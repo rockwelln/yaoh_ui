@@ -1,0 +1,69 @@
+
+.large-modal {
+  width:90%;
+}
+
+@media (min-width: 992px) {
+  .col-md-1-5 {
+    width: 2%;
+  }
+}
+
+@media (min-width: 768px) {
+  .col-md-1-5 {
+    width: 9%;
+  }
+}
+
+.tile {
+  width:140px;
+  height:120px;
+  border-radius:4px;
+  box-shadow: 2px 2px 4px 0 rgba(0,0,0,0.15);
+  margin-top:10px;
+  margin-bottom:10px;
+  /*margin-left:15px;
+  margin-right:15px;*/
+  float: none;
+}
+
+.tile .header {
+  height:120px;
+  background-color:#f4f4f4;
+  border-radius: 4px 4px 0 0;
+  color:white;
+  font-weight:300;
+}
+
+.tile .header .count {
+  font-size: 25px;
+  text-align:center;
+  padding:10px 0 0;
+}
+
+.tile .header .remark {
+  font-size: 15px;
+  text-align:center;
+  padding:0 0 0;
+}
+
+.tile .header .title {
+  font-size: 20px;
+  text-align:center;
+}
+
+.tile.primary .header {
+    background: linear-gradient(to bottom right, #6185bb, #7eb8f2);
+}
+
+.tile.warning .header {
+  background: linear-gradient(to bottom right, #efaf51, #f7ce64);
+}
+
+.tile.success .header {
+  background: linear-gradient(to bottom right, #609931, #87bc27);
+}
+
+.tile.error .header {
+  background: linear-gradient(to bottom right, #a30803, #dc5b4e);
+}
