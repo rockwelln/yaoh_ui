@@ -812,7 +812,7 @@ export class Transaction extends Component {
                 <Row>
                     {can_act && tx.status === 'ACTIVE' && actions_required.map((a, i) => <div key={i}>{a}</div>)}
                 </Row>
-                <Tabs defaultActiveKey={1} activeKey={activeTab} onSelect={e => this.setState({activeTab: e})} id="np-request-tabs">
+                <Tabs defaultActiveKey={1} activeKey={activeTab} onSelect={e => this.setState({activeTab: e})} id="request-tabs">
                     <Tab eventKey={1} title={<FormattedMessage id="request" defaultMessage="Request" />}>
                         <Col xs={12} sm={6} md={8} lg={8}>
                             <RequestTable

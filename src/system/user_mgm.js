@@ -14,6 +14,8 @@ import Glyphicon from 'react-bootstrap/lib/Glyphicon';
 import Col from 'react-bootstrap/lib/Col';
 import ControlLabel from 'react-bootstrap/lib/ControlLabel';
 import Breadcrumb from 'react-bootstrap/lib/Breadcrumb';
+import Tab from 'react-bootstrap/lib/Tab';
+import Tabs from 'react-bootstrap/lib/Tabs';
 
 import {FormattedMessage} from 'react-intl';
 
@@ -25,6 +27,7 @@ import {ApioDatatable} from "../utils/datatable";
 import { LinkContainer } from 'react-router-bootstrap';
 import {INTERNAL_HELP_LINKS} from "../async-apio-help";
 import {Search, StaticControl} from "../utils/common";
+import {CallbackHandler} from "./callbacks";
 
 
 export class LocalUserProfile extends Component {
@@ -81,105 +84,113 @@ export class LocalUserProfile extends Component {
     }
 
     render() {
-        const validPassword = (this.state.password === '')?null:(this.state.password.length >= 8)?"success":"error";
-        const validRepPassword = (this.state.password === '')?null:(this.state.repeated_password === this.state.password)?"success":"error";
+        const {password, repeated_password} = this.state;
+        const validPassword = (password === '')?null:(password.length >= 8)?"success":"error";
+        const validRepPassword = (password === '')?null:(repeated_password === password)?"success":"error";
         const validForm = validPassword !== 'error' && validRepPassword !== 'error';
 
         return (
             <Panel>
                 <Panel.Heading>
-                    <Panel.Title><FormattedMessage id="user-profile" defaultMessage="User Profile" /></Panel.Title>
+                    <Panel.Title><FormattedMessage id="user-profile" defaultMessage="User Profile" /> {this.state.username} </Panel.Title>
                 </Panel.Heading>
                 <Panel.Body>
                 {this.state.error !== undefined ? <Alert bsStyle="danger">{this.state.error}</Alert>:
                  this.state.success !== undefined ? <Alert bsStyle="success">{this.state.success}</Alert> :''}
-                <Form horizontal>
-                    <StaticControl
-                            label={<FormattedMessage id='username' defaultMessage='Username' />}
-                            value={this.state.username}/>
-                    <StaticControl
-                            label={<FormattedMessage id='email' defaultMessage='Email' />}
-                            value={this.state.email}/>
-                    <StaticControl
-                            label={<FormattedMessage id='system' defaultMessage='System' />}
-                            value={
-                                this.state.is_system?
-                                    <FormattedMessage id="yes" defaultMessage="Yes" />:
-                                    <FormattedMessage id="no" defaultMessage="No" />
-                            }/>
-                    <StaticControl label={<FormattedMessage id='ui-profile' defaultMessage='UI Profile'/>} value={this.state.ui_profile}/>
-                    <FormGroup>
-                        <Col componentClass={ControlLabel} sm={2}>
-                            <FormattedMessage id="groups" defaultMessage="Groups" />
-                        </Col>
+                 <Tabs defaultActiveKey={1} id="local-user-tabs">
+                     <Tab eventKey={1} title={<FormattedMessage id="details" defaultMessage="Details" />}>
+                        <Form horizontal style={{paddingTop: 10}}>
+                            <StaticControl
+                                    label={<FormattedMessage id='username' defaultMessage='Username' />}
+                                    value={this.state.username}/>
+                            <StaticControl
+                                    label={<FormattedMessage id='email' defaultMessage='Email' />}
+                                    value={this.state.email}/>
+                            <StaticControl
+                                    label={<FormattedMessage id='system' defaultMessage='System' />}
+                                    value={
+                                        this.state.is_system?
+                                            <FormattedMessage id="yes" defaultMessage="Yes" />:
+                                            <FormattedMessage id="no" defaultMessage="No" />
+                                    }/>
+                            <StaticControl label={<FormattedMessage id='ui-profile' defaultMessage='UI Profile'/>} value={this.state.ui_profile}/>
+                            <FormGroup>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="groups" defaultMessage="Groups" />
+                                </Col>
 
-                        <Col sm={9}>
-                            {
-                                this.state.groups.map((g) => {
-                                    return (
-                                        <FormControl.Static key={g.name}>
-                                            {g.name}
-                                            <FormattedMessage id="app.settings.user.groups.as" defaultMessage=" as " />
-                                            {g.level}
-                                        </FormControl.Static>
-                                    )
-                                })
-                            }
-                        </Col>
-                    </FormGroup>
-                    <StaticControl label={<FormattedMessage id='registered-on' defaultMessage='Registered on'/>} value={this.state.registered_on}/>
-                    <FormGroup>
-                        <Col componentClass={ControlLabel} sm={2}>
-                            <FormattedMessage id="language" defaultMessage="Language" />
-                        </Col>
+                                <Col sm={9}>
+                                    {
+                                        this.state.groups.map((g) => {
+                                            return (
+                                                <FormControl.Static key={g.name}>
+                                                    {g.name}
+                                                    <FormattedMessage id="app.settings.user.groups.as" defaultMessage=" as " />
+                                                    {g.level}
+                                                </FormControl.Static>
+                                            )
+                                        })
+                                    }
+                                </Col>
+                            </FormGroup>
+                            <StaticControl label={<FormattedMessage id='registered-on' defaultMessage='Registered on'/>} value={this.state.registered_on}/>
+                            <FormGroup>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="language" defaultMessage="Language" />
+                                </Col>
 
-                        <Col sm={2}>
-                            <FormControl
-                                componentClass="select"
-                                value={this.state.language}
-                                onChange={(e) => this.setState({language: e.target.value})}>
-                                <option value="fr">fr</option>
-                                <option value="nl">nl</option>
-                                <option value="en">en</option>
-                            </FormControl>
-                        </Col>
-                    </FormGroup>
-                    <FormGroup validationState={validPassword}>
-                        <Col componentClass={ControlLabel} sm={2}>
-                            <FormattedMessage id="password" defaultMessage="Password" />
-                        </Col>
+                                <Col sm={2}>
+                                    <FormControl
+                                        componentClass="select"
+                                        value={this.state.language}
+                                        onChange={(e) => this.setState({language: e.target.value})}>
+                                        <option value="fr">fr</option>
+                                        <option value="nl">nl</option>
+                                        <option value="en">en</option>
+                                    </FormControl>
+                                </Col>
+                            </FormGroup>
+                            <FormGroup validationState={validPassword}>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="password" defaultMessage="Password" />
+                                </Col>
 
-                        <Col sm={9}>
-                            <FormControl
-                                componentClass="input"
-                                placeholder="Password"
-                                type="password"
-                                value={this.state.password}
-                                onChange={(e) => this.setState({password: e.target.value})} />
-                        </Col>
-                    </FormGroup>
-                    <FormGroup validationState={validRepPassword}>
-                        <Col componentClass={ControlLabel} sm={2}>
-                            <FormattedMessage id="repeat-password" defaultMessage="Repeat password" />
-                        </Col>
+                                <Col sm={9}>
+                                    <FormControl
+                                        componentClass="input"
+                                        placeholder="Password"
+                                        type="password"
+                                        value={this.state.password}
+                                        onChange={(e) => this.setState({password: e.target.value})} />
+                                </Col>
+                            </FormGroup>
+                            <FormGroup validationState={validRepPassword}>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="repeat-password" defaultMessage="Repeat password" />
+                                </Col>
 
-                        <Col sm={9}>
-                            <FormControl
-                                componentClass="input"
-                                placeholder="Repeat password"
-                                type="password"
-                                value={this.state.repeated_password}
-                                onChange={(e) => this.setState({repeated_password: e.target.value})} />
-                        </Col>
-                    </FormGroup>
-                    <FormGroup>
-                        <Col smOffset={2} sm={9}>
-                            <Button bsStyle="primary" onClick={this.onSubmit} disabled={!validForm}>
-                                <FormattedMessage id="save" defaultMessage="Save" />
-                            </Button>
-                        </Col>
-                    </FormGroup>
-                </Form>
+                                <Col sm={9}>
+                                    <FormControl
+                                        componentClass="input"
+                                        placeholder="Repeat password"
+                                        type="password"
+                                        value={this.state.repeated_password}
+                                        onChange={(e) => this.setState({repeated_password: e.target.value})} />
+                                </Col>
+                            </FormGroup>
+                            <FormGroup>
+                                <Col smOffset={2} sm={9}>
+                                    <Button bsStyle="primary" onClick={this.onSubmit} disabled={!validForm}>
+                                        <FormattedMessage id="save" defaultMessage="Save" />
+                                    </Button>
+                                </Col>
+                            </FormGroup>
+                        </Form>
+                     </Tab>
+                     <Tab eventKey={2} title={<FormattedMessage id="callbacks" defaultMessage="Callbacks" />}>
+                         {this.props.notifications && <CallbackHandler userId={this.props.user_info.id} {...this.props} />}
+                     </Tab>
+                 </Tabs>
                 </Panel.Body>
             </Panel>
         )
@@ -275,123 +286,135 @@ class UpdateUser extends Component {
                                 <FormattedMessage id="fail-to-save-the-user" defaultMessage="Fail to save the user" /><br/>{this.state.error.message}
                             </Alert>
                     }
-                    <Form horizontal>
-                        <FormGroup validationState={validUsername}>
-                            <Col componentClass={ControlLabel} sm={2}>
-                                <FormattedMessage id="username" defaultMessage="Username" />
-                            </Col>
+                    <Tabs defaultActiveKey={1} id="user-update-tabs">
+                        <Tab eventKey={1} title={<FormattedMessage id="details" defaultMessage="Details" />}>
 
-                            <Col sm={9}>
-                                <FormControl
-                                    componentClass="input"
-                                    value={user_.username}
-                                    onChange={e => this.setState({diff_user: update(this.state.diff_user, {$merge: {username: e.target.value}})})}/>
-                            </Col>
-                        </FormGroup>
-                        <FormGroup validationState={validEmail}>
-                            <Col componentClass={ControlLabel} sm={2}>
-                                <FormattedMessage id="email" defaultMessage="Email" />
-                            </Col>
+                        <Form horizontal style={{paddingTop: 10}}>
+                            <FormGroup validationState={validUsername}>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="username" defaultMessage="Username" />
+                                </Col>
 
-                            <Col sm={9}>
-                                <FormControl
-                                    componentClass="input"
-                                    value={user_.email}
-                                    onChange={e => this.setState({diff_user: update(this.state.diff_user, {$merge: {email: e.target.value}})})}/>
-                            </Col>
-                        </FormGroup>
-                        <FormGroup>
-                            <Col componentClass={ControlLabel} sm={2}>
-                                <FormattedMessage id="system" defaultMessage="System" />
-                            </Col>
+                                <Col sm={9}>
+                                    <FormControl
+                                        componentClass="input"
+                                        value={user_.username}
+                                        onChange={e => this.setState({diff_user: update(this.state.diff_user, {$merge: {username: e.target.value}})})}/>
+                                </Col>
+                            </FormGroup>
+                            <FormGroup validationState={validEmail}>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="email" defaultMessage="Email" />
+                                </Col>
 
-                            <Col sm={9}>
-                                <Checkbox
-                                    checked={user_.is_system || false}
-                                    readOnly={!this.props.user_info.is_system} // if the user logged is system, then he can create other "system" user(s), otherwise, not.
-                                    onChange={e => this.setState({diff_user: update(this.state.diff_user, {$merge: {is_system: e.target.checked}})})}/>
+                                <Col sm={9}>
+                                    <FormControl
+                                        componentClass="input"
+                                        value={user_.email}
+                                        onChange={e => this.setState({diff_user: update(this.state.diff_user, {$merge: {email: e.target.value}})})}/>
+                                </Col>
+                            </FormGroup>
+                            <FormGroup>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="system" defaultMessage="System" />
+                                </Col>
 
-                                <HelpBlock><FormattedMessage id="app.user.is_system.label"
-                                                             defaultMessage="This is the 'full-access' flag, you can't set it if you don't have it already."/></HelpBlock>
-                            </Col>
-                        </FormGroup>
-                        <FormGroup>
-                            <Col componentClass={ControlLabel} sm={2}>
-                                <FormattedMessage id="ui-profile" defaultMessage="UI Profile" />
-                            </Col>
+                                <Col sm={9}>
+                                    <Checkbox
+                                        checked={user_.is_system || false}
+                                        readOnly={!this.props.user_info.is_system} // if the user logged is system, then he can create other "system" user(s), otherwise, not.
+                                        onChange={e => this.setState({diff_user: update(this.state.diff_user, {$merge: {is_system: e.target.checked}})})}/>
 
-                            <Col sm={9}>
-                                <FormControl
-                                    componentClass="select"
-                                    value={user_.ui_profile}
-                                    onChange={e => this.setState({diff_user: update(this.state.diff_user, {$merge: {ui_profile: e.target.value}})})}>
-                                    <option value="admin">Admin</option>
-                                    <option value="porta">Porta</option>
-                                    <option value="tl">TL</option>
-                                    <option value="hd2">HD2</option>
-                                </FormControl>
-                                <HelpBlock><FormattedMessage id="app.user.profile.help"
-                                                             defaultMessage="The profile has no influence on the rights in the application only the pages the user may see."/></HelpBlock>
-                                <HelpBlock>
-                                    <FormattedMessage id="for-more-information-about-profile-implementation-in-the-right-management-see-" defaultMessage="For more information about profile implementation in the right management see " />
-                                    <a href={INTERNAL_HELP_LINKS.profile_rights.url}><FormattedMessage id={"here"}/></a>
-                                </HelpBlock>
-                            </Col>
-                        </FormGroup>
-                        <FormGroup>
-                            <Col componentClass={ControlLabel} sm={2}>
-                                <FormattedMessage id="language" defaultMessage="Language" />
-                            </Col>
+                                    <HelpBlock><FormattedMessage id="app.user.is_system.label"
+                                                                 defaultMessage="This is the 'full-access' flag, you can't set it if you don't have it already."/></HelpBlock>
+                                </Col>
+                            </FormGroup>
+                            <FormGroup>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="ui-profile" defaultMessage="UI Profile" />
+                                </Col>
 
-                            <Col sm={2}>
-                                <FormControl
-                                    componentClass="select"
-                                    value={user_.language}
-                                    onChange={e => this.setState({diff_user: update(this.state.diff_user, {$merge: {language: e.target.value}})})}>
-                                    <option value="fr">fr</option>
-                                    <option value="nl">nl</option>
-                                    <option value="en">en</option>
-                                </FormControl>
-                            </Col>
-                        </FormGroup>
-                        <FormGroup validationState={validPassword}>
-                            <Col componentClass={ControlLabel} sm={2}>
-                                <FormattedMessage id="password" defaultMessage="Password" />
-                            </Col>
+                                <Col sm={9}>
+                                    <FormControl
+                                        componentClass="select"
+                                        value={user_.ui_profile}
+                                        onChange={e => this.setState({diff_user: update(this.state.diff_user, {$merge: {ui_profile: e.target.value}})})}>
+                                        <option value="admin">Admin</option>
+                                        <option value="porta">Porta</option>
+                                        <option value="tl">TL</option>
+                                        <option value="hd2">HD2</option>
+                                    </FormControl>
+                                    <HelpBlock><FormattedMessage id="app.user.profile.help"
+                                                                 defaultMessage="The profile has no influence on the rights in the application only the pages the user may see."/></HelpBlock>
+                                    <HelpBlock>
+                                        <FormattedMessage id="for-more-information-about-profile-implementation-in-the-right-management-see-" defaultMessage="For more information about profile implementation in the right management see " />
+                                        <a href={INTERNAL_HELP_LINKS.profile_rights.url}><FormattedMessage id={"here"}/></a>
+                                    </HelpBlock>
+                                </Col>
+                            </FormGroup>
+                            <FormGroup>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="language" defaultMessage="Language" />
+                                </Col>
 
-                            <Col sm={9}>
-                                <FormControl
-                                    componentClass="input"
-                                    placeholder="Password"
-                                    type="password"
-                                    value={user_.password || ''}
-                                    onChange={e => this.setState({diff_user: update(this.state.diff_user, {$merge: {password: e.target.value}})})}/>
-                            </Col>
-                        </FormGroup>
-                        <FormGroup validationState={validRepPassword}>
-                            <Col componentClass={ControlLabel} sm={2}>
-                                <FormattedMessage id="confirm-password" defaultMessage="Confirm password" />
-                            </Col>
+                                <Col sm={2}>
+                                    <FormControl
+                                        componentClass="select"
+                                        value={user_.language}
+                                        onChange={e => this.setState({diff_user: update(this.state.diff_user, {$merge: {language: e.target.value}})})}>
+                                        <option value="fr">fr</option>
+                                        <option value="nl">nl</option>
+                                        <option value="en">en</option>
+                                    </FormControl>
+                                </Col>
+                            </FormGroup>
+                            <FormGroup validationState={validPassword}>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="password" defaultMessage="Password" />
+                                </Col>
 
-                            <Col sm={9}>
-                                <FormControl
-                                    componentClass="input"
-                                    placeholder="Confirm password"
-                                    type="password"
-                                    value={user_.repeated_password || ''}
-                                    onChange={e => this.setState({diff_user: update(this.state.diff_user, {$merge: {repeated_password: e.target.value}})})}/>
-                            </Col>
-                        </FormGroup>
-                    </Form>
+                                <Col sm={9}>
+                                    <FormControl
+                                        componentClass="input"
+                                        placeholder="Password"
+                                        type="password"
+                                        value={user_.password || ''}
+                                        onChange={e => this.setState({diff_user: update(this.state.diff_user, {$merge: {password: e.target.value}})})}/>
+                                </Col>
+                            </FormGroup>
+                            <FormGroup validationState={validRepPassword}>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="confirm-password" defaultMessage="Confirm password" />
+                                </Col>
+
+                                <Col sm={9}>
+                                    <FormControl
+                                        componentClass="input"
+                                        placeholder="Confirm password"
+                                        type="password"
+                                        value={user_.repeated_password || ''}
+                                        onChange={e => this.setState({diff_user: update(this.state.diff_user, {$merge: {repeated_password: e.target.value}})})}/>
+                                </Col>
+                            </FormGroup>
+                            <FormGroup>
+                                <Col smOffset={2} sm={10}>
+                                    <ButtonToolbar>
+                                        <Button onClick={this.onSubmit} bsStyle="primary" disabled={!validForm}>
+                                            <FormattedMessage id="update" defaultMessage="Update" />
+                                        </Button>
+                                        <Button onClick={this.onClose}>
+                                            <FormattedMessage id="cancel" defaultMessage="Cancel" />
+                                        </Button>
+                                    </ButtonToolbar>
+                                </Col>
+                            </FormGroup>
+                        </Form>
+                        </Tab>
+                        <Tab eventKey={2} title={<FormattedMessage id="callbacks" defaultMessage="Callbacks" />}>
+                            {this.props.notifications && <CallbackHandler userId={user.user_id} {...this.props} />}
+                        </Tab>
+                    </Tabs>
                 </Modal.Body>
-                <Modal.Footer>
-                    <Button onClick={this.onSubmit} bsStyle="primary" disabled={!validForm}>
-                        <FormattedMessage id="update" defaultMessage="Update" />
-                    </Button>
-                    <Button onClick={this.onClose}>
-                        <FormattedMessage id="cancel" defaultMessage="Cancel" />
-                    </Button>
-                </Modal.Footer>
             </Modal>
         )
     }
