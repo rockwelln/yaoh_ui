@@ -125,7 +125,7 @@ export class LocalUserProfile extends Component {
                                             return (
                                                 <FormControl.Static key={g.name}>
                                                     {g.name}
-                                                    <FormattedMessage id="app.settings.user.groups.as" defaultMessage=" as " />
+                                                    <FormattedMessage id="as" defaultMessage=" as " />
                                                     {g.level}
                                                 </FormControl.Static>
                                             )
@@ -664,7 +664,7 @@ class DeleteUser extends Component {
                     <Modal.Body>
                         {
                             this.state.error &&
-                                <Alert bsSyle="danger">
+                                <Alert bsStyle="danger">
                                     {this.state.error.message}
                                 </Alert>
                         }

@@ -1,6 +1,7 @@
 // import React from 'react';
 
 export const API_URL_PREFIX = process.env.NODE_ENV === 'production'?window.location.origin:'http://127.0.0.1:5000';
+export const API_URL_PROXY_PREFIX = '/api/v01/apio/sync';
 
 export class AuthService {
     static getToken() {
@@ -67,15 +68,21 @@ export function fetch_put(url, body, token) {
 }
 
 export function fetch_post(url, body, token) {
+    return fetch_post_raw(url, JSON.stringify(body), token, 'application/json');
+}
+
+export function fetch_post_raw(url, raw_body, token, content_type) {
     const full_url = url.href?url:url.startsWith('http')?url:API_URL_PREFIX + url;
+    let headers = {
+        'Authorization': `Bearer ${token}`,
+    };
+    if(content_type) {
+        headers['content-type'] = content_type
+    }
     return fetch(full_url, {
         method: 'POST',
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(body)
+        headers: headers,
+        body: raw_body
     }).then(checkStatus)
 }
 

@@ -58,7 +58,7 @@ export class SearchBar extends Component {
     }
 
     onSearchRequests(value) {
-        const url = new URL(API_URL_PREFIX + '/api/v01/voo/np_requests/search');
+        const url = new URL(API_URL_PREFIX + '/api/v01/orange/requests/search');
         value = value.trim();
         var filter;
         
@@ -80,7 +80,7 @@ export class SearchBar extends Component {
         url.searchParams.append(
             'sorting',
             JSON.stringify([{
-                model: 'NPRequest', field: 'created_on', direction: 'desc'
+                model: 'request', field: 'created_on', direction: 'desc'
             }])
         );
         this.setState({error: undefined, entries: undefined, searching: true});

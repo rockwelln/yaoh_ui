@@ -32,3 +32,22 @@ body {
 .react-datepicker__time-container ul {
     padding: 0;
 }
+
+.path {
+  stroke-dasharray: 5000;
+  stroke-dashoffset: 5000;
+  animation: dash 2s linear forwards;
+}
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.tooltip-inner {
+    min-width: 450px;
+    /* If max-width does not work, try using width instead */
+    width: 450px;
+    text-align: left;
+}

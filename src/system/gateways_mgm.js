@@ -113,7 +113,7 @@ const GatewaySituation = ({info, name}) => {
         <ul className="list-inline" style={{marginTop: "10px"}}>
             <li>
                 <Glyphicon glyph="map-marker" style={{fontSize: "500%", color: "green", display: "block", textAlign: "center"}} />
-                <FormattedMessage id="npact2" defaultMessage="APIO Async"/>
+                <FormattedMessage id="apio-async" defaultMessage="APIO Async"/>
             </li>
             <li style={{paddingLeft: "5%", paddingRight: "5%"}}>
                 <span>

@@ -466,7 +466,7 @@ function draw_editor(container, handlers, placeholders, props) {
 
                 let style = undefined;
                 if(extra && extra.status !== undefined && (extra.status === 'OK' || extra.status === 'ERROR')) {
-                    const color = extra.status === 'OK'?'#32CD32':'#ff0000';
+                    const color = extra.status === 'OK'?(s.indexOf('.rollback') !== -1?'#ffbd53':'#32cd32'):'#ff0000';
                     style = `strokeColor=${color};fillColor=${color};`
                 }
                 graph.insertEdge(parent, null, '',  a[1], b[1], style);

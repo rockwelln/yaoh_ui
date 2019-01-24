@@ -5,8 +5,6 @@ import Alert from 'react-bootstrap/lib/Alert';
 import Button from 'react-bootstrap/lib/Button';
 import Col from 'react-bootstrap/lib/Col';
 import Row from 'react-bootstrap/lib/Row';
-import ButtonGroup from 'react-bootstrap/lib/ButtonGroup';
-import ButtonToolbar from 'react-bootstrap/lib/ButtonToolbar';
 import ControlLabel from 'react-bootstrap/lib/ControlLabel';
 import Form from 'react-bootstrap/lib/Form';
 import FormControl from 'react-bootstrap/lib/FormControl';
@@ -20,6 +18,9 @@ import Tabs from 'react-bootstrap/lib/Tabs';
 import Badge from 'react-bootstrap/lib/Badge';
 import Checkbox from 'react-bootstrap/lib/Checkbox';
 import Breadcrumb from 'react-bootstrap/lib/Breadcrumb';
+import ButtonToolbar from 'react-bootstrap/lib/ButtonToolbar';
+import OverlayTrigger from 'react-bootstrap/lib/OverlayTrigger';
+import Tooltip from 'react-bootstrap/lib/Tooltip';
 
 import DatePicker from 'react-datepicker';
 import moment from 'moment';
@@ -27,9 +28,10 @@ import {Link} from 'react-router-dom';
 import {FormattedMessage} from 'react-intl';
 import queryString from 'query-string';
 import 'font-awesome/css/font-awesome.min.css';
+import ReactJson from 'react-json-view';
 
 import {
-    API_URL_PREFIX, fetch_get, parseJSON, fetch_post, fetch_put
+    API_URL_PREFIX, API_URL_PROXY_PREFIX, fetch_get, parseJSON, fetch_post, fetch_put
 } from "../utils";
 import {ApioDatatable} from "../utils/datatable";
 
@@ -59,12 +61,15 @@ const workableDefinition = (definition, states) => {
     new_def.transitions && states && new_def.transitions.map(t => {
         const src = t[0];
         const dst = t[1];
-        const state = states && states.find(s => s.cell_id === dst);
-        // devnote: if there is a state (task) for the cell, and the task source (trigger) match the transition *or* there is only 1 way to trigger this cell.
-        if(state !== undefined && (state.source === src || new_def.transitions.filter(nt => nt[1] === t[1]).length === 1)) {
-            t[2] = {'status': state.status};
-            console.log(`${src} => ${dst}: ${state.status}`);
+
+        const state = states && states.find(s => src === `${s.cell_id}.${s.output}`);
+        if(state !== undefined) {
+            const dest_state = states.find(s => dst === s.cell_id);
+            if(dest_state !== undefined) {
+                t[2] = {'status': dest_state.status};
+            }
         }
+
         return null;
     });
 
@@ -73,16 +78,18 @@ const workableDefinition = (definition, states) => {
 
 
 class TransactionFlow extends Component {
-    constructor(props) {
-        super(props);
+    constructor(props, context) {
+        super(props, context);
         this.state = {};
+        this.flowGraphRef = React.createRef();
+        this.toolbarRef = React.createRef();
         this._renderGrid = this._renderGrid.bind(this);
         this._refreshGrid = this._refreshGrid.bind(this);
     }
 
     _renderGrid(getActivity) {
-        const node = ReactDOM.findDOMNode(this.refs.flowGraph);
-        const toolbarNode = ReactDOM.findDOMNode(this.refs.toolbar);
+        const node = ReactDOM.findDOMNode(this.flowGraphRef.current);
+        const toolbarNode = ReactDOM.findDOMNode(this.toolbarRef.current);
         draw_editor(node, {
             get: getActivity
         }, {
@@ -94,7 +101,8 @@ class TransactionFlow extends Component {
     }
 
     _refreshGrid(force) {
-        const width = ReactDOM.findDOMNode(this.refs.flowGraph).getBoundingClientRect().width;
+        const width = this.flowGraphRef.current?ReactDOM.findDOMNode(this.flowGraphRef.current).getBoundingClientRect().width:null;
+        if(!width) return;
         if(width !== this.state.eltWidth || force) {
             this.setState({eltWidth: width});
 
@@ -109,19 +117,402 @@ class TransactionFlow extends Component {
         this._refreshGrid(true);
     }
 
-    componentDidUpdate() {
-        this._refreshGrid();
+    shouldComponentUpdate(nextProps, nextState, nextContext) {
+        const width = this.flowGraphRef.current?ReactDOM.findDOMNode(this.flowGraphRef.current).getBoundingClientRect().width:null;
+        // if resized
+        if(width && width !== this.state.eltWidth){
+            return true;
+        }
+        // if there is a new task
+        if(!this.props.states || this.props.states.length !== nextProps.states.length){
+            return true;
+        }
+        // if a task status changed
+        return (
+            this.props.states.filter(
+                s => nextProps.states.find(
+                    ns => ns.cell_id === s.cell_id && s.status !== ns.status
+                ) !== undefined
+            ).length !== 0
+        );
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+        this._refreshGrid(true);
     }
 
     render() {
         return (
             <div>
-                <div ref="toolbar" style={{position: 'absolute', zIndex: '100'}} />
-                <div ref="flowGraph" style={{overflow: 'hidden', backgroundImage: `url(${GridPic})`}} />
+                <div ref={this.toolbarRef} style={{position: 'absolute', zIndex: '100'}} />
+                <div ref={this.flowGraphRef} style={{overflow: 'hidden', backgroundImage: `url(${GridPic})`}} />
             </div>
         );
     }
 }
+
+
+const vSpacing = 30;
+// const hSpacing = 200;
+
+class SyncMessagesFlow extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            boundingRect: SyncMessagesFlow.defaultClientRect,
+        };
+        this.chartRef = React.createRef();
+    }
+
+    static _extractEndpoints(data) {
+        const endpoints = data.map(d => {
+            if(d.protocol === "BS-OCI") return "BroadWorks";
+            return "unknown...";
+        });
+        return [...new Set(endpoints)];
+    }
+
+    static defaultClientRect = {
+        height: 250,
+        width: 800,
+    };
+
+    componentDidMount() {
+        const boundingRect = this.chartRef.current?ReactDOM.findDOMNode(this.chartRef.current).getBoundingClientRect():null;
+
+        if(boundingRect && boundingRect.width !== this.state.boundingRect.width) {
+            this.setState({boundingRect: boundingRect});
+        }
+    }
+
+    render() {
+        const {data} = this.props;
+        const {boundingRect} = this.state;
+
+        const endpoints = SyncMessagesFlow._extractEndpoints(data);
+        const flowWidth = boundingRect.width - 240;
+        const endpointsHSpacing = flowWidth / (endpoints.length);
+        console.log(endpointsHSpacing);
+
+        const vLineHeight = (data.length + 2) * vSpacing;
+        return (
+            <svg className="flow" width="100%" height={vLineHeight+75} ref={this.chartRef}>
+                <marker id="end" viewBox="0 -5 10 10" refX="10" refY="0" markerWidth="8" markerHeight="8" orient="auto">
+                    <path d="M0,-5L10,0L0,5"/>
+                </marker>
+                <g transform="translate(120,40)">
+
+                    <g transform="translate(0,30)">
+                        {
+                            data.map(
+                                (d, i) =>
+                                    <line
+                                        key={`message_line_${i}`}
+                                        x1={d.type === "request"?0:flowWidth}
+                                        x2={d.type === "request"?flowWidth:0}
+                                        y1={vSpacing * (i+1)}
+                                        y2={vSpacing * (i+1)}
+                                        stroke={d.type === "request"?"blue":d.type === "error"?"red":"green"}
+                                        markerEnd={`url(#end)`}
+                                        className="path"
+                                    />
+                            )
+                        }
+                    </g>
+                    <g transform="translate(0,30)">
+                        {
+                            data.map(
+                                (d, i) => {
+                                    const summary = /xsi:type="([A-Za-z0-9:]+)".*$/gm.exec(d.content);
+                                    return (
+                                        <OverlayTrigger
+                                          key={`tooltip-${i}`}
+                                          placement="top"
+                                          overlay={
+                                              <Tooltip
+                                                  id={`tooltip-${i}`}
+                                                  style={{padding: '2px 10px', borderRadius: 3}}>
+                                                  {d.content}
+                                              </Tooltip>
+                                          }>
+                                            <text
+                                                textAnchor="middle"
+                                                x={flowWidth / 2}
+                                                y={(vSpacing * (i + 1)) - 10}
+                                                fill="#1f77b4"
+                                                fillOpacity={1}
+                                                className="message-label">
+                                                {summary && summary[1]}
+                                            </text>
+                                        </OverlayTrigger>
+                                    )
+                                }
+                            )
+                        }
+                    </g>
+                    <g transform="translate(0,30)">
+                        {
+                            data.map(
+                                (d, i) =>
+                                    <text
+                                        key={`timeline_${i}`}
+                                        textAnchor="end"
+                                        x="-10"
+                                        y={vSpacing * (i+1)}
+                                        fillOpacity={1}
+                                        className="timestamp">
+                                        {moment(Math.floor(parseFloat(d.timestamp) * 1000)).format("HH:mm:ss.SSS")}
+                                    </text>
+                            )
+                        }
+                        {
+                            data.map(
+                                (d, i) =>
+                                    <line
+                                        key={`message_o_line_${i}`}
+                                        x1={0}
+                                        x2={flowWidth}
+                                        y1={vSpacing * (i+1)}
+                                        y2={vSpacing * (i+1)}
+                                        stroke="black"
+                                        strokeOpacity="0.05"
+                                    />
+                            )
+                        }
+                    </g>
+                    <g>
+                        <line x1={0} x2={0} y1={15} y2={vLineHeight} stroke="black"/>
+                        {
+                            endpoints.map(
+                                (e, i) =>
+                                    <line
+                                        key={`endpoint_line_${i}`}
+                                        x1={endpointsHSpacing * (i + 1)}
+                                        x2={endpointsHSpacing * (i + 1)}
+                                        y1={15}
+                                        y2={vLineHeight}
+                                        stroke="black"
+                                    />
+                            )
+                        }
+
+                        <text textAnchor="middle" x={0} y={10} fill="black" fillOpacity="1">APIO</text>
+                        {
+                            endpoints.map(
+                                (e, i) =>
+                                    <text
+                                        key={`endpoint_text_${i}`}
+                                        textAnchor="middle"
+                                        x={endpointsHSpacing * (i + 1)}
+                                        y={10}
+                                        fill="black"
+                                        fillOpacity={1}
+                                    >{e}</text>
+                            )
+                        }
+                    </g>
+                </g>
+            </svg>
+        )
+    }
+}
+
+
+class Message extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            expanded: false,
+            loading: false,
+        };
+        this.fetchDetails = this.fetchDetails.bind(this);
+        this.onExpand = this.onExpand.bind(this);
+    }
+
+    fetchDetails() {
+        this.setState({loading: true});
+        fetch_get(`${API_URL_PROXY_PREFIX}/api/v1/local/audit_records/${this.props.entry.external_id}`, this.props.auth_token)
+            .then(data => {
+                this.setState({syncDetails: data, loading: false});
+            })
+            .catch(error => {
+                this.setState({error: error, loading: false})
+            });
+    }
+
+    onExpand() {
+        const {expanded} = this.state;
+        if(!expanded) {
+            this.fetchDetails();
+        }
+        this.setState({expanded: !expanded});
+    }
+
+    getStatusColor() {
+        return this.props.entry.status < 400 ? '#a4d1a2' : '#ca6f7b';
+    }
+
+    render() {
+        const {entry, p} = this.props;
+        const {syncDetails, loading, expanded} = this.state;
+        const statusColor = this.getStatusColor();
+        const expIco = expanded?<Glyphicon glyph="chevron-down"/>:<Glyphicon glyph="chevron-right"/>;
+        let rows = [
+            <tr
+                onClick={this.onExpand}
+                key={`message_summary_${entry.processing_trace_id}`}
+            >
+                <td style={{width: '1%'}}>{expIco}</td>
+                <td style={{width: '1%'}}>{`${p+1}. `}</td>
+                <td style={{width: '2%'}}><Glyphicon style={{color: statusColor}} glyph={entry.status < 400?"ok":"remove"}/></td>
+                <td style={{width: '16%'}}>{entry.label}</td>
+                <td style={{width: '5%'}}>{entry.status}</td>
+                <td style={{width: '60%'}}>{moment(entry.created_on).format(DATE_FORMAT)}</td>
+                <td style={{width: '15%'}}><Badge>{entry.task_name}</Badge></td>
+            </tr>
+        ];
+
+        if (loading) {
+            rows.push(
+                <tr key={`message_loading_${entry.processing_trace_id}`}>
+                    <td colSpan={7}><FormattedMessage id="loading" defaultMessage="Loading..."/></td>
+                </tr>
+            )
+        } else if (expanded) {
+            let output = entry.output;
+            try {
+                output = JSON.stringify(JSON.parse(output), null, 2);
+            } catch (e) {
+                console.log(e);
+            }
+            rows.push(
+                <tr key={`message_details_${entry.processing_trace_id}`}>
+                    <td colSpan={7}>
+                        <pre style={{wordWrap: 'break-word', whiteSpace: 'pre-wrap'}}>{output}</pre>
+                    </td>
+                </tr>
+            );
+
+            try {
+                syncDetails && rows.push(
+                    <tr key={`message_flow_sync_${entry.processing_trace_id}`}>
+                        <td colSpan={7}>
+                            <SyncMessagesFlow data={JSON.parse(syncDetails.south_data)} />
+                        </td>
+                    </tr>
+                );
+            } catch {
+                console.error("invalid sync details")
+            }
+
+        }
+        return rows;
+    }
+}
+
+
+const MessagesTable = ({messages, auth_token})  => (
+    <Table condensed>
+        <tbody>
+        {
+            messages.sort(
+                (a, b) => {
+                    if(a.created_on < b.created_on) return -1;
+                    if(a.created_on > b.created_on) return 1;
+                    if(a.processing_trace_id < b.processing_trace_id) return -1;
+                    if(a.processing_trace_id > b.processing_trace_id) return 1;
+                    return 0;
+                }
+            ).map(
+                (e, i) => <Message key={`message_${i}`} entry={e} p={i} auth_token={auth_token}/>
+            )
+        }
+        </tbody>
+    </Table>
+);
+
+
+class SubInstance extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            request: {},
+        };
+        this.computeLabel = this.computeLabel.bind(this);
+    }
+
+    componentDidMount() {
+        const {instance, auth_token} = this.props;
+
+        fetch_get(`${API_URL_PREFIX}/api/v01/apio/requests/${instance.original_request_id}`, auth_token)
+            .then(data => {
+                this.setState({request: data.request});
+            })
+            .catch(error => {
+                this.setState({error: error})
+            });
+    }
+
+    computeLabel() {
+        const {instance} = this.props;
+        const {request} = this.state;
+        const entity = request.entities && request.entities[0];
+
+        if(!entity) {
+            return instance.id;
+        }
+
+        let label = entity.tenant_id;
+        if (entity.site_id) {
+            label += ' - ' + entity.site_id;
+        }
+        if (entity.numbers) {
+            label += ' - ' + entity.numbers;
+        }
+        return label;
+    }
+
+    render() {
+        const {instance, tasks} = this.props;
+        const {request} = this.state;
+        const statusColor = request.status === "SUCCESS" ? '#a4d1a2' : '#ca6f7b';
+        const statusGlyph = request.status === "SUCCESS" ? "ok" : "remove";
+        const callback_task_name = tasks.find(t => t.id === instance.callback_task_id).cell_id;
+
+        return (
+            <tr onClick={this.onExpand} key={`message_sub_flow_sync_${instance.id}`}>
+                <td style={{width: '2%'}}><Glyphicon style={{color: statusColor}} glyph={statusGlyph}/></td>
+                <td>
+                    <Link to={`/transactions/${instance.id}`}>{this.computeLabel()}</Link>
+                </td>
+                <td style={{width: '15%'}}>
+                    {
+                        instance.errors !== 0 && <Badge bsStyle="danger">{instance.errors}</Badge>
+                    }
+                </td>
+                <td style={{width: '15%'}}><Badge>{callback_task_name}</Badge></td>
+            </tr>
+        )
+    }
+}
+
+const SubInstancesTable = ({subinstances, tasks, auth_token}) => (
+    <Table condensed>
+        <tbody>
+        {
+            subinstances.sort(
+                (a, b) => {
+                    if(a.id < b.id) return -1;
+                    if(a.id > b.id) return 1;
+                    return 0;
+                }
+            ).map(
+                (e, i) => <SubInstance key={`subinst_${i}`} instance={e} tasks={tasks} auth_token={auth_token}/>
+            )
+        }
+        </tbody>
+    </Table>
+);
 
 
 class Comments extends Component {
@@ -171,22 +562,15 @@ class Comments extends Component {
     }
 
     render() {
-        const {error, comments, showAddModal, comment, save_error} = this.state;
+        const {comments, showAddModal, comment, save_error} = this.state;
         const closeModal = () => this.setState({showAddModal: false, comment: '', save_error: undefined});
 
         return (<div>
-            {
-                error &&
-                    <Alert bsStyle="danger">
-                        <FormattedMessage id="fail-fetch-comments" defaultMessage="Failed to fetch comments."/>
-                        {error.message}
-                    </Alert>
-            }
             <Table condensed>
                 <tbody>
                     {comments && comments.map(c => (
                         <tr key={c.id}>
-                            <th>{c.user.username}<br/>{moment(c.created_on).format(DATE_FORMAT)}</th>
+                            <th style={{width: '15%'}}>{c.user.username}<br/>{moment(c.created_on).format(DATE_FORMAT)}</th>
                             <td>{c.content.split('\n').map((e, i) => <div key={i}>{e}</div>)}</td>
                         </tr>
                         ))
@@ -207,7 +591,6 @@ class Comments extends Component {
                         save_error &&
                             <Alert bsStyle="danger">
                                 <FormattedMessage id="fail-save-comment" defaultMessage="Failed to save comment."/><br/>
-                                {save_error.message}
                             </Alert>
                     }
                     <Form>
@@ -294,7 +677,15 @@ const Errors = ({errors, user_info}) => (
         </thead>
         <tbody>
         {
-            errors.map(e => (!e.advanced || user_info.ui_profile === "admin") && <Error key={e.id} entry={e} />)
+            errors.sort(
+                (a, b) => {
+                    if(a.created_on < b.created_on) return 1;
+                    if(a.created_on > b.created_on) return -1;
+                    return 0;
+                }
+            ).map(
+                e => (!e.advanced || user_info.ui_profile === "admin") && <Error key={e.id} entry={e} />
+            )
         }
         </tbody>
     </Table>
@@ -366,26 +757,37 @@ class Events extends Component {
         }
         const closeModal = () => this.setState({show_details: false, selected_evt: {}});
         const events_ = events.concat(logs);
-        events_.sort((a, b) => (moment(b.created_on) - moment(a.created_on)));
         return (<div>
             {alert}
             <Table condensed>
                 <tbody>
-                {events_.map((e, n) => (
-                    <tr key={n}>
-                        <th>{e.source_entity + (e.username?' (' + e.username + ')':'')}<br/>{moment(e.created_on).format(DATE_FORMAT)}</th>
-                        <td>
-                            {e.content.substr(0, 50)}
-                            <br/>
-                            <Button bsStyle="link" onClick={() => this.setState({show_details: true, selected_evt: e})}>...</Button>
-                        </td>
-                        <td>{e.type === 'event' && this.props.user_can_replay &&
-                            <Button onClick={() => this.onReplay(e.id)}>
-                                <FormattedMessage id="replay" defaultMessage="Replay" />
-                            </Button>
-                        }</td>
-                    </tr>
-                ))}
+                {
+                    events_.sort((a, b) => {
+                        if(b.event_id && a.event_id) {
+                            if(b.event_id > a.event_id) return -1;
+                            if(b.event_id < a.event_id) return 1;
+                            return 0
+                        } else {
+                            return moment(b.created_on) - moment(a.created_on)
+                        }
+                    }).map(
+                        (e, n) => (
+                            <tr key={n}>
+                                <th>{e.source_entity + (e.username?' (' + e.username + ')':'')}<br/>{moment(e.created_on).format(DATE_FORMAT)}</th>
+                                <td>
+                                    {e.content.substr(0, 50)}
+                                    <br/>
+                                    <Button bsStyle="link" onClick={() => this.setState({show_details: true, selected_evt: e})}>...</Button>
+                                </td>
+                                <td>{e.type === 'event' && this.props.user_can_replay &&
+                                    <Button onClick={() => this.onReplay(e.id)}>
+                                        <FormattedMessage id="replay" defaultMessage="Replay" />
+                                    </Button>
+                                }</td>
+                            </tr>
+                        )
+                    )
+                }
                 </tbody>
             </Table>
             <Modal show={show_details} onHide={closeModal}>
@@ -417,97 +819,7 @@ class Events extends Component {
 }
 
 
-class RequestTable extends Component {
-    constructor(props) {
-        super(props);
-        this.cancelLoad = false;
-        this.state = {
-            operators: undefined,
-            diff_req: {},
-            publicHolidays: [],
-            saving: false,
-        };
-        this.onSubmit = this.onSubmit.bind(this);
-        this.onClose = this.onClose.bind(this);
-    }
-
-    componentWillUnmount() {
-        this.cancelLoad = true;
-    }
-
-    onSubmit() {
-        let {diff_req} = this.state;
-
-        this.setState({saving: true});
-        fetch_put(`/api/v01/orange/requests/${this.props.request.id}`, diff_req, this.props.auth_token)
-            .then(parseJSON)
-            .then(() => {
-                this.setState({saving: false});
-                this.props.notifications.addNotification({
-                    message: <FormattedMessage id="request-updated" defaultMessage="Request updated!"/>,
-                    level: 'success'
-                });
-                this.onClose();
-            })
-            .catch(error => {
-                    this.setState({saving: false});
-                    this.props.notifications.addNotification({
-                        title: <FormattedMessage id="request-update-failed" defaultMessage="Request update failed!"/>,
-                        message: error.message,
-                        level: 'error'
-                    });
-                }
-            );
-    }
-
-    onClose() {
-        this.setState({diff_req: {}, saving: false});
-        this.props.onEditEnd && this.props.onEditEnd();
-    }
-
-    render() {
-        if(this.props.request === undefined || this.state.operators === undefined) {
-            return <div><FormattedMessage id="loading" defaultMessage="Loading..." /></div>;
-        }
-
-        if(this.state.error !== undefined) {
-            return <Alert bsStyle="danger">
-                <FormattedMessage id="fail-fetch-request" defaultMessage="Failed to fetch original request."/>
-                {this.state.error.message}
-            </Alert>
-        }
-
-        const req = update(this.props.request, {$merge: this.state.diff_req});
-        return (
-            <Panel>
-                <Panel.Body>
-                <Table condensed>
-                    <tbody>
-                    <tr><th><FormattedMessage id="id" defaultMessage="ID" /></th><td>{req.id}</td></tr>
-                    <tr><th><FormattedMessage id="kind" defaultMessage="Kind" /></th><td>{req.kind}</td></tr>
-                    <tr><th><FormattedMessage id="final-status" defaultMessage="Status" /></th><td>{req.status}</td></tr>
-                    <tr><th><FormattedMessage id="external-id" defaultMessage="CRDC ID" /></th><td>{req.crdc_id}</td></tr>
-                    <tr><th><FormattedMessage id="created" defaultMessage="Created" /></th><td>{moment(req.created_on).format(DATE_FORMAT)}</td></tr>
-                    </tbody>
-                </Table>
-                {
-                    this.props.edit_mode && (
-                        <div>
-                            <ButtonToolbar>
-                                <Button onClick={this.onSubmit} bsStyle="primary" disabled={this.state.saving}><FormattedMessage id="save" defaultMessage="Save" /></Button>
-                                <Button onClick={this.onClose} disabled={this.state.saving}><FormattedMessage id="cancel" defaultMessage="Cancel" /></Button>
-                            </ButtonToolbar>
-                        </div>
-                    )
-                }
-                </Panel.Body>
-            </Panel>
-        )
-    }
-}
-
-
-const TasksTable = ({tasks, onReplay, user_can_replay, tx_id}) => (
+const TasksTable = ({tasks, onReplay, onRollback, user_can_replay, tx_id}) => (
     <Table condensed>
         <thead>
         <tr>
@@ -520,30 +832,46 @@ const TasksTable = ({tasks, onReplay, user_can_replay, tx_id}) => (
         </tr>
         </thead>
         <tbody>
-            {tasks.map((t) => {
-                const can_replay = onReplay && user_can_replay && t.status === 'ERROR' &&
-                    t.id === Math.max(tasks.filter((ot) => ot.cell_id === t.cell_id).map((oot) => oot.id));
-                return (
-            <tr key={t.id}>
-                <th>{t.cell_id}</th>
-                <td>{t.status}</td>
-                <td>{t.output}</td>
-                <td>{moment(t.created_on).format(DATE_FORMAT)}</td>
-                <td>{t.updated_on?moment(t.updated_on).format(DATE_FORMAT):'-'}</td>
-                <td>{can_replay && <Button onClick={() => onReplay(tx_id, t.id)}><FormattedMessage id="replay" defaultMessage="Replay" /></Button>}</td>
-            </tr>)})}
+            {
+                tasks.sort(
+                    (a, b) => {
+                        if(a.id < b.id) return -1;
+                        if(a.id > b.id) return 1;
+                        return 0;
+                    }
+                ).map(t => {
+                    const can_replay = onReplay && user_can_replay && t.status === 'ERROR' &&
+                        t.id === Math.max(tasks.filter((ot) => ot.cell_id === t.cell_id).map((oot) => oot.id));
+                    return (
+                        <tr key={t.id}>
+                            <th>{t.cell_id}</th>
+                            <td>{t.status}</td>
+                            <td>{t.output}</td>
+                            <td>{moment(t.created_on).format(DATE_FORMAT)}</td>
+                            <td>{t.updated_on?moment(t.updated_on).format(DATE_FORMAT):'-'}</td>
+                            <td>
+                                <ButtonToolbar>
+                                    {can_replay && <Button bsStyle="primary" onClick={() => onReplay(tx_id, t.id)}><FormattedMessage id="replay" defaultMessage="Replay" /></Button>}
+                                    {can_replay && <Button bsStyle="danger" onClick={() => onRollback(tx_id, t.id)}><FormattedMessage id="rollback" defaultMessage="Rollback"/></Button>}
+                                </ButtonToolbar>
+                            </td>
+                        </tr>
+                    )
+                })
+            }
         </tbody>
     </Table>
 );
 
 
-const TxTable = ({tx}) => (
+const TxTable = ({tx, request}) => (
     <Table condensed>
         <tbody>
             <tr><th><FormattedMessage id="id" defaultMessage="ID" /></th><td>{tx.id}</td></tr>
-            <tr><th><FormattedMessage id="status" defaultMessage="Status" /></th><td>{tx.status}</td></tr>
+            <tr><th><FormattedMessage id="request-status" defaultMessage="Request status" /></th><td>{request && request.status}</td></tr>
+            <tr><th><FormattedMessage id="workflow-status" defaultMessage="Workflow status" /></th><td>{tx.status}</td></tr>
             <tr><th><FormattedMessage id="creation-date" defaultMessage="Creation date" /></th><td>{moment(tx.created_on).format(DATE_FORMAT)}</td></tr>
-            <tr><th><FormattedMessage id="last-update" defaultMessage="Last update" /></th><td>{tx.updated_on}</td></tr>
+            <tr><th><FormattedMessage id="last-update" defaultMessage="Last update" /></th><td>{moment(tx.updated_on).format(DATE_FORMAT)}</td></tr>
             <tr><th><FormattedMessage id="errors" defaultMessage="Errors" /></th><td>{tx.errors.length}</td></tr>
         </tbody>
     </Table>
@@ -570,19 +898,25 @@ export class Transaction extends Component {
             error: undefined,
             sending: false,
             activeTab: 1,
+            messages: [],
+            messageShown: true,
+            subinstances: [],
+            subinstancesShown: true,
         };
         this.cancelLoad = false;
 
         this.onReplay = this.onReplay.bind(this);
+        this.onRollback = this.onRollback.bind(this);
         this.onForceClose = this.onForceClose.bind(this);
         this.fetchTxDetails = this.fetchTxDetails.bind(this);
-        this.actionList = this.actionList.bind(this);
         this.changeTxStatus = this.changeTxStatus.bind(this);
         this.onReopen = this.onReopen.bind(this);
         this.sendEvent = this.sendEvent.bind(this);
         this.onEdit = this.onEdit.bind(this);
         this.caseUpdated = this.caseUpdated.bind(this);
         this.caseUpdateFailure = this.caseUpdateFailure.bind(this);
+        this.refreshMessages = this.refreshMessages.bind(this);
+        this.refreshSubInstances = this.refreshSubInstances.bind(this);
     }
 
     fetchTxDetails(reload) {
@@ -594,9 +928,30 @@ export class Transaction extends Component {
 
                 this.setState({tx: data});
             
-                fetch_get(`/api/v01/voo/np_requests/${data.original_request_id}`, this.props.auth_token)
-                    .then(data => !this.cancelLoad && this.setState({request: data}))
+                fetch_get(`/api/v01/apio/requests/${data.original_request_id}`, this.props.auth_token)
+                    .then(data => {
+                        if(this.cancelLoad) return;
+                        let diffState = {
+                            request: data.request
+                        };
+                        if(!this.state.request && !data.request.event_id) {
+                            // if load for the first time && there is not request / event_id -> skip the "Request" tab.
+                            diffState.activeTab = 2;
+                        }
+                        this.setState(diffState);
+                    })
                     .catch(error => !this.cancelLoad && this.setState({error: error}));
+
+                fetch_get(`/api/v01/transactions/${this.props.match.params.txId}/events`, this.props.auth_token)
+                    .then(data => !this.cancelLoad && this.setState({events: data.events}))
+                    .catch(error => !this.cancelLoad && this.setState({error: error}));
+
+                if(this.state.messageShown) {
+                    this.refreshMessages();
+                }
+                if(this.state.subinstancesShown) {
+                    this.refreshSubInstances();
+                }
                 
                 reload && setTimeout(() => this.fetchTxDetails(true), RELOAD_TX);
             })
@@ -606,8 +961,12 @@ export class Transaction extends Component {
                 let error_msg = undefined;
                 reload && setTimeout(() => this.fetchTxDetails(true), RELOAD_TX / 2);
                 if(error.response === undefined) {
-                    this.setState({error: error});
-                    return
+                    this.props.notifications.addNotification({
+                        title: <FormattedMessage id="fetch-tx-failed" defaultMessage="Fetch transaction failed!"/>,
+                        message: error.message,
+                        level: 'error'
+                    });
+                    return;
                 }
                 switch(error.response.status) {
                     case 404: error_msg = <FormattedMessage id="unknown-transaction" defaultMessage="Unknown transaction." />; break;
@@ -632,18 +991,82 @@ export class Transaction extends Component {
     }
 
     onReplay(activity_id, task_id) {
+        this.setState({replaying: true});
         fetch_put(`/api/v01/transactions/${activity_id}/tasks/${task_id}`, {}, this.props.auth_token)
-            .then(() => this.props.notifications.addNotification({
-                    message: <FormattedMessage id="task-replayed" defaultMessage="Task replayed!"/>,
-                    level: 'success'
-                })
-            )
-            .catch(error => this.props.notifications.addNotification({
+            .then(() => {
+                !this.cancelLoad && this.setState({replaying: false});
+                this.fetchTxDetails(false);
+                this.props.notifications.addNotification({
+                        message: <FormattedMessage id="task-replayed" defaultMessage="Task replayed!"/>,
+                        level: 'success'
+                });
+            })
+            .catch(error => {
+                !this.cancelLoad && this.setState({replaying: false});
+                this.props.notifications.addNotification({
                     title: <FormattedMessage id="task-replay-failed" defaultMessage="Task replay failed!"/>,
                     message: error.message,
                     level: 'error'
+                });
+            })
+    }
+
+    onRollback(activity_id, task_id) {
+        this.setState({replaying: true});
+        const meta = JSON.stringify({replay_behaviour: 'rollback'});
+        fetch_put(`/api/v01/transactions/${activity_id}/tasks/${task_id}?meta=${meta}`, {}, this.props.auth_token)
+            .then(() => {
+                !this.cancelLoad && this.setState({replaying: false});
+                this.fetchTxDetails(false);
+                this.props.notifications.addNotification({
+                        message: <FormattedMessage id="rollback-triggered" defaultMessage="Rollback triggered!"/>,
+                        level: 'success'
+                });
+            })
+            .catch(error => {
+                !this.cancelLoad && this.setState({replaying: false});
+                this.props.notifications.addNotification({
+                    title: <FormattedMessage id="task-replay-failed" defaultMessage="Task rollback failed!"/>,
+                    message: error.message,
+                    level: 'error'
+                });
+            })
+    }
+
+    refreshMessages() {
+        this.state.tx.tasks.map(t => {
+            const task_name = t.cell_id;
+            fetch_get(`/api/v01/apio/transactions/${this.state.tx.id}/tasks/${t.id}/traces`, this.props.auth_token)
+                .then(data => {
+                    const missing_messages = data.traces.filter(
+                        t => this.state.messages.findIndex(m => m.processing_trace_id === t.processing_trace_id) === -1
+                    ).map(m => update(m, {'task_name' : {'$set' : task_name}}));
+
+                    this.setState({
+                        messages: update(
+                            this.state.messages, {
+                                '$push': missing_messages,
+                            })
+                    });
                 })
-            )
+                .catch(error => console.log(error));
+            return t;
+        });
+    }
+
+    refreshSubInstances() {
+        fetch_get(`/api/v01/transactions/${this.state.tx.id}/sub_transactions`, this.props.auth_token)
+            .then(data => {
+                const {subinstances} = this.state;
+                const missing_tx = data.transactions.filter(
+                    t => subinstances.findIndex(si => si.id === t.id) === -1
+                );
+
+                this.setState({
+                    subinstances: update(subinstances, {'$push': missing_tx})
+                });
+            })
+            .catch(error => console.log(error));
     }
 
     changeTxStatus(new_status) {
@@ -740,71 +1163,44 @@ export class Transaction extends Component {
         this.setState({edit_request: true})
     }
 
-    actionList() {
-        const {tx} = this.state;
-
-        const is_active = tx.status === 'ACTIVE';
-        const edited = this.state.edit_request === true;
-        const is_portin = tx.request && tx.request.kind === 'PortIn';
-        const is_portout = tx.request && tx.request.kind === 'PortOut';
-        const fnp_exec_sent = is_portin && tx.tasks && tx.tasks.findIndex(t => t.cell_id === 'Send FNPExec' && t.status === 'OK') !== -1;
-
-        let can_edit = is_active && !is_portout;
-        if(can_edit && is_portin) {
-            const fnp_request_sent = tx.tasks && tx.tasks.findIndex(t => t.cell_id === 'Send FNPRequest' && t.status === 'OK') !== -1;
-            const fnp_accept_recv = tx.tasks && tx.tasks.findIndex(t => t.cell_id === 'Send InDueDate' || t.cell_id === 'Set accepted') !== -1;
-
-            can_edit = !fnp_exec_sent && (!fnp_request_sent || fnp_accept_recv);
-        }
-        const can_close = is_active;
-        const can_reopen = !is_active;
-        const can_cancel = is_active && is_portin && !fnp_exec_sent;
-        const can_abort = is_active && is_portin && fnp_exec_sent;
-
-        return (
-            <ButtonGroup vertical block>
-                {can_edit && <Button onClick={() => this.onEdit()} disabled={edited}><FormattedMessage id="edit" defaultMessage="Edit" /></Button> }
-                {can_close && <Button onClick={() => this.onForceClose()}><FormattedMessage id="force-close" defaultMessage="Force close" /></Button>}
-                {can_reopen && <Button onClick={() => this.onReopen()}><FormattedMessage id="reopen" defaultMessage="Reopen" /></Button>}
-                {can_cancel && <Button onClick={() => this.onCancel()}><FormattedMessage id="trigger-cancel" defaultMessage="Trigger cancel" /></Button>}
-                {can_abort && <Button onClick={() => this.onAbort()}><FormattedMessage id="trigger-abort" defaultMessage="Trigger abort" /></Button>}
-            </ButtonGroup>
-        )
-    }
-
     render() {
-        const {sending, error, tx, request, activeTab} = this.state;
+        const {error, tx, request, events, activeTab, replaying, messages, subinstances, messageShown, subinstancesShown} = this.state;
+        const {user_info} = this.props;
+
+        const raw_event = request && events && events.filter(e => e.event_id === request.event_id)[0];
+
         let alerts = [];
-        error && alerts.push(
-            <Alert bsStyle="danger" key='fail-fetch-tx'>
-                <p>{error.message}</p>
-            </Alert>
-        );
+        if(error) {
+            alerts.push(
+                <Alert bsStyle="danger" key='fail-fetch-tx'>
+                    <p>{error.message || error}</p>
+                </Alert>
+            );
+        }
+        if(request && request.status === 'ERROR') {
+            alerts.push(
+                <Alert bsStyle="danger" key='request-error'>
+                    <FormattedMessage id="request-error" defaultMessage="The request ended in error. (see workflow for details)"/>
+                </Alert>
+            );
+        }
+        if(tx && tx.tasks.filter(t => t.status === 'ERROR') !== 0 && tx.status === 'ACTIVE') {
+            alerts.push(
+                <Alert bsStyle="warning" key='blocking-error'>
+                    <FormattedMessage id="blocking-error" defaultMessage="The request is blocked and needs manual intervention. (see workflow for details)"/>
+                </Alert>
+            );
+        }
+
         if(!tx && error) {
-            return <div>{alerts.map(e => e)}</div>
+            return <div>{alerts}</div>
         } else if (!tx) {
             return <div><FormattedMessage id='loading' defaultMessage='Loading...'/></div>
         }
 
         let actions_required = [];
         // add a user profile check to see if the user *can* approve/reject/hold
-        const can_act = isAllowed(this.props.user_info.ui_profile, pages.requests_nprequests, access_levels.modify);
-
-        if(tx.context.find(c => c.key === "donor_approval" && c.value === "waiting") !== undefined) {
-            actions_required.push(<Alert bsStyle="warning">
-                <FormattedMessage id="request-need-approval" defaultMessage="This request need your approval" />
-                { can_act &&
-                    <ButtonToolbar>
-                        <Button bsSize="xsmall" onClick={() => this.sendEvent('accept', 'donor_approval')} disabled={sending}>
-                            <FormattedMessage id="approve" defaultMessage="approve"/>
-                        </Button>
-                        <Button bsSize="xsmall" onClick={() => this.setState({showRejectReason: true})} disabled={sending}>
-                            <FormattedMessage id="reject" defaultMessage="reject"/>
-                        </Button>
-                    </ButtonToolbar>
-                }
-            </Alert>);
-        }
+        const can_act = isAllowed(user_info.ui_profile, pages.requests_nprequests, access_levels.modify);
 
         return (
             <div>
@@ -814,26 +1210,18 @@ export class Transaction extends Component {
                 </Row>
                 <Tabs defaultActiveKey={1} activeKey={activeTab} onSelect={e => this.setState({activeTab: e})} id="request-tabs">
                     <Tab eventKey={1} title={<FormattedMessage id="request" defaultMessage="Request" />}>
-                        <Col xs={12} sm={6} md={8} lg={8}>
-                            <RequestTable
-                                request={request}
-                                edit_mode={this.state.edit_request === true}
-                                onEditEnd={() => {
-                                    this.setState({edit_request: false});
-                                    this.fetchTxDetails(false);
-                                }}
-                                {...this.props} />
+                        <Col xs={12} sm={6} md={8} lg={8} style={{marginTop: '10px'}}>
+                            <Panel>
+                                <Panel.Body>
+                                {
+                                    raw_event && <ReactJson src={JSON.parse(raw_event.content)}/>
+                                }
+                                </Panel.Body>
+                            </Panel>
                         </Col>
                         <Col xs={12} sm={6} md={4} lg={4}>
-                            {can_act &&
-                                <Panel>
-                                    <Panel.Heading>
-                                        <Panel.Title><FormattedMessage id="actions" defaultMessage="Actions" /></Panel.Title>
-                                    </Panel.Heading>
-                                    <Panel.Body>
-                                        {this.actionList()}
-                                    </Panel.Body>
-                                </Panel>
+                            {
+                                // todo: add force close?
                             }
                             <Panel header="Context">
                                 <ContextTable context={tx.context}/>
@@ -854,7 +1242,7 @@ export class Transaction extends Component {
                         eventKey={2}
                         title={
                             <div>
-                                <FormattedMessage id="workflow" defaultMessage="Workflow" /> <Badge>{tx.errors.length}</Badge>
+                                <FormattedMessage id="workflow" defaultMessage="Workflow" /> {tx.errors.length !== 0 && <Badge style={{backgroundColor: '#ff0808'}}>{tx.errors.length}</Badge>}
                             </div>
                         }>
                         <Panel>
@@ -862,7 +1250,7 @@ export class Transaction extends Component {
                                 <Panel.Title><FormattedMessage id="summary" defaultMessage="Summary" /></Panel.Title>
                             </Panel.Heading>
                             <Panel.Body>
-                                <TxTable tx={tx}/>
+                                <TxTable tx={tx} request={request}/>
                             </Panel.Body>
                         </Panel>
 
@@ -875,26 +1263,76 @@ export class Transaction extends Component {
                                 <TasksTable
                                     tasks={tx.tasks}
                                     onReplay={this.onReplay}
-                                    user_can_replay={can_act && tx.status === 'ACTIVE'}
+                                    onRollback={this.onRollback}
+                                    user_can_replay={can_act && tx.status === 'ACTIVE' && !replaying}
                                     tx_id={tx.id}
                                 />
                             </Panel.Body>
                         </Panel>
 
-                        <Panel bsStyle="danger">
+                        {
+                            messages.length !== 0 && (
+                                <Panel
+                                    expanded={messageShown}
+                                    onToggle={e => {
+                                        this.setState({messageShown: e});
+                                        e && this.refreshMessages();
+                                    }}
+                                >
+                                    <Panel.Heading>
+                                        <Panel.Title toggle>
+                                            <FormattedMessage id="messages" defaultMessage="Messages"/>
+                                        </Panel.Title>
+                                    </Panel.Heading>
+                                    <Panel.Body collapsible>
+                                        <MessagesTable
+                                            messages={messages}
+                                            tasks={tx.tasks}
+                                            {...this.props}
+                                        />
+                                    </Panel.Body>
+                                </Panel>
+                            )
+                        }
+                        {
+                            subinstances.length !== 0 && (
+                                <Panel
+                                    expanded={subinstancesShown}
+                                    onToggle={e => {
+                                        this.setState({subinstancesShown: e});
+                                        e && this.refreshSubInstances();
+                                    }}
+                                >
+                                    <Panel.Heading>
+                                        <Panel.Title toggle>
+                                            <FormattedMessage id="sub-instances" defaultMessage="Sub instances"/>
+                                        </Panel.Title>
+                                    </Panel.Heading>
+                                    <Panel.Body collapsible>
+                                        <SubInstancesTable
+                                            subinstances={subinstances}
+                                            tasks={tx.tasks}
+                                            {...this.props}
+                                        />
+                                    </Panel.Body>
+                                </Panel>
+                            )
+                        }
+
+                        <Panel bsStyle="danger" defaultExpanded={false}>
                             <Panel.Heading>
-                                <Panel.Title><FormattedMessage id="errors" defaultMessage="Errors" /></Panel.Title>
+                                <Panel.Title toggle><FormattedMessage id="errors" defaultMessage="Errors" /></Panel.Title>
                             </Panel.Heading>
-                            <Panel.Body>
-                                <Errors errors={tx.errors} user_info={this.props.user_info}/>
+                            <Panel.Body collapsible>
+                                <Errors errors={tx.errors} user_info={user_info}/>
                             </Panel.Body>
                         </Panel>
 
-                        <Panel>
+                        <Panel defaultExpanded={false}>
                             <Panel.Heading>
-                                <Panel.Title><FormattedMessage id="events" defaultMessage="Events" /></Panel.Title>
+                                <Panel.Title toggle><FormattedMessage id="events" defaultMessage="Events" /></Panel.Title>
                             </Panel.Heading>
-                            <Panel.Body>
+                            <Panel.Body collapsible>
                                 <Events
                                     tx_id={tx.id}
                                     user_can_replay={can_act && tx.status === 'ACTIVE'}
@@ -909,7 +1347,7 @@ export class Transaction extends Component {
 
 
 export const errorCriteria = {
-    status: {model: 'tasks', value: 'ERROR', op: 'eq'}
+    task_status: {model: 'tasks', value: 'ERROR', op: 'eq'}
 };
 
 
@@ -917,16 +1355,6 @@ export const activeCriteria = {
     status: {model: 'instances', value: 'ACTIVE', op: 'eq'}
 };
 
-
-export const getIcon = (k) => {
-    switch (k) {
-        case "PortIn": return <Glyphicon glyph="arrow-right" title="PortIn"/>;
-        case "PortOut": return <Glyphicon glyph="arrow-left" title="PortOut"/>;
-        case "Disconnect": return <Glyphicon glyph="scissors" title="Disconnect"/>;
-        case "Update": return <Glyphicon glyph="save" title="Update"/>;
-        default: return "";
-    }
-};
 
 export class Requests extends Component{
     constructor(props) {
@@ -949,16 +1377,21 @@ export class Requests extends Component{
             error: undefined,
         };
         this._refresh = this._refresh.bind(this);
+        this._load_activities = this._load_activities.bind(this);
         this._prepare_url = this._prepare_url.bind(this);
     }
 
     static default_criteria(ui_profile) {
         return {
-            name: {model: 'request_entities', value: '', op: 'eq'},
+            tenant_id: {model: 'request_entities', value: '', op: 'eq'},
+            site_id: {model: 'request_entities', value: '', op: 'eq'},
+            number: {model: 'request_entities', value: '', op: 'like'},
             status: {model: 'instances', value: '', op: 'eq'},
             kind: {model: 'instances', value: '', op: 'eq'},
             created_on: {model: 'requests', value: '', op: 'ge'},
             request_status: {model: 'requests', value: '', op: 'eq'},
+            label: {model: 'bulks', value: '', op: 'eq'},
+            task_status: undefined,
         }
     }
 
@@ -977,6 +1410,7 @@ export class Requests extends Component{
     }
 
     componentDidMount() {
+        this._load_activities();
         this._refresh();
     }
 
@@ -993,10 +1427,10 @@ export class Requests extends Component{
         }
     }
 
-    componentWillUpdate(nextProps, nextState) {
-        if(JSON.stringify(nextState.filter_criteria) !== JSON.stringify(this.state.filter_criteria)) {
-            setTimeout(() => this._refresh(), 800);
-        }
+    _load_activities() {
+        fetch_get('/api/v01/activities', this.props.auth_token)
+            .then(data => !this.cancelLoad && this.setState({activities: data.activities}))
+            .catch(error => console.error(error))
     }
 
     _prepare_url(paging_spec, sorting_spec, format) {
@@ -1015,20 +1449,12 @@ export class Requests extends Component{
                 switch(f) {
                     case 'number':
                         // special handling to look into the ranges of the requests
-                        return {'or': [
-                                {
-                                    model: filter_criteria[f].model,
-                                    field: 'range_from',
-                                    op: filter_criteria[f].op,
-                                    value: filter_criteria[f].value.trim()
-                                },
-                                {
-                                    model: filter_criteria[f].model,
-                                    field: 'range_to',
-                                    op: filter_criteria[f].op,
-                                    value: filter_criteria[f].value.trim()
-                                }
-                            ]};
+                        return {
+                            model: 'request_entities',
+                            field: 'numbers',
+                            op: filter_criteria[f].op,
+                            value: '%' + filter_criteria[f].value.trim() + '%'
+                        };
                     case 'task_status':
                     case 'request_status':
                         return {
@@ -1061,11 +1487,6 @@ export class Requests extends Component{
         if(format !== undefined){
             url.searchParams.append('as', format);
         }
-        //full listing
-        const qs = queryString.parse(this.props.location.search);
-        if(qs.full) {
-            url.searchParams.append('full', '1');
-        }
         return url;
     }
 
@@ -1096,6 +1517,7 @@ export class Requests extends Component{
                         (filter_criteria[f].value && filter_criteria[f].op) ||
                         filter_criteria[f].or ||
                         filter_criteria[f].and ||
+                        filter_criteria[f].in ||
                         filter_criteria[f].op === 'is_null')
                     ).reduce((obj, key) => {
                         obj[key] = filter_criteria[key];
@@ -1116,23 +1538,24 @@ export class Requests extends Component{
                 this.setState({
                      requests: data.requests.map(c => {
                         c.created_on = c.created_on?moment(c.created_on).format(DATE_FORMAT):null;
+                        c.updated_on = c.updated_on?moment(c.updated_on).format(DATE_FORMAT):null;
                         return c;
-                    }),
-                    pagination: {
-                        page_number: data.pagination[0], // page_number, page_size, num_pages, total_results
-                        page_size: data.pagination[1],
-                        num_pages: data.pagination[2],
-                        total_results: data.pagination[3],
-                    },
-                    sorting_spec: data.sorting || [],
-                    export_url: export_url.href
+                     }),
+                     pagination: {
+                         page_number: data.pagination[0], // page_number, page_size, num_pages, total_results
+                         page_size: data.pagination[1],
+                         num_pages: data.pagination[2],
+                         total_results: data.pagination[3],
+                     },
+                     sorting_spec: data.sorting || [],
+                     export_url: export_url.href
                 });
             })
             .catch(error => !this.cancelLoad && this.setState({error: error}));
     }
 
     render() {
-        const {filter_criteria, requests, export_url} = this.state;
+        const {filter_criteria, requests, activities, export_url} = this.state;
         const invalid_created_on = filter_criteria.created_on.value.length !== 0 && !moment(filter_criteria.created_on.value, "DD/MM/YYYY HH:mm").isValid();
 
         return (
@@ -1150,21 +1573,15 @@ export class Requests extends Component{
 
                             <FormGroup>
                                 <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="kind" defaultMessage="Kind" />
+                                    <FormattedMessage id="bulk-label" defaultMessage="Bulk label" />
                                 </Col>
 
                                 <Col smOffset={1} sm={8}>
-                                    <FormControl componentClass="select" value={filter_criteria.kind.value}
-                                        onChange={(e) => this.setState({
-                                            filter_criteria: update(this.state.filter_criteria,
-                                                {kind: {$merge: {value: e.target.value}}})
-                                        })}>
-                                        <option value='' />
-                                        <option value="Disconnect">Disconnect</option>
-                                        <option value="PortIn">PortIn</option>
-                                        <option value="PortOut">PortOut</option>
-                                        <option value="Update">Update</option>
-                                    </FormControl>
+                                    <FormControl componentClass="input" value={filter_criteria.label.value}
+                                        onChange={e => this.setState({
+                                            filter_criteria: update(filter_criteria,
+                                                {label: {$merge: {value: e.target.value}}})
+                                        })} />
                                 </Col>
                             </FormGroup>
 
@@ -1177,7 +1594,7 @@ export class Requests extends Component{
                                     <FormControl
                                         componentClass="select"
                                         value={filter_criteria.status.op}
-                                        onChange={(e) => this.setState({
+                                        onChange={e => this.setState({
                                             filter_criteria: update(this.state.filter_criteria,
                                                 {status: {$merge: {op: e.target.value}}})
                                         })}>
@@ -1188,7 +1605,7 @@ export class Requests extends Component{
 
                                 <Col sm={8}>
                                     <FormControl componentClass="select" value={filter_criteria.status.value}
-                                        onChange={(e) => this.setState({
+                                        onChange={e => this.setState({
                                             filter_criteria: update(this.state.filter_criteria,
                                                 {status: {$merge: {value: e.target.value}}})
                                         })}>
@@ -1209,7 +1626,7 @@ export class Requests extends Component{
                                     <FormControl
                                         componentClass="select"
                                         value={filter_criteria.request_status.op}
-                                        onChange={(e) => this.setState({
+                                        onChange={e => this.setState({
                                             filter_criteria: update(this.state.filter_criteria,
                                                 {request_status: {$merge: {op: e.target.value}}})
                                         })}>
@@ -1220,17 +1637,91 @@ export class Requests extends Component{
 
                                 <Col sm={8}>
                                     <FormControl componentClass="select" value={filter_criteria.request_status.value}
-                                        onChange={(e) => this.setState({
+                                        onChange={e => this.setState({
                                             filter_criteria: update(this.state.filter_criteria,
                                                 {request_status: {$merge: {value: e.target.value}}})
                                         })}>
                                         <option value='' />
                                         <option value="ACTIVE">ACTIVE</option>
-                                        <option value="UPDATED">UPDATED</option>
-                                        <option value="DISCONNECTED">DISCONNECTED</option>
-                                        <option value="ACTIVATED">ACTIVATED</option>
                                         <option value="FAILED">FAILED</option>
                                     </FormControl>
+                                </Col>
+                            </FormGroup>
+
+                            <FormGroup>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="tenant-id" defaultMessage="Tenant ID" />
+                                </Col>
+
+                                <Col sm={1}>
+                                    <FormControl
+                                        componentClass="select"
+                                        value={filter_criteria.tenant_id.op}
+                                        onChange={e => this.setState({
+                                            filter_criteria: update(this.state.filter_criteria,
+                                                {tenant_id: {$merge: {op: e.target.value}}})
+                                        })}>
+                                        <option value="eq">==</option>
+                                        <option value="ne">!=</option>
+                                    </FormControl>
+                                </Col>
+
+                                <Col sm={8}>
+                                    <FormControl componentClass="input" value={filter_criteria.tenant_id.value}
+                                        onChange={e => this.setState({
+                                            filter_criteria: update(this.state.filter_criteria,
+                                                {tenant_id: {$merge: {value: e.target.value}}})
+                                        })} />
+                                </Col>
+                            </FormGroup>
+
+                            <FormGroup>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="site-id" defaultMessage="Site ID" />
+                                </Col>
+
+                                <Col sm={1}>
+                                    <FormControl
+                                        componentClass="select"
+                                        value={filter_criteria.site_id.op}
+                                        onChange={e => this.setState({
+                                            filter_criteria: update(this.state.filter_criteria,
+                                                {site_id: {$merge: {op: e.target.value}}})
+                                        })}>
+                                        <option value="eq">==</option>
+                                        <option value="ne">!=</option>
+                                    </FormControl>
+                                </Col>
+
+                                <Col sm={8}>
+                                    <FormControl componentClass="input" value={filter_criteria.site_id.value}
+                                        onChange={e => this.setState({
+                                            filter_criteria: update(filter_criteria,
+                                                {site_id: {$merge: {value: e.target.value}}})
+                                        })} />
+                                </Col>
+                            </FormGroup>
+
+                            <FormGroup>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="number" defaultMessage="Number" />
+                                </Col>
+
+                                <Col sm={1}>
+                                    <FormControl
+                                        componentClass="select"
+                                        value="like"
+                                        >
+                                        <option value="like">like</option>
+                                    </FormControl>
+                                </Col>
+
+                                <Col sm={8}>
+                                    <FormControl componentClass="input" value={filter_criteria.number && filter_criteria.number.value}
+                                        onChange={e => this.setState({
+                                            filter_criteria: update(filter_criteria,
+                                                {number: {$merge: {value: e.target.value}}})
+                                        })} />
                                 </Col>
                             </FormGroup>
 
@@ -1320,17 +1811,50 @@ export class Requests extends Component{
                         <ApioDatatable
                             sorting_spec={this.state.sorting_spec}
                             headers={[
-                                {title: '#', field: 'id', model: 'requests',
-                                    render: n => <Link to={`/transactions/${n.id}`}>{n.id}</Link>,
-                                    sortable: true
-                                },
-                                {title: <FormattedMessage id="status" defaultMessage="Status" />,
-                                    field: 'status',
-                                    model: 'requests',
-                                    render: n => n.request.status,
+                                {
+                                    title: '#', field: 'instance_id', model: 'requests',
+                                    render: n => <Link to={`/transactions/${n.instance_id}`}>{n.instance_id}</Link>,
                                     sortable: true,
+                                    style: {width: '50px'}
                                 },
-                                {title: <FormattedMessage id="created-on" defaultMessage="Created on" />, field: 'created_on', model: 'requests', sortable: true},
+                                {
+                                    title: <FormattedMessage id="workflow" defaultMessage="Workflow" />,
+                                    field: 'activity_id', model: 'requests', sortable: true,
+                                    render: n => activities && activities.find(a => a.id === n.activity_id).name
+                                },
+                                {
+                                    title: <FormattedMessage id="tenant" defaultMessage="Tenant" />,
+                                    field: 'tenant_id', model: 'requests', sortable: true
+                                },
+                                {
+                                    title: <FormattedMessage id="site" defaultMessage="Site" />,
+                                    field: 'site_id', model: 'requests', sortable: true
+                                },
+                                {
+                                    title: <FormattedMessage id="numbers" defaultMessage="Numbers" />,
+                                    field: 'numbers', model: 'requests', sortable: true,
+                                    style: {
+                                        //whiteSpace: 'nowrap',
+                                        //width: '100%',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        overflowWrap: 'unset',
+                                        wordWrap:'break-word'
+                                    },
+                                },
+                                {
+                                    title: <FormattedMessage id="status" defaultMessage="Status" />,
+                                    field: 'status', model: 'requests', sortable: true,
+                                    render: n => n.status
+                                },
+                                {
+                                    title: <FormattedMessage id="created-on" defaultMessage="Created on" />,
+                                    field: 'created_on', model: 'requests', sortable: true, style: {width: '200px'}
+                                },
+                                {
+                                    title: <FormattedMessage id="updated-on" defaultMessage="Updated on" />,
+                                    field: 'updated_on', model: 'requests', sortable: true, style: {width: '200px'}
+                                },
                             ]}
                             pagination={this.state.pagination}
                             data={requests}
@@ -1339,6 +1863,7 @@ export class Requests extends Component{
                             />
                     </Panel.Body>
                 </Panel>
+
                 <Panel>
                     <Panel.Body>
                         <Button
@@ -1346,7 +1871,7 @@ export class Requests extends Component{
                             href={export_url}
                             disabled={export_url === undefined}
                         >
-                            <FormattedMessage id="export-as-csv" defaultMessage="Export as CSV" />
+                            <FormattedMessage id="export-as-csv" defaultMessage="Export as CSV"/>
                         </Button>
                     </Panel.Body>
                 </Panel>

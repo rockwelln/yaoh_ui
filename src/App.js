@@ -29,6 +29,10 @@ import {FormattedMessage} from 'react-intl';
 import AsyncApioHelp from './async-apio-help';
 import Dashboard from './dashboard';
 import {Requests, Transaction} from './orange/requests';
+import {BulkActions} from "./orange/bulk";
+import {TenantsManagement} from "./data_apio/tenants";
+import {GroupsManagement} from "./data_apio/groups";
+import {NumbersManagement} from "./data_apio/numbers";
 import UserManagement, { LocalUserProfile } from './system/user_mgm';
 import {StartupEvents} from './startup_events';
 import ActivityEditor from './activity-editor';
@@ -41,7 +45,7 @@ import {API_URL_PREFIX, fetch_get, checkStatus, parseJSON} from "./utils";
 import Databases from "./system/databases_mgm";
 import {AuditLogs} from "./system/audit";
 import {isAllowed, pages} from "./utils/user";
-import {SearchBar} from "./utils/searchbar";
+// import {SearchBar} from "./utils/searchbar";
 
 const RESET_PASSWORD_PREFIX = '/reset-password/';
 const RESET_PASSWORD_TOKEN_LENGTH = 64;
@@ -288,14 +292,20 @@ const AsyncApioNavBar = ({user_group, logoutUser, database_status, ...props}) =>
           {isAllowed(user_group, pages.requests_nprequests) &&
           <NavDropdown title={
               <span>
-                        <Glyphicon glyph="send"/> {' '}
+                  <Glyphicon glyph="send"/> {' '}
                   <FormattedMessage id="requests" defaultMessage="Requests"/>
-                    </span>
+              </span>
           } id="nav-requests">
 
               <LinkContainer to={"/transactions/list"}>
                   <MenuItem>
                       <FormattedMessage id="requests" defaultMessage="Requests"/>
+                  </MenuItem>
+              </LinkContainer>
+              <MenuItem divider/>
+              <LinkContainer to={"/transactions/bulk"}>
+                  <MenuItem>
+                      <FormattedMessage id="bulk" defaultMessage="Bulk"/>
                   </MenuItem>
               </LinkContainer>
 
@@ -318,6 +328,21 @@ const AsyncApioNavBar = ({user_group, logoutUser, database_status, ...props}) =>
               </LinkContainer>
               }
           </NavDropdown>
+          }
+
+          { isAllowed(user_group, pages.data) &&
+              <NavDropdown eventKey={4} title={
+                <span>
+                    <Glyphicon glyph="hdd" /> {' '}
+                    <FormattedMessage id='data' defaultMessage='Data'/>
+                </span>
+                } id="nav-data-apio">
+                  <LinkContainer to={"/apio/tenants"}>
+                      <MenuItem>
+                          <FormattedMessage id="tenants" defaultMessage="Tenants"/>
+                      </MenuItem>
+                  </LinkContainer>
+              </NavDropdown>
           }
 
           { isAllowed(user_group, pages.system) &&
@@ -404,7 +429,7 @@ const AsyncApioNavBar = ({user_group, logoutUser, database_status, ...props}) =>
               (database_status && database_status.env) ? database_status.env : "unknown"
           }
       </Navbar.Text>
-      <SearchBar {...props}/>
+        {/*<SearchBar {...props}/>*/}
     </Navbar.Collapse>
   </Navbar>
 );
@@ -602,6 +627,46 @@ class App extends Component {
                                    <Requests
                                        auth_token={auth_token}
                                        user_info={user_info}
+                                       {...props} /> :
+                                   <NotAllowed/>
+                               )}
+                               exact />
+                        <Route path="/transactions/bulk"
+                               component={props => (
+                                   isAllowed(ui_profile, pages.requests_nprequests) ?
+                                   <BulkActions
+                                       auth_token={auth_token}
+                                       notifications={this._notificationSystem}
+                                       {...props} /> :
+                                   <NotAllowed/>
+                               )}
+                               exact />
+                        <Route path="/apio/tenants"
+                               component={props => (
+                                   isAllowed(ui_profile, pages.data_tenants) ?
+                                   <TenantsManagement
+                                       auth_token={auth_token}
+                                       notifications={this._notificationSystem}
+                                       {...props} /> :
+                                   <NotAllowed/>
+                               )}
+                               exact />
+                        <Route path="/apio/tenants/:tenantId/groups"
+                               component={props => (
+                                   isAllowed(ui_profile, pages.data_tenants) ?
+                                   <GroupsManagement
+                                       auth_token={auth_token}
+                                       notifications={this._notificationSystem}
+                                       {...props} /> :
+                                   <NotAllowed/>
+                               )}
+                               exact />
+                        <Route path="/apio/tenants/:tenantId/groups/:siteId/numbers"
+                               component={props => (
+                                   isAllowed(ui_profile, pages.data_tenants) ?
+                                   <NumbersManagement
+                                       auth_token={auth_token}
+                                       notifications={this._notificationSystem}
                                        {...props} /> :
                                    <NotAllowed/>
                                )}

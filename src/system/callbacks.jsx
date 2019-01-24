@@ -29,6 +29,7 @@ const CallbackDetails = ({cb, onChange, onCancel, onSave}) => (
 
                      <option value="on_request_success">on_request_success</option>
                      <option value="on_request_failure">on_request_failure</option>
+                     <option value="on_blocking_error">on_blocking_error</option>
                 </FormControl>
             </Col>
         </FormGroup>

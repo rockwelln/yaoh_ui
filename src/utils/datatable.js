@@ -150,7 +150,7 @@ export const ApioDatatable = ({sorting_spec, headers, pagination, data, onSort, 
                         <tr key={i}>
                             {
                                 headers.map((h, j) => (
-                                    <td key={j} style={default_col_style}>
+                                    <td key={j} style={h.style?update(default_col_style, {$merge: h.style}):default_col_style}>
                                         {h.render?h.render(n):n[h.field || h.title]}
                                     </td>
                                 ))

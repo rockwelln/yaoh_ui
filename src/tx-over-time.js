@@ -79,10 +79,10 @@ export default class TransactionsOverTime extends Component {
         const onConfigClose = () => {
             this.setState({showSettings: false});
             this.refresh();
-        }
+        };
         const onShowClose = () => {
             this.setState({showBig: false});
-        }
+        };
 
         // group by activity_id
         const grouped_data = this.state.data ? this.state.data.reduce((rv, x) => {
@@ -92,7 +92,7 @@ export default class TransactionsOverTime extends Component {
 
         const prepare_data = (labels, data) => {
             return labels.map(l => data[l] === undefined ? 0 : data[l]);
-       }
+       };
 
         const labels = this.state.data ? 
             Object.keys(this.state.data.reduce((rv , x) => {rv[x['creation_day']]=1; return rv;}, {})) : [];
