@@ -3,6 +3,7 @@
 export const API_URL_PREFIX = process.env.NODE_ENV === 'production'?window.location.origin:'http://127.0.0.1:5000';
 export const API_URL_PROXY_PREFIX = '/api/v01/apio/sync';
 
+/*
 export class AuthService {
     static getToken() {
         return localStorage.jwt;
@@ -12,6 +13,7 @@ export class AuthService {
         return this.getToken() === undefined;
     }
 }
+*/
 
 
 export function checkStatus(response) {

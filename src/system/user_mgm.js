@@ -31,7 +31,7 @@ import {CallbackHandler} from "./callbacks";
 
 
 export class LocalUserProfile extends Component {
-    static updatable_field = k => ['language', 'password'].includes(k)
+    static updatable_field = k => ['language', 'password'].includes(k);
 
     constructor(props) {
         super(props);
@@ -54,7 +54,7 @@ export class LocalUserProfile extends Component {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + this.props.auth_token
+                'Authorization': `Bearer ${this.props.auth_token}`
             },
             body: JSON.stringify(
                 Object.keys(data).filter(LocalUserProfile.updatable_field).reduce(
@@ -150,34 +150,38 @@ export class LocalUserProfile extends Component {
                                     </FormControl>
                                 </Col>
                             </FormGroup>
-                            <FormGroup validationState={validPassword}>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="password" defaultMessage="Password" />
-                                </Col>
+                            { this.state.local_user && (
+                                <FormGroup validationState={validPassword}>
+                                    <Col componentClass={ControlLabel} sm={2}>
+                                        <FormattedMessage id="password" defaultMessage="Password" />
+                                    </Col>
 
-                                <Col sm={9}>
-                                    <FormControl
-                                        componentClass="input"
-                                        placeholder="Password"
-                                        type="password"
-                                        value={this.state.password}
-                                        onChange={(e) => this.setState({password: e.target.value})} />
-                                </Col>
-                            </FormGroup>
-                            <FormGroup validationState={validRepPassword}>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="repeat-password" defaultMessage="Repeat password" />
-                                </Col>
+                                    <Col sm={9}>
+                                        <FormControl
+                                            componentClass="input"
+                                            placeholder="Password"
+                                            type="password"
+                                            value={this.state.password}
+                                            onChange={(e) => this.setState({password: e.target.value})} />
+                                    </Col>
+                                </FormGroup>
+                            )}
+                            { this.state.local_user && (
+                                <FormGroup validationState={validRepPassword}>
+                                    <Col componentClass={ControlLabel} sm={2}>
+                                        <FormattedMessage id="repeat-password" defaultMessage="Repeat password" />
+                                    </Col>
 
-                                <Col sm={9}>
-                                    <FormControl
-                                        componentClass="input"
-                                        placeholder="Repeat password"
-                                        type="password"
-                                        value={this.state.repeated_password}
-                                        onChange={(e) => this.setState({repeated_password: e.target.value})} />
-                                </Col>
-                            </FormGroup>
+                                    <Col sm={9}>
+                                        <FormControl
+                                            componentClass="input"
+                                            placeholder="Repeat password"
+                                            type="password"
+                                            value={this.state.repeated_password}
+                                            onChange={(e) => this.setState({repeated_password: e.target.value})} />
+                                    </Col>
+                                </FormGroup>
+                            )}
                             <FormGroup>
                                 <Col smOffset={2} sm={9}>
                                     <Button bsStyle="primary" onClick={this.onSubmit} disabled={!validForm}>
@@ -348,7 +352,7 @@ class UpdateUser extends Component {
                                                                  defaultMessage="The profile has no influence on the rights in the application only the pages the user may see."/></HelpBlock>
                                     <HelpBlock>
                                         <FormattedMessage id="for-more-information-about-profile-implementation-in-the-right-management-see-" defaultMessage="For more information about profile implementation in the right management see " />
-                                        <a href={INTERNAL_HELP_LINKS.profile_rights.url}><FormattedMessage id={"here"}/></a>
+                                        <a href={INTERNAL_HELP_LINKS.profile_rights.url}><FormattedMessage id="here" defaultMessage="here"/></a>
                                     </HelpBlock>
                                 </Col>
                             </FormGroup>
@@ -568,7 +572,7 @@ class NewUser extends Component {
                                                                  defaultMessage="The profile has no influence on the rights in the application only the pages the user may see."/></HelpBlock>
                                     <HelpBlock>
                                         <FormattedMessage id="for-more-information-about-profile-implementation-in-the-right-management-see-" defaultMessage="For more information about profile implementation in the right management see " />
-                                        <a href={INTERNAL_HELP_LINKS.profile_rights.url}><FormattedMessage id={"here"}/></a>
+                                        <a href={INTERNAL_HELP_LINKS.profile_rights.url}><FormattedMessage id="here" defaultMessage="here"/></a>
                                     </HelpBlock>
                                 </Col>
                             </FormGroup>

@@ -1,22 +1,12 @@
 export const pages = Object.freeze({
     'requests': 19,
     'requests_nprequests': 0,
-    //'requests_npportin': 18,
-    //'requests_npupdate': 1,
-    //'requests_npdisconnect': 2,
-    //'requests_mobile_events': 3,
     'requests_startup_events': 4,
     'requests_workflow_editor': 5,
     'data': 20,
     'data_tenants': 6,
-    //'data_ranges': 7,
-    //'data_routing_info': 8,
-    //'data_porting_cases': 9,
-    //'data_mvno_numbers': 10,
-    //'data_holidays': 11,
     'system': 21,
     'system_users': 12,
-    //'system_plugins_config': 13,
     'system_config': 14,
     'system_gateways': 15,
     'system_databases': 16,
@@ -36,37 +26,10 @@ const definition = {
     // give access to all pages for the admin
     admin: Object.keys(pages).reduce((o, page) => Object.assign(o, {[pages[page]]: true}), {}),
 
-    hd2: {
+    user: {
         [pages.data]: true,
-        [pages.data_mvno_numbers]: {level: access_levels.read},
-        [pages.data_porting_cases]: true,
-        [pages.data_routing_info]: {level: access_levels.read},
-        [pages.data_operators]: {level: access_levels.read},
-        [pages.data_ranges]: {level: access_levels.read},
-
         [pages.requests]: true,
         [pages.requests_nprequests]: true,
-        [pages.requests_mobile_events]: {level: access_levels.read},
-        [pages.requests_npportin]: true,
-        [pages.requests_npupdate]: true,
-        [pages.requests_npdisconnect]: true,
-    },
-    porta: {
-        [pages.data]: true,
-        [pages.data_porting_cases]: {level: access_levels.read},
-        [pages.data_routing_info]: {level: access_levels.read},
-        [pages.data_operators]: {level: access_levels.read},
-        [pages.data_ranges]: {level: access_levels.read},
-
-        [pages.requests]: true,
-        [pages.requests_nprequests]: true,
-        [pages.requests_npportin]: true,
-        [pages.requests_npupdate]: true,
-        [pages.requests_npdisconnect]: true,
-    },
-    tl: {
-        [pages.system]: true,
-        [pages.system_users]: true,
     },
 };
 

@@ -1319,14 +1319,20 @@ export class Transaction extends Component {
                             )
                         }
 
-                        <Panel bsStyle="danger" defaultExpanded={false}>
-                            <Panel.Heading>
-                                <Panel.Title toggle><FormattedMessage id="errors" defaultMessage="Errors" /></Panel.Title>
-                            </Panel.Heading>
-                            <Panel.Body collapsible>
-                                <Errors errors={tx.errors} user_info={user_info}/>
-                            </Panel.Body>
-                        </Panel>
+                        {
+                            tx.errors.length !== 0 && (
+                                <Panel bsStyle="danger" defaultExpanded={false}>
+                                    <Panel.Heading>
+                                        <Panel.Title toggle>
+                                            <FormattedMessage id="errors" defaultMessage="Errors"/>
+                                        </Panel.Title>
+                                    </Panel.Heading>
+                                    <Panel.Body collapsible>
+                                        <Errors errors={tx.errors} user_info={user_info}/>
+                                    </Panel.Body>
+                                </Panel>
+                            )
+                        }
 
                         <Panel defaultExpanded={false}>
                             <Panel.Heading>
@@ -1708,10 +1714,7 @@ export class Requests extends Component{
                                 </Col>
 
                                 <Col sm={1}>
-                                    <FormControl
-                                        componentClass="select"
-                                        value="like"
-                                        >
+                                    <FormControl componentClass="select" value="like" readOnly>
                                         <option value="like">like</option>
                                     </FormControl>
                                 </Col>

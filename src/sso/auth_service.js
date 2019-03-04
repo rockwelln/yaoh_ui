@@ -1,0 +1,64 @@
+// import React from 'react';
+import { UserManager } from 'oidc-client';
+
+
+const getClientSettings = () => {
+  return {
+    authority: 'http://localhost:7777/auth/realms/master',
+    client_id: 'myclient',
+    client_secret: 'de9eb896-3a9a-4266-817c-8b1934feb581',
+    redirect_uri: `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}/auth-callback`,
+    silent_redirect_uri: `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}/auth-silent-callback`,
+    response_type: "code",
+    scope: "openid profile email",
+    automaticSilentRenew: false,
+    filterProtocolClaims: true,
+    loadUserInfo: true
+  };
+};
+
+class AuthService {
+  manager = new UserManager(getClientSettings());
+  user = null;
+
+  constructor() {
+    this.manager.getUser().then(user => {
+      this.user = user;
+    });
+    // this.startAuthentication = this.startAuthentication.bind(this);
+  }
+
+  isLoggedIn() {
+    return this.user != null && !this.user.expired;
+  }
+
+  getClaims() {
+    return this.user.profile;
+  }
+
+  getAuthorizationHeaderValue() {
+    return `${this.user.token_type} ${this.user.access_token}`;
+  }
+
+  startAuthentication() {
+    return this.manager.signinRedirect();
+  }
+
+  removeUser() {
+      return (
+          this.manager.clearStaleState()
+              .then(() => this.manager.removeUser())
+              .then(() => this.user = null)
+      )
+  }
+
+  completeAuthentication() {
+    return this.manager.signinRedirectCallback().then(user => {
+      this.user = user;
+    });
+  }
+}
+
+export const sso_auth_service = new AuthService();
+
+

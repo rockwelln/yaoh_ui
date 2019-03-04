@@ -16,7 +16,6 @@ import Nav from 'react-bootstrap/lib/Nav';
 import Navbar from 'react-bootstrap/lib/Navbar';
 import NavDropdown from 'react-bootstrap/lib/NavDropdown';
 import MenuItem from 'react-bootstrap/lib/MenuItem';
-import HelpBlock from 'react-bootstrap/lib/HelpBlock';
 import ButtonToolbar from 'react-bootstrap/lib/ButtonToolbar';
 
 import {BrowserRouter as Router, Link, Route, Switch, Redirect} from 'react-router-dom';
@@ -39,120 +38,38 @@ import ActivityEditor from './activity-editor';
 import {ConfigManagement} from './settings/configuration';
 import {Reporting} from "./settings/reporting.jsx";
 import Gateways from "./system/gateways_mgm";
-import './App.css';
-import loading from './loading.gif';
 import {API_URL_PREFIX, fetch_get, checkStatus, parseJSON} from "./utils";
 import Databases from "./system/databases_mgm";
 import {AuditLogs} from "./system/audit";
 import {isAllowed, pages} from "./utils/user";
-// import {SearchBar} from "./utils/searchbar";
+import {LoginOpenIdConnect, AuthCallback, AuthSilentCallback} from "./sso/login";
+import {ResetPasswordPage, RESET_PASSWORD_PREFIX} from "./reset_password";
 
-const RESET_PASSWORD_PREFIX = '/reset-password/';
-const RESET_PASSWORD_TOKEN_LENGTH = 64;
+import './App.css';
+import loading from './loading.gif';
+import {sso_auth_service} from "./sso/auth_service";
 
 const ListItemLink = ({to, children}) => (
-  <Route path={to} children={({match}) => (
-    <li role="presentation" className={match ? 'active' : ''}>
-      <Link to={to} role="button">{children}</Link>
-    </li>
+    <Route path={to} children={({match}) => (
+        <li role="presentation" className={match ? 'active' : ''}>
+            <Link to={to} role="button">{children}</Link>
+        </li>
   )} />
 );
 
 const Loading = () => (
-    <div style={{
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)'
-    }}>
-        <img src={loading} width="200" height="200" alt="please wait..." />
+    <div>
+        <div style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)'
+        }}>
+            <img src={loading} width="200" height="200" alt="please wait..." />
+        </div>
     </div>
 );
 
-class ResetPasswordForm extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {password: '', confirm: '', error: undefined, success: false}
-    }
-
-    onSubmit(e) {
-        e.preventDefault();
-
-        fetch(API_URL_PREFIX + '/api/v01/auth/reset-password/' + window.location.href.substr(- RESET_PASSWORD_TOKEN_LENGTH), {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                password: this.state.password,
-            }),
-        })
-            .then(checkStatus)
-            .then(() => this.setState({success: true, error: undefined}))
-            .catch(error => this.setState({error: error.response.statusText}))
-    }
-
-    render() {
-        const {success, password, error, confirm} = this.state;
-
-        if(success) {
-            setTimeout(() => window.location.href = "/", 2000);
-            return (
-                <Alert bsStyle="success">
-                    <FormattedMessage id="password-reset" defaultMessage="Your password has been reset."/>
-                </Alert>
-            );
-        }
-
-        const validPassword = (password === '')?null:(password.length >= 8)?"success":"error";
-        const validConfirm = (password === '')?null:(confirm === password)?"success":"error";
-        const validForm = (validPassword === "success" && validConfirm === "success");
-
-        return (
-            <Form horizontal>
-                {error && (
-                    <Alert bsStyle="danger">
-                        <FormattedMessage id="fail-password-reset" defaultMessage="Failed to reset the password." />
-                        {` (${error})`}
-                    </Alert>
-                )}
-                <FormGroup validationState={validPassword}>
-                    <Col componentClass={ControlLabel} sm={3}>
-                        <FormattedMessage id="password" defaultMessage="Password" />
-                    </Col>
-
-                    <Col sm={8}>
-                        <FormControl
-                            type="password"
-                            value={password}
-                            onChange={(e) => this.setState({password: e.target.value, error: undefined})}
-                        />
-                        <HelpBlock><FormattedMessage id="Your password must be at least 8 characters long."/></HelpBlock>
-                    </Col>
-                </FormGroup>
-                <FormGroup validationState={validConfirm}>
-                    <Col componentClass={ControlLabel} sm={3}>
-                        <FormattedMessage id="confirm" defaultMessage="Confirm" />
-                    </Col>
-
-                    <Col sm={8}>
-                        <FormControl
-                            type="password"
-                            value={confirm}
-                            onChange={(e) => this.setState({confirm: e.target.value, error: undefined})}
-                        />
-                    </Col>
-                </FormGroup>
-                <FormGroup>
-                    <Col smOffset={3} sm={10}>
-                        <Button type="submit" onClick={this.onSubmit.bind(this)} disabled={!validForm}>
-                            <FormattedMessage id="submit" defaultMessage="Submit" />
-                        </Button>
-                    </Col>
-                </FormGroup>
-            </Form>)
-    }
-}
 
 class LoginForm extends Component {
     constructor(props) {
@@ -429,7 +346,6 @@ const AsyncApioNavBar = ({user_group, logoutUser, database_status, ...props}) =>
               (database_status && database_status.env) ? database_status.env : "unknown"
           }
       </Navbar.Text>
-        {/*<SearchBar {...props}/>*/}
     </Navbar.Collapse>
   </Navbar>
 );
@@ -451,9 +367,37 @@ const NotAllowed = ({match}) => (
     </div>
 );
 
-class App extends Component {
-    _notificationSystem = null;
+const LoginPage = ({updateToken, error_msg, standby_alert}) => (
+    <div>
+        <Row style={{height: "20px", display: "block"}}/>
+        <Row style={{height: "100%", display: "block"}}>
+            <Col xsOffset={1} xs={10} mdOffset={4} md={4}>
+                {
+                    standby_alert
+                }
+                <Panel >
+                    <Panel.Heading>
+                        <Panel.Title><FormattedMessage id="welcome" defaultMessage="Welcome!" /></Panel.Title>
+                    </Panel.Heading>
+                    <Panel.Body>
+                        {
+                            error_msg && (
+                                <Alert bsStyle="danger">
+                                    <p>{error_msg}</p>
+                                </Alert>
+                            )
+                        }
+                        <LoginOpenIdConnect />
+                        <hr/>
+                        <LoginForm updateToken={updateToken}/>
+                    </Panel.Body>
+                </Panel>
+            </Col>
+        </Row>
+    </div>
+);
 
+class App extends Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -461,22 +405,45 @@ class App extends Component {
             user_info: undefined,
             error_msg: undefined,
         };
+        // this._auth_token = this.props.cookies.get("auth_token");
+        this._notificationSystem = React.createRef();
 
         this.getUserInfo = this.getUserInfo.bind(this);
         this.updateToken = this.updateToken.bind(this);
         this.logout = this.logout.bind(this);
+
+        sso_auth_service.manager.events.addUserSignedOut(() => this.logout());
+        sso_auth_service.manager.events.addUserLoaded(this.ssoTokenToLocalToken.bind(this));
+        sso_auth_service.manager.events.addAccessTokenExpired(this.onSsoTokenExpired.bind(this));
+
+        sso_auth_service.manager.events.addAccessTokenExpiring(() => console.log("token expiring"));
+    }
+
+    onSsoTokenExpired() {
+        if(window.location.pathname.endsWith('callback')) {
+            return;
+        }
+        console.log(`token expired: ${window.location}`);
+        // sso_auth_service.manager.signinSilent();
+        sso_auth_service.manager._signinSilentIframe({}).catch(e => {
+            console.error(e);
+            if(e.error === "login_required") {
+                this.logout();
+            } /*else if (e.message === "Frame window timed out") {
+                setTimeout(this.onSsoTokenExpired, 1100);
+            }*/
+        })
     }
 
     getUserInfo(auth_token) {
         fetch_get('/api/v01/system/users/local', auth_token)
-            .then((data) => {
+            .then(data => {
                 this.setState({user_info: data});
                 this.props.onLanguageUpdate(data.language);
             })
-            .catch((error) => {
-                console.log('request failed', error);
+            .catch(error => {
                 if(error.response !== undefined && error.response.status === 401) {  // unauthorized
-                    this.logout()
+                    //this.logout()
                 } else {
                     this.setState({error_msg: <FormattedMessage id="app.no_connection" defaultMessage="Connection issue: Refresh the page or contact the site admin." /> })
                 }
@@ -493,15 +460,16 @@ class App extends Component {
     }
 
     componentWillUpdate() {
-        this.getDatabaseStatus()
+        if(this.isAuthenticated() && !this.state.user_info && this.state.auth_token) {
+            this.getUserInfo(this.state.auth_token);
+        }
+        /*
+        this.getDatabaseStatus();
+        */
     }
 
     componentDidMount() {
-        this.getDatabaseStatus()
-    }
-
-    componentDidUpdate() {
-        this._notificationSystem = this.refs.notificationSystem;
+        this.getDatabaseStatus();
     }
 
     updateToken(token) {
@@ -516,14 +484,48 @@ class App extends Component {
         console.log('logout');
         this.props.cookies.remove("auth_token", { path: '/' });
         this.props.cookies.remove("user_language", { path: '/' });
-        this.props.onLanguageUpdate(undefined);
+        sso_auth_service.removeUser().then(() => this.props.onLanguageUpdate(undefined));
+    }
+
+    ssoTokenToLocalToken(user) {
+        if(this.state.auth_token) {
+            return;
+        }
+
+        console.log(`user loaded`);
+        return fetch(API_URL_PREFIX + '/api/v01/auth/login_oidc', {
+            method: 'post',
+            content_type: 'application/json',
+            body: JSON.stringify({
+                token_type: user.token_type,
+                access_token: user.access_token,
+            })
+        })
+            .then(checkStatus)
+            .then(parseJSON)
+            .then(r => {
+                const internal_token = r.token;
+                console.log("got access token");
+                this.updateToken(internal_token);
+                return r;
+            })
+            .then(r => this.getUserInfo(r.token))
+            .catch(console.error);
+    }
+
+    isAuthenticated() {
+        const local_auth = this.state.auth_token !== undefined;
+        const sso_auth = sso_auth_service.isLoggedIn();
+
+        console.log(`local_auth status: ${local_auth}, sso_auth status: ${sso_auth}`);
+        return local_auth || sso_auth;
     }
 
     render() {
-        let authenticated = this.state.auth_token !== undefined;
-        let is_reset_password = window.location.pathname.substr(0, RESET_PASSWORD_PREFIX.length) === RESET_PASSWORD_PREFIX;
-
-        const standby_alert = this.state.database_status && !this.state.database_status.is_master && (
+        const {auth_token, database_status, error_msg, user_info} = this.state;
+        const authenticated = this.isAuthenticated();
+        const is_reset_password = window.location.pathname.substr(0, RESET_PASSWORD_PREFIX.length) === RESET_PASSWORD_PREFIX;
+        const standby_alert = database_status && !database_status.is_master && (
             <Alert bsStyle="danger">
                 <FormattedMessage id="standby-db-alert" defaultMessage="You are working on a Standby database!"/>
             </Alert>
@@ -531,78 +533,44 @@ class App extends Component {
 
         // reset password
         if(is_reset_password) {
-            return (
-                <div>
-                    <Row style={{height: "20px", display: "block"}}/>
-                    <Row style={{height: "100%", display: "block"}}>
-                        <Col xsOffset={4} xs={4}>
-                            {
-                                standby_alert || null
-                            }
-                            <Panel>
-                                <Panel.Heading>
-                                    <Panel.Title><FormattedMessage id="reset-password" defaultMessage="Reset password" /></Panel.Title>
-                                </Panel.Heading>
-                                <Panel.Body>
-                                    <ResetPasswordForm />
-                                </Panel.Body>
-                            </Panel>
-                        </Col>
-                    </Row>
-                </div>)
+            return <ResetPasswordPage standby_alert={standby_alert}/>
         }
 
         // need to login first
-        if(!authenticated || this.state.error_msg !== undefined) {
+        if(!authenticated || error_msg !== undefined) {
             return (
-                <div>
-                    <Row style={{height: "20px", display: "block"}}/>
-                    <Row style={{height: "100%", display: "block"}}>
-                        <Col xsOffset={1} xs={10} mdOffset={4} md={4}>
-                            {
-                                standby_alert
-                            }
-                            <Panel >
-                                <Panel.Heading>
-                                    <Panel.Title><FormattedMessage id="login" defaultMessage="Login" /></Panel.Title>
-                                </Panel.Heading>
-                                <Panel.Body>
-                                    {
-                                        this.state.error_msg && (
-                                            <Alert bsStyle="danger">
-                                                <p>{this.state.error_msg}</p>
-                                            </Alert>
-                                        )
-                                    }
-                                    <LoginForm updateToken={this.updateToken}/>
-                                </Panel.Body>
-                            </Panel>
-                        </Col>
-                    </Row>
-                </div>)
-        } else if (this.state.user_info === undefined) { // get the right level of the user (pages allowance)
-            this.getUserInfo(this.state.auth_token);
-            return (
-                <div>
-                    <Loading />
-                </div>
+                <Router>
+                    <Switch>
+                        <Route path="/auth-callback" component={AuthCallback} exact/>
+                        <Route path="/auth-silent-callback" component={AuthSilentCallback} exact/>
+                        <Route path="/" exact>
+                            <Redirect to="/dashboard" />
+                        </Route>
+                        <Route component={() => (
+                            <LoginPage updateToken={this.updateToken} error_msg={error_msg} standby_alert={standby_alert}/>
+                        )} />
+                    </Switch>
+                </Router>
             )
+
+            //return <LoginPage updateToken={this.updateToken} error_msg={error_msg} standby_alert={standby_alert}/>
+        } else if (user_info === undefined) { // get the right level of the user (pages allowance)
+            return <Loading/>
         }
 
-        const {user_info, auth_token} = this.state;
         const ui_profile = user_info.ui_profile;
 
         return (
           <Router>
             <div className="App">
-                <NotificationSystem ref="notificationSystem"/>
+                <NotificationSystem ref={this._notificationSystem}/>
                 {
                     standby_alert
                 }
                 <div className="App-header">
                   <AsyncApioNavBar
                       user_group={ui_profile}
-                      database_status={this.state.database_status}
+                      database_status={database_status}
                       logoutUser={this.logout}
                       auth_token={auth_token} />
                 </div>
@@ -617,7 +585,7 @@ class App extends Component {
                                component={props => (
                                    <Dashboard
                                        auth_token={auth_token}
-                                       notifications={this._notificationSystem}
+                                       notifications={this._notificationSystem.current}
                                        {...props} />
                                )}
                                exact />
@@ -636,7 +604,7 @@ class App extends Component {
                                    isAllowed(ui_profile, pages.requests_nprequests) ?
                                    <BulkActions
                                        auth_token={auth_token}
-                                       notifications={this._notificationSystem}
+                                       notifications={this._notificationSystem.current}
                                        {...props} /> :
                                    <NotAllowed/>
                                )}
@@ -646,7 +614,7 @@ class App extends Component {
                                    isAllowed(ui_profile, pages.data_tenants) ?
                                    <TenantsManagement
                                        auth_token={auth_token}
-                                       notifications={this._notificationSystem}
+                                       notifications={this._notificationSystem.current}
                                        {...props} /> :
                                    <NotAllowed/>
                                )}
@@ -656,7 +624,7 @@ class App extends Component {
                                    isAllowed(ui_profile, pages.data_tenants) ?
                                    <GroupsManagement
                                        auth_token={auth_token}
-                                       notifications={this._notificationSystem}
+                                       notifications={this._notificationSystem.current}
                                        {...props} /> :
                                    <NotAllowed/>
                                )}
@@ -666,7 +634,7 @@ class App extends Component {
                                    isAllowed(ui_profile, pages.data_tenants) ?
                                    <NumbersManagement
                                        auth_token={auth_token}
-                                       notifications={this._notificationSystem}
+                                       notifications={this._notificationSystem.current}
                                        {...props} /> :
                                    <NotAllowed/>
                                )}
@@ -676,7 +644,7 @@ class App extends Component {
                                    isAllowed(ui_profile, pages.requests_startup_events) ?
                                        <StartupEvents
                                            auth_token={auth_token}
-                                           notifications={this._notificationSystem}
+                                           notifications={this._notificationSystem.current}
                                            {...props} /> :
                                        <NotAllowed/>
                                )}
@@ -694,7 +662,7 @@ class App extends Component {
                                        <Transaction
                                            auth_token={auth_token}
                                            user_info={user_info}
-                                           notifications={this._notificationSystem}
+                                           notifications={this._notificationSystem.current}
                                            {...props} /> :
                                        <NotAllowed/>
                                )} />
@@ -704,7 +672,7 @@ class App extends Component {
                                        <UserManagement
                                            auth_token={auth_token}
                                            user_info={user_info}
-                                           notifications={this._notificationSystem}
+                                           notifications={this._notificationSystem.current}
                                            {...props} />:
                                        <NotAllowed />
                                )}
@@ -715,7 +683,7 @@ class App extends Component {
                                        <AuditLogs
                                            auth_token={auth_token}
                                            user_info={user_info}
-                                           notifications={this._notificationSystem}
+                                           notifications={this._notificationSystem.current}
                                            {...props} />:
                                        <NotAllowed />
                                )}
@@ -725,7 +693,7 @@ class App extends Component {
                                    isAllowed(ui_profile, pages.system_reporting)?
                                        <Reporting
                                            auth_token={auth_token}
-                                           notifications={this._notificationSystem}
+                                           notifications={this._notificationSystem.current}
                                            {...props} />:
                                        <NotAllowed />
                                )}
@@ -735,7 +703,7 @@ class App extends Component {
                                    isAllowed(ui_profile, pages.system_gateways) ?
                                        <Gateways
                                            auth_token={auth_token}
-                                           notifications={this._notificationSystem}
+                                           notifications={this._notificationSystem.current}
                                            {...props} />:
                                        <NotAllowed />
                                )}
@@ -745,7 +713,7 @@ class App extends Component {
                                    isAllowed(ui_profile, pages.system_databases) ?
                                        <Databases
                                            auth_token={auth_token}
-                                           notifications={this._notificationSystem}
+                                           notifications={this._notificationSystem.current}
                                            {...props} />:
                                        <NotAllowed />
                                )}
@@ -755,8 +723,8 @@ class App extends Component {
                                    <LocalUserProfile
                                        user_info={user_info}
                                        auth_token={auth_token}
-                                       onUserInfoChanged={()=>{this.setState({user_info:undefined})}}
-                                       notifications={this._notificationSystem}
+                                       onUserInfoChanged={()=> this.setState({user_info:undefined})}
+                                       notifications={this._notificationSystem.current}
                                        {...props} />
                                )}
                                exact />
@@ -765,11 +733,12 @@ class App extends Component {
                                    isAllowed(ui_profile, pages.system_config) ?
                                        <ConfigManagement
                                            auth_token={auth_token}
-                                           notifications={this._notificationSystem}
+                                           notifications={this._notificationSystem.current}
                                            {...props} />:
                                        <NotAllowed />
                                )}
                                exact />
+                        <Route path="/auth-silent-callback" component={AuthSilentCallback} exact/>
                         <Route path="/" exact>
                             <Redirect to="/dashboard" />
                         </Route>
