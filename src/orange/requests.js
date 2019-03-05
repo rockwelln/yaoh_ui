@@ -432,7 +432,7 @@ const MessagesTable = ({messages, auth_token})  => (
 );
 
 
-class SubInstance extends Component {
+export class SubInstance extends Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -473,14 +473,17 @@ class SubInstance extends Component {
     }
 
     render() {
-        const {instance, tasks} = this.props;
+        const {instance, tasks, colOffset} = this.props;
         const {request} = this.state;
         const statusColor = request.status === "SUCCESS" ? '#a4d1a2' : '#ca6f7b';
         const statusGlyph = request.status === "SUCCESS" ? "ok" : "remove";
-        const callback_task_name = tasks.find(t => t.id === instance.callback_task_id).cell_id;
+        const callback_task_name = tasks && tasks.find(t => t.id === instance.callback_task_id).cell_id;
 
         return (
-            <tr onClick={this.onExpand} key={`message_sub_flow_sync_${instance.id}`}>
+            <tr key={`message_sub_flow_sync_${instance.id}`}>
+                {
+                    colOffset && <td colSpan={colOffset}/>
+                }
                 <td style={{width: '2%'}}><Glyphicon style={{color: statusColor}} glyph={statusGlyph}/></td>
                 <td>
                     <Link to={`/transactions/${instance.id}`}>{this.computeLabel()}</Link>
@@ -490,7 +493,11 @@ class SubInstance extends Component {
                         instance.errors !== 0 && <Badge bsStyle="danger">{instance.errors}</Badge>
                     }
                 </td>
-                <td style={{width: '15%'}}><Badge>{callback_task_name}</Badge></td>
+                <td style={{width: '15%'}}>
+                    {
+                        callback_task_name && <Badge>{callback_task_name}</Badge>
+                    }
+                </td>
             </tr>
         )
     }
@@ -1042,14 +1049,14 @@ export class Transaction extends Component {
                         t => this.state.messages.findIndex(m => m.processing_trace_id === t.processing_trace_id) === -1
                     ).map(m => update(m, {'task_name' : {'$set' : task_name}}));
 
-                    this.setState({
+                    !this.cancelLoad && this.setState({
                         messages: update(
                             this.state.messages, {
                                 '$push': missing_messages,
                             })
                     });
                 })
-                .catch(error => console.log(error));
+                .catch(error => console.error(error));
             return t;
         });
     }
@@ -1062,11 +1069,11 @@ export class Transaction extends Component {
                     t => subinstances.findIndex(si => si.id === t.id) === -1
                 );
 
-                this.setState({
+                !this.cancelLoad && this.setState({
                     subinstances: update(subinstances, {'$push': missing_tx})
                 });
             })
-            .catch(error => console.log(error));
+            .catch(error => console.error(error));
     }
 
     changeTxStatus(new_status) {
@@ -1123,11 +1130,11 @@ export class Transaction extends Component {
         )
         .then(() => {
             this.caseUpdated();
-            setTimeout(() => this.setState({sending: false}), RELOAD_TX);
+            setTimeout(() => !this.cancelLoad && this.setState({sending: false}), RELOAD_TX);
         })
         .catch(error => {
             this.caseUpdateFailure(error);
-            this.setState({sending: false});
+            !this.cancelLoad && this.setState({sending: false});
         });
     }
 

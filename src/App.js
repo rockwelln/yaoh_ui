@@ -429,9 +429,7 @@ class App extends Component {
             console.error(e);
             if(e.error === "login_required") {
                 this.logout();
-            } /*else if (e.message === "Frame window timed out") {
-                setTimeout(this.onSsoTokenExpired, 1100);
-            }*/
+            }
         })
     }
 

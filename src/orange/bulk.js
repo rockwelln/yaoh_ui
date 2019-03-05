@@ -14,6 +14,7 @@ import Alert from "react-bootstrap/lib/Alert";
 
 import {FormattedMessage} from "react-intl";
 import {fetch_get, fetch_post_raw} from "../utils";
+import {SubInstance} from "./requests";
 
 
 class NewBulk extends Component {
@@ -65,10 +66,11 @@ class NewBulk extends Component {
     }
 
     onSubmit() {
-        const {action, source} = this.state;
+        const {action, source, label} = this.state;
         const {onChange} = this.props;
 
         let data = new FormData();
+        data.append('label', label);
         data.append('action', action);
         data.append('input_file', source);
 
@@ -187,7 +189,41 @@ class NewBulk extends Component {
     }
 }
 
-const BulkHistory = ({bulks}) => (
+
+class BulkEntry extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            expanded: false
+        };
+    }
+
+    render() {
+        const {expanded} = this.state;
+        const {bulk, auth_token} = this.props;
+        const expIco = expanded?<Glyphicon glyph="chevron-down"/>:<Glyphicon glyph="chevron-right"/>;
+
+        let rows = [
+            <tr key={`bulk_head_${bulk.bulk_id}`} onClick={() => this.setState({expanded: !expanded})}>
+                <td style={{width: '2%'}}>{bulk.related.length !== 0 && expIco}</td>
+                <td>{bulk.bulk_id}</td>
+                <td>{bulk.label}</td>
+                <td>{bulk.status}</td>
+                <td>{bulk.action}</td>
+                <td>{bulk.created_on}</td>
+            </tr>
+        ];
+
+        if(expanded) {
+            bulk.related.map(i => rows.push(
+                <SubInstance key={`inst_${i.id}`} instance={i} auth_token={auth_token} colOffset={1}/>
+            ))
+        }
+        return rows;
+    }
+}
+
+const BulkHistory = ({bulks, auth_token}) => (
     <Panel defaultExpanded={false}>
         <Panel.Heading>
             <Panel.Title toggle><FormattedMessage id="history" defaultMessage="History" /> <Glyphicon glyph="cog" /></Panel.Title>
@@ -196,17 +232,17 @@ const BulkHistory = ({bulks}) => (
             <Table>
                 <thead>
                     <tr>
+                        <th/>
                         <th>#</th>
                         <th><FormattedMessage id="label" defaultMessage="Label"/></th>
                         <th><FormattedMessage id="status" defaultMessage="Status"/></th>
-                        <th><FormattedMessage id="source" defaultMessage="Source"/></th>
                         <th><FormattedMessage id="workflow" defaultMessage="Workflow"/></th>
                         <th><FormattedMessage id="creation-date" defaultMessage="Creation date"/></th>
                     </tr>
                 </thead>
                 <tbody>
                 {
-                    bulks && bulks.map(b => <tr><td>{b.label}</td></tr>)
+                    bulks && bulks.sort((a, b) => b.bulk_id - a.bulk_id).map(b => <BulkEntry bulk={b} key={`bulk_${b.bulk_id}`} auth_token={auth_token}/>)
                 }
                 </tbody>
             </Table>
@@ -252,7 +288,7 @@ export class BulkActions extends Component {
                 </Breadcrumb>
 
                 <NewBulk onChange={this._fetchHistory} {...this.props}/>
-                <BulkHistory bulks={this.state.bulks}/>
+                <BulkHistory bulks={this.state.bulks} {...this.props}/>
             </div>
         )
     }
