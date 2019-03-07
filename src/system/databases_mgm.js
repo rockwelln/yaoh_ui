@@ -8,6 +8,18 @@ import Breadcrumb from 'react-bootstrap/lib/Breadcrumb';
 import {FormattedMessage} from 'react-intl';
 import {fetch_get} from '../utils';
 
+const REFRESH_CYCLE = 15;
+
+
+const TableDetails = ({table}) => (
+    <tr>
+        <td>{table.table_name}</td>
+        <td>{table.total_bytes}</td>
+        <td>{table.row_estimate}</td>
+    </tr>
+);
+
+
 const DatabaseDetails = ({info}) => (
     <Panel bsStyle={info.is_master?"success":null}>
         <Panel.Heading>
@@ -59,13 +71,13 @@ const DatabaseDetails = ({info}) => (
                 </thead>
                 <tbody>
                 {
-                    info.tables.map((t, i) => (
-                        <tr key={i}>
-                            <td>{t.table_name}</td>
-                            <td>{t.total_bytes}</td>
-                            <td>{t.row_estimate}</td>
-                        </tr>
-                    ))
+                    info.tables
+                        .sort((a, b) => {
+                            if(a.table_name < b.table_name) return -1;
+                            if(a.table_name > b.table_name) return 1;
+                            return 0;
+                        })
+                        .map((t, i) => <TableDetails table={t} key={i}/>)
                 }
                 </tbody>
             </Table>
@@ -77,19 +89,14 @@ const DatabaseDetails = ({info}) => (
 export default class Databases extends Component {
     constructor(props) {
         super(props);
-        this.autoRefresh = true;
-        this.state = {databases:[]};
+        this.cancelLoad = false;
+        this.state = { databases:[] };
         this._refresh = this._refresh.bind(this);
     }
 
     _refresh() {
-        if(!this.autoRefresh) return;
-
         fetch_get('/api/v01/system/databases', this.props.auth_token)
-            .then(data => {
-                this.autoRefresh && this.setState({databases: data.databases});
-                setTimeout(this._refresh, 15000);
-            })
+            .then(data => !this.cancelLoad && this.setState({databases: data.databases}))
             .catch(error => this.props.notifications.addNotification({
                 title: <FormattedMessage id="database-refresh-failed" defaultMessage="Failed to fetch database information"/>,
                 message: error.message,
@@ -98,11 +105,13 @@ export default class Databases extends Component {
     }
 
     componentWillUnmount() {
-        this.autoRefresh = false;
+        this.cancelLoad = true;
+        this._refreshInterval && clearInterval(this._refreshInterval);
     }
 
     componentDidMount() {
-        this._refresh()
+        this._refresh();
+        this._refreshInterval = setInterval(this._refresh, REFRESH_CYCLE * 1000);
     }
 
     render() {

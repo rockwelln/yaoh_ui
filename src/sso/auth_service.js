@@ -25,7 +25,9 @@ class AuthService {
     this.manager.getUser().then(user => {
       this.user = user;
     });
-    // this.startAuthentication = this.startAuthentication.bind(this);
+
+    this.manager.events.addAccessTokenExpired(this.signinSilent.bind(this));
+    this.manager.events.addAccessTokenExpiring(() => console.log("token expiring"));
   }
 
   isLoggedIn() {
@@ -52,6 +54,11 @@ class AuthService {
       )
   }
 
+  signinSilent() {
+      const config = getClientSettings();
+      return this.manager.signinSilent({client_secret: config.client_secret});
+  }
+
   completeAuthentication() {
     return this.manager.signinRedirectCallback().then(user => {
       this.user = user;
@@ -60,5 +67,3 @@ class AuthService {
 }
 
 export const sso_auth_service = new AuthService();
-
-

@@ -2,7 +2,7 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import draw_editor from "./editor";
-import {checkStatus, parseJSON, API_URL_PREFIX, fetch_get, fetch_delete} from "./utils";
+import {parseJSON, fetch_post, fetch_get, fetch_delete, fetch_put} from "./utils";
 
 import Nav from 'react-bootstrap/lib/Nav';
 import NavItem from 'react-bootstrap/lib/NavItem';
@@ -101,39 +101,35 @@ export default class ActivityEditor extends Component {
     }
 
     saveActivity(data, cb) {
-        let method = data.id === undefined?'POST':'PUT';
-        let url = API_URL_PREFIX + '/api/v01/activities' + (data.id === undefined?'':'/'+data.id);
-        fetch(url, {
-            method: method,
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + this.props.auth_token
-            },
-            body: JSON.stringify({
+        const method = data.id === undefined?fetch_post:fetch_put;
+
+        method(
+            `/api/v01/activities${data.id === undefined?'':'/'+data.id}`,
+            {
                 'name': data.name,
                 'definition': data.definition,
-            })
-        }).then(checkStatus)
-        .then(parseJSON)
-        .then(data => {
-            cb && cb(data);
+            },
+            this.props.auth_token
+        )
+        .then(data_ => {
+            cb && cb(data_);
             this.showAlert("Activity saved !");
             this.fetchActivities();
 
-            if(method === 'POST') { // new activity created, we have to fetch again the activity list.
-                this.setState({newActivity: false, currentActivity: data.id});
+            if(data.id === undefined) { // new activity created, we have to fetch again the activity list.
+                this.setState({newActivity: false, currentActivity: data_.id});
             }
         })
-        .catch((error) => {
+        .catch(error => {
             console.error(error);
             if(error.response.status === 409) {
                 this.showAlert("Duplicate name!")
-            } else if(error.response.status === 404 && method === "PUT") {
+            } else if(error.response.status === 404 && data.id !== undefined) {
                 // we tried to update a resource not found. so we retry to create it instead.
                 delete data.id;
                 this.saveActivity(data, cb);
             } else {
-                this.showAlert("Impossible to save the activity (" + error + ")", "danger");
+                this.showAlert(`Impossible to save the activity (${error})`, "danger");
             }
         });
     }

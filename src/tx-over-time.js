@@ -16,6 +16,7 @@ import {fetch_get} from "./utils";
 import {DashboardPanel} from './dashboard-panel';
 
 const DEFAULT_NB_DAYS = 30;
+const REFRESH_CYCLE = 60;
 
 
 export default class TransactionsOverTime extends Component {
@@ -32,8 +33,9 @@ export default class TransactionsOverTime extends Component {
         this.loadActivityNames = this.loadActivityNames.bind(this);
     }
 
-    refresh(auto) {
+    refresh() {
         if(this.cancelLoad) return;
+
         let {start, end} = this.state;
         if(end === undefined) {
             end = moment();
@@ -42,37 +44,29 @@ export default class TransactionsOverTime extends Component {
             `/api/v01/system/stats_per_wf_per_day?start=${start.format('YYYY-MM-DD')}&end=${end.endOf('day').format('YYYY-MM-DDTHH:mm:ss')}`,
             this.props.auth_token
         )
-        .then(data => {
-            if(this.cancelLoad) return;
-            this.setState({data: data.requests});
-            auto && setTimeout(this.refresh, 2 * 60 * 1000);
-        })
-        .catch(error => {
-            console.error(error);
-            auto && setTimeout(this.refresh, 60 * 1000);
-        })
+        .then(data => !this.cancelLoad && this.setState({data: data.requests}))
+        .catch(console.error);
     }
 
     loadActivityNames() {
         if(this.cancelLoad) return;
 
         fetch_get('/api/v01/activities', this.props.auth_token)
-        .then(data => {
-            if(this.cancelLoad) return;
-            this.setState({
-                names: data.activities.reduce((rv, a) => {rv[a.id] = a.name; return rv;}, {})
-            });
-        })
+        .then(data => !this.cancelLoad && this.setState({
+            names: data.activities.reduce((rv, a) => {rv[a.id] = a.name; return rv;}, {})
+        }))
         .catch(console.error)
     }
 
     componentDidMount() {
-        this.refresh(true);
+        this.refresh();
         this.loadActivityNames();
+        this._refreshHandler = setInterval(this.refresh, REFRESH_CYCLE * 1000);
     }
 
     componentWillUnmount() {
         this.cancelLoad = true;
+        this._refreshHandler && clearInterval(this._refreshHandler);
     }
 
     render() {
@@ -96,8 +90,7 @@ export default class TransactionsOverTime extends Component {
 
         const labels = this.state.data ? 
             Object.keys(this.state.data.reduce((rv , x) => {rv[x['creation_day']]=1; return rv;}, {})) : [];
-        //console.log(labels);
-        
+
         let colorHash = new ColorHash();
         const datasets = Object.keys(grouped_data).map(k => ({
             label: this.state.names[k] || k,
@@ -112,7 +105,6 @@ export default class TransactionsOverTime extends Component {
             ),
             backgroundColor: colorHash.hex(this.state.names[k] || k),
         })); 
-        //console.log(datasets);
 
         const chartData = {
             labels: labels,

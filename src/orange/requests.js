@@ -444,13 +444,9 @@ export class SubInstance extends Component {
     componentDidMount() {
         const {instance, auth_token} = this.props;
 
-        fetch_get(`${API_URL_PREFIX}/api/v01/apio/requests/${instance.original_request_id}`, auth_token)
-            .then(data => {
-                this.setState({request: data.request});
-            })
-            .catch(error => {
-                this.setState({error: error})
-            });
+        fetch_get(`/api/v01/apio/requests/${instance.original_request_id}`, auth_token)
+            .then(data => this.setState({request: data.request}))
+            .catch(error => this.setState({error: error}));
     }
 
     computeLabel() {
@@ -475,8 +471,21 @@ export class SubInstance extends Component {
     render() {
         const {instance, tasks, colOffset} = this.props;
         const {request} = this.state;
-        const statusColor = request.status === "SUCCESS" ? '#a4d1a2' : '#ca6f7b';
-        const statusGlyph = request.status === "SUCCESS" ? "ok" : "remove";
+        let statusColor = '';
+        let statusGlyph = '';
+        switch(request.status) {
+            case "ERROR":
+                statusColor = '#ca6f7b';
+                statusGlyph = 'remove';
+                break;
+            case "SUCCESS":
+                statusColor = '#a4d1a2';
+                statusGlyph = 'ok';
+                break;
+            default:
+                statusColor = '#a4d1a2';
+                statusGlyph = 'play';
+        }
         const callback_task_name = tasks && tasks.find(t => t.id === instance.callback_task_id).cell_id;
 
         return (
@@ -605,7 +614,8 @@ class Comments extends Component {
                             <FormControl componentClass="textarea"
                                          placeholder="..."
                                          value={comment}
-                                         onChange={e => this.setState({comment: e.target.value})} />
+                                         onChange={e => this.setState({comment: e.target.value})}
+                                         autoFocus />
                         </FormGroup>
                     </Form>
                 </Modal.Body>
@@ -977,7 +987,7 @@ export class Transaction extends Component {
                 }
                 switch(error.response.status) {
                     case 404: error_msg = <FormattedMessage id="unknown-transaction" defaultMessage="Unknown transaction." />; break;
-                    case 401: error_msg = <FormattedMessage id="not-allowed-transaction" defaultMessage="You are not allowed to see this transaction." />; break;
+                    case 403: error_msg = <FormattedMessage id="not-allowed-transaction" defaultMessage="You are not allowed to see this transaction." />; break;
                     default: error_msg = <FormattedMessage id="unknown-error" defaultMessage="Unknown error: {status}" values={{status: error.response.status}} />;
                 }
                 this.setState({error: new Error(error_msg)})

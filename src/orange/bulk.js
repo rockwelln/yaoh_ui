@@ -11,6 +11,7 @@ import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import Button from "react-bootstrap/lib/Button";
 import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 import Alert from "react-bootstrap/lib/Alert";
+import HelpBlock from "react-bootstrap/lib/HelpBlock";
 
 import {FormattedMessage} from "react-intl";
 import {fetch_get, fetch_post_raw} from "../utils";
@@ -155,6 +156,22 @@ class NewBulk extends Component {
                                         Object.keys(actions).map(a => <option value={a} key={a}>{a}</option>)
                                     }
                                 </FormControl>
+
+                                { action && (
+                                    <HelpBlock style={{color: 'grey'}}>
+                                        <FormattedMessage
+                                            id="columns-available"
+                                            defaultMessage="Columns available (mandatory: *): {cols}"
+                                            values={
+                                                {cols: (
+                                                    Object.keys(actions[action].validation_schema.properties)
+                                                        .map(p => actions[action].validation_schema.required.indexOf(p) !== -1?`*${p}*`:p)
+                                                        .join(", ")
+                                                )}
+                                            }/>
+                                    </HelpBlock>
+                                )}
+
                             </Col>
                         </FormGroup>
                         <FormGroup>

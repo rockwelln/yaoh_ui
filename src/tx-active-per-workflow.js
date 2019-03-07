@@ -7,6 +7,8 @@ import ColorHash from 'color-hash';
 import {fetch_get} from "./utils";
 import {FormattedMessage} from 'react-intl';
 
+const REFRESH_CYCLE = 60;
+
 
 export default class ActiveTransactionsPerWorkflow extends Component {
     constructor(props, context) {
@@ -22,46 +24,38 @@ export default class ActiveTransactionsPerWorkflow extends Component {
 
     componentWillUnmount() {
         this.cancelLoad = true;
+        this._refreshHandler && clearInterval(this._refreshHandler);
     }
 
-    refresh(refresh) {
+    componentDidMount() {
+        this._refreshHandler = setInterval(this.refresh, REFRESH_CYCLE * 1000);
+        this.refresh();
+        this.loadActivityNames();
+    }
+
+    refresh() {
         if(this.cancelLoad) return;
 
         fetch_get('/api/v01/system/stats_active_per_wf', this.props.auth_token)
-        .then(data => {
-            if(this.cancelLoad) return;
-            this.setState({data: data.requests});
-            refresh && setTimeout(() => this.refresh(true), 60 * 1000);
-        })
-        .catch(error => {
-            console.error(error);
-            refresh && setTimeout(() => this.refresh(true), 10* 1000);
-        });
+        .then(data => !this.cancelLoad && this.setState({data: data.requests}))
+        .catch(console.error);
     }
 
     loadActivityNames() {
         if(this.cancelLoad) return;
 
         fetch_get('/api/v01/activities', this.props.auth_token)
-        .then(data => {
-            if(this.cancelLoad) return;
-            this.setState({
-                names: data.activities.reduce((rv, a) => {rv[a.id] = a.name; return rv;}, {})
-            });
-        })
+        .then(data => !this.cancelLoad && this.setState({
+            names: data.activities.reduce((rv, a) => {rv[a.id] = a.name; return rv;}, {})
+        }))
         .catch(console.error)
-    }
-
-    componentDidMount() {
-        this.refresh(true);
-        this.loadActivityNames();
     }
 
     render() {
         const {data, names} = this.state;
         const onShowClose = () => {
             this.setState({showBig: false});
-        }
+        };
         let colorHash = new ColorHash();
         const chartData = {
             labels: data.map(d => `${names[d.activity_id]}: ${d.counter}`),

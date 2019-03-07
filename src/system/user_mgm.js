@@ -22,16 +22,31 @@ import {FormattedMessage} from 'react-intl';
 import 'font-awesome/css/font-awesome.min.css';
 import update from 'immutability-helper';
 
-import {checkStatus, API_URL_PREFIX, fetch_get, fetch_delete} from "../utils";
+import {fetch_post, fetch_get, fetch_delete, fetch_put} from "../utils";
 import {ApioDatatable} from "../utils/datatable";
 import { LinkContainer } from 'react-router-bootstrap';
 import {INTERNAL_HELP_LINKS} from "../async-apio-help";
 import {Search, StaticControl} from "../utils/common";
 import {CallbackHandler} from "./callbacks";
 
+import PropTypes from 'prop-types';
+
 
 export class LocalUserProfile extends Component {
     static updatable_field = k => ['language', 'password'].includes(k);
+
+    static propTypes = {
+        user_info: PropTypes.shape(
+            {
+                id: PropTypes.number.isRequired,
+                language: PropTypes.string,
+                username: PropTypes.string,
+                email: PropTypes.string,
+                is_system: PropTypes.bool
+            }
+        ).isRequired,
+        auth_token: PropTypes.string.isRequired,
+    };
 
     constructor(props) {
         super(props);
@@ -50,21 +65,16 @@ export class LocalUserProfile extends Component {
         }
 
         this.setState({error: undefined, success: undefined});
-        fetch(API_URL_PREFIX + '/api/v01/system/users/local', {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${this.props.auth_token}`
-            },
-            body: JSON.stringify(
-                Object.keys(data).filter(LocalUserProfile.updatable_field).reduce(
-                    (obj, key) => {
-                        obj[key] = data[key];
-                        return obj;
-                    }, {}
-                )
+        fetch_put(
+            '/api/v01/system/users/local',
+            Object.keys(data).filter(LocalUserProfile.updatable_field).reduce(
+                (obj, key) => {
+                    obj[key] = data[key];
+                    return obj;
+                }, {}
             ),
-        }).then(checkStatus)
+            this.props.auth_token
+        )
         .then(() => {
             this.setState({
                 success: <FormattedMessage id="user-updated" defaultMessage="User updated" />
@@ -84,7 +94,8 @@ export class LocalUserProfile extends Component {
     }
 
     render() {
-        const {password, repeated_password} = this.state;
+        const {password, repeated_password, error, username, success, email, is_system, ui_profile, groups, registered_on, language, local_user} = this.state;
+        const {user_info} = this.props;
         const validPassword = (password === '')?null:(password.length >= 8)?"success":"error";
         const validRepPassword = (password === '')?null:(repeated_password === password)?"success":"error";
         const validForm = validPassword !== 'error' && validRepPassword !== 'error';
@@ -92,28 +103,28 @@ export class LocalUserProfile extends Component {
         return (
             <Panel>
                 <Panel.Heading>
-                    <Panel.Title><FormattedMessage id="user-profile" defaultMessage="User Profile" /> {this.state.username} </Panel.Title>
+                    <Panel.Title><FormattedMessage id="user-profile" defaultMessage="User Profile" /> {username} </Panel.Title>
                 </Panel.Heading>
                 <Panel.Body>
-                {this.state.error !== undefined ? <Alert bsStyle="danger">{this.state.error}</Alert>:
-                 this.state.success !== undefined ? <Alert bsStyle="success">{this.state.success}</Alert> :''}
+                {error !== undefined ? <Alert bsStyle="danger">{error}</Alert>:
+                 success !== undefined ? <Alert bsStyle="success">{success}</Alert> :''}
                  <Tabs defaultActiveKey={1} id="local-user-tabs">
                      <Tab eventKey={1} title={<FormattedMessage id="details" defaultMessage="Details" />}>
                         <Form horizontal style={{paddingTop: 10}}>
                             <StaticControl
                                     label={<FormattedMessage id='username' defaultMessage='Username' />}
-                                    value={this.state.username}/>
+                                    value={username}/>
                             <StaticControl
                                     label={<FormattedMessage id='email' defaultMessage='Email' />}
-                                    value={this.state.email}/>
+                                    value={email}/>
                             <StaticControl
                                     label={<FormattedMessage id='system' defaultMessage='System' />}
                                     value={
-                                        this.state.is_system?
+                                        is_system?
                                             <FormattedMessage id="yes" defaultMessage="Yes" />:
                                             <FormattedMessage id="no" defaultMessage="No" />
                                     }/>
-                            <StaticControl label={<FormattedMessage id='ui-profile' defaultMessage='UI Profile'/>} value={this.state.ui_profile}/>
+                            <StaticControl label={<FormattedMessage id='ui-profile' defaultMessage='UI Profile'/>} value={ui_profile}/>
                             <FormGroup>
                                 <Col componentClass={ControlLabel} sm={2}>
                                     <FormattedMessage id="groups" defaultMessage="Groups" />
@@ -121,19 +132,17 @@ export class LocalUserProfile extends Component {
 
                                 <Col sm={9}>
                                     {
-                                        this.state.groups.map((g) => {
-                                            return (
-                                                <FormControl.Static key={g.name}>
-                                                    {g.name}
-                                                    <FormattedMessage id="as" defaultMessage=" as " />
-                                                    {g.level}
-                                                </FormControl.Static>
-                                            )
-                                        })
+                                        groups.map(g => (
+                                            <FormControl.Static key={g.name}>
+                                                {g.name}
+                                                <FormattedMessage id="as" defaultMessage=" as " />
+                                                {g.level}
+                                            </FormControl.Static>
+                                        ))
                                     }
                                 </Col>
                             </FormGroup>
-                            <StaticControl label={<FormattedMessage id='registered-on' defaultMessage='Registered on'/>} value={this.state.registered_on}/>
+                            <StaticControl label={<FormattedMessage id='registered-on' defaultMessage='Registered on'/>} value={registered_on}/>
                             <FormGroup>
                                 <Col componentClass={ControlLabel} sm={2}>
                                     <FormattedMessage id="language" defaultMessage="Language" />
@@ -142,7 +151,7 @@ export class LocalUserProfile extends Component {
                                 <Col sm={2}>
                                     <FormControl
                                         componentClass="select"
-                                        value={this.state.language}
+                                        value={language}
                                         onChange={(e) => this.setState({language: e.target.value})}>
                                         <option value="fr">fr</option>
                                         <option value="nl">nl</option>
@@ -150,7 +159,7 @@ export class LocalUserProfile extends Component {
                                     </FormControl>
                                 </Col>
                             </FormGroup>
-                            { this.state.local_user && (
+                            { local_user && (
                                 <FormGroup validationState={validPassword}>
                                     <Col componentClass={ControlLabel} sm={2}>
                                         <FormattedMessage id="password" defaultMessage="Password" />
@@ -161,12 +170,12 @@ export class LocalUserProfile extends Component {
                                             componentClass="input"
                                             placeholder="Password"
                                             type="password"
-                                            value={this.state.password}
+                                            value={password}
                                             onChange={(e) => this.setState({password: e.target.value})} />
                                     </Col>
                                 </FormGroup>
                             )}
-                            { this.state.local_user && (
+                            { local_user && (
                                 <FormGroup validationState={validRepPassword}>
                                     <Col componentClass={ControlLabel} sm={2}>
                                         <FormattedMessage id="repeat-password" defaultMessage="Repeat password" />
@@ -177,7 +186,7 @@ export class LocalUserProfile extends Component {
                                             componentClass="input"
                                             placeholder="Repeat password"
                                             type="password"
-                                            value={this.state.repeated_password}
+                                            value={repeated_password}
                                             onChange={(e) => this.setState({repeated_password: e.target.value})} />
                                     </Col>
                                 </FormGroup>
@@ -192,7 +201,7 @@ export class LocalUserProfile extends Component {
                         </Form>
                      </Tab>
                      <Tab eventKey={2} title={<FormattedMessage id="callbacks" defaultMessage="Callbacks" />}>
-                         {this.props.notifications && <CallbackHandler userId={this.props.user_info.id} {...this.props} />}
+                         {this.props.notifications && <CallbackHandler userId={user_info.id} {...this.props} />}
                      </Tab>
                  </Tabs>
                 </Panel.Body>
@@ -203,6 +212,11 @@ export class LocalUserProfile extends Component {
 
 
 class UpdateUser extends Component {
+    static propTypes = {
+        onClose: PropTypes.func,
+        auth_token: PropTypes.string.isRequired,
+    };
+
     constructor(props) {
         super(props);
         this.state = {diff_user: {}, user: null, show: false};
@@ -219,14 +233,25 @@ class UpdateUser extends Component {
 
     onSubmit() {
         const {diff_user} = this.state;
-        fetch(API_URL_PREFIX + '/api/v01/system/users/' + this.props.user.id, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + this.props.auth_token
-            },
-            body: JSON.stringify(diff_user)
-        }).then(checkStatus)
+        const {user, auth_token} = this.props;
+        fetch_put(`/api/v01/system/users/${user.id}`, diff_user, auth_token)
+            .then(() => {
+                !this.cancelLoad && this.onClose();
+                this.props.notifications.addNotification({
+                    message: <FormattedMessage id="user-updated" defaultMessage="User saved!" />,
+                    level: 'success'
+                });
+            })
+            .catch(error => this.props.notifications.addNotification({
+                title: <FormattedMessage id="user-update-failed" defaultMessage="User update failed!" />,
+                message: error.message,
+                level: 'error'
+            }))
+    }
+
+    onRevoke(unblock) {
+        const {user, auth_token} = this.props;
+        fetch_put(`/api/v01/auth/${user.id}/${unblock?'un':''}revoke`, {}, auth_token)
         .then(() => {
             !this.cancelLoad && this.onClose();
             this.props.notifications.addNotification({
@@ -235,15 +260,16 @@ class UpdateUser extends Component {
             });
         })
         .catch(error => this.props.notifications.addNotification({
-            title: <FormattedMessage id="user-update-failed" defaultMessage="User update failed!" />,
+            title: <FormattedMessage id="user-revoke-failed" defaultMessage="User access update failed!" />,
             message: error.message,
             level: 'error'
         }))
     }
 
     _fetchUserDetails() {
-        fetch_get('/api/v01/system/users/' + this.props.user.id, this.props.auth_token)
-            .then(user => this.setState({user: user, diff_user: {}}))
+        const {user, auth_token} = this.props;
+        fetch_get(`/api/v01/system/users/${user.id}`, auth_token)
+            .then(user => !this.cancelLoad && this.setState({user: user, diff_user: {}}))
             .catch(console.error)
     }
 
@@ -344,9 +370,7 @@ class UpdateUser extends Component {
                                         value={user_.ui_profile}
                                         onChange={e => this.setState({diff_user: update(this.state.diff_user, {$merge: {ui_profile: e.target.value}})})}>
                                         <option value="admin">Admin</option>
-                                        <option value="porta">Porta</option>
-                                        <option value="tl">TL</option>
-                                        <option value="hd2">HD2</option>
+                                        <option value="user">User</option>
                                     </FormControl>
                                     <HelpBlock><FormattedMessage id="app.user.profile.help"
                                                                  defaultMessage="The profile has no influence on the rights in the application only the pages the user may see."/></HelpBlock>
@@ -400,6 +424,28 @@ class UpdateUser extends Component {
                                         onChange={e => this.setState({diff_user: update(this.state.diff_user, {$merge: {repeated_password: e.target.value}})})}/>
                                 </Col>
                             </FormGroup>
+                            <FormGroup validationState={false}>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="danger-zone" defaultMessage="Dangerous zone" />
+                                </Col>
+
+                                <Col sm={9}>
+                                    <ButtonToolbar>
+                                        {
+                                            user_.status === "REVOKED" ?
+                                                <Button onClick={() => this.onRevoke(true)} bsStyle="danger">
+                                                    <FormattedMessage id="allow" defaultMessage="Allow again"/>
+                                                </Button> :
+                                                <Button onClick={() => this.onRevoke(false)} bsStyle="danger">
+                                                    <FormattedMessage id="revoke" defaultMessage="Revoke"/>
+                                                </Button>
+                                        }
+                                    </ButtonToolbar>
+                                    <HelpBlock>
+                                        <FormattedMessage id="user-danger-zone-help" defaultMessage="Careful, these options may impact user access definitively!"/>
+                                    </HelpBlock>
+                                </Col>
+                            </FormGroup>
                             <FormGroup>
                                 <Col smOffset={2} sm={10}>
                                     <ButtonToolbar>
@@ -451,7 +497,7 @@ class NewUser extends Component {
             username: '',
             email: '',
             is_system: false,
-            ui_profile: 'porta',
+            ui_profile: 'user',
             language: 'en',
             groups: [],
             password: '',
@@ -472,20 +518,14 @@ class NewUser extends Component {
             delete user_data.password;
         }
         this.setState({creating: true});
-        fetch(API_URL_PREFIX + '/api/v01/system/users', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + this.props.auth_token
-            },
-            body: JSON.stringify(user_data)
-        }).then(checkStatus)
-        .then(this.onClose)
-        .catch(error => this.setState({error: error, creating: false}))
+
+        fetch_post('/api/v01/system/users', user_data, this.props.auth_token)
+            .then(this.onClose)
+            .catch(error => this.setState({error: error, creating: false}))
     }
 
     render() {
-        const {user} = this.state;
+        const {user, show, error} = this.state;
 
         // email has to contain @
         const validEmail = (user.email.length === 0) ? null : (user.email.indexOf('@') !== -1) ? "success" : "error";
@@ -495,22 +535,22 @@ class NewUser extends Component {
 
         const validForm = !this.state.creating && validEmail === 'success' && ((validPassword === null && validRepPassword === null) || (validPassword === 'success' && validRepPassword === 'success'));
 
-        this.state.error && setTimeout(() => this.setState({error: false}), 2000);
+        error && setTimeout(() => this.setState({error: false}), 2000);
 
         return (
             <div>
                 <Button bsStyle='primary' onClick={() => this.setState({show: true})}>
                     <FormattedMessage id="add-user" defaultMessage="Add user" />
                 </Button>
-                <Modal show={this.state.show} onHide={this.onClose} backdrop={false}>
+                <Modal show={show} onHide={this.onClose} backdrop={false}>
                     <Modal.Header closeButton>
                         <Modal.Title><FormattedMessage id="create-a-user" defaultMessage="Create a user" /></Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
                         {
-                            this.state.error &&
+                            error &&
                                 <Alert bsStyle="danger">
-                                    <FormattedMessage id="fail-to-create-the-user" defaultMessage="Fail to create the user" /><br/>{this.state.error.message}
+                                    <FormattedMessage id="fail-to-create-the-user" defaultMessage="Fail to create the user" /><br/>{error.message}
                                 </Alert>
                         }
                         <Form horizontal>
@@ -523,7 +563,7 @@ class NewUser extends Component {
                                     <FormControl
                                         componentClass="input"
                                         value={user.username}
-                                        onChange={e => this.setState({user: update(this.state.user, {$merge: {username: e.target.value}})})}/>
+                                        onChange={e => this.setState({user: update(user, {$merge: {username: e.target.value}})})}/>
                                 </Col>
                             </FormGroup>
                             <FormGroup validationState={validEmail}>
@@ -535,7 +575,7 @@ class NewUser extends Component {
                                     <FormControl
                                         componentClass="input"
                                         value={user.email}
-                                        onChange={e => this.setState({user: update(this.state.user, {$merge: {email: e.target.value}})})}/>
+                                        onChange={e => this.setState({user: update(user, {$merge: {email: e.target.value}})})}/>
                                 </Col>
                             </FormGroup>
                             <FormGroup>
@@ -547,7 +587,7 @@ class NewUser extends Component {
                                     <Checkbox
                                         checked={user.is_system}
                                         readOnly={!this.props.user_info.is_system} // if the user logged is system, then he can create other "system" user(s), otherwise, not.
-                                        onChange={e => this.setState({user: update(this.state.user, {$merge: {is_system: e.target.checked}})})}/>
+                                        onChange={e => this.setState({user: update(user, {$merge: {is_system: e.target.checked}})})}/>
 
                                     <HelpBlock><FormattedMessage id="app.user.is_system.label"
                                                                  defaultMessage="This is the 'full-access' flag, you can't set it if you don't have it already."/></HelpBlock>
@@ -562,11 +602,9 @@ class NewUser extends Component {
                                     <FormControl
                                         componentClass="select"
                                         value={user.ui_profile}
-                                        onChange={e => this.setState({user: update(this.state.user, {$merge: {ui_profile: e.target.value}})})}>
+                                        onChange={e => this.setState({user: update(user, {$merge: {ui_profile: e.target.value}})})}>
                                         <option value="admin">Admin</option>
-                                        <option value="porta">Porta</option>
-                                        <option value="tl">TL</option>
-                                        <option value="hd2">HD2</option>
+                                        <option value="user">User</option>
                                     </FormControl>
                                     <HelpBlock><FormattedMessage id="app.user.profile.help"
                                                                  defaultMessage="The profile has no influence on the rights in the application only the pages the user may see."/></HelpBlock>
@@ -585,7 +623,7 @@ class NewUser extends Component {
                                     <FormControl
                                         componentClass="select"
                                         value={user.language}
-                                        onChange={e => this.setState({user: update(this.state.user, {$merge: {language: e.target.value}})})}>
+                                        onChange={e => this.setState({user: update(user, {$merge: {language: e.target.value}})})}>
                                         <option value="fr">fr</option>
                                         <option value="nl">nl</option>
                                         <option value="en">en</option>
@@ -603,7 +641,7 @@ class NewUser extends Component {
                                         placeholder="Password"
                                         type="password"
                                         value={user.password}
-                                        onChange={e => this.setState({user: update(this.state.user, {$merge: {password: e.target.value}})})}/>
+                                        onChange={e => this.setState({user: update(user, {$merge: {password: e.target.value}})})}/>
                                 </Col>
                             </FormGroup>
                             <FormGroup validationState={validRepPassword}>
@@ -617,7 +655,7 @@ class NewUser extends Component {
                                         placeholder="Confirm password"
                                         type="password"
                                         value={user.repeated_password}
-                                        onChange={e => this.setState({user: update(this.state.user, {$merge: {repeated_password: e.target.value}})})}/>
+                                        onChange={e => this.setState({user: update(user, {$merge: {repeated_password: e.target.value}})})}/>
                                 </Col>
                             </FormGroup>
                         </Form>
@@ -637,6 +675,12 @@ class NewUser extends Component {
 }
 
 class DeleteUser extends Component {
+    static propTypes = {
+        onClose: PropTypes.func,
+        user: PropTypes.object.isRequired,
+        auth_token: PropTypes.string.isRequired
+    };
+
     constructor(props) {
         super(props);
         this.state = {};
@@ -645,13 +689,18 @@ class DeleteUser extends Component {
     }
 
     onDelete() {
-        fetch_delete(`/api/v01/system/users/${this.props.user.id}`, this.props.auth_token)
+        const {user, auth_token} = this.props;
+        fetch_delete(`/api/v01/system/users/${user.id}`, auth_token)
             .then(this.onClose)
-            .catch(error => this.setState({error: error}));
+            .catch(error => this.props.notifications.addNotification({
+                title: <FormattedMessage id="user-update-failed" defaultMessage="User update failed!" />,
+                message: error.message,
+                level: 'error'
+            }));
     }
 
     onClose() {
-        this.setState({show: false, error: undefined});
+        this.setState({show: false});
         this.props.onClose && this.props.onClose();
     }
 
@@ -666,12 +715,6 @@ class DeleteUser extends Component {
                         <Modal.Title><FormattedMessage id="confirm" defaultMessage="Confirm" /></Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
-                        {
-                            this.state.error &&
-                                <Alert bsStyle="danger">
-                                    {this.state.error.message}
-                                </Alert>
-                        }
                         <Form horizontal>
                             <StaticControl label={<FormattedMessage id='username' defaultMessage='Username'/>} value={this.props.user.username}/>
                         </Form>
@@ -686,20 +729,14 @@ class DeleteUser extends Component {
     }
 }
 
-class UserActions extends Component {
-    render() {
-        return (
-            <ButtonToolbar>
-                <UpdateUser
-                    onClose={this.props.onUserUpdate}
-                    {...this.props}/>
-                <DeleteUser
-                    onClose={this.props.onUserDelete}
-                    {...this.props} />
-            </ButtonToolbar>
-        )
-    }
-}
+
+const UserActions = ({onUserUpdate, onUserDelete, ...props}) => (
+    <ButtonToolbar>
+        <UpdateUser onClose={onUserUpdate} {...props}/>
+        <DeleteUser onClose={onUserDelete} {...props} />
+    </ButtonToolbar>
+);
+
 
 export default class SearchUsers extends Search {
     static defaultProps = update(Search.defaultProps, {'$merge': {
@@ -719,12 +756,12 @@ export default class SearchUsers extends Search {
                 {
                     field: 'username',
                     op: 'like',
-                    value: '%' + f + '%'
+                    value: `%${f}%`
                 },
                 {
                     field: 'email',
                     op: 'like',
-                    value: '%' + f + '%'
+                    value: `%${f}%`
                 }
             ]}
         })
@@ -736,6 +773,7 @@ export default class SearchUsers extends Search {
 
     render() {
         const {resources, error, sorting_spec, pagination, filter_criteria} = this.state;
+        const {user_info, auth_token} = this.props;
         return (
             <div>
                 <Breadcrumb>
@@ -786,11 +824,11 @@ export default class SearchUsers extends Search {
                         <ButtonToolbar>
                             <NewUser
                                 onClose={() => this._refresh()}
-                                user_info={this.props.user_info}
-                                auth_token={this.props.auth_token} />
+                                user_info={user_info}
+                                auth_token={auth_token} />
                             <LinkContainer to={"/system/users/audit"}>
                                 <Button bsStyle='danger'>
-                                    <FormattedMessage id="audit_users" defaultMessage="Audit"/>
+                                    <FormattedMessage id="audit" defaultMessage="Audit"/>
                                 </Button>
                             </LinkContainer>
                         </ButtonToolbar>

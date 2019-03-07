@@ -1,5 +1,3 @@
-// import React from 'react';
-
 export const API_URL_PREFIX = process.env.NODE_ENV === 'production'?window.location.origin:'http://127.0.0.1:5000';
 export const API_URL_PROXY_PREFIX = '/api/v01/apio/sync';
 
@@ -17,11 +15,13 @@ export class AuthService {
 
 
 export function checkStatus(response) {
-  if (response.status >= 200 && response.status < 300) {
-    return response
-  } else {
-    //let error = null;
-    let contentType = response.headers.get("content-type");
+    if (response.status >= 200 && response.status < 300) {
+        return response
+    } else if (response.status === 401) {
+        console.log("the request was *not* authorized!");
+    }
+
+    const contentType = response.headers.get("content-type");
     if(contentType && contentType.indexOf("application/json") !== -1) {
         return response.json().then(function(json) {
           const message = json.error || response.statusText;
@@ -36,8 +36,7 @@ export function checkStatus(response) {
 
     let error = new Error(response.statusText);
     error.response = response;
-    throw error
-  }
+    throw error;
 }
 
 export function parseJSON(response) {

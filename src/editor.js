@@ -259,6 +259,7 @@ function draw_editor(container, handlers, placeholders, props) {
             alert("the workflow need a `start`");
             return;
         }
+        Object.keys(r.activity.definition.cells).map(c => delete r.activity.definition.cells[c].name);
 
         saveData(r.activity, () => {
             // update the original activity stored *if* everything went well.

@@ -11,6 +11,7 @@ import ActiveTransactionsPerWorkflow from './tx-active-per-workflow';
 import {EmptyTile, GatewaysStatusTile, ErrorCasesTile} from './dashboard-tiles';
 
 import './dashboard.css';
+const REFRESH_CYCLE = 30;
 
 
 export default class Dashboard extends Component {
@@ -18,31 +19,17 @@ export default class Dashboard extends Component {
         super(props);
         this.cancelLoad = false;
         this.state = {stats: {active_requests: {}}, gateways: {}};
-        this.fetch_gateways = this.fetch_gateways.bind(this);
-        this.fetch_stats = this.fetch_stats.bind(this);
     }
 
     fetch_gateways() {
         fetch_get('/api/v01/gateways', this.props.auth_token)
-            .then(data => {
-                if(this.cancelLoad) return;
-                this.setState({gateways: data.gateways});
-                setTimeout(this.fetch_gateways, 30 * 1000);
-            })
-            .catch(error => {
-                if(this.cancelLoad) return;
-                console.error(error);
-                setTimeout(this.fetch_gateways, 10 * 1000);
-            });
+            .then(data => !this.cancelLoad && this.setState({gateways: data.gateways}))
+            .catch(console.error);
     }
 
     fetch_stats() {
         fetch_get('/api/v01/apio/stats', this.props.auth_token)
-            .then(data => {
-                if(this.cancelLoad) return;
-                this.setState({stats: data});
-                setTimeout(this.fetch_stats, 30 * 1000); // every 30 seconds
-            })
+            .then(data => !this.cancelLoad && this.setState({stats: data}))
             .catch(error => {
                 if(this.cancelLoad) return;
                 this.props.notifications && this.props.notifications.addNotification({
@@ -50,17 +37,21 @@ export default class Dashboard extends Component {
                     message: error.message,
                     level: 'error'
                 });
-                setTimeout(this.fetch_stats, 10 * 1000); // every 10 seconds
             });
     }
 
     componentDidMount() {
         this.fetch_gateways();
         this.fetch_stats();
+
+        this.refreshGatewaysHandler = setInterval(this.fetch_gateways.bind(this), REFRESH_CYCLE * 1000);
+        this.refreshStatsHandler = setInterval(this.fetch_stats.bind(this), REFRESH_CYCLE * 1000);
     }
 
     componentWillUnmount() {
         this.cancelLoad = true;
+        this.refreshGatewaysHandler && clearInterval(this.refreshGatewaysHandler);
+        this.refreshStatsHandler && clearInterval(this.refreshStatsHandler);
     }
 
     render() {

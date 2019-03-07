@@ -8,6 +8,7 @@ import {FormattedMessage} from 'react-intl';
 import {API_URL_PREFIX, fetch_get, fetchOperators} from "../utils";
 import queryString from "query-string";
 import update from "immutability-helper/index";
+import PropTypes from 'prop-types';
 
 
 export const StaticControl = ({label, value, validationState}) => (
@@ -36,6 +37,19 @@ export class Search extends React.Component {
         defaultSortingSpec: [],
         handleOperators: false,
         useNotifications: true,
+    };
+
+    static propTypes = {
+        searchUrl: PropTypes.string.isRequired,
+        auth_token: PropTypes.string.isRequired,
+        location: PropTypes.shape({
+            search: PropTypes.string
+        }),
+        collectionName: PropTypes.string.isRequired,
+        defaultCriteria: PropTypes.array.isRequired,
+        defaultSortingSpec: PropTypes.array.isRequired,
+        handleOperators: PropTypes.bool.isRequired,
+        useNotifications: PropTypes.bool.isRequired,
     };
 
     static criteriaFromParams(url_params, default_params) {
@@ -92,7 +106,7 @@ export class Search extends React.Component {
     _refreshOperators() {
         fetchOperators(
             this.props.auth_token,
-            data => {!this.cancelLoad && this.setState({operators: data})},
+            data => !this.cancelLoad && this.setState({operators: data}),
             console.log
         );
     }
@@ -133,9 +147,7 @@ export class Search extends React.Component {
         this.setState({resources: undefined});
 
         fetch_get(url, auth_token)
-            .then(data => {
-                if(this.cancelLoad) return;
-                this.setState({
+            .then(data => !this.cancelLoad && this.setState({
                     resources: data[collectionName].map(this._normalizeResource),
                     pagination: {
                         page_number: data.pagination[0], // page_number, page_size, num_pages, total_results
@@ -144,8 +156,7 @@ export class Search extends React.Component {
                         total_results: data.pagination[3],
                     },
                     sorting_spec: data.sorting || [],
-                });
-            })
+            }))
             .catch(error => {
                 if(this.cancelLoad) return;
 

@@ -19,11 +19,11 @@ class Numbers extends Component {
         super(props);
         this.cancelLoad = false;
         this.state = {
-            numbers: [],
+            users: [],
             deleting: false,
             loading: false,
         };
-        this._fetchNumbers = this._fetchNumbers.bind(this);
+        this._fetchUsers = this._fetchUsers.bind(this);
         this.onDelete = this.onDelete.bind(this);
     }
 
@@ -31,10 +31,10 @@ class Numbers extends Component {
         this.cancelLoad = true;
     }
 
-    _fetchNumbers() {
+    _fetchUsers() {
         this.setState({loading: true});
-        fetch_get(`${API_URL_PROXY_PREFIX}/api/v1/orange/tenants/${this.props.tenantId}/groups/${this.props.siteId}/numbers/`, this.props.auth_token)
-            .then(data => !this.cancelLoad && this.setState({numbers: data.numbers, loading: false}))
+        fetch_get(`${API_URL_PROXY_PREFIX}/api/v1/tenants/${this.props.tenantId}/groups/${this.props.siteId}/users/`, this.props.auth_token)
+            .then(data => !this.cancelLoad && this.setState({users: data.users, loading: false}))
             .catch(error => {
                 console.error(error);
                 !this.cancelLoad && this.setState({loading: false});
@@ -42,16 +42,16 @@ class Numbers extends Component {
     }
 
     componentDidMount() {
-        this._fetchNumbers();
+        this._fetchUsers();
     }
 
-    onDelete(number) {
+    onDelete(userId) {
         this.setState({deleting: true});
-        fetch_delete(`${API_URL_PROXY_PREFIX}/api/v1/orange/tenants/${this.props.tenantId}/groups/${this.props.siteId}/numbers/${number}/`, this.props.auth_token)
+        fetch_delete(`${API_URL_PROXY_PREFIX}/api/v1/tenants/${this.props.tenantId}/groups/${this.props.siteId}/users/${userId}/`, this.props.auth_token)
             .then(() => {
                 if(this.cancelLoad) return;
                 this.props.notifications.addNotification({
-                    message: <FormattedMessage id="delete-number-ok" defaultMessage="Number deleted"/>,
+                    message: <FormattedMessage id="delete-user-ok" defaultMessage="User deleted"/>,
                     level: 'success',
                 });
                 this.setState({confirmDelete: undefined, deleting: false});
@@ -60,7 +60,7 @@ class Numbers extends Component {
             .catch(error => {
                 this.setState({deleting: false});
                 this.props.notifications.addNotification({
-                    title: <FormattedMessage id="delete-number-fail" defaultMessage="Fail delete number"/>,
+                    title: <FormattedMessage id="delete-number-fail" defaultMessage="Fail User number"/>,
                     //message: error.message,
                     level: 'error',
                 })
@@ -68,7 +68,7 @@ class Numbers extends Component {
     }
 
     render() {
-        const {numbers, confirmDelete, deleting, loading} = this.state;
+        const {users, confirmDelete, deleting, loading} = this.state;
         const closeDelete = () => this.setState({"confirmDelete": undefined});
 
         if(loading) {
@@ -83,15 +83,25 @@ class Numbers extends Component {
                 <Table>
                     <thead>
                         <tr>
-                            <th style={{width: '80%'}}><FormattedMessage id="number" defaultMessage="Number"/></th>
-                            <th style={{width: '20%'}}/>
+                            <th style={{width: '2%'}}/>
+                            <th style={{width: '20%'}}><FormattedMessage id="username" defaultMessage="Username"/></th>
+                            <th style={{width: '20%'}}><FormattedMessage id="firstname" defaultMessage="Firstname"/></th>
+                            <th style={{width: '20%'}}><FormattedMessage id="lastname" defaultMessage="Lastname"/></th>
+                            <th style={{width: '20%'}}><FormattedMessage id="phonenumber" defaultMessage="Phonenumber"/></th>
+                            <th style={{width: '18%'}}/>
                         </tr>
                     </thead>
                     <tbody>
                     {
-                        numbers.map(n => (
-                            <tr key={n.phoneNumber}>
-                                <td>{n.phoneNumber}</td>
+                        users.map(n => (
+                            <tr key={n.userId}>
+                                <td>{n.userId}</td>
+                                <td>{n.username}</td>
+                                <td>{n.firstName}</td>
+                                <td>{n.lastName}</td>
+                                <td>
+                                    {n.phoneNumber} {n.extension && `(${n.extension})`}
+                                </td>
                                 <td>
                                     <ButtonToolbar>
                                         {/*
@@ -99,7 +109,7 @@ class Numbers extends Component {
                                             <Glyphicon glyph="pencil"/>
                                         </Button>
                                         */}
-                                        <Button onClick={() => this.setState({confirmDelete: n.phoneNumber})} bsStyle="danger">
+                                        <Button onClick={() => this.setState({confirmDelete: n.userId})} bsStyle="danger">
                                             <Glyphicon glyph="remove-sign"/>
                                         </Button>
                                     </ButtonToolbar>
@@ -117,7 +127,7 @@ class Numbers extends Component {
                         {
                             deleting && <Alert bsStyle="info"><FormattedMessage id="deleting" defaultMessage="Deleting..."/></Alert>
                         }
-                        <p><FormattedMessage id="confirm-delete-warning" defaultMessage={`You are about to delete the number ${confirmDelete}!`}/></p>
+                        <p><FormattedMessage id="confirm-delete-warning" defaultMessage={`You are about to delete the user ${confirmDelete}!`}/></p>
                     </Modal.Body>
                     <Modal.Footer>
                         <Button onClick={() => this.onDelete(confirmDelete)} bsStyle="danger" disabled={deleting}>
@@ -137,9 +147,17 @@ export const NumbersManagement = ({match, ...props}) => (
     <div>
         <Breadcrumb>
             <Breadcrumb.Item active><FormattedMessage id="data" defaultMessage="Data"/></Breadcrumb.Item>
-            <Breadcrumb.Item as="div"><Link to='/apio/tenants'><FormattedMessage id="tenants" defaultMessage="Tenants"/></Link></Breadcrumb.Item>
+            <Breadcrumb.Item as="div" active>
+                <FormattedMessage id="tenants" defaultMessage="Tenants">
+                    { message => <Link to='/apio/tenants'>{message}</Link> }
+                </FormattedMessage>
+            </Breadcrumb.Item>
             <Breadcrumb.Item active>{match.params.tenantId}</Breadcrumb.Item>
-            <Breadcrumb.Item as="div"><Link to={`/apio/tenants/${match.params.tenantId}/groups`}><FormattedMessage id="groups" defaultMessage="Groups"/></Link></Breadcrumb.Item>
+            <Breadcrumb.Item as="div" active>
+                <FormattedMessage id="groups" defaultMessage="Groups">
+                    { message => <Link to={`/apio/tenants/${match.params.tenantId}/groups`}>{message}</Link> }
+                </FormattedMessage>
+            </Breadcrumb.Item>
             <Breadcrumb.Item href='#'>{match.params.siteId}</Breadcrumb.Item>
             <Breadcrumb.Item active><FormattedMessage id="numbers" defaultMessage="Numbers"/></Breadcrumb.Item>
         </Breadcrumb>

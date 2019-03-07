@@ -405,7 +405,6 @@ class App extends Component {
             user_info: undefined,
             error_msg: undefined,
         };
-        // this._auth_token = this.props.cookies.get("auth_token");
         this._notificationSystem = React.createRef();
 
         this.getUserInfo = this.getUserInfo.bind(this);
@@ -414,23 +413,6 @@ class App extends Component {
 
         sso_auth_service.manager.events.addUserSignedOut(() => this.logout());
         sso_auth_service.manager.events.addUserLoaded(this.ssoTokenToLocalToken.bind(this));
-        sso_auth_service.manager.events.addAccessTokenExpired(this.onSsoTokenExpired.bind(this));
-
-        sso_auth_service.manager.events.addAccessTokenExpiring(() => console.log("token expiring"));
-    }
-
-    onSsoTokenExpired() {
-        if(window.location.pathname.endsWith('callback')) {
-            return;
-        }
-        console.log(`token expired: ${window.location}`);
-        // sso_auth_service.manager.signinSilent();
-        sso_auth_service.manager._signinSilentIframe({}).catch(e => {
-            console.error(e);
-            if(e.error === "login_required") {
-                this.logout();
-            }
-        })
     }
 
     getUserInfo(auth_token) {
@@ -441,7 +423,7 @@ class App extends Component {
             })
             .catch(error => {
                 if(error.response !== undefined && error.response.status === 401) {  // unauthorized
-                    //this.logout()
+                    auth_token && this.logout()
                 } else {
                     this.setState({error_msg: <FormattedMessage id="app.no_connection" defaultMessage="Connection issue: Refresh the page or contact the site admin." /> })
                 }
@@ -461,26 +443,26 @@ class App extends Component {
         if(this.isAuthenticated() && !this.state.user_info && this.state.auth_token) {
             this.getUserInfo(this.state.auth_token);
         }
-        /*
-        this.getDatabaseStatus();
-        */
     }
 
     componentDidMount() {
         this.getDatabaseStatus();
+        this.props.cookies.get('auth_sso') === '1' && !sso_auth_service.isLoggedIn() && sso_auth_service.signinSilent();
     }
 
-    updateToken(token) {
+    updateToken(token, sso_auth) {
         let tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate()+1);
         this.setState({auth_token: token, error_msg: undefined});
         this.props.cookies.set('auth_token', token, {expires: tomorrow, path: '/'});  // maxAge = 24hours
+        this.props.cookies.set('auth_sso', sso_auth?'1':'0', {path: '/'});  // maxAge = 24hours
     }
 
     logout() {
         this.setState({auth_token: undefined, user_info: undefined});
         console.log('logout');
         this.props.cookies.remove("auth_token", { path: '/' });
+        this.props.cookies.remove("auth_sso", { path: '/' });
         this.props.cookies.remove("user_language", { path: '/' });
         sso_auth_service.removeUser().then(() => this.props.onLanguageUpdate(undefined));
     }
@@ -504,7 +486,7 @@ class App extends Component {
             .then(r => {
                 const internal_token = r.token;
                 console.log("got access token");
-                this.updateToken(internal_token);
+                this.updateToken(internal_token, true);
                 return r;
             })
             .then(r => this.getUserInfo(r.token))
