@@ -1,5 +1,6 @@
 import "babel-polyfill";
 import "url-polyfill";
+import "isomorphic-fetch";
 import React, { Component } from 'react';
 
 import Alert from 'react-bootstrap/lib/Alert';
