@@ -19,6 +19,7 @@ import Badge from 'react-bootstrap/lib/Badge';
 import Checkbox from 'react-bootstrap/lib/Checkbox';
 import Breadcrumb from 'react-bootstrap/lib/Breadcrumb';
 import ButtonToolbar from 'react-bootstrap/lib/ButtonToolbar';
+import ButtonGroup from 'react-bootstrap/lib/ButtonGroup';
 import OverlayTrigger from 'react-bootstrap/lib/OverlayTrigger';
 import Tooltip from 'react-bootstrap/lib/Tooltip';
 
@@ -896,7 +897,8 @@ const TxTable = ({tx, request}) => (
 
 
 const ContextTable = ({context}) => (
-    <Table style={{tableLayout: 'fixed'}}><tbody>
+    <Table style={{tableLayout: 'fixed'}}>
+        <tbody>
         {context.map(c =>
             <tr key={c.id}><th>{c.key}</th><td style={{wordWrap:'break-word'}}>{c.value}</td></tr>
         )}
@@ -1075,7 +1077,7 @@ export class Transaction extends Component {
         fetch_get(`/api/v01/transactions/${this.state.tx.id}/sub_transactions`, this.props.auth_token)
             .then(data => {
                 const {subinstances} = this.state;
-                const missing_tx = data.transactions.filter(
+                const missing_tx = data.instances.filter(
                     t => subinstances.findIndex(si => si.id === t.id) === -1
                 );
 
@@ -1168,14 +1170,6 @@ export class Transaction extends Component {
             });
     }
 
-    onCancel() {
-        this.sendEvent('', 'cancel');
-    }
-
-    onAbort() {
-        this.sendEvent('', 'abort');
-    }
-
     onEdit() {
         this.setState({edit_request: true})
     }
@@ -1201,7 +1195,7 @@ export class Transaction extends Component {
                 </Alert>
             );
         }
-        if(tx && tx.tasks.filter(t => t.status === 'ERROR') !== 0 && tx.status === 'ACTIVE') {
+        if(tx && tx.tasks.filter(t => t.status === 'ERROR').length !== 0 && tx.status === 'ACTIVE') {
             alerts.push(
                 <Alert bsStyle="warning" key='blocking-error'>
                     <FormattedMessage id="blocking-error" defaultMessage="The request is blocked and needs manual intervention. (see workflow for details)"/>
@@ -1237,12 +1231,23 @@ export class Transaction extends Component {
                             </Panel>
                         </Col>
                         <Col xs={12} sm={6} md={4} lg={4}>
-                            {
-                                // todo: add force close?
-                            }
-                            <Panel header="Context">
-                                <ContextTable context={tx.context}/>
+                            <Panel style={{marginTop: "10px"}}>
+                                <ButtonGroup vertical block>
+                                    {
+                                        tx.status === "ACTIVE" &&
+                                        <Button onClick={() => this.onForceClose()}><FormattedMessage id="force-close" defaultMessage="Force close" /></Button>
+                                    }
+                                    {
+                                        tx.status !== "ACTIVE" &&
+                                        <Button onClick={() => this.onReopen()}><FormattedMessage id="reopen" defaultMessage="Reopen" /></Button>
+                                    }
+                                </ButtonGroup>
                             </Panel>
+                            { tx.context && tx.context.length !== 0 &&
+                                <Panel header="Context">
+                                    <ContextTable context={tx.context}/>
+                                </Panel>
+                            }
                         </Col>
                         <Col xs={12} sm={12} md={12} lg={12}>
                             <Panel>
