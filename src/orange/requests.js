@@ -487,7 +487,7 @@ export class SubInstance extends Component {
                 statusColor = '#a4d1a2';
                 statusGlyph = 'play';
         }
-        const callback_task_name = tasks && tasks.find(t => t.id === instance.callback_task_id).cell_id;
+        const callback_task = tasks && tasks.find(t => t.id === instance.callback_task_id);
 
         return (
             <tr key={`message_sub_flow_sync_${instance.id}`}>
@@ -505,7 +505,7 @@ export class SubInstance extends Component {
                 </td>
                 <td style={{width: '15%'}}>
                     {
-                        callback_task_name && <Badge>{callback_task_name}</Badge>
+                        callback_task && <Badge>{callback_task.cell_id}</Badge>
                     }
                 </td>
             </tr>
