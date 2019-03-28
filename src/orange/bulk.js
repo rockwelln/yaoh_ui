@@ -139,6 +139,15 @@ class NewBulk extends Component {
                                     type="file"
                                     accept={`.${source_type}`}
                                     onChange={e => this.setState({source: e.target.files[0], approvedSource: false})} />
+
+                                {
+                                    source_type === "csv" &&
+                                        <HelpBlock style={{color: 'grey'}}>
+                                            <FormattedMessage
+                                                id="csv-format"
+                                                defaultMessage="The file has to contains the headers and the delimiter has to be a semicolon (;)." />
+                                        </HelpBlock>
+                                }
                             </Col>
                         </FormGroup>
                         <FormGroup validationState={validAction}>
