@@ -1090,13 +1090,23 @@ export class Transaction extends Component {
 
     changeTxStatus(new_status) {
         fetch_put(`/api/v01/transactions/${this.state.tx.id}`, {status: new_status}, this.props.auth_token)
-            .then(() => {
-                this.fetchTxDetails(false);
-                this.props.notifications.addNotification({
-                    message: <FormattedMessage id="task-status-changed" defaultMessage="Task status updated!"/>,
-                    level: 'success'
-                });
-            })
+            .then(() =>
+                this.state.tx.original_request_id &&
+                fetch_put(`/api/v01/apio/requests/${this.state.tx.original_request_id}`, {status: new_status === "CLOSED_IN_ERROR"?"ERROR":new_status}, this.props.auth_token)
+                    .then(() => {
+                        this.fetchTxDetails(false);
+                        this.props.notifications.addNotification({
+                            message: <FormattedMessage id="task-status-changed" defaultMessage="Task status updated!"/>,
+                            level: 'success'
+                        });
+                    })
+                    .catch(error => this.props.notifications.addNotification({
+                            title: <FormattedMessage id="task-update-failed" defaultMessage="Task status update failed!"/>,
+                            message: error.message,
+                            level: 'error'
+                        })
+                    )
+            )
             .catch(error => this.props.notifications.addNotification({
                     title: <FormattedMessage id="task-update-failed" defaultMessage="Task status update failed!"/>,
                     message: error.message,
