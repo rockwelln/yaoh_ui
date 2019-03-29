@@ -440,9 +440,20 @@ export class SubInstance extends Component {
             request: {},
         };
         this.computeLabel = this.computeLabel.bind(this);
+        this.refreshRequest = this.refreshRequest.bind(this);
+        this.refreshRequestHandler = null;
     }
 
     componentDidMount() {
+        this.refreshRequest();
+        this.refreshRequestHandler = setInterval(this.refreshRequest, 1000);
+    }
+
+    componentWillUnmount() {
+        this.refreshRequestHandler && clearInterval(this.refreshRequestHandler)
+    }
+
+    refreshRequest() {
         const {instance, auth_token} = this.props;
 
         fetch_get(`/api/v01/apio/requests/${instance.original_request_id}`, auth_token)
@@ -470,7 +481,7 @@ export class SubInstance extends Component {
     }
 
     render() {
-        const {instance, tasks, colOffset} = this.props;
+        const {instance, tasks, colOffset, onRollback, onReplay} = this.props;
         const {request} = this.state;
         let statusColor = '';
         let statusGlyph = '';
@@ -496,11 +507,19 @@ export class SubInstance extends Component {
                 }
                 <td style={{width: '2%'}}><Glyphicon style={{color: statusColor}} glyph={statusGlyph}/></td>
                 <td>
-                    <Link to={`/transactions/${instance.id}`}>{this.computeLabel()}</Link>
-                </td>
-                <td style={{width: '15%'}}>
+                    <Link to={`/transactions/${instance.id}`}>{this.computeLabel()}</Link>{' '}
                     {
-                        instance.errors !== 0 && <Badge bsStyle="danger">{instance.errors}</Badge>
+                        instance.errors !== 0 && <Badge style={{backgroundColor: '#ff0808'}}>{instance.errors}{' '}<FormattedMessage id="errors" defaultMessage="error(s)"/></Badge>
+                    }
+                </td>
+                <td style={{width: '30%'}}>
+                    {
+                        request.status === "ACTIVE" && instance.tasks && instance.tasks.filter(t => t.status === 'ERROR').map(t =>
+                            <ButtonToolbar key={`subints_act_${instance.id}_${t.id}`}>
+                                <Button bsStyle="primary" onClick={() => onReplay(instance.id, t.id)}><FormattedMessage id="replay" defaultMessage="Replay" /></Button>
+                                <Button bsStyle="danger" onClick={() => onRollback(instance.id, t.id)}><FormattedMessage id="rollback" defaultMessage="Rollback" /></Button>
+                            </ButtonToolbar>
+                        )
                     }
                 </td>
                 <td style={{width: '15%'}}>
@@ -513,7 +532,7 @@ export class SubInstance extends Component {
     }
 }
 
-const SubInstancesTable = ({subinstances, tasks, auth_token}) => (
+const SubInstancesTable = ({subinstances, tasks, ...props}) => (
     <Table condensed>
         <tbody>
         {
@@ -524,7 +543,7 @@ const SubInstancesTable = ({subinstances, tasks, auth_token}) => (
                     return 0;
                 }
             ).map(
-                (e, i) => <SubInstance key={`subinst_${i}`} instance={e} tasks={tasks} auth_token={auth_token}/>
+                (e, i) => <SubInstance key={`subinst_${i}`} instance={e} tasks={tasks} {...props} />
             )
         }
         </tbody>
@@ -859,7 +878,7 @@ const TasksTable = ({tasks, onReplay, onRollback, user_can_replay, tx_id}) => (
                     }
                 ).map(t => {
                     const can_replay = onReplay && user_can_replay && t.status === 'ERROR' &&
-                        t.id === Math.max(tasks.filter((ot) => ot.cell_id === t.cell_id).map((oot) => oot.id));
+                        t.id === Math.max(tasks.filter(ot => ot.cell_id === t.cell_id).map(oot => oot.id));
                     return (
                         <tr key={t.id}>
                             <th>{t.cell_id}</th>
@@ -871,6 +890,7 @@ const TasksTable = ({tasks, onReplay, onRollback, user_can_replay, tx_id}) => (
                                 <ButtonToolbar>
                                     {can_replay && <Button bsStyle="primary" onClick={() => onReplay(tx_id, t.id)}><FormattedMessage id="replay" defaultMessage="Replay" /></Button>}
                                     {can_replay && <Button bsStyle="danger" onClick={() => onRollback(tx_id, t.id)}><FormattedMessage id="rollback" defaultMessage="Rollback"/></Button>}
+                                    {onReplay && user_can_replay && t.status === 'WAIT' && <Button bsStyle="danger" onClick={() => onRollback(tx_id, t.id)}><FormattedMessage id="full-rollback" defaultMessage="Full rollback"/></Button>}
                                 </ButtonToolbar>
                             </td>
                         </tr>
@@ -1076,7 +1096,8 @@ export class Transaction extends Component {
     refreshSubInstances() {
         fetch_get(`/api/v01/transactions/${this.state.tx.id}/sub_transactions`, this.props.auth_token)
             .then(data => {
-                const {subinstances} = this.state;
+                !this.cancelLoad && this.setState({subinstances: data.instances});
+                /*
                 const missing_tx = data.instances.filter(
                     t => subinstances.findIndex(si => si.id === t.id) === -1
                 );
@@ -1084,6 +1105,7 @@ export class Transaction extends Component {
                 !this.cancelLoad && this.setState({
                     subinstances: update(subinstances, {'$push': missing_tx})
                 });
+                */
             })
             .catch(error => console.error(error));
     }
@@ -1344,6 +1366,8 @@ export class Transaction extends Component {
                                         <SubInstancesTable
                                             subinstances={subinstances}
                                             tasks={tx.tasks}
+                                            onReplay={this.onReplay}
+                                            onRollback={this.onRollback}
                                             {...this.props}
                                         />
                                     </Panel.Body>
