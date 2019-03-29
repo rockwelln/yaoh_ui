@@ -269,7 +269,7 @@ class Groups extends Component {
                             if(a.groupId < b.groupId) return -1;
                             if(a.groupId > b.groupId) return 1;
                             return 0;
-                        }).map(g => <Group g={g} onReload={this._fetchGroups} tenantId={this.props.tenantId} {...this.props} />)
+                        }).map(g => <Group g={g} key={g.groupId} onReload={this._fetchGroups} tenantId={this.props.tenantId} {...this.props} />)
                     }
                     </tbody>
                 </Table>

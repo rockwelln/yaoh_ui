@@ -269,7 +269,7 @@ class Tenants extends Component {
                             if(a.tenantId < b.tenantId) return -1;
                             if(a.tenantId > b.tenantId) return 1;
                             return 0;
-                        }).map(t => <Tenant t={t} onReload={this._fetchTenants} {...this.props} />)
+                        }).map(t => <Tenant key={t.tenantId} t={t} onReload={this._fetchTenants} {...this.props} />)
                     }
                     </tbody>
                 </Table>
