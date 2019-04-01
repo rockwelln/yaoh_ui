@@ -153,6 +153,36 @@ class TransactionFlow extends Component {
 }
 
 
+const transformXML = (xmlText, xsltText) => {
+    // Bomb out if this browser does not support DOM parsing and transformation
+    if (!(window.DOMParser && window.XSLTProcessor)) {
+        return xmlText;
+    }
+
+    var xsltDoc = new DOMParser().parseFromString(xsltText, "text/xml");
+
+    // Apply that document to as a stylesheet to a transformer
+    var xslt = new XSLTProcessor();
+    xslt.importStylesheet(xsltDoc);
+
+    // Load the XML into a document.
+    // Trim any preceding whitespace to prevent parse failure.
+    var xml = new DOMParser().parseFromString(xmlText.trim(), "text/xml");
+    // Transform it
+    var transformedXml = xslt.transformToDocument(xml);
+    // Apply the transformed document if it was successful
+    return !transformedXml ? xmlText : new XMLSerializer().serializeToString(transformedXml);
+};
+
+
+const XSLT_PP = "<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">\n" +
+    "<xsl:output omit-xml-declaration=\"yes\" indent=\"yes\"/>\n" +
+    "  <xsl:template match=\"node()|@*\">\n" +
+    "    <xsl:copy><xsl:apply-templates select=\"node()|@*\"/></xsl:copy>\n" +
+    "  </xsl:template>\n" +
+    "</xsl:stylesheet>";
+
+
 const SyncMessagesDetails = ({data}) => (
     <Table>
         <thead>
@@ -174,7 +204,9 @@ const SyncMessagesDetails = ({data}) => (
                         <td>{d.type}</td>
                         <td>{d.id}</td>
                         <td>
-                            <pre style={{wordWrap: 'break-word', whiteSpace: 'pre-wrap'}}>{d.content}</pre>
+                            <pre style={{wordWrap: 'break-word', whiteSpace: 'pre-wrap'}}>
+                                {transformXML(d.content, XSLT_PP)}
+                            </pre>
                         </td>
                     </tr>
             )
