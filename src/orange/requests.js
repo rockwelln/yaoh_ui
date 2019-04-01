@@ -153,6 +153,37 @@ class TransactionFlow extends Component {
 }
 
 
+const SyncMessagesDetails = ({data}) => (
+    <Table>
+        <thead>
+            <tr>
+                <th><FormattedMessage id="time" defaultMessage="Time" /></th>
+                <th><FormattedMessage id="protocol" defaultMessage="Protocol" /></th>
+                <th><FormattedMessage id="type" defaultMessage="Type" /></th>
+                <th><FormattedMessage id="id" defaultMessage="Id" /></th>
+                <th><FormattedMessage id="content" defaultMessage="Content" /></th>
+            </tr>
+        </thead>
+        <tbody>
+        {
+            data.map(
+                (d, i) =>
+                    <tr key={`sync_msg_${i}`}>
+                        <td>{moment(Math.floor(parseFloat(d.timestamp) * 1000)).format("HH:mm:ss.SSS")}</td>
+                        <td>{d.protocol}</td>
+                        <td>{d.type}</td>
+                        <td>{d.id}</td>
+                        <td>
+                            <pre style={{wordWrap: 'break-word', whiteSpace: 'pre-wrap'}}>{d.content}</pre>
+                        </td>
+                    </tr>
+            )
+        }
+        </tbody>
+    </Table>
+);
+
+
 const vSpacing = 30;
 // const hSpacing = 200;
 
@@ -188,12 +219,11 @@ class SyncMessagesFlow extends Component {
 
     render() {
         const {data} = this.props;
-        const {boundingRect} = this.state;
+        const {boundingRect, focusId} = this.state;
 
         const endpoints = SyncMessagesFlow._extractEndpoints(data);
         const flowWidth = boundingRect.width - 240;
         const endpointsHSpacing = flowWidth / (endpoints.length);
-        console.log(endpointsHSpacing);
 
         const vLineHeight = (data.length + 2) * vSpacing;
         return (
@@ -229,6 +259,8 @@ class SyncMessagesFlow extends Component {
                                         <OverlayTrigger
                                           key={`tooltip-${i}`}
                                           placement="top"
+                                          onEntered={() => this.setState({focusId: d.id})}
+                                          onExited={() => this.setState({focusId: undefined})}
                                           overlay={
                                               <Tooltip
                                                   id={`tooltip-${i}`}
@@ -240,7 +272,7 @@ class SyncMessagesFlow extends Component {
                                                 textAnchor="middle"
                                                 x={flowWidth / 2}
                                                 y={(vSpacing * (i + 1)) - 10}
-                                                fill="#1f77b4"
+                                                fill={!focusId || focusId === d.id ? "#1f77b4" : "rgba(31,119,180,0.4)"}
                                                 fillOpacity={1}
                                                 className="message-label">
                                                 {summary && summary[1]}
@@ -398,7 +430,14 @@ class Message extends Component {
                 syncDetails && rows.push(
                     <tr key={`message_flow_sync_${entry.processing_trace_id}`}>
                         <td colSpan={7}>
-                            <SyncMessagesFlow data={JSON.parse(syncDetails.south_data)} />
+                            <Tabs defaultActiveKey={1} id="syn-messages-flow">
+                                <Tab eventKey={1} title={<FormattedMessage id="flows" defaultMessage="Flows" />}>
+                                    <SyncMessagesFlow data={JSON.parse(syncDetails.south_data)} />
+                                </Tab>
+                                <Tab eventKey={2} title={<FormattedMessage id="messages" defaultMessage="Messages" />}>
+                                    <SyncMessagesDetails data={JSON.parse(syncDetails.south_data)} />
+                                </Tab>
+                            </Tabs>
                         </td>
                     </tr>
                 );
@@ -965,8 +1004,13 @@ export class Transaction extends Component {
                 if(this.cancelLoad)
                     return;
 
+                if(this.state.tx && this.state.tx.status !== "ACTIVE" && data.status !== "ACTIVE") {
+                    reload && setTimeout(() => this.fetchTxDetails(true), RELOAD_TX);
+                    return;
+                }
+
                 this.setState({tx: data});
-            
+
                 fetch_get(`/api/v01/apio/requests/${data.original_request_id}`, this.props.auth_token)
                     .then(data => {
                         if(this.cancelLoad) return;
