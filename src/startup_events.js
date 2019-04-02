@@ -1,10 +1,26 @@
 import React, { Component } from 'react';
 import Panel from 'react-bootstrap/lib/Panel';
 import Table from 'react-bootstrap/lib/Table';
+import Button from 'react-bootstrap/lib/Button';
+import ButtonToolbar from 'react-bootstrap/lib/ButtonToolbar';
+import Modal from 'react-bootstrap/lib/Modal';
 import {FormattedMessage} from 'react-intl';
-import {fetch_get, fetch_put} from "./utils";
+import {fetch_delete, fetch_get, fetch_post, fetch_put} from "./utils";
+import FormGroup from "react-bootstrap/lib/FormGroup";
+import Col from "react-bootstrap/lib/Col";
+import Form from "react-bootstrap/lib/Form";
+import HelpBlock from "react-bootstrap/lib/HelpBlock";
+import ControlLabel from "react-bootstrap/lib/ControlLabel";
+import FormControl from "react-bootstrap/lib/FormControl";
+import update from 'immutability-helper';
+import Glyphicon from "react-bootstrap/lib/Glyphicon";
+import Checkbox from "react-bootstrap/lib/Checkbox";
+import Alert from "react-bootstrap/lib/Alert";
 
-export class StartupEvents extends Component {
+const CUSTOM_ROUTE_PREFIX = "https://<target>/api/v01/custom/";
+
+
+class DedicatedStartupEvents extends Component {
     constructor(props) {
         super(props);
         this.state = {events: [], handlers: []};
@@ -92,6 +108,307 @@ export class StartupEvents extends Component {
                         </tbody>
                     </Table>
                 </Panel.Body>
-        </Panel>)
+            </Panel>
+        )
     }
 }
+
+
+class CustomRoutes extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {activities: [], custom_routes: [], new_route: {method: 'get', sync: false}, showSyncWarning: false};
+        this.cancelLoad = false;
+        this.fetchActivities = this.fetchActivities.bind(this);
+        this.onSelectActivity = this.onSelectActivity.bind(this);
+        this.onSyncUpdate = this.onSyncUpdate.bind(this);
+    }
+
+    fetchRoutes() {
+        fetch_get('/api/v01/custom_routes', this.props.auth_token)
+            .then(data => !this.cancelLoad && this.setState({custom_routes: data.routes}))
+            .catch(error => this.props.notifications.addNotification({
+                title: <FormattedMessage id="fetch-routes-failed" defaultMessage="Failed to fetch custom routes"/>,
+                message: error.message,
+                level: 'error'
+            }));
+    }
+
+    fetchActivities() {
+        fetch_get('/api/v01/activities', this.props.auth_token)
+            .then(data => !this.cancelLoad && this.setState({activities: data.activities}))
+            .catch(error => this.props.notifications.addNotification({
+                title: <FormattedMessage id="fetch-activities-failed" defaultMessage="Failed to fetch activities"/>,
+                message: error.message,
+                level: 'error'
+            }));
+    }
+
+    onSelectActivity(route_id, activity_id) {
+        fetch_put(`/api/v01/custom_routes/${route_id}`, {activity_id: activity_id?parseInt(activity_id, 10): null}, this.props.auth_token)
+            .then(() => {
+                this.props.notifications.addNotification({
+                    message: <FormattedMessage id="update-custom-route-done" defaultMessage="Custom route saved!"/>,
+                    level: 'success'
+                });
+                this.fetchRoutes();
+            })
+            .catch(error => this.props.notifications.addNotification({
+                title: <FormattedMessage id="update-custom-routes-failed" defaultMessage="Failed to update custom route"/>,
+                message: error.message,
+                level: 'error'
+            }));
+    }
+
+    onSyncUpdate(route_id, new_sync) {
+        fetch_put(`/api/v01/custom_routes/${route_id}`, {sync: new_sync}, this.props.auth_token)
+            .then(() => {
+                this.props.notifications.addNotification({
+                    message: <FormattedMessage id="update-custom-route-done" defaultMessage="Custom route saved!"/>,
+                    level: 'success'
+                });
+                this.fetchRoutes();
+                this.setState({showSyncWarning: false, pending_route: undefined})
+            })
+            .catch(error => this.props.notifications.addNotification({
+                title: <FormattedMessage id="update-custom-routes-failed" defaultMessage="Failed to update custom route"/>,
+                message: error.message,
+                level: 'error'
+            }));
+    }
+
+    onNewRoute() {
+        fetch_post('/api/v01/custom_routes', this.state.new_route, this.props.auth_token)
+            .then(() => {
+                this.props.notifications.addNotification({
+                    message: <FormattedMessage id="update-custom-route-done" defaultMessage="Custom route saved!"/>,
+                    level: 'success'
+                });
+                this.setState({showNewRoute: false, new_route: {method: 'get', sync: false}});
+                this.fetchRoutes();
+            })
+            .catch(error => this.props.notifications.addNotification({
+                title: <FormattedMessage id="create-custom-routes-failed" defaultMessage="Failed to create custom route"/>,
+                message: error.message,
+                level: 'error'
+            }));
+    }
+
+    onDeleteCustomRoute(route_id) {
+        fetch_delete(`/api/v01/custom_routes/${route_id}`, this.props.auth_token)
+            .then(() => {
+                this.props.notifications.addNotification({
+                    message: <FormattedMessage id="delete-custom-route-done" defaultMessage="Custom route deleted!"/>,
+                    level: 'success'
+                });
+                this.fetchRoutes();
+            })
+            .catch(error => this.props.notifications.addNotification({
+                title: <FormattedMessage id="delete-custom-routes-failed" defaultMessage="Failed to delete custom route"/>,
+                message: error.message,
+                level: 'error'
+            }));
+    }
+
+    componentDidMount() {
+        this.fetchActivities();
+        this.fetchRoutes();
+    }
+
+    componentWillUnmount() {
+        this.cancelLoad = true;
+    }
+
+    render() {
+        const {custom_routes, activities, showNewRoute, new_route, showSyncWarning, pending_route} = this.state;
+        const hideNewRoute = () => this.setState({showNewRoute: false, new_route: {method: 'get', sync: false}});
+        const cancelSyncWarning = () => this.setState({showSyncWarning: false, pending_route: undefined});
+        const route_ = new_route.route;
+        const validRoute = !route_ || route_.length<5 ? null : (
+             ["..", "?", "&"].map(c => route_.indexOf(c)).filter(i => i !== -1).length !== 0
+        ) ? "error" : "success";
+        const validNewRouteForm = validRoute === "success";
+
+        return (
+            <Panel>
+                <Panel.Heading>
+                    <Panel.Title><FormattedMessage id="custom-routes" defaultMessage="Custom routes" /></Panel.Title>
+                </Panel.Heading>
+                <Panel.Body>
+                    <Table>
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th><FormattedMessage id="method" defaultMessage="Method" /></th>
+                            <th><FormattedMessage id="route" defaultMessage="Route (prefix: {prefix})" values={{prefix: CUSTOM_ROUTE_PREFIX}} /></th>
+                            <th><FormattedMessage id="handler" defaultMessage="Activity" /></th>
+                            <th><FormattedMessage id="sync" defaultMessage="Sync" /></th>
+                            <th/>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {
+                            custom_routes && custom_routes.sort((a, b) => {
+                                    if(a.route_id < b.route_id) return -1;
+                                    if(a.route_id > b.route_id) return 1;
+                                    return 0;
+                                }).map((route, i) => (
+                                    <tr key={i}>
+                                        <td>{ route.route_id }</td>
+                                        <td>{ route.method }</td>
+                                        <td>{ route.route }</td>
+                                        <td>
+                                            <select onChange={e => this.onSelectActivity(route.route_id, e.target.value)} value={route.activity_id || ''}>
+                                                <FormattedMessage id="none" defaultMessage="*none*">
+                                                    {message => <option value={""}>{message}</option>}
+                                                </FormattedMessage>
+                                                {activities
+                                                    .sort((a,b) => a.id - b.id)
+                                                    .map(a => <option value={a.id} key={a.id}>{a.name}</option>)
+                                                }
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <Checkbox
+                                                checked={route.sync}
+                                                onChange={e => e.preventDefault()}
+                                                onClick={e => {
+                                                    e.preventDefault();
+                                                    this.setState({
+                                                        pending_route: update(route, {$merge: {sync: e.target.checked}}),
+                                                        showSyncWarning: true})
+                                                }} />
+                                        </td>
+                                        <td>
+                                            <ButtonToolbar>
+                                                <Button onClick={() => this.onDeleteCustomRoute(route.route_id)} bsStyle="danger" style={{marginLeft: '5px', marginRight: '5px'}}>
+                                                    <Glyphicon glyph="remove-sign"/>
+                                                </Button>
+                                            </ButtonToolbar>
+                                        </td>
+                                    </tr>
+                                ))
+                        }
+                        </tbody>
+                    </Table>
+                    <ButtonToolbar>
+                        <Button onClick={() => this.setState({showNewRoute: true})}>
+                            <FormattedMessage id="new-route" defaultMessage="New route" />
+                        </Button>
+                    </ButtonToolbar>
+                    <Modal show={showNewRoute} onHide={hideNewRoute} backdrop={false}>
+                        <Modal.Header closeButton>
+                            <Modal.Title><FormattedMessage id="new-route" defaultMessage="New route" /></Modal.Title>
+                        </Modal.Header>
+                        <Modal.Body>
+                            <Form horizontal>
+                                <FormGroup validationState={validRoute}>
+                                    <Col componentClass={ControlLabel} sm={2}>
+                                        <FormattedMessage id="route" defaultMessage="Route" />
+                                    </Col>
+
+                                    <Col sm={9}>
+                                        <FormControl
+                                            componentClass="input"
+                                            value={new_route.route}
+                                            onChange={e => this.setState({new_route: update(new_route, {$merge: {route: e.target.value}})})}/>
+                                    </Col>
+                                </FormGroup>
+
+                                <FormGroup>
+                                    <Col componentClass={ControlLabel} sm={2}>
+                                        <FormattedMessage id="method" defaultMessage="Method" />
+                                    </Col>
+
+                                    <Col sm={2}>
+                                        <FormControl
+                                            componentClass="select"
+                                            value={new_route.method}
+                                            onChange={e => this.setState({new_route: update(new_route, {$merge: {method: e.target.value}})})}>
+                                            <option value="get">get</option>
+                                            <option value="post">post</option>
+                                            <option value="put">put</option>
+                                            <option value="delete">delete</option>
+                                        </FormControl>
+                                    </Col>
+                                </FormGroup>
+
+                                <FormGroup>
+                                    <Col smOffset={2} sm={10}>
+                                        <HelpBlock>
+                                            <FormattedMessage id="custom-route-help" defaultMessage="The final endpoint will be: " />
+                                            {`${CUSTOM_ROUTE_PREFIX}${new_route.route || ''}`}
+                                        </HelpBlock>
+                                    </Col>
+                                </FormGroup>
+
+                                 <FormGroup>
+                                     <Col componentClass={ControlLabel} sm={2}>
+                                         <FormattedMessage id="sync" defaultMessage="Sync" />
+                                     </Col>
+
+                                     <Col sm={9}>
+                                         <Checkbox
+                                             checked={new_route.sync}
+                                             onChange={e => this.setState({new_route: update(new_route, {$merge: {sync: e.target.checked}})})}/>
+
+                                         <HelpBlock>
+                                             <FormattedMessage id="custom-route-sync" defaultMessage="When set, the call to this API is synchronous and the response is returned directly. Otherwise, only an instance id is returned and the associated job is spawned asynchronously."/>
+                                         </HelpBlock>
+                                     </Col>
+                                 </FormGroup>
+
+                                <FormGroup>
+                                    <Col smOffset={2} sm={10}>
+                                        <ButtonToolbar>
+                                            <Button onClick={this.onNewRoute.bind(this)} bsStyle="primary" disabled={!validNewRouteForm}>
+                                                <FormattedMessage id="create" defaultMessage="Create" />
+                                            </Button>
+                                            <Button onClick={hideNewRoute}>
+                                                <FormattedMessage id="cancel" defaultMessage="Cancel" />
+                                            </Button>
+                                        </ButtonToolbar>
+                                    </Col>
+                                </FormGroup>
+                            </Form>
+                        </Modal.Body>
+                    </Modal>
+                    {
+                        pending_route && <Modal show={showSyncWarning} onHide={cancelSyncWarning} backdrop={false}>
+                            <Modal.Header closeButton>
+                                <Modal.Title><FormattedMessage id="confirm-update"
+                                                               defaultMessage="Are you sure?"/></Modal.Title>
+                            </Modal.Header>
+                            <Modal.Body>
+                                <Alert bsStyle="info"><FormattedMessage id="sync-update"
+                                                                        defaultMessage="Update sync flag..."/></Alert>
+                                <p><FormattedMessage id="update-sync-warning"
+                                                     defaultMessage={`You are about to change the output of the endpoint ${pending_route.route} !`}/>
+                                </p>
+                            </Modal.Body>
+                            <Modal.Footer>
+                                <Button
+                                    onClick={() => this.onSyncUpdate(pending_route.route_id, pending_route.sync)}
+                                    bsStyle="primary"
+                                    autoFocus >
+                                    <FormattedMessage id="ok" defaultMessage="Ok"/>
+                                </Button>
+                                <Button onClick={cancelSyncWarning}>
+                                    <FormattedMessage id="cancel" defaultMessage="Cancel"/>
+                                </Button>
+                            </Modal.Footer>
+                        </Modal>
+                    }
+                </Panel.Body>
+            </Panel>
+        )
+    }
+}
+
+
+export const StartupEvents = ({...props}) => (
+    <div>
+        <DedicatedStartupEvents {...props} />
+        <CustomRoutes {...props} />
+    </div>
+);
