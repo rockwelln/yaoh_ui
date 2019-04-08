@@ -720,6 +720,17 @@ function createInput(param, value, cells, cells_defs) {
             }).forEach(o => input.appendChild(o));
             input.value = value;
             break;
+        case 'bool':
+            input = document.createElement('select');
+            input.className = 'form-control';
+            ["true", "false"].map(v => {
+                const opt = document.createElement('option');
+                opt.value = v;
+                opt.innerText = v;
+                return opt;
+            }).forEach(o => input.appendChild(o));
+            input.value = value;
+            break;
         default:
             input = document.createElement('input');
             input.type = 'text';

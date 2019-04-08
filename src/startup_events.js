@@ -72,7 +72,11 @@ export class StartupEvents extends Component {
                         </thead>
                         <tbody>
                         {
-                           events.sort((a, b) => b.name < a.name).map(event => (
+                           events.sort((a, b) => {
+                               if(b.name > a.name) return -1;
+                               if(b.name < a.name) return 1;
+                               return 0
+                           }).map(event => (
                                 <tr key={event.name}>
                                     <td>{event.name}</td>
                                     <td>

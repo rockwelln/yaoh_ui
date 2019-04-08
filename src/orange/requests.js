@@ -4,7 +4,6 @@ import ReactDOM from 'react-dom';
 import Alert from 'react-bootstrap/lib/Alert';
 import Button from 'react-bootstrap/lib/Button';
 import Col from 'react-bootstrap/lib/Col';
-import Row from 'react-bootstrap/lib/Row';
 import ControlLabel from 'react-bootstrap/lib/ControlLabel';
 import Form from 'react-bootstrap/lib/Form';
 import FormControl from 'react-bootstrap/lib/FormControl';
@@ -1317,16 +1316,13 @@ export class Transaction extends Component {
             return <div><FormattedMessage id='loading' defaultMessage='Loading...'/></div>
         }
 
-        let actions_required = [];
+        // let actions_required = [];
         // add a user profile check to see if the user *can* approve/reject/hold
         const can_act = isAllowed(user_info.ui_profile, pages.requests_nprequests, access_levels.modify);
 
         return (
             <div>
                 {alerts}
-                <Row>
-                    {can_act && tx.status === 'ACTIVE' && actions_required.map((a, i) => <div key={i}>{a}</div>)}
-                </Row>
                 <Tabs defaultActiveKey={1} activeKey={activeTab} onSelect={e => this.setState({activeTab: e})} id="request-tabs">
                     <Tab eventKey={1} title={<FormattedMessage id="request" defaultMessage="Request" />}>
                         <Col xs={12} sm={6} md={8} lg={8} style={{marginTop: '10px'}}>
