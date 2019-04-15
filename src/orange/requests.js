@@ -804,7 +804,7 @@ class Events extends Component {
         super(props);
         this.cancelLoad = false;
         this.state = {events: [], logs: [], show_details: false, selected_evt: {}};
-        this.onReplay = this.onReplay.bind(this);
+        //this.onReplay = this.onReplay.bind(this);
     }
 
     componentDidMount() {
@@ -824,6 +824,7 @@ class Events extends Component {
         this.cancelLoad = true;
     }
 
+    /*
     onReplay(event_id) {
         fetch_put(`/api/v01/transactions/${this.props.tx_id}/events/${event_id}`, {}, this.props.auth_token)
             .then(() =>
@@ -840,6 +841,7 @@ class Events extends Component {
                 })
             )
     }
+    */
 
     render() {
         if(this.state.events_error !== undefined && this.state.logs_error !== undefined) {
@@ -886,11 +888,13 @@ class Events extends Component {
                                     <br/>
                                     <Button bsStyle="link" onClick={() => this.setState({show_details: true, selected_evt: e})}>...</Button>
                                 </td>
+                                {/*
                                 <td>{e.type === 'event' && this.props.user_can_replay &&
                                     <Button onClick={() => this.onReplay(e.id)}>
                                         <FormattedMessage id="replay" defaultMessage="Replay" />
                                     </Button>
                                 }</td>
+                                */}
                             </tr>
                         )
                     )
@@ -1469,7 +1473,7 @@ export class Transaction extends Component {
                             <Panel.Body collapsible>
                                 <Events
                                     tx_id={tx.id}
-                                    user_can_replay={can_act && tx.status === 'ACTIVE'}
+                                    // user_can_replay={can_act && tx.status === 'ACTIVE'}
                                     {...this.props} />
                             </Panel.Body>
                         </Panel>
