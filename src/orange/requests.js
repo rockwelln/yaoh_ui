@@ -77,6 +77,15 @@ const workableDefinition = (definition, states) => {
 };
 
 
+const pp_as_json = (s) => {
+    try {
+        return JSON.stringify(JSON.parse(s), null, 2);
+    } catch(e) {
+        console.log(e);
+        return s
+    }
+}
+
 class TransactionFlow extends Component {
     constructor(props, context) {
         super(props, context);
@@ -443,16 +452,10 @@ class Message extends Component {
                 </tr>
             )
         } else if (expanded) {
-            let output = entry.output;
-            try {
-                output = JSON.stringify(JSON.parse(output), null, 2);
-            } catch (e) {
-                console.log(e);
-            }
             rows.push(
                 <tr key={`message_details_${entry.processing_trace_id}`}>
                     <td colSpan={7}>
-                        <pre style={{wordWrap: 'break-word', whiteSpace: 'pre-wrap'}}>{output}</pre>
+                        <pre style={{wordWrap: 'break-word', whiteSpace: 'pre-wrap'}}>{pp_as_json(entry.output)}</pre>
                     </td>
                 </tr>
             );
@@ -866,6 +869,8 @@ class Events extends Component {
         }
         const closeModal = () => this.setState({show_details: false, selected_evt: {}});
         const events_ = events.concat(logs);
+        const event_content = pp_as_json(selected_evt.content);
+        const extra = pp_as_json(selected_evt.extra);
         return (<div>
             {alert}
             <Table condensed>
@@ -916,9 +921,21 @@ class Events extends Component {
                             </Col>
 
                             <Col sm={9}>
-                                <FormControl componentClass="textarea" defaultValue={selected_evt.content} />
+                                <pre style={{wordWrap: 'break-word', whiteSpace: 'pre-wrap', maxHeight: '250px'}}>{event_content}</pre>
                             </Col>
                         </FormGroup>
+                        {
+                            extra &&
+                                <FormGroup>
+                                    <Col componentClass={ControlLabel} sm={2}>
+                                        <FormattedMessage id="extra" defaultMessage="Extra..." />
+                                    </Col>
+
+                                    <Col sm={9}>
+                                        <pre style={{wordWrap: 'break-word', whiteSpace: 'pre-wrap', maxHeight: '250px'}}>{extra}</pre>
+                                    </Col>
+                                </FormGroup>
+                        }
                     </Form>
                 </Modal.Body>
                 <Modal.Footer>
