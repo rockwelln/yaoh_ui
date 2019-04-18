@@ -580,7 +580,7 @@ export class SubInstance extends Component {
                 }
                 <td style={{width: '2%'}}><Glyphicon style={{color: statusColor}} glyph={statusGlyph}/></td>
                 <td>
-                    <Link to={`/transactions/${instance.id}`}>{this.computeLabel()}</Link>{' '}
+                    <a href={`/transactions/${instance.id}`} target="_blank" rel="noopener noreferrer">{this.computeLabel()}</a>{' '}
                     {
                         instance.errors !== 0 && <Badge style={{backgroundColor: '#ff0808'}}>{instance.errors}{' '}<FormattedMessage id="errors" defaultMessage="error(s)"/></Badge>
                     }
