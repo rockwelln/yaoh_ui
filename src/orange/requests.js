@@ -512,26 +512,36 @@ export class SubInstance extends Component {
         this.state = {
             request: {},
         };
+        this.cancelLoad = false;
         this.computeLabel = this.computeLabel.bind(this);
         this.refreshRequest = this.refreshRequest.bind(this);
-        this.refreshRequestHandler = null;
+        //this.refreshRequestHandler = null;
     }
 
     componentDidMount() {
         this.refreshRequest();
-        this.refreshRequestHandler = setInterval(this.refreshRequest, 1000);
+        //this.refreshRequestHandler = setInterval(this.refreshRequest, 10 * 1000);
     }
 
     componentWillUnmount() {
-        this.refreshRequestHandler && clearInterval(this.refreshRequestHandler)
+        this.cancelLoad = true;
+        //this.refreshRequestHandler && clearInterval(this.refreshRequestHandler)
     }
 
     refreshRequest() {
         const {instance, auth_token} = this.props;
 
         fetch_get(`/api/v01/apio/requests/${instance.original_request_id}`, auth_token)
-            .then(data => this.setState({request: data.request}))
-            .catch(error => this.setState({error: error}));
+            .then(data => {
+                if(this.cancelLoad) return;
+                setTimeout(this.refreshRequest, 10 * 1000);
+                this.setState({request: data.request});
+            })
+            .catch(error => {
+                if(this.cancelLoad) return;
+                setTimeout(this.refreshRequest, 10 * 1000);
+                this.setState({error: error});
+            });
     }
 
     computeLabel() {
