@@ -6,6 +6,7 @@ import Form from "react-bootstrap/lib/Form";
 import Table from "react-bootstrap/lib/Table";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import FormGroup from "react-bootstrap/lib/FormGroup";
+import HelpBlock from "react-bootstrap/lib/HelpBlock";
 import FormControl from "react-bootstrap/lib/FormControl";
 import Col from "react-bootstrap/lib/Col";
 import ControlLabel from "react-bootstrap/lib/ControlLabel";
@@ -13,6 +14,22 @@ import {FormattedMessage} from "react-intl";
 import update from "immutability-helper";
 import {fetch_delete, fetch_get, fetch_post, fetch_put} from "../utils";
 
+
+const isJsonValid = e => {
+    try {
+        JSON.parse(e)
+    } catch {
+        return false;
+    }
+    return true;
+};
+
+const SAMPLE_ENDPOINT_EXTRA = JSON.stringify({
+    "auth": {
+        "type": "basic",
+        "value": "<username>:<password>"
+    }
+}, null, 2);
 
 const CallbackDetails = ({cb, onChange, onCancel, onSave}) => (
     <Form horizontal style={{paddingTop: 10}}>
@@ -68,10 +85,24 @@ const CallbackDetails = ({cb, onChange, onCancel, onSave}) => (
                     onChange={e => onChange(update(cb, {$merge: {endpoint: e.target.value}}))} />
             </Col>
         </FormGroup>
+        <FormGroup validationState={!cb.endpoint_extra?null:isJsonValid(cb.endpoint_extra)?"success":"error"}>
+            <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="extra" defaultMessage="Extra..."/>
+            </Col>
+            <Col sm={9}>
+                <FormControl
+                    componentClass="textarea"
+                    placeholder={SAMPLE_ENDPOINT_EXTRA}
+                    value={cb.endpoint_extra || ''}
+                    onChange={e => onChange(update(cb, {$merge: {endpoint_extra: e.target.value}}))}
+                    style={{minHeight: "150px"}} />
+                <HelpBlock><FormattedMessage id="help-json" defaultMessage="Need to be JSON valid!"/></HelpBlock>
+            </Col>
+        </FormGroup>
         <FormGroup>
             <Col smOffset={2} sm={10}>
                 <ButtonToolbar>
-                    <Button onClick={onSave} bsStyle="primary">
+                    <Button onClick={onSave} bsStyle="primary" disabled={!(!cb.endpoint_extra || isJsonValid(cb.endpoint_extra))}>
                         <FormattedMessage id="save" defaultMessage="Save"/>
                     </Button>
                     <Button onClick={onCancel} bsStyle="default">
@@ -146,7 +177,18 @@ export class CallbackHandler extends Component {
 
     refresh() {
         fetch_get(`/api/v01/system/users/${this.props.userId}/callbacks`, this.props.auth_token)
-            .then(data => !this.cancelLoad && this.setState({callbacks: data.callbacks, editCallback: undefined}))
+            .then(data => (
+                !this.cancelLoad &&
+                this.setState({
+                    callbacks: data.callbacks.map(cb => {
+                        if(cb.endpoint_extra) {
+                            cb.endpoint_extra = JSON.stringify(cb.endpoint_extra, null, 2)
+                        }
+                        return cb;
+                        }),
+                    editCallback: undefined
+                })
+            ))
             .catch(error => this.props.notifications.addNotification({
                 title: <FormattedMessage id="Callbacks refresh"/>,
                 message: error.message,
@@ -171,7 +213,13 @@ export class CallbackHandler extends Component {
     }
 
     onAddCallback(cb) {
-        fetch_post(`/api/v01/system/users/${this.props.userId}/callbacks`, cb, this.props.auth_token)
+        let body = Object.assign(cb, {});
+        if(body.endpoint_extra) {
+            body.endpoint_extra = JSON.parse(body.endpoint_extra);
+        } else {
+            delete body.endpoint_extra;
+        }
+        fetch_post(`/api/v01/system/users/${this.props.userId}/callbacks`, body, this.props.auth_token)
             .then(() => {
                 this.props.notifications.addNotification({
                     message: <FormattedMessage id="callback-added" defaultMessage="Callback added"/>,
@@ -187,9 +235,15 @@ export class CallbackHandler extends Component {
     }
 
     onUpdateCallback(cb) {
+        let body = Object.assign(cb, {});
+        if(body.endpoint_extra) {
+            body.endpoint_extra = JSON.parse(body.endpoint_extra);
+        } else {
+            body.endpoint_extra = null;
+        }
         fetch_put(
             `/api/v01/system/users/${this.props.userId}/callbacks/${cb.callback_id}`,
-            Object.keys(cb).filter(k => ['scope', 'event_category', 'endpoint'].includes(k)).reduce(
+            Object.keys(body).filter(k => ['scope', 'event_category', 'endpoint', 'endpoint_extra'].includes(k)).reduce(
                 (obj, key) => {
                     obj[key] = cb[key];
                     return obj;

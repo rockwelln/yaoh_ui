@@ -424,7 +424,7 @@ class UpdateUser extends Component {
                                         onChange={e => this.setState({diff_user: update(this.state.diff_user, {$merge: {repeated_password: e.target.value}})})}/>
                                 </Col>
                             </FormGroup>
-                            <FormGroup validationState={false}>
+                            <FormGroup validationState={"error"}>
                                 <Col componentClass={ControlLabel} sm={2}>
                                     <FormattedMessage id="danger-zone" defaultMessage="Dangerous zone" />
                                 </Col>
