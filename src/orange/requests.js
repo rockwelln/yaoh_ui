@@ -506,6 +506,52 @@ const MessagesTable = ({messages, auth_token})  => (
 );
 
 
+class ExternalCallback extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {show_details: false}
+    }
+
+    render() {
+        const {entry} = this.props;
+        return (
+            <tr>
+                <td>{entry.callback_id}</td>
+                <td>{entry.entity}</td>
+                <td>{entry.external_id}</td>
+                <td>{entry.status}</td>
+            </tr>
+        )
+    }
+}
+
+const ExternalCallbacks = ({callbacks, tasks}) => (
+    <Table condensed>
+        <thead>
+            <tr>
+                <th><FormattedMessage id="id" defaultMessage="id" /></th>
+                <th><FormattedMessage id="entity" defaultMessage="Entity" /></th>
+                <th><FormattedMessage id="external-id" defaultMessage="External id" /></th>
+                <th><FormattedMessage id="status" defaultMessage="Status" /></th>
+            </tr>
+        </thead>
+        <tbody>
+        {
+            callbacks.sort(
+                (a, b) => {
+                    if(a.callback_id < b.callback_id) return -1;
+                    if(a.callback_id > b.callback_id) return 1;
+                    return 0;
+                }
+            ).map(
+                (e, i) => <ExternalCallback key={`ext_cb_${i}`} entry={e} p={i} tasks={tasks} />
+            )
+        }
+        </tbody>
+    </Table>
+);
+
+
 const SubRequest = ({req, tasks, colOffset, onRollback, onReplay}) => {
     const request = req.request;
     const instance_ = req.instance;
@@ -555,7 +601,7 @@ const SubRequest = ({req, tasks, colOffset, onRollback, onReplay}) => {
             </td>
         </tr>
     )
-}
+};
 
 const SubRequestsTable = ({subrequests, tasks, ...props}) => (
     <Table condensed>
@@ -906,7 +952,7 @@ const TasksTable = ({tasks, onReplay, onRollback, user_can_replay, tx_id}) => (
                                 <ButtonToolbar>
                                     {can_replay && <Button bsStyle="primary" onClick={() => onReplay(tx_id, t.id)}><FormattedMessage id="replay" defaultMessage="Replay" /></Button>}
                                     {can_replay && <Button bsStyle="danger" onClick={() => onRollback(tx_id, t.id)}><FormattedMessage id="rollback" defaultMessage="Rollback"/></Button>}
-                                    {onReplay && user_can_replay && t.status === 'WAIT' && <Button bsStyle="danger" onClick={() => onRollback(tx_id, t.id)}><FormattedMessage id="full-rollback" defaultMessage="Full rollback"/></Button>}
+                                    {onReplay && user_can_replay && t.status === 'WAIT' && t.cell_id.includes("numbers") && <Button bsStyle="danger" onClick={() => onRollback(tx_id, t.id)}><FormattedMessage id="full-rollback" defaultMessage="Full rollback"/></Button>}
                                 </ButtonToolbar>
                             </td>
                         </tr>
@@ -957,6 +1003,7 @@ export class Transaction extends Component {
             messageShown: true,
             subrequests: [],
             subrequestsShown: true,
+            externalCallbacks: [],
         };
         this.cancelLoad = false;
 
@@ -1004,6 +1051,10 @@ export class Transaction extends Component {
 
                 fetch_get(`/api/v01/transactions/${this.props.match.params.txId}/events`, this.props.auth_token)
                     .then(data => !this.cancelLoad && this.setState({events: data.events}))
+                    .catch(error => !this.cancelLoad && this.setState({error: error}));
+
+                fetch_get(`/api/v01/apio/transactions/${this.props.match.params.txId}/callbacks`, this.props.auth_token)
+                    .then(data => !this.cancelLoad && this.setState({externalCallbacks: data.callbacks}))
                     .catch(error => !this.cancelLoad && this.setState({error: error}));
 
                 if(this.state.messageShown) {
@@ -1118,15 +1169,6 @@ export class Transaction extends Component {
         fetch_get(`/api/v01/apio/transactions/${this.state.tx.id}/sub_requests`, this.props.auth_token)
             .then(data => {
                 !this.cancelLoad && this.setState({subrequests: data.requests});
-                /*
-                const missing_tx = data.instances.filter(
-                    t => subinstances.findIndex(si => si.id === t.id) === -1
-                );
-
-                !this.cancelLoad && this.setState({
-                    subinstances: update(subinstances, {'$push': missing_tx})
-                });
-                */
             })
             .catch(error => console.error(error));
     }
@@ -1202,34 +1244,13 @@ export class Transaction extends Component {
             !this.cancelLoad && this.setState({sending: false});
         });
     }
-    /*
-    updateContext(key, value) {
-        this.setState({sending: true});
-        fetch_put(
-            `/api/v01/transactions/${this.state.tx.id}/context`,
-            {
-                key: key,
-                value: value,
-            },
-            this.props.auth_token
-        )
-            .then(() => {
-                this.caseUpdated();
-                setTimeout(() => this.setState({sending: false}), RELOAD_TX);
-            })
-            .catch(error => {
-                this.caseUpdateFailure(error);
-                this.setState({sending: false});
-            });
-    }
-    */
 
     onEdit() {
         this.setState({edit_request: true})
     }
 
     render() {
-        const {error, tx, request, events, activeTab, replaying, messages, subrequests, messageShown, subrequestsShown} = this.state;
+        const {error, tx, request, events, activeTab, replaying, messages, subrequests, messageShown, subrequestsShown, externalCallbacks} = this.state;
         const {user_info} = this.props;
 
         const raw_event = request && events && events.filter(e => e.event_id === request.event_id)[0];
@@ -1393,7 +1414,6 @@ export class Transaction extends Component {
                                 </Panel>
                             )
                         }
-
                         {
                             tx.errors.length !== 0 && (
                                 <Panel bsStyle="danger" defaultExpanded={false}>
@@ -1408,6 +1428,20 @@ export class Transaction extends Component {
                                 </Panel>
                             )
                         }
+                        {
+                            externalCallbacks.length !== 0 && (
+                                <Panel defaultExpanded={true}>
+                                    <Panel.Heading>
+                                        <Panel.Title toggle>
+                                            <FormattedMessage id="external-callbacks" defaultMessage="External callbacks"/>
+                                        </Panel.Title>
+                                    </Panel.Heading>
+                                    <Panel.Body collapsible>
+                                        <ExternalCallbacks callbacks={externalCallbacks} tasks={tx.tasks} />
+                                    </Panel.Body>
+                                </Panel>
+                            )
+                        }
 
                         <Panel defaultExpanded={false}>
                             <Panel.Heading>
@@ -1416,7 +1450,6 @@ export class Transaction extends Component {
                             <Panel.Body collapsible>
                                 <Events
                                     tx_id={tx.id}
-                                    // user_can_replay={can_act && tx.status === 'ACTIVE'}
                                     {...this.props} />
                             </Panel.Body>
                         </Panel>
