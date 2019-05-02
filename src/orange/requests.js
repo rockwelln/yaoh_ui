@@ -213,7 +213,7 @@ const SyncMessagesDetails = ({data}) => (
                         <td>{d.id}</td>
                         <td>
                             <pre style={{wordWrap: 'break-word', whiteSpace: 'pre-wrap'}}>
-                                {transformXML(d.content, XSLT_PP)}
+                                {d.content && transformXML(d.content, XSLT_PP)}
                             </pre>
                         </td>
                     </tr>
@@ -506,127 +506,69 @@ const MessagesTable = ({messages, auth_token})  => (
 );
 
 
-export class SubInstance extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            request: {},
-        };
-        this.cancelLoad = false;
-        this.computeLabel = this.computeLabel.bind(this);
-        this.refreshRequest = this.refreshRequest.bind(this);
-        //this.refreshRequestHandler = null;
+const SubRequest = ({req, tasks, colOffset, onRollback, onReplay}) => {
+    const request = req.request;
+    const instance_ = req.instance;
+    let statusColor = '';
+    let statusGlyph = '';
+    switch(request.status) {
+        case "ERROR":
+            statusColor = '#ca6f7b';
+            statusGlyph = 'remove';
+            break;
+        case "SUCCESS":
+            statusColor = '#a4d1a2';
+            statusGlyph = 'ok';
+            break;
+        default:
+            statusColor = '#a4d1a2';
+            statusGlyph = 'play';
     }
+    const callback_task = tasks && tasks.find(t => t.id === instance_.callback_task_id);
 
-    componentDidMount() {
-        this.refreshRequest();
-        //this.refreshRequestHandler = setInterval(this.refreshRequest, 10 * 1000);
-    }
-
-    componentWillUnmount() {
-        this.cancelLoad = true;
-        //this.refreshRequestHandler && clearInterval(this.refreshRequestHandler)
-    }
-
-    refreshRequest() {
-        const {instance, auth_token} = this.props;
-
-        fetch_get(`/api/v01/apio/requests/${instance.original_request_id}`, auth_token)
-            .then(data => {
-                if(this.cancelLoad) return;
-                setTimeout(this.refreshRequest, 10 * 1000);
-                this.setState({request: data.request});
-            })
-            .catch(error => {
-                if(this.cancelLoad) return;
-                setTimeout(this.refreshRequest, 10 * 1000);
-                this.setState({error: error});
-            });
-    }
-
-    computeLabel() {
-        const {instance} = this.props;
-        const {request} = this.state;
-        const entity = request.entities && request.entities[0];
-
-        if(!entity) {
-            return instance.id;
-        }
-
-        let label = entity.tenant_id;
-        if (entity.site_id) {
-            label += ' - ' + entity.site_id;
-        }
-        if (entity.numbers) {
-            label += ' - ' + entity.numbers;
-        }
-        return label;
-    }
-
-    render() {
-        const {instance, tasks, colOffset, onRollback, onReplay} = this.props;
-        const {request} = this.state;
-        let statusColor = '';
-        let statusGlyph = '';
-        switch(request.status) {
-            case "ERROR":
-                statusColor = '#ca6f7b';
-                statusGlyph = 'remove';
-                break;
-            case "SUCCESS":
-                statusColor = '#a4d1a2';
-                statusGlyph = 'ok';
-                break;
-            default:
-                statusColor = '#a4d1a2';
-                statusGlyph = 'play';
-        }
-        const callback_task = tasks && tasks.find(t => t.id === instance.callback_task_id);
-
-        return (
-            <tr key={`message_sub_flow_sync_${instance.id}`}>
+    return (
+        <tr key={`message_sub_flow_sync_${instance_.id}`}>
+            {
+                colOffset && <td colSpan={colOffset}/>
+            }
+            <td style={{width: '2%'}}><Glyphicon style={{color: statusColor}} glyph={statusGlyph}/></td>
+            <td>
+                <a href={`/transactions/${instance_.id}`} target="_blank" rel="noopener noreferrer">{request.label}</a>{' '}
                 {
-                    colOffset && <td colSpan={colOffset}/>
+                    instance_.errors !== 0 && <Badge style={{backgroundColor: '#ff0808'}}>{instance_.errors}{' '}<FormattedMessage id="errors" defaultMessage="error(s)"/></Badge>
                 }
-                <td style={{width: '2%'}}><Glyphicon style={{color: statusColor}} glyph={statusGlyph}/></td>
-                <td>
-                    <a href={`/transactions/${instance.id}`} target="_blank" rel="noopener noreferrer">{this.computeLabel()}</a>{' '}
-                    {
-                        instance.errors !== 0 && <Badge style={{backgroundColor: '#ff0808'}}>{instance.errors}{' '}<FormattedMessage id="errors" defaultMessage="error(s)"/></Badge>
-                    }
-                </td>
-                <td style={{width: '30%'}}>
-                    {
-                        request.status === "ACTIVE" && instance.tasks && instance.tasks.filter(t => t.status === 'ERROR').map(t =>
-                            <ButtonToolbar key={`subints_act_${instance.id}_${t.id}`}>
-                                <Button bsStyle="primary" onClick={() => onReplay(instance.id, t.id)}><FormattedMessage id="replay" defaultMessage="Replay" /></Button>
-                                <Button bsStyle="danger" onClick={() => onRollback(instance.id, t.id)}><FormattedMessage id="rollback" defaultMessage="Rollback" /></Button>
-                            </ButtonToolbar>
-                        )
-                    }
-                </td>
-                <td style={{width: '15%'}}>
-                    {
-                        callback_task && <Badge>{callback_task.cell_id}</Badge>
-                    }
-                </td>
-            </tr>
-        )
-    }
+            </td>
+            <td style={{width: '30%'}}>
+                {
+                    request.status === "ACTIVE" && instance_.tasks && instance_.tasks.filter(t => t.status === 'ERROR').map(t =>
+                        <ButtonToolbar key={`subints_act_${instance_.id}_${t.id}`}>
+                            <Button bsStyle="primary" onClick={() => onReplay(instance_.id, t.id)}><FormattedMessage id="replay" defaultMessage="Replay" /></Button>
+                            <Button bsStyle="danger" onClick={() => onRollback(instance_.id, t.id)}><FormattedMessage id="rollback" defaultMessage="Rollback" /></Button>
+                        </ButtonToolbar>
+                    )
+                }
+            </td>
+            <td style={{width: '15%'}}>
+                {
+                    callback_task && <Badge>{callback_task.cell_id}</Badge>
+                }
+            </td>
+        </tr>
+    )
 }
 
-const SubInstancesTable = ({subinstances, tasks, ...props}) => (
+const SubRequestsTable = ({subrequests, tasks, ...props}) => (
     <Table condensed>
         <tbody>
         {
-            subinstances.sort(
+            subrequests.sort(
                 (a, b) => {
                     if(a.id < b.id) return -1;
                     if(a.id > b.id) return 1;
                     return 0;
                 }
             ).map(
-                (e, i) => <SubInstance key={`subinst_${i}`} instance={e} tasks={tasks} {...props} />
+                (r, i) => <SubRequest key={`subreqs_${i}`} req={r} tasks={tasks} {...props} />
             )
         }
         </tbody>
@@ -817,7 +759,6 @@ class Events extends Component {
         super(props);
         this.cancelLoad = false;
         this.state = {events: [], logs: [], show_details: false, selected_evt: {}};
-        //this.onReplay = this.onReplay.bind(this);
     }
 
     componentDidMount() {
@@ -836,25 +777,6 @@ class Events extends Component {
     componentWillUnmount() {
         this.cancelLoad = true;
     }
-
-    /*
-    onReplay(event_id) {
-        fetch_put(`/api/v01/transactions/${this.props.tx_id}/events/${event_id}`, {}, this.props.auth_token)
-            .then(() =>
-                this.props.notifications.addNotification({
-                    message:  <FormattedMessage id="replay-event-success" defaultMessage="Event replayed!"/>,
-                    level: 'success'
-                })
-            )
-            .catch(error =>
-                this.props.notifications.addNotification({
-                    title: <FormattedMessage id="replay-event-failed" defaultMessage="Replay event failed!"/>,
-                    message: error.message,
-                    level: 'error'
-                })
-            )
-    }
-    */
 
     render() {
         if(this.state.events_error !== undefined && this.state.logs_error !== undefined) {
@@ -1040,8 +962,8 @@ export class Transaction extends Component {
             activeTab: 1,
             messages: [],
             messageShown: true,
-            subinstances: [],
-            subinstancesShown: true,
+            subrequests: [],
+            subrequestsShown: true,
         };
         this.cancelLoad = false;
 
@@ -1094,7 +1016,7 @@ export class Transaction extends Component {
                 if(this.state.messageShown) {
                     this.refreshMessages();
                 }
-                if(this.state.subinstancesShown) {
+                if(this.state.subrequestsShown) {
                     this.refreshSubInstances();
                 }
                 
@@ -1200,9 +1122,9 @@ export class Transaction extends Component {
     }
 
     refreshSubInstances() {
-        fetch_get(`/api/v01/transactions/${this.state.tx.id}/sub_transactions`, this.props.auth_token)
+        fetch_get(`/api/v01/apio/transactions/${this.state.tx.id}/sub_requests`, this.props.auth_token)
             .then(data => {
-                !this.cancelLoad && this.setState({subinstances: data.instances});
+                !this.cancelLoad && this.setState({subrequests: data.requests});
                 /*
                 const missing_tx = data.instances.filter(
                     t => subinstances.findIndex(si => si.id === t.id) === -1
@@ -1287,7 +1209,7 @@ export class Transaction extends Component {
             !this.cancelLoad && this.setState({sending: false});
         });
     }
-
+    /*
     updateContext(key, value) {
         this.setState({sending: true});
         fetch_put(
@@ -1307,13 +1229,14 @@ export class Transaction extends Component {
                 this.setState({sending: false});
             });
     }
+    */
 
     onEdit() {
         this.setState({edit_request: true})
     }
 
     render() {
-        const {error, tx, request, events, activeTab, replaying, messages, subinstances, messageShown, subinstancesShown} = this.state;
+        const {error, tx, request, events, activeTab, replaying, messages, subrequests, messageShown, subrequestsShown} = this.state;
         const {user_info} = this.props;
 
         const raw_event = request && events && events.filter(e => e.event_id === request.event_id)[0];
@@ -1452,11 +1375,11 @@ export class Transaction extends Component {
                             )
                         }
                         {
-                            subinstances.length !== 0 && (
+                            subrequests.length !== 0 && (
                                 <Panel
-                                    expanded={subinstancesShown}
+                                    expanded={subrequestsShown}
                                     onToggle={e => {
-                                        this.setState({subinstancesShown: e});
+                                        this.setState({subrequestsShown: e});
                                         e && this.refreshSubInstances();
                                     }}
                                 >
@@ -1466,8 +1389,8 @@ export class Transaction extends Component {
                                         </Panel.Title>
                                     </Panel.Heading>
                                     <Panel.Body collapsible>
-                                        <SubInstancesTable
-                                            subinstances={subinstances}
+                                        <SubRequestsTable
+                                            subrequests={subrequests}
                                             tasks={tx.tasks}
                                             onReplay={this.onReplay}
                                             onRollback={this.onRollback}

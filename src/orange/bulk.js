@@ -12,10 +12,10 @@ import Button from "react-bootstrap/lib/Button";
 import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 import Alert from "react-bootstrap/lib/Alert";
 import HelpBlock from "react-bootstrap/lib/HelpBlock";
+import Badge from "react-bootstrap/lib/Badge";
 
 import {FormattedMessage} from "react-intl";
 import {fetch_get, fetch_post_raw} from "../utils";
-import {SubInstance} from "./requests";
 
 
 class NewBulk extends Component {
@@ -215,6 +215,103 @@ class NewBulk extends Component {
     }
 }
 
+class InstanceDetails extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            request: {},
+        };
+        this.cancelLoad = false;
+        this.computeLabel = this.computeLabel.bind(this);
+        this.refreshRequest = this.refreshRequest.bind(this);
+    }
+
+    componentDidMount() {
+        this.refreshRequest();
+    }
+
+    componentWillUnmount() {
+        this.cancelLoad = true;
+    }
+
+    refreshRequest() {
+        const {instance, auth_token} = this.props;
+
+        fetch_get(`/api/v01/apio/requests/${instance.original_request_id}`, auth_token)
+            .then(data => {
+                if(this.cancelLoad) return;
+                setTimeout(this.refreshRequest, 30 * 1000);
+                this.setState({request: data.request});
+            })
+            .catch(error => {
+                if(this.cancelLoad) return;
+                setTimeout(this.refreshRequest, 30 * 1000);
+                this.setState({error: error});
+            });
+    }
+
+    computeLabel() {
+        const {instance} = this.props;
+        const {request} = this.state;
+        const entity = request.entities && request.entities[0];
+
+        if(!entity) {
+            return instance.id;
+        }
+
+        let label = entity.tenant_id;
+        if (entity.site_id) {
+            label += ' - ' + entity.site_id;
+        }
+        if (entity.numbers) {
+            label += ' - ' + entity.numbers;
+        }
+        return label;
+    }
+
+    render() {
+        const {instance, tasks, colOffset} = this.props;
+        const {request} = this.state;
+        let statusColor = '';
+        let statusGlyph = '';
+        switch(request.status) {
+            case "ERROR":
+                statusColor = '#ca6f7b';
+                statusGlyph = 'remove';
+                break;
+            case "SUCCESS":
+                statusColor = '#a4d1a2';
+                statusGlyph = 'ok';
+                break;
+            default:
+                statusColor = '#a4d1a2';
+                statusGlyph = 'play';
+        }
+        const callback_task = tasks && tasks.find(t => t.id === instance.callback_task_id);
+
+        return (
+            <tr key={`message_sub_flow_sync_${instance.id}`}>
+                {
+                    colOffset && <td colSpan={colOffset}/>
+                }
+                <td style={{width: '2%'}}><Glyphicon style={{color: statusColor}} glyph={statusGlyph}/></td>
+                <td>
+                    <a href={`/transactions/${instance.id}`} target="_blank" rel="noopener noreferrer">{this.computeLabel()}</a>{' '}
+                    {
+                        instance.errors !== 0 && <Badge style={{backgroundColor: '#ff0808'}}>{instance.errors}{' '}<FormattedMessage id="errors" defaultMessage="error(s)"/></Badge>
+                    }
+                </td>
+                <td style={{width: '30%'}} />
+                <td style={{width: '15%'}}>
+                    {
+                        callback_task && <Badge>{callback_task.cell_id}</Badge>
+                    }
+                </td>
+            </tr>
+        )
+    }
+}
+
 
 class BulkEntry extends Component {
     constructor(props) {
@@ -242,7 +339,7 @@ class BulkEntry extends Component {
 
         if(expanded) {
             bulk.related.map(i => rows.push(
-                <SubInstance key={`inst_${i.id}`} instance={i} auth_token={auth_token} colOffset={1}/>
+                <InstanceDetails key={`inst_${i.id}`} instance={i} auth_token={auth_token} colOffset={1}/>
             ))
         }
         return rows;
