@@ -81,10 +81,10 @@ const pp_as_json = (s) => {
     try {
         return JSON.stringify(JSON.parse(s), null, 2);
     } catch(e) {
-        console.log(e);
+        //console.log(e);
         return s
     }
-}
+};
 
 class TransactionFlow extends Component {
     constructor(props, context) {
@@ -191,6 +191,40 @@ const XSLT_PP = "<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1
     "</xsl:stylesheet>";
 
 
+const pp_output = (protocol, content) => {
+    switch(protocol) {
+        case "BS-OCI":
+        case "ROM":
+            return transformXML(content, XSLT_PP);
+        default:
+            return content;
+    }
+};
+
+const protocol2endpoint = (protocol) => {
+    switch(protocol) {
+        case "BS-OCI": return "BroadWorks";
+        case "ROM":
+            return protocol;
+        default:
+            return "unknown ..."
+    }
+};
+
+const protocol2summary = (protocol, content) => {
+    var s;
+    switch(protocol) {
+        case "BS-OCI":
+            s = /xsi:type="([A-Za-z0-9:]+)".*$/gm.exec(content);
+            return s && s[1];
+        case "ROM":
+            s = /ns[0-9]:action>([A-Za-z0-9:]+)<\/ns[0-9]:action.*$/gm.exec(content);
+            return (s && s[1]) || "....";
+        default:
+            return "..."
+    }
+};
+
 const SyncMessagesDetails = ({data}) => (
     <Table>
         <thead>
@@ -213,7 +247,7 @@ const SyncMessagesDetails = ({data}) => (
                         <td>{d.id}</td>
                         <td>
                             <pre style={{wordWrap: 'break-word', whiteSpace: 'pre-wrap'}}>
-                                {d.content && transformXML(d.content, XSLT_PP)}
+                                {d.content && pp_output(d.protocol, d.content)}
                             </pre>
                         </td>
                     </tr>
@@ -237,10 +271,7 @@ class SyncMessagesFlow extends Component {
     }
 
     static _extractEndpoints(data) {
-        const endpoints = data.map(d => {
-            if(d.protocol === "BS-OCI") return "BroadWorks";
-            return "unknown...";
-        });
+        const endpoints = data.map(d => protocol2endpoint(d.protocol));
         return [...new Set(endpoints)];
     }
 
@@ -264,6 +295,7 @@ class SyncMessagesFlow extends Component {
         const endpoints = SyncMessagesFlow._extractEndpoints(data);
         const flowWidth = boundingRect.width - 240;
         const endpointsHSpacing = flowWidth / (endpoints.length);
+        const messageWidth = p => (endpoints.indexOf(protocol2endpoint(p)) + 1) * endpointsHSpacing;
 
         const vLineHeight = (data.length + 2) * vSpacing;
         return (
@@ -279,8 +311,8 @@ class SyncMessagesFlow extends Component {
                                 (d, i) =>
                                     <line
                                         key={`message_line_${i}`}
-                                        x1={d.type === "request"?0:flowWidth}
-                                        x2={d.type === "request"?flowWidth:0}
+                                        x1={d.type === "request"?0:messageWidth(d.protocol)}
+                                        x2={d.type === "request"?messageWidth(d.protocol):0}
                                         y1={vSpacing * (i+1)}
                                         y2={vSpacing * (i+1)}
                                         stroke={d.type === "request"?"blue":d.type === "error"?"red":"green"}
@@ -293,9 +325,7 @@ class SyncMessagesFlow extends Component {
                     <g transform="translate(0,30)">
                         {
                             data.map(
-                                (d, i) => {
-                                    const summary = /xsi:type="([A-Za-z0-9:]+)".*$/gm.exec(d.content);
-                                    return (
+                                (d, i) => (
                                         <OverlayTrigger
                                           key={`tooltip-${i}`}
                                           placement="top"
@@ -310,16 +340,15 @@ class SyncMessagesFlow extends Component {
                                           }>
                                             <text
                                                 textAnchor="middle"
-                                                x={flowWidth / 2}
+                                                x={messageWidth(d.protocol) / 2}
                                                 y={(vSpacing * (i + 1)) - 10}
                                                 fill={!focusId || focusId === d.id ? "#1f77b4" : "rgba(31,119,180,0.4)"}
                                                 fillOpacity={1}
                                                 className="message-label">
-                                                {summary && summary[1]}
+                                                {protocol2summary(d.protocol, d.content)}
                                             </text>
                                         </OverlayTrigger>
-                                    )
-                                }
+                                )
                             )
                         }
                     </g>
@@ -513,12 +542,14 @@ class ExternalCallback extends Component {
     }
 
     render() {
-        const {entry} = this.props;
+        const {entry, tasks} = this.props;
+        const task = tasks.find(t => t.id === entry.origin_task_id);
         return (
             <tr>
                 <td>{entry.callback_id}</td>
                 <td>{entry.entity}</td>
                 <td>{entry.external_id}</td>
+                <td>{task && <Badge>{task.cell_id}</Badge>}</td>
                 <td>{entry.status}</td>
             </tr>
         )
@@ -532,6 +563,7 @@ const ExternalCallbacks = ({callbacks, tasks}) => (
                 <th><FormattedMessage id="id" defaultMessage="id" /></th>
                 <th><FormattedMessage id="entity" defaultMessage="Entity" /></th>
                 <th><FormattedMessage id="external-id" defaultMessage="External id" /></th>
+                <th><FormattedMessage id="task" defaultMessage="Task" /></th>
                 <th><FormattedMessage id="status" defaultMessage="Status" /></th>
             </tr>
         </thead>
