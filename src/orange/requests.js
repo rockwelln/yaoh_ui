@@ -717,7 +717,7 @@ class Error extends Component {
                                 </Col>
 
                                 <Col sm={9}>
-                                    {entry.description.split("\n").map((l, i) => <FormControl.Static key={i}>{l}</FormControl.Static>)}
+                                    {entry.description && entry.description.split("\n").map((l, i) => <FormControl.Static key={i}>{l}</FormControl.Static>)}
                                 </Col>
                             </FormGroup>
                         </Form>
@@ -825,13 +825,6 @@ class Events extends Component {
                                     <br/>
                                     <Button bsStyle="link" onClick={() => this.setState({show_details: true, selected_evt: e})}>...</Button>
                                 </td>
-                                {/*
-                                <td>{e.type === 'event' && this.props.user_can_replay &&
-                                    <Button onClick={() => this.onReplay(e.id)}>
-                                        <FormattedMessage id="replay" defaultMessage="Replay" />
-                                    </Button>
-                                }</td>
-                                */}
                             </tr>
                         )
                     )
