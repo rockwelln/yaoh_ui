@@ -1501,6 +1501,7 @@ export const activeCriteria = {
     status: {model: 'instances', value: 'ACTIVE', op: 'eq'}
 };
 
+const AutoRefreshTime = 10;
 
 export class Requests extends Component{
     constructor(props) {
@@ -1521,6 +1522,8 @@ export class Requests extends Component{
                 num_pages: 1,
             },
             error: undefined,
+            auto_refresh: false,
+            auto_refresh_remaining: AutoRefreshTime,
         };
         this._refresh = this._refresh.bind(this);
         this._load_activities = this._load_activities.bind(this);
@@ -1562,6 +1565,7 @@ export class Requests extends Component{
 
     componentWillUnmount() {
         this.cancelLoad = true;
+        this.autoRefreshHandler && clearInterval(this.autoRefreshHandler);
     }
 
     componentWillReceiveProps(nextProps) {
@@ -1701,7 +1705,7 @@ export class Requests extends Component{
     }
 
     render() {
-        const {filter_criteria, requests, activities, export_url} = this.state;
+        const {filter_criteria, requests, activities, export_url, auto_refresh} = this.state;
         const invalid_created_on = filter_criteria.created_on.value.length !== 0 && !moment(filter_criteria.created_on.value, "DD/MM/YYYY HH:mm").isValid();
 
         return (
@@ -1712,7 +1716,39 @@ export class Requests extends Component{
                 </Breadcrumb>
                 <Panel defaultExpanded={false} >
                     <Panel.Heading>
-                        <Panel.Title toggle><FormattedMessage id="search" defaultMessage="Search" /> <Glyphicon glyph="search" /></Panel.Title>
+                        <Panel.Title toggle>
+                            <FormattedMessage id="search" defaultMessage="Search" /> <Glyphicon glyph="search" />
+                            <Checkbox
+                                className="pull-right"
+                                style={{marginTop:0}}
+                                checked={auto_refresh}
+                                onClick={e => e.stopPropagation()}
+                                onChange={e => {
+                                    this.setState({auto_refresh: e.target.checked});
+                                    if(e.target.checked) {
+                                        this.autoRefreshHandler = setInterval(() => {
+                                            let {auto_refresh_remaining} = this.state;
+                                            --auto_refresh_remaining;
+                                            if(auto_refresh_remaining < 0) {
+                                                auto_refresh_remaining = AutoRefreshTime;
+                                                this._refresh();
+                                            }
+                                            this.setState({auto_refresh_remaining: auto_refresh_remaining});
+                                        }, 1000);
+
+                                    } else {
+                                        clearInterval(this.autoRefreshHandler);
+                                        this.setState({auto_refresh_remaining: AutoRefreshTime});
+                                    }
+                                }}
+                            >
+                                {
+                                    auto_refresh ?
+                                    <FormattedMessage id="remaining secs" defaultMessage="refresh in {r} secs" values={{r: this.state.auto_refresh_remaining}}/>
+                                    :<FormattedMessage id="auto-refresh" defaultMessage="auto-refresh"/>
+                                }
+                            </Checkbox>
+                        </Panel.Title>
                     </Panel.Heading>
                     <Panel.Body collapsible>
                         <Form horizontal>
