@@ -950,6 +950,12 @@ class Events extends Component {
 }
 
 
+const FORCEABLE_TASKS = [
+    "delete @ENUM",
+];
+
+const titleCase = s => s[0].toUpperCase() + s.substr(1);
+
 const TasksTable = ({tasks, onReplay, onRollback, user_can_replay, tx_id}) => (
     <Table condensed>
         <thead>
@@ -971,8 +977,10 @@ const TasksTable = ({tasks, onReplay, onRollback, user_can_replay, tx_id}) => (
                         return 0;
                     }
                 ).map(t => {
-                    const can_replay = onReplay && user_can_replay && t.status === 'ERROR' &&
+                    const replayable = onReplay && user_can_replay;
+                    const can_replay = replayable && t.status === 'ERROR' &&
                         t.id === Math.max(tasks.filter(ot => ot.cell_id === t.cell_id).map(oot => oot.id));
+
                     return (
                         <tr key={t.id}>
                             <th>{t.cell_id}</th>
@@ -982,9 +990,30 @@ const TasksTable = ({tasks, onReplay, onRollback, user_can_replay, tx_id}) => (
                             <td>{t.updated_on?moment(t.updated_on).format(DATE_FORMAT):'-'}</td>
                             <td>
                                 <ButtonToolbar>
-                                    {can_replay && <Button bsStyle="primary" onClick={() => onReplay(tx_id, t.id)}><FormattedMessage id="replay" defaultMessage="Replay" /></Button>}
-                                    {can_replay && <Button bsStyle="danger" onClick={() => onRollback(tx_id, t.id)}><FormattedMessage id="rollback" defaultMessage="Rollback"/></Button>}
-                                    {onReplay && user_can_replay && t.status === 'WAIT' && t.cell_id.includes("numbers") && <Button bsStyle="danger" onClick={() => onRollback(tx_id, t.id)}><FormattedMessage id="full-rollback" defaultMessage="Full rollback"/></Button>}
+                                    {
+                                        can_replay &&
+                                        <Button bsStyle="primary" onClick={() => onReplay(tx_id, t.id)}>
+                                            <FormattedMessage id="replay" defaultMessage="Replay" />
+                                        </Button>
+                                    }
+                                    {
+                                        can_replay &&
+                                        <Button bsStyle="danger" onClick={() => onRollback(tx_id, t.id, "rollback")}>
+                                            <FormattedMessage id="rollback" defaultMessage="Rollback"/>
+                                        </Button>
+                                    }
+                                    {
+                                        replayable && FORCEABLE_TASKS.indexOf(t.cell_id) !== -1 &&
+                                        <Button bsStyle="danger" onClick={() => onRollback(tx_id, t.id, "force")}>
+                                            <FormattedMessage id="force" defaultMessage="Force"/>
+                                        </Button>
+                                    }
+                                    {
+                                        replayable && t.status === 'WAIT' && t.cell_id.includes("numbers") &&
+                                        <Button bsStyle="danger" onClick={() => onRollback(tx_id, t.id)}>
+                                            <FormattedMessage id="full-rollback" defaultMessage="Full rollback"/>
+                                        </Button>
+                                    }
                                 </ButtonToolbar>
                             </td>
                         </tr>
@@ -1154,22 +1183,23 @@ export class Transaction extends Component {
             })
     }
 
-    onRollback(activity_id, task_id) {
+    onRollback(activity_id, task_id, replay_behaviour) {
         this.setState({replaying: true});
-        const meta = JSON.stringify({replay_behaviour: 'rollback'});
+        const meta = JSON.stringify({replay_behaviour: replay_behaviour});
+        const action = titleCase(replay_behaviour);
         fetch_put(`/api/v01/transactions/${activity_id}/tasks/${task_id}?meta=${meta}`, {}, this.props.auth_token)
             .then(() => {
                 !this.cancelLoad && this.setState({replaying: false});
                 this.fetchTxDetails(false);
                 this.props.notifications.addNotification({
-                        message: <FormattedMessage id="rollback-triggered" defaultMessage="Rollback triggered!"/>,
+                        message: <FormattedMessage id="rollback-triggered" defaultMessage="{action} triggered!" values={{action: action}}/>,
                         level: 'success'
                 });
             })
             .catch(error => {
                 !this.cancelLoad && this.setState({replaying: false});
                 this.props.notifications.addNotification({
-                    title: <FormattedMessage id="task-replay-failed" defaultMessage="Task rollback failed!"/>,
+                    title: <FormattedMessage id="rollback-failed" defaultMessage="{action} failed!" values={{action: action}}/>,
                     message: error.message,
                     level: 'error'
                 });
