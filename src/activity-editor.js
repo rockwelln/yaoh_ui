@@ -164,6 +164,7 @@ export default class ActivityEditor extends Component {
     }
 
     render() {
+        const {activities} = this.state;
         return (
             <div>
                 <div role="alert" ref="alert-editor" />
@@ -180,10 +181,17 @@ export default class ActivityEditor extends Component {
                     <Col sm={2}>
                         <Nav bsSize="small" bsStyle="pills" stacked>
                             {
-                                this.state.activities.map((a) => (
-                                    <NavItem key={a.name} onClick={() => this.setState({currentActivity:a.id, newActivity: false})}>
-                                        {a.name}
-                                    </NavItem>)
+                                activities
+                                    .sort((a, b) => {
+                                        if(a.name > b.name) return 1;
+                                        if(a.name < b.name) return -1;
+                                        return 0;
+                                    })
+                                    .map(a => (
+                                        <NavItem key={a.name} onClick={() => this.setState({currentActivity:a.id, newActivity: false})}>
+                                            {a.name}
+                                        </NavItem>
+                                    )
                                 )
                             }
                             <NavItem onClick={() => this.setState({newActivity: true})}>+ New</NavItem>
