@@ -47,6 +47,7 @@ import {LoginOpenIdConnect, AuthCallback, AuthSilentCallback} from "./sso/login"
 import {ResetPasswordPage, RESET_PASSWORD_PREFIX} from "./reset_password";
 
 import './App.css';
+import apio_logo from "./images/apio.png";
 import loading from './loading.gif';
 import {sso_auth_service} from "./sso/auth_service";
 
@@ -195,9 +196,14 @@ class LoginForm extends Component {
 const AsyncApioNavBar = ({user_group, logoutUser, database_status, ...props}) => (
   <Navbar staticTop collapseOnSelect inverse>
     <Navbar.Header>
-        { database_status && database_status.env === 'TEST' &&
-            <Navbar.Brand style={{color: '#ef0803', fontWeight: 'bold',}}>TEST</Navbar.Brand>
-        }
+        <Navbar.Brand style={{color: '#ef0803', fontWeight: 'bold',}}>
+            <img src={apio_logo}
+                 width="38"
+                 height="42"
+                 className="d-inline-block align-top"
+                 style={{padding: 0}}
+                 alt="apio" />
+        </Navbar.Brand>
         <Navbar.Toggle />
     </Navbar.Header>
     <Navbar.Collapse>
