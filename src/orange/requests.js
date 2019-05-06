@@ -1003,7 +1003,7 @@ const TasksTable = ({tasks, onReplay, onRollback, user_can_replay, tx_id}) => (
                                         </Button>
                                     }
                                     {
-                                        replayable && FORCEABLE_TASKS.indexOf(t.cell_id) !== -1 &&
+                                        can_replay && FORCEABLE_TASKS.indexOf(t.cell_id) !== -1 &&
                                         <Button bsStyle="danger" onClick={() => onRollback(tx_id, t.id, "force")}>
                                             <FormattedMessage id="force" defaultMessage="Force"/>
                                         </Button>
