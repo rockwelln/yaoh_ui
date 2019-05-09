@@ -720,7 +720,15 @@ function createInput(param, value, cells, cells_defs) {
             }).forEach(o => input.appendChild(o));
             input.value = value;
             break;
+        case 'json':
+            input = document.createElement('textarea');
+            input.innerText = value;
+            input.rows = 10;
+            input.className = 'form-control';
+            input.value = value;
+            break;
         case 'bool':
+            // todo: should become a checkbox!!
             input = document.createElement('select');
             input.className = 'form-control';
             ["true", "false"].map(v => {
@@ -810,7 +818,7 @@ function newCell(defs, cells, modal, editor, spacer, entities_defs) {
         optGroup = optGroups.find(o => c.path.split('.')[2] === o.label.split(' ')[0]);
         if(optGroup === undefined) {
             optGroup = document.createElement('optgroup');
-            optGroup.label = c.path.split('.')[2] + ' Processing';
+            optGroup.label = (c.path?c.path.split('.')[2]:"direct") + ' Processing';
             value.appendChild(optGroup);
             optGroups.push(optGroup);
         }
