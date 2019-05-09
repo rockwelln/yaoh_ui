@@ -619,9 +619,9 @@ const SubRequest = ({req, tasks, colOffset, onRollback, onReplay}) => {
             <td style={{width: '30%'}}>
                 {
                     request.status === "ACTIVE" && instance_.tasks && instance_.tasks.filter(t => t.status === 'ERROR').map(t =>
-                        <ButtonToolbar key={`subints_act_${instance_.id}_${t.id}`}>
-                            <Button bsStyle="primary" onClick={() => onReplay(instance_.id, t.id)}><FormattedMessage id="replay" defaultMessage="Replay" /></Button>
-                            <Button bsStyle="danger" onClick={() => onRollback(instance_.id, t.id)}><FormattedMessage id="rollback" defaultMessage="Rollback" /></Button>
+                        <ButtonToolbar key={`subints_act_${instance_.id}_${t.task_id}`}>
+                            <Button bsStyle="primary" onClick={() => onReplay(instance_.id, t.task_id)}><FormattedMessage id="replay" defaultMessage="Replay" /></Button>
+                            <Button bsStyle="danger" onClick={() => onRollback(instance_.id, t.task_id)}><FormattedMessage id="rollback" defaultMessage="Rollback" /></Button>
                         </ButtonToolbar>
                     )
                 }
