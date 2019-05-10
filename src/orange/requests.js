@@ -611,7 +611,7 @@ const SubRequest = ({req, tasks, colOffset, onRollback, onReplay}) => {
             }
             <td style={{width: '2%'}}><Glyphicon style={{color: statusColor}} glyph={statusGlyph}/></td>
             <td>
-                <a href={`/transactions/${instance_.id}`} target="_blank" rel="noopener noreferrer">{request.label}</a>{' '}
+                <Link to={`/transactions/${instance_.id}`}>{request.label}</Link>{' '}
                 {
                     instance_.errors !== 0 && <Badge style={{backgroundColor: '#ff0808'}}>{instance_.errors}{' '}<FormattedMessage id="errors" defaultMessage="error(s)"/></Badge>
                 }
@@ -836,57 +836,21 @@ class Events extends Component {
     constructor(props) {
         super(props);
         this.cancelLoad = false;
-        this.state = {events: [], logs: [], show_details: false, selected_evt: {}};
-    }
-
-    componentDidMount() {
-        // get the events
-        fetch_get(`/api/v01/transactions/${this.props.tx_id}/events`, this.props.auth_token)
-            .then(data => !this.cancelLoad && this.setState({events: data.events.map(e => {e.type='event'; return e})}))
-            .catch(error => !this.cancelLoad && this.setState({events_error: error}));
-        // get the logs
-        fetch_get(`/api/v01/transactions/${this.props.tx_id}/logs`, this.props.auth_token)
-            .then(data => !this.cancelLoad && this.setState({
-                logs: data.logs.map(l => {l.type='log'; l.source_entity=l.source; l.content=l.message; return l;})
-            }))
-            .catch(error => !this.cancelLoad && this.setState({logs_error: error}));
-    }
-
-    componentWillUnmount() {
-        this.cancelLoad = true;
+        this.state = {show_details: false, selected_evt: {}};
     }
 
     render() {
-        if(this.state.events_error !== undefined && this.state.logs_error !== undefined) {
-            return <Alert bsStyle="danger">
-                <FormattedMessage id="fail-fetch-events" defaultMessage="Failed to fetch events."/><br/>
-                {this.state.events_error.message}<br/>
-                {this.state.logs_error.message}
-            </Alert>
-        }
-        const {selected_evt, events_error, logs_error, events, logs, show_details} = this.state;
-        let alert = '';
-        if (events_error !== undefined) {
-            alert = <Alert bsStyle="danger">
-                <FormattedMessage id="fail-fetch-events" defaultMessage="Failed to fetch events."/><br/>
-                {events_error.message}
-            </Alert>
-        } else if (logs_error !== undefined) {
-            alert = <Alert bsStyle="danger">
-                <FormattedMessage id="fail-fetch-logs" defaultMessage="Failed to fetch logs."/><br/>
-                {logs_error.message}
-            </Alert>
-        }
+        const {selected_evt, show_details} = this.state;
+        const {events} = this.props;
+
         const closeModal = () => this.setState({show_details: false, selected_evt: {}});
-        const events_ = events.concat(logs);
         const event_content = pp_as_json(selected_evt.content);
         const extra = pp_as_json(selected_evt.extra);
         return (<div>
-            {alert}
             <Table condensed>
                 <tbody>
                 {
-                    events_.sort((a, b) => {
+                    events.sort((a, b) => {
                         if(b.event_id && a.event_id) {
                             if(b.event_id > a.event_id) return -1;
                             if(b.event_id < a.event_id) return 1;
@@ -1065,6 +1029,8 @@ export class Transaction extends Component {
             subrequests: [],
             subrequestsShown: true,
             externalCallbacks: [],
+            logs: [],
+            events: [],
         };
         this.cancelLoad = false;
 
@@ -1114,6 +1080,12 @@ export class Transaction extends Component {
                     .then(data => !this.cancelLoad && this.setState({events: data.events}))
                     .catch(error => !this.cancelLoad && this.setState({error: error}));
 
+                fetch_get(`/api/v01/transactions/${this.props.match.params.txId}/logs`, this.props.auth_token)
+                    .then(data => !this.cancelLoad && this.setState({
+                        logs: data.logs.map(l => {l.type='log'; l.source_entity=l.source; l.content=l.message; return l;})
+                    }))
+                    .catch(error => !this.cancelLoad && this.setState({error: error}));
+
                 fetch_get(`/api/v01/apio/transactions/${this.props.match.params.txId}/callbacks`, this.props.auth_token)
                     .then(data => !this.cancelLoad && this.setState({externalCallbacks: data.callbacks}))
                     .catch(error => !this.cancelLoad && this.setState({error: error}));
@@ -1157,10 +1129,18 @@ export class Transaction extends Component {
         this.cancelLoad = true;
     }
 
-    componentWillReceiveProps() {
-        this.setState({activeTab: 1});
-        this.fetchTxDetails(false);
+    componentDidUpdate(prevProps, prevState, snapshot) {
+        if(prevProps.match.params.txId !== this.props.match.params.txId) {
+            this.setState({activeTab: 1, tx: undefined, request: undefined, logs: [], events: [], externalCallbacks: []});
+            this.fetchTxDetails(false);
+        }
     }
+    /*
+    componentWillReceiveProps(nextProps) {
+        //this.setState({activeTab: 1});
+        //this.fetchTxDetails(false);
+    }
+    */
 
     onReplay(activity_id, task_id) {
         this.setState({replaying: true});
@@ -1312,7 +1292,7 @@ export class Transaction extends Component {
     }
 
     render() {
-        const {error, tx, request, events, activeTab, replaying, messages, subrequests, messageShown, subrequestsShown, externalCallbacks} = this.state;
+        const {error, tx, request, events, logs, activeTab, replaying, messages, subrequests, messageShown, subrequestsShown, externalCallbacks} = this.state;
         const {user_info} = this.props;
 
         const raw_event = request && events && events.filter(e => e.event_id === request.event_id)[0];
@@ -1336,6 +1316,14 @@ export class Transaction extends Component {
             alerts.push(
                 <Alert bsStyle="warning" key='blocking-error'>
                     <FormattedMessage id="blocking-error" defaultMessage="The request is blocked and needs manual intervention. (see workflow for details)"/>
+                </Alert>
+            );
+        }
+        if(tx && tx.super_instance) {
+            alerts.push(
+                <Alert bsStyle="info" key='super-instance'>
+                    <FormattedMessage id="super-instance-link" defaultMessage="The request is a sub-instance of the request: "/>
+                    <Link to={`/transactions/${tx.super_instance.id}`}>{tx.super_instance.id}</Link>
                 </Alert>
             );
         }
@@ -1504,17 +1492,18 @@ export class Transaction extends Component {
                                 </Panel>
                             )
                         }
-
-                        <Panel defaultExpanded={false}>
-                            <Panel.Heading>
-                                <Panel.Title toggle><FormattedMessage id="events" defaultMessage="Events" /></Panel.Title>
-                            </Panel.Heading>
-                            <Panel.Body collapsible>
-                                <Events
-                                    tx_id={tx.id}
-                                    {...this.props} />
-                            </Panel.Body>
-                        </Panel>
+                        {
+                            (events.length !== 0 || logs.length !== 0) && (
+                                <Panel defaultExpanded={false}>
+                                    <Panel.Heading>
+                                        <Panel.Title toggle><FormattedMessage id="events" defaultMessage="Events" /></Panel.Title>
+                                    </Panel.Heading>
+                                    <Panel.Body collapsible>
+                                        <Events events={events.concat(logs)} />
+                                    </Panel.Body>
+                                </Panel>
+                            )
+                        }
                     </Tab>
                 </Tabs>
             </div>)
