@@ -47,7 +47,8 @@ import {LoginOpenIdConnect, AuthCallback, AuthSilentCallback} from "./sso/login"
 import {ResetPasswordPage, RESET_PASSWORD_PREFIX} from "./reset_password";
 
 import './App.css';
-import apio_logo from "./images/apio.png";
+import apio_brand from "./images/apio.png";
+import apio_logo from "./images/logo.png";
 import loading from './loading.gif';
 import {sso_auth_service} from "./sso/auth_service";
 
@@ -189,7 +190,8 @@ class LoginForm extends Component {
                         </ButtonToolbar>
                     </Col>
                 </FormGroup>
-            </Form>)
+            </Form>
+        )
     }
 }
 
@@ -197,7 +199,7 @@ const AsyncApioNavBar = ({user_group, logoutUser, database_status, ...props}) =>
   <Navbar staticTop collapseOnSelect inverse>
     <Navbar.Header>
         <Navbar.Brand style={{color: '#ef0803', fontWeight: 'bold',}}>
-            <img src={apio_logo}
+            <img src={apio_brand}
                  width="38"
                  height="42"
                  className="d-inline-block align-top"
@@ -383,20 +385,30 @@ const LoginPage = ({updateToken, error_msg, standby_alert}) => (
                     standby_alert
                 }
                 <Panel >
-                    <Panel.Heading>
-                        <Panel.Title><FormattedMessage id="welcome" defaultMessage="Welcome!" /></Panel.Title>
-                    </Panel.Heading>
                     <Panel.Body>
-                        {
-                            error_msg && (
-                                <Alert bsStyle="danger">
-                                    <p>{error_msg}</p>
-                                </Alert>
-                            )
-                        }
-                        <LoginOpenIdConnect />
-                        <hr/>
-                        <LoginForm updateToken={updateToken}/>
+                        <Row>
+                            <Col xsOffset={3} xs={6} mdOffset={3} md={7}>
+                                <img src={apio_logo}
+                                     width={"100%"}
+                                     height={"100%"}
+                                     style={{padding: 0}}
+                                     alt="apio" />
+                            </Col>
+                        </Row>
+                        <Row>
+                            <Col xsOffset={1} xs={10} mdOffset={0} md={12}>
+                                {
+                                    error_msg && (
+                                        <Alert bsStyle="danger">
+                                            <p>{error_msg}</p>
+                                        </Alert>
+                                    )
+                                }
+                                { /* <LoginOpenIdConnect /> */ }
+                                <hr/>
+                                <LoginForm updateToken={updateToken}/>
+                            </Col>
+                        </Row>
                     </Panel.Body>
                 </Panel>
             </Col>

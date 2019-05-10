@@ -11,6 +11,7 @@ import Alert from "react-bootstrap/lib/Alert";
 import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import {FormattedMessage} from "react-intl";
 import {API_URL_PREFIX, checkStatus} from "./utils";
+import apio_logo from "./images/logo.png";
 
 const RESET_PASSWORD_TOKEN_LENGTH = 64;
 export const RESET_PASSWORD_PREFIX = '/reset-password/';
@@ -106,16 +107,27 @@ export const ResetPasswordPage = ({standby_alert}) => (
     <div>
         <Row style={{height: "20px", display: "block"}}/>
         <Row style={{height: "100%", display: "block"}}>
-            <Col xsOffset={4} xs={4}>
+            <Col xsOffset={1} xs={10} mdOffset={4} md={4}>
                 {
                     standby_alert || null
                 }
                 <Panel>
-                    <Panel.Heading>
-                        <Panel.Title><FormattedMessage id="reset-password" defaultMessage="Reset password" /></Panel.Title>
-                    </Panel.Heading>
                     <Panel.Body>
-                        <ResetPasswordForm />
+                        <Row>
+                            <Col xsOffset={3} xs={6} mdOffset={3} md={7}>
+                                <img src={apio_logo}
+                                     width={"100%"}
+                                     height={"100%"}
+                                     style={{padding: 0}}
+                                     alt="apio" />
+                            </Col>
+                        </Row>
+                        <Row>
+                            <Col xsOffset={1} xs={10} mdOffset={0} md={12}>
+                                <hr/>
+                                <ResetPasswordForm />
+                            </Col>
+                        </Row>
                     </Panel.Body>
                 </Panel>
             </Col>
