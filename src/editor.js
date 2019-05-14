@@ -808,17 +808,20 @@ function newCell(defs, cells, modal, editor, spacer, entities_defs) {
 
     let optGroups = [];
     defs.sort((a, b) => {
-        if(a.path.toLowerCase() < b.path.toLowerCase()) return -1;
-        if(a.path.toLowerCase() > b.path.toLowerCase()) return 1;
+        if(a.category && a.category.toLowerCase() < b.category.toLowerCase()) return -1;
+        if(a.category && a.category.toLowerCase() > b.category.toLowerCase()) return 1;
+
+        if(a.name.toLowerCase() < b.name.toLowerCase()) return -1;
+        if(a.name.toLowerCase() > b.name.toLowerCase()) return 1;
         return 0;
-    }).map((c) => {
+    }).map(c => {
         let option = document.createElement('option');
         option.value = c.name;
         option.innerHTML = c.name;
-        optGroup = optGroups.find(o => c.path.split('.')[2] === o.label.split(' ')[0]);
+        optGroup = optGroups.find(o => c.category?c.category === o.label.split(' ')[0]:"direct processing");
         if(optGroup === undefined) {
             optGroup = document.createElement('optgroup');
-            optGroup.label = (c.path?c.path.split('.')[2]:"direct") + ' Processing';
+            optGroup.label = (c.path?c.path.split('.')[2]:"direct") + ' processing';
             value.appendChild(optGroup);
             optGroups.push(optGroup);
         }
