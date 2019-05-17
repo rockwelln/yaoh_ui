@@ -28,7 +28,7 @@ import {FormattedMessage} from 'react-intl';
 
 import AsyncApioHelp from './async-apio-help';
 import Dashboard from './dashboard';
-import {Requests, Transaction} from './orange/requests';
+import {Requests, Transaction, Request} from './orange/requests';
 import {BulkActions} from "./orange/bulk";
 import {TenantsManagement} from "./data_apio/tenants";
 import {GroupsManagement} from "./data_apio/groups";
@@ -659,6 +659,16 @@ class App extends Component {
                                component={props => (
                                    isAllowed(ui_profile, pages.requests_nprequests) ?
                                        <Transaction
+                                           auth_token={auth_token}
+                                           user_info={user_info}
+                                           notifications={this._notificationSystem.current}
+                                           {...props} /> :
+                                       <NotAllowed/>
+                               )} />
+                        <Route path="/requests/:reqId"
+                               component={props => (
+                                   isAllowed(ui_profile, pages.requests_nprequests) ?
+                                       <Request
                                            auth_token={auth_token}
                                            user_info={user_info}
                                            notifications={this._notificationSystem.current}
