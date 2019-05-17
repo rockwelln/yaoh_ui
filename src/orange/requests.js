@@ -1062,7 +1062,7 @@ export class Transaction extends Component {
 
                 this.setState({tx: data});
 
-                fetch_get(`/api/v01/apio/requests/${data.original_request_id}`, this.props.auth_token)
+                data.original_request_id && fetch_get(`/api/v01/apio/requests/${data.original_request_id}`, this.props.auth_token)
                     .then(data => {
                         if(this.cancelLoad) return;
                         let diffState = {
@@ -1295,7 +1295,7 @@ export class Transaction extends Component {
         const {error, tx, request, events, logs, activeTab, replaying, messages, subrequests, messageShown, subrequestsShown, externalCallbacks} = this.state;
         const {user_info} = this.props;
 
-        const raw_event = request && events && events.filter(e => e.event_id === request.event_id)[0];
+        const raw_event = events && (request ? events.filter(e => e.event_id === request.event_id)[0] : events[0]);
 
         let alerts = [];
         if(error) {
@@ -1507,6 +1507,120 @@ export class Transaction extends Component {
                     </Tab>
                 </Tabs>
             </div>)
+    }
+}
+
+
+export class Request extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            // error: undefined,
+            messages: [],
+        };
+        this.cancelLoad = false;
+        this.fetchDetails = this.fetchDetails.bind(this);
+    }
+
+    fetchDetails() {
+        fetch_get(`/api/v01/apio/requests/${this.props.match.params.reqId}`, this.props.auth_token)
+            .then(data => !this.cancelLoad && this.setState({request: data.request}))
+            .catch(error =>
+                !this.cancelLoad && this.props.notifications.addNotification({
+                    title: <FormattedMessage id="fetch-req-failed" defaultMessage="Fetch request failed!" />,
+                    message: error.message,
+                    level: 'error'
+                })
+            );
+
+        fetch_get(`/api/v01/apio/requests/${this.props.match.params.reqId}/traces`, this.props.auth_token)
+            .then(data => !this.cancelLoad && this.setState({messages: data.traces}))
+            .catch(error =>
+                !this.cancelLoad && this.props.notifications.addNotification({
+                    title: <FormattedMessage id="fetch-messages-failed" defaultMessage="Fetch request traces failed!" />,
+                    message: error.message,
+                    level: 'error'
+                })
+            );
+    }
+
+    componentDidMount() {
+        this.fetchDetails();
+    }
+
+    componentWillUnmount() {
+        this.cancelLoad = true;
+    }
+
+    render() {
+        const {request, messages} = this.state;
+
+        if (!request) {
+            return <div><FormattedMessage id='loading' defaultMessage='Loading...'/></div>
+        }
+
+        const request_entity = request.entities[0];
+        const raw_event = request_entity.details;
+
+        const response_ = raw_event.response;
+        delete raw_event.response;
+
+        const username = raw_event.user;
+        delete raw_event.user;
+
+        return (
+            <div>
+                <Col xs={12} sm={6} md={8} lg={8} style={{marginTop: '10px'}}>
+                    <Panel>
+                        <Panel.Body>
+                        {
+                            raw_event && (
+                                <div>
+                                    <ReactJson src={raw_event} name={"Request"}/><hr/>
+                                    <ReactJson src={response_} name={"Response"}/><hr/>
+                                </div>
+                            )
+                        }
+                        </Panel.Body>
+                    </Panel>
+                </Col>
+                <Col xs={12} sm={6} md={4} lg={4}>
+                    <Panel style={{marginTop: "10px"}}>
+                        <Panel.Body>
+                            <Table condensed>
+                                <tbody>
+                                    <tr><th><FormattedMessage id="requset-id" defaultMessage="Request ID" /></th><td>{ request.request_id }</td></tr>
+                                    <tr><th><FormattedMessage id="request-status" defaultMessage="Request status" /></th><td>{ request.status }</td></tr>
+                                    <tr><th><FormattedMessage id="username" defaultMessage="Username" /></th><td>{ username }</td></tr>
+                                    <tr><th><FormattedMessage id="target-type" defaultMessage="Target type" /></th><td>{ request_entity.entity_type }</td></tr>
+                                    <tr><th><FormattedMessage id="creation-date" defaultMessage="Creation date" /></th><td>{ request.created_on }</td></tr>
+                                </tbody>
+                            </Table>
+                        </Panel.Body>
+                    </Panel>
+                </Col>
+
+                <Col xs={12} sm={12} md={12} lg={12}>
+                    {
+                        messages.length !== 0 && (
+                            <Panel>
+                                <Panel.Heading>
+                                    <Panel.Title>
+                                        <FormattedMessage id="messages" defaultMessage="Messages"/>
+                                    </Panel.Title>
+                                </Panel.Heading>
+                                <Panel.Body>
+                                    <MessagesTable
+                                        messages={messages}
+                                        {...this.props}
+                                    />
+                                </Panel.Body>
+                            </Panel>
+                        )
+                    }
+                </Col>
+            </div>
+        )
     }
 }
 
@@ -2011,14 +2125,17 @@ export class Requests extends Component{
                             headers={[
                                 {
                                     title: '#', field: 'instance_id', model: 'requests',
-                                    render: n => <Link to={`/transactions/${n.instance_id}`}>{n.instance_id}</Link>,
+                                    render: n =>
+                                        n.instance_id ?
+                                            <Link to={`/transactions/${n.instance_id}`}>I{n.instance_id}</Link> :
+                                            <Link to={`/requests/${n.request_id}`}>R{n.request_id}</Link>,
                                     sortable: true,
                                     style: {width: '50px'}
                                 },
                                 {
                                     title: <FormattedMessage id="workflow" defaultMessage="Workflow" />,
                                     field: 'activity_id', model: 'requests', sortable: true,
-                                    render: n => activities && activities.find(a => a.id === n.activity_id).name
+                                    render: n => activities && n.activity_id ? activities.find(a => a.id === n.activity_id).name : "-"
                                 },
                                 {
                                     title: <FormattedMessage id="tenant" defaultMessage="Tenant" />,
@@ -2029,7 +2146,7 @@ export class Requests extends Component{
                                     field: 'site_id', model: 'requests', sortable: true
                                 },
                                 {
-                                    title: <FormattedMessage id="numbers" defaultMessage="Numbers" />,
+                                    title: <FormattedMessage id="user-s" defaultMessage="User(s)" />,
                                     field: 'numbers', model: 'requests', sortable: true,
                                     style: {
                                         //whiteSpace: 'nowrap',
