@@ -1062,7 +1062,7 @@ export class Transaction extends Component {
 
                 this.setState({tx: data});
 
-                fetch_get(`/api/v01/apio/requests/${data.original_request_id}`, this.props.auth_token)
+                data.original_request_id && fetch_get(`/api/v01/apio/requests/${data.original_request_id}`, this.props.auth_token)
                     .then(data => {
                         if(this.cancelLoad) return;
                         let diffState = {
@@ -1295,7 +1295,7 @@ export class Transaction extends Component {
         const {error, tx, request, events, logs, activeTab, replaying, messages, subrequests, messageShown, subrequestsShown, externalCallbacks} = this.state;
         const {user_info} = this.props;
 
-        const raw_event = request && events && events.filter(e => e.event_id === request.event_id)[0];
+        const raw_event = events && (request ? events.filter(e => e.event_id === request.event_id)[0] : events[0]);
 
         let alerts = [];
         if(error) {
