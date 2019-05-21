@@ -28,7 +28,7 @@ import {FormattedMessage} from 'react-intl';
 
 import AsyncApioHelp from './async-apio-help';
 import Dashboard from './dashboard';
-import {Requests, Transaction, Request} from './orange/requests';
+import {Requests, CustomRequests, Transaction, Request} from './orange/requests';
 import {BulkActions} from "./orange/bulk";
 import {TenantsManagement} from "./data_apio/tenants";
 import {GroupsManagement} from "./data_apio/groups";
@@ -225,7 +225,12 @@ const AsyncApioNavBar = ({user_group, logoutUser, database_status, ...props}) =>
 
               <LinkContainer to={"/transactions/list"}>
                   <MenuItem>
-                      <FormattedMessage id="requests" defaultMessage="Requests"/>
+                      <FormattedMessage id="apio-requests" defaultMessage="APIO Requests"/>
+                  </MenuItem>
+              </LinkContainer>
+              <LinkContainer to={"/custom-transactions/list"}>
+                  <MenuItem>
+                      <FormattedMessage id="custom-requests" defaultMessage="Custom Requests"/>
                   </MenuItem>
               </LinkContainer>
               <MenuItem divider/>
@@ -360,7 +365,7 @@ const AsyncApioNavBar = ({user_group, logoutUser, database_status, ...props}) =>
 );
 
 
-const NotFound = ({match}) => (
+const NotFound = () => (
     <div>
         <FormattedMessage
             id="app.route.notFound"
@@ -368,7 +373,7 @@ const NotFound = ({match}) => (
     </div>
 );
 
-const NotAllowed = ({match}) => (
+const NotAllowed = () => (
     <div>
         <FormattedMessage
             id="app.route.notAllowed"
@@ -592,6 +597,16 @@ class App extends Component {
                                component={props => (
                                    isAllowed(ui_profile, pages.requests_nprequests) ?
                                    <Requests
+                                       auth_token={auth_token}
+                                       user_info={user_info}
+                                       {...props} /> :
+                                   <NotAllowed/>
+                               )}
+                               exact />
+                        <Route path="/custom-transactions/list"
+                               component={props => (
+                                   isAllowed(ui_profile, pages.requests_nprequests) ?
+                                   <CustomRequests
                                        auth_token={auth_token}
                                        user_info={user_info}
                                        {...props} /> :

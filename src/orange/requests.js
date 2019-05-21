@@ -1649,7 +1649,7 @@ export class Requests extends Component{
                 model: 'requests', field: 'created_on', direction: 'desc'
             }],
 
-            requests: [], operators: [],
+            requests: [],
             pagination: {
                 page_number: 1,
                 num_pages: 1,
@@ -2169,6 +2169,494 @@ export class Requests extends Component{
                                 {
                                     title: <FormattedMessage id="updated-on" defaultMessage="Updated on" />,
                                     field: 'updated_on', model: 'requests', sortable: true, style: {width: '200px'}
+                                },
+                            ]}
+                            pagination={this.state.pagination}
+                            data={requests}
+                            onSort={s => this._refresh(undefined, s)}
+                            onPagination={p => this._refresh(p)}
+                            />
+                    </Panel.Body>
+                </Panel>
+
+                <Panel>
+                    <Panel.Body>
+                        <Button
+                            bsStyle="primary"
+                            href={export_url}
+                            disabled={export_url === undefined}
+                        >
+                            <FormattedMessage id="export-as-csv" defaultMessage="Export as CSV"/>
+                        </Button>
+                    </Panel.Body>
+                </Panel>
+            </div>
+        )
+    }
+}
+
+
+export class CustomRequests extends Component{
+    constructor(props) {
+        super(props);
+        this.cancelLoad = false;
+        this.state = {
+            filter_criteria: CustomRequests.criteria_from_params(this.props.location.search, this.props.user_info.ui_profile),
+            paging_info: {
+                page_number: 1, page_size: 50
+            },
+            sorting_spec : [{
+                model: 'instances', field: 'created_on', direction: 'desc'
+            }],
+
+            requests: [],
+            pagination: {
+                page_number: 1,
+                num_pages: 1,
+            },
+            error: undefined,
+            auto_refresh: false,
+            auto_refresh_remaining: AutoRefreshTime,
+        };
+        this._refresh = this._refresh.bind(this);
+        this._load_activities = this._load_activities.bind(this);
+        this._prepare_url = this._prepare_url.bind(this);
+    }
+
+    static default_criteria(ui_profile) {
+        return {
+            status: {value: '', op: 'eq'},
+            created_on: {value: '', op: 'ge'},
+            method: {model: 'events', value: '', op: 'eq'},
+            url: {model: 'events', value: '', op: 'like'},
+            user: {value: '', op: 'eq'},
+            task_status: undefined,
+        }
+    }
+
+    static criteria_from_params(url_params, ui_profile) {
+        const params = queryString.parse(url_params);
+        let custom_params = {};
+        if (params.filter !== undefined) {
+            try {
+                custom_params = JSON.parse(params.filter);
+            } catch (e) { console.error(e) }
+        }
+        return update(
+            CustomRequests.default_criteria(ui_profile),
+            {$merge: custom_params}
+        );
+    }
+
+    componentDidMount() {
+        this._load_activities();
+        this._refresh();
+    }
+
+    componentWillUnmount() {
+        this.cancelLoad = true;
+        this.autoRefreshHandler && clearInterval(this.autoRefreshHandler);
+    }
+
+    componentWillReceiveProps(nextProps) {
+        if (nextProps.location.pathname === this.props.location.pathname &&
+            nextProps.location.search !== this.props.location.search) {
+            this.setState({
+                filter_criteria: CustomRequests.criteria_from_params(nextProps.location.search, nextProps.user_info.ui_profile)
+            });
+        }
+    }
+
+    _load_activities() {
+        fetch_get('/api/v01/activities', this.props.auth_token)
+            .then(data => !this.cancelLoad && this.setState({activities: data.activities}))
+            .catch(error => console.error(error))
+    }
+
+    _prepare_url(paging_spec, sorting_spec, format) {
+        let url = new URL(API_URL_PREFIX + '/api/v01/custom_instances/search');
+        // filter
+        const {filter_criteria} = this.state;
+        let filter_spec = Object.keys(filter_criteria)
+            .filter(f =>
+                filter_criteria[f] &&
+                (
+                    (filter_criteria[f].value && filter_criteria[f].op) ||
+                    filter_criteria[f].or || filter_criteria[f].and || filter_criteria[f].op === 'is_null' || typeof(filter_criteria[f].value) === 'boolean'
+                )
+            )
+            .map(f => {
+                const criteria = filter_criteria[f];
+                switch(f) {
+                    case 'method':
+                        return {
+                            model: criteria.model,
+                            field: 'key',
+                            op: criteria.op === "eq"?"like":"not_like",
+                            value: criteria.value + " %"
+                        };
+                    case 'url':
+                        const op = criteria.op === "ne" ? "not_like": "like";
+                        const value = ["like", "ne"].indexOf(criteria.op) !== -1 ? "% %" + criteria.value + "%" : "% " + criteria.value;
+                        return {
+                            model: criteria.model,
+                            field: 'key',
+                            op: op,
+                            value: value,
+                        };
+                    case 'task_status':
+                        return {
+                            model: criteria.model,
+                            field: 'status',
+                            op: criteria.op,
+                            value: criteria.value
+                        };
+                    default:
+                        return {
+                            model: criteria.model, // needed in multi-model query
+                            field: f,
+                            op: criteria.op,
+                            value: f === 'created_on' || f === 'due_date' ?
+                                moment(criteria.value, 'DD/MM/YYYY HH:mm').format() :
+                                criteria.value.trim()
+                        }
+                }
+            });
+        url.searchParams.append('filter', JSON.stringify(filter_spec));
+        // paging
+        if(paging_spec !== undefined) {
+            url.searchParams.append('paging', JSON.stringify(paging_spec));
+        }
+        //sorting
+        if(sorting_spec !== undefined) {
+            url.searchParams.append('sorting', JSON.stringify(sorting_spec));
+        }
+        //formatting
+        if(format !== undefined){
+            url.searchParams.append('as', format);
+        }
+        return url;
+    }
+
+    _refresh(p, s) {
+        let {paging_info, sorting_spec, filter_criteria} = this.state;
+        // override paging and sorting if needed
+        if(p !== undefined) {
+            paging_info = update(this.state.paging_info, {$merge: p});
+        }
+        if(s !== undefined) {
+            sorting_spec = [s];
+        }
+
+        // get the export URL
+        const url = this._prepare_url(paging_info, sorting_spec);
+        let export_url = this._prepare_url(undefined, sorting_spec, 'csv');
+        export_url.searchParams.append('auth_token', this.props.auth_token);
+
+        //reset collection
+        this.setState({requests: undefined});
+
+        fetch_get(url, this.props.auth_token)
+            .then(data => {
+                if(this.cancelLoad) return;
+                // devnote: save in the history the search.
+                const filter_spec = Object.keys(filter_criteria)
+                    .filter(f => filter_criteria[f] && (
+                        (filter_criteria[f].value && filter_criteria[f].op) ||
+                        filter_criteria[f].or ||
+                        filter_criteria[f].and ||
+                        filter_criteria[f].in ||
+                        filter_criteria[f].op === 'is_null')
+                    ).reduce((obj, key) => {
+                        obj[key] = filter_criteria[key];
+                        return obj;
+                    }, {});
+
+                if(Object.keys(filter_spec).length !== 0) {
+                    const search_str = queryString.stringify(
+                        {
+                            filter: JSON.stringify(filter_spec),
+                            paging_info: paging_info, // not used: RFU
+                            sorting_spec: sorting_spec // not used: RFU
+                        }
+                    );
+                    this.props.history.push(this.props.location.pathname + '?' + search_str);
+                }
+
+                this.setState({
+                     requests: data.instances.map(c => {
+                        c.created_on = c.created_on?moment(c.created_on).format(DATE_FORMAT):null;
+                        c.updated_on = c.updated_on?moment(c.updated_on).format(DATE_FORMAT):null;
+                        return c;
+                     }),
+                     pagination: {
+                         page_number: data.pagination[0], // page_number, page_size, num_pages, total_results
+                         page_size: data.pagination[1],
+                         num_pages: data.pagination[2],
+                         total_results: data.pagination[3],
+                     },
+                     sorting_spec: data.sorting || [],
+                     export_url: export_url.href
+                });
+            })
+            .catch(error => !this.cancelLoad && this.setState({error: error}));
+    }
+
+    render() {
+        const {filter_criteria, requests, activities, export_url, auto_refresh} = this.state;
+        const invalid_created_on = filter_criteria.created_on.value.length !== 0 && !moment(filter_criteria.created_on.value, "DD/MM/YYYY HH:mm").isValid();
+
+        return (
+            <div>
+                <Breadcrumb>
+                    <Breadcrumb.Item active><FormattedMessage id="requests" defaultMessage="Requests"/></Breadcrumb.Item>
+                    <Breadcrumb.Item active><FormattedMessage id="custom-requests" defaultMessage="Custom requests"/></Breadcrumb.Item>
+                </Breadcrumb>
+                <Panel defaultExpanded={false} >
+                    <Panel.Heading>
+                        <Panel.Title toggle>
+                            <FormattedMessage id="search" defaultMessage="Search" /> <Glyphicon glyph="search" />
+                            <Checkbox
+                                className="pull-right"
+                                style={{marginTop:0}}
+                                checked={auto_refresh}
+                                onClick={e => e.stopPropagation()}
+                                onChange={e => {
+                                    this.setState({auto_refresh: e.target.checked});
+                                    if(e.target.checked) {
+                                        this.autoRefreshHandler = setInterval(() => {
+                                            let {auto_refresh_remaining} = this.state;
+                                            --auto_refresh_remaining;
+                                            if(auto_refresh_remaining < 0) {
+                                                auto_refresh_remaining = AutoRefreshTime;
+                                                this._refresh();
+                                            }
+                                            this.setState({auto_refresh_remaining: auto_refresh_remaining});
+                                        }, 1000);
+
+                                    } else {
+                                        clearInterval(this.autoRefreshHandler);
+                                        this.setState({auto_refresh_remaining: AutoRefreshTime});
+                                    }
+                                }}
+                            >
+                                {
+                                    auto_refresh ?
+                                    <FormattedMessage id="remaining secs" defaultMessage="refresh in {r} secs" values={{r: this.state.auto_refresh_remaining}}/>
+                                    :<FormattedMessage id="auto-refresh" defaultMessage="auto-refresh"/>
+                                }
+                            </Checkbox>
+                        </Panel.Title>
+                    </Panel.Heading>
+                    <Panel.Body collapsible>
+                        <Form horizontal>
+
+                            <FormGroup>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="method" defaultMessage="Method" />
+                                </Col>
+
+                                <Col sm={1}>
+                                    <FormControl
+                                        componentClass="select"
+                                        value={filter_criteria.method.op}
+                                        onChange={e => this.setState({
+                                            filter_criteria: update(this.state.filter_criteria,
+                                                {method: {$merge: {op: e.target.value}}})
+                                        })}>
+                                        <option value="eq">==</option>
+                                        <option value="ne">!=</option>
+                                    </FormControl>
+                                </Col>
+
+                                <Col sm={8}>
+                                    <FormControl componentClass="select" value={filter_criteria.method.value}
+                                        onChange={e => this.setState({
+                                            filter_criteria: update(this.state.filter_criteria,
+                                                {method: {$merge: {value: e.target.value}}})
+                                        })}>
+                                        <option value='' />
+                                        <option value="get">get</option>
+                                        <option value="post">post</option>
+                                        <option value="put">put</option>
+                                        <option value="delete">delete</option>
+                                    </FormControl>
+                                </Col>
+                            </FormGroup>
+
+                            <FormGroup>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="url" defaultMessage="URL" />
+                                </Col>
+
+                                <Col sm={1}>
+                                    <FormControl
+                                        componentClass="select"
+                                        value={filter_criteria.url.op}
+                                        onChange={e => this.setState({
+                                            filter_criteria: update(this.state.filter_criteria,
+                                                {url: {$merge: {op: e.target.value}}})
+                                        })}>
+                                        <option value="like">like</option>
+                                        <option value="eq">==</option>
+                                        <option value="ne">!=</option>
+                                    </FormControl>
+                                </Col>
+
+                                <Col sm={8}>
+                                    <FormControl componentClass="input" value={filter_criteria.url.value}
+                                        onChange={e => this.setState({
+                                            filter_criteria: update(filter_criteria,
+                                                {url: {$merge: {value: e.target.value}}})
+                                        })} />
+                                </Col>
+                            </FormGroup>
+
+                            <FormGroup>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="status" defaultMessage="Status" />
+                                </Col>
+
+                                <Col sm={1}>
+                                    <FormControl
+                                        componentClass="select"
+                                        value={filter_criteria.status.op}
+                                        onChange={e => this.setState({
+                                            filter_criteria: update(this.state.filter_criteria,
+                                                {status: {$merge: {op: e.target.value}}})
+                                        })}>
+                                        <option value="eq">==</option>
+                                        <option value="ne">!=</option>
+                                    </FormControl>
+                                </Col>
+
+                                <Col sm={8}>
+                                    <FormControl componentClass="select" value={filter_criteria.status.value}
+                                        onChange={e => this.setState({
+                                            filter_criteria: update(this.state.filter_criteria,
+                                                {status: {$merge: {value: e.target.value}}})
+                                        })}>
+                                        <option value='' />
+                                        <option value="ACTIVE">ACTIVE</option>
+                                        <option value="CLOSED_IN_ERROR">CLOSED_IN_ERROR</option>
+                                        <option value="CLOSED_IN_SUCCESS">CLOSED_IN_SUCCESS</option>
+                                    </FormControl>
+                                </Col>
+                            </FormGroup>
+
+                            <FormGroup validationState={invalid_created_on?"error":null}>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="created-on" defaultMessage="Created on" />
+                                </Col>
+
+                                <Col sm={1}>
+                                    <FormControl
+                                        componentClass="select"
+                                        value={filter_criteria.created_on.op}
+                                        onChange={e => this.setState({
+                                            filter_criteria: update(this.state.filter_criteria,
+                                                {created_on: {$merge: {op: e.target.value}}})
+                                        })}>
+                                        <option value="gt">&gt;</option>
+                                        <option value="ge">&gt;=</option>
+                                        <option value="lt">&lt;</option>
+                                        <option value="le">&lt;=</option>
+                                    </FormControl>
+                                </Col>
+
+                                <Col sm={8}>
+                                    <DatePicker
+                                        className="form-control"
+                                        selected={filter_criteria.created_on.value.length !== 0?moment(filter_criteria.created_on.value, "DD/MM/YYYY HH:mm"):null}
+                                        onChangeRaw={d => {
+                                            this.setState({
+                                                filter_criteria: update(
+                                                    this.state.filter_criteria,
+                                                    {created_on: {$merge: {value: d.target.value}}})
+                                            });
+                                            d.target.value.length === 0 && d.preventDefault();
+                                        }}
+                                        onChange={d => this.setState({
+                                            filter_criteria: update(
+                                                this.state.filter_criteria,
+                                                {created_on: {$merge: {value: d.format("DD/MM/YYYY HH:mm")}}})
+                                        })}
+                                        dateFormat="DD/MM/YYYY HH:mm"
+                                        locale="fr-fr"
+                                        showTimeSelect
+                                        timeFormat="HH:mm"
+                                        timeIntervals={60}/>
+                                </Col>
+                            </FormGroup>
+
+                            <FormGroup>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="flags" defaultMessage="Flags" />
+                                </Col>
+
+                                <Col smOffset={1} sm={8}>
+                                    <Checkbox
+                                        checked={filter_criteria.task_status && filter_criteria.task_status.value === 'ERROR'}
+                                        onChange={e => (
+                                            e.target.checked ?
+                                                this.setState({
+                                                    filter_criteria: update(this.state.filter_criteria,
+                                                        {$merge: errorCriteria})
+                                                }) :
+                                                this.setState({
+                                                    filter_criteria: update(this.state.filter_criteria,
+                                                        {$unset: ['task_status']})
+                                                })
+                                        )} >
+                                        <FormattedMessage id="with-errors" defaultMessage="With errors" />
+                                    </Checkbox>
+
+                                </Col>
+                            </FormGroup>
+
+                            <FormGroup>
+                                <Col smOffset={1} sm={1}>
+                                    <Button bsStyle="info" onClick={() => this._refresh({page_number: 1})} disabled={invalid_created_on}>
+                                        <FormattedMessage id="search" defaultMessage="Search" />
+                                    </Button>
+                                </Col>
+                            </FormGroup>
+                        </Form>
+                    </Panel.Body>
+                </Panel>
+
+                <Panel>
+                    <Panel.Body>
+                        <ApioDatatable
+                            sorting_spec={this.state.sorting_spec}
+                            headers={[
+                                {
+                                    title: '#', field: 'instance_id', model: 'requests',
+                                    render: n => <Link to={`/transactions/${n.instance_id}`}>I{n.instance_id}</Link>,
+                                    sortable: true,
+                                    style: {width: '50px'}
+                                },
+                                {
+                                    title: <FormattedMessage id="workflow" defaultMessage="Workflow" />,
+                                    field: 'activity_id', model: 'instances', sortable: true,
+                                    render: n => activities && n.activity_id ? activities.find(a => a.id === n.activity_id).name : "-"
+                                },
+                                {
+                                    title: <FormattedMessage id="route" defaultMessage="Route" />,
+                                    field: 'key', model: 'events',
+                                },
+                                {
+                                    title: <FormattedMessage id="status" defaultMessage="Status" />,
+                                    field: 'status', model: 'instances', sortable: true,
+                                    render: n => n.status
+                                },
+                                {
+                                    title: <FormattedMessage id="created-on" defaultMessage="Created on" />,
+                                    field: 'created_on', model: 'instances', sortable: true, style: {width: '200px'}
+                                },
+                                {
+                                    title: <FormattedMessage id="updated-on" defaultMessage="Updated on" />,
+                                    field: 'updated_on', model: 'instances', sortable: true, style: {width: '200px'}
                                 },
                             ]}
                             pagination={this.state.pagination}
