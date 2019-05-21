@@ -180,6 +180,7 @@ export default class ActivityEditor extends Component {
                 <Row>
                     <Col sm={2}>
                         <Nav bsSize="small" bsStyle="pills" stacked>
+                            <NavItem onClick={() => this.setState({newActivity: true})}>+ New</NavItem>
                             {
                                 activities
                                     .sort((a, b) => {
@@ -194,7 +195,6 @@ export default class ActivityEditor extends Component {
                                     )
                                 )
                             }
-                            <NavItem onClick={() => this.setState({newActivity: true})}>+ New</NavItem>
                         </Nav>
                     </Col>
 
