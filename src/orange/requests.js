@@ -1562,11 +1562,14 @@ export class Request extends Component {
         const request_entity = request.entities[0];
         const raw_event = request_entity.details;
 
+        const request_ = Object.keys(raw_event).filter(k => !["response", "user"].includes(k)).reduce(
+            (obj, key) => {
+                obj[key] = raw_event[key];
+                return obj;
+            }, {}
+        );
         const response_ = raw_event.response;
-        delete raw_event.response;
-
         const username = raw_event.user;
-        delete raw_event.user;
 
         return (
             <div>
@@ -1576,7 +1579,7 @@ export class Request extends Component {
                         {
                             raw_event && (
                                 <div>
-                                    <ReactJson src={raw_event} name={"Request"}/><hr/>
+                                    <ReactJson src={request_} name={"Request"}/><hr/>
                                     <ReactJson src={response_} name={"Response"}/><hr/>
                                 </div>
                             )
