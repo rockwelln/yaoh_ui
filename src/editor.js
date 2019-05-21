@@ -1156,6 +1156,7 @@ function configureStylesheet(graph)
     style[mxConstants.STYLE_FONTSTYLE] = 0;
     style[mxConstants.STYLE_IMAGE_WIDTH] = '48';
     style[mxConstants.STYLE_IMAGE_HEIGHT] = '48';
+    style[mxConstants.STYLE_ARCSIZE] = 6;
     graph.getStylesheet().putDefaultVertexStyle(style);
 
     style = {};
