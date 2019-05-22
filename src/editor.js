@@ -3,6 +3,7 @@ const errPic = require("./images/error.png");
 const runPic = require("./images/run.png");
 
 const BASIC_CELL_HEIGHT = 120;
+const CHAR_HEIGHT_APPROX = 7.5;
 const BASE_Y = 35;
 
 const mxUtils = window.mxUtils;
@@ -18,6 +19,20 @@ const mxEvent = window.mxEvent;
 const mxPoint = window.mxPoint;
 const mxImage = window.mxImage;
 const mxCellOverlay = window.mxCellOverlay;
+
+
+function min_cell_height(cell, name) {
+    let c_height = cell.outputs.reduce(
+        (height, output) => output.length * CHAR_HEIGHT_APPROX > height?output.length * CHAR_HEIGHT_APPROX:height, cell.height || BASIC_CELL_HEIGHT
+    );
+    if(cell.original_name) {
+        c_height = Math.max(c_height, cell.original_name.length * CHAR_HEIGHT_APPROX);
+    }
+    if(name) {
+        c_height = Math.max(c_height, name.length * CHAR_HEIGHT_APPROX);
+    }
+    return c_height;
+}
 
 
 function draw_editor(container, handlers, placeholders, props) {
@@ -400,7 +415,7 @@ function draw_editor(container, handlers, placeholders, props) {
                         endpoints.push([name, v10]);
                         break;
                     default:
-                        v = graph.insertVertex(parent, null, node, c.x, c.y, c.height || BASIC_CELL_HEIGHT, baseY + (20 * c.outputs.length) + 15);
+                        v = graph.insertVertex(parent, null, node, c.x, c.y, min_cell_height(c, name), baseY + (20 * c.outputs.length) + 15);
                         v.setConnectable(false);
 
                         v10 = graph.insertVertex(v, null, targetNode.cloneNode(true), 0, 0, 10, 10, 'port;target;spacingLeft=18', true);
@@ -940,7 +955,7 @@ function newCell(defs, cells, modal, editor, spacer, entities_defs) {
                     v10.geometry.offset = new mxPoint(-5, 9);
                     break;
                 default:
-                    v = graph.insertVertex(parent, null, node, 0, 0, c.height || BASIC_CELL_HEIGHT, baseY + (20 * c.outputs.length) + 15, cls);
+                    v = graph.insertVertex(parent, null, node, 0, 0, min_cell_height(c, nameVal.value), baseY + (20 * c.outputs.length) + 15, cls);
                     v.setConnectable(false);
 
                     v10 = graph.insertVertex(v, null, document.createElement('Target'), 0, 0, 10, 10, 'port;target;spacingLeft=18', true);
@@ -1146,7 +1161,7 @@ function configureStylesheet(graph)
     style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter;
     style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_CENTER;
     style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_TOP;
-    style[mxConstants.STYLE_GRADIENTCOLOR] = 'white'; //'#41B9F5';
+    //style[mxConstants.STYLE_GRADIENTCOLOR] = 'white'; //'#41B9F5';
     style[mxConstants.STYLE_FILLCOLOR] = '#8CCDF5';
     style[mxConstants.STYLE_STROKECOLOR] = '#1B78C8';
     style[mxConstants.STYLE_FONTCOLOR] = '#000000';
@@ -1164,7 +1179,7 @@ function configureStylesheet(graph)
     style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter;
     style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_CENTER;
     style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_MIDDLE;
-    style[mxConstants.STYLE_GRADIENTCOLOR] = '#41B9F5';
+    //style[mxConstants.STYLE_GRADIENTCOLOR] = '#41B9F5';
     style[mxConstants.STYLE_FILLCOLOR] = '#8CCDF5';
     style[mxConstants.STYLE_STROKECOLOR] = '#1B78C8';
     style[mxConstants.STYLE_FONTCOLOR] = '#000000';
@@ -1181,7 +1196,7 @@ function configureStylesheet(graph)
     style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter;
     style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_LEFT;
     style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_MIDDLE;
-    style[mxConstants.STYLE_GRADIENTCOLOR] = '#41B9F5';
+    //style[mxConstants.STYLE_GRADIENTCOLOR] = '#41B9F5';
     style[mxConstants.STYLE_FILLCOLOR] = '#8CCDF5';
     style[mxConstants.STYLE_STROKECOLOR] = '#1B78C8';
     style[mxConstants.STYLE_FONTCOLOR] = '#000000';
