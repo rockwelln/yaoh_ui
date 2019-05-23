@@ -16,8 +16,21 @@ import update from 'immutability-helper';
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 import Alert from "react-bootstrap/lib/Alert";
+import {StaticControl} from "./utils/common";
 
-const CUSTOM_ROUTE_PREFIX = "https://<target>/api/v01/custom/";
+const CUSTOM_ROUTE_PREFIX = "https://<target>/api/v01/custom";
+const JSON_SCHEMA_SAMPLE = (
+`{
+    "$schema": "http://json-schema.org/schema#",
+    "type": "object",
+    "properties": {
+        "status": {
+            "type": "string", "enum": ["ACTIVE", "ERROR"]
+        }
+    },
+    "additionalProperties": false
+}`
+);
 
 
 class DedicatedStartupEvents extends Component {
@@ -118,14 +131,27 @@ class DedicatedStartupEvents extends Component {
 }
 
 
+const isObject = value => value && typeof value === 'object' && value.constructor === Object;
+
+
 class CustomRoutes extends Component {
     constructor(props) {
         super(props);
-        this.state = {activities: [], custom_routes: [], new_route: {method: 'get', sync: false}, showSyncWarning: false};
+        this.state = {
+            activities: [],
+            custom_routes: [],
+            new_route: CustomRoutes.new_route(),
+            showSyncWarning: false,
+            showUpdateModal:false
+        };
         this.cancelLoad = false;
         this.fetchActivities = this.fetchActivities.bind(this);
         this.onSelectActivity = this.onSelectActivity.bind(this);
         this.onSyncUpdate = this.onSyncUpdate.bind(this);
+    }
+
+    static new_route() {
+        return {method: "get", sync: false, route: "", schema: null}
     }
 
     fetchRoutes() {
@@ -182,13 +208,18 @@ class CustomRoutes extends Component {
     }
 
     onNewRoute() {
-        fetch_post('/api/v01/custom_routes', this.state.new_route, this.props.auth_token)
+        const {new_route} = this.state;
+        // copy onto a new object.
+        if(new_route.schema) {
+            new_route.schema = JSON.parse(new_route.schema);
+        }
+        fetch_post('/api/v01/custom_routes', new_route, this.props.auth_token)
             .then(() => {
                 this.props.notifications.addNotification({
                     message: <FormattedMessage id="update-custom-route-done" defaultMessage="Custom route saved!"/>,
                     level: 'success'
                 });
-                this.setState({showNewRoute: false, new_route: {method: 'get', sync: false}});
+                this.setState({showNewRoute: false, new_route: CustomRoutes.new_route()});
                 this.fetchRoutes();
             })
             .catch(error => this.props.notifications.addNotification({
@@ -214,6 +245,35 @@ class CustomRoutes extends Component {
             }));
     }
 
+    onUpdateCustomRoute() {
+        const {pending_route} = this.state;
+        const route = Object.keys(pending_route).filter(k => ["activity_id", "schema", "sync"].includes(k)).reduce(
+            (obj, key) => {
+                obj[key] = pending_route[key];
+                return obj;
+            }, {}
+        );
+        if(route.schema) {
+            route.schema = JSON.parse(route.schema);
+        } else {
+            route.schema = null;
+        }
+        fetch_put(`/api/v01/custom_routes/${pending_route.route_id}`, route, this.props.auth_token)
+            .then(() => {
+                this.props.notifications.addNotification({
+                    message: <FormattedMessage id="update-custom-route-done" defaultMessage="Custom route updated!"/>,
+                    level: 'success'
+                });
+                this.setState({showUpdateModal: false, pending_route: undefined});
+                this.fetchRoutes();
+            })
+            .catch(error => this.props.notifications.addNotification({
+                title: <FormattedMessage id="update-custom-routes-failed" defaultMessage="Failed to update custom route"/>,
+                message: error.message,
+                level: 'error'
+            }));
+    }
+
     componentDidMount() {
         this.fetchActivities();
         this.fetchRoutes();
@@ -224,14 +284,34 @@ class CustomRoutes extends Component {
     }
 
     render() {
-        const {custom_routes, activities, showNewRoute, new_route, showSyncWarning, pending_route} = this.state;
-        const hideNewRoute = () => this.setState({showNewRoute: false, new_route: {method: 'get', sync: false}});
+        const {custom_routes, activities, showNewRoute, showUpdateModal, new_route, showSyncWarning, pending_route} = this.state;
+        const hideNewRoute = () => this.setState({showNewRoute: false, new_route: CustomRoutes.new_route()});
         const cancelSyncWarning = () => this.setState({showSyncWarning: false, pending_route: undefined});
+        const cancelUpdate = () => this.setState({showUpdateModal: false, pending_route: undefined});
         const route_ = new_route.route;
         const validRoute = !route_ || route_.length<5 ? null : (
              ["..", "?", "&"].map(c => route_.indexOf(c)).filter(i => i !== -1).length !== 0
-        ) ? "error" : "success";
-        const validNewRouteForm = validRoute === "success";
+        )  || route_[0] !== "/" ? "error" : "success";
+        let validSchema = null;
+        if(new_route.schema) {
+            try {
+                JSON.parse(new_route.schema);
+                validSchema = "success";
+            } catch {
+                validSchema = "error";
+            }
+        }
+        let validUpdateSchema = null;
+        if(pending_route && pending_route.schema && !isObject(pending_route.schema)) {
+            try {
+                JSON.parse(pending_route.schema);
+                validUpdateSchema = "success";
+            } catch {
+                validUpdateSchema = "error";
+            }
+        }
+        const validNewRouteForm = validRoute === "success" && validSchema !== "error";
+        const validUpdateRouteForm = validUpdateSchema !== "error";
 
         return (
             <Panel>
@@ -285,6 +365,15 @@ class CustomRoutes extends Component {
                                         </td>
                                         <td>
                                             <ButtonToolbar>
+                                                <Button
+                                                    onClick={() => this.setState({
+                                                        pending_route: Object.assign({}, route),
+                                                        showUpdateModal: true})
+                                                    }
+                                                    bsStyle="primary"
+                                                    style={{marginLeft: '5px', marginRight: '5px'}} >
+                                                    <Glyphicon glyph="pencil"/>
+                                                </Button>
                                                 <Button onClick={() => this.onDeleteCustomRoute(route.route_id)} bsStyle="danger" style={{marginLeft: '5px', marginRight: '5px'}}>
                                                     <Glyphicon glyph="remove-sign"/>
                                                 </Button>
@@ -315,7 +404,17 @@ class CustomRoutes extends Component {
                                         <FormControl
                                             componentClass="input"
                                             value={new_route.route}
+                                            placeholder="ex: /clients/{client_id:\d+}/addresses"
                                             onChange={e => this.setState({new_route: update(new_route, {$merge: {route: e.target.value}})})}/>
+                                    </Col>
+                                </FormGroup>
+
+                                <FormGroup>
+                                    <Col smOffset={2} sm={10}>
+                                        <HelpBlock>
+                                            <FormattedMessage id="custom-route-help" defaultMessage="The final endpoint will be: " />
+                                            {`${CUSTOM_ROUTE_PREFIX}${new_route.route || ''}`}
+                                        </HelpBlock>
                                     </Col>
                                 </FormGroup>
 
@@ -337,14 +436,33 @@ class CustomRoutes extends Component {
                                     </Col>
                                 </FormGroup>
 
-                                <FormGroup>
-                                    <Col smOffset={2} sm={10}>
-                                        <HelpBlock>
-                                            <FormattedMessage id="custom-route-help" defaultMessage="The final endpoint will be: " />
-                                            {`${CUSTOM_ROUTE_PREFIX}${new_route.route || ''}`}
-                                        </HelpBlock>
-                                    </Col>
-                                </FormGroup>
+                                <FormGroup validationState={validSchema}>
+                                     <Col componentClass={ControlLabel} sm={2}>
+                                         <FormattedMessage id="json-schema" defaultMessage="JSON Schema (optional)" />
+                                     </Col>
+
+                                     <Col sm={9}>
+                                         <Button
+                                             bsSize="small"
+                                             style={{
+                                                 position: "absolute",
+                                                 right: "20px",
+                                                 top: "5px",
+                                             }}
+                                             onClick={() => this.setState({new_route: update(new_route, {$merge: {schema: JSON_SCHEMA_SAMPLE}})})}>
+                                             <FormattedMessage id="sample" defaultMessage="Sample"/>
+                                         </Button>
+                                         <FormControl componentClass="textarea"
+                                             value={new_route.schema || ""}
+                                             rows={5}
+                                             placeholder={"ex: " + JSON_SCHEMA_SAMPLE}
+                                             onChange={e => this.setState({new_route: update(new_route, {$merge: {schema: e.target.value}})})} />
+
+                                         <HelpBlock>
+                                             <FormattedMessage id="custom-route-schema" defaultMessage="When set, the body is systematically checked against the schema associated to the route."/>
+                                         </HelpBlock>
+                                     </Col>
+                                 </FormGroup>
 
                                  <FormGroup>
                                      <Col componentClass={ControlLabel} sm={2}>
@@ -377,6 +495,87 @@ class CustomRoutes extends Component {
                             </Form>
                         </Modal.Body>
                     </Modal>
+                    {
+                        pending_route && <Modal show={showUpdateModal} onHide={cancelUpdate} backdrop={false}>
+                            <Modal.Header closeButton>
+                                <Modal.Title>
+                                    <FormattedMessage id="update" defaultMessage="Update"/>
+                                </Modal.Title>
+                            </Modal.Header>
+                            <Modal.Body>
+                                <Form horizontal>
+                                    <StaticControl label={<FormattedMessage id='route' defaultMessage='Route'/>} value={pending_route.route}/>
+                                    <FormGroup>
+                                        <Col smOffset={2} sm={10}>
+                                            <HelpBlock>
+                                                <FormattedMessage id="custom-route-help" defaultMessage="The final endpoint will be: " />
+                                                {`${CUSTOM_ROUTE_PREFIX}${pending_route.route || ''}`}
+                                            </HelpBlock>
+                                        </Col>
+                                    </FormGroup>
+
+                                    <StaticControl label={<FormattedMessage id='method' defaultMessage='Method'/>} value={pending_route.method}/>
+
+                                    <FormGroup validationState={validUpdateSchema}>
+                                         <Col componentClass={ControlLabel} sm={2}>
+                                             <FormattedMessage id="json-schema" defaultMessage="JSON Schema (optional)" />
+                                         </Col>
+
+                                         <Col sm={9}>
+                                             <Button
+                                                 bsSize="small"
+                                                 style={{
+                                                     position: "absolute",
+                                                     right: "20px",
+                                                     top: "5px",
+                                                 }}
+                                                 onClick={() => this.setState({pending_route: update(pending_route, {$merge: {schema: JSON_SCHEMA_SAMPLE}})})}>
+                                                 <FormattedMessage id="sample" defaultMessage="Sample"/>
+                                             </Button>
+                                             <FormControl componentClass="textarea"
+                                                 value={isObject(pending_route.schema)?JSON.stringify(pending_route.schema, null, 2):pending_route.schema || ""}
+                                                 rows={5}
+                                                 placeholder={"ex: " + JSON_SCHEMA_SAMPLE}
+                                                 onChange={e => this.setState({pending_route: update(pending_route, {$merge: {schema: e.target.value}})})} />
+
+                                             <HelpBlock>
+                                                 <FormattedMessage id="custom-route-schema" defaultMessage="When set, the body is systematically checked against the schema associated to the route."/>
+                                             </HelpBlock>
+                                         </Col>
+                                     </FormGroup>
+
+                                     <FormGroup>
+                                         <Col componentClass={ControlLabel} sm={2}>
+                                             <FormattedMessage id="sync" defaultMessage="Sync" />
+                                         </Col>
+
+                                         <Col sm={9}>
+                                             <Checkbox
+                                                 checked={pending_route.sync}
+                                                 onChange={e => this.setState({pending_route: update(pending_route, {$merge: {sync: e.target.checked}})})}/>
+
+                                             <HelpBlock>
+                                                 <FormattedMessage id="custom-route-sync" defaultMessage="When set, the call to this API is synchronous and the response is returned directly. Otherwise, only an instance id is returned and the associated job is spawned asynchronously."/>
+                                             </HelpBlock>
+                                         </Col>
+                                     </FormGroup>
+
+                                    <FormGroup>
+                                        <Col smOffset={2} sm={10}>
+                                            <ButtonToolbar>
+                                                <Button onClick={this.onUpdateCustomRoute.bind(this)} bsStyle="primary" disabled={!validUpdateRouteForm}>
+                                                    <FormattedMessage id="save" defaultMessage="Save" />
+                                                </Button>
+                                                <Button onClick={cancelUpdate}>
+                                                    <FormattedMessage id="cancel" defaultMessage="Cancel" />
+                                                </Button>
+                                            </ButtonToolbar>
+                                        </Col>
+                                    </FormGroup>
+                                </Form>
+                            </Modal.Body>
+                        </Modal>
+                    }
                     {
                         pending_route && <Modal show={showSyncWarning} onHide={cancelSyncWarning} backdrop={false}>
                             <Modal.Header closeButton>
