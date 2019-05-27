@@ -265,12 +265,12 @@ const AsyncApioNavBar = ({user_group, logoutUser, database_status, ...props}) =>
               <NavDropdown eventKey={4} title={
                 <span>
                     <Glyphicon glyph="hdd" /> {' '}
-                    <FormattedMessage id='data' defaultMessage='Data'/>
+                    <FormattedMessage id='provisioning' defaultMessage='Provisioning'/>
                 </span>
                 } id="nav-data-apio">
                   <LinkContainer to={"/apio/tenants"}>
                       <MenuItem>
-                          <FormattedMessage id="tenants" defaultMessage="Tenants"/>
+                          <FormattedMessage id="broadsoft-platform-1" defaultMessage="Broadsoft platform 1"/>
                       </MenuItem>
                   </LinkContainer>
               </NavDropdown>
