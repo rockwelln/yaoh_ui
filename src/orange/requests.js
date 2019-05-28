@@ -1060,20 +1060,17 @@ export class Transaction extends Component {
                     return;
                 }
 
-                this.setState({tx: data});
+                let diffState = {tx: data};
+
+                // devnote: if the transaction was not yet loaded and is a sub-workflow.
+                if(!this.state.tx && data.callback_task_id) {
+                    diffState.activeTab = 2;
+                }
+
+                this.setState(diffState);
 
                 data.original_request_id && fetch_get(`/api/v01/apio/requests/${data.original_request_id}`, this.props.auth_token)
-                    .then(data => {
-                        if(this.cancelLoad) return;
-                        let diffState = {
-                            request: data.request
-                        };
-                        if(!this.state.request && !data.request.event_id) {
-                            // if load for the first time && there is not request / event_id -> skip the "Request" tab.
-                            diffState.activeTab = 2;
-                        }
-                        this.setState(diffState);
-                    })
+                    .then(data => !this.cancelLoad && this.setState({request: data.request}))
                     .catch(error => !this.cancelLoad && this.setState({error: error}));
 
                 fetch_get(`/api/v01/transactions/${this.props.match.params.txId}/events`, this.props.auth_token)
@@ -2127,7 +2124,7 @@ export class Requests extends Component{
                             sorting_spec={this.state.sorting_spec}
                             headers={[
                                 {
-                                    title: '#', field: 'instance_id', model: 'requests',
+                                    title: '#', field: 'request_id', model: 'requests',
                                     render: n =>
                                         n.instance_id ?
                                             <Link to={`/transactions/${n.instance_id}`}>I{n.instance_id}</Link> :
@@ -2137,20 +2134,20 @@ export class Requests extends Component{
                                 },
                                 {
                                     title: <FormattedMessage id="workflow" defaultMessage="Workflow" />,
-                                    field: 'activity_id', model: 'requests', sortable: true,
+                                    field: 'activity_id', model: 'instances',
                                     render: n => activities && n.activity_id ? activities.find(a => a.id === n.activity_id).name : "-"
                                 },
                                 {
                                     title: <FormattedMessage id="tenant" defaultMessage="Tenant" />,
-                                    field: 'tenant_id', model: 'requests', sortable: true
+                                    field: 'tenant_id', model: 'request_entities',
                                 },
                                 {
                                     title: <FormattedMessage id="site" defaultMessage="Site" />,
-                                    field: 'site_id', model: 'requests', sortable: true
+                                    field: 'site_id', model: 'request_entities',
                                 },
                                 {
                                     title: <FormattedMessage id="user-s" defaultMessage="User(s)" />,
-                                    field: 'numbers', model: 'requests', sortable: true,
+                                    field: 'numbers', model: 'request_entities',
                                     style: {
                                         //whiteSpace: 'nowrap',
                                         //width: '100%',
