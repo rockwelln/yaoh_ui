@@ -95,15 +95,41 @@ export const SearchBar = ({filter, onChange, onSearch, size}) => (
     </Form>
 );
 
-export const ApioDatatable = ({sorting_spec, headers, pagination, data, onSort, onPagination, filter, onFilterChange, onSearch}) => {
 
-    const renderSortIcon = (field) => {
+const datatableRow = (headers, data, label, default_col_style, key) => {
+    let r = [
+        <tr key={key} style={{border: 0}}>
+        {
+            headers.map((h, j) => (
+                <td key={j} style={h.style?update(default_col_style, {$merge: h.style}):default_col_style}>
+                    {h.render?h.render(data):data[h.field || h.title]}
+                </td>
+            ))
+        }
+        </tr>
+    ];
+
+    if(label) {
+        r.push(
+            <tr key={`label-${key}`}>
+                <td colSpan={1} style={{border: 0, padding: 0}}/>
+                <td colSpan={headers.length - 1} style={{border: 0, padding: 0}}><p style={{color: "#777"}}>{label}</p></td>
+            </tr>
+        )
+    }
+    return r;
+};
+
+
+export const ApioDatatable = ({sorting_spec, headers, pagination, data, labels, onSort, onPagination, filter, onFilterChange, onSearch}) => {
+
+    const renderSortIcon = field => {
         const e = sorting_spec.find(s => s.field === field);
         const sortClass = e !== undefined?(' fa-sort-' + e.direction):'';
         return <i className={"fa fa-sort" + sortClass + " fa-fw"} aria-hidden="true" />;
     };
 
-    const getSortDirection = (field) => {
+    const getSortDirection = field => {
         const e = sorting_spec.find(s => s.field === field);
         return (e === undefined || e.direction === 'desc')?'asc':'desc';
     };
@@ -146,17 +172,7 @@ export const ApioDatatable = ({sorting_spec, headers, pagination, data, onSort, 
                 </thead>
                 <tbody>
                 {
-                    data.map((n, i) => (
-                        <tr key={i}>
-                            {
-                                headers.map((h, j) => (
-                                    <td key={j} style={h.style?update(default_col_style, {$merge: h.style}):default_col_style}>
-                                        {h.render?h.render(n):n[h.field || h.title]}
-                                    </td>
-                                ))
-                            }
-                        </tr>
-                    ))
+                    data.map((n, i) => datatableRow(headers, n, labels && labels[i], default_col_style, i))
                 }
                 </tbody>
             </Table>

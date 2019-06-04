@@ -1496,7 +1496,7 @@ export class Transaction extends Component {
                                         <Panel.Title toggle><FormattedMessage id="events" defaultMessage="Events" /></Panel.Title>
                                     </Panel.Heading>
                                     <Panel.Body collapsible>
-                                        <Events events={events.concat(logs)} />
+                                        <Events events={events.concat(logs)} onReplay={event_id => console.log("replay event")}/>
                                     </Panel.Body>
                                 </Panel>
                             )
@@ -2130,7 +2130,7 @@ export class Requests extends Component{
                                             <Link to={`/transactions/${n.instance_id}`}>I{n.instance_id}</Link> :
                                             <Link to={`/requests/${n.request_id}`}>R{n.request_id}</Link>,
                                     sortable: true,
-                                    style: {width: '50px'}
+                                    style: {width: '50px', wordWrap: 'undefined'}
                                 },
                                 {
                                     title: <FormattedMessage id="workflow" defaultMessage="Workflow" />,
@@ -2163,6 +2163,10 @@ export class Requests extends Component{
                                     render: n => n.status
                                 },
                                 {
+                                    title: <FormattedMessage id="owner" defaultMessage="Owner" />,
+                                    field: 'username'
+                                },
+                                {
                                     title: <FormattedMessage id="created-on" defaultMessage="Created on" />,
                                     field: 'created_on', model: 'requests', sortable: true, style: {width: '200px'}
                                 },
@@ -2173,6 +2177,7 @@ export class Requests extends Component{
                             ]}
                             pagination={this.state.pagination}
                             data={requests}
+                            labels={requests && requests.map(r => r.label)}
                             onSort={s => this._refresh(undefined, s)}
                             onPagination={p => this._refresh(p)}
                             />
