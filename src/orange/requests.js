@@ -1665,6 +1665,7 @@ export class Requests extends Component{
 
     static default_criteria(ui_profile) {
         return {
+            activity_id: {model: 'instances', value: '', op: 'eq'},
             tenant_id: {model: 'request_entities', value: '', op: 'eq'},
             site_id: {model: 'request_entities', value: '', op: 'eq'},
             number: {model: 'request_entities', value: '', op: 'like'},
@@ -1725,7 +1726,8 @@ export class Requests extends Component{
                 filter_criteria[f] &&
                 (
                     (filter_criteria[f].value && filter_criteria[f].op) ||
-                    filter_criteria[f].or || filter_criteria[f].and || filter_criteria[f].op === 'is_null' || typeof(filter_criteria[f].value) === 'boolean'
+                    filter_criteria[f].or || filter_criteria[f].and || filter_criteria[f].op === 'is_null' ||
+                    filter_criteria[f].op === 'is_not_null' || typeof(filter_criteria[f].value) === 'boolean'
                 )
             )
             .map(f => {
@@ -1743,6 +1745,13 @@ export class Requests extends Component{
                         return {
                             model: filter_criteria[f].model,
                             field: 'status',
+                            op: filter_criteria[f].op,
+                            value: filter_criteria[f].value
+                        };
+                    case 'activity_id':
+                        return {
+                            model: filter_criteria[f].model, // needed in multi-model query
+                            field: f,
                             op: filter_criteria[f].op,
                             value: filter_criteria[f].value
                         };
@@ -1801,8 +1810,9 @@ export class Requests extends Component{
                         filter_criteria[f].or ||
                         filter_criteria[f].and ||
                         filter_criteria[f].in ||
-                        filter_criteria[f].op === 'is_null')
-                    ).reduce((obj, key) => {
+                        filter_criteria[f].op === 'is_null' ||
+                        filter_criteria[f].op === 'is_not_null'
+                    )).reduce((obj, key) => {
                         obj[key] = filter_criteria[key];
                         return obj;
                     }, {});
@@ -1897,6 +1907,57 @@ export class Requests extends Component{
                                             filter_criteria: update(filter_criteria,
                                                 {label: {$merge: {value: e.target.value}}})
                                         })} />
+                                </Col>
+                            </FormGroup>
+
+                            <FormGroup>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="workflow" defaultMessage="Workflow" />
+                                </Col>
+
+                                <Col sm={1}>
+                                    <FormControl
+                                        componentClass="select"
+                                        value={filter_criteria.activity_id.op}
+                                        onChange={e => this.setState({
+                                            filter_criteria: update(this.state.filter_criteria,
+                                                {activity_id: {$merge: {op: e.target.value}}})
+                                        })}>
+                                        <option value="eq">==</option>
+                                        <option value="ne">!=</option>
+                                        <FormattedMessage id="proxy-none" defaultMessage="proxied (none)" >
+                                            {
+                                                message => <option value="is_null">{message}</option>
+                                            }
+                                        </FormattedMessage>
+                                        <FormattedMessage id="not proxy" defaultMessage="not proxied (any)" >
+                                            {
+                                                message => <option value="is_not_null">{message}</option>
+                                            }
+                                        </FormattedMessage>
+                                    </FormControl>
+                                </Col>
+
+                                <Col sm={8}>
+                                    <FormControl
+                                        componentClass="select"
+                                        disabled={["is_null", "is_not_null"].includes(filter_criteria.activity_id.op)}
+                                        value={filter_criteria.activity_id.value}
+                                        onChange={e => this.setState({
+                                            filter_criteria: update(this.state.filter_criteria,
+                                                {activity_id: {$merge: {value: e.target.value && parseInt(e.target.value, 10)}}})
+                                        })}>
+                                        <option value='' />
+                                        {
+                                            activities && activities.sort((a, b) => {
+                                                if(a.name > b.name) return 1;
+                                                if(a.name < b.name) return -1;
+                                                return 0
+                                            }).map(
+                                                a => <option value={a.id} key={a.id}>{a.name}</option>
+                                            )
+                                        }
+                                    </FormControl>
                                 </Col>
                             </FormGroup>
 
