@@ -942,8 +942,9 @@ const TasksTable = ({tasks, onReplay, onRollback, user_can_replay, tx_id}) => (
                     }
                 ).map(t => {
                     const replayable = onReplay && user_can_replay;
-                    const can_replay = replayable && t.status === 'ERROR' &&
+                    const can_replay = (replayable || t.cell_id === 'end') && t.status === 'ERROR' &&
                         t.id === Math.max(tasks.filter(ot => ot.cell_id === t.cell_id).map(oot => oot.id));
+                    const support_rollback = !["end", "start", "mark request success", "mark request error"].includes(t.cell_id);
 
                     return (
                         <tr key={t.id}>
@@ -961,7 +962,7 @@ const TasksTable = ({tasks, onReplay, onRollback, user_can_replay, tx_id}) => (
                                         </Button>
                                     }
                                     {
-                                        can_replay &&
+                                        can_replay && support_rollback &&
                                         <Button bsStyle="danger" onClick={() => onRollback(tx_id, t.id, "rollback")}>
                                             <FormattedMessage id="rollback" defaultMessage="Rollback"/>
                                         </Button>
@@ -1055,11 +1056,6 @@ export class Transaction extends Component {
                 if(this.cancelLoad)
                     return;
 
-                if(this.state.tx && this.state.tx.status !== "ACTIVE" && data.status !== "ACTIVE") {
-                    reload && setTimeout(() => this.fetchTxDetails(true), RELOAD_TX);
-                    return;
-                }
-
                 let diffState = {tx: data};
 
                 // devnote: if the transaction was not yet loaded and is a sub-workflow.
@@ -1068,6 +1064,11 @@ export class Transaction extends Component {
                 }
 
                 this.setState(diffState);
+
+                if(this.state.tx && this.state.tx.status !== "ACTIVE" && data.status !== "ACTIVE") {
+                    reload && setTimeout(() => this.fetchTxDetails(true), RELOAD_TX);
+                    return;
+                }
 
                 data.original_request_id && fetch_get(`/api/v01/apio/requests/${data.original_request_id}`, this.props.auth_token)
                     .then(data => !this.cancelLoad && this.setState({request: data.request}))
@@ -1132,12 +1133,6 @@ export class Transaction extends Component {
             this.fetchTxDetails(false);
         }
     }
-    /*
-    componentWillReceiveProps(nextProps) {
-        //this.setState({activeTab: 1});
-        //this.fetchTxDetails(false);
-    }
-    */
 
     onReplay(activity_id, task_id) {
         this.setState({replaying: true});
@@ -1220,19 +1215,19 @@ export class Transaction extends Component {
                     .then(() => {
                         this.fetchTxDetails(false);
                         this.props.notifications.addNotification({
-                            message: <FormattedMessage id="task-status-changed" defaultMessage="Task status updated!"/>,
+                            message: <FormattedMessage id="instance-status-changed" defaultMessage="Instance status updated!"/>,
                             level: 'success'
                         });
                     })
                     .catch(error => this.props.notifications.addNotification({
-                            title: <FormattedMessage id="task-update-failed" defaultMessage="Task status update failed!"/>,
+                            title: <FormattedMessage id="instance-update-failed" defaultMessage="Instance status update failed!"/>,
                             message: error.message,
                             level: 'error'
                         })
                     )
             )
             .catch(error => this.props.notifications.addNotification({
-                    title: <FormattedMessage id="task-update-failed" defaultMessage="Task status update failed!"/>,
+                    title: <FormattedMessage id="instance-update-failed" defaultMessage="Instance status update failed!"/>,
                     message: error.message,
                     level: 'error'
                 })
@@ -1463,7 +1458,7 @@ export class Transaction extends Component {
                         }
                         {
                             tx.errors.length !== 0 && (
-                                <Panel bsStyle="danger" defaultExpanded={false}>
+                                <Panel bsStyle="danger" defaultExpanded={true}>
                                     <Panel.Heading>
                                         <Panel.Title toggle>
                                             <FormattedMessage id="errors" defaultMessage="Errors"/>
@@ -1496,7 +1491,7 @@ export class Transaction extends Component {
                                         <Panel.Title toggle><FormattedMessage id="events" defaultMessage="Events" /></Panel.Title>
                                     </Panel.Heading>
                                     <Panel.Body collapsible>
-                                        <Events events={events.concat(logs)} onReplay={event_id => console.log("replay event")}/>
+                                        <Events events={events.concat(logs)} />
                                     </Panel.Body>
                                 </Panel>
                             )
@@ -1630,6 +1625,26 @@ export const errorCriteria = {
 };
 
 
+const callbackErrorCriteria = {
+    end_task_status: {
+        and: [
+            {
+                model: 'tasks',
+                field: 'status',
+                op: 'eq',
+                value: 'ERROR'
+            },
+            {
+                model: 'tasks',
+                field: 'cell_id',
+                op: "eq",
+                value: "end"
+            }
+        ]
+    }
+};
+
+
 export const activeCriteria = {
     status: {model: 'instances', value: 'ACTIVE', op: 'eq'}
 };
@@ -1675,6 +1690,7 @@ export class Requests extends Component{
             request_status: {model: 'requests', value: '', op: 'eq'},
             label: {model: 'bulks', value: '', op: 'eq'},
             task_status: undefined,
+            end_task_status: undefined,
         }
     }
 
@@ -1750,11 +1766,14 @@ export class Requests extends Component{
                         };
                     case 'activity_id':
                         return {
-                            model: filter_criteria[f].model, // needed in multi-model query
+                            model: filter_criteria[f].model,
                             field: f,
                             op: filter_criteria[f].op,
                             value: filter_criteria[f].value
                         };
+                    case 'end_task_status':
+                        // filter transparently sent
+                        return filter_criteria[f];
                     default:
                         return {
                             model: filter_criteria[f].model, // needed in multi-model query
@@ -2165,6 +2184,21 @@ export class Requests extends Component{
                                         <FormattedMessage id="with-errors" defaultMessage="With errors" />
                                     </Checkbox>
 
+                                    <Checkbox
+                                        checked={filter_criteria.end_task_status}
+                                        onChange={e => (
+                                            e.target.checked ?
+                                                this.setState({
+                                                    filter_criteria: update(this.state.filter_criteria,
+                                                        {$merge: callbackErrorCriteria})
+                                                }) :
+                                                this.setState({
+                                                    filter_criteria: update(this.state.filter_criteria,
+                                                        {$unset: ['end_task_status']})
+                                                })
+                                        )} >
+                                        <FormattedMessage id="with-end-in-error" defaultMessage="With end in error" />
+                                    </Checkbox>
                                 </Col>
                             </FormGroup>
 
