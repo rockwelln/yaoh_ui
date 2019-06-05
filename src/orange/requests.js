@@ -841,13 +841,16 @@ class Events extends Component {
 
     render() {
         const {selected_evt, show_details} = this.state;
-        const {events} = this.props;
+        const {events, logs} = this.props;
 
         const closeModal = () => this.setState({show_details: false, selected_evt: {}});
         const event_content = pp_as_json(selected_evt.content);
         const extra = pp_as_json(selected_evt.extra);
         return (<div>
             <Table condensed>
+                <thead>
+                    <th><td colSpan={2}>{"# "}<FormattedMessage id="external" defaultMessage="External"/></td></th>
+                </thead>
                 <tbody>
                 {
                     events.sort((a, b) => {
@@ -861,7 +864,44 @@ class Events extends Component {
                     }).map(
                         (e, n) => (
                             <tr key={n}>
-                                <th>{e.source_entity + (e.username?' (' + e.username + ')':'')}<br/>{moment(e.created_on).format(DATE_FORMAT)}</th>
+                                <th style={{width: "20%"}}>
+                                    {e.source_entity + (e.username?' (' + e.username + ')':'')}
+                                    <br/>
+                                    {moment(e.created_on).format(DATE_FORMAT)}
+                                </th>
+                                <td>
+                                    {e.content.substr(0, 50)}
+                                    <br/>
+                                    <Button bsStyle="link" onClick={() => this.setState({show_details: true, selected_evt: e})}>...</Button>
+                                </td>
+                            </tr>
+                        )
+                    )
+                }
+                </tbody>
+            </Table>
+            <Table condensed>
+                <thead>
+                    <th><td colSpan={2}>{"# "}<FormattedMessage id="logs" defaultMessage="Log"/></td></th>
+                </thead>
+                <tbody>
+                {
+                    logs.sort((a, b) => {
+                        if(b.event_id && a.event_id) {
+                            if(b.event_id > a.event_id) return -1;
+                            if(b.event_id < a.event_id) return 1;
+                            return 0
+                        } else {
+                            return moment(b.created_on) - moment(a.created_on)
+                        }
+                    }).map(
+                        (e, n) => (
+                            <tr key={n}>
+                                <th style={{width: "20%"}}>
+                                    {e.source_entity + (e.username?' (' + e.username + ')':'')}
+                                    <br/>
+                                    {moment(e.created_on).format(DATE_FORMAT)}
+                                </th>
                                 <td>
                                     {e.content.substr(0, 50)}
                                     <br/>
@@ -1063,12 +1103,13 @@ export class Transaction extends Component {
                     diffState.activeTab = 2;
                 }
 
-                this.setState(diffState);
-
                 if(this.state.tx && this.state.tx.status !== "ACTIVE" && data.status !== "ACTIVE") {
+                    this.setState(diffState);
                     reload && setTimeout(() => this.fetchTxDetails(true), RELOAD_TX);
                     return;
                 }
+
+                this.setState(diffState);
 
                 data.original_request_id && fetch_get(`/api/v01/apio/requests/${data.original_request_id}`, this.props.auth_token)
                     .then(data => !this.cancelLoad && this.setState({request: data.request}))
@@ -1491,7 +1532,7 @@ export class Transaction extends Component {
                                         <Panel.Title toggle><FormattedMessage id="events" defaultMessage="Events" /></Panel.Title>
                                     </Panel.Heading>
                                     <Panel.Body collapsible>
-                                        <Events events={events.concat(logs)} />
+                                        <Events events={events} logs={logs} />
                                     </Panel.Body>
                                 </Panel>
                             )
