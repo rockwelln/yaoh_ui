@@ -98,6 +98,8 @@ export class ConfigManagement extends React.Component {
                     <ReactJson
                         src={config.content}
                         onEdit={this.onEdit}
+                        onAdd={this.onEdit}
+                        onDelete={this.onEdit}
                         validationMessage={this.state.validationMessage}
                     />
                 }
