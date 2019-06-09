@@ -621,7 +621,7 @@ const SubRequest = ({req, tasks, colOffset, onRollback, onReplay}) => {
                     request.status === "ACTIVE" && instance_.tasks && instance_.tasks.filter(t => t.status === 'ERROR').map(t =>
                         <ButtonToolbar key={`subints_act_${instance_.id}_${t.task_id}`}>
                             <Button bsStyle="primary" onClick={() => onReplay(instance_.id, t.task_id)}><FormattedMessage id="replay" defaultMessage="Replay" /></Button>
-                            <Button bsStyle="danger" onClick={() => onRollback(instance_.id, t.task_id)}><FormattedMessage id="rollback" defaultMessage="Rollback" /></Button>
+                            <Button bsStyle="danger" onClick={() => onRollback(instance_.id, t.task_id, "rollback")}><FormattedMessage id="rollback" defaultMessage="Rollback" /></Button>
                         </ButtonToolbar>
                     )
                 }
@@ -985,6 +985,8 @@ const TasksTable = ({tasks, onReplay, onRollback, user_can_replay, tx_id}) => (
                     const can_replay = (replayable || t.cell_id === 'end') && t.status === 'ERROR' &&
                         t.id === Math.max(tasks.filter(ot => ot.cell_id === t.cell_id).map(oot => oot.id));
                     const support_rollback = !["end", "start", "mark request success", "mark request error"].includes(t.cell_id);
+                    const support_force = FORCEABLE_TASKS.includes(t.cell_id);
+                    const support_skip = support_rollback;
 
                     return (
                         <tr key={t.id}>
@@ -1008,15 +1010,21 @@ const TasksTable = ({tasks, onReplay, onRollback, user_can_replay, tx_id}) => (
                                         </Button>
                                     }
                                     {
-                                        can_replay && FORCEABLE_TASKS.indexOf(t.cell_id) !== -1 &&
+                                        can_replay && support_force &&
                                         <Button bsStyle="danger" onClick={() => onRollback(tx_id, t.id, "force")}>
                                             <FormattedMessage id="force" defaultMessage="Force"/>
                                         </Button>
                                     }
                                     {
                                         replayable && t.status === 'WAIT' && t.cell_id.includes("numbers") &&
-                                        <Button bsStyle="danger" onClick={() => onRollback(tx_id, t.id)}>
+                                        <Button bsStyle="danger" onClick={() => onRollback(tx_id, t.id, "rollback")}>
                                             <FormattedMessage id="full-rollback" defaultMessage="Full rollback"/>
+                                        </Button>
+                                    }
+                                    {
+                                        can_replay && support_skip &&
+                                        <Button bsStyle="primary" onClick={() => onRollback(tx_id, t.id, "skip")}>
+                                            <FormattedMessage id="skip" defaultMessage="Skip"/>
                                         </Button>
                                     }
                                 </ButtonToolbar>
