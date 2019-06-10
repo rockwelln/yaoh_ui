@@ -849,7 +849,7 @@ class Events extends Component {
         return (<div>
             <Table condensed>
                 <thead>
-                    <th><td colSpan={2}>{"# "}<FormattedMessage id="external" defaultMessage="External"/></td></th>
+                    <tr><th colSpan={2}>{"# "}<FormattedMessage id="external" defaultMessage="External"/></th></tr>
                 </thead>
                 <tbody>
                 {
@@ -882,7 +882,7 @@ class Events extends Component {
             </Table>
             <Table condensed>
                 <thead>
-                    <th><td colSpan={2}>{"# "}<FormattedMessage id="logs" defaultMessage="Log"/></td></th>
+                    <tr><th colSpan={2}>{"# "}<FormattedMessage id="logs" defaultMessage="Log"/></th></tr>
                 </thead>
                 <tbody>
                 {
