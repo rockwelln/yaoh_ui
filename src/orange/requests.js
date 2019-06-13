@@ -623,7 +623,7 @@ const SubRequest = ({req, tasks, colOffset, onRollback, onReplay}) => {
                             <Button bsStyle="primary" onClick={() => onReplay(instance_.id, t.task_id)}><FormattedMessage id="replay" defaultMessage="Replay" /></Button>
                             <Button bsStyle="danger" onClick={() => onRollback(instance_.id, t.task_id, "rollback")}><FormattedMessage id="rollback" defaultMessage="Rollback" /></Button>
                         </ButtonToolbar>
-                    )
+                    ).pop()
                 }
             </td>
             <td style={{width: '15%'}}>
@@ -1178,7 +1178,16 @@ export class Transaction extends Component {
 
     componentDidUpdate(prevProps, prevState, snapshot) {
         if(prevProps.match.params.txId !== this.props.match.params.txId) {
-            this.setState({activeTab: 1, tx: undefined, request: undefined, logs: [], events: [], externalCallbacks: []});
+            this.setState({
+                activeTab: 1,
+                tx: undefined,
+                request: undefined,
+                logs: [],
+                events: [],
+                externalCallbacks: [],
+                messages: [],
+                subrequests: []
+            });
             this.fetchTxDetails(false);
         }
     }
