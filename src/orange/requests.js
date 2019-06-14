@@ -1055,9 +1055,15 @@ const TxTable = ({tx, request}) => (
 const ContextTable = ({context}) => (
     <Table style={{tableLayout: 'fixed'}}>
         <tbody>
-        {context.map(c =>
-            <tr key={c.id}><th>{c.key}</th><td style={{wordWrap:'break-word'}}>{c.value}</td></tr>
-        )}
+        {
+            context.sort((a, b) => {
+                if(a.id < b.id) return 1;
+                if(a.id > b.id) return -1;
+                return 0;
+            }).map(c =>
+                <tr key={c.id}><th>{c.key}</th><td style={{wordWrap:'break-word'}}>{c.value}</td></tr>
+            )
+        }
         </tbody>
     </Table>
 );
