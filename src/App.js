@@ -30,9 +30,15 @@ import AsyncApioHelp from './async-apio-help';
 import Dashboard from './dashboard';
 import {Requests, CustomRequests, Transaction, Request} from './orange/requests';
 import {BulkActions} from "./orange/bulk";
-import {TenantsManagement} from "./data_apio/tenants";
-import {GroupsManagement} from "./data_apio/groups";
+//import {TenantsManagement} from "./data_apio/tenants";
+//import {GroupsManagement} from "./data_apio/groups";
 import {NumbersManagement} from "./data_apio/numbers";
+
+import Tenants from "./components/Tenants";
+import TenantPage from "./components/TenantPage";
+import GroupPage from "./components/GroupPage";
+import UserPage from "./components/UserPage";
+
 import UserManagement, { LocalUserProfile } from './system/user_mgm';
 import {StartupEvents} from './startup_events';
 import ActivityEditor from './activity-editor';
@@ -262,17 +268,27 @@ const AsyncApioNavBar = ({user_group, logoutUser, database_status, ...props}) =>
           }
 
           { isAllowed(user_group, pages.data) &&
-              <NavDropdown eventKey={4} title={
-                <span>
-                    <Glyphicon glyph="hdd" /> {' '}
-                    <FormattedMessage id='provisioning' defaultMessage='Provisioning'/>
-                </span>
-                } id="nav-data-apio">
-                  <LinkContainer to={"/apio/tenants"}>
-                      <MenuItem>
-                          <FormattedMessage id="broadsoft-platform-1" defaultMessage="Broadsoft platform 1"/>
-                      </MenuItem>
-                  </LinkContainer>
+              <NavDropdown
+                eventKey={4}
+                title={
+                  <span>
+                    <Glyphicon glyph="hdd" />{" "}
+                    <FormattedMessage
+                      id="provisioning"
+                      defaultMessage="Provisioning"
+                    />
+                  </span>
+                }
+                id="nav-data-apio"
+              >
+                <LinkContainer to={"/provisioning/broadsoft_xsp1_as1/tenants"}>
+                  <MenuItem>
+                    <FormattedMessage
+                      id="broadsoft_xsp1_as1"
+                      defaultMessage="Broadsoft XSP 1/AS 1"
+                    />
+                  </MenuItem>
+                </LinkContainer>
               </NavDropdown>
           }
 
@@ -623,7 +639,7 @@ class App extends Component {
                                    <NotAllowed/>
                                )}
                                exact />
-                        <Route path="/apio/tenants"
+                        {/*<Route path="/apio/tenants"
                                component={props => (
                                    isAllowed(ui_profile, pages.data_tenants) ?
                                    <TenantsManagement
@@ -652,7 +668,75 @@ class App extends Component {
                                        {...props} /> :
                                    <NotAllowed/>
                                )}
-                               exact />
+                               exact />*/}
+                        <Route
+                            path="/provisioning/broadsoft_xsp1_as1/tenants"
+                            component={props =>
+                                isAllowed(ui_profile, pages.data_tenants) ? (
+                                    <Tenants
+                                        notifications={this._notificationSystem.current}
+                                        {...props}
+                                    />
+                                ) : (
+                                    <NotAllowed/>
+                                )
+                            }
+                            exact />
+
+                        <Route
+                            path="/provisioning/broadsoft_xsp1_as1/tenants/:tenantId"
+                            component={props =>
+                              isAllowed(ui_profile, pages.data_tenants) ? (
+                                <TenantPage
+                                  notifications={this._notificationSystem.current}
+                                />
+                              ) : (
+                                <NotAllowed />
+                              )
+                            }
+                            exact
+                        />
+                        <Route
+                          path="/provisioning/broadsoft_xsp1_as1/tenants/:tenantId/:groupId"
+                          component={props =>
+                            isAllowed(ui_profile, pages.data_tenants) ? (
+                              <GroupPage
+                                notifications={this._notificationSystem.current}
+                              />
+                            ) : (
+                              <NotAllowed />
+                            )
+                          }
+                          exact
+                        />
+                        <Route
+                          path="/provisioning/broadsoft_xsp1_as1/tenants/:tenantId/:groupId/users/:userName"
+                          component={props =>
+                            isAllowed(ui_profile, pages.data_tenants) ? (
+                              <UserPage />
+                            ) : (
+                              <NotAllowed />
+                            )
+                          }
+                          exact
+                        />
+                        <Route
+                          path="/data/tenants/:tenantId/groups/:siteId/numbers"
+                          component={props =>
+                            isAllowed(ui_profile, pages.data_tenants) ? (
+                              <NumbersManagement
+                                auth_token={auth_token}
+                                notifications={this._notificationSystem.current}
+                                {...props}
+                              />
+                            ) : (
+                              <NotAllowed />
+                            )
+                          }
+                          exact
+                        />
+
+
                         <Route path="/transactions/config/startup_events"
                                component={props => (
                                    isAllowed(ui_profile, pages.requests_startup_events) ?
