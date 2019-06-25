@@ -2,9 +2,15 @@ import React, {Component} from 'react';
 import ReactDOM from 'react-dom';
 import {CookiesProvider, withCookies} from 'react-cookie';
 import {IntlProvider, addLocaleData} from 'react-intl';
+import { createStore, applyMiddleware, compose } from "redux";
+import { Provider } from "react-redux";
+import thunk from "redux-thunk";
+
 import App from './App';
 // import registerServiceWorker from './registerServiceWorker';
 import { unregister } from './registerServiceWorker';
+
+import mainReducer from "./store/reducers";
 
 import en from 'react-intl/locale-data/en';
 import fr from 'react-intl/locale-data/fr';
@@ -75,9 +81,19 @@ class AppWithIntl extends Component {
 }
 let AppWithIntlAndCookies = withCookies(AppWithIntl);
 
+const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
+
+const store = createStore(
+  mainReducer,
+  composeEnhancers(applyMiddleware(thunk))
+);
+
 
 ReactDOM.render(
-    <CookiesProvider>
-        <AppWithIntlAndCookies/>
-    </CookiesProvider>, document.getElementById('root'));
+    <Provider store={store}>
+        <CookiesProvider>
+            <AppWithIntlAndCookies/>
+        </CookiesProvider>
+    </Provider>, document.getElementById('root')
+);
 unregister();

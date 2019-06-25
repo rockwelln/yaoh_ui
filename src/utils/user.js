@@ -30,6 +30,8 @@ const definition = {
         [pages.data]: true,
         [pages.requests]: true,
         [pages.requests_nprequests]: true,
+        [pages.data]: true,
+        [pages.data_tenants]: true,
     },
 };
 

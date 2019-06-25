@@ -1,6 +1,8 @@
 export const API_URL_PREFIX = process.env.NODE_ENV === 'production'?window.location.origin:'http://127.0.0.1:5000';
 export const API_URL_PROXY_PREFIX = '/api/v01/apio/sync';
 
+export const API_BASE_URL = "/api/v01/p1";
+
 /*
 export class AuthService {
     static getToken() {
@@ -10,6 +12,17 @@ export class AuthService {
     static isAuthenticated() {
         return this.getToken() === undefined;
     }
+}
+
+
+function getCookie(name) {
+  var value = "; " + document.cookie;
+  var parts = value.split("; " + name + "=");
+  if (parts.length === 2)
+    return parts
+      .pop()
+      .split(";")
+      .shift();
 }
 */
 
