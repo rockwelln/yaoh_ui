@@ -1,7 +1,7 @@
 export const API_URL_PREFIX = process.env.NODE_ENV === 'production'?window.location.origin:'http://127.0.0.1:5000';
 export const API_URL_PROXY_PREFIX = '/api/v01/apio/sync';
 
-export const API_BASE_URL = "/api/v01/p1";
+export const API_BASE_URL = process.env.NODE_ENV === 'production'?"/api/v01/p2":"http://127.0.0.1:5001/api/v01/p1";
 
 /*
 export class AuthService {

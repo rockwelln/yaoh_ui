@@ -20,7 +20,7 @@ import {
   fetchGetUserByName
 } from "../../store/actions";
 
-class TenantPage extends Component {
+class UserPage extends Component {
   state = {
     isLoadingTenant: true,
     isLoadingGroup: true,
@@ -29,7 +29,7 @@ class TenantPage extends Component {
 
   fetchRequsts = () => {
     this.props
-      .fetchGetTenantById(this.props.match.params.tenantId)
+      .fetchGetTenantById(this.props.match.params.tenantId, this.props.auth_token)
       .then(() => this.setState({ isLoadingTenant: false }));
     this.props
       .fetchGetGroupById(
@@ -82,16 +82,16 @@ class TenantPage extends Component {
         </div>
         <Tabs defaultActiveKey={0} id="tenant_tabs">
           <Tab eventKey={0} title="DETAILS">
-            <Details />
+            <Details {...this.props} />
           </Tab>
           <Tab eventKey={1} title="PHONE NUMBERS">
-            <PhoneNumber />
+            <PhoneNumber {...this.props} />
           </Tab>
           <Tab eventKey={2} title="SERVICES">
-            <Services />
+            <Services {...this.props} />
           </Tab>
           <Tab eventKey={3} title="SERVICE PACKS">
-            <ServicesPacks />
+            <ServicesPacks {...this.props} />
           </Tab>
           <Tab eventKey={4} title="DEVICE">
             Device Tab
@@ -121,5 +121,5 @@ export default withRouter(
   connect(
     mapStateToProps,
     mapDispatchToProps
-  )(TenantPage)
+  )(UserPage)
 );
