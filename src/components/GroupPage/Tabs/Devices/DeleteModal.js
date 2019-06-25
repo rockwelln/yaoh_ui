@@ -21,7 +21,7 @@ class DeleteModal extends Component {
     this.setState({ deleting: true });
 
     this.props
-      .fetchDeleteGroupDevice(tenantId, groupId, deviceName)
+      .fetchDeleteGroupDevice(tenantId, groupId, deviceName, this.props.auth_token)
       .then(() => {
         this.props.notifications.notifications.addNotification({
           message: (

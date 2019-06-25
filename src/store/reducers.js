@@ -5,7 +5,7 @@ const initialState = {
   tenant: {},
   groups: [],
   phoneNumbers: [],
-  admins: [],
+  adminsTenant: [],
   group: {},
   users: [],
   phoneNumbersByGroup: [],
@@ -15,7 +15,14 @@ const initialState = {
   devices: [],
   user: {},
   trunkGroups: {},
-  availableNumbers: []
+  availableNumbers: [],
+  adminsGroup: [],
+  errorMassage: "",
+  shouldRedirect: false,
+  groupAdmin: {},
+  tenantAdmin: {},
+  userServices: [],
+  userServicePacks: []
 };
 
 function mainReducer(state = initialState, action) {
@@ -29,7 +36,9 @@ function mainReducer(state = initialState, action) {
     case actionType.GET_TENANT: {
       return {
         ...state,
-        tenant: action.data
+        tenant: action.data,
+        shouldRedirect: false,
+        errorMassage: ""
       };
     }
     case actionType.GET_GROUPS: {
@@ -56,16 +65,18 @@ function mainReducer(state = initialState, action) {
         phoneNumbers
       };
     }
-    case actionType.GET_ADMINS: {
+    case actionType.GET_ADMINS_TENANT: {
       return {
         ...state,
-        admins: action.data.admins
+        adminsTenant: action.data.admins
       };
     }
     case actionType.GET_GROUP: {
       return {
         ...state,
-        group: action.data
+        group: action.data,
+        shouldRedirect: false,
+        errorMassage: ""
       };
     }
     case actionType.GET_USERS: {
@@ -159,8 +170,108 @@ function mainReducer(state = initialState, action) {
         availableNumbers: action.data.available_numbers
       };
     }
+    case actionType.GET_ADMINS_GROUP: {
+      return {
+        ...state,
+        adminsGroup: action.data.admins
+      };
+    }
+    case actionType.GET_GROUP_ADMIN_BY_ADMIN_ID: {
+      return {
+        ...state,
+        groupAdmin: action.data
+      };
+    }
+    case actionType.GET_TENANT_ADMIN_BY_ADMIN_ID: {
+      return {
+        ...state,
+        tenantAdmin: action.data
+      };
+    }
+    case actionType.GET_USER_SERVICES_BY_USER_ID: {
+      const userServices = action.data.assignementStatus.services.map(
+        service => ({
+          ...service,
+          serviceChecked: service.assigned,
+          status: action.data.summary.userServices.reduce(
+            (prev, userService) => {
+              if (service.name === userService.name) {
+                if (userService.active) {
+                  prev = "Active";
+                  return prev;
+                } else {
+                  prev = "Not active";
+                  return prev;
+                }
+              } else return prev;
+            },
+            "N/A"
+          )
+        })
+      );
+      const userServicePacks = action.data.assignementStatus.servicePacks.map(
+        service => ({
+          ...service,
+          serviceChecked: service.assigned
+        })
+      );
+      return {
+        ...state,
+        userServices,
+        userServicePacks
+      };
+    }
+    case actionType.POST_CREATE_GROUP_ADMIN: {
+      return {
+        ...state,
+        shouldRedirect: true
+      };
+    }
+    case actionType.POST_CREATE_GROUP_ADMIN_ERROR: {
+      const errorMassage = action.error.errors[0].details.errors["0"].summary;
+      return {
+        ...state,
+        errorMassage
+      };
+    }
+    case actionType.POST_CREATE_TENANT_ADMIN: {
+      return {
+        ...state,
+        shouldRedirect: true
+      };
+    }
+    case actionType.POST_CREATE_TENANT_ADMIN_ERROR: {
+      const errorMassage = action.error.errors[0].details.errors["0"].summary;
+      return {
+        ...state,
+        errorMassage
+      };
+    }
     case actionType.PUT_UPDATE_USER: {
-      console.log(action.data);
+      return {
+        ...state,
+        user: action.data
+      };
+    }
+    case actionType.PUT_UPDATE_GROUP_DETAILS: {
+      return {
+        ...state,
+        group: action.data
+      };
+    }
+    case actionType.PUT_UPDATE_GROUP_ADMIN: {
+      return {
+        ...state,
+        groupAdmin: action.data
+      };
+    }
+    case actionType.PUT_UPDATE_TENANT_ADMIN: {
+      return {
+        ...state,
+        tenantAdmin: action.data
+      };
+    }
+    case actionType.DELETE_TENANT: {
       return {
         ...state
       };
@@ -175,9 +286,15 @@ function mainReducer(state = initialState, action) {
         ...state
       };
     }
-    case actionType.DELETE_TENANT: {
+    case actionType.DELETE_GROUP_ADMIN: {
       return {
         ...state
+      };
+    }
+    case actionType.CLEAR_ERROR_MASSAGE: {
+      return {
+        ...state,
+        errorMassage: ""
       };
     }
     default:

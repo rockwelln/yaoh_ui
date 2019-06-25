@@ -7,9 +7,9 @@ import Breadcrumb from "../../common/Breadcrumb";
 import Sidebar from "../../common/Sidebar";
 import Title from "../../common/Title";
 
-import UserPage from "./UserPage";
+import UpdateAdminPage from "./UpdateAdminPage";
 
-const GroupComponent = props => {
+const UpdateAdminComponent = props => {
   return (
     <React.Fragment>
       <Row className={"margin-bottom-4"}>
@@ -24,7 +24,7 @@ const GroupComponent = props => {
             <Breadcrumb />
           </Row>
           <Row>
-            <UserPage {...props} />
+            <UpdateAdminPage {...props} />
           </Row>
         </Col>
       </Row>
@@ -32,4 +32,4 @@ const GroupComponent = props => {
   );
 };
 
-export default GroupComponent;
+export default UpdateAdminComponent;

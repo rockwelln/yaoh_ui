@@ -25,7 +25,7 @@ class TenantPage extends Component {
 
   componentDidMount() {
     this.props
-      .fetchGetTenantById(this.props.match.params.tenantId)
+      .fetchGetTenantById(this.props.match.params.tenantId, this.props.auth_token)
       .then(() => this.setState({ isLoading: false }));
   }
 
@@ -61,22 +61,23 @@ class TenantPage extends Component {
             LICENSES Tab
           </Tab>
           <Tab eventKey={1} title="GROUPS">
-            <GroupsTab tenantId={this.props.match.params.tenantId} />
+            <GroupsTab tenantId={this.props.match.params.tenantId} {...this.props} />
           </Tab>
           <Tab eventKey={2} title="ENTERPRISE TRUNKS">
             ENTERPRISE TRUNKS Tab
           </Tab>
           <Tab eventKey={3} title="PHONE NUMBERS">
-            <PhoneNumbersTab tenantId={this.props.match.params.tenantId} />
+            <PhoneNumbersTab tenantId={this.props.match.params.tenantId} {...this.props} />
           </Tab>
           <Tab eventKey={4} title="ADMINISTRATORS">
             <Admins
               tenantId={this.props.match.params.tenantId}
               notifications={this.props.notifications}
+              {...this.props}
             />
           </Tab>
           <Tab eventKey={5} title="DETAILS">
-            <Details tenant={tenant} isLoading={isLoading} />
+            <Details tenant={tenant} isLoading={isLoading} {...this.props} />
           </Tab>
         </Tabs>
       </React.Fragment>

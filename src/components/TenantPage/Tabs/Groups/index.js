@@ -29,7 +29,7 @@ export class GroupsTab extends Component {
   };
 
   componentDidMount() {
-    this.props.fetchGetGroupsByTenantId(this.props.tenantId).then(() =>
+    this.props.fetchGetGroupsByTenantId(this.props.tenantId, this.props.auth_token).then(() =>
       this.setState(
         {
           groups: this.props.groups.sort((a, b) => {

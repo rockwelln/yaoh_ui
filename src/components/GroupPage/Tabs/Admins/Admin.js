@@ -17,7 +17,7 @@ export default class Admin extends Component {
           <Link
             to={`/provisioning/broadsoft_xsp1_as1/tenants/${
               this.props.tenantId
-            }/admins/${admin.userId}`}
+            }/groups/${this.props.groupId}/admins/${admin.userId}`}
           >
             {admin.userId}
           </Link>
@@ -36,6 +36,7 @@ export default class Admin extends Component {
             notifications={this.props.notifications}
             adminId={admin.userId}
             tenantId={this.props.tenantId}
+            groupId={this.props.groupId}
             show={showDelete}
             onClose={e => {
               onReload && onReload();

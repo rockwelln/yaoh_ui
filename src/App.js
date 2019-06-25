@@ -32,12 +32,14 @@ import {Requests, CustomRequests, Transaction, Request} from './orange/requests'
 import {BulkActions} from "./orange/bulk";
 //import {TenantsManagement} from "./data_apio/tenants";
 //import {GroupsManagement} from "./data_apio/groups";
-import {NumbersManagement} from "./data_apio/numbers";
+//import {NumbersManagement} from "./data_apio/numbers";
 
 import Tenants from "./components/Tenants";
 import TenantPage from "./components/TenantPage";
 import GroupPage from "./components/GroupPage";
 import UserPage from "./components/UserPage";
+import CreateAdmin from "./components/CreateAdmin";
+import UpdateAdmin from "./components/UpdateAdmin";
 
 import UserManagement, { LocalUserProfile } from './system/user_mgm';
 import {StartupEvents} from './startup_events';
@@ -672,14 +674,15 @@ class App extends Component {
                         <Route
                             path="/provisioning/broadsoft_xsp1_as1/tenants"
                             component={props =>
-                                isAllowed(ui_profile, pages.data_tenants) ? (
-                                    <Tenants
-                                        notifications={this._notificationSystem.current}
-                                        {...props}
-                                    />
-                                ) : (
-                                    <NotAllowed/>
-                                )
+                              isAllowed(ui_profile, pages.data_tenants) ? (
+                                <Tenants
+                                    auth_token={auth_token}
+                                    notifications={this._notificationSystem.current}
+                                    {...props}
+                                />
+                              ) : (
+                                <NotAllowed />
+                              )
                             }
                             exact />
 
@@ -688,7 +691,8 @@ class App extends Component {
                             component={props =>
                               isAllowed(ui_profile, pages.data_tenants) ? (
                                 <TenantPage
-                                  notifications={this._notificationSystem.current}
+                                    auth_token={auth_token}
+                                    notifications={this._notificationSystem.current}
                                 />
                               ) : (
                                 <NotAllowed />
@@ -697,43 +701,73 @@ class App extends Component {
                             exact
                         />
                         <Route
-                          path="/provisioning/broadsoft_xsp1_as1/tenants/:tenantId/:groupId"
-                          component={props =>
-                            isAllowed(ui_profile, pages.data_tenants) ? (
-                              <GroupPage
-                                notifications={this._notificationSystem.current}
-                              />
-                            ) : (
-                              <NotAllowed />
-                            )
-                          }
-                          exact
+                            path="/provisioning/broadsoft_xsp1_as1/tenants/:tenantId/groups/:groupId"
+                            component={props =>
+                              isAllowed(ui_profile, pages.data_tenants) ? (
+                                <GroupPage
+                                    auth_token={auth_token}
+                                    notifications={this._notificationSystem.current}
+                                />
+                              ) : (
+                                <NotAllowed />
+                              )
+                            }
+                            exact
                         />
                         <Route
-                          path="/provisioning/broadsoft_xsp1_as1/tenants/:tenantId/:groupId/users/:userName"
-                          component={props =>
-                            isAllowed(ui_profile, pages.data_tenants) ? (
-                              <UserPage />
-                            ) : (
-                              <NotAllowed />
-                            )
-                          }
-                          exact
+                            path="/provisioning/broadsoft_xsp1_as1/tenants/:tenantId/groups/:groupId/users/:userName"
+                            component={props =>
+                              isAllowed(ui_profile, pages.data_tenants) ? (
+                                <UserPage auth_token={auth_token} />
+                              ) : (
+                                <NotAllowed />
+                              )
+                            }
+                            exact
                         />
                         <Route
-                          path="/data/tenants/:tenantId/groups/:siteId/numbers"
-                          component={props =>
-                            isAllowed(ui_profile, pages.data_tenants) ? (
-                              <NumbersManagement
-                                auth_token={auth_token}
-                                notifications={this._notificationSystem.current}
-                                {...props}
-                              />
-                            ) : (
-                              <NotAllowed />
-                            )
-                          }
-                          exact
+                            path="/provisioning/broadsoft_xsp1_as1/tenants/:tenantId/groups/:groupId/addadmin"
+                            component={props =>
+                              isAllowed(ui_profile, pages.data_tenants) ? (
+                                <CreateAdmin auth_token={auth_token} />
+                              ) : (
+                                <NotAllowed />
+                              )
+                            }
+                            exact
+                        />
+                        <Route
+                            path="/provisioning/broadsoft_xsp1_as1/tenants/:tenantId/groups/:groupId/admins/:adminId"
+                            component={props =>
+                              isAllowed(ui_profile, pages.data_tenants) ? (
+                                <UpdateAdmin auth_token={auth_token} />
+                              ) : (
+                                <NotAllowed />
+                              )
+                            }
+                            exact
+                        />
+                        <Route
+                            path="/provisioning/broadsoft_xsp1_as1/tenants/:tenantId/addadmin"
+                            component={props =>
+                              isAllowed(ui_profile, pages.data_tenants) ? (
+                                <CreateAdmin auth_token={auth_token} />
+                              ) : (
+                                <NotAllowed />
+                              )
+                            }
+                            exact
+                        />
+                        <Route
+                            path="/provisioning/broadsoft_xsp1_as1/tenants/:tenantId/admins/:adminId"
+                            component={props =>
+                              isAllowed(ui_profile, pages.data_tenants) ? (
+                                <UpdateAdmin auth_token={auth_token} />
+                              ) : (
+                                <NotAllowed />
+                              )
+                            }
+                            exact
                         />
 
 

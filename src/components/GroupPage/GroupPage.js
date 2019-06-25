@@ -12,10 +12,11 @@ import PhoneNumbers from "./Tabs/PhoneNumbers";
 import Licenses from "./Tabs/Licenses";
 import Details from "./Tabs/Details";
 import Devices from "./Tabs/Devices";
+import Admins from "./Tabs/Admins";
 
 import { fetchGetTenantById, fetchGetGroupById } from "../../store/actions";
 
-class TenantPage extends Component {
+class GroupPage extends Component {
   tabsIdSuffix = Math.random()
     .toString(36)
     .replace(".", "");
@@ -25,25 +26,26 @@ class TenantPage extends Component {
     isLoadingGroup: true
   };
 
-  fetchTennant = () => {
+  fetchTenant = () => {
     this.props
-      .fetchGetTenantById(this.props.match.params.tenantId)
+      .fetchGetTenantById(this.props.match.params.tenantId, this.props.auth_token)
       .then(() => this.setState({ isLoadingTenant: false }));
     this.props
       .fetchGetGroupById(
         this.props.match.params.tenantId,
-        this.props.match.params.groupId
+        this.props.match.params.groupId,
+        this.props.auth_token
       )
       .then(() => this.setState({ isLoadingGroup: false }));
   };
 
   componentDidMount() {
-    this.fetchTennant();
+    this.fetchTenant();
   }
 
   componentDidUpdate(prevProps) {
     if (prevProps.match.params.tenantId !== this.props.match.params.tenantId) {
-      this.fetchTennant();
+      this.fetchTenant();
     }
   }
 
@@ -67,14 +69,16 @@ class TenantPage extends Component {
         <Tabs defaultActiveKey={0} id={`group_tabs${this.tabsIdSuffix}`}>
           <Tab eventKey={0} title="LICENSES">
             <Licenses
-              tenantId={tenant.tenantId}
+              tenantId={this.props.match.params.tenantId}
               groupId={this.props.match.params.groupId}
+              {...this.props}
             />
           </Tab>
           <Tab eventKey={1} title="USERS">
             <Users
-              tenantId={tenant.tenantId}
+              tenantId={this.props.match.params.tenantId}
               groupId={this.props.match.params.groupId}
+              {...this.props}
             />
           </Tab>
           <Tab eventKey={2} title="TRUNKS GROUP">
@@ -82,22 +86,27 @@ class TenantPage extends Component {
           </Tab>
           <Tab eventKey={3} title="PHONE NUMBERS">
             <PhoneNumbers
-              tenantId={tenant.tenantId}
+              tenantId={this.props.match.params.tenantId}
               groupId={this.props.match.params.groupId}
+              {...this.props}
             />
           </Tab>
           <Tab eventKey={4} title="DEVICES">
             <Devices
-              tenantId={tenant.tenantId}
+              tenantId={this.props.match.params.tenantId}
               groupId={this.props.match.params.groupId}
-              notifications={this.props.notifications}
+              {...this.props}
             />
           </Tab>
           <Tab eventKey={5} title="ADMINISTRATORS">
-            ADMINISTRATORS
+            <Admins
+              tenantId={this.props.match.params.tenantId}
+              groupId={this.props.match.params.groupId}
+              {...this.props}
+            />
           </Tab>
           <Tab eventKey={6} title="DETAILS">
-            <Details group={group} isLoading={isLoadingTenant} />
+            <Details group={group} isLoading={isLoadingTenant} {...this.props} />
           </Tab>
         </Tabs>
       </React.Fragment>
@@ -119,5 +128,5 @@ export default withRouter(
   connect(
     mapStateToProps,
     mapDispatchToProps
-  )(TenantPage)
+  )(GroupPage)
 );

@@ -9,6 +9,7 @@ import Col from "react-bootstrap/lib/Col";
 import Row from "react-bootstrap/lib/Row";
 import Button from "react-bootstrap/lib/Button";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
+import HelpBlock from "react-bootstrap/lib/HelpBlock";
 import { Form } from "react-bootstrap";
 
 import Loading from "../../../../common/Loading";
@@ -23,7 +24,8 @@ class PhoneNumber extends Component {
     isLoadingUser: true,
     phoneNumber: "",
     cliPhoneNumber: "",
-    extension: ""
+    extension: "",
+    updateMassage: ""
   };
 
   componentDidMount() {
@@ -31,7 +33,8 @@ class PhoneNumber extends Component {
       .fetchGetUserByName(
         this.props.match.params.tenantId,
         this.props.match.params.groupId,
-        this.props.match.params.userName
+        this.props.match.params.userName,
+        this.props.auth_token
       )
       .then(() =>
         this.setState({
@@ -44,8 +47,13 @@ class PhoneNumber extends Component {
 
     this.props.fetchGetAvailableNumbersByGroupId(
       this.props.match.params.tenantId,
-      this.props.match.params.groupId
+      this.props.match.params.groupId,
+      this.props.auth_token
     );
+  }
+
+  componentWillUnmount() {
+    clearTimeout(this.timer);
   }
 
   render() {
@@ -53,7 +61,8 @@ class PhoneNumber extends Component {
       isLoadingUser,
       phoneNumber,
       cliPhoneNumber,
-      extension
+      extension,
+      updateMassage
     } = this.state;
 
     if (isLoadingUser) {
@@ -74,7 +83,11 @@ class PhoneNumber extends Component {
                   componentClass="select"
                   placeholder="Phone Number"
                   defaultValue={phoneNumber}
-                  onChange={e => this.setState({ phoneNumber: e.target.value })}
+                  onChange={e =>
+                    this.setState({
+                      phoneNumber: e.target.value
+                    })
+                  }
                 >
                   <option key={"none"} value="">
                     none
@@ -99,15 +112,17 @@ class PhoneNumber extends Component {
             </FormGroup>
             <FormGroup controlId="cliPhoneNumber">
               <Col componentClass={ControlLabel} md={3} className={"text-left"}>
-                CLI Phone Number
+                CLI for outgoing calls
               </Col>
               <Col md={9}>
                 <FormControl
                   componentClass="select"
-                  placeholder="CLI Phone Number"
+                  placeholder="CLI for outgoing calls"
                   defaultValue={cliPhoneNumber}
                   onChange={e =>
-                    this.setState({ cliPhoneNumber: e.target.value })
+                    this.setState({
+                      cliPhoneNumber: e.target.value
+                    })
                   }
                 >
                   <option key={"none"} value="">
@@ -140,10 +155,27 @@ class PhoneNumber extends Component {
                   type="number"
                   placeholder="Extension"
                   defaultValue={extension}
-                  onChange={e => this.setState({ extension: e.target.value })}
+                  onChange={e =>
+                    this.setState({
+                      extension: e.target.value
+                    })
+                  }
                 />
               </Col>
             </FormGroup>
+            <Col mdOffset={3} md={9}>
+              {updateMassage && (
+                <HelpBlock
+                  bsClass={`${
+                    updateMassage === "Loading..."
+                      ? "color-info"
+                      : "color-success"
+                  }`}
+                >
+                  {updateMassage}
+                </HelpBlock>
+              )}
+            </Col>
           </FormGroup>
           <Row>
             <Col mdPush={10} md={1}>
@@ -167,11 +199,25 @@ class PhoneNumber extends Component {
       extension
     };
 
-    this.props.fetchPutUpdateUser(
-      this.props.match.params.tenantId,
-      this.props.match.params.groupId,
-      this.props.match.params.userName,
-      data
+    this.setState({ updateMassage: "Loading..." }, () =>
+      this.props
+        .fetchPutUpdateUser(
+          this.props.match.params.tenantId,
+          this.props.match.params.groupId,
+          this.props.match.params.userName,
+          data,
+          this.props.auth_token
+        )
+        .then(() =>
+          this.setState(
+            { updateMassage: "User is updated" },
+            () =>
+              (this.timer = setTimeout(
+                () => this.setState({ updateMassage: "" }),
+                3000
+              ))
+          )
+        )
     );
   };
 }

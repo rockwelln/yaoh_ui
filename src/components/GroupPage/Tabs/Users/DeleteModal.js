@@ -19,7 +19,7 @@ class DeleteModal extends Component {
     this.setState({ deleting: true });
 
     this.props
-      .fetchDeleteTenant(userId)
+      .fetchDeleteTenant(userId, this.props.auth_token)
       .then(() => {
         this.props.notifications.addNotification({
           message: (

@@ -104,6 +104,7 @@ export default class LoginForm extends Component {
             <FormControl
               type="text"
               value={this.state.username}
+              autoComplete="username"
               onChange={e =>
                 this.setState({ username: e.target.value, errors: undefined })
               }
@@ -114,13 +115,14 @@ export default class LoginForm extends Component {
           validationState={this.state.errors === undefined ? null : "error"}
         >
           <Col componentClass={ControlLabel} sm={3}>
-            <FormattedMessage id="password" defaultMessage="Password" />
+            <FormattedMessage id="current-password" defaultMessage="Password" />
           </Col>
 
           <Col sm={8}>
             <FormControl
               type="password"
               value={this.state.password}
+              autoComplete="current-password"
               onChange={e =>
                 this.setState({ password: e.target.value, errors: undefined })
               }

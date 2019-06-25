@@ -41,3 +41,22 @@
 .cursor-pointer {
   cursor: pointer;
 }
+
+.color-error {
+  color: #a94442;
+  font-weight: 600;
+}
+
+.color-success {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.color-info {
+  color: #777;
+  font-weight: 600;
+}
+
+.font-weight-bold {
+  font-weight: 600;
+}

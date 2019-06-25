@@ -29,20 +29,37 @@ const linkByCrumb = (item, lastItem, i, path) => {
   if (path[i - 2] === "tenants" && !lastItem.includes(crumb)) {
     return (
       <Link
-        to={`/provisioning/broadsoft_xsp1_as1/tenants/${path[i - 1]}/${crumb}`}
+        to={`/provisioning/broadsoft_xsp1_as1/tenants/${
+          path[i - 1]
+        }/groups/${crumb}`}
       >
         {crumb}
       </Link>
     );
+  }
+  if (crumb === "addadmin") {
+    return "Add admin";
   }
 
   return crumb;
 };
 
 const BreadcrumbComponent = ({ location }) => {
-  const indexOfUser = 3;
+  const indexForGroupLevel = 4;
+  const indexForTenantLevel = 2;
   const path = location.pathname.split("/").slice(3);
-  path.splice(indexOfUser, 1);
+  if (
+    path[indexForGroupLevel] === "users" ||
+    path[indexForGroupLevel] === "admins"
+  ) {
+    path.splice(indexForGroupLevel, 1);
+  }
+  if (
+    (path[indexForTenantLevel] === "groups") |
+    (path[indexForTenantLevel] === "admins")
+  ) {
+    path.splice(indexForTenantLevel, 1);
+  }
   const lastItem = path.slice(-1);
   return (
     <Breadcrumb>

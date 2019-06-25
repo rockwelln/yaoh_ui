@@ -1,5 +1,7 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
+import { Link } from "react-router-dom";
+import { withRouter } from "react-router";
 
 import Table from "react-bootstrap/lib/Table";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
@@ -25,11 +27,12 @@ export class Admins extends Component {
     countPerPage: 25,
     page: 0,
     pagination: true,
-    countPages: null
+    countPages: null,
+    searchValue: ""
   };
 
   fetchAdmins = () => {
-    this.props.fetchGetAdminsByTenantId(this.props.tenantId).then(() =>
+    this.props.fetchGetAdminsByTenantId(this.props.tenantId, this.props.auth_token).then(() =>
       this.setState(
         {
           admins: this.props.admins.sort((a, b) => {
@@ -97,10 +100,16 @@ export class Admins extends Component {
             </InputGroup>
           </Col>
           <Col md={1}>
-            <Glyphicon
-              className={"x-large"}
-              glyph="glyphicon glyphicon-plus-sign"
-            />
+            <Link
+              to={`/provisioning/broadsoft_xsp1_as1/tenants/${
+                this.props.match.params.tenantId
+              }/addadmin`}
+            >
+              <Glyphicon
+                className={"x-large"}
+                glyph="glyphicon glyphicon-plus-sign"
+              />
+            </Link>
           </Col>
         </Row>
         {paginationAdmins.length ? (
@@ -159,7 +168,7 @@ export class Admins extends Component {
                         notifications={this.props.notifications}
                         onReload={() =>
                           this.props.fetchGetAdminsByTenantId(
-                            this.props.tenantId
+                            this.props.tenantId, this.props.auth_token
                           )
                         }
                       />
@@ -336,14 +345,16 @@ export class Admins extends Component {
 }
 
 const mapStateToProps = state => ({
-  admins: state.admins
+  admins: state.adminsTenant
 });
 
 const mapDispatchToProps = {
   fetchGetAdminsByTenantId
 };
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(Admins);
+export default withRouter(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(Admins)
+);

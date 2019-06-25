@@ -3,28 +3,27 @@ import { Link } from "react-router-dom";
 
 import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
+import Checkbox from "react-bootstrap/lib/Checkbox";
 
 import DeleteModal from "./DeleteModal";
 
-export default class Admin extends Component {
+export default class Sevice extends Component {
   state = { showDelete: false };
   render() {
-    const { admin, onReload } = this.props;
+    const { service, onReload, index } = this.props;
     const { showDelete } = this.state;
     return (
-      <tr key={admin.userId}>
-        <td>
-          <Link
-            to={`/provisioning/broadsoft_xsp1_as1/tenants/${
-              this.props.tenantId
-            }/admins/${admin.userId}`}
-          >
-            {admin.userId}
-          </Link>
+      <tr key={service.name}>
+        <td>{service.name}</td>
+        <td className={"text-center"}>
+          <Checkbox
+            checked={service.serviceChecked}
+            className={"table-checkbox"}
+            onChange={() => {
+              this.props.handleSingleCheckboxClick(index);
+            }}
+          />
         </td>
-        <td>{admin.firstName}</td>
-        <td>{admin.lastName}</td>
-        <td>{admin.language}</td>
         <td>
           <ButtonToolbar>
             <Glyphicon
@@ -34,8 +33,8 @@ export default class Admin extends Component {
           </ButtonToolbar>
           <DeleteModal
             notifications={this.props.notifications}
-            adminId={admin.userId}
-            tenantId={this.props.tenantId}
+            serviceName={service.name}
+            // tenantId={this.props.tenantId}
             show={showDelete}
             onClose={e => {
               onReload && onReload();

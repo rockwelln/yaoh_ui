@@ -13,7 +13,7 @@ export class AuthService {
         return this.getToken() === undefined;
     }
 }
-*/
+
 
 function getCookie(name) {
   var value = "; " + document.cookie;
@@ -24,6 +24,7 @@ function getCookie(name) {
       .split(";")
       .shift();
 }
+*/
 
 
 export function checkStatus(response) {
@@ -61,7 +62,7 @@ export function fetch_get(url, token) {
         method: 'GET',
         headers: {
             'Accept': 'application/json',
-            'Authorization': `Bearer ${token || getCookie("auth_token")}`
+            'Authorization': `Bearer ${token}`
         }
     }).then(checkStatus)
     .then(parseJSON)

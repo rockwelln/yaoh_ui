@@ -10,6 +10,7 @@ import Row from "react-bootstrap/lib/Row";
 import Button from "react-bootstrap/lib/Button";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import Checkbox from "react-bootstrap/lib/Checkbox";
+import HelpBlock from "react-bootstrap/lib/HelpBlock";
 import { Form } from "react-bootstrap";
 
 import Loading from "../../../../common/Loading";
@@ -28,15 +29,20 @@ class Details extends Component {
     lastName: "",
     cliFirstName: "",
     cliLastName: "",
-    language: "English"
+    language: "English",
+    emailIsValid: null,
+    firstNameError: null,
+    lastNameError: null,
+    updateMassage: ""
   };
 
-  componentDidMount() {
+  fetchRequst = () => {
     this.props
       .fetchGetUserByName(
         this.props.match.params.tenantId,
         this.props.match.params.groupId,
-        this.props.match.params.userName
+        this.props.match.params.userName,
+        this.props.auth_token
       )
       .then(() =>
         this.setState({
@@ -48,6 +54,14 @@ class Details extends Component {
           isLoading: false
         })
       );
+  };
+
+  componentDidMount() {
+    this.fetchRequst();
+  }
+
+  componentWillUnmount() {
+    clearTimeout(this.timer);
   }
 
   render() {
@@ -58,7 +72,11 @@ class Details extends Component {
       lastName,
       cliFirstName,
       cliLastName,
-      language
+      language,
+      emailIsValid,
+      firstNameError,
+      lastNameError,
+      updateMassage
     } = this.state;
 
     if (isLoading) {
@@ -70,7 +88,7 @@ class Details extends Component {
         <Form horizontal className={"margin-1"}>
           <FormGroup controlId="Details">
             <ControlLabel className={"margin-1"}>DETAILS</ControlLabel>
-            <FormGroup controlId="userEmail">
+            <FormGroup controlId="userEmail" validationState={emailIsValid}>
               <Col componentClass={ControlLabel} md={3} className={"text-left"}>
                 Email
               </Col>
@@ -80,12 +98,16 @@ class Details extends Component {
                   placeholder="Email"
                   defaultValue={emailAddress}
                   onChange={e =>
-                    this.setState({ emailAddress: e.target.value })
+                    this.setState({
+                      emailAddress: e.target.value,
+                      emailIsValid: null
+                    })
                   }
                 />
+                {emailIsValid && <HelpBlock>Invalid email</HelpBlock>}
               </Col>
             </FormGroup>
-            <FormGroup controlId="firstName">
+            <FormGroup controlId="firstName" validationState={firstNameError}>
               <Col componentClass={ControlLabel} md={3} className={"text-left"}>
                 First Name
               </Col>
@@ -94,11 +116,17 @@ class Details extends Component {
                   type="text"
                   placeholder="First Name"
                   defaultValue={firstName}
-                  onChange={e => this.setState({ firstName: e.target.value })}
+                  onChange={e =>
+                    this.setState({
+                      firstName: e.target.value,
+                      firstNameError: null
+                    })
+                  }
                 />
+                {firstNameError && <HelpBlock>Field is required</HelpBlock>}
               </Col>
             </FormGroup>
-            <FormGroup controlId="lastName">
+            <FormGroup controlId="lastName" validationState={lastNameError}>
               <Col componentClass={ControlLabel} md={3} className={"text-left"}>
                 Last Name
               </Col>
@@ -107,8 +135,14 @@ class Details extends Component {
                   type="text"
                   placeholder="Last Name"
                   defaultValue={lastName}
-                  onChange={e => this.setState({ lastName: e.target.value })}
+                  onChange={e =>
+                    this.setState({
+                      lastName: e.target.value,
+                      lastNameError: null
+                    })
+                  }
                 />
+                {lastNameError && <HelpBlock>Field is required</HelpBlock>}
               </Col>
             </FormGroup>
             <FormGroup controlId="lastName">
@@ -116,7 +150,9 @@ class Details extends Component {
                 <Checkbox
                   checked={this.state.useSameName}
                   onChange={e =>
-                    this.setState({ useSameName: e.target.checked })
+                    this.setState({
+                      useSameName: e.target.checked
+                    })
                   }
                 >
                   Use same Name at CLI Name
@@ -139,7 +175,9 @@ class Details extends Component {
                       placeholder="CLI First Name"
                       defaultValue={cliFirstName}
                       onChange={e =>
-                        this.setState({ cliFirstName: e.target.value })
+                        this.setState({
+                          cliFirstName: e.target.value
+                        })
                       }
                     />
                   </Col>
@@ -158,7 +196,9 @@ class Details extends Component {
                       placeholder="CLI Last Name"
                       defaultValue={cliLastName}
                       onChange={e =>
-                        this.setState({ cliLastName: e.target.value })
+                        this.setState({
+                          cliLastName: e.target.value
+                        })
                       }
                     />
                   </Col>
@@ -178,6 +218,19 @@ class Details extends Component {
                 />
               </Col>
             </FormGroup>
+            <Col mdOffset={3} md={9}>
+              {updateMassage && (
+                <HelpBlock
+                  bsClass={`${
+                    updateMassage === "Loading..."
+                      ? "color-info"
+                      : "color-success"
+                  }`}
+                >
+                  {updateMassage}
+                </HelpBlock>
+              )}
+            </Col>
           </FormGroup>
           <Row>
             <Col mdPush={10} md={1}>
@@ -191,6 +244,11 @@ class Details extends Component {
     );
   }
 
+  validateEmail = elementValue => {
+    var emailPattern = /^([0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*@([0-9a-zA-Z][-\w]*[0-9a-zA-Z]\.)+[a-zA-Z]{2,9})$/;
+    return emailPattern.test(elementValue);
+  };
+
   updateUser = e => {
     e.preventDefault();
     const {
@@ -203,6 +261,21 @@ class Details extends Component {
       language
     } = this.state;
 
+    if (emailAddress) {
+      if (!this.validateEmail(emailAddress)) {
+        this.setState({ emailIsValid: "error" });
+        return;
+      }
+    }
+    if (!firstName) {
+      this.setState({ firstNameError: "error" });
+      return;
+    }
+    if (!lastName) {
+      this.setState({ lastNameError: "error" });
+      return;
+    }
+
     const data = {
       emailAddress,
       firstName,
@@ -212,13 +285,25 @@ class Details extends Component {
       language
     };
 
-    console.log(data);
-
-    this.props.fetchPutUpdateUser(
-      this.props.match.params.tenantId,
-      this.props.match.params.groupId,
-      this.props.match.params.userName,
-      data
+    this.setState({ updateMassage: "Loading..." }, () =>
+      this.props
+        .fetchPutUpdateUser(
+          this.props.match.params.tenantId,
+          this.props.match.params.groupId,
+          this.props.match.params.userName,
+          data,
+          this.props.auth_token
+        )
+        .then(() =>
+          this.setState(
+            { updateMassage: "User is updated" },
+            () =>
+              (this.timer = setTimeout(
+                () => this.setState({ updateMassage: "" }),
+                3000
+              ))
+          )
+        )
     );
   };
 }

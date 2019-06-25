@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
-
-import { fetchGetDevicesByGroupId } from "../../../../store/actions";
+import { Link } from "react-router-dom";
+import { withRouter } from "react-router";
 
 import Table from "react-bootstrap/lib/Table";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
@@ -9,38 +9,40 @@ import FormControl from "react-bootstrap/lib/FormControl";
 import InputGroup from "react-bootstrap/lib/InputGroup";
 import Row from "react-bootstrap/lib/Row";
 import Col from "react-bootstrap/lib/Col";
+
 import { FormattedMessage } from "react-intl";
 
 import Loading from "../../../../common/Loading";
-import Device from "./Device";
+import Admin from "./Admin";
+
+import { fetchGetAdminsByGroupId } from "../../../../store/actions";
 import { countsPerPages } from "../../../../constants";
 
-export class Devices extends Component {
+export class Admins extends Component {
   state = {
-    searchValue: "",
-    devices: [],
+    admins: [],
+    paginationAdmins: [],
     isLoading: true,
     sortedBy: "",
-    paginationDevices: [],
     countPerPage: 25,
     page: 0,
     pagination: true,
     countPages: null
   };
 
-  fetchDevices = () => {
+  fetchAdmins = () => {
     this.props
-      .fetchGetDevicesByGroupId(this.props.tenantId, this.props.groupId, this.props.auth_token)
+      .fetchGetAdminsByGroupId(this.props.tenantId, this.props.groupId, this.props.auth_token)
       .then(() =>
         this.setState(
           {
-            devices: this.props.devices.sort((a, b) => {
-              if (a.deviceName < b.deviceName) return -1;
-              if (a.deviceName > b.deviceName) return 1;
+            admins: this.props.admins.sort((a, b) => {
+              if (a.userId < b.userId) return -1;
+              if (a.userId > b.userId) return 1;
               return 0;
             }),
             isLoading: false,
-            sortedBy: "deviceName"
+            sortedBy: "userId"
           },
           () => this.pagination()
         )
@@ -48,39 +50,37 @@ export class Devices extends Component {
   };
 
   componentDidMount() {
-    this.fetchDevices();
+    this.fetchAdmins();
   }
+
   componentDidUpdate(prevProps) {
-    if (prevProps.devices.length !== this.props.devices.length) {
-      this.fetchDevices();
+    if (prevProps.admins.length !== this.props.admins.length) {
+      this.fetchAdmins();
     }
   }
 
   render() {
     const {
-      devices,
       isLoading,
-      pagination,
-      paginationDevices,
       countPerPage,
+      pagination,
+      paginationAdmins,
       page
     } = this.state;
-
-    if ((isLoading, pagination)) {
+    if (isLoading && pagination) {
       return <Loading />;
     }
-
     return (
       <React.Fragment>
         <Row className={"margin-top-2"}>
-          <Col mdOffset={1} md={11}>
+          <Col mdOffset={1} md={10}>
             <InputGroup className={"margin-left-negative-4"}>
               <InputGroup.Addon>
                 <Glyphicon glyph="lyphicon glyphicon-search" />
               </InputGroup.Addon>
               <FormattedMessage
                 id="search_placeholder"
-                defaultMessage="Device name or device type or mac address"
+                defaultMessage="User ID or name"
               >
                 {placeholder => (
                   <FormControl
@@ -100,85 +100,76 @@ export class Devices extends Component {
               </FormattedMessage>
             </InputGroup>
           </Col>
+          <Col md={1}>
+            <Link
+              to={`/provisioning/broadsoft_xsp1_as1/tenants/${
+                this.props.tenantId
+              }/groups/${this.props.groupId}/addadmin`}
+            >
+              <Glyphicon
+                className={"x-large"}
+                glyph="glyphicon glyphicon-plus-sign"
+              />
+            </Link>
+          </Col>
         </Row>
-        {paginationDevices.length ? (
+        {paginationAdmins.length ? (
           <React.Fragment>
             <Row>
-              <Col mdOffset={1} md={11}>
-                <FormattedMessage
-                  id="number_of_devices"
-                  defaultMessage={`Number of devices: ${devices.length}`}
-                />
-              </Col>
-            </Row>
-            <Row>
-              <Col mdOffset={1} md={11}>
+              <Col mdOffset={1} md={10}>
                 <Table hover>
                   <thead>
                     <tr>
-                      <th style={{ width: "19%" }}>
+                      <th style={{ width: "24%" }}>
                         <FormattedMessage
-                          id="devices_name"
-                          defaultMessage="Name"
+                          id="tenant-id"
+                          defaultMessage="User ID"
                         />
                         <Glyphicon
                           glyph="glyphicon glyphicon-sort"
-                          onClick={this.sortByName}
+                          onClick={this.sortByUserId}
                         />
                       </th>
-                      <th style={{ width: "19%" }}>
+                      <th style={{ width: "24%" }}>
                         <FormattedMessage
-                          id="devices_Type"
-                          defaultMessage="Type"
+                          id="name"
+                          defaultMessage="First name"
                         />
                         <Glyphicon
                           glyph="glyphicon glyphicon-sort"
-                          onClick={this.sortByType}
+                          onClick={this.sortByFirstName}
                         />
                       </th>
-                      <th style={{ width: "19%" }}>
+                      <th style={{ width: "24%" }}>
                         <FormattedMessage
-                          id="mac_addess"
-                          defaultMessage="Mac addesss"
+                          id="type"
+                          defaultMessage="Last name"
                         />
                         <Glyphicon
                           glyph="glyphicon glyphicon-sort"
-                          onClick={this.sortByMacAddress}
+                          onClick={this.sortByLastName}
                         />
                       </th>
-                      <th style={{ width: "19%" }}>
-                        <FormattedMessage
-                          id="free_ports"
-                          defaultMessage="Free ports"
-                        />
+                      <th style={{ width: "24%" }}>
+                        <FormattedMessage id="type" defaultMessage="Language" />
                         <Glyphicon
                           glyph="glyphicon glyphicon-sort"
-                          onClick={this.sortByFreePorts}
+                          onClick={this.sortByAssignedToGroup}
                         />
                       </th>
-                      <th style={{ width: "19%" }}>
-                        <FormattedMessage
-                          id="devices_status"
-                          defaultMessage="Status"
-                        />
-                        <Glyphicon
-                          glyph="glyphicon glyphicon-sort"
-                          onClick={this.sortByFreePorts}
-                        />
-                      </th>
-                      <th style={{ width: "5%" }} />
+                      <th style={{ width: "4%" }} />
                     </tr>
                   </thead>
                   <tbody>
-                    {paginationDevices[page].map(device => (
-                      <Device
-                        key={device.deviceName}
-                        device={device}
+                    {paginationAdmins[page].map(admin => (
+                      <Admin
+                        key={admin.userId}
                         tenantId={this.props.tenantId}
                         groupId={this.props.groupId}
+                        admin={admin}
                         notifications={this.props.notifications}
                         onReload={() =>
-                          this.props.fetchGetDevicesByGroupId(
+                          this.props.fetchGetAdminsByGroupId(
                             this.props.tenantId,
                             this.props.groupId,
                             this.props.auth_token
@@ -221,7 +212,7 @@ export class Devices extends Component {
           <Col mdOffset={1} md={10}>
             <FormattedMessage
               id="notFound"
-              defaultMessage="No groups were found"
+              defaultMessage="No admins were found"
             />
           </Col>
         )}
@@ -250,25 +241,25 @@ export class Devices extends Component {
   };
 
   pagination = () => {
-    const { countPerPage, devices } = this.state;
-    const countPages = Math.ceil(devices.length / countPerPage);
+    const { countPerPage, admins } = this.state;
+    const countPages = Math.ceil(admins.length / countPerPage);
 
     let paginationItems = [];
     let counter = 0;
 
     for (let i = 0; i < countPages; i++) {
       if (i === 0) {
-        const item = devices.slice(0, countPerPage);
+        const item = admins.slice(0, countPerPage);
         paginationItems.push(item);
       } else {
-        const item = devices.slice(counter, counter + countPerPage);
+        const item = admins.slice(counter, counter + countPerPage);
         paginationItems.push(item);
       }
       counter = counter + countPerPage;
     }
 
     this.setState({
-      paginationDevices: paginationItems,
+      paginationAdmins: paginationItems,
       pagination: false,
       countPages,
       page: 0
@@ -277,98 +268,80 @@ export class Devices extends Component {
 
   filterBySearchValue = () => {
     const { searchValue } = this.state;
-    const SearchArray = this.props.devices
+    const SearchArray = this.props.admins
       .filter(
-        device =>
-          device.deviceName.toLowerCase().includes(searchValue.toLowerCase()) ||
-          device.deviceType.toLowerCase().includes(searchValue.toLowerCase()) ||
-          device.macAddress.toLowerCase().includes(searchValue.toLowerCase()) ||
-          device.status.toLowerCase().includes(searchValue.toLowerCase())
+        admin =>
+          admin.userId.toLowerCase().includes(searchValue.toLowerCase()) ||
+          admin.firstName.toLowerCase().includes(searchValue.toLowerCase()) ||
+          admin.lastName.toLowerCase().includes(searchValue.toLowerCase())
       )
-      .map(device => device);
-    this.setState({ devices: SearchArray }, () => this.pagination());
+      .map(admin => admin);
+    this.setState({ admins: SearchArray }, () => this.pagination());
   };
 
-  sortByName = () => {
-    const { devices, sortedBy } = this.state;
-    if (sortedBy === "deviceName") {
-      const devicesSorted = devices.reverse();
-      this.setState({ devices: devicesSorted }, () => this.pagination());
+  sortByUserId = () => {
+    const { admins, sortedBy } = this.state;
+    if (sortedBy === "userId") {
+      const adminsSorted = admins.reverse();
+      this.setState({ admins: adminsSorted }, () => this.pagination());
     } else {
-      const devicesSorted = devices.sort((a, b) => {
-        if (a.deviceName < b.deviceName) return -1;
-        if (a.deviceName > b.deviceName) return 1;
+      const adminsSorted = admins.sort((a, b) => {
+        if (a.userId < b.userId) return -1;
+        if (a.userId > b.userId) return 1;
         return 0;
       });
-      this.setState({ devices: devicesSorted, sortedBy: "deviceName" }, () =>
+      this.setState({ admins: adminsSorted, sortedBy: "userId" }, () =>
         this.pagination()
       );
     }
   };
 
-  sortByType = () => {
-    const { devices, sortedBy } = this.state;
-    if (sortedBy === "deviceType") {
-      const devicesSorted = devices.reverse();
-      this.setState({ devices: devicesSorted }, () => this.pagination());
+  sortByFirstName = () => {
+    const { admins, sortedBy } = this.state;
+    if (sortedBy === "firstName") {
+      const adminsSorted = admins.reverse();
+      this.setState({ admins: adminsSorted }, () => this.pagination());
     } else {
-      const devicesSorted = devices.sort((a, b) => {
-        if (a.deviceType < b.deviceType) return -1;
-        if (a.deviceType > b.deviceType) return 1;
+      const adminsSorted = admins.sort((a, b) => {
+        if (a.firstName < b.firstName) return -1;
+        if (a.firstName > b.firstName) return 1;
         return 0;
       });
-      this.setState({ devices: devicesSorted, sortedBy: "deviceType" }, () =>
+      this.setState({ admins: adminsSorted, sortedBy: "firstName" }, () =>
         this.pagination()
       );
     }
   };
 
-  sortByMacAddress = () => {
-    const { devices, sortedBy } = this.state;
-    if (sortedBy === "macAddress") {
-      const devicesSorted = devices.reverse();
-      this.setState({ devices: devicesSorted }, () => this.pagination());
+  sortByLastName = () => {
+    const { admins, sortedBy } = this.state;
+    if (sortedBy === "lastName") {
+      const adminsSorted = admins.reverse();
+      this.setState({ admins: adminsSorted }, () => this.pagination());
     } else {
-      const devicesSorted = devices.sort((a, b) => {
-        if (a.macAddress < b.macAddress) return -1;
-        if (a.macAddress > b.macAddress) return 1;
+      const adminsSorted = admins.sort((a, b) => {
+        if (a.lastName < b.lastName) return -1;
+        if (a.lastName > b.lastName) return 1;
         return 0;
       });
-      this.setState({ devices: devicesSorted, sortedBy: "macAddress" }, () =>
+      this.setState({ admins: adminsSorted, sortedBy: "lastName" }, () =>
         this.pagination()
       );
     }
   };
 
-  sortByFreePorts = () => {
-    const { devices, sortedBy } = this.state;
-    if (sortedBy === "freePorts") {
-      const devicesSorted = devices.reverse();
-      this.setState({ devices: devicesSorted }, () => this.pagination());
+  sortByLanguage = () => {
+    const { admins, sortedBy } = this.state;
+    if (sortedBy === "language") {
+      const adminsSorted = admins.reverse();
+      this.setState({ admins: adminsSorted }, () => this.pagination());
     } else {
-      const devicesSorted = devices.sort((a, b) => {
-        if (a.freePorts < b.freePorts) return -1;
-        if (a.freePorts > b.freePorts) return 1;
+      const adminsSorted = admins.sort((a, b) => {
+        if (a.language < b.language) return -1;
+        if (a.language > b.language) return 1;
         return 0;
       });
-      this.setState({ devices: devicesSorted, sortedBy: "freePorts" }, () =>
-        this.pagination()
-      );
-    }
-  };
-
-  sortByStatus = () => {
-    const { devices, sortedBy } = this.state;
-    if (sortedBy === "status") {
-      const devicesSorted = devices.reverse();
-      this.setState({ devices: devicesSorted }, () => this.pagination());
-    } else {
-      const devicesSorted = devices.sort((a, b) => {
-        if (a.status < b.status) return -1;
-        if (a.status > b.status) return 1;
-        return 0;
-      });
-      this.setState({ devices: devicesSorted, sortedBy: "status" }, () =>
+      this.setState({ admins: adminsSorted, sortedBy: "language" }, () =>
         this.pagination()
       );
     }
@@ -376,14 +349,16 @@ export class Devices extends Component {
 }
 
 const mapStateToProps = state => ({
-  devices: state.devices
+  admins: state.adminsGroup
 });
 
 const mapDispatchToProps = {
-  fetchGetDevicesByGroupId
+  fetchGetAdminsByGroupId
 };
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(Devices);
+export default withRouter(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(Admins)
+);

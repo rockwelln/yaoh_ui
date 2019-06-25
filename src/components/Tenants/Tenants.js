@@ -38,7 +38,7 @@ class Tenants extends Component {
   }
 
   componentDidMount() {
-    this.props.fetchGetTenants(this.cancelLoad).then(() => {
+    this.props.fetchGetTenants(this.cancelLoad, this.props.auth_token).then(() => {
       const sortedTenants = [...this.props.tenants];
       this.setState(
         {

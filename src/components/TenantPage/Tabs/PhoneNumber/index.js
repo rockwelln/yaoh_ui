@@ -37,7 +37,7 @@ export class PhoneNumbersTab extends Component {
   };
 
   componentDidMount() {
-    this.props.fetchGetPhoneNumbersByTenantId(this.props.tenantId).then(() =>
+    this.props.fetchGetPhoneNumbersByTenantId(this.props.tenantId, this.props.auth_token).then(() =>
       this.setState(
         {
           phoneNumbers: this.props.phoneNumbers.sort((a, b) => {
@@ -190,7 +190,8 @@ export class PhoneNumbersTab extends Component {
                         }
                         onReload={() =>
                           this.props.fetchGetPhoneNumbersByTenantId(
-                            this.props.tenantId
+                            this.props.tenantId,
+                            this.props.auth_token
                           )
                         }
                       />

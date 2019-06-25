@@ -9,6 +9,10 @@ import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import Loading from "../../common/Loading";
 import Details from "./Tabs/Details";
 import PhoneNumber from "./Tabs/PhoneNumbers";
+import Services from "./Tabs/Services";
+import ServicesPacks from "./Tabs/ServicePacks";
+
+import deepEqual from "../deepEqual";
 
 import {
   fetchGetTenantById,
@@ -23,23 +27,37 @@ class TenantPage extends Component {
     isLoadingUser: true
   };
 
-  componentDidMount() {
+  fetchRequsts = () => {
     this.props
       .fetchGetTenantById(this.props.match.params.tenantId)
       .then(() => this.setState({ isLoadingTenant: false }));
     this.props
       .fetchGetGroupById(
         this.props.match.params.tenantId,
-        this.props.match.params.groupId
+        this.props.match.params.groupId,
+        this.props.auth_token
       )
       .then(() => this.setState({ isLoadingGroup: false }));
     this.props
       .fetchGetUserByName(
         this.props.match.params.tenantId,
         this.props.match.params.groupId,
-        this.props.match.params.userName
+        this.props.match.params.userName,
+        this.props.auth_token
       )
       .then(() => this.setState({ isLoadingUser: false }));
+  };
+
+  componentDidMount() {
+    this.fetchRequsts();
+  }
+
+  componentDidUpdate(prevProps) {
+    const { _record_internal_id: prevId, ...prevPropsUser } = prevProps.user;
+    const { _record_internal_id: thisId, ...thisPropsUser } = this.props.user;
+    if (!deepEqual(prevPropsUser, thisPropsUser)) {
+      this.fetchRequsts();
+    }
   }
 
   render() {
@@ -54,7 +72,9 @@ class TenantPage extends Component {
       <React.Fragment>
         <div>
           <p className={"header"}>
-            {`User: ${user.firstName} ${user.lastName}`}
+            {`User: ${user.firstName ? user.firstName : ""} ${
+              user.lastName ? user.lastName : ""
+            }`}
             <Glyphicon glyph="glyphicon glyphicon-trash" />
           </p>
           <p>{`Tenant: ${tenant.name} (id: ${tenant.tenantId})`}</p>
@@ -68,10 +88,10 @@ class TenantPage extends Component {
             <PhoneNumber />
           </Tab>
           <Tab eventKey={2} title="SERVICES">
-            Services Tab
+            <Services />
           </Tab>
           <Tab eventKey={3} title="SERVICE PACKS">
-            Service packs Tab
+            <ServicesPacks />
           </Tab>
           <Tab eventKey={4} title="DEVICE">
             Device Tab

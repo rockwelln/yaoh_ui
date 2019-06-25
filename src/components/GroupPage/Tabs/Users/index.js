@@ -35,7 +35,7 @@ export class Users extends Component {
 
   componentDidMount() {
     this.props
-      .fetchGetUsersByGroupId(this.props.tenantId, this.props.groupId)
+      .fetchGetUsersByGroupId(this.props.tenantId, this.props.groupId, this.props.auth_token)
       .then(() =>
         this.setState(
           {
@@ -100,8 +100,7 @@ export class Users extends Component {
           <Col className={"text-right"} md={1}>
             <Glyphicon
               className={"x-large"}
-              glyph="glyphicon glyphicon-search"
-              onClick={this.handleSearchClick}
+              glyph="glyphicon glyphicon-plus-sign"
             />
           </Col>
         </Row>
@@ -130,7 +129,8 @@ export class Users extends Component {
                     onClose={e => {
                       this.props.fetchGetUsersByGroupId(
                         this.props.tenantId,
-                        this.props.groupId
+                        this.props.groupId,
+                        this.props.auth_token
                       );
                       this.setState({ showDelete: false });
                     }}
@@ -216,7 +216,8 @@ export class Users extends Component {
                         onReload={() =>
                           this.props.fetchGetUsersByGroupId(
                             this.props.tenantId,
-                            this.props.groupId
+                            this.props.groupId,
+                            this.props.auth_token
                           )
                         }
                       />
