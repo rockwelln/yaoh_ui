@@ -233,31 +233,21 @@ const AsyncApioNavBar = ({user_group, logoutUser, database_status, ...props}) =>
                       <FormattedMessage id="custom-requests" defaultMessage="Custom Requests"/>
                   </MenuItem>
               </LinkContainer>
-              <MenuItem divider/>
+          </NavDropdown>
+          }
+
+          {isAllowed(user_group, pages.requests_nprequests) &&
+          <NavDropdown title={
+              <span>
+                  <Glyphicon glyph="equalizer" /> {' '}
+                  <FormattedMessage id="bulks" defaultMessage="Bulks"/>
+              </span>
+          } id="nav-bulks">
               <LinkContainer to={"/transactions/bulk"}>
                   <MenuItem>
                       <FormattedMessage id="bulk" defaultMessage="Bulk"/>
                   </MenuItem>
               </LinkContainer>
-
-              {isAllowed(user_group, pages.requests_startup_events) &&
-              <MenuItem divider/>
-              }
-
-              {isAllowed(user_group, pages.requests_startup_events) &&
-              <LinkContainer to={"/transactions/config/startup_events"}>
-                  <MenuItem>
-                      <FormattedMessage id="startup-events" defaultMessage="Startup Events"/>
-                  </MenuItem>
-              </LinkContainer>
-              }
-              {isAllowed(user_group, pages.requests_workflow_editor) &&
-              <LinkContainer to={"/transactions/config/activities/editor"}>
-                  <MenuItem>
-                      <FormattedMessage id="editor" defaultMessage="Editor"/>
-                  </MenuItem>
-              </LinkContainer>
-              }
           </NavDropdown>
           }
 
@@ -279,7 +269,7 @@ const AsyncApioNavBar = ({user_group, logoutUser, database_status, ...props}) =>
           { isAllowed(user_group, pages.system) &&
               <NavDropdown eventKey={4} title={
                 <span>
-                    <Glyphicon glyph="cog" /> {' '}
+                    <Glyphicon glyph="signal" /> {' '}
                     <FormattedMessage id='settings' defaultMessage='Settings'/>
                 </span>
                 } id="nav-system-settings">
@@ -290,13 +280,6 @@ const AsyncApioNavBar = ({user_group, logoutUser, database_status, ...props}) =>
                           </MenuItem>
                       </LinkContainer>
                   }
-                  {/* isAllowed(user_group, pages.system_plugins_config) &&
-                      <LinkContainer to={"/system/plugins/config"}>
-                          <MenuItem>
-                              <FormattedMessage id="plugins-settings" defaultMessage="Plugins Settings"/>
-                          </MenuItem>
-                      </LinkContainer>
-                  */}
                   { isAllowed(user_group, pages.system_config) &&
                       <LinkContainer to={"/system/config"}>
                           <MenuItem>
@@ -330,6 +313,29 @@ const AsyncApioNavBar = ({user_group, logoutUser, database_status, ...props}) =>
                               <FormattedMessage id="reporting" defaultMessage="Reporting"/>
                           </MenuItem>
                       </LinkContainer>
+                  }
+              </NavDropdown>
+          }
+          { isAllowed(user_group, pages.requests_startup_events) &&
+              <NavDropdown eventKey={4} title={
+                <span>
+                    <Glyphicon glyph="cog" /> {' '}
+                    <FormattedMessage id='orchestration' defaultMessage='Orchestration'/>
+                </span>
+                } id="nav-orch">
+                  {isAllowed(user_group, pages.requests_startup_events) &&
+                  <LinkContainer to={"/transactions/config/startup_events"}>
+                      <MenuItem>
+                          <FormattedMessage id="startup-events" defaultMessage="Startup Events"/>
+                      </MenuItem>
+                  </LinkContainer>
+                  }
+                  {isAllowed(user_group, pages.requests_workflow_editor) &&
+                  <LinkContainer to={"/transactions/config/activities/editor"}>
+                      <MenuItem>
+                          <FormattedMessage id="editor" defaultMessage="Editor"/>
+                      </MenuItem>
+                  </LinkContainer>
                   }
               </NavDropdown>
           }
