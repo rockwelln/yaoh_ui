@@ -132,6 +132,21 @@ export const putUpdateTenantAdmin = data => ({
   data
 });
 
+export const putUpdateTrunkByGroupId = data => ({
+  type: actionType.PUT_UPDATE_TRUNK_BY_GROUP_ID,
+  data
+});
+
+export const putUpdateTrunkByGroupIdError = data => ({
+  type: actionType.PUT_UPDATE_TRUNK_BY_GROUP_ID_ERROR,
+  data
+});
+
+export const putUpdateServicePacksByGroupId = data => ({
+  type: actionType.PUT_UPDATE_SERVICE_PACKS_BY_GROUP_ID,
+  data
+});
+
 export const deleteTenant = Id => ({
   type: actionType.DELETE_TENANT,
   Id
@@ -397,6 +412,45 @@ export function fetchPutUpdateTenantAdmin(tenantId, adminId, data, auth_token) {
     )
       .then(res => res.json())
       .then(data => dispatch(putUpdateTenantAdmin(data)))
+      .catch(error => console.error("An error occurred.", error));
+  };
+}
+
+export function fetchPutUpdateTrunkByGroupId(tenantId, groupId, data, auth_token) {
+  return function(dispatch) {
+    const checkBadRequest = true;
+    return fetch_put(
+      `${API_BASE_URL}/tenants/${tenantId}/groups/${groupId}/features/trunk_groups/`,
+      data,
+      //checkBadRequest
+      auth_token
+    ).then(res => {
+      if (res.status === 400) {
+        res
+          .json()
+          .then(data => dispatch(putUpdateTrunkByGroupIdError(data)))
+          .catch(error => console.error(error));
+        return Promise.resolve("fail");
+      } else {
+        res
+          .json()
+          .then(data => dispatch(putUpdateTrunkByGroupId(data)))
+          .catch(error => console.error(error));
+        return Promise.resolve("success");
+      }
+    });
+  };
+}
+
+export function fetchPutUpdateServicePacksByGroupId(tenantId, groupId, data, auth_token) {
+  return function(dispatch) {
+    return fetch_put(
+      `${API_BASE_URL}/tenants/${tenantId}/groups/${groupId}/licenses/`,
+      data,
+      auth_token
+    )
+      .then(res => res.json())
+      .then(data => dispatch(putUpdateServicePacksByGroupId(data)))
       .catch(error => console.error("An error occurred.", error));
   };
 }
