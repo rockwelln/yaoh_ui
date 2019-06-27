@@ -418,11 +418,9 @@ export function fetchPutUpdateTenantAdmin(tenantId, adminId, data, auth_token) {
 
 export function fetchPutUpdateTrunkByGroupId(tenantId, groupId, data, auth_token) {
   return function(dispatch) {
-    const checkBadRequest = true;
     return fetch_put(
       `${API_BASE_URL}/tenants/${tenantId}/groups/${groupId}/features/trunk_groups/`,
       data,
-      //checkBadRequest
       auth_token
     ).then(res => {
       if (res.status === 400) {

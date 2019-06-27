@@ -68,8 +68,7 @@ export class Licenses extends Component {
       trunkGroups,
       editNumberOfUsers,
       editTrunkCapacity,
-      editServicePacks,
-      isCheckedServicePack
+      editServicePacks
     } = this.state;
     const { group, servicePacks, groupServices } = this.props;
 
