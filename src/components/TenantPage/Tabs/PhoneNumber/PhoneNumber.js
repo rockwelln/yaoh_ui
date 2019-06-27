@@ -16,6 +16,7 @@ export default class PhoneNumber extends Component {
   render() {
     const { number, onReload, index, tenantId } = this.props;
     const { showDelete } = this.state;
+    const gwName = window.location.pathname.split("/")[2];
     return (
       <tr key={number.groupId}>
         <td>
@@ -33,7 +34,7 @@ export default class PhoneNumber extends Component {
         <td>{number.rangeEnd}</td>
         <td>
           <Link
-            to={`/provisioning/broadsoft_xsp1_as1/tenants/${tenantId}/groups/${
+            to={`/provisioning/${gwName}/tenants/${tenantId}/groups/${
               number.assignedToGroup
             }`}
           >

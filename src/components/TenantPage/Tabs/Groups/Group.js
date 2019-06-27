@@ -11,11 +11,12 @@ export default class Group extends Component {
   render() {
     const { group, onReload } = this.props;
     const { showDelete } = this.state;
+    const gwName = window.location.pathname.split("/")[2];
     return (
       <tr key={group.groupId}>
         <td>
           <Link
-            to={`/provisioning/broadsoft_xsp1_as1/tenants/${
+            to={`/provisioning/${gwName}/tenants/${
               group.tenantId
             }/groups/${group.groupId}`}
           >

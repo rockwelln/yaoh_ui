@@ -47,7 +47,7 @@ import ActivityEditor from './activity-editor';
 import {ConfigManagement} from './settings/configuration';
 import {Reporting} from "./settings/reporting.jsx";
 import Gateways from "./system/gateways_mgm";
-import {API_URL_PREFIX, fetch_get, checkStatus, parseJSON} from "./utils";
+import {API_URL_PREFIX, fetch_get, checkStatus, parseJSON, PROVISIONING_PROXIES} from "./utils";
 import Databases from "./system/databases_mgm";
 import {AuditLogs} from "./system/audit";
 import {isAllowed, pages} from "./utils/user";
@@ -273,14 +273,15 @@ const AsyncApioNavBar = ({user_group, logoutUser, database_status, ...props}) =>
                 }
                 id="nav-data-apio"
               >
-                <LinkContainer to={"/provisioning/broadsoft_xsp1_as1/tenants"}>
-                  <MenuItem>
-                    <FormattedMessage
-                      id="broadsoft_xsp1_as1"
-                      defaultMessage="Broadsoft XSP 1/AS 1"
-                    />
-                  </MenuItem>
-                </LinkContainer>
+                  {
+                      PROVISIONING_PROXIES.listProxies().map((p, i) =>
+                          <LinkContainer to={"/provisioning/" + p.id + "/tenants"} key={i}>
+                              <MenuItem>
+                                  {p.name}
+                              </MenuItem>
+                            </LinkContainer>
+                      )
+                  }
               </NavDropdown>
           }
 
@@ -490,6 +491,9 @@ class App extends Component {
     componentWillUpdate() {
         if(this.isAuthenticated() && !this.state.user_info && this.state.auth_token) {
             this.getUserInfo(this.state.auth_token);
+            PROVISIONING_PROXIES.fetchConfiguration(this.state.auth_token).then(() => {
+                this.setState({proxy_fetch: true});
+            }).catch(error => console.log(error));
         }
     }
 
@@ -678,7 +682,7 @@ class App extends Component {
                                )}
                                exact />*/}
                         <Route
-                            path="/provisioning/broadsoft_xsp1_as1/tenants"
+                            path="/provisioning/:gwName/tenants"
                             component={props =>
                               isAllowed(ui_profile, pages.data_tenants) ? (
                                 <Tenants
@@ -693,7 +697,7 @@ class App extends Component {
                             exact />
 
                         <Route
-                            path="/provisioning/broadsoft_xsp1_as1/tenants/:tenantId"
+                            path="/provisioning/:gwName/tenants/:tenantId"
                             component={props =>
                               isAllowed(ui_profile, pages.data_tenants) ? (
                                 <TenantPage
@@ -707,7 +711,7 @@ class App extends Component {
                             exact
                         />
                         <Route
-                            path="/provisioning/broadsoft_xsp1_as1/tenants/:tenantId/groups/:groupId"
+                            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId"
                             component={props =>
                               isAllowed(ui_profile, pages.data_tenants) ? (
                                 <GroupPage
@@ -721,10 +725,10 @@ class App extends Component {
                             exact
                         />
                         <Route
-                            path="/provisioning/broadsoft_xsp1_as1/tenants/:tenantId/groups/:groupId/users/:userName"
+                            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/users/:userName"
                             component={props =>
                               isAllowed(ui_profile, pages.data_tenants) ? (
-                                <UserPage auth_token={auth_token} />
+                                <UserPage auth_token={auth_token} {...props} />
                               ) : (
                                 <NotAllowed />
                               )
@@ -732,7 +736,7 @@ class App extends Component {
                             exact
                         />
                         <Route
-                            path="/provisioning/broadsoft_xsp1_as1/tenants/:tenantId/groups/:groupId/addadmin"
+                            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/addadmin"
                             component={props =>
                               isAllowed(ui_profile, pages.data_tenants) ? (
                                 <CreateAdmin auth_token={auth_token} />
@@ -743,7 +747,7 @@ class App extends Component {
                             exact
                         />
                         <Route
-                            path="/provisioning/broadsoft_xsp1_as1/tenants/:tenantId/groups/:groupId/admins/:adminId"
+                            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/admins/:adminId"
                             component={props =>
                               isAllowed(ui_profile, pages.data_tenants) ? (
                                 <UpdateAdmin auth_token={auth_token} />
@@ -754,7 +758,7 @@ class App extends Component {
                             exact
                         />
                         <Route
-                            path="/provisioning/broadsoft_xsp1_as1/tenants/:tenantId/addadmin"
+                            path="/provisioning/:gwName/tenants/:tenantId/addadmin"
                             component={props =>
                               isAllowed(ui_profile, pages.data_tenants) ? (
                                 <CreateAdmin auth_token={auth_token} />
@@ -765,7 +769,7 @@ class App extends Component {
                             exact
                         />
                         <Route
-                            path="/provisioning/broadsoft_xsp1_as1/tenants/:tenantId/admins/:adminId"
+                            path="/provisioning/:gwName/tenants/:tenantId/admins/:adminId"
                             component={props =>
                               isAllowed(ui_profile, pages.data_tenants) ? (
                                 <UpdateAdmin auth_token={auth_token} />

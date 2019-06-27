@@ -20,6 +20,7 @@ class DeleteModal extends Component {
   onDelete(tenantId) {
     const { onClose } = this.props;
     this.setState({ deleting: true });
+    const gwName = this.props.location.pathname.split("/")[2];
 
     this.props
       .fetchDeleteTenant(tenantId, this.props.auth_token)
@@ -37,7 +38,7 @@ class DeleteModal extends Component {
         onClose && onClose(true);
       })
       .then(() =>
-        this.props.history.push("/provisioning/broadsoft_xsp1_as1/tenants/")
+        this.props.history.push(`/provisioning/${gwName}/tenants/`)
       )
       .catch(error => {
         this.setState({ deleting: false });

@@ -37,7 +37,7 @@ class Tenants extends Component {
     this.cancelLoad = true;
   }
 
-  componentDidMount() {
+  fetchTenants() {
     this.props.fetchGetTenants(this.cancelLoad, this.props.auth_token).then(() => {
       const sortedTenants = [...this.props.tenants];
       this.setState(
@@ -52,7 +52,24 @@ class Tenants extends Component {
         },
         () => this.pagination()
       );
-    });
+    }).catch(error => {
+        this.props.notifications && this.props.notifications.addNotification({
+            title: <FormattedMessage id="fetch-tenants-failed" defaultMessage="Failed to fetch tenants!"/>,
+            message: error.message,
+            level: 'error'
+        });
+        this.setState({tenants: [], isLoading: false}, () => this.pagination())
+    })
+  }
+
+  componentDidMount() {
+    this.fetchTenants();
+  }
+
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    if(this.props.match.params.gwName !== prevProps.match.params.gwName) {
+      this.fetchTenants();
+    }
   }
 
   render() {

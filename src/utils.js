@@ -26,6 +26,30 @@ function getCookie(name) {
 }
 */
 
+class ProvisioningProxies {
+    static proxies = [];
+
+    fetchConfiguration(auth_token) {
+      return fetch_get("/api/v01/apio/provisioning/gateways", auth_token)
+          .then(data => ProvisioningProxies.proxies = data.gateways.map(g => {
+              g.id = g.name.toLowerCase().replace(/[. ]/g, "");
+              console.log(g);
+              return g;
+          }))
+    }
+
+    getProxyPrefix() {
+      const name = window.location.href.match(/\/provisioning\/[A-Za-z0-9_-]*\//)[0].split("/")[2];
+      const e = ProvisioningProxies.proxies.filter(p => p.id === name);
+      return e.length > 0?e[0].prefix:"";
+    }
+
+    listProxies() {
+        return ProvisioningProxies.proxies;
+    }
+}
+
+export const PROVISIONING_PROXIES = new ProvisioningProxies();
 
 export function checkStatus(response) {
     if (response.status >= 200 && response.status < 300) {

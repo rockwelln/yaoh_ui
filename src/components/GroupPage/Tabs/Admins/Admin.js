@@ -11,11 +11,12 @@ export default class Admin extends Component {
   render() {
     const { admin, onReload } = this.props;
     const { showDelete } = this.state;
+    const gwName = window.location.pathname.split("/")[2];
     return (
       <tr key={admin.userId}>
         <td>
           <Link
-            to={`/provisioning/broadsoft_xsp1_as1/tenants/${
+            to={`/provisioning/${gwName}/tenants/${
               this.props.tenantId
             }/groups/${this.props.groupId}/admins/${admin.userId}`}
           >
