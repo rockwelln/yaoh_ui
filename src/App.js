@@ -1,4 +1,6 @@
-import "babel-polyfill";
+import "core-js/stable";
+import "regenerator-runtime/runtime";
+
 import "url-polyfill";
 import "isomorphic-fetch";
 import React, { Component } from 'react';
