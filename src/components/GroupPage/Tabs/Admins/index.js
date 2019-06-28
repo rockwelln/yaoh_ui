@@ -70,6 +70,7 @@ export class Admins extends Component {
     if (isLoading && pagination) {
       return <Loading />;
     }
+    const gwName = window.location.pathname.split("/")[2];
     return (
       <React.Fragment>
         <Row className={"margin-top-2"}>
@@ -102,7 +103,7 @@ export class Admins extends Component {
           </Col>
           <Col md={1}>
             <Link
-              to={`/provisioning/broadsoft_xsp1_as1/tenants/${
+              to={`/provisioning/${gwName}/tenants/${
                 this.props.tenantId
               }/groups/${this.props.groupId}/addadmin`}
             >

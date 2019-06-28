@@ -24,7 +24,7 @@ class Tenant extends Component {
     return (
       <tr key={t.tenantId}>
         <td>
-          <Link to={`/provisioning/broadsoft_xsp1_as1/tenants/${t.tenantId}`}>
+          <Link to={`/provisioning/${this.props.match.params.gwName}/tenants/${t.tenantId}`}>
             {t.tenantId}
           </Link>
         </td>

@@ -8,20 +8,17 @@ import { Link } from "react-router-dom";
 import "./styles.css";
 
 const convertCrumb = crumb => {
-  if (crumb === "broadsoft_xsp1_as1") {
-    return "broadsoft XSP 1 / AS 1";
-  }
   return crumb;
 };
 
-const linkByCrumb = (item, lastItem, i, path) => {
+const linkByCrumb = (item, lastItem, i, path, gwName) => {
   const crumb = convertCrumb(item);
   if (crumb === "tenants" && !lastItem.includes(crumb)) {
-    return <Link to={"/provisioning/broadsoft_xsp1_as1/tenants"}>{crumb}</Link>;
+    return <Link to={`/provisioning/${gwName}/tenants`}>{crumb}</Link>;
   }
   if (path[i - 1] === "tenants" && !lastItem.includes(crumb)) {
     return (
-      <Link to={`/provisioning/broadsoft_xsp1_as1/tenants/${item}`}>
+      <Link to={`/provisioning/${gwName}/tenants/${item}`}>
         {crumb}
       </Link>
     );
@@ -29,7 +26,7 @@ const linkByCrumb = (item, lastItem, i, path) => {
   if (path[i - 2] === "tenants" && !lastItem.includes(crumb)) {
     return (
       <Link
-        to={`/provisioning/broadsoft_xsp1_as1/tenants/${
+        to={`/provisioning/${gwName}/tenants/${
           path[i - 1]
         }/groups/${crumb}`}
       >
@@ -48,6 +45,7 @@ const BreadcrumbComponent = ({ location }) => {
   const indexForGroupLevel = 4;
   const indexForTenantLevel = 2;
   const path = location.pathname.split("/").slice(3);
+  const gwName = location.pathname.split("/")[2];
   if (
     path[indexForGroupLevel] === "users" ||
     path[indexForGroupLevel] === "admins"
@@ -65,7 +63,7 @@ const BreadcrumbComponent = ({ location }) => {
     <Breadcrumb>
       {path.map((item, i) => (
         <Breadcrumb.Item active key={String(i)}>
-          {linkByCrumb(item, lastItem, i, path)}
+          {linkByCrumb(item, lastItem, i, path, gwName)}
         </Breadcrumb.Item>
       ))}
     </Breadcrumb>

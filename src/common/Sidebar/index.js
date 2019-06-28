@@ -3,6 +3,7 @@ import React, { Component } from "react";
 import Nav from "react-bootstrap/lib/Nav";
 import NavItem from "react-bootstrap/lib/NavItem";
 import { LinkContainer } from "react-router-bootstrap";
+import {withRouter} from "react-router";
 
 export class Sidebar extends Component {
   state = {
@@ -10,6 +11,7 @@ export class Sidebar extends Component {
   };
 
   render() {
+    const gwName = this.props.location.pathname.split("/")[2];
     return (
       <React.Fragment>
         <Nav
@@ -18,13 +20,13 @@ export class Sidebar extends Component {
           activeKey={this.state.activeKey}
           onSelect={this.handleSelect}
         >
-          <LinkContainer to="/provisioning/broadsoft_xsp1_as1/tenants">
+          <LinkContainer to={`/provisioning/${gwName}/tenants`}>
             <NavItem eventKey={0}>TENANTS</NavItem>
           </LinkContainer>
-          <LinkContainer to="/provisioning/broadsoft_xsp1_as1/search">
+          <LinkContainer to={`/provisioning/${gwName}/search`}>
             <NavItem eventKey={1}>SEARCH</NavItem>
           </LinkContainer>
-          <LinkContainer to="/provisioning/broadsoft_xsp1_as1/templates">
+          <LinkContainer to={`/provisioning/${gwName}/templates`}>
             <NavItem eventKey={2}>TEMPLATES</NavItem>
           </LinkContainer>
         </Nav>
@@ -36,4 +38,4 @@ export class Sidebar extends Component {
   };
 }
 
-export default Sidebar;
+export default withRouter(Sidebar);
