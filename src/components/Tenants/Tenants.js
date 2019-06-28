@@ -52,13 +52,6 @@ class Tenants extends Component {
         },
         () => this.pagination()
       );
-    }).catch(error => {
-        this.props.notifications && this.props.notifications.addNotification({
-            title: <FormattedMessage id="fetch-tenants-failed" defaultMessage="Failed to fetch tenants!"/>,
-            message: error.message,
-            level: 'error'
-        });
-        this.setState({tenants: [], isLoading: false}, () => this.pagination())
     })
   }
 

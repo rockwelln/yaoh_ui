@@ -51,6 +51,27 @@ class ProvisioningProxies {
 
 export const ProvProxiesManager = new ProvisioningProxies();
 
+
+class NotificationsHandler {
+    static rootRef = null;
+
+    setRef(ref_) {
+        NotificationsHandler.rootRef = ref_;
+    }
+
+    error(title, message) {
+        NotificationsHandler.rootRef &&
+        NotificationsHandler.rootRef.current.addNotification({
+            title: title,
+            message: message,
+            level: 'error'
+        });
+    }
+}
+
+export const NotificationsManager = new NotificationsHandler();
+
+
 export function checkStatus(response) {
     if (response.status >= 200 && response.status < 300) {
         return response

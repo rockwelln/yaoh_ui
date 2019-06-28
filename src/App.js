@@ -49,7 +49,7 @@ import ActivityEditor from './activity-editor';
 import {ConfigManagement} from './settings/configuration';
 import {Reporting} from "./settings/reporting.jsx";
 import Gateways from "./system/gateways_mgm";
-import {API_URL_PREFIX, fetch_get, checkStatus, parseJSON, ProvProxiesManager} from "./utils";
+import {API_URL_PREFIX, fetch_get, checkStatus, parseJSON, ProvProxiesManager, NotificationsManager} from "./utils";
 import Databases from "./system/databases_mgm";
 import {AuditLogs} from "./system/audit";
 import {isAllowed, pages} from "./utils/user";
@@ -457,6 +457,7 @@ class App extends Component {
             error_msg: undefined,
         };
         this._notificationSystem = React.createRef();
+        NotificationsManager.setRef(this._notificationSystem);
 
         this.getUserInfo = this.getUserInfo.bind(this);
         this.updateToken = this.updateToken.bind(this);

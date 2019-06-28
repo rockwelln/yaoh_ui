@@ -3,9 +3,12 @@ import {
   fetch_delete,
   fetch_put,
   fetch_post,
-  ProvProxiesManager
+  ProvProxiesManager,
+  NotificationsManager
 } from "../utils";
 import * as actionType from "./constants";
+import {FormattedMessage} from "react-intl";
+import React from "react";
 
 export const getTenants = data => ({
   type: actionType.GET_TENANTS,
@@ -177,7 +180,12 @@ export function fetchGetTenants(cancelLoad, auth_token) {
   return function(dispatch) {
     return fetch_get(`${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/`, auth_token)
       .then(data => !cancelLoad && dispatch(getTenants(data)))
-      //.catch(error => console.error("An error occurred.", error));
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage id="fetch-tenants-failed" defaultMessage="Failed to fetch tenants!"/>,
+          error.message
+        )
+      );
   };
 }
 
@@ -185,7 +193,12 @@ export function fetchGetTenantById(Id, auth_token) {
   return function(dispatch) {
     return fetch_get(`${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${Id}`, auth_token)
       .then(data => dispatch(getTenantById(data)))
-      .catch(error => console.error("An error occurred.", error));
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage id="fetch-tenant-failed" defaultMessage="Failed to fetch tenant details!"/>,
+          error.message
+        )
+      );
   };
 }
 
@@ -193,7 +206,12 @@ export function fetchGetGroupsByTenantId(Id, auth_token) {
   return function(dispatch) {
     return fetch_get(`${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${Id}/groups`, auth_token)
       .then(data => dispatch(getGroupsByTenantId(data)))
-      .catch(error => console.error("An error occurred.", error));
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage id="fetch-groups-failed" defaultMessage="Failed to fetch groups!"/>,
+          error.message
+        )
+      );
   };
 }
 
@@ -201,7 +219,12 @@ export function fetchGetPhoneNumbersByTenantId(Id, auth_token) {
   return function(dispatch) {
     return fetch_get(`${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${Id}/numbers`, auth_token)
       .then(data => dispatch(getPhoneNumbersByTenantId(data)))
-      .catch(error => console.error("An error occurred.", error));
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage id="fetch-numbers-failed" defaultMessage="Failed to fetch phone numbers!"/>,
+          error.message
+        )
+      );
   };
 }
 
@@ -209,7 +232,12 @@ export function fetchGetAdminsByTenantId(Id, auth_token) {
   return function(dispatch) {
     return fetch_get(`${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${Id}/admins`, auth_token)
       .then(data => dispatch(getAdminsByTenantId(data)))
-      .catch(error => console.error("An error occurred.", error));
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage id="fetch-admins-failed" defaultMessage="Failed to fetch admins!"/>,
+          error.message
+        )
+      );
   };
 }
 
@@ -217,7 +245,12 @@ export function fetchGetGroupById(tenantId, groupId, auth_token) {
   return function(dispatch) {
     return fetch_get(`${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}`, auth_token)
       .then(data => dispatch(getGroupById(data)))
-      .catch(error => console.error("An error occurred.", error));
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage id="fetch-group-failed" defaultMessage="Failed to fetch group details!"/>,
+          error.message
+        )
+      );
   };
 }
 
@@ -227,7 +260,12 @@ export function fetchGetUsersByGroupId(tenantId, groupId, auth_token) {
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/users`, auth_token
     )
       .then(data => dispatch(getUsersByGroupId(data)))
-      .catch(error => console.error("An error occurred.", error));
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage id="fetch-users-failed" defaultMessage="Failed to fetch users!"/>,
+          error.message
+        )
+      );
   };
 }
 
@@ -237,7 +275,12 @@ export function fetchGetPhoneNumbersByGroupId(tenantId, groupId, auth_token) {
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/numbers?assignement=true`, auth_token
     )
       .then(data => dispatch(getPhoneNumbersByGroupId(data)))
-      .catch(error => console.error("An error occurred.", error));
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage id="fetch-numbers-failed" defaultMessage="Failed to fetch phone numbers!"/>,
+          error.message
+        )
+      );
   };
 }
 
@@ -247,7 +290,12 @@ export function fetchGetLicensesByGroupId(tenantId, groupId, auth_token) {
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/licenses`, auth_token
     )
       .then(data => dispatch(getLicensesByGroupId(data)))
-      .catch(error => console.error("An error occurred.", error));
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage id="fetch-licenses-failed" defaultMessage="Failed to fetch licenses!"/>,
+          error.message
+        )
+      );
   };
 }
 
@@ -257,7 +305,12 @@ export function fetchGetDevicesByGroupId(tenantId, groupId, auth_token) {
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/access_devices`, auth_token
     )
       .then(data => dispatch(getDevicesByGroupId(data)))
-      .catch(error => console.error("An error occurred.", error));
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage id="fetch-devices-failed" defaultMessage="Failed to fetch devices!"/>,
+          error.message
+        )
+      );
   };
 }
 
@@ -267,7 +320,12 @@ export function fetchGetAdminsByGroupId(tenantId, groupId, auth_token) {
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/admins`, auth_token
     )
       .then(data => dispatch(getAdminsByGroupId(data)))
-      .catch(error => console.error("An error occurred.", error));
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage id="fetch-group-admins-failed" defaultMessage="Failed to fetch group admins!"/>,
+          error.message
+        )
+      );
   };
 }
 
@@ -277,7 +335,12 @@ export function fetchGetUserByName(tenantId, groupId, userName, auth_token) {
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/users/${userName}`, auth_token
     )
       .then(data => dispatch(getUserByName(data)))
-      .catch(error => console.error("An error occurred.", error));
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage id="fetch-user-failed" defaultMessage="Failed to fetch user details!"/>,
+          error.message
+        )
+      );
   };
 }
 
@@ -287,7 +350,12 @@ export function fetchGetTrunkByGroupID(tenantId, groupId, auth_token) {
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/features/trunk_groups`, auth_token
     )
       .then(data => dispatch(getTrunkByGroupID(data)))
-      .catch(error => console.error("An error occurred.", error));
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage id="fetch-trunk-failed" defaultMessage="Failed to fetch trunk!"/>,
+          error.message
+        )
+      );
   };
 }
 
@@ -297,7 +365,12 @@ export function fetchGetAvailableNumbersByGroupId(tenantId, groupId, auth_token)
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/numbers?available=true`, auth_token
     )
       .then(data => dispatch(getAvailableNumbersByGroupID(data)))
-      .catch(error => console.error("An error occurred.", error));
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage id="fetch-avail-numbers-failed" defaultMessage="Failed to fetch available numbers!"/>,
+          error.message
+        )
+      );
   };
 }
 
@@ -307,7 +380,12 @@ export function fetchGetGroupAdminByAdminId(tenantId, groupId, adminId, auth_tok
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/admins/${adminId}`, auth_token
     )
       .then(data => dispatch(getGroupAdminByAdminId(data)))
-      .catch(error => console.error("An error occurred.", error));
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage id="fetch-admin-failed" defaultMessage="Failed to fetch admin details!"/>,
+          error.message
+        )
+      );
   };
 }
 
@@ -315,7 +393,12 @@ export function fetchGetTenantAdminByAdminId(tenantId, adminId, auth_token) {
   return function(dispatch) {
     return fetch_get(`${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/admins/${adminId}`, auth_token)
       .then(data => dispatch(getTenantAdminByAdminId(data)))
-      .catch(error => console.error("An error occurred.", error));
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage id="fetch-admin-failed" defaultMessage="Failed to fetch admin details!"/>,
+          error.message
+        )
+      );
   };
 }
 
@@ -325,51 +408,54 @@ export function fetchGetUserServicesByUserId(tenantId, groupId, userId, auth_tok
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/users/${userId}/services?assignementStatus=true&summary=true`, auth_token
     )
       .then(data => dispatch(getUserServicesByUserId(data)))
-      .catch(error => console.error("An error occurred.", error));
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage id="fetch-user-services-failed" defaultMessage="Failed to fetch user services!"/>,
+          error.message
+        )
+      );
   };
 }
 
 export function fetchPostCreateGroupAdmin(tenantId, groupId, data, auth_token) {
   return function(dispatch) {
-    const response = fetch_post(
+    return fetch_post(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/admins/`,
       data, auth_token
-    );
-    response.then(res => {
-      if (res.status === 400) {
-        res
-          .json()
-          .then(data => dispatch(postCreateGroupAdminError(data)))
-          .catch(error => console.error(error));
-        return;
-      }
-      res
-        .json()
-        .then(data => dispatch(postCreateGroupAdmin(data)))
-        .catch(error => console.error(error));
-    });
-  };
+    )
+      .then(resp => resp.json())
+      .then(data => dispatch(postCreateGroupAdmin(data)))
+      .catch(error => {
+        if (error.response && error.response.status === 400) {
+          return dispatch(postCreateGroupAdminError(error));
+        } else {
+          NotificationsManager.error(
+            <FormattedMessage id="create-group-admin-failed" defaultMessage="Failed to create group admin!"/>,
+            error.message
+          )
+        }
+      });
+  }
 }
 
 export function fetchPostCreateTenantAdmin(tenantId, data, auth_token) {
   return function(dispatch) {
-    const response = fetch_post(
+    return fetch_post(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/admins/`,
       data, auth_token
-    );
-    response.then(res => {
-      if (res.status === 400) {
-        res
-          .json()
-          .then(data => dispatch(postCreateTenantAdminError(data)))
-          .catch(error => console.error(error));
-        return;
-      }
-      res
-        .json()
-        .then(data => dispatch(postCreateTenantAdmin(data)))
-        .catch(error => console.error(error));
-    });
+    )
+      .then(resp => resp.json())
+      .then(data => dispatch(postCreateTenantAdmin(data)))
+      .catch(error => {
+        if (error.response && error.response.status === 400) {
+          return dispatch(postCreateTenantAdminError(error));
+        } else {
+          NotificationsManager.error(
+            <FormattedMessage id="create-group-admin-failed" defaultMessage="Failed to create group admin!"/>,
+            error.message
+          )
+        }
+      });
   };
 }
 
@@ -381,7 +467,12 @@ export function fetchPutUpdateUser(tenantId, groupId, userName, data, auth_token
     )
       .then(res => res.json())
       .then(data => dispatch(putUpdateUser(data)))
-      .catch(error => console.error("An error occurred.", error));
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage id="update-user-failed" defaultMessage="Failed to update user!"/>,
+          error.message
+        )
+      );
   };
 }
 
@@ -393,7 +484,12 @@ export function fetchPutUpdateGroupDetails(tenantId, groupId, data, auth_token) 
     )
       .then(res => res.json())
       .then(data => dispatch(putUpdateGroupDetails(data)))
-      .catch(error => console.error("An error occurred.", error));
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage id="update-group-failed" defaultMessage="Failed to update group details!"/>,
+          error.message
+        )
+      );
   };
 }
 
@@ -405,7 +501,12 @@ export function fetchPutUpdateGroupAdmin(tenantId, groupId, adminId, data, auth_
     )
       .then(res => res.json())
       .then(data => dispatch(putUpdateGroupAdmin(data)))
-      .catch(error => console.error("An error occurred.", error));
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage id="update-group-admin-failed" defaultMessage="Failed to update group admin!"/>,
+          error.message
+        )
+      );
   };
 }
 
@@ -417,7 +518,12 @@ export function fetchPutUpdateTenantAdmin(tenantId, adminId, data, auth_token) {
     )
       .then(res => res.json())
       .then(data => dispatch(putUpdateTenantAdmin(data)))
-      .catch(error => console.error("An error occurred.", error));
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage id="update-tenant-admin-failed" defaultMessage="Failed to update tenant admin!"/>,
+          error.message
+        )
+      );
   };
 }
 
@@ -427,21 +533,19 @@ export function fetchPutUpdateTrunkByGroupId(tenantId, groupId, data, auth_token
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/features/trunk_groups/`,
       data,
       auth_token
-    ).then(res => {
-      if (res.status === 400) {
-        res
-          .json()
-          .then(data => dispatch(putUpdateTrunkByGroupIdError(data)))
-          .catch(error => console.error(error));
-        return Promise.resolve("fail");
-      } else {
-        res
-          .json()
-          .then(data => dispatch(putUpdateTrunkByGroupId(data)))
-          .catch(error => console.error(error));
-        return Promise.resolve("success");
-      }
-    });
+    )
+      .then(resp => resp.json())
+      .then(data => dispatch(putUpdateTrunkByGroupId(data)))
+      .catch(error => {
+        if (error.response && error.response.status === 400) {
+          return dispatch(putUpdateTrunkByGroupIdError(error));
+        } else {
+          NotificationsManager.error(
+            <FormattedMessage id="update-trunk-failed" defaultMessage="Failed to update trunk!"/>,
+            error.message
+          )
+        }
+      });
   };
 }
 
@@ -454,7 +558,12 @@ export function fetchPutUpdateServicePacksByGroupId(tenantId, groupId, data, aut
     )
       .then(res => res.json())
       .then(data => dispatch(putUpdateServicePacksByGroupId(data)))
-      .catch(error => console.error("An error occurred.", error));
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage id="update-service-packs-failed" defaultMessage="Failed to update service packs!"/>,
+          error.message
+        )
+      )
   };
 }
 
@@ -467,15 +576,25 @@ export function fetchPutUpdateGroupServicesByGroupId(tenantId, groupId, data, au
     )
       .then(res => res.json())
       .then(data => dispatch(putUpdateGroupServicesByGroupId(data)))
-      .catch(error => console.error("An error occurred.", error));
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage id="update-services-failed" defaultMessage="Failed to update services!"/>,
+          error.message
+        )
+      );
   };
 }
 
 export function fetchDeleteTenant(ID, auth_token) {
   return function(dispatch) {
-    return fetch_delete(`${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${ID}`, auth_token).then(data =>
-      dispatch(deleteTenant(ID))
-    );
+    return fetch_delete(`${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${ID}`, auth_token)
+      .then(data => dispatch(deleteTenant(ID)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage id="delete-tenant-failed" defaultMessage="Failed to delete tenant!"/>,
+          error.message
+        )
+      )
   };
 }
 
@@ -483,7 +602,14 @@ export function fetchDeleteTenantAdmin(tenantId, adminId, auth_token) {
   return function(dispatch) {
     return fetch_delete(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/admins/${adminId}`, auth_token
-    ).then(data => dispatch(deleteTenantAdmin()));
+    )
+      .then(data => dispatch(deleteTenantAdmin()))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage id="delete-tenant-admin-failed" defaultMessage="Failed to delete tenant admin!"/>,
+          error.message
+        )
+      )
   };
 }
 
@@ -491,7 +617,14 @@ export function fetchDeleteGroupDevice(tenantId, groupId, deviceName, auth_token
   return function(dispatch) {
     return fetch_delete(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/access_devices/${deviceName}`, auth_token
-    ).then(data => dispatch(deleteGroupDevice()));
+    )
+      .then(data => dispatch(deleteGroupDevice()))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage id="delete-group-device-failed" defaultMessage="Failed to delete group device!"/>,
+          error.message
+        )
+      )
   };
 }
 
@@ -499,6 +632,13 @@ export function fetchDeleteGroupAdmin(tenantId, groupId, adminId, auth_token) {
   return function(dispatch) {
     return fetch_delete(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/admins/${adminId}`, auth_token
-    ).then(data => dispatch(deleteGroupAdmin()));
+    )
+      .then(data => dispatch(deleteGroupAdmin()))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage id="delete-group-admin-failed" defaultMessage="Failed to delete group admin!"/>,
+          error.message
+        )
+      )
   };
 }
