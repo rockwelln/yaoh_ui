@@ -165,7 +165,7 @@ class Tenants extends Component {
                       <Tenant
                         key={t.tenantId}
                         t={t}
-                        onReload={this.props.fetchGetTenants}
+                        onReload={this.fetchGetTenants}
                         {...this.props}
                       />
                     ))}

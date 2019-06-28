@@ -48,7 +48,7 @@ class CreateAdmin extends Component {
           )
           .then(() => this.setState({ isLoading: false }))
       : this.props
-          .fetchGetTenantById(this.props.match.params.tenantId)
+          .fetchGetTenantById(this.props.match.params.tenantId, this.props.auth_token)
           .then(() => this.setState({ isLoading: false }));
   }
 
