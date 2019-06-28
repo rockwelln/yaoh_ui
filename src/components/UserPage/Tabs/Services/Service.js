@@ -1,16 +1,12 @@
 import React, { Component } from "react";
 
-import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
-import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 
-import DeleteModal from "./DeleteModal";
 
 export default class Sevice extends Component {
   state = { showDelete: false };
   render() {
-    const { service, onReload, index } = this.props;
-    const { showDelete } = this.state;
+    const { service, index } = this.props;
     return (
       <tr key={service.name}>
         <td>{service.name}</td>
@@ -24,25 +20,6 @@ export default class Sevice extends Component {
           />
         </td>
         <td>{service.status}</td>
-        <td>
-          <ButtonToolbar>
-            <Glyphicon
-              glyph="glyphicon glyphicon-remove"
-              onClick={() => this.setState({ showDelete: true })}
-            />
-          </ButtonToolbar>
-          <DeleteModal
-            notifications={this.props.notifications}
-            serviceName={service.name}
-            // tenantId={this.props.tenantId}
-            show={showDelete}
-            onClose={e => {
-              onReload && onReload();
-              this.setState({ showDelete: false });
-            }}
-            {...this.props}
-          />
-        </td>
       </tr>
     );
   }
