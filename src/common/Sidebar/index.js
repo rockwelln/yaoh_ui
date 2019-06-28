@@ -11,7 +11,7 @@ export class Sidebar extends Component {
   };
 
   render() {
-    const gwName = this.props.location.pathname.split("/").slice(2);
+    const gwName = this.props.location.pathname.split("/")[2];
     return (
       <React.Fragment>
         <Nav
