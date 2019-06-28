@@ -38,7 +38,7 @@ class ProvisioningProxies {
           }))
     }
 
-    getProxyPrefix() {
+    getCurrentUrlPrefix() {
       const name = window.location.href.match(/\/provisioning\/[A-Za-z0-9_-]*\//)[0].split("/")[2];
       const e = ProvisioningProxies.proxies.filter(p => p.id === name);
       return e.length > 0?e[0].prefix:"";
@@ -49,7 +49,7 @@ class ProvisioningProxies {
     }
 }
 
-export const PROVISIONING_PROXIES = new ProvisioningProxies();
+export const ProvProxiesManager = new ProvisioningProxies();
 
 export function checkStatus(response) {
     if (response.status >= 200 && response.status < 300) {

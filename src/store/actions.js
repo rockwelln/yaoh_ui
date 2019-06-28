@@ -3,7 +3,7 @@ import {
   fetch_delete,
   fetch_put,
   fetch_post,
-  PROVISIONING_PROXIES
+  ProvProxiesManager
 } from "../utils";
 import * as actionType from "./constants";
 
@@ -175,7 +175,7 @@ export const clearErrorMassage = () => ({
 
 export function fetchGetTenants(cancelLoad, auth_token) {
   return function(dispatch) {
-    return fetch_get(`${PROVISIONING_PROXIES.getProxyPrefix()}/tenants/`, auth_token)
+    return fetch_get(`${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/`, auth_token)
       .then(data => !cancelLoad && dispatch(getTenants(data)))
       //.catch(error => console.error("An error occurred.", error));
   };
@@ -183,7 +183,7 @@ export function fetchGetTenants(cancelLoad, auth_token) {
 
 export function fetchGetTenantById(Id, auth_token) {
   return function(dispatch) {
-    return fetch_get(`${PROVISIONING_PROXIES.getProxyPrefix()}/tenants/${Id}`, auth_token)
+    return fetch_get(`${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${Id}`, auth_token)
       .then(data => dispatch(getTenantById(data)))
       .catch(error => console.error("An error occurred.", error));
   };
@@ -191,7 +191,7 @@ export function fetchGetTenantById(Id, auth_token) {
 
 export function fetchGetGroupsByTenantId(Id, auth_token) {
   return function(dispatch) {
-    return fetch_get(`${PROVISIONING_PROXIES.getProxyPrefix()}/tenants/${Id}/groups`, auth_token)
+    return fetch_get(`${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${Id}/groups`, auth_token)
       .then(data => dispatch(getGroupsByTenantId(data)))
       .catch(error => console.error("An error occurred.", error));
   };
@@ -199,7 +199,7 @@ export function fetchGetGroupsByTenantId(Id, auth_token) {
 
 export function fetchGetPhoneNumbersByTenantId(Id, auth_token) {
   return function(dispatch) {
-    return fetch_get(`${PROVISIONING_PROXIES.getProxyPrefix()}/tenants/${Id}/numbers`, auth_token)
+    return fetch_get(`${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${Id}/numbers`, auth_token)
       .then(data => dispatch(getPhoneNumbersByTenantId(data)))
       .catch(error => console.error("An error occurred.", error));
   };
@@ -207,7 +207,7 @@ export function fetchGetPhoneNumbersByTenantId(Id, auth_token) {
 
 export function fetchGetAdminsByTenantId(Id, auth_token) {
   return function(dispatch) {
-    return fetch_get(`${PROVISIONING_PROXIES.getProxyPrefix()}/tenants/${Id}/admins`, auth_token)
+    return fetch_get(`${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${Id}/admins`, auth_token)
       .then(data => dispatch(getAdminsByTenantId(data)))
       .catch(error => console.error("An error occurred.", error));
   };
@@ -215,7 +215,7 @@ export function fetchGetAdminsByTenantId(Id, auth_token) {
 
 export function fetchGetGroupById(tenantId, groupId, auth_token) {
   return function(dispatch) {
-    return fetch_get(`${PROVISIONING_PROXIES.getProxyPrefix()}/tenants/${tenantId}/groups/${groupId}`, auth_token)
+    return fetch_get(`${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}`, auth_token)
       .then(data => dispatch(getGroupById(data)))
       .catch(error => console.error("An error occurred.", error));
   };
@@ -224,7 +224,7 @@ export function fetchGetGroupById(tenantId, groupId, auth_token) {
 export function fetchGetUsersByGroupId(tenantId, groupId, auth_token) {
   return function(dispatch) {
     return fetch_get(
-      `${PROVISIONING_PROXIES.getProxyPrefix()}/tenants/${tenantId}/groups/${groupId}/users`, auth_token
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/users`, auth_token
     )
       .then(data => dispatch(getUsersByGroupId(data)))
       .catch(error => console.error("An error occurred.", error));
@@ -234,7 +234,7 @@ export function fetchGetUsersByGroupId(tenantId, groupId, auth_token) {
 export function fetchGetPhoneNumbersByGroupId(tenantId, groupId, auth_token) {
   return function(dispatch) {
     return fetch_get(
-      `${PROVISIONING_PROXIES.getProxyPrefix()}/tenants/${tenantId}/groups/${groupId}/numbers?assignement=true`, auth_token
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/numbers?assignement=true`, auth_token
     )
       .then(data => dispatch(getPhoneNumbersByGroupId(data)))
       .catch(error => console.error("An error occurred.", error));
@@ -244,7 +244,7 @@ export function fetchGetPhoneNumbersByGroupId(tenantId, groupId, auth_token) {
 export function fetchGetLicensesByGroupId(tenantId, groupId, auth_token) {
   return function(dispatch) {
     return fetch_get(
-      `${PROVISIONING_PROXIES.getProxyPrefix()}/tenants/${tenantId}/groups/${groupId}/licenses`, auth_token
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/licenses`, auth_token
     )
       .then(data => dispatch(getLicensesByGroupId(data)))
       .catch(error => console.error("An error occurred.", error));
@@ -254,7 +254,7 @@ export function fetchGetLicensesByGroupId(tenantId, groupId, auth_token) {
 export function fetchGetDevicesByGroupId(tenantId, groupId, auth_token) {
   return function(dispatch) {
     return fetch_get(
-      `${PROVISIONING_PROXIES.getProxyPrefix()}/tenants/${tenantId}/groups/${groupId}/access_devices`, auth_token
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/access_devices`, auth_token
     )
       .then(data => dispatch(getDevicesByGroupId(data)))
       .catch(error => console.error("An error occurred.", error));
@@ -264,7 +264,7 @@ export function fetchGetDevicesByGroupId(tenantId, groupId, auth_token) {
 export function fetchGetAdminsByGroupId(tenantId, groupId, auth_token) {
   return function(dispatch) {
     return fetch_get(
-      `${PROVISIONING_PROXIES.getProxyPrefix()}/tenants/${tenantId}/groups/${groupId}/admins`, auth_token
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/admins`, auth_token
     )
       .then(data => dispatch(getAdminsByGroupId(data)))
       .catch(error => console.error("An error occurred.", error));
@@ -274,7 +274,7 @@ export function fetchGetAdminsByGroupId(tenantId, groupId, auth_token) {
 export function fetchGetUserByName(tenantId, groupId, userName, auth_token) {
   return function(dispatch) {
     return fetch_get(
-      `${PROVISIONING_PROXIES.getProxyPrefix()}/tenants/${tenantId}/groups/${groupId}/users/${userName}`, auth_token
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/users/${userName}`, auth_token
     )
       .then(data => dispatch(getUserByName(data)))
       .catch(error => console.error("An error occurred.", error));
@@ -284,7 +284,7 @@ export function fetchGetUserByName(tenantId, groupId, userName, auth_token) {
 export function fetchGetTrunkByGroupID(tenantId, groupId, auth_token) {
   return function(dispatch) {
     return fetch_get(
-      `${PROVISIONING_PROXIES.getProxyPrefix()}/tenants/${tenantId}/groups/${groupId}/features/trunk_groups`, auth_token
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/features/trunk_groups`, auth_token
     )
       .then(data => dispatch(getTrunkByGroupID(data)))
       .catch(error => console.error("An error occurred.", error));
@@ -294,7 +294,7 @@ export function fetchGetTrunkByGroupID(tenantId, groupId, auth_token) {
 export function fetchGetAvailableNumbersByGroupId(tenantId, groupId, auth_token) {
   return function(dispatch) {
     return fetch_get(
-      `${PROVISIONING_PROXIES.getProxyPrefix()}/tenants/${tenantId}/groups/${groupId}/numbers?available=true`, auth_token
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/numbers?available=true`, auth_token
     )
       .then(data => dispatch(getAvailableNumbersByGroupID(data)))
       .catch(error => console.error("An error occurred.", error));
@@ -304,7 +304,7 @@ export function fetchGetAvailableNumbersByGroupId(tenantId, groupId, auth_token)
 export function fetchGetGroupAdminByAdminId(tenantId, groupId, adminId, auth_token) {
   return function(dispatch) {
     return fetch_get(
-      `${PROVISIONING_PROXIES.getProxyPrefix()}/tenants/${tenantId}/groups/${groupId}/admins/${adminId}`, auth_token
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/admins/${adminId}`, auth_token
     )
       .then(data => dispatch(getGroupAdminByAdminId(data)))
       .catch(error => console.error("An error occurred.", error));
@@ -313,7 +313,7 @@ export function fetchGetGroupAdminByAdminId(tenantId, groupId, adminId, auth_tok
 
 export function fetchGetTenantAdminByAdminId(tenantId, adminId, auth_token) {
   return function(dispatch) {
-    return fetch_get(`${PROVISIONING_PROXIES.getProxyPrefix()}/tenants/${tenantId}/admins/${adminId}`, auth_token)
+    return fetch_get(`${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/admins/${adminId}`, auth_token)
       .then(data => dispatch(getTenantAdminByAdminId(data)))
       .catch(error => console.error("An error occurred.", error));
   };
@@ -322,7 +322,7 @@ export function fetchGetTenantAdminByAdminId(tenantId, adminId, auth_token) {
 export function fetchGetUserServicesByUserId(tenantId, groupId, userId, auth_token) {
   return function(dispatch) {
     return fetch_get(
-      `${PROVISIONING_PROXIES.getProxyPrefix()}/tenants/${tenantId}/groups/${groupId}/users/${userId}/services?assignementStatus=true&summary=true`, auth_token
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/users/${userId}/services?assignementStatus=true&summary=true`, auth_token
     )
       .then(data => dispatch(getUserServicesByUserId(data)))
       .catch(error => console.error("An error occurred.", error));
@@ -332,7 +332,7 @@ export function fetchGetUserServicesByUserId(tenantId, groupId, userId, auth_tok
 export function fetchPostCreateGroupAdmin(tenantId, groupId, data, auth_token) {
   return function(dispatch) {
     const response = fetch_post(
-      `${PROVISIONING_PROXIES.getProxyPrefix()}/tenants/${tenantId}/groups/${groupId}/admins/`,
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/admins/`,
       data, auth_token
     );
     response.then(res => {
@@ -354,7 +354,7 @@ export function fetchPostCreateGroupAdmin(tenantId, groupId, data, auth_token) {
 export function fetchPostCreateTenantAdmin(tenantId, data, auth_token) {
   return function(dispatch) {
     const response = fetch_post(
-      `${PROVISIONING_PROXIES.getProxyPrefix()}/tenants/${tenantId}/admins/`,
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/admins/`,
       data, auth_token
     );
     response.then(res => {
@@ -376,7 +376,7 @@ export function fetchPostCreateTenantAdmin(tenantId, data, auth_token) {
 export function fetchPutUpdateUser(tenantId, groupId, userName, data, auth_token) {
   return function(dispatch) {
     return fetch_put(
-      `${PROVISIONING_PROXIES.getProxyPrefix()}/tenants/${tenantId}/groups/${groupId}/users/${userName}/`,
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/users/${userName}/`,
       data, auth_token
     )
       .then(res => res.json())
@@ -388,7 +388,7 @@ export function fetchPutUpdateUser(tenantId, groupId, userName, data, auth_token
 export function fetchPutUpdateGroupDetails(tenantId, groupId, data, auth_token) {
   return function(dispatch) {
     return fetch_put(
-      `${PROVISIONING_PROXIES.getProxyPrefix()}/tenants/${tenantId}/groups/${groupId}/`,
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/`,
       data, auth_token
     )
       .then(res => res.json())
@@ -400,7 +400,7 @@ export function fetchPutUpdateGroupDetails(tenantId, groupId, data, auth_token) 
 export function fetchPutUpdateGroupAdmin(tenantId, groupId, adminId, data, auth_token) {
   return function(dispatch) {
     return fetch_put(
-      `${PROVISIONING_PROXIES.getProxyPrefix()}/tenants/${tenantId}/groups/${groupId}/admins/${adminId}/`,
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/admins/${adminId}/`,
       data, auth_token
     )
       .then(res => res.json())
@@ -412,7 +412,7 @@ export function fetchPutUpdateGroupAdmin(tenantId, groupId, adminId, data, auth_
 export function fetchPutUpdateTenantAdmin(tenantId, adminId, data, auth_token) {
   return function(dispatch) {
     return fetch_put(
-      `${PROVISIONING_PROXIES.getProxyPrefix()}/tenants/${tenantId}/admins/${adminId}/`,
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/admins/${adminId}/`,
       data, auth_token
     )
       .then(res => res.json())
@@ -424,7 +424,7 @@ export function fetchPutUpdateTenantAdmin(tenantId, adminId, data, auth_token) {
 export function fetchPutUpdateTrunkByGroupId(tenantId, groupId, data, auth_token) {
   return function(dispatch) {
     return fetch_put(
-      `${PROVISIONING_PROXIES.getProxyPrefix()}/tenants/${tenantId}/groups/${groupId}/features/trunk_groups/`,
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/features/trunk_groups/`,
       data,
       auth_token
     ).then(res => {
@@ -448,7 +448,7 @@ export function fetchPutUpdateTrunkByGroupId(tenantId, groupId, data, auth_token
 export function fetchPutUpdateServicePacksByGroupId(tenantId, groupId, data, auth_token) {
   return function(dispatch) {
     return fetch_put(
-      `${PROVISIONING_PROXIES.getProxyPrefix()}/tenants/${tenantId}/groups/${groupId}/licenses/`,
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/licenses/`,
       data,
       auth_token
     )
@@ -461,7 +461,7 @@ export function fetchPutUpdateServicePacksByGroupId(tenantId, groupId, data, aut
 export function fetchPutUpdateGroupServicesByGroupId(tenantId, groupId, data, auth_token) {
   return function(dispatch) {
     return fetch_put(
-      `${PROVISIONING_PROXIES.getProxyPrefix()}/tenants/${tenantId}/groups/${groupId}/licenses/`,
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/licenses/`,
       data,
       auth_token
     )
@@ -473,7 +473,7 @@ export function fetchPutUpdateGroupServicesByGroupId(tenantId, groupId, data, au
 
 export function fetchDeleteTenant(ID, auth_token) {
   return function(dispatch) {
-    return fetch_delete(`${PROVISIONING_PROXIES.getProxyPrefix()}/tenants/${ID}`, auth_token).then(data =>
+    return fetch_delete(`${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${ID}`, auth_token).then(data =>
       dispatch(deleteTenant(ID))
     );
   };
@@ -482,7 +482,7 @@ export function fetchDeleteTenant(ID, auth_token) {
 export function fetchDeleteTenantAdmin(tenantId, adminId, auth_token) {
   return function(dispatch) {
     return fetch_delete(
-      `${PROVISIONING_PROXIES.getProxyPrefix()}/tenants/${tenantId}/admins/${adminId}`, auth_token
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/admins/${adminId}`, auth_token
     ).then(data => dispatch(deleteTenantAdmin()));
   };
 }
@@ -490,7 +490,7 @@ export function fetchDeleteTenantAdmin(tenantId, adminId, auth_token) {
 export function fetchDeleteGroupDevice(tenantId, groupId, deviceName, auth_token) {
   return function(dispatch) {
     return fetch_delete(
-      `${PROVISIONING_PROXIES.getProxyPrefix()}/tenants/${tenantId}/groups/${groupId}/access_devices/${deviceName}`, auth_token
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/access_devices/${deviceName}`, auth_token
     ).then(data => dispatch(deleteGroupDevice()));
   };
 }
@@ -498,7 +498,7 @@ export function fetchDeleteGroupDevice(tenantId, groupId, deviceName, auth_token
 export function fetchDeleteGroupAdmin(tenantId, groupId, adminId, auth_token) {
   return function(dispatch) {
     return fetch_delete(
-      `${PROVISIONING_PROXIES.getProxyPrefix()}/tenants/${tenantId}/groups/${groupId}/admins/${adminId}`, auth_token
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/admins/${adminId}`, auth_token
     ).then(data => dispatch(deleteGroupAdmin()));
   };
 }

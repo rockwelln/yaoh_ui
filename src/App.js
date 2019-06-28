@@ -49,7 +49,7 @@ import ActivityEditor from './activity-editor';
 import {ConfigManagement} from './settings/configuration';
 import {Reporting} from "./settings/reporting.jsx";
 import Gateways from "./system/gateways_mgm";
-import {API_URL_PREFIX, fetch_get, checkStatus, parseJSON, PROVISIONING_PROXIES} from "./utils";
+import {API_URL_PREFIX, fetch_get, checkStatus, parseJSON, ProvProxiesManager} from "./utils";
 import Databases from "./system/databases_mgm";
 import {AuditLogs} from "./system/audit";
 import {isAllowed, pages} from "./utils/user";
@@ -276,7 +276,7 @@ const AsyncApioNavBar = ({user_group, logoutUser, database_status, ...props}) =>
                 id="nav-data-apio"
               >
                   {
-                      PROVISIONING_PROXIES.listProxies().map((p, i) =>
+                      ProvProxiesManager.listProxies().map((p, i) =>
                           <LinkContainer to={"/provisioning/" + p.id + "/tenants"} key={i}>
                               <MenuItem>
                                   {p.name}
@@ -493,7 +493,7 @@ class App extends Component {
     componentWillUpdate() {
         if(this.isAuthenticated() && !this.state.user_info && this.state.auth_token) {
             this.getUserInfo(this.state.auth_token);
-            PROVISIONING_PROXIES.fetchConfiguration(this.state.auth_token).then(() => {
+            ProvProxiesManager.fetchConfiguration(this.state.auth_token).then(() => {
                 this.setState({proxy_fetch: true});
             }).catch(error => console.log(error));
         }
