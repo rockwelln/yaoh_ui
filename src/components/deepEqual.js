@@ -1,5 +1,3 @@
-"use strict";
-
 var isArray = Array.isArray;
 var keyList = Object.keys;
 var hasProp = Object.prototype.hasOwnProperty;
@@ -16,22 +14,22 @@ export default function equal(a, b) {
 
     if (arrA && arrB) {
       length = a.length;
-      if (length != b.length) return false;
+      if (length !== b.length) return false;
       for (i = length; i-- !== 0; ) if (!equal(a[i], b[i])) return false;
       return true;
     }
 
-    if (arrA != arrB) return false;
+    if (arrA !== arrB) return false;
 
     var dateA = a instanceof Date,
       dateB = b instanceof Date;
-    if (dateA != dateB) return false;
-    if (dateA && dateB) return a.getTime() == b.getTime();
+    if (dateA !== dateB) return false;
+    if (dateA && dateB) return a.getTime() === b.getTime();
 
     var regexpA = a instanceof RegExp,
       regexpB = b instanceof RegExp;
-    if (regexpA != regexpB) return false;
-    if (regexpA && regexpB) return a.toString() == b.toString();
+    if (regexpA !== regexpB) return false;
+    if (regexpA && regexpB) return a.toString() === b.toString();
 
     var keys = keyList(a);
     length = keys.length;
@@ -48,5 +46,5 @@ export default function equal(a, b) {
     return true;
   }
 
-  return a !== a && b !== b;
+  return false;  // a !== a && b !== b;
 }

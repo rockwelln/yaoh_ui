@@ -22,7 +22,8 @@ const initialState = {
   groupAdmin: {},
   tenantAdmin: {},
   userServices: [],
-  userServicePacks: []
+  userServicePacks: [],
+  groupTrunkErrorMassage: ""
 };
 
 function mainReducer(state = initialState, action) {
@@ -271,6 +272,30 @@ function mainReducer(state = initialState, action) {
         tenantAdmin: action.data
       };
     }
+    case actionType.PUT_UPDATE_TRUNK_BY_GROUP_ID: {
+      return {
+        ...state,
+        trunkGroups: action.data
+      };
+    }
+    case actionType.PUT_UPDATE_TRUNK_BY_GROUP_ID_ERROR: {
+      const groupTrunkErrorMassage =
+        action.data.errors[0].details.errors["0"].summary;
+      return {
+        ...state,
+        groupTrunkErrorMassage
+      };
+    }
+    case actionType.PUT_UPDATE_SERVICE_PACKS_BY_GROUP_ID: {
+      return {
+        ...state
+      };
+    }
+    case actionType.PUT_UPDATE_GROUP_SERVICES_BY_GROUP_ID: {
+      return {
+        ...state
+      };
+    }
     case actionType.DELETE_TENANT: {
       return {
         ...state
@@ -294,7 +319,8 @@ function mainReducer(state = initialState, action) {
     case actionType.CLEAR_ERROR_MASSAGE: {
       return {
         ...state,
-        errorMassage: ""
+        errorMassage: "",
+        groupTrunkErrorMassage: ""
       };
     }
     default:
