@@ -49,10 +49,10 @@ export const ErrorCasesTile = ({count, total}) => (
 );
 
 function gwStatus(status) {
-    if(status === undefined) return "?";
+    if(status === undefined || status.connected === undefined) return "?";
 
     if(status.connected) {
-        if(status.active) {
+        if(status.active || status.active === undefined) {
             return <Glyphicon glyph="ok-circle"/>;
         } else {
             return <Glyphicon glyph="pause"/>;
@@ -64,7 +64,7 @@ function gwStatus(status) {
 
 export const GatewaysStatusTile = ({status, label}) => (
     <Link to="/system/gateways">
-        <Tile className={status === undefined?"warning":status.connected === true?"success":"error"}>
+        <Tile className={(status === undefined || status.connected === undefined)?"warning":status.connected === true?"success":"error"}>
             <TileHeader>
                 <div className="count">{gwStatus(status)}</div>
                 <div className="title">{label}</div>

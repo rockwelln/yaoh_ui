@@ -54,16 +54,31 @@ export default class Dashboard extends Component {
         this.refreshStatsHandler && clearInterval(this.refreshStatsHandler);
     }
 
+    static _buildPadding(nbTiles) {
+        const tilesPerRow = 6;
+
+        let padding = [];
+        if((tilesPerRow - nbTiles) % 2) {
+            padding.push(<EmptyTile className='col-md-1-5'/>)
+        }
+        let i = Math.floor((tilesPerRow - nbTiles) / 2);
+        while(i--) {
+            padding.push(<EmptyTile />);
+        }
+        return padding;
+    }
+
     render() {
         const {gateways, stats} = this.state;
         return (
             <div>
                 <Row>
-                    <EmptyTile />
-                    <EmptyTile className='col-md-1-5'/>
+                    {
+                        Dashboard._buildPadding(1 + Object.keys(gateways).length)
+                    }
                     <ErrorCasesTile count={stats.active_requests.with_errors} total={stats.active_requests.total}/>
                     {
-                        Object.keys(gateways).map(k => <GatewaysStatusTile key={k} label={k} status={gateways[k]} />)
+                        Object.keys(gateways).slice(0, 5).map(k => <GatewaysStatusTile key={k} label={k} status={gateways[k]} />)
                     }
                 </Row>
                 <Row>
