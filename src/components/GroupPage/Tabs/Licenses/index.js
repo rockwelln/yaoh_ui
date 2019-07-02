@@ -519,12 +519,10 @@ export class Licenses extends Component {
                           defaultChecked={pack.allocated.unlimited}
                           index={i}
                           defaultMaximum={pack.allocated.maximum}
-                          changeServicePacksUnlimeted={
+                          changePacksUnlimeted={
                             this.changeServicePacksUnlimeted
                           }
-                          changeServicePacksMaximum={
-                            this.changeServicePacksMaximum
-                          }
+                          changePacksMaximum={this.changeServicePacksMaximum}
                         />
                       </Col>
                     )}
@@ -677,10 +675,7 @@ export class Licenses extends Component {
         data,
         this.props.auth_token
       )
-      .then(
-        data =>
-          data === "success" && this.setState({ editTrunkCapacity: false })
-      );
+      .then(() => this.setState({ editTrunkCapacity: false }));
   };
 }
 

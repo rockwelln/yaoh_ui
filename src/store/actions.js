@@ -115,6 +115,14 @@ export const postCreateTenantAdminError = error => ({
   error
 });
 
+export const postAssignUserServices = () => ({
+  type: actionType.POST_ASSIGN_USER_SERVICES
+});
+
+export const postAssignUserServicePacks = () => ({
+  type: actionType.POST_ASSIGN_USER_SERVICE_PACKS
+});
+
 export const putUpdateUser = data => ({
   type: actionType.PUT_UPDATE_USER,
   data
@@ -170,6 +178,14 @@ export const deleteGroupDevice = () => ({
 
 export const deleteGroupAdmin = () => ({
   type: actionType.DELETE_GROUP_ADMIN
+});
+
+export const deleteAssignUserServices = () => ({
+  type: actionType.DELETE_DEASSIGN_USER_SERVICES
+});
+
+export const deleteAssignUserServicePacks = () => ({
+  type: actionType.DELETE_DEASSIGN_USER_SERVICE_PACKS
 });
 
 export const clearErrorMassage = () => ({
@@ -527,6 +543,54 @@ export function fetchPutUpdateTenantAdmin(tenantId, adminId, data, auth_token) {
   };
 }
 
+export function fetchPostAssignUserServices(tenantId, groupId, userName, data, auth_token) {
+  return function(dispatch) {
+    return fetch_post(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/users/${userName}/services/`,
+      data,
+      auth_token
+    )
+      .then(resp => resp.json())
+      .then(data => dispatch(postAssignUserServices(data)))
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-assign-services"
+            defaultMessage="Failed to assign services!"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchPostAssignUserServicePacks(
+  tenantId,
+  groupId,
+  userName,
+  data,
+  auth_token
+) {
+  return function(dispatch) {
+    return fetch_post(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/users/${userName}/services/`,
+      data,
+      auth_token
+    )
+      .then(resp => resp.json())
+      .then(data => dispatch(postAssignUserServicePacks(data)))
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-assign-service-packs"
+            defaultMessage="Failed to assign services packs!"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
 export function fetchPutUpdateTrunkByGroupId(tenantId, groupId, data, auth_token) {
   return function(dispatch) {
     return fetch_put(
@@ -637,6 +701,63 @@ export function fetchDeleteGroupAdmin(tenantId, groupId, adminId, auth_token) {
       .catch(error =>
         NotificationsManager.error(
           <FormattedMessage id="delete-group-admin-failed" defaultMessage="Failed to delete group admin!"/>,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchDeleteAssignUserServices(
+  tenantId,
+  groupId,
+  userName,
+  data,
+  auth_token
+) {
+  return function(dispatch) {
+    console.log("delete", data);
+    return fetch_delete(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/users/${userName}/services/`,
+      data,
+      auth_token
+    )
+      .then(data => {
+        dispatch(deleteAssignUserServices());
+      })
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-deassign-user-services"
+            defaultMessage="Failed to deassign user services!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchDeleteAssignUserServicePacks(
+  tenantId,
+  groupId,
+  userName,
+  data,
+  auth_token
+) {
+  return function(dispatch) {
+    return fetch_delete(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/users/${userName}/services/`,
+      data,
+      auth_token
+    )
+      .then(data => {
+        dispatch(deleteAssignUserServicePacks());
+      })
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-deassign-user-services"
+            defaultMessage="Failed to deassign user services!"
+          />,
           error.message
         )
       );
