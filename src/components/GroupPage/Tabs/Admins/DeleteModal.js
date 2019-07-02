@@ -19,33 +19,10 @@ class DeleteModal extends Component {
   onDelete(tenantId, groupId, adminId) {
     const { onClose } = this.props;
     this.setState({ deleting: true });
-    this.props
-      .fetchDeleteGroupAdmin(tenantId, groupId, adminId, this.props.auth_token)
-      .then(() => {
-        this.props.notifications.notifications.addNotification({
-          message: (
-            <FormattedMessage
-              id="delete-tenant-ok"
-              defaultMessage="Admin deleted"
-            />
-          ),
-          level: "success"
-        });
-        this.setState({ deleting: false });
-        onClose && onClose(true);
-      })
-      .catch(error => {
-        this.setState({ deleting: false });
-        this.props.notifications.notifications.addNotification({
-          title: (
-            <FormattedMessage
-              id="delete-tenant-fail"
-              defaultMessage="Fail delete admin"
-            />
-          ),
-          level: "error"
-        });
-      });
+    this.props.fetchDeleteGroupAdmin(tenantId, groupId, adminId, this.props.auth_token).then(() => {
+      this.setState({ deleting: false });
+      onClose && onClose(true);
+    });
   }
 
   render() {

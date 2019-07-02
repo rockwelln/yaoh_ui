@@ -7,7 +7,7 @@ import {
   NotificationsManager
 } from "../utils";
 import * as actionType from "./constants";
-import {FormattedMessage} from "react-intl";
+import { FormattedMessage } from "react-intl";
 import React from "react";
 
 export const getTenants = data => ({
@@ -432,10 +432,10 @@ export function fetchPostCreateGroupAdmin(tenantId, groupId, data, auth_token) {
           NotificationsManager.error(
             <FormattedMessage id="create-group-admin-failed" defaultMessage="Failed to create group admin!"/>,
             error.message
-          )
+          );
         }
       });
-  }
+  };
 }
 
 export function fetchPostCreateTenantAdmin(tenantId, data, auth_token) {
@@ -453,7 +453,7 @@ export function fetchPostCreateTenantAdmin(tenantId, data, auth_token) {
           NotificationsManager.error(
             <FormattedMessage id="create-group-admin-failed" defaultMessage="Failed to create group admin!"/>,
             error.message
-          )
+          );
         }
       });
   };
@@ -543,7 +543,7 @@ export function fetchPutUpdateTrunkByGroupId(tenantId, groupId, data, auth_token
           NotificationsManager.error(
             <FormattedMessage id="update-trunk-failed" defaultMessage="Failed to update trunk!"/>,
             error.message
-          )
+          );
         }
       });
   };
@@ -563,7 +563,7 @@ export function fetchPutUpdateServicePacksByGroupId(tenantId, groupId, data, aut
           <FormattedMessage id="update-service-packs-failed" defaultMessage="Failed to update service packs!"/>,
           error.message
         )
-      )
+      );
   };
 }
 
@@ -594,7 +594,7 @@ export function fetchDeleteTenant(ID, auth_token) {
           <FormattedMessage id="delete-tenant-failed" defaultMessage="Failed to delete tenant!"/>,
           error.message
         )
-      )
+      );
   };
 }
 
@@ -609,7 +609,7 @@ export function fetchDeleteTenantAdmin(tenantId, adminId, auth_token) {
           <FormattedMessage id="delete-tenant-admin-failed" defaultMessage="Failed to delete tenant admin!"/>,
           error.message
         )
-      )
+      );
   };
 }
 
@@ -624,7 +624,7 @@ export function fetchDeleteGroupDevice(tenantId, groupId, deviceName, auth_token
           <FormattedMessage id="delete-group-device-failed" defaultMessage="Failed to delete group device!"/>,
           error.message
         )
-      )
+      );
   };
 }
 
@@ -639,6 +639,6 @@ export function fetchDeleteGroupAdmin(tenantId, groupId, adminId, auth_token) {
           <FormattedMessage id="delete-group-admin-failed" defaultMessage="Failed to delete group admin!"/>,
           error.message
         )
-      )
+      );
   };
 }
