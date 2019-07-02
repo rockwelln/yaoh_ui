@@ -4,6 +4,11 @@ This project hold the development for the APIO UI running at Orange.
 In the future it should become the product UI.
 
 
+N.B it also include the provisioning-UI
+
+
+-----
+
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
