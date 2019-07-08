@@ -95,6 +95,11 @@ export const getUserServicesByUserId = data => ({
   data
 });
 
+export const getTamplatesOfTenant = data => ({
+  type: actionType.GET_TEMPLATES_OF_TENANT,
+  data
+});
+
 export const postCreateGroupAdmin = data => ({
   type: actionType.POST_CREATE_GROUP_ADMIN,
   data
@@ -121,6 +126,10 @@ export const postAssignUserServices = () => ({
 
 export const postAssignUserServicePacks = () => ({
   type: actionType.POST_ASSIGN_USER_SERVICE_PACKS
+});
+
+export const postCreateTenant = () => ({
+  type: actionType.POST_CREATE_TENANT
 });
 
 export const putUpdateUser = data => ({
@@ -190,6 +199,55 @@ export const deleteAssignUserServicePacks = () => ({
 
 export const clearErrorMassage = () => ({
   type: actionType.CLEAR_ERROR_MASSAGE
+});
+
+export const changeStepOfCreateTenant = data => ({
+  type: actionType.CHANGE_STEP_OF_CREATE_TENANT,
+  data
+});
+
+export const changeTypeOfTenant = data => ({
+  type: actionType.CHANGE_TYPE_OF_TENANT,
+  data
+});
+
+export const changeIdOfTenant = data => ({
+  type: actionType.CHANGE_ID_OF_TENANT,
+  data
+});
+
+export const changeNameOfTenant = data => ({
+  type: actionType.CHANGE_NAME_OF_TENANT,
+  data
+});
+
+export const changeAddressOfTenant = data => ({
+  type: actionType.CHANGE_ADDRESS_OF_TENANT,
+  data
+});
+
+export const changeZIPOfTenant = data => ({
+  type: actionType.CHANGE_ZIP_OF_TENANT,
+  data
+});
+
+export const changeCityOfTenant = data => ({
+  type: actionType.CHANGE_CITY_OF_TENANT,
+  data
+});
+
+export const changeTemplateOfTenant = data => ({
+  type: actionType.CHANGE_TAMPLATE_OF_TENANT,
+  data
+});
+
+export const refuseCreateTenant = () => ({
+  type: actionType.REFUSE_CREATE_TENANT
+});
+
+export const changeDomainOfTenant = data => ({
+  type: actionType.CHANGE_DOMAIN_OF_TENANT,
+  data
 });
 
 export function fetchGetTenants(cancelLoad, auth_token) {
@@ -433,6 +491,24 @@ export function fetchGetUserServicesByUserId(tenantId, groupId, userId, auth_tok
   };
 }
 
+export function fetchGetTamplatesOfTenant(auth_token) {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/templates/categories/tenant/`, auth_token
+    )
+      .then(data => dispatch(getTamplatesOfTenant(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-tenant-tamplates-failed"
+            defaultMessage="Failed to fetch tenant tamplates!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
 export function fetchPostCreateGroupAdmin(tenantId, groupId, data, auth_token) {
   return function(dispatch) {
     return fetch_post(
@@ -471,6 +547,26 @@ export function fetchPostCreateTenantAdmin(tenantId, data, auth_token) {
             error.message
           );
         }
+      });
+  };
+}
+
+export function fetchPostCreateTenant(data, auth_token) {
+  return function(dispatch) {
+    return fetch_post(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/`,
+      data,
+      auth_token
+    )
+      .then(data => dispatch(postCreateTenant(data)))
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-create-tenant"
+            defaultMessage="Failed to create tenant!"
+          />,
+          error.message
+        );
       });
   };
 }

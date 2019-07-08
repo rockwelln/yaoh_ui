@@ -1,7 +1,8 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
+import { Link } from "react-router-dom";
 
-import { fetchGetTenants } from "../../store/actions";
+import { fetchGetTenants, refuseCreateTenant } from "../../store/actions";
 
 import Table from "react-bootstrap/lib/Table";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
@@ -52,7 +53,8 @@ class Tenants extends Component {
         },
         () => this.pagination()
       );
-    })
+    });
+    this.props.refuseCreateTenant();
   }
 
   componentDidMount() {
@@ -109,10 +111,12 @@ class Tenants extends Component {
             </InputGroup>
           </Col>
           <Col md={1}>
-            <Glyphicon
-              className={"x-large"}
-              glyph="glyphicon glyphicon-plus-sign"
-            />
+            <Link to={`/provisioning/broadsoft_xsp1_as1/tenants/add`}>
+              <Glyphicon
+                className={"x-large"}
+                glyph="glyphicon glyphicon-plus-sign"
+              />
+            </Link>
           </Col>
         </Row>
         {paginationTenants.length ? (
@@ -317,7 +321,8 @@ class Tenants extends Component {
 }
 
 const mapDispatchToProps = {
-  fetchGetTenants
+  fetchGetTenants,
+  refuseCreateTenant
 };
 
 const mapStateToProps = state => ({

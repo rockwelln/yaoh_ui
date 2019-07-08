@@ -42,6 +42,7 @@ import GroupPage from "./components/GroupPage";
 import UserPage from "./components/UserPage";
 import CreateAdmin from "./components/CreateAdmin";
 import UpdateAdmin from "./components/UpdateAdmin";
+import CreateTenant from "./components/CreateTenant";
 
 import UserManagement, { LocalUserProfile } from './system/user_mgm';
 import {StartupEvents} from './startup_events';
@@ -698,6 +699,15 @@ class App extends Component {
                               )
                             }
                             exact />
+
+                        <Route
+                            path="/provisioning/:gwName/tenants/add"
+                            component={props =>
+                                isAllowed(ui_profile, pages.data_tenants) ? <CreateTenant auth_token={auth_token}/>
+                                : <NotAllowed />
+                            }
+                            exact
+                        />
 
                         <Route
                             path="/provisioning/:gwName/tenants/:tenantId"

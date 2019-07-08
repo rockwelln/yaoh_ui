@@ -23,7 +23,32 @@ const initialState = {
   tenantAdmin: {},
   userServices: [],
   userServicePacks: [],
-  groupTrunkErrorMassage: ""
+  groupTrunkErrorMassage: "",
+  createTenantStep: "Basic",
+  createTenant: {
+    tenantId: "",
+    type: "",
+    defaultDomain: "",
+    useCustomRoutingProfile: false,
+    name: "",
+    contact: {
+      name: "",
+      phoneNumber: "",
+      emailAddress: ""
+    },
+    address: {
+      addressLine1: "",
+      addressLine2: "",
+      city: "",
+      state: "",
+      stateDisplayName: "",
+      postalCode: "",
+      country: ""
+    },
+    useTenantLanguages: false,
+    templateName: ""
+  },
+  templatesOfTenant: []
 };
 
 function mainReducer(state = initialState, action) {
@@ -222,6 +247,12 @@ function mainReducer(state = initialState, action) {
         userServicePacks
       };
     }
+    case actionType.GET_TEMPLATES_OF_TENANT: {
+      return {
+        ...state,
+        templatesOfTenant: action.data.templates
+      };
+    }
     case actionType.POST_CREATE_GROUP_ADMIN: {
       return {
         ...state,
@@ -254,6 +285,11 @@ function mainReducer(state = initialState, action) {
       };
     }
     case actionType.POST_ASSIGN_USER_SERVICE_PACKS: {
+      return {
+        ...state
+      };
+    }
+    case actionType.POST_CREATE_TENANT: {
       return {
         ...state
       };
@@ -341,6 +377,122 @@ function mainReducer(state = initialState, action) {
         ...state,
         errorMassage: "",
         groupTrunkErrorMassage: ""
+      };
+    }
+    case actionType.CHANGE_STEP_OF_CREATE_TENANT: {
+      return {
+        ...state,
+        createTenantStep: action.data
+      };
+    }
+    case actionType.CHANGE_TYPE_OF_TENANT: {
+      return {
+        ...state,
+        createTenant: {
+          ...state.createTenant,
+          type: action.data
+        }
+      };
+    }
+    case actionType.CHANGE_ID_OF_TENANT: {
+      return {
+        ...state,
+        createTenant: {
+          ...state.createTenant,
+          tenantId: action.data
+        }
+      };
+    }
+    case actionType.CHANGE_NAME_OF_TENANT: {
+      return {
+        ...state,
+        createTenant: {
+          ...state.createTenant,
+          name: action.data
+        }
+      };
+    }
+    case actionType.CHANGE_ADDRESS_OF_TENANT: {
+      return {
+        ...state,
+        createTenant: {
+          ...state.createTenant,
+          address: {
+            ...state.createTenant.address,
+            addressLine1: action.data
+          }
+        }
+      };
+    }
+    case actionType.CHANGE_ZIP_OF_TENANT: {
+      return {
+        ...state,
+        createTenant: {
+          ...state.createTenant,
+          address: {
+            ...state.createTenant.address,
+            postalCode: action.data
+          }
+        }
+      };
+    }
+    case actionType.CHANGE_CITY_OF_TENANT: {
+      return {
+        ...state,
+        createTenant: {
+          ...state.createTenant,
+          address: {
+            ...state.createTenant.address,
+            city: action.data
+          }
+        }
+      };
+    }
+    case actionType.CHANGE_TAMPLATE_OF_TENANT: {
+      return {
+        ...state,
+        createTenant: {
+          ...state.createTenant,
+          templateName: action.data
+        }
+      };
+    }
+    case actionType.REFUSE_CREATE_TENANT: {
+      return {
+        ...state,
+        createTenantStep: "Basic",
+        createTenant: {
+          tenantId: "",
+          type: "",
+          defaultDomain: "",
+          useCustomRoutingProfile: false,
+          name: "",
+          contact: {
+            name: "",
+            phoneNumber: "",
+            emailAddress: ""
+          },
+          address: {
+            addressLine1: "",
+            addressLine2: "",
+            city: "",
+            state: "",
+            stateDisplayName: "",
+            postalCode: "",
+            country: ""
+          },
+          useTenantLanguages: false,
+          templateName: ""
+        }
+      };
+    }
+    case actionType.CHANGE_DOMAIN_OF_TENANT: {
+      return {
+        ...state,
+        createTenant: {
+          ...state.createTenant,
+          defaultDomain: action.data
+        }
       };
     }
     default:
