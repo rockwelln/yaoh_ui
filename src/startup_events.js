@@ -114,7 +114,11 @@ class DedicatedStartupEvents extends Component {
                                                 {(message) => <option value={""}>{message}</option>}
                                             </FormattedMessage>
                                             {handlers
-                                                .sort((h1,h2) => h1.id - h2.id)
+                                                .sort((a,b) => {
+                                                    if(a.name > b.name) return 1;
+                                                    if(a.name < b.name) return -1;
+                                                    return 0;
+                                                })
                                                 .map(h => <option value={h.id} key={h.id}>{h.name}</option>)
                                             }
                                         </select>
@@ -347,7 +351,11 @@ class CustomRoutes extends Component {
                                                     {message => <option value={""}>{message}</option>}
                                                 </FormattedMessage>
                                                 {activities
-                                                    .sort((a,b) => a.id - b.id)
+                                                    .sort((a,b) => {
+                                                        if(a.name > b.name) return 1;
+                                                        if(a.name < b.name) return -1;
+                                                        return 0;
+                                                    })
                                                     .map(a => <option value={a.id} key={a.id}>{a.name}</option>)
                                                 }
                                             </select>
