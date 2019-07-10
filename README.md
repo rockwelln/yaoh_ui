@@ -1,3 +1,4 @@
+![](http://buildbot.bxl.netaxis.be/badges/builder-orange_apio_ui.svg)
 # Orange APIO UI
 
 This project hold the development for the APIO UI running at Orange.
