@@ -67,6 +67,14 @@ class NotificationsHandler {
             level: 'error'
         });
     }
+
+    success(message) {
+        NotificationsHandler.rootRef &&
+        NotificationsHandler.rootRef.current.addNotification({
+            message: message,
+            level: 'success'
+        });
+    }
 }
 
 export const NotificationsManager = new NotificationsHandler();
