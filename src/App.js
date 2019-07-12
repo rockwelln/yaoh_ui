@@ -62,6 +62,7 @@ import apio_brand from "./images/apio.png";
 import apio_logo from "./images/logo.png";
 import loading from './loading.gif';
 import {sso_auth_service} from "./sso/auth_service";
+import {Webhooks} from "./system/webhooks";
 
 const ListItemLink = ({to, children}) => (
     <Route path={to} children={({match}) => (
@@ -299,6 +300,13 @@ const AsyncApioNavBar = ({user_group, logoutUser, database_status, ...props}) =>
                       <LinkContainer to={"/system/users"}>
                           <MenuItem>
                               <FormattedMessage id="users" defaultMessage="Users"/>
+                          </MenuItem>
+                      </LinkContainer>
+                  }
+                  { isAllowed(user_group, pages.system_config) &&
+                      <LinkContainer to={"/system/webhooks"}>
+                          <MenuItem>
+                              <FormattedMessage id="webhooks" defaultMessage="Webhooks"/>
                           </MenuItem>
                       </LinkContainer>
                   }
@@ -898,6 +906,17 @@ class App extends Component {
                                    isAllowed(ui_profile, pages.system_config) ?
                                        <ConfigManagement
                                            auth_token={auth_token}
+                                           notifications={this._notificationSystem.current}
+                                           {...props} />:
+                                       <NotAllowed />
+                               )}
+                               exact />
+                        <Route path="/system/webhooks"
+                               component={props => (
+                                   isAllowed(ui_profile, pages.system_config) ?
+                                       <Webhooks
+                                           auth_token={auth_token}
+                                           user_info={user_info}
                                            notifications={this._notificationSystem.current}
                                            {...props} />:
                                        <NotAllowed />
