@@ -26,10 +26,10 @@
     "react-router-bootstrap": "^0.25.0",
     "react-router-dom": "^5.0.1",
     "react-scripts": "^3.0.1",
-    "redux": "^4.0.1",
+    "redux": "^4.0.4",
     "redux-thunk": "^2.3.0",
     "regenerator-runtime": "^0.13.2",
-    "url-polyfill": "^1.1.5"
+    "url-polyfill": "^1.1.7"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -50,7 +50,7 @@
     "babel-plugin-react-intl": "^3.3.3",
     "babel-preset-react": "^6.24.1",
     "babel-preset-stage-0": "^6.24.1",
-    "npm-check-updates": "^3.1.12",
+    "npm-check-updates": "^3.1.20",
     "react-intl-po": "^2.2.2"
   }
 }
