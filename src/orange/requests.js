@@ -163,14 +163,24 @@ class TransactionFlow extends Component {
 
 const transformXML = (xmlText, xsltText) => {
     // Bomb out if this browser does not support DOM parsing and transformation
-    if (!(window.DOMParser && window.XSLTProcessor)) {
+    if(!window.DOMParser) {
+        return xmlText
+    }
+
+    var xslt;
+    if(window.XSLTProcessor) {
+        xslt = new XSLTProcessor();
+    }
+    else if(window.ActiveXObject || "ActiveXObject" in window) {
+        xslt = new ActiveXObject("Msxml2.XSLTemplate");
+    } else {
         return xmlText;
     }
 
     var xsltDoc = new DOMParser().parseFromString(xsltText, "text/xml");
 
     // Apply that document to as a stylesheet to a transformer
-    var xslt = new XSLTProcessor();
+    // var xslt = new XSLTProcessor();
     xslt.importStylesheet(xsltDoc);
 
     // Load the XML into a document.
