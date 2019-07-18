@@ -11,14 +11,14 @@ const convertCrumb = crumb => {
   return crumb;
 };
 
-const linkByCrumb = (item, lastItem, i, path, gwName) => {
+const linkByCrumb = (item, lastItem, i, path, match) => {
   const crumb = convertCrumb(item);
   if (crumb === "tenants" && !lastItem.includes(crumb)) {
-    return <Link to={`/provisioning/${gwName}/tenants`}>{crumb}</Link>;
+    return <Link to={`/provisioning/${match.params.gwName}/tenants`}>{crumb}</Link>;
   }
   if (path[i - 1] === "tenants" && !lastItem.includes(crumb)) {
     return (
-      <Link to={`/provisioning/${gwName}/tenants/${item}`}>
+      <Link to={`/provisioning/${match.params.gwName}/tenants/${item}`}>
         {crumb}
       </Link>
     );
@@ -26,7 +26,7 @@ const linkByCrumb = (item, lastItem, i, path, gwName) => {
   if (path[i - 2] === "tenants" && !lastItem.includes(crumb)) {
     return (
       <Link
-        to={`/provisioning/${gwName}/tenants/${
+        to={`/provisioning/${match.params.gwName}/tenants/${
           path[i - 1]
         }/groups/${crumb}`}
       >
@@ -37,15 +37,17 @@ const linkByCrumb = (item, lastItem, i, path, gwName) => {
   if (crumb === "addadmin") {
     return "Add admin";
   }
+  if (crumb === "addgroup") {
+    return "Add group";
+  }
 
   return crumb;
 };
 
-const BreadcrumbComponent = ({ location }) => {
+const BreadcrumbComponent = ({ location, match }) => {
   const indexForGroupLevel = 4;
   const indexForTenantLevel = 2;
   const path = location.pathname.split("/").slice(3);
-  const gwName = location.pathname.split("/")[2];
   if (
     path[indexForGroupLevel] === "users" ||
     path[indexForGroupLevel] === "admins"
@@ -63,7 +65,7 @@ const BreadcrumbComponent = ({ location }) => {
     <Breadcrumb>
       {path.map((item, i) => (
         <Breadcrumb.Item active key={String(i)}>
-          {linkByCrumb(item, lastItem, i, path, gwName)}
+          {linkByCrumb(item, lastItem, i, path, match)}
         </Breadcrumb.Item>
       ))}
     </Breadcrumb>

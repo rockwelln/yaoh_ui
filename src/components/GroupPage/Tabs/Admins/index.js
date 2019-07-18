@@ -9,6 +9,7 @@ import FormControl from "react-bootstrap/lib/FormControl";
 import InputGroup from "react-bootstrap/lib/InputGroup";
 import Row from "react-bootstrap/lib/Row";
 import Col from "react-bootstrap/lib/Col";
+import Pagination from "react-bootstrap/lib/Pagination";
 
 import { FormattedMessage } from "react-intl";
 
@@ -70,7 +71,6 @@ export class Admins extends Component {
     if (isLoading && pagination) {
       return <Loading />;
     }
-    const gwName = window.location.pathname.split("/")[2];
     return (
       <React.Fragment>
         <Row className={"margin-top-2"}>
@@ -103,7 +103,7 @@ export class Admins extends Component {
           </Col>
           <Col md={1}>
             <Link
-              to={`/provisioning/${gwName}/tenants/${
+              to={`/provisioning/${this.props.match.params.gwName}/tenants/${
                 this.props.tenantId
               }/groups/${this.props.groupId}/addadmin`}
             >
@@ -112,6 +112,26 @@ export class Admins extends Component {
                 glyph="glyphicon glyphicon-plus-sign"
               />
             </Link>
+          </Col>
+        </Row>
+        <Row>
+          <Col md={11}>
+            <div className="flex flex-row flex-end-center indent-top-bottom-1">
+              <div>Item per page</div>
+              <FormControl
+                componentClass="select"
+                defaultValue={countPerPage}
+                style={{ display: "inline", width: "auto" }}
+                className={"margin-left-1"}
+                onChange={this.changeCoutOnPage}
+              >
+                {countsPerPages.map(counts => (
+                  <option key={counts.value} value={counts.value}>
+                    {counts.title}
+                  </option>
+                ))}
+              </FormControl>
+            </div>
           </Col>
         </Row>
         {paginationAdmins.length ? (
@@ -183,29 +203,14 @@ export class Admins extends Component {
               </Col>
             </Row>
             <Row>
-              <Col mdOffset={9} md={2}>
-                <FormControl
-                  componentClass="select"
-                  defaultValue={countPerPage}
-                  style={{ display: "inline", width: "auto" }}
-                  className={"margin-1"}
-                  onChange={this.changeCoutOnPage}
-                >
-                  {countsPerPages.map(counts => (
-                    <option key={counts.value} value={counts.value}>
-                      {counts.title}
-                    </option>
-                  ))}
-                </FormControl>
-                <Glyphicon
-                  glyph="glyphicon glyphicon-chevron-left"
-                  onClick={this.decrementPage}
-                />
-                {this.state.page + 1}
-                <Glyphicon
-                  glyph="glyphicon glyphicon-chevron-right"
-                  onClick={this.incrementPage}
-                />
+              <Col md={11}>
+                <div className="flex flex-row flex-end-center">
+                  <Pagination className={"indent-top-bottom-1"}>
+                    <Pagination.Prev onClick={this.decrementPage} />
+                    <Pagination.Item>{this.state.page + 1}</Pagination.Item>
+                    <Pagination.Next onClick={this.incrementPage} />
+                  </Pagination>
+                </div>
               </Col>
             </Row>
           </React.Fragment>

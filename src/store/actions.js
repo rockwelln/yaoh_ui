@@ -100,6 +100,16 @@ export const getTamplatesOfTenant = data => ({
   data
 });
 
+export const getAccessDeviceByName = data => ({
+  type: actionType.GET_ACCESS_DEVICE_BY_NAME,
+  data
+});
+
+export const getTamplatesOfGroup = data => ({
+  type: actionType.GET_TEMPLATES_OF_GROUP,
+  data
+});
+
 export const postCreateGroupAdmin = data => ({
   type: actionType.POST_CREATE_GROUP_ADMIN,
   data
@@ -128,8 +138,14 @@ export const postAssignUserServicePacks = () => ({
   type: actionType.POST_ASSIGN_USER_SERVICE_PACKS
 });
 
-export const postCreateTenant = () => ({
-  type: actionType.POST_CREATE_TENANT
+export const postCreateTenant = data => ({
+  type: actionType.POST_CREATE_TENANT,
+  data
+});
+
+export const postCreateGroup = data => ({
+  type: actionType.POST_CREATE_GROUP,
+  data
 });
 
 export const putUpdateUser = data => ({
@@ -172,9 +188,14 @@ export const putUpdateGroupServicesByGroupId = data => ({
   data
 });
 
-export const deleteTenant = Id => ({
+export const putUpdateTenantDetails = data => ({
+  type: actionType.PUT_UPDATE_TENANT_DETAILS,
+  data
+});
+
+export const deleteTenant = data => ({
   type: actionType.DELETE_TENANT,
-  Id
+  data
 });
 
 export const deleteTenantAdmin = () => ({
@@ -247,6 +268,55 @@ export const refuseCreateTenant = () => ({
 
 export const changeDomainOfTenant = data => ({
   type: actionType.CHANGE_DOMAIN_OF_TENANT,
+  data
+});
+
+export const refuseCreateGroup = () => ({
+  type: actionType.REFUSE_CREATE_GROUP
+});
+
+export const changeIdOfGroup = data => ({
+  type: actionType.CHANGE_ID_OF_GROUP,
+  data
+});
+
+export const changeNameOfGroup = data => ({
+  type: actionType.CHANGE_NAME_OF_GROUP,
+  data
+});
+
+export const changeDomainOfGroup = data => ({
+  type: actionType.CHANGE_DOMAIN_OF_GROUP,
+  data
+});
+
+export const changeUserLimitOfGroup = data => ({
+  type: actionType.CHANGE_USER_LIMIT_OF_GROUP,
+  data
+});
+
+export const changeAddressOfGroup = data => ({
+  type: actionType.CHANGE_ADDRESS_OF_GROUP,
+  data
+});
+
+export const changeZIPOfGroup = data => ({
+  type: actionType.CHANGE_ZIP_OF_GROUP,
+  data
+});
+
+export const changeCityOfGroup = data => ({
+  type: actionType.CHANGE_CITY_OF_GROUP,
+  data
+});
+
+export const changeStepOfCreateGroup = data => ({
+  type: actionType.CHANGE_STEP_OF_CREATE_GROUP,
+  data
+});
+
+export const changeTemplateOfGroup = data => ({
+  type: actionType.CHANGE_TAMPLATE_OF_GROUP,
   data
 });
 
@@ -509,6 +579,44 @@ export function fetchGetTamplatesOfTenant(auth_token) {
   };
 }
 
+export function fetchGetAccessDeviceByName(tenantId, groupId, deviceName, auth_token) {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/access_devices/${deviceName}`,
+      auth_token
+    )
+      .then(data => dispatch(getAccessDeviceByName(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-access-device-failed"
+            defaultMessage="Failed to fetch access device!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchGetTamplatesOfGroup(auth_token) {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/templates/categories/group/`,
+      auth_token
+    )
+      .then(data => dispatch(getTamplatesOfGroup(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-tenant-tamplates-failed"
+            defaultMessage="Failed to fetch tenant tamplates!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
 export function fetchPostCreateGroupAdmin(tenantId, groupId, data, auth_token) {
   return function(dispatch) {
     return fetch_post(
@@ -564,6 +672,26 @@ export function fetchPostCreateTenant(data, auth_token) {
           <FormattedMessage
             id="failed-to-create-tenant"
             defaultMessage="Failed to create tenant!"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchPostCreateGroup(tenantId, data, auth_token) {
+  return function(dispatch) {
+    return fetch_post(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/`,
+      data,
+      auth_token
+    )
+      .then(data => dispatch(postCreateGroup(data)))
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-create-group"
+            defaultMessage="Failed to create group!"
           />,
           error.message
         );
@@ -734,7 +862,6 @@ export function fetchPutUpdateGroupServicesByGroupId(tenantId, groupId, data, au
       data,
       auth_token
     )
-      .then(res => res.json())
       .then(data => dispatch(putUpdateGroupServicesByGroupId(data)))
       .catch(error =>
         NotificationsManager.error(
@@ -745,10 +872,34 @@ export function fetchPutUpdateGroupServicesByGroupId(tenantId, groupId, data, au
   };
 }
 
+export function fetchPutUpdateTenantDetails(tenantId, data, auth_token) {
+  return function(dispatch) {
+    return fetch_put(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}`,
+      data,
+      auth_token
+    )
+      .then(res => res.json())
+      .then(data => dispatch(putUpdateTenantDetails(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="update-tenant-details-failed"
+            defaultMessage="Failed to update tenant details!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
 export function fetchDeleteTenant(ID, auth_token) {
   return function(dispatch) {
     return fetch_delete(`${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${ID}`, auth_token)
-      .then(data => dispatch(deleteTenant(ID)))
+      .then(data => {
+          dispatch(deleteTenant(data));
+          return "deleted";
+      })
       .catch(error =>
         NotificationsManager.error(
           <FormattedMessage id="delete-tenant-failed" defaultMessage="Failed to delete tenant!"/>,
@@ -811,7 +962,6 @@ export function fetchDeleteAssignUserServices(
   auth_token
 ) {
   return function(dispatch) {
-    console.log("delete", data);
     return fetch_delete(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/users/${userName}/services/`,
       data,

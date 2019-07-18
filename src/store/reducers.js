@@ -46,9 +46,38 @@ const initialState = {
       country: ""
     },
     useTenantLanguages: false,
+    templateName: "",
+    accessDevice: {}
+  },
+  templatesOfTenant: [],
+  createdTenant: {},
+  createGroupStep: "Basic",
+  createGroup: {
+    groupId: "",
+    groupName: "",
+    userLimit: "",
+    defaultDomain: "",
+    cliName: "",
+    cliPhoneNumber: "",
+    timeZone: "",
+    contact: {
+      name: "",
+      phoneNumber: "",
+      emailAddress: ""
+    },
+    address: {
+      addressLine1: "",
+      addressLine2: "",
+      city: "",
+      state: "",
+      stateDisplayName: "",
+      postalCode: "",
+      country: ""
+    },
     templateName: ""
   },
-  templatesOfTenant: []
+  templatesOfGroup: [],
+  createdGroup: {}
 };
 
 function mainReducer(state = initialState, action) {
@@ -253,6 +282,18 @@ function mainReducer(state = initialState, action) {
         templatesOfTenant: action.data.templates
       };
     }
+    case actionType.GET_ACCESS_DEVICE_BY_NAME: {
+      return {
+        ...state,
+        accessDevice: action.data
+      };
+    }
+    case actionType.GET_TEMPLATES_OF_GROUP: {
+      return {
+        ...state,
+        templatesOfGroup: action.data.templates
+      };
+    }
     case actionType.POST_CREATE_GROUP_ADMIN: {
       return {
         ...state,
@@ -291,7 +332,14 @@ function mainReducer(state = initialState, action) {
     }
     case actionType.POST_CREATE_TENANT: {
       return {
-        ...state
+        ...state,
+        createTenant: action.data
+      };
+    }
+    case actionType.POST_CREATE_GROUP: {
+      return {
+        ...state,
+        createdGroup: action.data
       };
     }
     case actionType.PUT_UPDATE_USER: {
@@ -342,6 +390,12 @@ function mainReducer(state = initialState, action) {
         ...state
       };
     }
+    case actionType.PUT_UPDATE_TENANT_DETAILS: {
+      return {
+        ...state
+      };
+    }
+
     case actionType.DELETE_TENANT: {
       return {
         ...state
@@ -492,6 +546,123 @@ function mainReducer(state = initialState, action) {
         createTenant: {
           ...state.createTenant,
           defaultDomain: action.data
+        }
+      };
+    }
+    case actionType.REFUSE_CREATE_GROUP: {
+      return {
+        ...state,
+        createGroupStep: "Basic",
+        createGroup: {
+          groupId: "",
+          groupName: "",
+          userLimit: "",
+          defaultDomain: "",
+          cliName: "",
+          cliPhoneNumber: "",
+          timeZone: "",
+          contact: {
+            name: "",
+            phoneNumber: "",
+            emailAddress: ""
+          },
+          address: {
+            addressLine1: "",
+            addressLine2: "",
+            city: "",
+            state: "",
+            stateDisplayName: "",
+            postalCode: "",
+            country: ""
+          },
+          templateName: ""
+        }
+      };
+    }
+    case actionType.CHANGE_ID_OF_GROUP: {
+      return {
+        ...state,
+        createGroup: {
+          ...state.createGroup,
+          groupId: action.data
+        }
+      };
+    }
+    case actionType.CHANGE_NAME_OF_GROUP: {
+      return {
+        ...state,
+        createGroup: {
+          ...state.createGroup,
+          groupName: action.data
+        }
+      };
+    }
+    case actionType.CHANGE_DOMAIN_OF_GROUP: {
+      return {
+        ...state,
+        createGroup: {
+          ...state.createGroup,
+          defaultDomain: action.data
+        }
+      };
+    }
+    case actionType.CHANGE_USER_LIMIT_OF_GROUP: {
+      return {
+        ...state,
+        createGroup: {
+          ...state.createGroup,
+          userLimit: action.data
+        }
+      };
+    }
+    case actionType.CHANGE_ADDRESS_OF_GROUP: {
+      return {
+        ...state,
+        createGroup: {
+          ...state.createGroup,
+          address: {
+            ...state.createGroup.address,
+            addressLine1: action.data
+          }
+        }
+      };
+    }
+    case actionType.CHANGE_ZIP_OF_GROUP: {
+      return {
+        ...state,
+        createGroup: {
+          ...state.createGroup,
+          address: {
+            ...state.createGroup.address,
+            postalCode: action.data
+          }
+        }
+      };
+    }
+    case actionType.CHANGE_CITY_OF_GROUP: {
+      return {
+        ...state,
+        createGroup: {
+          ...state.createGroup,
+          address: {
+            ...state.createGroup.address,
+            city: action.data
+          }
+        }
+      };
+    }
+    case actionType.CHANGE_STEP_OF_CREATE_GROUP: {
+      return {
+        ...state,
+        createGroupStep: action.data
+      };
+    }
+    case actionType.CHANGE_TAMPLATE_OF_GROUP: {
+      return {
+        ...state,
+        createGroup: {
+          ...state.createGroup,
+          templateName: action.data
         }
       };
     }

@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import { withRouter } from "react-router";
 
 import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
@@ -8,12 +9,11 @@ import { Link } from "react-router-dom";
 
 import DeleteModal from "./DeleteModal";
 
-export default class User extends Component {
+class User extends Component {
   state = { showDelete: false };
   render() {
     const { user, onReload, tenantId, groupId, index } = this.props;
     const { showDelete } = this.state;
-    const gwName = window.location.pathname.split("/")[2];
     return (
       <tr key={user.userId}>
         <td>
@@ -27,9 +27,9 @@ export default class User extends Component {
         </td>
         <td>
           <Link
-            to={`/provisioning/${gwName}/tenants/${tenantId}/groups/${groupId}/users/${
-              user.userId
-            }`}
+            to={`/provisioning/${
+              this.props.match.params.gwName
+            }/tenants/${tenantId}/groups/${groupId}/users/${user.userId}`}
           >
             {user.userId}
           </Link>
@@ -60,3 +60,5 @@ export default class User extends Component {
     );
   }
 }
+
+export default withRouter(User);

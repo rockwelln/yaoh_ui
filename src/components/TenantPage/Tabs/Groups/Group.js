@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import { withRouter } from "react-router";
 
 import { Link } from "react-router-dom";
 import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
@@ -6,17 +7,16 @@ import Glyphicon from "react-bootstrap/lib/Glyphicon";
 
 import DeleteModal from "./DeleteModal";
 
-export default class Group extends Component {
+class Group extends Component {
   state = { showDelete: false };
   render() {
     const { group, onReload } = this.props;
     const { showDelete } = this.state;
-    const gwName = window.location.pathname.split("/")[2];
     return (
       <tr key={group.groupId}>
         <td>
           <Link
-            to={`/provisioning/${gwName}/tenants/${
+            to={`/provisioning/${this.props.match.params.gwName}/tenants/${
               group.tenantId
             }/groups/${group.groupId}`}
           >
@@ -47,3 +47,5 @@ export default class Group extends Component {
     );
   }
 }
+
+export default withRouter(Group);

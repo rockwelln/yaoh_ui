@@ -85,7 +85,7 @@ class Details extends Component {
                   type="text"
                   placeholder="Group ID"
                   disabled
-                  defaultValue={group.groupId}
+                  defaultValue={this.props.match.params.groupId}
                 />
               </Col>
             </FormGroup>

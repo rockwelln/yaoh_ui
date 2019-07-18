@@ -1,22 +1,22 @@
 import React, { Component } from "react";
 import { Link } from "react-router-dom";
+import { withRouter } from "react-router";
 
 import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
 
 import DeleteModal from "./DeleteModal";
 
-export default class Admin extends Component {
+class Admin extends Component {
   state = { showDelete: false };
   render() {
     const { admin, onReload } = this.props;
     const { showDelete } = this.state;
-    const gwName = window.location.pathname.split("/")[2];
     return (
       <tr key={admin.userId}>
         <td>
           <Link
-            to={`/provisioning/${gwName}/tenants/${
+            to={`/provisioning/${this.props.match.params.gwName}/tenants/${
               this.props.tenantId
             }/groups/${this.props.groupId}/admins/${admin.userId}`}
           >
@@ -50,3 +50,5 @@ export default class Admin extends Component {
     );
   }
 }
+
+export default withRouter(Admin);

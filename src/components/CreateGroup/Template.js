@@ -14,11 +14,11 @@ import Radio from "react-bootstrap/lib/Radio";
 import Loading from "../../common/Loading";
 
 import {
-  fetchGetTamplatesOfTenant,
-  changeTemplateOfTenant,
-  changeStepOfCreateTenant,
-  refuseCreateTenant,
-  fetchPostCreateTenant
+  refuseCreateGroup,
+  changeTemplateOfGroup,
+  fetchGetTamplatesOfGroup,
+  changeStepOfCreateGroup,
+  fetchPostCreateGroup
 } from "../../store/actions";
 
 export class Template extends Component {
@@ -29,7 +29,7 @@ export class Template extends Component {
 
   componentDidMount() {
     this.props
-      .fetchGetTamplatesOfTenant(this.props.auth_token)
+      .fetchGetTamplatesOfGroup(this.props.auth_token)
       .then(() => this.setState({ isLoading: false }));
   }
 
@@ -43,17 +43,18 @@ export class Template extends Component {
         <Row>
           <Col md={12}>
             <p className={"header"}>
-              ADD TENANT: template
+              ADD GROUP: template
               <Link
-                to={`/provisioning/${this.props.match.params.gwName}/tenants`}
+                to={`/provisioning/${this.props.match.params.gwName}/tenants/${
+                  this.props.match.params.tenantId
+                }`}
               >
                 <Button
                   disabled={this.state.creating}
                   className={"margin-left-1"}
-
-                  onClick={() => this.props.refuseCreateTenant()}
+                  onClick={() => this.props.refuseCreateGroup()}
                 >
-                    Cancel
+                  Cancel
                 </Button>
               </Link>
             </p>
@@ -62,7 +63,7 @@ export class Template extends Component {
         <Row>
           <Col md={12}>
             <p>
-              Please select a Tenant template. This template will influence they
+              Please select a Group template. This template will influence they
               way your tenant will be configured. (service pack definition,
               service (pack) authorisation, feature access code definition.
             </p>
@@ -73,12 +74,12 @@ export class Template extends Component {
             <FormGroup>
               <Radio
                 name="radioGroup"
-                checked={this.props.createTenant.templateName ? 0 : 1}
+                checked={this.props.createGroup.templateName ? 0 : 1}
                 onClick={() => this.selectTemplate("")}
               >
                 <div className="font-weight-bold flex">no template</div>
               </Radio>
-              {this.props.templatesOfTenant.map((template, i) => (
+              {this.props.templatesOfGroup.map((template, i) => (
                 <Radio
                   key={i + ""}
                   name="radioGroup"
@@ -132,35 +133,35 @@ export class Template extends Component {
   createButtonClick = () => {
     this.setState({ creating: "Creating..." }, () => {
       this.props
-        .fetchPostCreateTenant(this.props.createTenant)
+        .fetchPostCreateGroup(this.props.tenantId, this.props.createGroup, this.props.auth_token)
         .then(res =>
           res
-            ? this.props.changeStepOfCreateTenant("Created")
+            ? this.props.changeStepOfCreateGroup("Created")
             : this.setState({ creating: "" })
         );
     });
   };
 
   selectTemplate = name => {
-    this.props.changeTemplateOfTenant(name);
+    this.props.changeTemplateOfGroup(name);
   };
 
   backButtonClick = () => {
-    this.props.changeStepOfCreateTenant("Basic");
+    this.props.changeStepOfCreateGroup("Basic");
   };
 }
 
 const mapStateToProps = state => ({
-  templatesOfTenant: state.templatesOfTenant,
-  createTenant: state.createTenant
+  templatesOfGroup: state.templatesOfGroup,
+  createGroup: state.createGroup
 });
 
 const mapDispatchToProps = {
-  fetchGetTamplatesOfTenant,
-  changeTemplateOfTenant,
-  changeStepOfCreateTenant,
-  refuseCreateTenant,
-  fetchPostCreateTenant
+  refuseCreateGroup,
+  changeTemplateOfGroup,
+  fetchGetTamplatesOfGroup,
+  changeStepOfCreateGroup,
+  fetchPostCreateGroup
 };
 
 export default withRouter(

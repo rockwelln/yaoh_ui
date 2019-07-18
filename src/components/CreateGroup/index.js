@@ -3,9 +3,9 @@ import { connect } from "react-redux";
 
 import Basic from "./Basic";
 import Template from "./Template";
-import Limits from "./Limits";
-import Admin from "./Admin";
-import Created from "./Created";
+// import Limits from "./Limits";
+// import Admin from "./Admin";
+// import Created from "./Created";
 
 import Col from "react-bootstrap/lib/Col";
 import Row from "react-bootstrap/lib/Row";
@@ -14,7 +14,7 @@ import Breadcrumb from "../../common/Breadcrumb";
 import Sidebar from "../../common/Sidebar";
 import Title from "../../common/Title";
 
-export class CreateTenant extends Component {
+export class CreateGroup extends Component {
   render() {
     return (
       <React.Fragment>
@@ -37,30 +37,30 @@ export class CreateTenant extends Component {
   }
 
   returnStep = () => {
-    switch (this.props.createTenantStep) {
+    switch (this.props.createGroupStep) {
       case "Basic": {
-        return <Basic auth_token={this.props.auth_token} />;
+        return <Basic />;
       }
       case "Template": {
-        return <Template auth_token={this.props.auth_token} />;
+        return <Template />;
       }
-      case "Limits": {
-        return <Limits auth_token={this.props.auth_token} />;
-      }
-      case "Admin": {
-        return <Admin auth_token={this.props.auth_token} />;
-      }
-      case "Created": {
-        return <Created auth_token={this.props.auth_token} />;
-      }
+      //   case "Created": {
+      //     return <Created />;
+      //   }
+      //   case "Limits": {
+      //     return <Limits />;
+      //   }
+      //   case "Admin": {
+      //     return <Admin />;
+      //   }
       default:
-        return <Basic auth_token={this.props.auth_token} />;
+        return <Basic />;
     }
   };
 }
 
 const mapStateToProps = state => ({
-  createTenantStep: state.createTenantStep
+  createGroupStep: state.createGroupStep
 });
 
 const mapDispatchToProps = {};
@@ -68,4 +68,4 @@ const mapDispatchToProps = {};
 export default connect(
   mapStateToProps,
   mapDispatchToProps
-)(CreateTenant);
+)(CreateGroup);

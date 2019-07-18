@@ -172,7 +172,7 @@ const transformXML = (xmlText, xsltText) => {
         xslt = new XSLTProcessor();
     }
     else if(window.ActiveXObject || "ActiveXObject" in window) {
-        xslt = new ActiveXObject("Msxml2.XSLTemplate");
+        xslt = new window.ActiveXObject("Msxml2.XSLTemplate");
     } else {
         return xmlText;
     }

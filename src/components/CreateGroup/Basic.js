@@ -6,31 +6,29 @@ import { withRouter } from "react-router";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import Row from "react-bootstrap/lib/Row";
 import Col from "react-bootstrap/lib/Col";
-import ToggleButton from "react-bootstrap/lib/ToggleButton";
-import ToggleButtonGroup from "react-bootstrap/lib/ToggleButtonGroup";
 import FormControl from "react-bootstrap/lib/FormControl";
 import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import Button from "react-bootstrap/lib/Button";
+import Checkbox from "react-bootstrap/lib/Checkbox";
 
 import {
-  changeTypeOfTenant,
-  changeIdOfTenant,
-  changeNameOfTenant,
-  changeAddressOfTenant,
-  changeZIPOfTenant,
-  changeCityOfTenant,
-  changeStepOfCreateTenant,
-  refuseCreateTenant,
-  changeDomainOfTenant
+  refuseCreateGroup,
+  changeIdOfGroup,
+  changeNameOfGroup,
+  changeDomainOfGroup,
+  changeUserLimitOfGroup,
+  changeAddressOfGroup,
+  changeZIPOfGroup,
+  changeCityOfGroup,
+  changeStepOfCreateGroup
 } from "../../store/actions";
-
-const RESELLEROPTIONS = [{ value: "", name: "None" }];
 
 export class Basic extends Component {
   state = {
     showMore: false,
     errorMessage: "",
-    domainError: ""
+    domainError: "",
+    userUnlimeted: false
   };
 
   render() {
@@ -39,15 +37,17 @@ export class Basic extends Component {
         <Row>
           <Col md={12}>
             <p className={"header"}>
-              ADD TENANT
+              ADD GROUP
               <Link
-                to={`/provisioning/${this.props.match.params.gwName}/tenants`}
+                to={`/provisioning/${this.props.match.params.gwName}/tenants/${
+                  this.props.match.params.tenantId
+                }`}
               >
                 <Button
                   className={"margin-left-1"}
-                  onClick={() => this.props.refuseCreateTenant()}
+                  onClick={() => this.props.refuseCreateGroup()}
                 >
-                    CANCEL
+                  Cancel
                 </Button>
               </Link>
             </p>
@@ -56,72 +56,9 @@ export class Basic extends Component {
         <Row>
           <Col md={12}>
             <p>
-              Select the type, configure a unique ID, a name and optionally some
-              contact details
+              Configure a unique ID, a name, domain, user limit and optionally
+              some contact details
             </p>
-          </Col>
-        </Row>
-        <Row className={"margin-1"}>
-          <Col md={12}>
-            <p className={"larger"}>TYPE{"\u002a"}</p>
-          </Col>
-        </Row>
-        <Row className={"margin-1"}>
-          <Col md={12}>
-            <ToggleButtonGroup
-              type="radio"
-              name="options"
-              defaultValue={this.props.createTenant.type}
-            >
-              <ToggleButton
-                className={"radio-button"}
-                value={"ServiceProvider"}
-                onClick={e => {
-                  this.props.changeTypeOfTenant(e.target.value);
-                  this.setState({ errorMessage: "" });
-                }}
-              >
-                <div>
-                  <Glyphicon
-                    className={"font-24"}
-                    glyph="glyphicon glyphicon-cloud"
-                  />
-                  <p>SERVICE PROVIDER</p>
-                </div>
-              </ToggleButton>
-              <ToggleButton
-                className={"radio-button"}
-                value={"Enterprise"}
-                onClick={e => {
-                  this.props.changeTypeOfTenant(e.target.value);
-                  this.setState({ errorMessage: "" });
-                }}
-              >
-                <div>
-                  <Glyphicon
-                    className={"font-24"}
-                    glyph="glyphicon glyphicon-object-align-bottom"
-                  />
-                  <p>ENTERPRISE</p>
-                </div>
-              </ToggleButton>
-            </ToggleButtonGroup>
-          </Col>
-        </Row>
-        <Row className={"margin-1"}>
-          <Col md={12}>
-            <p className={"larger"}>Reseller</p>
-          </Col>
-        </Row>
-        <Row className={"margin-1"}>
-          <Col md={12}>
-            <FormControl componentClass="select">
-              {RESELLEROPTIONS.map((option, i) => (
-                <option key={i + ""} value={option.value}>
-                  {option.name}
-                </option>
-              ))}
-            </FormControl>
           </Col>
         </Row>
         <Row className={"margin-1"}>
@@ -136,10 +73,10 @@ export class Basic extends Component {
           <Col md={9}>
             <FormControl
               type="text"
-              placeholder="Tenant ID"
-              defaultValue={this.props.createTenant.tenantId}
+              placeholder="Group ID"
+              defaultValue={this.props.createGroup.groupId}
               onChange={e => {
-                this.props.changeIdOfTenant(e.target.value);
+                this.props.changeIdOfGroup(e.target.value);
                 this.setState({ errorMessage: "" });
               }}
             />
@@ -152,10 +89,10 @@ export class Basic extends Component {
           <Col md={9}>
             <FormControl
               type="text"
-              placeholder="Tenant name"
-              defaultValue={this.props.createTenant.name}
+              placeholder="Group name"
+              defaultValue={this.props.createGroup.groupName}
               onChange={e => {
-                this.props.changeNameOfTenant(e.target.value);
+                this.props.changeNameOfGroup(e.target.value);
                 this.setState({ errorMessage: "" });
               }}
             />
@@ -169,7 +106,7 @@ export class Basic extends Component {
             <FormControl
               type="text"
               placeholder="Domain"
-              defaultValue={this.props.createTenant.defaultDomain}
+              defaultValue={this.props.createGroup.defaultDomain}
               onChange={e => {
                 this.validateDomain(e.target.value);
                 this.setState({ errorMessage: "" });
@@ -184,6 +121,40 @@ export class Basic extends Component {
             </Col>
           </Row>
         )}
+        <Row className={"margin-1"}>
+          <Col componentClass={ControlLabel} md={3}>
+            User limit{"\u002a"}
+          </Col>
+          <Col md={2}>
+            <Checkbox
+              onChange={e =>
+                e.target.checked
+                  ? (this.props.changeUserLimitOfGroup(-1),
+                    this.setState({ userUnlimeted: e.target.checked }))
+                  : this.props.changeUserLimitOfGroup("")
+              }
+            >
+              unlimeted
+            </Checkbox>
+          </Col>
+          <Col md={7}>
+            <FormControl
+              disabled={this.props.createGroup.userLimit === -1}
+              type="number"
+              min={0}
+              placeholder="User limit"
+              value={
+                this.props.createGroup.userLimit === -1
+                  ? ""
+                  : this.props.createGroup.userLimit
+              }
+              onChange={e => {
+                this.validateUserLimits(e.target.value);
+                this.setState({ errorMessage: "" });
+              }}
+            />
+          </Col>
+        </Row>
         <Row className={"margin-1"}>
           <Col mdOffset={10} md={2}>
             {!this.state.showHideMore ? (
@@ -229,9 +200,9 @@ export class Basic extends Component {
                 <FormControl
                   type="text"
                   placeholder="Street"
-                  defaultValue={this.props.createTenant.address.addressLine1}
+                  defaultValue={this.props.createGroup.address.addressLine1}
                   onChange={e =>
-                    this.props.changeAddressOfTenant(e.target.value)
+                    this.props.changeAddressOfGroup(e.target.value)
                   }
                 />
               </Col>
@@ -241,16 +212,16 @@ export class Basic extends Component {
                 <FormControl
                   type="text"
                   placeholder="ZIP"
-                  defaultValue={this.props.createTenant.address.postalCode}
-                  onChange={e => this.props.changeZIPOfTenant(e.target.value)}
+                  defaultValue={this.props.createGroup.address.postalCode}
+                  onChange={e => this.props.changeZIPOfGroup(e.target.value)}
                 />
               </Col>
               <Col md={6}>
                 <FormControl
                   type="text"
                   placeholder="City"
-                  defaultValue={this.props.createTenant.address.city}
-                  onChange={e => this.props.changeCityOfTenant(e.target.value)}
+                  defaultValue={this.props.createGroup.address.city}
+                  onChange={e => this.props.changeCityOfGroup(e.target.value)}
                 />
               </Col>
             </Row>
@@ -287,26 +258,38 @@ export class Basic extends Component {
   }
 
   nextStep = () => {
-    const { tenantId, name, type, defaultDomain } = this.props.createTenant;
-    if (tenantId && name && type && defaultDomain) {
-      this.props.changeStepOfCreateTenant("Template");
+    const {
+      groupId,
+      groupName,
+      userLimit,
+      defaultDomain
+    } = this.props.createGroup;
+    if (groupId && groupName && userLimit && defaultDomain) {
+      this.props.changeStepOfCreateGroup("Template");
     } else {
       this.setState({
-        errorMessage: "Tenant ID, name, type and domain are required"
+        errorMessage: "Grop ID, name, user limit and domain are required"
       });
     }
   };
 
+  validateUserLimits = value => {
+    if ((!isNaN(value) && value > 0) || value === "") {
+      this.props.changeUserLimitOfGroup(value);
+    }
+    return;
+  };
+
   validateDomain = value => {
     if (value.length < 2 || value.length > 80 || value.includes("@")) {
-      this.props.changeDomainOfTenant(value);
+      this.props.changeDomainOfGroup(value);
       this.setState({
         domainError:
           "Domain length must be from 2 to 80 characters and not contain the @ symbol"
       });
       return;
     }
-    this.props.changeDomainOfTenant(value);
+    this.props.changeDomainOfGroup(value);
     this.setState({ domainError: "" });
   };
 
@@ -316,19 +299,20 @@ export class Basic extends Component {
 }
 
 const mapStateToProps = state => ({
-  createTenant: state.createTenant
+  createTenant: state.createTenant,
+  createGroup: state.createGroup
 });
 
 const mapDispatchToProps = {
-  changeTypeOfTenant,
-  changeIdOfTenant,
-  changeNameOfTenant,
-  changeAddressOfTenant,
-  changeZIPOfTenant,
-  changeCityOfTenant,
-  changeStepOfCreateTenant,
-  refuseCreateTenant,
-  changeDomainOfTenant
+  refuseCreateGroup,
+  changeIdOfGroup,
+  changeNameOfGroup,
+  changeDomainOfGroup,
+  changeUserLimitOfGroup,
+  changeAddressOfGroup,
+  changeZIPOfGroup,
+  changeCityOfGroup,
+  changeStepOfCreateGroup
 };
 
 export default withRouter(

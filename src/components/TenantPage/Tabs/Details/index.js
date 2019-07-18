@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import { connect } from "react-redux";
 
 import FormGroup from "react-bootstrap/lib/FormGroup";
 import ControlLabel from "react-bootstrap/lib/ControlLabel";
@@ -6,18 +7,34 @@ import FormControl from "react-bootstrap/lib/FormControl";
 import Col from "react-bootstrap/lib/Col";
 import Button from "react-bootstrap/lib/Button";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
+import Checkbox from "react-bootstrap/lib/Checkbox";
 import { Form } from "react-bootstrap";
 
 import Loading from "../../../../common/Loading";
 
+import {
+  fetchPutUpdateTenantDetails,
+  fetchGetTenantById
+} from "../../../../store/actions";
+
 class Details extends Component {
   state = {
     tenant: [],
-    tenantName: ""
+    tenantName: "",
+    defaultDomain: "",
+    useTenantLanguages: "",
+    useCustomRoutingProfile: "",
+    isLoading: true
+
   };
 
   componentDidMount() {
-    this.setState({ tenant: this.props.tenant });
+     this.props
+      .fetchGetTenantById(this.props.tenantId, this.props.auth_token)
+      .then(() =>
+        this.setState({ tenant: this.props.tenant, isLoading: false })
+      );
+
   }
 
   render() {
@@ -64,6 +81,45 @@ class Details extends Component {
                 />
               </Col>
             </FormGroup>
+            <FormGroup controlId="defaultDomain">
+              <Col componentClass={ControlLabel} md={3}>
+                Domain
+              </Col>
+              <Col md={9}>
+                <FormControl
+                  type="text"
+                  placeholder="Tenant name"
+                  defaultValue={this.state.tenant.defaultDomain}
+                  onChange={e => {
+                    this.setState({ defaultDomain: e.target.value });
+                  }}
+                />
+              </Col>
+            </FormGroup>
+            <FormGroup controlId="useTenantLanguages">
+              <Col mdOffset={3} md={9}>
+                <Checkbox
+                  defaultChecked={this.state.tenant.useTenantLanguages}
+                  onChange={e =>
+                    this.setState({ useTenantLanguages: e.target.checked })
+                  }
+                >
+                  Use tenant languages
+                </Checkbox>
+              </Col>
+            </FormGroup>
+            <FormGroup controlId="useCustomRoutingProfile">
+              <Col mdOffset={3} md={9}>
+                <Checkbox
+                  defaultChecked={this.state.tenant.useCustomRoutingProfile}
+                  onChange={e =>
+                    this.setState({ useCustomRoutingProfile: e.target.checked })
+                  }
+                >
+                  Use custom routing profile
+                </Checkbox>
+              </Col>
+            </FormGroup>
             <FormGroup controlId="tentantStreet">
               <Col componentClass={ControlLabel} md={3}>
                 Addess
@@ -82,14 +138,52 @@ class Details extends Component {
             </FormGroup>
           </FormGroup>
           <Col mdPush={10} md={1}>
-            <Button>
-              <Glyphicon glyph="glyphicon glyphicon-ok" /> UPDATE
+            <Button onClick={this.updateTenant}>
+              <Glyphicon glyph="glyphicon glyphicon-ok" />
+              {` UPDATE`}
             </Button>
           </Col>
         </Form>
       </Col>
     );
   }
+
+
+  updateTenant = () => {
+    const {
+      tenantName,
+      defaultDomain,
+      useTenantLanguages,
+      useCustomRoutingProfile
+    } = this.state;
+
+    const data = {
+      name: tenantName ? tenantName : this.state.tenant.name,
+      defaultDomain: defaultDomain
+        ? defaultDomain
+        : this.state.tenant.defaultDomain,
+      useTenantLanguages: useTenantLanguages
+        ? useTenantLanguages
+        : this.state.tenant.useTenantLanguages,
+      useCustomRoutingProfile: useCustomRoutingProfile
+        ? useCustomRoutingProfile
+        : this.state.tenant.useCustomRoutingProfile
+    };
+
+    this.props.fetchPutUpdateTenantDetails(this.state.tenant.tenantId, data, this.props.auth_token);
+  };
 }
 
-export default Details;
+const mapStateToProps = state => ({
+  tenant: state.tenant
+});
+
+const mapDispatchToProps = {
+  fetchGetTenantById,
+  fetchPutUpdateTenantDetails
+};
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(Details);

@@ -77,7 +77,11 @@ class TenantPage extends Component {
             />
           </Tab>
           <Tab eventKey={5} title="DETAILS">
-            <Details tenant={tenant} isLoading={isLoading} {...this.props} />
+            <Details
+              tenantId={this.props.match.params.tenantId}
+              isLoading={isLoading}
+              {...this.props}
+            />
           </Tab>
         </Tabs>
       </React.Fragment>
