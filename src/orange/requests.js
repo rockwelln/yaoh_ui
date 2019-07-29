@@ -33,7 +33,7 @@ import ReactJson from 'react-json-view';
 import {
     API_URL_PREFIX, API_URL_PROXY_PREFIX, fetch_get, parseJSON, fetch_post, fetch_put
 } from "../utils";
-import {ApioDatatable} from "../utils/datatable";
+import {ApioDatatable, Pagination} from "../utils/datatable";
 
 import 'react-datepicker/dist/react-datepicker.css';
 import GridPic from "../grid.gif";
@@ -43,6 +43,7 @@ import {StaticControl} from "../utils/common";
 import {access_levels, isAllowed, pages} from "../utils/user";
 
 export const DATE_FORMAT = 'DD/MM/YYYY HH:mm:ss';
+const SUB_REQUESTS_PAGE_SIZE = 25;
 
 const workableDefinition = (definition, states) => {
     let new_def = Object.assign({}, definition);
@@ -649,13 +650,7 @@ const SubRequestsTable = ({subrequests, tasks, ...props}) => (
     <Table condensed>
         <tbody>
         {
-            subrequests.sort(
-                (a, b) => {
-                    if(a.id < b.id) return -1;
-                    if(a.id > b.id) return 1;
-                    return 0;
-                }
-            ).map(
+            subrequests.map(
                 (r, i) => <SubRequest key={`subreqs_${i}`} req={r} tasks={tasks} {...props} />
             )
         }
@@ -1093,6 +1088,7 @@ export class Transaction extends Component {
             messageShown: true,
             subrequests: [],
             subrequestsShown: true,
+            subrequests_paging_info: {page_number: 1, page_size: SUB_REQUESTS_PAGE_SIZE},
             externalCallbacks: [],
             logs: [],
             events: [],
@@ -1202,7 +1198,8 @@ export class Transaction extends Component {
                 events: [],
                 externalCallbacks: [],
                 messages: [],
-                subrequests: []
+                subrequests: [],
+                subrequests_paging_info: {page_number: 1, page_size: SUB_REQUESTS_PAGE_SIZE}
             });
             this.fetchTxDetails(false);
         }
@@ -1273,10 +1270,25 @@ export class Transaction extends Component {
         });
     }
 
-    refreshSubInstances() {
-        fetch_get(`/api/v01/apio/transactions/${this.state.tx.id}/sub_requests`, this.props.auth_token)
+    refreshSubInstances(p) {
+        const {subrequests_paging_info} = this.state;
+        const url = new URL(API_URL_PREFIX + `/api/v01/apio/transactions/${this.state.tx.id}/sub_requests`);
+        // paging
+        const paging_spec = p === undefined ? subrequests_paging_info : update(subrequests_paging_info, {$merge: p});
+        url.searchParams.append('paging', JSON.stringify(paging_spec));
+
+        fetch_get(url, this.props.auth_token)
             .then(data => {
-                !this.cancelLoad && this.setState({subrequests: data.requests});
+                !this.cancelLoad && this.setState({
+                    subrequests: data.requests,
+                    subrequests_pagination: {
+                        page_number: data.pagination[0], // page_number, page_size, num_pages, total_results
+                        page_size: data.pagination[1],
+                        num_pages: data.pagination[2],
+                        total_results: data.pagination[3],
+                    },
+                    subrequests_paging_info: paging_spec,
+                });
             })
             .catch(error => console.error(error));
     }
@@ -1358,7 +1370,7 @@ export class Transaction extends Component {
     }
 
     render() {
-        const {error, tx, request, events, logs, activeTab, replaying, messages, subrequests, messageShown, subrequestsShown, externalCallbacks} = this.state;
+        const {error, tx, request, events, logs, activeTab, replaying, messages, subrequests, messageShown, subrequestsShown, subrequests_pagination, externalCallbacks} = this.state;
         const {user_info} = this.props;
 
         const raw_event = events && (request ? events.filter(e => e.event_id === request.event_id)[0] : events[0]);
@@ -1525,6 +1537,12 @@ export class Transaction extends Component {
                                             onReplay={this.onReplay}
                                             onRollback={this.onRollback}
                                             {...this.props}
+                                        />
+                                        <Pagination
+                                            onChange={this.refreshSubInstances}
+                                            page_number={subrequests_pagination.page_number}
+                                            num_pages={subrequests_pagination.num_pages}
+                                            total_results={subrequests_pagination.total_results}
                                         />
                                     </Panel.Body>
                                 </Panel>

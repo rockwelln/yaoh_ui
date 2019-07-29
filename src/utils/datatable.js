@@ -16,7 +16,7 @@ import update from "immutability-helper/index";
 import 'font-awesome/css/font-awesome.min.css';
 
 
-const Pagination = ({num_pages, page_number, onChange, total_results}) => {
+export const Pagination = ({num_pages, page_number, onChange, total_results}) => {
     let pages = [];
     let i = 0;
     let startNumber = 0;
