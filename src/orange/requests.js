@@ -229,8 +229,8 @@ const protocol2summary = (protocol, content) => {
             s = /xsi:type="([A-Za-z0-9:]+)".*$/gm.exec(content);
             return s && s[1];
         case "ROM":
-            s = /ns[0-9]:action>([A-Za-z0-9:]+)<\/ns[0-9]:action.*$/gm.exec(content);
-            return (s && s[1]) || "....";
+            s = /<(ns[0-9]:|)action>([A-Za-z0-9:]+)<\/.*$/gm.exec(content);
+            return (s && s[2]) || "....";
         default:
             return "..."
     }
