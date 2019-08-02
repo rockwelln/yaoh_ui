@@ -1,6 +1,7 @@
 export const pages = Object.freeze({
     'requests': 19,
     'requests_nprequests': 0,
+    'requests_ndg': 22,
     'requests_startup_events': 4,
     'requests_workflow_editor': 5,
     'data': 20,

@@ -32,9 +32,7 @@ import AsyncApioHelp from './async-apio-help';
 import Dashboard from './dashboard';
 import {Requests, CustomRequests, Transaction, Request} from './orange/requests';
 import {BulkActions} from "./orange/bulk";
-//import {TenantsManagement} from "./data_apio/tenants";
-//import {GroupsManagement} from "./data_apio/groups";
-//import {NumbersManagement} from "./data_apio/numbers";
+import {NdgHistory} from "./orange/ndg_history";
 
 import Tenants from "./components/Tenants";
 import TenantPage from "./components/TenantPage";
@@ -241,6 +239,14 @@ const AsyncApioNavBar = ({user_group, logoutUser, database_status, ...props}) =>
                       <FormattedMessage id="apio-requests" defaultMessage="APIO Requests"/>
                   </MenuItem>
               </LinkContainer>
+              {isAllowed(user_group, pages.requests_ndg) &&
+                  <LinkContainer to={"/requests/ndg"}>
+                      <MenuItem>
+                          <FormattedMessage id="ndg-history" defaultMessage="NDG history"/>
+                      </MenuItem>
+                  </LinkContainer>
+              }
+              <MenuItem divider />
               <LinkContainer to={"/custom-transactions/list"}>
                   <MenuItem>
                       <FormattedMessage id="custom-requests" defaultMessage="Custom Requests"/>
@@ -839,6 +845,17 @@ class App extends Component {
                                            {...props} /> :
                                        <NotAllowed/>
                                )} />
+                        <Route path="/requests/ndg"
+                               component={props => (
+                                   isAllowed(ui_profile, pages.requests_ndg)?
+                                       <NdgHistory
+                                           auth_token={auth_token}
+                                           user_info={user_info}
+                                           notifications={this._notificationSystem.current}
+                                           {...props} /> :
+                                       <NotAllowed/>
+                               )}
+                               exact />
                         <Route path="/requests/:reqId"
                                component={props => (
                                    isAllowed(ui_profile, pages.requests_nprequests) ?

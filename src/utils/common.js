@@ -9,6 +9,8 @@ import {API_URL_PREFIX, fetch_get, fetchOperators} from "../utils";
 import queryString from "query-string";
 import update from "immutability-helper/index";
 import PropTypes from 'prop-types';
+import Panel from "react-bootstrap/lib/Panel";
+import Glyphicon from "react-bootstrap/lib/Glyphicon";
 
 
 export const StaticControl = ({label, value, validationState}) => (
@@ -25,6 +27,18 @@ export const StaticControl = ({label, value, validationState}) => (
     </FormGroup>
 );
 
+export const SearchFieldsPanel = ({children}) => (
+    <Panel defaultExpanded={false} >
+        <Panel.Heading>
+            <Panel.Title toggle>
+                <FormattedMessage id="search" defaultMessage="Search" /> <Glyphicon glyph="search" />
+            </Panel.Title>
+        </Panel.Heading>
+        <Panel.Body collapsible>
+            {children}
+        </Panel.Body>
+    </Panel>
+);
 
 export class Search extends React.Component {
     static defaultProps = {
