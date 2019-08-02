@@ -173,7 +173,20 @@ const transformXML = (xmlText, xsltText) => {
         xslt = new XSLTProcessor();
     }
     else if(window.ActiveXObject || "ActiveXObject" in window) {
-        xslt = new window.ActiveXObject("Msxml2.XSLTemplate");
+        //xslt = new window.ActiveXObject("Msxml2.XSLTemplate");
+        //xslt.stylesheet = xsltDoc;
+        try {
+            var xmlDoc = new window.ActiveXObject('Msxml2.DOMDocument.6.0');
+            xmlDoc.loadXML(xmlText);
+
+            var sheet = new window.ActiveXObject('Msxml2.DOMDocument.6.0');
+            sheet.loadXML(xsltText);
+
+            return xmlDoc.transformNode(sheet);
+        } catch (e) {
+            console.error(e);
+            return xmlText;
+        }
     } else {
         return xmlText;
     }
