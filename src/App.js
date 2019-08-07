@@ -42,6 +42,11 @@ import CreateAdmin from "./components/CreateAdmin";
 import UpdateAdmin from "./components/UpdateAdmin";
 import CreateTenant from "./components/CreateTenant";
 import CreateGroup from "./components/CreateGroup";
+import AddPhoneNumberTenant from "./components/AddPhoneNumberTenant";
+import Templates from "./components/Templates";
+import TemplatePage from "./components/TemplatePage";
+import AddUser from "./components/AddUser";
+import TrunkGroupPage from "./components/TrunkGroupPage";
 
 import UserManagement, { LocalUserProfile } from './system/user_mgm';
 import {StartupEvents} from './startup_events';
@@ -670,36 +675,29 @@ class App extends Component {
                                    <NotAllowed/>
                                )}
                                exact />
-                        {/*<Route path="/apio/tenants"
-                               component={props => (
-                                   isAllowed(ui_profile, pages.data_tenants) ?
-                                   <TenantsManagement
-                                       auth_token={auth_token}
-                                       notifications={this._notificationSystem.current}
-                                       {...props} /> :
-                                   <NotAllowed/>
-                               )}
-                               exact />
-                        <Route path="/apio/tenants/:tenantId/groups"
-                               component={props => (
-                                   isAllowed(ui_profile, pages.data_tenants) ?
-                                   <GroupsManagement
-                                       auth_token={auth_token}
-                                       notifications={this._notificationSystem.current}
-                                       {...props} /> :
-                                   <NotAllowed/>
-                               )}
-                               exact />
-                        <Route path="/apio/tenants/:tenantId/groups/:siteId/numbers"
-                               component={props => (
-                                   isAllowed(ui_profile, pages.data_tenants) ?
-                                   <NumbersManagement
-                                       auth_token={auth_token}
-                                       notifications={this._notificationSystem.current}
-                                       {...props} /> :
-                                   <NotAllowed/>
-                               )}
-                               exact />*/}
+                        {/*================ Provisioning UI routes ==============*/}
+                        <Route
+                            path="/provisioning/:gwName/templates"
+                            component={props =>
+                                isAllowed(ui_profile, pages.data_tenants) ? (
+                                <Templates />
+                            ) : (
+                                <NotAllowed />
+                            )
+                            }
+                            exact />
+
+                        <Route
+                            path="/provisioning/:gwName/templates/:templateName"
+                            component={props =>
+                                isAllowed(ui_profile, pages.data_tenants) ? (
+                                    <TemplatePage />
+                                ) : (
+                                    <NotAllowed />
+                                )
+                            }
+                            exact />
+
                         <Route
                             path="/provisioning/:gwName/tenants"
                             component={props =>
@@ -713,6 +711,17 @@ class App extends Component {
                                 <NotAllowed />
                               )
                             }
+                            exact />
+
+                        <Route
+                            path="/provisioning/:gwName/tenants/:tenantId/addphone"
+                            component={props =>
+                                isAllowed(ui_profile, pages.data_tenants) ? (
+                                <AddPhoneNumberTenant />
+                                ) : (
+                                    <NotAllowed />
+                                )
+                                }
                             exact />
 
                         <Route
@@ -732,7 +741,50 @@ class App extends Component {
                             }
                             exact
                         />
-
+                        <Route
+                            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/adduser"
+                            component={props =>
+                                isAllowed(ui_profile, pages.data_tenants) ? (
+                                    <AddUser />
+                                ) : (
+                                    <NotAllowed />
+                                )
+                            }
+                            exact
+                        />
+                        <Route
+                            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/trunkgroup/:trunkGroupName"
+                            component={props =>
+                                isAllowed(ui_profile, pages.data_tenants) ? (
+                                    <TrunkGroupPage />
+                                ) : (
+                                    <NotAllowed />
+                                )
+                            }
+                            exact
+                        />
+                        <Route
+                            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/trunkgroup/:trunkGroupName/users/:userName"
+                            component={props =>
+                                isAllowed(ui_profile, pages.data_tenants) ? (
+                                    <UserPage />
+                                ) : (
+                                    <NotAllowed />
+                                )
+                            }
+                            exact
+                        />
+                        <Route
+                            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/trunkgroup/:trunkGroupName/adduser"
+                            component={props =>
+                                isAllowed(ui_profile, pages.data_tenants) ? (
+                                    <AddUser />
+                                ) : (
+                                    <NotAllowed />
+                                )
+                            }
+                            exact
+                        />
                         <Route
                             path="/provisioning/:gwName/tenants/:tenantId"
                             component={props =>

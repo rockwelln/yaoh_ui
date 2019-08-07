@@ -3,9 +3,9 @@ import { connect } from "react-redux";
 
 import Basic from "./Basic";
 import Template from "./Template";
-// import Limits from "./Limits";
-// import Admin from "./Admin";
-// import Created from "./Created";
+import Limits from "./Limits";
+import Admin from "./Admin";
+import Created from "./Created";
 
 import Col from "react-bootstrap/lib/Col";
 import Row from "react-bootstrap/lib/Row";
@@ -25,11 +25,11 @@ export class CreateGroup extends Component {
           <Col md={2}>
             <Sidebar />
           </Col>
-          <Col md={10} className={"border-left padding-left-3"}>
+          <Col md={10} className={"padding-left-3"}>
             <Row>
               <Breadcrumb />
             </Row>
-            <Row>{this.returnStep()}</Row>
+            <Row className={"panel panel-default"}>{this.returnStep()}</Row>
           </Col>
         </Row>
       </React.Fragment>
@@ -39,22 +39,22 @@ export class CreateGroup extends Component {
   returnStep = () => {
     switch (this.props.createGroupStep) {
       case "Basic": {
-        return <Basic />;
+        return <Basic auth_token={this.props.auth_token} />;
       }
       case "Template": {
-        return <Template />;
+        return <Template auth_token={this.props.auth_token} />;
       }
-      //   case "Created": {
-      //     return <Created />;
-      //   }
-      //   case "Limits": {
-      //     return <Limits />;
-      //   }
-      //   case "Admin": {
-      //     return <Admin />;
-      //   }
+      case "Created": {
+        return <Created auth_token={this.props.auth_token} />;
+      }
+      case "Limits": {
+        return <Limits auth_token={this.props.auth_token} />;
+      }
+      case "Admin": {
+        return <Admin auth_token={this.props.auth_token} />;
+      }
       default:
-        return <Basic />;
+        return <Basic auth_token={this.props.auth_token} />;
     }
   };
 }
@@ -63,9 +63,7 @@ const mapStateToProps = state => ({
   createGroupStep: state.createGroupStep
 });
 
-const mapDispatchToProps = {};
-
 export default connect(
   mapStateToProps,
-  mapDispatchToProps
+  null
 )(CreateGroup);

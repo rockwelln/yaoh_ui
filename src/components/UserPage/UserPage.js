@@ -20,7 +20,7 @@ import {
   fetchGetUserByName
 } from "../../store/actions";
 
-class UserPage extends Component {
+class TenantPage extends Component {
   state = {
     isLoadingTenant: true,
     isLoadingGroup: true,
@@ -61,39 +61,39 @@ class UserPage extends Component {
   }
 
   render() {
-    const { tenant, group, user } = this.props;
+    const { user } = this.props;
     const { isLoadingTenant, isLoadingGroup, isLoadingUser } = this.state;
 
     if (isLoadingTenant && isLoadingGroup && isLoadingUser) {
       return <Loading />;
     }
-
     return (
       <React.Fragment>
-        <div>
-          <p className={"header"}>
-            {`User: ${user.firstName ? user.firstName : ""} ${
-              user.lastName ? user.lastName : ""
-            }`}
+        <div className={"panel-heading"}>
+          <div className={"header"}>
+            {`User: 
+              ${user.firstName ? user.firstName : ""} 
+              ${user.lastName ? user.lastName : ""}
+              (${this.props.match.params.userName})`}
             <Glyphicon glyph="glyphicon glyphicon-trash" />
-          </p>
-          <p>{`Tenant: ${tenant.name} (id: ${tenant.tenantId})`}</p>
-          <p>{`Group: ${group.groupName} (id: )`}</p>
+          </div>
         </div>
-        <Tabs defaultActiveKey={0} id="tenant_tabs">
-          <Tab eventKey={0} title="DETAILS">
-            <Details {...this.props} />
-          </Tab>
-          <Tab eventKey={1} title="PHONE NUMBERS">
-            <PhoneNumber {...this.props} />
-          </Tab>
-          <Tab eventKey={2} title="SERVICES">
-            <Services {...this.props} />
-          </Tab>
-          <Tab eventKey={3} title="SERVICE PACKS">
-            <ServicesPacks {...this.props} />
-          </Tab>
-        </Tabs>
+        <div className={"panel-body"}>
+          <Tabs defaultActiveKey={0} id="tenant_tabs">
+            <Tab eventKey={0} title="DETAILS">
+              <Details />
+            </Tab>
+            <Tab eventKey={1} title="PHONE NUMBERS">
+              <PhoneNumber />
+            </Tab>
+            <Tab eventKey={2} title="SERVICES">
+              <Services />
+            </Tab>
+            <Tab eventKey={3} title="SERVICE PACKS">
+              <ServicesPacks />
+            </Tab>
+          </Tabs>
+        </div>
       </React.Fragment>
     );
   }
@@ -115,5 +115,5 @@ export default withRouter(
   connect(
     mapStateToProps,
     mapDispatchToProps
-  )(UserPage)
+  )(TenantPage)
 );

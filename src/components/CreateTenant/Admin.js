@@ -40,240 +40,258 @@ export class Admin extends Component {
   render() {
     return (
       <React.Fragment>
-        <Row>
-          <Col md={12}>
-            <p className={"header"}>ADD TENANT: admin</p>
-          </Col>
-        </Row>
-        <Row>
-          <Col md={12}>
-            <p>Add an administrator who can manage this tenant</p>
-          </Col>
-        </Row>
-        <Row className={"margin-1"}>
-          <FormGroup
-            controlId="passwordGroupAdmin"
-            validationState={this.state.userIdError}
-          >
+        {/* PANEL HEADER */}
+        <div className={"panel-heading"}>
+          <Row>
+            <Col md={12}>
+              <div className={"header"}>Add admin to tenant</div>
+            </Col>
+          </Row>
+        </div>
+
+        {/* PANEL HEADER */}
+        <div className={"panel-body"}>
+          {/* EXPLANATION */}
+          <Row>
+            <Col md={12}>
+              <p>Add an administrator who can manage this tenant</p>
+            </Col>
+          </Row>
+
+          {/* FORM */}
+
+          {/* USER-ID */}
+          <Row className={"margin-1"}>
+            <FormGroup
+              controlId="passwordGroupAdmin"
+              validationState={this.state.userIdError}
+            >
+              <Col componentClass={ControlLabel} md={2}>
+                ID{"\u002a"}
+              </Col>
+              <Col md={10}>
+                <InputGroup>
+                  <FormControl
+                    type="text"
+                    placeholder="Admin ID"
+                    defaultValue={this.state.createAdminData.userId}
+                    onChange={e => {
+                      this.clearErrors();
+                      this.setState({
+                        createAdminData: {
+                          ...this.state.createAdminData,
+                          userId: e.target.value
+                        }
+                      });
+                    }}
+                  />
+                  <InputGroup.Addon>{`@${
+                    this.props.createdTenant.defaultDomain
+                  }`}</InputGroup.Addon>
+                </InputGroup>
+                {this.state.userIdError && (
+                  <HelpBlock>
+                    Must be greater than 6 and less than 80 characters
+                  </HelpBlock>
+                )}
+              </Col>
+            </FormGroup>
+          </Row>
+
+          {/* FIRST & LAST NAME */}
+          <Row className={"margin-1"}>
             <Col componentClass={ControlLabel} md={2}>
-              ID{"\u002a"}
+              Name
             </Col>
-            <Col md={10}>
-              <InputGroup>
-                <FormControl
-                  type="text"
-                  placeholder="Admin ID"
-                  defaultValue={this.state.createAdminData.userId}
-                  onChange={e => {
-                    this.clearErrors();
-                    this.setState({
-                      createAdminData: {
-                        ...this.state.createAdminData,
-                        userId: e.target.value
-                      }
-                    });
-                  }}
-                />
-                <InputGroup.Addon>{`@${
-                  this.props.createdTenant.defaultDomain
-                }`}</InputGroup.Addon>
-              </InputGroup>
-              {this.state.userIdError && (
-                <HelpBlock>
-                  Must be greater than 6 and less than 80 characters
-                </HelpBlock>
-              )}
-            </Col>
-          </FormGroup>
-        </Row>
-        <Row className={"margin-1"}>
-          <Col componentClass={ControlLabel} md={2}>
-            Name
-          </Col>
-          <Col md={5}>
-            <FormControl
-              type="text"
-              placeholder="First Name"
-              defaultValue={this.state.createAdminData.firstName}
-              onChange={e => {
-                this.clearErrors();
-                this.setState({
-                  createAdminData: {
-                    ...this.state.createAdminData,
-                    firstName: e.target.value
-                  }
-                });
-              }}
-            />
-          </Col>
-          <Col md={5}>
-            <FormControl
-              type="text"
-              placeholder="Last Name"
-              defaultValue={this.state.createAdminData.lastName}
-              onChange={e => {
-                this.clearErrors();
-                this.setState({
-                  createAdminData: {
-                    ...this.state.createAdminData,
-                    lastName: e.target.value
-                  }
-                });
-              }}
-            />
-          </Col>
-        </Row>
-        <Row className={"margin-1"}>
-          <Col componentClass={ControlLabel} md={2}>
-            E-mail{"\u002a"}
-          </Col>
-          <Col md={10}>
-            <FormControl type="text" placeholder="E-mail" />
-          </Col>
-        </Row>
-        <Row className={"margin-1"}>
-          <Col componentClass={ControlLabel} md={2} className={"text-left"}>
-            Language
-          </Col>
-          <Col md={10}>
-            <FormControl
-              type="text"
-              placeholder="Language"
-              defaultValue={this.state.createAdminData.language}
-              disabled
-            />
-          </Col>
-        </Row>
-        <Row className={"margin-1"}>
-          <FormGroup
-            controlId="passwordGroupAdmin"
-            validationState={
-              this.state.passwordNotMatch || this.state.passwordLenthError
-            }
-          >
-            <Col componentClass={ControlLabel} md={2} className={"text-left"}>
-              Password{"\u002a"}
-            </Col>
-            <Col md={10}>
+            <Col md={5}>
               <FormControl
-                type="password"
-                placeholder="Password"
-                autoComplete="new-password"
-                defaultValue={this.state.createAdminData.password}
+                type="text"
+                placeholder="First Name"
+                defaultValue={this.state.createAdminData.firstName}
                 onChange={e => {
                   this.clearErrors();
                   this.setState({
                     createAdminData: {
                       ...this.state.createAdminData,
-                      password: e.target.value
+                      firstName: e.target.value
                     }
                   });
                 }}
               />
-              {this.state.passwordLenthError && (
-                <HelpBlock>
-                  Must be greater than 6 and less than 80 characters
-                </HelpBlock>
-              )}
             </Col>
-          </FormGroup>
-        </Row>
-        <Row className={"margin-1"}>
-          <FormGroup
-            controlId="passwordConfirmation"
-            validationState={this.state.passwordNotMatch}
-          >
+            <Col md={5}>
+              <FormControl
+                type="text"
+                placeholder="Last Name"
+                defaultValue={this.state.createAdminData.lastName}
+                onChange={e => {
+                  this.clearErrors();
+                  this.setState({
+                    createAdminData: {
+                      ...this.state.createAdminData,
+                      lastName: e.target.value
+                    }
+                  });
+                }}
+              />
+            </Col>
+          </Row>
+
+          {/* E-MAIL */}
+          <Row className={"margin-1"}>
+            <Col componentClass={ControlLabel} md={2}>
+              E-mail{"\u002a"}
+            </Col>
+            <Col md={10}>
+              <FormControl type="text" placeholder="E-mail" />
+            </Col>
+          </Row>
+          <Row className={"margin-1"}>
             <Col componentClass={ControlLabel} md={2} className={"text-left"}>
-              Password confirmation{"\u002a"}
+              Language
             </Col>
             <Col md={10}>
               <FormControl
-                type="password"
-                placeholder="Password confirmation"
-                autoComplete="new-password"
-                defaultValue={this.state.passwordConfirmation}
-                onChange={e => {
-                  this.clearErrors();
-                  this.setState({ passwordConfirmation: e.target.value });
-                }}
+                type="text"
+                placeholder="Language"
+                defaultValue={this.state.createAdminData.language}
+                disabled
               />
-              {this.state.passwordNotMatch && (
-                <HelpBlock>Passwords not match</HelpBlock>
-              )}
-            </Col>
-          </FormGroup>
-        </Row>
-        <Row className={"margin-1"}>
-          <Col md={12}>
-            <Checkbox>Send welcome email</Checkbox>
-          </Col>
-        </Row>
-        {this.state.emptyFieldError && (
-          <Row className={"margin-1 color-error"}>
-            <Col md={12}>
-              <p>{this.state.emptyFieldError}</p>
             </Col>
           </Row>
-        )}
-        <Row className={"margin-1"}>
-          <Col md={1}>
-            <Button
-              onClick={() => this.props.changeStepOfCreateTenant("Limits")}
+
+          {/* PASSWORD */}
+          <Row className={"margin-1"}>
+            <FormGroup
+              controlId="passwordGroupAdmin"
+              validationState={
+                this.state.passwordNotMatch || this.state.passwordLenthError
+              }
             >
-              <Glyphicon
-                glyph="glyphicon glyphicon-backward"
-                style={{ display: "flex", lineHeight: "20px" }}
-              >
-                <div
-                  className={"margin-left-1"}
-                  style={{
-                    fontFamily: `"Helvetica Neue",Helvetica,Arial,sans-serif`
+              <Col componentClass={ControlLabel} md={2} className={"text-left"}>
+                Password{"\u002a"}
+              </Col>
+              <Col md={10}>
+                <FormControl
+                  type="password"
+                  placeholder="Password"
+                  autoComplete="new-password"
+                  defaultValue={this.state.createAdminData.password}
+                  onChange={e => {
+                    this.clearErrors();
+                    this.setState({
+                      createAdminData: {
+                        ...this.state.createAdminData,
+                        password: e.target.value
+                      }
+                    });
                   }}
-                >
-                  BACK
-                </div>
-              </Glyphicon>
-            </Button>
-          </Col>
-          <Col mdOffset={8} md={1}>
-            <Link
-              to={`/provisioning/${this.props.match.params.gwName}/tenants`}
+                />
+                {this.state.passwordLenthError && (
+                  <HelpBlock>
+                    Must be greater than 6 and less than 80 characters
+                  </HelpBlock>
+                )}
+              </Col>
+            </FormGroup>
+          </Row>
+
+          {/* PASSWORD CONFIRMATION */}
+          <Row className={"margin-1"}>
+            <FormGroup
+              controlId="passwordConfirmation"
+              validationState={this.state.passwordNotMatch}
             >
-              <Button onClick={() => this.props.refuseCreateTenant()}>
-                <Glyphicon
-                  glyph="glyphicon glyphicon-forward"
-                  style={{ display: "flex", lineHeight: "20px" }}
-                >
-                  <div
-                    className={"margin-left-1"}
-                    style={{
-                      fontFamily: `"Helvetica Neue",Helvetica,Arial,sans-serif`
-                    }}
+              <Col componentClass={ControlLabel} md={2} className={"text-left"}>
+                Password confirmation{"\u002a"}
+              </Col>
+              <Col md={10}>
+                <FormControl
+                  type="password"
+                  placeholder="Password confirmation"
+                  autoComplete="new-password"
+                  defaultValue={this.state.passwordConfirmation}
+                  onChange={e => {
+                    this.clearErrors();
+                    this.setState({ passwordConfirmation: e.target.value });
+                  }}
+                />
+                {this.state.passwordNotMatch && (
+                  <HelpBlock>Passwords not match</HelpBlock>
+                )}
+              </Col>
+            </FormGroup>
+          </Row>
+
+          {/* SEND WELCOME EMAIL FLAG */}
+          <Row className={"margin-1"}>
+            <Col md={12}>
+              <Checkbox>Send welcome email</Checkbox>
+            </Col>
+          </Row>
+          {this.state.emptyFieldError && (
+            <Row className={"margin-1 color-error"}>
+              <Col md={12}>
+                <p>{this.state.emptyFieldError}</p>
+              </Col>
+            </Row>
+          )}
+
+          {/* BUTTONS */}
+          <Row>
+            <Col md={12}>
+              <div class="button-row">
+                <div class="pull-left">
+                  {/* BACK BUTTON */}
+                  <Button
+                    className={"btn-success"}
+                    onClick={() =>
+                      this.props.changeStepOfCreateTenant("Limits")
+                    }
                   >
-                    SKIP
-                  </div>
-                </Glyphicon>
-              </Button>
-            </Link>
-          </Col>
-          <Col mdOffset={1} md={1}>
-            <Button onClick={this.createAdmin}>
-              <Glyphicon
-                glyph="glyphicon glyphicon-ok"
-                style={{ display: "flex", lineHeight: "20px" }}
-              >
-                <div
-                  className={"margin-left-1"}
-                  style={{
-                    fontFamily: `"Helvetica Neue",Helvetica,Arial,sans-serif`
-                  }}
-                >
-                  ADD
+                    <Glyphicon glyph="glyphicon glyphicon-backward" />
+                    &nbsp; Back
+                  </Button>
                 </div>
-              </Glyphicon>
-            </Button>
-          </Col>
-        </Row>
+
+                <div class="pull-right">
+                  {/* CREATE & FINISH */}
+                  <Button
+                    onClick={() => this.createAdmin()}
+                    className={"btn-primary"}
+                  >
+                    <Glyphicon glyph="glyphicon glyphicon-ok" />
+                    &nbsp; Create
+                  </Button>
+                </div>
+              </div>
+            </Col>
+          </Row>
+          <Row>
+            <Col md={12}>
+              <div class="button-row">
+                <div class="pull-right">
+                  <Link
+                    to={`/provisioning/${
+                      this.props.match.params.gwName
+                    }/tenants/${this.props.createdTenant.tenantId}`}
+                  >
+                    {/* SKIP & FINISH */}
+                    <Button
+                      onClick={() =>
+                        this.props.changeStepOfCreateTenant("Admin")
+                      }
+                      className={"btn-warning"}
+                    >
+                      <Glyphicon glyph="glyphicon glyphicon-stop" />
+                      &nbsp; Skip
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </Col>
+          </Row>
+        </div>
       </React.Fragment>
     );
   }
@@ -309,11 +327,12 @@ export class Admin extends Component {
     this.props
       .fetchPostCreateTenantAdmin(
         this.props.createdTenant.tenantId,
-        this.state.createAdminData
+        this.state.createAdminData,
+        this.props.auth_token
       )
       .then(() => {
-                this.props.history.push(
-          `/provisioning/${this.props.match.params.gwName}/tenants`
+        this.props.history.push(
+          `/provisioning/${this.props.match.params.gwName}/tenants/`
         );
         this.props.refuseCreateTenant();
       });
@@ -321,7 +340,7 @@ export class Admin extends Component {
 }
 
 const mapStateToProps = state => ({
-    createdTenant: state.createdTenant
+  createdTenant: state.createdTenant
 });
 
 const mapDispatchToProps = {

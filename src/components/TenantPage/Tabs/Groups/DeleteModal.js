@@ -1,7 +1,8 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
+import { withRouter } from "react-router";
 
-//import { fetchDeleteTenant } from "../../store/actions";
+import { fetchDeleteGroupFromTenant } from "../../../../store/actions";
 
 import Modal from "react-bootstrap/lib/Modal";
 import Alert from "react-bootstrap/lib/Alert";
@@ -16,18 +17,24 @@ class DeleteModal extends Component {
     this.onDelete = this.onDelete.bind(this);
   }
 
-  onDelete(tenantId) {
+  onDelete() {
     const { onClose } = this.props;
     this.setState({ deleting: true });
 
-    this.props.fetchDeleteTenant(tenantId, this.props.auth_token).then(() => {
-      this.setState({ deleting: false });
-      onClose && onClose(true);
-    });
+    this.props
+      .fetchDeleteGroupFromTenant(
+        this.props.match.params.tenantId,
+        this.props.groupId,
+        this.props.auth_token
+      )
+      .then(() => {
+        this.setState({ deleting: false });
+        onClose && onClose(true);
+      });
   }
 
   render() {
-    const { tenantId, show, onClose } = this.props;
+    const { groupId, show, onClose } = this.props;
     const { deleting } = this.state;
     return (
       <Modal
@@ -52,16 +59,12 @@ class DeleteModal extends Component {
           <p>
             <FormattedMessage
               id="confirm-delete-warning"
-              defaultMessage={`You are about to delete the group ${tenantId}!`}
+              defaultMessage={`You are about to delete the group ${groupId}!`}
             />
           </p>
         </Modal.Body>
         <Modal.Footer>
-          <Button
-            onClick={() => this.onDelete(tenantId)}
-            bsStyle="danger"
-            disabled={true}
-          >
+          <Button onClick={() => this.onDelete()} bsStyle="danger">
             <FormattedMessage id="delete" defaultMessage="Delete" />
           </Button>
           <Button onClick={() => onClose && onClose(false)} disabled={deleting}>
@@ -74,10 +77,12 @@ class DeleteModal extends Component {
 }
 
 const mapDispatchToProps = {
-  //fetchDeleteTenant
+  fetchDeleteGroupFromTenant
 };
 
-export default connect(
-  null,
-  mapDispatchToProps
-)(DeleteModal);
+export default withRouter(
+  connect(
+    null,
+    mapDispatchToProps
+  )(DeleteModal)
+);

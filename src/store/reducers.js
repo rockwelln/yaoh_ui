@@ -77,7 +77,18 @@ const initialState = {
     templateName: ""
   },
   templatesOfGroup: [],
-  createdGroup: {}
+  createdGroup: {},
+  addPhoneTenantStep: "Basic",
+  validatedNumbersTenant: null,
+  addedNumbersToTenant: {},
+  phoneDeleted: false,
+  categoriesOfTemplate: [],
+  category: {},
+  createdUserInGroup: {},
+  trunksGroups: [],
+  trunkGroup: {},
+  trunkGroupUsers: [],
+  trunkGroupBackup: {}
 };
 
 function mainReducer(state = initialState, action) {
@@ -140,9 +151,10 @@ function mainReducer(state = initialState, action) {
         type: user.inTrunkGroup ? "trunk" : "normal",
         userChecked: false
       }));
+
       return {
         ...state,
-        users
+        users: users.filter(user => user.type !== "trunk")
       };
     }
     case actionType.GET_PHONE_NUMBERS_BY_GROUP_ID: {
@@ -294,6 +306,47 @@ function mainReducer(state = initialState, action) {
         templatesOfGroup: action.data.templates
       };
     }
+    case actionType.GET_CATEGORIES_OF_TEMPLATE: {
+      return {
+        ...state,
+        categoriesOfTemplate: action.data.categories
+      };
+    }
+    case actionType.GET_CATEGORY_BY_NAME: {
+      return {
+        ...state,
+        category: action.data
+      };
+    }
+    case actionType.GET_TRUNKS_GROUPS_BY_GROUP: {
+      return {
+        ...state,
+        trunksGroups: action.data.trunks
+      };
+    }
+    case actionType.GET_TRUNK_GROUP_BY_NAME: {
+      return {
+        ...state,
+        trunkGroup: action.data
+      };
+    }
+    case actionType.GET_USERS_BY_TRUNK_GROUP: {
+      const users = action.data.users.map(user => ({
+        ...user,
+        type: "trunk",
+        userChecked: false
+      }));
+      return {
+        ...state,
+        trunkGroupUsers: users
+      };
+    }
+    case actionType.GET_BACKUP_BY_TRUNK_GROUP: {
+      return {
+        ...state,
+        trunkGroupBackup: action.data
+      };
+    }
     case actionType.POST_CREATE_GROUP_ADMIN: {
       return {
         ...state,
@@ -340,6 +393,29 @@ function mainReducer(state = initialState, action) {
       return {
         ...state,
         createdGroup: action.data
+      };
+    }
+    case actionType.POST_ADD_PHONE_NUMBERS_TO_TENANT: {
+      const warning = action.data.warning;
+      const added = action.data.result.filter(
+        number => number.status === "added"
+      );
+      const rejected = action.data.result.filter(
+        number => number.status === "rejected"
+      );
+      return {
+        ...state,
+        addedNumbersToTenant: {
+          warning,
+          added,
+          rejected
+        }
+      };
+    }
+    case actionType.POST_CREATE_USER_TO_GROUP: {
+      return {
+        ...state,
+        createdUserInGroup: action.data
       };
     }
     case actionType.PUT_UPDATE_USER: {
@@ -422,6 +498,22 @@ function mainReducer(state = initialState, action) {
       };
     }
     case actionType.DELETE_DEASSIGN_USER_SERVICE_PACKS: {
+      return {
+        ...state
+      };
+    }
+    case actionType.DELETE_PHONE_FROM_TENANT: {
+      return {
+        ...state,
+        phoneDeleted: !state.phoneDeleted
+      };
+    }
+    case actionType.DELETE_USER_FROM_GROUP: {
+      return {
+        ...state
+      };
+    }
+    case actionType.DELETE_GROUP_FROM_TENANT: {
       return {
         ...state
       };
@@ -663,6 +755,39 @@ function mainReducer(state = initialState, action) {
         createGroup: {
           ...state.createGroup,
           templateName: action.data
+        }
+      };
+    }
+    case actionType.CHANGE_STEP_OF_ADD_PHONE_TENANT: {
+      return {
+        ...state,
+        addPhoneTenantStep: action.data
+      };
+    }
+    case actionType.REFUSE_ADD_PHONE_TO_TENANT: {
+      return {
+        ...state,
+        addPhoneTenantStep: "Basic",
+        validatedNumbersTenant: null
+      };
+    }
+    case actionType.SAVE_VALIDATED_NUMBERS_TENANT: {
+      return {
+        ...state,
+        validatedNumbersTenant: action.data
+      };
+    }
+    case actionType.REMOVE_SUCCESFUL_VALID_PHONE_TENANT: {
+      const indexToDelete = state.validatedNumbersTenant.ok.findIndex(
+        phone => phone.line === action.data
+      );
+      const newArray = [...state.validatedNumbersTenant.ok];
+      newArray.splice(indexToDelete, 1);
+      return {
+        ...state,
+        validatedNumbersTenant: {
+          ...state.validatedNumbersTenant,
+          ok: newArray
         }
       };
     }

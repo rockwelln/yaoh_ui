@@ -13,7 +13,7 @@ class Admin extends Component {
     const { admin, onReload } = this.props;
     const { showDelete } = this.state;
     return (
-      <tr key={admin.userId}>
+      <tr>
         <td>
           <Link
             to={`/provisioning/${this.props.match.params.gwName}/tenants/${

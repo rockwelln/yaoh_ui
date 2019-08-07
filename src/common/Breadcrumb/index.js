@@ -11,10 +11,13 @@ const convertCrumb = crumb => {
   return crumb;
 };
 
+//Links and rename path for crumb
 const linkByCrumb = (item, lastItem, i, path, match) => {
   const crumb = convertCrumb(item);
   if (crumb === "tenants" && !lastItem.includes(crumb)) {
-    return <Link to={`/provisioning/${match.params.gwName}/tenants`}>{crumb}</Link>;
+    return (
+      <Link to={`/provisioning/${match.params.gwName}/tenants`}>{crumb}</Link>
+    );
   }
   if (path[i - 1] === "tenants" && !lastItem.includes(crumb)) {
     return (
@@ -34,32 +37,55 @@ const linkByCrumb = (item, lastItem, i, path, match) => {
       </Link>
     );
   }
+  if (path[i - 3] === "tenants" && !lastItem.includes(crumb)) {
+    return (
+      <Link
+        to={`/provisioning/${match.params.gwName}/tenants/${
+          match.params.tenantId
+        }/groups/${match.params.groupId}/trunkgroup/${crumb}`}
+      >
+        {crumb === match.params.trunkGroupName && match.params.trunkGroupName}
+      </Link>
+    );
+  }
   if (crumb === "addadmin") {
     return "Add admin";
   }
   if (crumb === "addgroup") {
     return "Add group";
   }
-
+  if (crumb === "addphone") {
+    return "Add phone";
+  }
+  if (crumb === "adduser") {
+    return "Add user";
+  }
   return crumb;
 };
 
+//parsing and render breadcrumb
 const BreadcrumbComponent = ({ location, match }) => {
+  const indexForTrunkUsersLevel = 6;
   const indexForGroupLevel = 4;
   const indexForTenantLevel = 2;
   const path = location.pathname.split("/").slice(3);
+  if (path[indexForTrunkUsersLevel] === "users") {
+    path.splice(indexForTrunkUsersLevel, 1);
+  }
   if (
     path[indexForGroupLevel] === "users" ||
-    path[indexForGroupLevel] === "admins"
+    path[indexForGroupLevel] === "admins" ||
+    path[indexForGroupLevel] === "trunkgroup"
   ) {
     path.splice(indexForGroupLevel, 1);
   }
   if (
-    (path[indexForTenantLevel] === "groups") |
-    (path[indexForTenantLevel] === "admins")
+    path[indexForTenantLevel] === "groups" ||
+    path[indexForTenantLevel] === "admins"
   ) {
     path.splice(indexForTenantLevel, 1);
   }
+
   const lastItem = path.slice(-1);
   return (
     <Breadcrumb>

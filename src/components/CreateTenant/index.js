@@ -25,11 +25,11 @@ export class CreateTenant extends Component {
           <Col md={2}>
             <Sidebar />
           </Col>
-          <Col md={10} className={"border-left padding-left-3"}>
+          <Col md={10} className={"padding-left-3"}>
             <Row>
               <Breadcrumb />
             </Row>
-            <Row>{this.returnStep()}</Row>
+            <Row className={"panel panel-default"}>{this.returnStep()}</Row>
           </Col>
         </Row>
       </React.Fragment>
@@ -44,14 +44,14 @@ export class CreateTenant extends Component {
       case "Template": {
         return <Template auth_token={this.props.auth_token} />;
       }
+      case "Created": {
+        return <Created auth_token={this.props.auth_token} />;
+      }
       case "Limits": {
         return <Limits auth_token={this.props.auth_token} />;
       }
       case "Admin": {
         return <Admin auth_token={this.props.auth_token} />;
-      }
-      case "Created": {
-        return <Created auth_token={this.props.auth_token} />;
       }
       default:
         return <Basic auth_token={this.props.auth_token} />;

@@ -1,5 +1,7 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
+import { Link } from "react-router-dom";
+import { withRouter } from "react-router";
 
 import Table from "react-bootstrap/lib/Table";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
@@ -16,7 +18,7 @@ import { fetchGetPhoneNumbersByTenantId } from "../../../../store/actions";
 
 import Loading from "../../../../common/Loading";
 import PhoneNumber from "./PhoneNumber";
-import DeleteModal from "./DeleteModal";
+import DeleteModal from "./MultipleDeleteModal";
 import { countsPerPages } from "../../../../constants";
 
 import "./styles.css";
@@ -37,7 +39,7 @@ export class PhoneNumbersTab extends Component {
     countPages: null
   };
 
-  componentDidMount() {
+  fetchNumbers = () => {
     this.props.fetchGetPhoneNumbersByTenantId(this.props.tenantId, this.props.auth_token).then(() =>
       this.setState(
         {
@@ -52,12 +54,21 @@ export class PhoneNumbersTab extends Component {
         () => this.pagination()
       )
     );
+  };
+
+  componentDidMount() {
+    this.fetchNumbers();
+  }
+
+  componentDidUpdate(prevProps) {
+    if (prevProps.phoneDeleted !== this.props.phoneDeleted) {
+      this.fetchNumbers();
+    }
   }
 
   render() {
     const {
       isLoading,
-      showDelete,
       numbersForDelete,
       countPerPage,
       pagination,
@@ -65,13 +76,16 @@ export class PhoneNumbersTab extends Component {
       page
     } = this.state;
 
-    const { onReload, tenantId } = this.props;
+    const { tenantId } = this.props;
 
     if (isLoading && pagination) {
       return <Loading />;
     }
+
     return (
       <React.Fragment>
+        {/*SEARCHBAR */}
+
         <Row className={"margin-top-2"}>
           <Col mdOffset={1} md={10}>
             <InputGroup className={"margin-left-negative-4"}>
@@ -101,14 +115,22 @@ export class PhoneNumbersTab extends Component {
             </InputGroup>
           </Col>
           <Col md={1}>
-            <Glyphicon
-              className={"x-large"}
-              glyph="glyphicon glyphicon-plus-sign"
-            />
+            <Link
+              to={`/provisioning/${this.props.match.params.gwName}/tenants/${
+                this.props.match.params.tenantId
+              }/addphone`}
+            >
+              <Glyphicon
+                className={"x-large"}
+                glyph="glyphicon glyphicon-plus-sign"
+              />
+            </Link>
           </Col>
         </Row>
         {paginationPhoneNumbers.length ? (
           <React.Fragment>
+            {/*CONTROL BAR */}
+
             <Row>
               <Col mdOffset={1} md={10}>
                 <div className={"flex space-between indent-top-bottom-1"}>
@@ -120,20 +142,26 @@ export class PhoneNumbersTab extends Component {
                     >
                       (Un)select all shown numbers
                     </Checkbox>
-                    <Glyphicon
-                      glyph="glyphicon glyphicon-trash"
+                    <div
                       onClick={this.deleteSlectedNumbers}
-                    />
-                    <div className={"margin-checbox"}>
-                      Delete selected numbers
+                      className={
+                        "cursor-pointer padding-left-05 flex text-align-center align-items-center"
+                      }
+                    >
+                      <Glyphicon
+                        glyph="glyphicon glyphicon-trash"
+                        onClick={this.deleteSlectedNumbers}
+                      />
+                      <div>Delete selected numbers</div>
                     </div>
                     <DeleteModal
                       rangeStart={numbersForDelete.map(
                         number => number.phoneNumbers || number.phoneNumber
                       )}
-                      show={showDelete}
+                      tenantId={this.props.tenantId}
+                      show={this.state.showDelete}
                       onClose={e => {
-                        onReload && onReload(numbersForDelete);
+                        this.fetchNumbers();
                         this.setState({ showDelete: false });
                       }}
                       {...this.props}
@@ -158,6 +186,9 @@ export class PhoneNumbersTab extends Component {
                 </div>
               </Col>
             </Row>
+
+            {/*TABLE */}
+
             <Row>
               <Col mdOffset={1} md={10}>
                 <Table hover>
@@ -365,9 +396,7 @@ export class PhoneNumbersTab extends Component {
     const numbersForDelete = phoneNumbers.filter(phone => {
       return !!phone.phoneChecked;
     });
-    this.setState({ numbersForDelete, showDelete: true }, () =>
-      this.pagination()
-    );
+    this.setState({ numbersForDelete, showDelete: true });
   };
 
   handleSelectAllClick = e => {
@@ -395,14 +424,17 @@ export class PhoneNumbersTab extends Component {
 }
 
 const mapStateToProps = state => ({
-  phoneNumbers: state.phoneNumbers
+  phoneNumbers: state.phoneNumbers,
+  phoneDeleted: state.phoneDeleted
 });
 
 const mapDispatchToProps = {
   fetchGetPhoneNumbersByTenantId
 };
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(PhoneNumbersTab);
+export default withRouter(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(PhoneNumbersTab)
+);

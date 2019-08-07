@@ -13,20 +13,24 @@ import Licenses from "./Tabs/Licenses";
 import Details from "./Tabs/Details";
 import Devices from "./Tabs/Devices";
 import Admins from "./Tabs/Admins";
+import TrunksGroup from "./Tabs/TrunksGroup";
 
 import { fetchGetTenantById, fetchGetGroupById } from "../../store/actions";
 
-class GroupPage extends Component {
+import DeleteModal from "./DeleteModal";
+
+class TenantPage extends Component {
   tabsIdSuffix = Math.random()
     .toString(36)
     .replace(".", "");
 
   state = {
     isLoadingTenant: true,
-    isLoadingGroup: true
+    isLoadingGroup: true,
+    showDelete: false
   };
 
-  fetchTenant = () => {
+  fetchTennant = () => {
     this.props
       .fetchGetTenantById(this.props.match.params.tenantId, this.props.auth_token)
       .then(() => this.setState({ isLoadingTenant: false }));
@@ -40,18 +44,18 @@ class GroupPage extends Component {
   };
 
   componentDidMount() {
-    this.fetchTenant();
+    this.fetchTennant();
   }
 
   componentDidUpdate(prevProps) {
     if (prevProps.match.params.tenantId !== this.props.match.params.tenantId) {
-      this.fetchTenant();
+      this.fetchTennant();
     }
   }
 
   render() {
     const { tenant, group } = this.props;
-    const { isLoadingTenant, isLoadingGroup } = this.state;
+    const { isLoadingTenant, isLoadingGroup, showDelete } = this.state;
 
     if (isLoadingTenant && isLoadingGroup) {
       return <Loading />;
@@ -59,56 +63,72 @@ class GroupPage extends Component {
 
     return (
       <React.Fragment>
-        <div>
+        <div className={"panel-heading"}>
           <p className={"header"}>
-            {`GROUP: ${group.groupName} (${this.props.match.params.groupId})`}
-            <Glyphicon glyph="glyphicon glyphicon-trash" />
+            {`GROUP: ${group.groupName} (${
+              this.props.match.params.groupId
+            }) of tenant ${tenant.name} (${tenant.tenantId})`}
+            <Glyphicon
+              glyph="glyphicon glyphicon-trash"
+              onClick={() => this.setState({ showDelete: true })}
+            />
+            <DeleteModal
+              groupId={this.props.match.params.groupId}
+              show={showDelete}
+              notifications={this.props.notifications}
+              onClose={() => {
+                this.setState({ showDelete: false });
+              }}
+            />
           </p>
-          <p>{`Tenant: ${tenant.name} (${tenant.tenantId})`}</p>
         </div>
-        <Tabs defaultActiveKey={0} id={`group_tabs${this.tabsIdSuffix}`}>
-          <Tab eventKey={0} title="LICENSES">
-            <Licenses
-              tenantId={this.props.match.params.tenantId}
-              groupId={this.props.match.params.groupId}
-              {...this.props}
-            />
-          </Tab>
-          <Tab eventKey={1} title="USERS">
-            <Users
-              tenantId={this.props.match.params.tenantId}
-              groupId={this.props.match.params.groupId}
-              {...this.props}
-            />
-          </Tab>
-          <Tab eventKey={2} title="TRUNKS GROUP">
-            ENTERPRISE TRUNKS Tab
-          </Tab>
-          <Tab eventKey={3} title="PHONE NUMBERS">
-            <PhoneNumbers
-              tenantId={this.props.match.params.tenantId}
-              groupId={this.props.match.params.groupId}
-              {...this.props}
-            />
-          </Tab>
-          <Tab eventKey={4} title="DEVICES">
-            <Devices
-              tenantId={this.props.match.params.tenantId}
-              groupId={this.props.match.params.groupId}
-              {...this.props}
-            />
-          </Tab>
-          <Tab eventKey={5} title="ADMINISTRATORS">
-            <Admins
-              tenantId={this.props.match.params.tenantId}
-              groupId={this.props.match.params.groupId}
-              {...this.props}
-            />
-          </Tab>
-          <Tab eventKey={6} title="DETAILS">
-            <Details group={group} isLoading={isLoadingTenant} {...this.props} />
-          </Tab>
-        </Tabs>
+        <div className={"panel-body"}>
+          <Tabs defaultActiveKey={0} id={`group_tabs${this.tabsIdSuffix}`}>
+            <Tab eventKey={0} title="LICENSES">
+              <Licenses
+                tenantId={this.props.match.params.tenantId}
+                groupId={this.props.match.params.groupId}
+                {...this.props}
+              />
+            </Tab>
+            <Tab eventKey={1} title="HOSTED PBX USERS">
+              <Users
+                tenantId={this.props.match.params.tenantId}
+                groupId={this.props.match.params.groupId}
+                {...this.props}
+              />
+            </Tab>
+            <Tab eventKey={2} title="TRUNKS GROUP">
+              <TrunksGroup {...this.props} />
+            </Tab>
+            <Tab eventKey={3} title="PHONE NUMBERS">
+              <PhoneNumbers
+                tenantId={this.props.match.params.tenantId}
+                groupId={this.props.match.params.groupId}
+                {...this.props}
+              />
+            </Tab>
+            <Tab eventKey={4} title="DEVICES">
+              <Devices
+                tenantId={this.props.match.params.tenantId}
+                groupId={this.props.match.params.groupId}
+                notifications={this.props.notifications}
+                {...this.props}
+              />
+            </Tab>
+            <Tab eventKey={5} title="ADMINISTRATORS">
+              <Admins
+                tenantId={this.props.match.params.tenantId}
+                groupId={this.props.match.params.groupId}
+                notifications={this.props.notifications}
+                {...this.props}
+              />
+            </Tab>
+            <Tab eventKey={6} title="DETAILS">
+              <Details group={group} isLoading={isLoadingTenant} />
+            </Tab>
+          </Tabs>
+        </div>
       </React.Fragment>
     );
   }
@@ -128,5 +148,5 @@ export default withRouter(
   connect(
     mapStateToProps,
     mapDispatchToProps
-  )(GroupPage)
+  )(TenantPage)
 );

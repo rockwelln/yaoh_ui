@@ -18,11 +18,11 @@ const GroupComponent = props => {
         <Col md={2}>
           <Sidebar />
         </Col>
-        <Col md={10} className={"border-left padding-left-3"}>
+        <Col md={10}>
           <Row>
             <Breadcrumb />
           </Row>
-          <Row>
+          <Row  className={"panel panel-default"}>
             <GroupPage {...props} />
           </Row>
         </Col>

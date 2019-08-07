@@ -3,7 +3,6 @@ import React from "react";
 import Col from "react-bootstrap/lib/Col";
 import Row from "react-bootstrap/lib/Row";
 
-import Breadcrumb from "../../common/Breadcrumb";
 import Sidebar from "../../common/Sidebar";
 import Tenants from "./Tenants";
 import Title from "../../common/Title";
@@ -20,11 +19,8 @@ const TenantComponent = props => {
         <Col md={2}>
           <Sidebar />
         </Col>
-        <Col md={10} className={"border-left padding-left-3"}>
-          <Row>
-            <Breadcrumb />
-          </Row>
-          <Row>
+        <Col md={10} className={"padding-left-3 padding-right-3"}>
+          <Row className={"panel panel-default"}>
             <Tenants {...props} />
           </Row>
         </Col>

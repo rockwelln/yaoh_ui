@@ -23,7 +23,7 @@ const UpdateAdminComponent = props => {
           <Row>
             <Breadcrumb />
           </Row>
-          <Row>
+          <Row className={"panel panel-default"}>
             <UpdateAdminPage {...props} />
           </Row>
         </Col>
