@@ -187,23 +187,29 @@ const transformXML = (xmlText, xsltText) => {
             console.error(e);
             return xmlText;
         }
-    } else {
+    }
+    else {
         return xmlText;
     }
 
-    var xsltDoc = new DOMParser().parseFromString(xsltText, "text/xml");
+    try {
+        var xsltDoc = new DOMParser().parseFromString(xsltText, "text/xml");
 
-    // Apply that document to as a stylesheet to a transformer
-    // var xslt = new XSLTProcessor();
-    xslt.importStylesheet(xsltDoc);
+        // Apply that document to as a stylesheet to a transformer
+        // var xslt = new XSLTProcessor();
+        xslt.importStylesheet(xsltDoc);
 
-    // Load the XML into a document.
-    // Trim any preceding whitespace to prevent parse failure.
-    var xml = new DOMParser().parseFromString(xmlText.trim(), "text/xml");
-    // Transform it
-    var transformedXml = xslt.transformToDocument(xml);
-    // Apply the transformed document if it was successful
-    return !transformedXml ? xmlText : new XMLSerializer().serializeToString(transformedXml);
+        // Load the XML into a document.
+        // Trim any preceding whitespace to prevent parse failure.
+        var xml = new DOMParser().parseFromString(xmlText.trim(), "text/xml");
+        // Transform it
+        var transformedXml = xslt.transformToDocument(xml);
+        // Apply the transformed document if it was successful
+        return !transformedXml ? xmlText : new XMLSerializer().serializeToString(transformedXml);
+    } catch (e) {
+        console.error(e);
+        return xmlText
+    }
 };
 
 
@@ -498,6 +504,20 @@ class Message extends Component {
             </tr>
         ];
 
+        if (expanded && entry.input) {
+            rows.push(
+                <tr key={`message_input_${entry.processing_trace_id}`}>
+                    <td><Glyphicon glyph="forward"/></td>
+                    <td colSpan={6}>
+                        <pre style={{wordWrap: 'break-word', whiteSpace: 'pre-wrap'}}>
+                            # request <br/>
+                            {pp_as_json(entry.input)}
+                        </pre>
+                    </td>
+                </tr>
+            )
+        }
+
         if (loading) {
             rows.push(
                 <tr key={`message_loading_${entry.processing_trace_id}`}>
@@ -507,8 +527,12 @@ class Message extends Component {
         } else if (expanded) {
             rows.push(
                 <tr key={`message_details_${entry.processing_trace_id}`}>
-                    <td colSpan={7}>
-                        <pre style={{wordWrap: 'break-word', whiteSpace: 'pre-wrap'}}>{pp_as_json(entry.output)}</pre>
+                    <td><Glyphicon glyph="backward"/></td>
+                    <td colSpan={6}>
+                        <pre style={{wordWrap: 'break-word', whiteSpace: 'pre-wrap'}}>
+                            # response <br/>
+                            {pp_as_json(entry.output)}
+                        </pre>
                     </td>
                 </tr>
             );
