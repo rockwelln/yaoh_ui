@@ -1107,11 +1107,14 @@ export class Transaction extends Component {
             events: [],
         };
         this.cancelLoad = false;
+        this.websocket = null;
 
         this.onReplay = this.onReplay.bind(this);
         this.onRollback = this.onRollback.bind(this);
         this.onForceClose = this.onForceClose.bind(this);
-        this.fetchTxDetails = this.fetchTxDetails.bind(this);
+        // this.fetchTxDetails = this.fetchTxDetails.bind(this);
+        this.completeTx = this.completeTx.bind(this);
+        this.fetchDetails = this.fetchDetails.bind(this);
         this.changeTxStatus = this.changeTxStatus.bind(this);
         this.onReopen = this.onReopen.bind(this);
         this.sendEvent = this.sendEvent.bind(this);
@@ -1122,7 +1125,73 @@ export class Transaction extends Component {
         this.refreshSubInstances = this.refreshSubInstances.bind(this);
     }
 
+    completeTx(event) {
+        console.log("message received");
+        const data = JSON.parse(event.data);
+        if(this.cancelLoad)
+            return;
+
+        let diffState = {tx: data};
+
+        // devnote: if the transaction was not yet loaded and is a sub-workflow.
+        if(!this.state.tx && data.callback_task_id) {
+            diffState.activeTab = 2;
+        }
+
+        this.setState(diffState);
+
+        data.original_request_id && fetch_get(`/api/v01/apio/requests/${data.original_request_id}`, this.props.auth_token)
+            .then(data => !this.cancelLoad && this.setState({request: data.request}))
+            .catch(error => !this.cancelLoad && this.setState({error: error}));
+
+        fetch_get(`/api/v01/transactions/${this.props.match.params.txId}/events`, this.props.auth_token)
+            .then(data => !this.cancelLoad && this.setState({events: data.events}))
+            .catch(error => !this.cancelLoad && this.setState({error: error}));
+
+        fetch_get(`/api/v01/transactions/${this.props.match.params.txId}/logs`, this.props.auth_token)
+            .then(data => !this.cancelLoad && this.setState({
+                logs: data.logs.map(l => {l.type='log'; l.source_entity=l.source; l.content=l.message; return l;})
+            }))
+            .catch(error => !this.cancelLoad && this.setState({error: error}));
+
+        fetch_get(`/api/v01/apio/transactions/${this.props.match.params.txId}/callbacks`, this.props.auth_token)
+            .then(data => !this.cancelLoad && this.setState({externalCallbacks: data.callbacks}))
+            .catch(error => !this.cancelLoad && this.setState({error: error}));
+
+        if(this.state.messageShown) {
+            this.refreshMessages();
+        }
+        if(this.state.subrequestsShown) {
+            this.refreshSubInstances();
+        }
+    }
+
+    fetchDetails() {
+        this.websocket = new WebSocket(`ws://localhost:5000/api/v01/transactions/${this.props.match.params.txId}/ws?auth_token=${this.props.auth_token}`);
+        this.websocket.onopen = () => this.setState({error: undefined});
+        this.websocket.onmessage = this.completeTx;
+        this.websocket.onerror = () => this.setState({error: "Failed to fetch details"});
+        this.websocket.onclose = e => {
+            switch (e.code) {
+                case 4001:
+                    this.setState({error: "Not found ..."});
+                    break;
+                case 4002:
+                    this.setState({error: "You are not allowed to see this request!"});
+                    break;
+                case 1000:	// CLOSE_NORMAL
+                    console.log("WebSocket: closed");
+                    break;
+                default:	// Abnormal closure
+                    this.setState({error: "Trying to reconnect..."});
+                    setTimeout(this.fetchDetails, 1000);
+                    break;
+            }
+        }
+    }
+
     fetchTxDetails(reload) {
+        /*
         this.setState({error: undefined});
         fetch_get(`/api/v01/transactions/${this.props.match.params.txId}`, this.props.auth_token)
             .then(data => {
@@ -1191,13 +1260,16 @@ export class Transaction extends Component {
                 }
                 this.setState({error: new Error(error_msg)})
             });
+
+         */
     }
 
     componentDidMount() {
-        this.fetchTxDetails(true);
+        this.fetchDetails(true);
     }
 
     componentWillUnmount() {
+        this.websocket && this.websocket.close();
         this.cancelLoad = true;
     }
 
@@ -1214,7 +1286,8 @@ export class Transaction extends Component {
                 subrequests: [],
                 subrequests_paging_info: {page_number: 1, page_size: SUB_REQUESTS_PAGE_SIZE}
             });
-            this.fetchTxDetails(false);
+            this.websocket && this.websocket.close();
+            this.fetchDetails(false);
         }
     }
 
@@ -1223,7 +1296,7 @@ export class Transaction extends Component {
         fetch_put(`/api/v01/transactions/${activity_id}/tasks/${task_id}`, {}, this.props.auth_token)
             .then(() => {
                 !this.cancelLoad && this.setState({replaying: false});
-                this.fetchTxDetails(false);
+                this.websocket && this.websocket.send(JSON.stringify({"reload": true}));
                 this.props.notifications.addNotification({
                         message: <FormattedMessage id="task-replayed" defaultMessage="Task replayed!"/>,
                         level: 'success'
@@ -1246,7 +1319,7 @@ export class Transaction extends Component {
         fetch_put(`/api/v01/transactions/${activity_id}/tasks/${task_id}?meta=${meta}`, {}, this.props.auth_token)
             .then(() => {
                 !this.cancelLoad && this.setState({replaying: false});
-                this.fetchTxDetails(false);
+                this.websocket && this.websocket.send(JSON.stringify({"reload": true}));
                 this.props.notifications.addNotification({
                         message: <FormattedMessage id="rollback-triggered" defaultMessage="{action} triggered!" values={{action: action}}/>,
                         level: 'success'
@@ -1312,7 +1385,7 @@ export class Transaction extends Component {
                 this.state.tx.original_request_id &&
                 fetch_put(`/api/v01/apio/requests/${this.state.tx.original_request_id}`, {status: new_status === "CLOSED_IN_ERROR"?"ERROR":new_status}, this.props.auth_token)
                     .then(() => {
-                        this.fetchTxDetails(false);
+                        this.websocket && this.websocket.send(JSON.stringify({"reload": true}));
                         this.props.notifications.addNotification({
                             message: <FormattedMessage id="instance-status-changed" defaultMessage="Instance status updated!"/>,
                             level: 'success'
@@ -1338,7 +1411,7 @@ export class Transaction extends Component {
             message: <FormattedMessage id="case-updated" defaultMessage="Case updated!"/>,
             level: 'success'
         });
-        this.fetchTxDetails(false);
+        this.websocket && this.websocket.send(JSON.stringify({"reload": true}));
     }
 
     caseUpdateFailure(error) {
