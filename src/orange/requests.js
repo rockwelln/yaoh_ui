@@ -1112,7 +1112,7 @@ const ContextTable = ({context}) => (
 
 
 const RELOAD_TX = 10 * 1000;
-const USE_WS = window.location.includes("ws=1");
+const USE_WS = window.location.href.includes("ws=1");
 
 
 export class Transaction extends Component {
