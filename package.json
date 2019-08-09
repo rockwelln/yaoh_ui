@@ -5,20 +5,20 @@
   "dependencies": {
     "chart.js": "^2.8.0",
     "color-hash": "^1.0.3",
-    "core-js": "^3.1.4",
+    "core-js": "^3.2.0",
     "es6-promise": "^4.2.8",
     "font-awesome": "^4.7.0",
     "immutability-helper": "2.9.0",
     "isomorphic-fetch": "^2.2.1",
     "oidc-client": "^1.8.2",
     "query-string": "6.2.0",
-    "react": "^16.8.6",
+    "react": "^16.9.0",
     "react-bootstrap": "^0.32.4",
     "react-chartjs-2": "^2.7.6",
     "react-cookie": "^3.1.1",
     "react-datepicker": "^1.6.0",
-    "react-dom": "^16.8.6",
-    "react-intl": "^2.9.0",
+    "react-dom": "^16.9.0",
+    "react-intl": "2.9.0",
     "react-json-view": "^1.19.1",
     "react-notification-system": "^0.2.17",
     "react-redux": "^7.1.0",
@@ -28,7 +28,7 @@
     "react-scripts": "^3.0.1",
     "redux": "^4.0.4",
     "redux-thunk": "^2.3.0",
-    "regenerator-runtime": "^0.13.2",
+    "regenerator-runtime": "^0.13.3",
     "url-polyfill": "^1.1.7"
   },
   "scripts": {
@@ -47,7 +47,7 @@
     "not op_mini all"
   ],
   "devDependencies": {
-    "babel-plugin-react-intl": "^3.3.3",
+    "babel-plugin-react-intl": "^4.1.8",
     "babel-preset-react": "^6.24.1",
     "babel-preset-stage-0": "^6.24.1",
     "npm-check-updates": "^3.1.20",
