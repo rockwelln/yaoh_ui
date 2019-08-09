@@ -31,7 +31,7 @@ import 'font-awesome/css/font-awesome.min.css';
 import ReactJson from 'react-json-view';
 
 import {
-    API_URL_PREFIX, API_URL_PROXY_PREFIX, fetch_get, parseJSON, fetch_post, fetch_put
+    API_URL_PREFIX, API_URL_PROXY_PREFIX, fetch_get, parseJSON, fetch_post, fetch_put, API_WS_URL
 } from "../utils";
 import {ApioDatatable, Pagination} from "../utils/datatable";
 
@@ -1192,7 +1192,7 @@ export class Transaction extends Component {
     }
 
     fetchDetails() {
-        this.websocket = new WebSocket(`ws://localhost:5000/api/v01/transactions/${this.props.match.params.txId}/ws?auth_token=${this.props.auth_token}`);
+        this.websocket = new WebSocket(`${API_WS_URL}/api/v01/transactions/${this.props.match.params.txId}/ws?auth_token=${this.props.auth_token}`);
         this.websocket.onopen = () => this.setState({error: undefined});
         this.websocket.onmessage = this.completeTx;
         this.websocket.onerror = () => this.setState({error: "Failed to fetch details"});
