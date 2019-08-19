@@ -14,6 +14,13 @@ export const pages = Object.freeze({
     'system_reporting': 17,
 });
 
+export const modules = Object.freeze({
+    orange: 'orange',
+    provisioning: 'provisioning',
+    bulk: 'bulk',
+    orchestration: 'orchestration',
+});
+
 export const privileges = Object.freeze({
 
 });

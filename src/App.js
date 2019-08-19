@@ -57,7 +57,7 @@ import Gateways from "./system/gateways_mgm";
 import {API_URL_PREFIX, fetch_get, checkStatus, parseJSON, ProvProxiesManager, NotificationsManager} from "./utils";
 import Databases from "./system/databases_mgm";
 import {AuditLogs} from "./system/audit";
-import {isAllowed, pages} from "./utils/user";
+import {isAllowed, modules, pages} from "./utils/user";
 import {LoginOpenIdConnect, AuthCallback, AuthSilentCallback} from "./sso/login";
 import {ResetPasswordPage, RESET_PASSWORD_PREFIX} from "./reset_password";
 
@@ -211,7 +211,7 @@ class LoginForm extends Component {
     }
 }
 
-const AsyncApioNavBar = ({user_group, logoutUser, database_status, ...props}) => (
+const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => (
   <Navbar staticTop collapseOnSelect inverse>
     <Navbar.Header>
         <Navbar.Brand style={{color: '#ef0803', fontWeight: 'bold',}}>
@@ -231,7 +231,7 @@ const AsyncApioNavBar = ({user_group, logoutUser, database_status, ...props}) =>
               <FormattedMessage id="dashboard" defaultMessage="Dashboard" />
           </ListItemLink>
 
-          {isAllowed(user_group, pages.requests_nprequests) &&
+          {isAllowed(user_info.ui_profile, pages.requests_nprequests) &&
           <NavDropdown title={
               <span>
                   <Glyphicon glyph="send"/> {' '}
@@ -244,7 +244,7 @@ const AsyncApioNavBar = ({user_group, logoutUser, database_status, ...props}) =>
                       <FormattedMessage id="apio-requests" defaultMessage="APIO Requests"/>
                   </MenuItem>
               </LinkContainer>
-              {isAllowed(user_group, pages.requests_ndg) &&
+              {user_info.modules.includes(modules.orange) && isAllowed(user_info.ui_profile, pages.requests_ndg) &&
                   <LinkContainer to={"/requests/ndg"}>
                       <MenuItem>
                           <FormattedMessage id="ndg-history" defaultMessage="NDG history"/>
@@ -252,15 +252,17 @@ const AsyncApioNavBar = ({user_group, logoutUser, database_status, ...props}) =>
                   </LinkContainer>
               }
               <MenuItem divider />
-              <LinkContainer to={"/custom-transactions/list"}>
-                  <MenuItem>
-                      <FormattedMessage id="custom-requests" defaultMessage="Custom Requests"/>
-                  </MenuItem>
-              </LinkContainer>
+              {user_info.modules.includes(modules.orchestration) &&
+                  <LinkContainer to={"/custom-transactions/list"}>
+                      <MenuItem>
+                          <FormattedMessage id="custom-requests" defaultMessage="Custom Requests"/>
+                      </MenuItem>
+                  </LinkContainer>
+              }
           </NavDropdown>
           }
 
-          {isAllowed(user_group, pages.requests_nprequests) &&
+          {user_info.modules.includes(modules.bulk) && isAllowed(user_info.ui_profile, pages.requests_nprequests) &&
           <NavDropdown title={
               <span>
                   <Glyphicon glyph="equalizer" /> {' '}
@@ -275,7 +277,7 @@ const AsyncApioNavBar = ({user_group, logoutUser, database_status, ...props}) =>
           </NavDropdown>
           }
 
-          { isAllowed(user_group, pages.data) &&
+          { user_info.modules.includes(modules.provisioning) && isAllowed(user_info.ui_profile, pages.data) &&
               <NavDropdown
                 eventKey={4}
                 title={
@@ -301,55 +303,55 @@ const AsyncApioNavBar = ({user_group, logoutUser, database_status, ...props}) =>
               </NavDropdown>
           }
 
-          { isAllowed(user_group, pages.system) &&
+          { isAllowed(user_info.ui_profile, pages.system) &&
               <NavDropdown eventKey={4} title={
                 <span>
                     <Glyphicon glyph="signal" /> {' '}
                     <FormattedMessage id='settings' defaultMessage='Settings'/>
                 </span>
                 } id="nav-system-settings">
-                  { isAllowed(user_group, pages.system_users) &&
+                  { isAllowed(user_info.ui_profile, pages.system_users) &&
                       <LinkContainer to={"/system/users"}>
                           <MenuItem>
                               <FormattedMessage id="users" defaultMessage="Users"/>
                           </MenuItem>
                       </LinkContainer>
                   }
-                  { isAllowed(user_group, pages.system_config) &&
+                  { isAllowed(user_info.ui_profile, pages.system_config) &&
                       <LinkContainer to={"/system/webhooks"}>
                           <MenuItem>
                               <FormattedMessage id="webhooks" defaultMessage="Webhooks"/>
                           </MenuItem>
                       </LinkContainer>
                   }
-                  { isAllowed(user_group, pages.system_config) &&
+                  { isAllowed(user_info.ui_profile, pages.system_config) &&
                       <LinkContainer to={"/system/config"}>
                           <MenuItem>
                               <FormattedMessage id="configuration" defaultMessage="Configuration"/>
                           </MenuItem>
                       </LinkContainer>
                   }
-                  { isAllowed(user_group, pages.system_gateways) &&
+                  { isAllowed(user_info.ui_profile, pages.system_gateways) &&
                       <MenuItem divider/>
                   }
-                  { isAllowed(user_group, pages.system_gateways) &&
+                  { isAllowed(user_info.ui_profile, pages.system_gateways) &&
                       <LinkContainer to={"/system/gateways"}>
                           <MenuItem>
                               <FormattedMessage id="gateways" defaultMessage="Gateways"/>
                           </MenuItem>
                       </LinkContainer>
                   }
-                  { isAllowed(user_group, pages.system_databases) &&
+                  { isAllowed(user_info.ui_profile, pages.system_databases) &&
                       <LinkContainer to={"/system/databases"}>
                           <MenuItem>
                               <FormattedMessage id="databases" defaultMessage="Databases"/>
                           </MenuItem>
                       </LinkContainer>
                   }
-                  { isAllowed(user_group, pages.system_reporting) &&
+                  { isAllowed(user_info.ui_profile, pages.system_reporting) &&
                       <MenuItem divider/>
                   }
-                  { isAllowed(user_group, pages.system_reporting) &&
+                  { isAllowed(user_info.ui_profile, pages.system_reporting) &&
                       <LinkContainer to={"/system/reporting"}>
                           <MenuItem>
                               <FormattedMessage id="reporting" defaultMessage="Reporting"/>
@@ -358,21 +360,21 @@ const AsyncApioNavBar = ({user_group, logoutUser, database_status, ...props}) =>
                   }
               </NavDropdown>
           }
-          { isAllowed(user_group, pages.requests_startup_events) &&
+          { user_info.modules.includes(modules.orchestration) && isAllowed(user_info.ui_profile, pages.requests_startup_events) &&
               <NavDropdown eventKey={4} title={
                 <span>
                     <Glyphicon glyph="cog" /> {' '}
                     <FormattedMessage id='orchestration' defaultMessage='Orchestration'/>
                 </span>
                 } id="nav-orch">
-                  {isAllowed(user_group, pages.requests_startup_events) &&
+                  {isAllowed(user_info.ui_profile, pages.requests_startup_events) &&
                   <LinkContainer to={"/transactions/config/startup_events"}>
                       <MenuItem>
                           <FormattedMessage id="startup-events" defaultMessage="Startup Events"/>
                       </MenuItem>
                   </LinkContainer>
                   }
-                  {isAllowed(user_group, pages.requests_workflow_editor) &&
+                  {isAllowed(user_info.ui_profile, pages.requests_workflow_editor) &&
                   <LinkContainer to={"/transactions/config/activities/editor"}>
                       <MenuItem>
                           <FormattedMessage id="editor" defaultMessage="Editor"/>
@@ -625,7 +627,7 @@ class App extends Component {
                 }
                 <div className="App-header">
                   <AsyncApioNavBar
-                      user_group={ui_profile}
+                      user_info={user_info}
                       database_status={database_status}
                       logoutUser={this.logout}
                       auth_token={auth_token} />
