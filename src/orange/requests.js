@@ -1112,8 +1112,12 @@ const ContextTable = ({context}) => (
 
 
 const RELOAD_TX = 10 * 1000;
-const USE_WS = window.location.href.includes("ws=1");
-
+let USE_WS = false;
+try {
+    USE_WS = window.location.href ? window.location.href.includes("ws=1") : document.location.href.includes("ws=1");
+} catch {
+    console.error("USE_WS not set");
+}
 
 export class Transaction extends Component {
     constructor(props) {
