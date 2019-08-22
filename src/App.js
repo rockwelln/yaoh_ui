@@ -244,7 +244,7 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
                       <FormattedMessage id="apio-requests" defaultMessage="APIO Requests"/>
                   </MenuItem>
               </LinkContainer>
-              {user_info.modules.includes(modules.orange) && isAllowed(user_info.ui_profile, pages.requests_ndg) &&
+              {(!user_info.modules || user_info.modules.includes(modules.orange)) && isAllowed(user_info.ui_profile, pages.requests_ndg) &&
                   <LinkContainer to={"/requests/ndg"}>
                       <MenuItem>
                           <FormattedMessage id="ndg-history" defaultMessage="NDG history"/>
@@ -252,7 +252,7 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
                   </LinkContainer>
               }
               <MenuItem divider />
-              {user_info.modules.includes(modules.orchestration) &&
+              {(!user_info.modules || user_info.modules.includes(modules.orchestration)) &&
                   <LinkContainer to={"/custom-transactions/list"}>
                       <MenuItem>
                           <FormattedMessage id="custom-requests" defaultMessage="Custom Requests"/>
@@ -262,7 +262,7 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
           </NavDropdown>
           }
 
-          {user_info.modules.includes(modules.bulk) && isAllowed(user_info.ui_profile, pages.requests_nprequests) &&
+          {(!user_info.modules || user_info.modules.includes(modules.bulk)) && isAllowed(user_info.ui_profile, pages.requests_nprequests) &&
           <NavDropdown title={
               <span>
                   <Glyphicon glyph="equalizer" /> {' '}
@@ -277,7 +277,7 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
           </NavDropdown>
           }
 
-          { user_info.modules.includes(modules.provisioning) && isAllowed(user_info.ui_profile, pages.data) &&
+          {(!user_info.modules || user_info.modules.includes(modules.provisioning)) && isAllowed(user_info.ui_profile, pages.data) &&
               <NavDropdown
                 eventKey={4}
                 title={
@@ -360,7 +360,7 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
                   }
               </NavDropdown>
           }
-          { user_info.modules.includes(modules.orchestration) && isAllowed(user_info.ui_profile, pages.requests_startup_events) &&
+          {(!user_info.modules || user_info.modules.includes(modules.orchestration)) && isAllowed(user_info.ui_profile, pages.requests_startup_events) &&
               <NavDropdown eventKey={4} title={
                 <span>
                     <Glyphicon glyph="cog" /> {' '}
