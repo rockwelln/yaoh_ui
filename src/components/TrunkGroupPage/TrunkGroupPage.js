@@ -11,6 +11,13 @@ import { fetchGetTrunkGroupByName } from "../../store/actions";
 
 import Users from "./Tabs/Users";
 import Backup from "./Tabs/Backup";
+import Details from "./Tabs/Details";
+import TrunkIndenty from "./Tabs/TrunkIndenty";
+import Capacity from "./Tabs/Capacity";
+import CallScreening from "./Tabs/CallScreening";
+import StatefulRerouting from "./Tabs/StatefulRerouting";
+import CLI from "./Tabs/CLI";
+import Advanced from "./Tabs/Advanced";
 
 class TrunkGroupPage extends Component {
   state = {
@@ -56,24 +63,33 @@ class TrunkGroupPage extends Component {
           <div>{`Level: ${this.props.trunkGroup.accessDevice.level}`}</div>
         </div>
         <div className={"panel-body"}>
-          <Tabs defaultActiveKey={3} id="tenant_tabs">
-            <Tab eventKey={0} title="DETAILS">
-              DETAILS
+          <Tabs defaultActiveKey={0} id="tenant_tabs">
+            <Tab eventKey={0} title="Details">
+              <Details />
             </Tab>
-            <Tab eventKey={1} title="USERS">
+            <Tab eventKey={1} title="Users">
               <Users />
             </Tab>
-            <Tab eventKey={2} title="SCREENING">
-              SCREENING Tab
+            <Tab eventKey={2} title="Trunk indentity">
+              <TrunkIndenty />
             </Tab>
-            <Tab eventKey={3} title="BACKUP">
+            <Tab eventKey={3} title="Backup">
               <Backup />
             </Tab>
-            <Tab eventKey={4} title="NETWORK SETTINGS">
-              NETWORK SETTINGS
+            <Tab eventKey={4} title="Capacity">
+              <Capacity />
             </Tab>
-            <Tab eventKey={5} title="NETWORK SETTINGS">
-              NETWORK SETTINGS
+            <Tab eventKey={5} title="Call screening">
+              <CallScreening />
+            </Tab>
+            <Tab eventKey={6} title="Stateful rerouting">
+              <StatefulRerouting />
+            </Tab>
+            <Tab eventKey={7} title="Outgoing CLI overwrite">
+              <CLI />
+            </Tab>
+            <Tab eventKey={8} title="Advanced">
+              <Advanced />
             </Tab>
           </Tabs>
         </div>

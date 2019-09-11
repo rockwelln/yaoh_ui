@@ -5,13 +5,13 @@ import { withRouter } from "react-router";
 import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
 
-//import DeleteModal from "./DeleteModal";
+import DeleteModal from "./DeleteModal";
 
 class TrunkGrup extends Component {
   state = { showDelete: false };
   render() {
-    const { trunkGrup } = this.props;
-    // const { showDelete } = this.state;
+    const { trunkGrup, onReload } = this.props;
+    const { showDelete } = this.state;
     return (
       <tr>
         <td>
@@ -36,18 +36,15 @@ class TrunkGrup extends Component {
               onClick={() => this.setState({ showDelete: true })}
             />
           </ButtonToolbar>
-          {/* <DeleteModal
-            notifications={this.props.notifications}
-            adminId={admin.userId}
-            tenantId={this.props.tenantId}
-            groupId={this.props.groupId}
+          <DeleteModal
+            trunkName={trunkGrup.name}
             show={showDelete}
             onClose={e => {
               onReload && onReload();
               this.setState({ showDelete: false });
             }}
             {...this.props}
-          /> */}
+          />
         </td>
       </tr>
     );

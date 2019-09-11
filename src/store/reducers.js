@@ -88,7 +88,20 @@ const initialState = {
   trunksGroups: [],
   trunkGroup: {},
   trunkGroupUsers: [],
-  trunkGroupBackup: {}
+  trunkGroupBackup: {},
+  templateDetails: {},
+  phoneTypes: [],
+  phoneTypesDetails: {},
+  applications: [],
+  applicationKeys: [],
+  keyValue: {},
+  fetchTrunksGroupsFail: false,
+  localUsers: [],
+  localUser: {},
+  availableNumbersTenant: [],
+  addedNumbersToGroup: {},
+  usersFound: [],
+  groupsFound: []
 };
 
 function mainReducer(state = initialState, action) {
@@ -181,7 +194,9 @@ function mainReducer(state = initialState, action) {
             group.name === "Auto Attendant - Standard" ||
             group.name === "Call Pickup" ||
             group.name === "Hunt Group" ||
-            group.name === "Meet-me Conferencing"
+            group.name === "Group Paging" ||
+            group.name === "Meet-me Conferencing" ||
+            group.name === "Trunk Group"
         )
         .sort((a, b) => {
           if (a.name < b.name) return -1;
@@ -191,12 +206,13 @@ function mainReducer(state = initialState, action) {
       const groupServicesHide = action.data.groupServices
         .filter(
           group =>
-            group.name === "Auto Attendant - Video" ||
-            group.name === "Find-me/Follow-me" ||
-            group.name === "Group Paging" ||
-            group.name === "Route Point" ||
-            group.name === "Series Completion" ||
-            group.name === "VoiceXML"
+            group.name !== "Auto Attendant" &&
+            group.name !== "Auto Attendant - Standard" &&
+            group.name !== "Call Pickup" &&
+            group.name !== "Hunt Group" &&
+            group.name !== "Group Paging" &&
+            group.name !== "Meet-me Conferencing" &&
+            group.name !== "Trunk Group"
         )
         .sort((a, b) => {
           if (a.name < b.name) return -1;
@@ -228,7 +244,8 @@ function mainReducer(state = initialState, action) {
     case actionType.GET_TRUNK_BY_GROUP_ID: {
       return {
         ...state,
-        trunkGroups: action.data
+        trunkGroups: action.data,
+        fetchTrunksGroupsFail: true
       };
     }
     case actionType.GET_AVAILABLE_NUMBERS_BY_GROUP_ID: {
@@ -347,6 +364,90 @@ function mainReducer(state = initialState, action) {
         trunkGroupBackup: action.data
       };
     }
+    case actionType.GET_TEMPLATE_DETAILS: {
+      return {
+        ...state,
+        templateDetails: action.data
+      };
+    }
+    case actionType.GET_PHONE_TYPES: {
+      return {
+        ...state,
+        phoneTypes: action.data.phoneTypes
+      };
+    }
+    case actionType.GET_PHONE_TYPES_DETAILS: {
+      return {
+        ...state,
+        phoneTypesDetails: action.data
+      };
+    }
+    case actionType.GET_APPLICATIONS: {
+      return {
+        ...state,
+        applications: action.data.applications
+      };
+    }
+    case actionType.GET_KEYS_BY_APPLICATIONS: {
+      return {
+        ...state,
+        applicationKeys: action.data.applicationKeys
+      };
+    }
+    case actionType.GET_VALUE_OF_KEY: {
+      return {
+        ...state,
+        keyValue: action.data
+      };
+    }
+    case actionType.GET_TRUNKS_GROUPS_BY_GROUP_FAIL: {
+      return {
+        ...state,
+        fetchTrunksGroupsFail: false
+      };
+    }
+    case actionType.GET_LOCAL_USERS: {
+      return {
+        ...state,
+        localUsers: action.data.local_users
+      };
+    }
+    case actionType.GET_LOCAL_USER: {
+      return {
+        ...state,
+        localUser: action.data
+      };
+    }
+    case actionType.GET_SEARCH_USERS: {
+      return {
+        ...state,
+        usersFound: action.data.users
+      };
+    }
+    case actionType.GET_SEARCH_GROUPS: {
+      return {
+        ...state,
+        groupsFound: action.data.groups
+      };
+    }
+    case actionType.GET_AVAILABLE_NUMBERS_BY_TENANT_ID: {
+      const phoneNumbers = action.data.available_phoneNumbers.map(phone => ({
+        ...phone,
+        rangeStart:
+          (phone.phoneNumbers && phone.phoneNumbers.split(" - ").slice(0)[0]) ||
+          phone.phoneNumber ||
+          "",
+        rangeEnd:
+          (phone.phoneNumbers &&
+            phone.phoneNumbers.split(" - ").slice(-1)[0]) ||
+          "",
+        phoneChecked: false
+      }));
+      return {
+        ...state,
+        availableNumbersTenant: phoneNumbers
+      };
+    }
     case actionType.POST_CREATE_GROUP_ADMIN: {
       return {
         ...state,
@@ -418,6 +519,38 @@ function mainReducer(state = initialState, action) {
         createdUserInGroup: action.data
       };
     }
+    case actionType.POST_ADD_GROUP_SERVICES_TO_GROUP: {
+      return {
+        ...state
+      };
+    }
+    case actionType.POST_ADD_KEY_TO_APPLICATION: {
+      return {
+        ...state
+      };
+    }
+    case actionType.POST_CREATE_LOCAL_USER: {
+      return {
+        ...state
+      };
+    }
+    case actionType.POST_ASSIGN_PHONE_NUMBERS_TO_GROUP: {
+      const warning = action.data.warning;
+      const added = action.data.result.filter(
+        number => number.status === "added"
+      );
+      const rejected = action.data.result.filter(
+        number => number.status === "rejected"
+      );
+      return {
+        ...state,
+        addedNumbersToGroup: {
+          warning,
+          added,
+          rejected
+        }
+      };
+    }
     case actionType.PUT_UPDATE_USER: {
       return {
         ...state,
@@ -471,7 +604,30 @@ function mainReducer(state = initialState, action) {
         ...state
       };
     }
-
+    case actionType.PUT_UPDATE_KEY: {
+      return {
+        ...state,
+        keyValue: action.data
+      };
+    }
+    case actionType.PUT_UPDATE_TRUNK_GROUP: {
+      return {
+        ...state,
+        trunkGroup: action.data
+      };
+    }
+    case actionType.PUT_UPDATE_BACKUP_BY_TRUNK_GROUP: {
+      return {
+        ...state,
+        trunkGroupBackup: action.data
+      };
+    }
+    case actionType.PUT_UPDATE_LOCAL_USER: {
+      return {
+        ...state,
+        localUser: action.data
+      };
+    }
     case actionType.DELETE_TENANT: {
       return {
         ...state
@@ -514,6 +670,21 @@ function mainReducer(state = initialState, action) {
       };
     }
     case actionType.DELETE_GROUP_FROM_TENANT: {
+      return {
+        ...state
+      };
+    }
+    case actionType.DELETE_TRUNK_GROUP: {
+      return {
+        ...state
+      };
+    }
+    case actionType.DELETE_KEY: {
+      return {
+        ...state
+      };
+    }
+    case actionType.DELETE_LOCAL_USER: {
       return {
         ...state
       };

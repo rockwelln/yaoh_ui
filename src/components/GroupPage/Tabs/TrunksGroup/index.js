@@ -184,7 +184,7 @@ export class Trunks extends Component {
                       <TrunkGrup
                         key={i}
                         trunkGrup={trunkGrup}
-                        onReload={() => this.props.fetchTrunks()}
+                        onReload={() => this.fetchTrunks()}
                         {...this.props}
                       />
                     ))}
@@ -258,7 +258,7 @@ export class Trunks extends Component {
       paginationTrunks: paginationItems,
       pagination: false,
       countPages,
-      page: 0
+      page: this.state.page
     });
   };
 

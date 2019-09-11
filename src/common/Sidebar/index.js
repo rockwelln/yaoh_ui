@@ -48,6 +48,16 @@ export class Sidebar extends Component {
               <CategoriesSideBar />
             </Nav>
           </DropdownButton>
+          <LinkContainer
+            to={`/provisioning/${this.props.match.params.gwName}/configs`}
+          >
+            <NavItem eventKey={3}>CONFIGS</NavItem>
+          </LinkContainer>
+          <LinkContainer
+            to={`/provisioning/${this.props.match.params.gwName}/localusers`}
+          >
+            <NavItem eventKey={0}>LOCAL USERS</NavItem>
+          </LinkContainer>
         </Nav>
       </React.Fragment>
     );
