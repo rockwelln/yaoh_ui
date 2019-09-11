@@ -5,12 +5,12 @@
   "dependencies": {
     "chart.js": "^2.8.0",
     "color-hash": "^1.0.3",
-    "core-js": "^3.2.0",
+    "core-js": "^3.2.1",
     "es6-promise": "^4.2.8",
     "font-awesome": "^4.7.0",
     "immutability-helper": "2.9.0",
     "isomorphic-fetch": "^2.2.1",
-    "oidc-client": "^1.8.2",
+    "oidc-client": "^1.9.0",
     "query-string": "6.2.0",
     "react": "^16.9.0",
     "react-bootstrap": "^0.32.4",
@@ -25,7 +25,7 @@
     "react-router": "^5.0.1",
     "react-router-bootstrap": "^0.25.0",
     "react-router-dom": "^5.0.1",
-    "react-scripts": "^3.0.1",
+    "react-scripts": "^3.1.1",
     "redux": "^4.0.4",
     "redux-thunk": "^2.3.0",
     "regenerator-runtime": "^0.13.3",
@@ -47,10 +47,9 @@
     "not op_mini all"
   ],
   "devDependencies": {
-    "babel-plugin-react-intl": "^4.1.8",
+    "babel-plugin-react-intl": "^4.1.14",
     "babel-preset-react": "^6.24.1",
     "babel-preset-stage-0": "^6.24.1",
-    "npm-check-updates": "^3.1.20",
     "react-intl-po": "^2.2.2"
   }
 }
