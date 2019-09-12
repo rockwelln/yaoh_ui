@@ -2,20 +2,6 @@ export const API_WS_URL = (window.location.protocol === 'https:'?'wss':'ws') + '
 export const API_URL_PREFIX = process.env.NODE_ENV === 'production'?window.location.origin:'http://127.0.0.1:5000';
 export const API_URL_PROXY_PREFIX = '/api/v01/apio/sync';
 
-export const API_BASE_URL = process.env.NODE_ENV === 'production'?"/api/v01/p2":"http://127.0.0.1:5001/api/v01/p1";
-
-/*
-export class AuthService {
-    static getToken() {
-        return localStorage.jwt;
-    }
-
-    static isAuthenticated() {
-        return this.getToken() === undefined;
-    }
-}
-
-
 function getCookie(name) {
   var value = "; " + document.cookie;
   var parts = value.split("; " + name + "=");
@@ -25,7 +11,53 @@ function getCookie(name) {
       .split(";")
       .shift();
 }
-*/
+
+function createCookie(name,value,days,path) {
+	var expires = "";
+    if (days) {
+		var date = new Date();
+		date.setTime(date.getTime()+(days*24*60*60*1000));
+		expires = "; expires="+date.toGMTString();
+	}
+	if (!path) {
+	    path = "/";
+    }
+	document.cookie = name+"="+value+expires+"; path="+path;
+}
+
+function removeCookie(name) {
+    createCookie(name,"",-1);
+}
+
+class AuthService {
+    static token = null;
+
+    loadToken(token) {
+        this.token = token;
+        console.log("token updated!");
+    }
+
+    loadTokenFromCookie(cookie_name) {
+        this.loadToken(getCookie(cookie_name));
+    }
+
+    getToken() {
+        return this.token;
+        // return localStorage.jwt;
+    }
+
+    logout() {
+        this.token = null;
+    }
+
+    isAuthenticated() {
+        const token = this.getToken();
+        return token !== null && typeof token === "string" && token.length > 0;
+    }
+}
+
+export const AuthServiceManager = new AuthService();
+
 
 class ProvisioningProxies {
     static proxies = [];
@@ -111,25 +143,27 @@ export function parseJSON(response) {
 }
 
 export function fetch_get(url, token) {
+    const token_ = AuthServiceManager.getToken();
     const full_url = url.href?url:url.startsWith('http')?url:API_URL_PREFIX + url;
     return fetch(full_url, {
         method: 'GET',
         headers: {
             'Accept': 'application/json',
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${token_}`
         }
     }).then(checkStatus)
     .then(parseJSON)
 }
 
 export function fetch_put(url, body, token) {
+    const token_ = AuthServiceManager.getToken();
     const full_url = url.href?url:url.startsWith('http')?url:API_URL_PREFIX + url;
     return fetch(full_url, {
         method: 'PUT',
         headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${token_}`
         },
         body: JSON.stringify(body)
     }).then(checkStatus)
@@ -140,9 +174,10 @@ export function fetch_post(url, body, token) {
 }
 
 export function fetch_post_raw(url, raw_body, token, content_type) {
+    const token_ = AuthServiceManager.getToken();
     const full_url = url.href?url:url.startsWith('http')?url:API_URL_PREFIX + url;
     let headers = {
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `Bearer ${token_}`,
     };
     if(content_type) {
         headers['content-type'] = content_type
@@ -154,24 +189,14 @@ export function fetch_post_raw(url, raw_body, token, content_type) {
     }).then(checkStatus)
 }
 
-export function fetch_delete(url, token, body) {
+export function fetch_delete(url, body, token) {
+    const token_ = AuthServiceManager.getToken();
     const full_url = url.href?url:url.startsWith('http')?url:API_URL_PREFIX + url;
     return fetch(full_url, {
         method: 'DELETE',
         headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${token_}`
         },
         body: JSON.stringify(body)
     }).then(checkStatus)
-}
-
-export function fetchOperators(token, onSuccess, onError) {
-  fetch_get('/api/v01/voo/operators', token)
-      .then(data => {
-          let operators = data.operators.sort((a, b) => (a.name < b.name)?-1:1);
-          onSuccess && onSuccess(operators);
-      })
-      .catch(error => {
-          onError && onError(error)
-      });
 }

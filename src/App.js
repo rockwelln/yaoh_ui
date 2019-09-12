@@ -54,7 +54,15 @@ import ActivityEditor from './activity-editor';
 import {ConfigManagement} from './settings/configuration';
 import {Reporting} from "./settings/reporting.jsx";
 import Gateways from "./system/gateways_mgm";
-import {API_URL_PREFIX, fetch_get, checkStatus, parseJSON, ProvProxiesManager, NotificationsManager} from "./utils";
+import {
+    API_URL_PREFIX,
+    fetch_get,
+    checkStatus,
+    parseJSON,
+    ProvProxiesManager,
+    NotificationsManager,
+    AuthServiceManager
+} from "./utils";
 import Databases from "./system/databases_mgm";
 import {AuditLogs} from "./system/audit";
 import {isAllowed, modules, pages} from "./utils/user";
@@ -481,6 +489,7 @@ class App extends Component {
         };
         this._notificationSystem = React.createRef();
         NotificationsManager.setRef(this._notificationSystem);
+        AuthServiceManager.loadTokenFromCookie("auth_token");
 
         this.getUserInfo = this.getUserInfo.bind(this);
         this.updateToken = this.updateToken.bind(this);
@@ -529,6 +538,7 @@ class App extends Component {
     }
 
     updateToken(token, sso_auth) {
+        AuthServiceManager.loadToken(token);
         let tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate()+1);
         this.setState({auth_token: token, error_msg: undefined});
@@ -539,6 +549,7 @@ class App extends Component {
     logout() {
         this.setState({auth_token: undefined, user_info: undefined});
         console.log('logout');
+        AuthServiceManager.logout();
         this.props.cookies.remove("auth_token", { path: '/' });
         this.props.cookies.remove("auth_sso", { path: '/' });
         this.props.cookies.remove("user_language", { path: '/' });

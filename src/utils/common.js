@@ -5,7 +5,7 @@ import FormControl from "react-bootstrap/lib/FormControl";
 import Col from "react-bootstrap/lib/Col";
 
 import {FormattedMessage} from 'react-intl';
-import {API_URL_PREFIX, fetch_get, fetchOperators} from "../utils";
+import {API_URL_PREFIX, fetch_get} from "../utils";
 import queryString from "query-string";
 import update from "immutability-helper/index";
 import PropTypes from 'prop-types';
@@ -49,7 +49,6 @@ export class Search extends React.Component {
         collectionName: '',
         defaultCriteria: [],
         defaultSortingSpec: [],
-        handleOperators: false,
         useNotifications: true,
     };
 
@@ -62,7 +61,6 @@ export class Search extends React.Component {
         collectionName: PropTypes.string.isRequired,
         defaultCriteria: PropTypes.array.isRequired,
         defaultSortingSpec: PropTypes.array.isRequired,
-        handleOperators: PropTypes.bool.isRequired,
         useNotifications: PropTypes.bool.isRequired,
     };
 
@@ -94,7 +92,7 @@ export class Search extends React.Component {
             },
             sorting_spec : this.props.defaultSortingSpec,
 
-            resources: undefined, operators: [],
+            resources: undefined,
             pagination: {
                 page_number: 1,
                 num_pages: 1,
@@ -104,25 +102,15 @@ export class Search extends React.Component {
         this._usableCriteria = this._usableCriteria.bind(this);
         this._filterCriteriaAsSpec = this._filterCriteriaAsSpec.bind(this);
         this._refresh = this._refresh.bind(this);
-        this._refreshOperators = this._refreshOperators.bind(this);
         this._normalizeResource = this._normalizeResource.bind(this);
     }
 
     componentDidMount() {
         this._refresh();
-        this.props.handleOperators && this._refreshOperators();
     }
 
     componentWillUnmount() {
         this.cancelLoad = true;
-    }
-
-    _refreshOperators() {
-        fetchOperators(
-            this.props.auth_token,
-            data => !this.cancelLoad && this.setState({operators: data}),
-            console.log
-        );
     }
 
     _usableCriteria(c) {
