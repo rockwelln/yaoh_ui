@@ -31,7 +31,7 @@ import 'font-awesome/css/font-awesome.min.css';
 import ReactJson from 'react-json-view';
 
 import {
-    API_URL_PREFIX, API_URL_PROXY_PREFIX, fetch_get, parseJSON, fetch_post, fetch_put, API_WS_URL
+    API_URL_PREFIX, API_URL_PROXY_PREFIX, fetch_get, parseJSON, fetch_post, fetch_put, API_WS_URL, NotificationsManager
 } from "../utils";
 import {ApioDatatable, Pagination} from "../utils/datatable";
 
@@ -1889,6 +1889,7 @@ export class Requests extends Component{
             }],
 
             requests: [],
+            selected_reqs: [],
             pagination: {
                 page_number: 1,
                 num_pages: 1,
@@ -1900,6 +1901,8 @@ export class Requests extends Component{
         this._refresh = this._refresh.bind(this);
         this._load_activities = this._load_activities.bind(this);
         this._prepare_url = this._prepare_url.bind(this);
+        this._onCloseAll = this._onCloseAll.bind(this);
+        this._onClose = this._onClose.bind(this);
     }
 
     static default_criteria(ui_profile) {
@@ -1957,11 +1960,11 @@ export class Requests extends Component{
             .catch(error => console.error(error))
     }
 
-    _prepare_url(paging_spec, sorting_spec, format) {
-        let url = new URL(API_URL_PREFIX + '/api/v01/apio/requests/search');
+    _prepare_url(paging_spec, sorting_spec, format, action) {
+        const url = new URL(API_URL_PREFIX + '/api/v01/apio/requests/' + (action?action:"search"));
         // filter
         const {filter_criteria} = this.state;
-        let filter_spec = Object.keys(filter_criteria)
+        const filter_spec = Object.keys(filter_criteria)
             .filter(f =>
                 filter_criteria[f] &&
                 (
@@ -2039,9 +2042,11 @@ export class Requests extends Component{
         const url = this._prepare_url(paging_info, sorting_spec);
         let export_url = this._prepare_url(undefined, sorting_spec, 'csv');
         export_url.searchParams.append('auth_token', this.props.auth_token);
+        // get the force close URL
+        const close_instances_url = this._prepare_url(undefined, undefined, undefined, "close");
 
         //reset collection
-        this.setState({requests: undefined});
+        this.setState({requests: undefined, selected_reqs: []});
 
         fetch_get(url, this.props.auth_token)
             .then(data => {
@@ -2084,14 +2089,67 @@ export class Requests extends Component{
                          total_results: data.pagination[3],
                      },
                      sorting_spec: data.sorting || [],
-                     export_url: export_url.href
+                     export_url: export_url.href,
+                     close_instances_url: close_instances_url,
                 });
             })
             .catch(error => !this.cancelLoad && this.setState({error: error}));
     }
 
+    _onClose() {
+        const {selected_reqs, requests} = this.state;
+        if(selected_reqs.length === 0) {
+            return this._onCloseAll();
+        } else {
+            const reqs_ = requests.filter(r => r.request_id && r.status === "ACTIVE" && selected_reqs.includes(r.instance_id));
+            if(reqs_.length === 0) {
+                NotificationsManager.success(<FormattedMessage id="nothing-to-do"
+                                                               defaultMessage="Nothing to be done."/>);
+                return
+            }
+            this.setState({updating_requests: true});
+            Promise.all(
+                reqs_.map(
+                    r => fetch_put(`/api/v01/apio/requests/${r.request_id}?close=1`, {status: "ERROR"}, this.props.auth_token)
+                )
+            ).then(() => {
+                NotificationsManager.success(<FormattedMessage id="instance-status-changed"
+                                                               defaultMessage="Instance status updated!"/>);
+                this.setState({updating_requests: false});
+                this._refresh();
+            })
+            .catch(error => {
+                NotificationsManager.error(
+                    <FormattedMessage id="instance-update-failed" defaultMessage="Instance status update failed!"/>,
+                    error.message
+                );
+                this.setState({updating_requests: false});
+                this._refresh();
+            });
+        }
+    }
+
+    _onCloseAll() {
+        const {close_instances_url} = this.state;
+        this.setState({updating_requests: true});
+        NotificationsManager.success(<FormattedMessage id="closing-all_requests" defaultMessage="Closing requests..."/>);
+        fetch_put(close_instances_url, {}, this.props.auth_token)
+            .then(() => {
+                !this.cancelLoad && this.setState({updating_requests: false});
+                NotificationsManager.success(<FormattedMessage id="done" defaultMessage="Done"/>);
+                this._refresh();
+            })
+            .catch(error => {
+                !this.cancelLoad && this.setState({updating_requests: false});
+                NotificationsManager.error(
+                    <FormattedMessage id="global-action-failed" defaultMessage="Global action failed!"/>,
+                    error.message
+                );
+            })
+    }
+
     render() {
-        const {filter_criteria, requests, activities, export_url, auto_refresh} = this.state;
+        const {filter_criteria, requests, activities, export_url, auto_refresh, sorting_spec, selected_reqs} = this.state;
         const invalid_created_on = filter_criteria.created_on.value.length !== 0 && !moment(filter_criteria.created_on.value, "DD/MM/YYYY HH:mm").isValid();
 
         return (
@@ -2440,8 +2498,20 @@ export class Requests extends Component{
                 <Panel>
                     <Panel.Body>
                         <ApioDatatable
-                            sorting_spec={this.state.sorting_spec}
+                            sorting_spec={sorting_spec}
                             headers={[
+                                {
+                                    title: '',
+                                    render: n =>
+                                        n.instance_id && <Checkbox checked={selected_reqs.includes(n.instance_id)} onChange={e => {
+                                            if(e.target.checked) {
+                                                this.setState({selected_reqs: update(selected_reqs, {"$push": [n.instance_id]})})
+                                            } else {
+                                                this.setState({selected_reqs: update(selected_reqs, {"$splice": [[selected_reqs.indexOf(n.instance_id), 1]]})})
+                                            }
+                                        }} />,
+                                    style: {width: '30px'}
+                                },
                                 {
                                     title: '#', field: 'request_id', model: 'requests',
                                     render: n =>
@@ -2505,13 +2575,27 @@ export class Requests extends Component{
 
                 <Panel>
                     <Panel.Body>
-                        <Button
-                            bsStyle="primary"
-                            href={export_url}
-                            disabled={export_url === undefined}
-                        >
-                            <FormattedMessage id="export-as-csv" defaultMessage="Export as CSV"/>
-                        </Button>
+                        <ButtonToolbar>
+                            <Button
+                                bsStyle="primary"
+                                href={export_url}
+                                disabled={export_url === undefined}
+                            >
+                                <FormattedMessage id="export-as-csv" defaultMessage="Export as CSV"/>
+                            </Button>
+                            <Button
+                                    bsStyle="danger"
+                                    onClick={this._onClose}
+                                    disabled={this.state.updating_requests || this.props.user_info.ui_profile !== "admin"}
+                                >
+                                <FormattedMessage id="force-close-all" defaultMessage="Force close "/>
+                                {
+                                    selected_reqs.length === 0?
+                                        <FormattedMessage id="all" defaultMessage="all"/>:
+                                        <FormattedMessage id="selected" defaultMessage="selected: {n}" values={{n: selected_reqs.length}}/>
+                                }
+                            </Button>
+                        </ButtonToolbar>
                     </Panel.Body>
                 </Panel>
             </div>
@@ -2598,10 +2682,10 @@ export class CustomRequests extends Component{
     }
 
     _prepare_url(paging_spec, sorting_spec, format) {
-        let url = new URL(API_URL_PREFIX + '/api/v01/custom_instances/search');
+        const url = new URL(API_URL_PREFIX + '/api/v01/custom_instances/search');
         // filter
         const {filter_criteria} = this.state;
-        let filter_spec = Object.keys(filter_criteria)
+        const filter_spec = Object.keys(filter_criteria)
             .filter(f =>
                 filter_criteria[f] &&
                 (
@@ -2621,7 +2705,7 @@ export class CustomRequests extends Component{
                         };
                     case 'url':
                         const op = criteria.op === "ne" ? "not_like": "like";
-                        const value = ["like", "ne"].indexOf(criteria.op) !== -1 ? "% %" + criteria.value + "%" : "% " + criteria.value;
+                        const value = ["like", "ne"].includes(criteria.op) ? "% %" + criteria.value + "%" : "% " + criteria.value;
                         return {
                             model: criteria.model,
                             field: 'key',
