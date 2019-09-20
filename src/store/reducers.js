@@ -101,7 +101,10 @@ const initialState = {
   availableNumbersTenant: [],
   addedNumbersToGroup: {},
   usersFound: [],
-  groupsFound: []
+  groupsFound: [],
+  languages: {},
+  tenantLicenses: {},
+  tenantTrunkGroups: {}
 };
 
 function mainReducer(state = initialState, action) {
@@ -448,6 +451,60 @@ function mainReducer(state = initialState, action) {
         availableNumbersTenant: phoneNumbers
       };
     }
+    case actionType.GET_LANGUAGES: {
+      return {
+        ...state,
+        languages: action.data
+      };
+    }
+    case actionType.GET_TENANT_LICENSES: {
+      const groupServicesShown = action.data.groupServices
+        .filter(
+          group =>
+            group.name === "Auto Attendant" ||
+            group.name === "Auto Attendant - Standard" ||
+            group.name === "Call Pickup" ||
+            group.name === "Hunt Group" ||
+            group.name === "Group Paging" ||
+            group.name === "Meet-me Conferencing" ||
+            group.name === "Trunk Group"
+        )
+        .sort((a, b) => {
+          if (a.name < b.name) return -1;
+          if (a.name > b.name) return 1;
+          return 0;
+        });
+      const groupServicesHide = action.data.groupServices
+        .filter(
+          group =>
+            group.name !== "Auto Attendant" &&
+            group.name !== "Auto Attendant - Standard" &&
+            group.name !== "Call Pickup" &&
+            group.name !== "Hunt Group" &&
+            group.name !== "Group Paging" &&
+            group.name !== "Meet-me Conferencing" &&
+            group.name !== "Trunk Group"
+        )
+        .sort((a, b) => {
+          if (a.name < b.name) return -1;
+          if (a.name > b.name) return 1;
+          return 0;
+        });
+      const groupServices = [...groupServicesShown, ...groupServicesHide];
+      return {
+        ...state,
+        tenantLicenses: {
+          groups: groupServices,
+          countShown: groupServicesShown.length
+        }
+      };
+    }
+    case actionType.GET_TRUNK_BY_TENANT_ID: {
+      return {
+        ...state,
+        tenantTrunkGroups: action.data
+      };
+    }
     case actionType.POST_CREATE_GROUP_ADMIN: {
       return {
         ...state,
@@ -544,7 +601,7 @@ function mainReducer(state = initialState, action) {
       );
       return {
         ...state,
-        addedNumbersToGroup: {
+        addedNumbersToTenant: {
           warning,
           added,
           rejected
@@ -628,6 +685,17 @@ function mainReducer(state = initialState, action) {
         localUser: action.data
       };
     }
+    case actionType.PUT_UPDATE_TRUNK_BY_TENANT_ID: {
+      return {
+        ...state,
+        tenantTrunkGroups: action.data
+      };
+    }
+    case actionType.PUT_UPDATE_GROUP_SERVICES_BY_TENANT_ID: {
+      return {
+        ...state
+      };
+    }
     case actionType.DELETE_TENANT: {
       return {
         ...state
@@ -659,6 +727,12 @@ function mainReducer(state = initialState, action) {
       };
     }
     case actionType.DELETE_PHONE_FROM_TENANT: {
+      return {
+        ...state,
+        phoneDeleted: !state.phoneDeleted
+      };
+    }
+    case actionType.DELETE_PHONE_FROM_GROUP: {
       return {
         ...state,
         phoneDeleted: !state.phoneDeleted

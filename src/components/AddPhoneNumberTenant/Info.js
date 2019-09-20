@@ -21,12 +21,15 @@ import {
 
 export class Info extends Component {
   state = {
-    addButton: "Add now"
+    addButton: "Add to group"
   };
   render() {
     return (
       //body
       <div className={"panel-body"}>
+        {this.props.isGroupPage && (
+          <div className={"header"}>Add numbers to group</div>
+        )}
         {this.props.isGroupPage && <div>Results added to tennant</div>}
         {this.props.addedNumbersToTenant.warning && (
           <Row>
@@ -46,9 +49,7 @@ export class Info extends Component {
           </Tab>
           <Tab
             eventKey={1}
-            title={`Rejected (${
-              this.props.addedNumbersToTenant.rejected.length
-            })`}
+            title={`Rejected (${this.props.addedNumbersToTenant.rejected.length})`}
           >
             <Rejected rejected={this.props.addedNumbersToTenant.rejected} />
           </Tab>
@@ -57,59 +58,27 @@ export class Info extends Component {
         <Row className={"margin-1"}>
           <div className="button-row">
             <div className="pull-right">
-              {this.props.isGroupPage ? (
-                <React.Fragment>
-                  <Button
-                    onClick={this.addNumbersToGroup}
-                    className={"btn-primary"}
-                    disabled={this.state.addButton === "Adding..."}
-                  >
-                    {this.state.addButton}
-                  </Button>
-                  <div className={"color-error"}>{this.props.errorMessage}</div>
-                </React.Fragment>
-              ) : (
-                <Link
-                  to={`/provisioning/${
-                    this.props.match.params.gwName
-                  }/tenants/${this.props.match.params.tenantId}`}
+              <Link
+                to={`${
+                  this.props.isGroupPage
+                    ? `/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}/groups/${this.props.match.params.groupId}`
+                    : `/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}`
+                }`}
+              >
+                <Button
+                  onClick={this.addPhoneNumbers}
+                  className={"btn-primary"}
                 >
-                  <Button
-                    onClick={this.addPhoneNumbers}
-                    className={"btn-primary"}
-                  >
-                    OK
-                  </Button>
-                </Link>
-              )}
+                  OK
+                </Button>
+              </Link>
+              {/* )} */}
             </div>
           </div>
         </Row>
       </div>
     );
   }
-
-  addNumbersToGroup = () => {
-    this.setState({ errorMessage: null, addButton: "Adding..." });
-    const numbers = this.props.addedNumbersToTenant.added.map(phone => ({
-      phoneNumber: phone.phoneNumber
-    }));
-    const data = { numbers };
-    this.props
-      .fetchPostAssignPhoneNumbersToGroup(
-        this.props.match.params.tenantId,
-        this.props.match.params.groupId,
-        data
-      )
-      .then(res =>
-        res === "success"
-          ? this.props.changeStepOfAddPhoneTenant("InfoGroup")
-          : this.setState({
-              errorMessage: "Failed assign numbers",
-              addButton: "Add now"
-            })
-      );
-  };
 }
 
 const mapStateToProps = state => ({

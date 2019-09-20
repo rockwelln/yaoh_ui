@@ -348,6 +348,16 @@ export const putUpdateLocalUser = data => ({
   data
 });
 
+export const putUpdateTrunkByTenantId = data => ({
+  type: actionType.PUT_UPDATE_TRUNK_BY_TENANT_ID,
+  data
+});
+
+export const putUpdateGroupServicesByTenantId = data => ({
+  type: actionType.PUT_UPDATE_GROUP_SERVICES_BY_TENANT_ID,
+  data
+});
+
 export const deleteTenant = data => ({
   type: actionType.DELETE_TENANT,
   data
@@ -398,6 +408,11 @@ export const deleteKey = data => ({
 
 export const deleteLocalUser = data => ({
   type: actionType.DELETE_LOCAL_USER,
+  data
+});
+
+export const deletePhoneFromGroup = data => ({
+  type: actionType.DELETE_PHONE_FROM_GROUP,
   data
 });
 
@@ -1669,6 +1684,46 @@ export function fetchPutUpdateTrunkGroup(
   };
 }
 
+export function fetchPutUpdateTrunkByTenantId(tenantId, data) {
+  return function(dispatch) {
+    return fetch_put(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/features/trunk_groups/`,
+      data
+    )
+      .then(res => res.json())
+      .then(data => dispatch(putUpdateTrunkByTenantId(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="update-trunk-failed"
+            defaultMessage="Failed to update trunk!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchPutUpdateGroupServicesByTenantId(tenantId, data) {
+  return function(dispatch) {
+    return fetch_put(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/licenses/`,
+      data
+    )
+      .then(res => res.json())
+      .then(data => dispatch(putUpdateGroupServicesByTenantId(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="update-trunk-failed"
+            defaultMessage="Failed to update trunk!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
 export function fetchDeleteTenant(ID, auth_token) {
   return function(dispatch) {
     return fetch_delete(`${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${ID}`, auth_token)
@@ -1899,6 +1954,27 @@ export function fetchDeleteLocalUser(username) {
       .then(data => {
         dispatch(deleteLocalUser(data));
         return "deleted";
+      })
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-delete-user"
+            defaultMessage="Failed to delete user!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchDeletePhoneFromGroup(tenantId, groupId, data) {
+  return function(dispatch) {
+    return fetch_delete(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/numbers/`,
+      data
+    )
+      .then(data => {
+        dispatch(deletePhoneFromGroup(data));
       })
       .catch(error =>
         NotificationsManager.error(
