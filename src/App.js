@@ -30,9 +30,9 @@ import {FormattedMessage} from 'react-intl';
 
 import AsyncApioHelp from './async-apio-help';
 import Dashboard from './dashboard';
-import {Requests, CustomRequests, Transaction, Request} from './orange/requests';
-import {BulkActions} from "./orange/bulk";
-import {NdgHistory} from "./orange/ndg_history";
+import {Requests, CustomRequests, Transaction, Request} from './requests/requests';
+import {BulkActions} from "./requests/bulk";
+import {NdgHistory} from "./requests/ndg_history";
 
 import Tenants from "./components/Tenants";
 import TenantPage from "./components/TenantPage";
