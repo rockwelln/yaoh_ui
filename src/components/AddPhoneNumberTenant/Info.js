@@ -13,11 +13,24 @@ import Tab from "react-bootstrap/lib/Tab";
 import Added from "./Tabs/Added";
 import Rejected from "./Tabs/Rejected";
 
+import {
+  fetchPostAssignPhoneNumbersToGroup,
+  changeStepOfAddPhoneTenant
+} from "../../store/actions";
+
+
 export class Info extends Component {
+  state = {
+    addButton: "Add to group"
+  };
   render() {
     return (
       //body
       <div className={"panel-body"}>
+        {this.props.isGroupPage && (
+          <div className={"header"}>Add numbers to group</div>
+        )}
+        {this.props.isGroupPage && <div>Results added to tennant</div>}
         {this.props.addedNumbersToTenant.warning && (
           <Row>
             <Col md={12}>
@@ -32,15 +45,13 @@ export class Info extends Component {
             eventKey={0}
             title={`Added (${this.props.addedNumbersToTenant.added.length})`}
           >
-            <Added />
+            <Added added={this.props.addedNumbersToTenant.added} />
           </Tab>
           <Tab
             eventKey={1}
-            title={`Rejected (${
-              this.props.addedNumbersToTenant.rejected.length
-            })`}
+            title={`Rejected (${this.props.addedNumbersToTenant.rejected.length})`}
           >
-            <Rejected />
+            <Rejected rejected={this.props.addedNumbersToTenant.rejected} />
           </Tab>
         </Tabs>
         {/**Button for finish */}
@@ -48,8 +59,10 @@ export class Info extends Component {
           <div className="button-row">
             <div className="pull-right">
               <Link
-                to={`/provisioning/${this.props.match.params.gwName}/tenants/${
-                  this.props.match.params.tenantId
+                to={`${
+                  this.props.isGroupPage
+                    ? `/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}/groups/${this.props.match.params.groupId}`
+                    : `/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}`
                 }`}
               >
                 <Button
@@ -59,6 +72,7 @@ export class Info extends Component {
                   OK
                 </Button>
               </Link>
+              {/* )} */}
             </div>
           </div>
         </Row>
@@ -71,7 +85,10 @@ const mapStateToProps = state => ({
   addedNumbersToTenant: state.addedNumbersToTenant
 });
 
-const mapDispatchToProps = {};
+const mapDispatchToProps = {
+  fetchPostAssignPhoneNumbersToGroup,
+  changeStepOfAddPhoneTenant
+};
 
 export default withRouter(
   connect(

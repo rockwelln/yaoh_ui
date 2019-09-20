@@ -25,7 +25,8 @@ import {
   fetchPutUpdateServicePacksByGroupId,
   fetchPutUpdateGroupServicesByGroupId,
   changeStepOfCreateGroup,
-  refuseCreateTenant
+  refuseCreateTenant,
+  fetchPostAddGroupServicesToGroup
 } from "../../store/actions";
 
 const INFINITY = 8734;
@@ -47,8 +48,7 @@ export class Licenses extends Component {
     this.props
       .fetchGetLicensesByGroupId(
         this.props.match.params.tenantId,
-        this.props.createdGroup.groupId,
-        this.props.auth_token
+        this.props.createdGroup.groupId
       )
       .then(data => {
         this.setState({
@@ -60,8 +60,7 @@ export class Licenses extends Component {
     this.props
       .fetchGetTrunkByGroupID(
         this.props.match.params.tenantId,
-        this.props.createdGroup.groupId,
-        this.props.auth_token
+        this.props.createdGroup.groupId
       )
       .then(() => {
         this.setState({
@@ -325,25 +324,14 @@ export class Licenses extends Component {
                       <Row>
                         <Col
                           mdOffset={5}
-                          md={editGroupServices ? 3 : 2}
+                          md={3}
                           className={"text-center font-weight-bold"}
                         >
                           in use
                         </Col>
-                        <Col
-                          md={editGroupServices ? 3 : 2}
-                          className={"text-center font-weight-bold"}
-                        >
+                        <Col md={3} className={"text-center font-weight-bold"}>
                           limited to
                         </Col>
-                        {!editGroupServices && (
-                          <Col
-                            md={3}
-                            className={"text-center font-weight-bold"}
-                          >
-                            authorised
-                          </Col>
-                        )}
                       </Row>
                       {this.state.groupServices.map((pack, i) =>
                         !this.state.showMore && !editGroupServices ? (
@@ -355,25 +343,21 @@ export class Licenses extends Component {
                                   defaultMessage={`${pack.name}:`}
                                 />
                               </Col>
-                              <Col md={2} className={"text-center"}>{`${
-                                pack.inUse ? pack.inUse : 0
-                              }`}</Col>
-                              <Col md={2} className={"text-center"}>{`${
-                                pack.allocated.unlimited
-                                  ? String.fromCharCode(INFINITY)
-                                  : pack.allocated.maximum
-                              }`}</Col>
-                              <Col md={3} className={"text-center"}>
-                                <Checkbox
-                                  className={"margin-0"}
-                                  checked={
-                                    !(
-                                      !pack.allocated.unlimited &&
-                                      pack.allocated.maximum === 0
-                                    )
-                                  }
-                                />
-                              </Col>
+                              {!pack.allocated.unlimited &&
+                              pack.allocated.maximum === 0 ? (
+                                <Col md={6}>not authorised</Col>
+                              ) : (
+                                <React.Fragment>
+                                  <Col md={3} className={"text-center"}>{`${
+                                    pack.inUse ? pack.inUse : 0
+                                  }`}</Col>
+                                  <Col md={3} className={"text-center"}>{`${
+                                    pack.allocated.unlimited
+                                      ? String.fromCharCode(INFINITY)
+                                      : pack.allocated.maximum
+                                  }`}</Col>
+                                </React.Fragment>
+                              )}
                             </Row>
                           ) : null
                         ) : !editGroupServices ? (
@@ -384,25 +368,21 @@ export class Licenses extends Component {
                                 defaultMessage={`${pack.name}:`}
                               />
                             </Col>
-                            <Col md={2} className={"text-center"}>{`${
-                              pack.inUse ? pack.inUse : 0
-                            }`}</Col>
-                            <Col md={2} className={"text-center"}>{`${
-                              pack.allocated.unlimited
-                                ? String.fromCharCode(INFINITY)
-                                : pack.allocated.maximum
-                            }`}</Col>
-                            <Col md={3} className={"text-center"}>
-                              <Checkbox
-                                className={"margin-0"}
-                                checked={
-                                  !(
-                                    !pack.allocated.unlimited &&
-                                    pack.allocated.maximum === 0
-                                  )
-                                }
-                              />
-                            </Col>
+                            {!pack.allocated.unlimited &&
+                            pack.allocated.maximum === 0 ? (
+                              <Col md={6}>not authorised</Col>
+                            ) : (
+                              <React.Fragment>
+                                <Col md={3} className={"text-center"}>{`${
+                                  pack.inUse ? pack.inUse : 0
+                                }`}</Col>
+                                <Col md={3} className={"text-center"}>{`${
+                                  pack.allocated.unlimited
+                                    ? String.fromCharCode(INFINITY)
+                                    : pack.allocated.maximum
+                                }`}</Col>
+                              </React.Fragment>
+                            )}
                           </Row>
                         ) : (
                           <Row key={i}>
@@ -502,22 +482,14 @@ export class Licenses extends Component {
                     <Row>
                       <Col
                         mdOffset={5}
-                        md={editServicePacks ? 3 : 2}
+                        md={3}
                         className={"text-center font-weight-bold"}
                       >
                         in use
                       </Col>
-                      <Col
-                        md={editServicePacks ? 3 : 2}
-                        className={"text-center font-weight-bold"}
-                      >
+                      <Col md={3} className={"text-center font-weight-bold"}>
                         limited to
                       </Col>
-                      {!editServicePacks && (
-                        <Col md={3} className={"text-center font-weight-bold"}>
-                          authorised
-                        </Col>
-                      )}
                     </Row>
                     {this.state.servicePacks.map((pack, i) => (
                       <Row key={i}>
@@ -527,18 +499,28 @@ export class Licenses extends Component {
                             defaultMessage={`${pack.name}:`}
                           />
                         </Col>
-                        <Col
-                          md={editServicePacks ? 3 : 2}
-                          className={"text-center"}
-                        >{`${pack.inUse ? pack.inUse : 0}`}</Col>
-                        {!editServicePacks ? (
-                          <Col md={2} className={"text-center"}>{`${
-                            pack.allocated.unlimited
-                              ? String.fromCharCode(INFINITY)
-                              : pack.allocated.maximum
+                        {!pack.allocated.unlimited &&
+                          pack.allocated.maximum === 0 && (
+                            <Col md={6} className={"text-center"}>
+                              not authorised
+                            </Col>
+                          )}
+
+                        {pack.allocated.maximum !== 0 && (
+                          <Col md={3} className={"text-center"}>{`${
+                            pack.inUse ? pack.inUse : 0
                           }`}</Col>
+                        )}
+                        {!editServicePacks ? (
+                          pack.allocated.maximum !== 0 ? (
+                            <Col md={3} className={"text-center"}>{`${
+                              pack.allocated.unlimited
+                                ? String.fromCharCode(INFINITY)
+                                : pack.allocated.maximum
+                            }`}</Col>
+                          ) : null
                         ) : (
-                          <Col md={3} className={"text-right"}>
+                          <Col md={3} className={"text-center"}>
                             <EditLicenses
                               defaultChecked={pack.allocated.unlimited}
                               index={i}
@@ -552,19 +534,6 @@ export class Licenses extends Component {
                             />
                           </Col>
                         )}
-                        {!editServicePacks ? (
-                          <Col md={3} className={"text-center"}>
-                            <Checkbox
-                              className={"margin-0"}
-                              checked={
-                                !(
-                                  !pack.allocated.unlimited &&
-                                  pack.allocated.maximum === 0
-                                )
-                              }
-                            />
-                          </Col>
-                        ) : null}
                       </Row>
                     ))}
                   </Panel.Body>
@@ -607,8 +576,7 @@ export class Licenses extends Component {
       .fetchPutUpdateServicePacksByGroupId(
         this.props.match.params.tenantId,
         this.props.createdGroup.groupId,
-        data,
-        this.props.auth_token
+        data
       )
       .then(() => this.fetchData())
       .then(() => this.setState({ editServicePacks: false }));
@@ -651,12 +619,30 @@ export class Licenses extends Component {
       groupServices: this.state.groupServices
     };
 
+    const authorisedServices = {
+      services: this.state.groupServices.reduce((prev, service) => {
+        if (
+          !(!service.allocated.unlimited && service.allocated.maximum === 0)
+        ) {
+          prev.push({ name: service.name });
+          return prev;
+        }
+        return prev;
+      }, [])
+    };
+
     this.props
       .fetchPutUpdateGroupServicesByGroupId(
         this.props.match.params.tenantId,
         this.props.createdGroup.groupId,
-        data,
-        this.props.auth_token
+        data
+      )
+      .then(() =>
+        this.props.fetchPostAddGroupServicesToGroup(
+          this.props.match.params.tenantId,
+          this.props.match.params.groupId,
+          authorisedServices
+        )
       )
       .then(() => this.fetchData())
       .then(() => this.setState({ editGroupServices: false }));
@@ -708,8 +694,7 @@ export class Licenses extends Component {
       .fetchPutUpdateTrunkByGroupId(
         this.props.match.params.tenantId,
         this.props.createdGroup.groupId,
-        data,
-        this.props.auth_token
+        data
       )
       .then(this.setState({ editTrunkCapacity: false }));
   };
@@ -733,7 +718,8 @@ const mapDispatchToProps = {
   fetchPutUpdateServicePacksByGroupId,
   fetchPutUpdateGroupServicesByGroupId,
   changeStepOfCreateGroup,
-  refuseCreateTenant
+  refuseCreateTenant,
+  fetchPostAddGroupServicesToGroup
 };
 
 export default withRouter(

@@ -1,5 +1,7 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
+import { Link } from "react-router-dom";
+import { withRouter } from "react-router";
 
 import Table from "react-bootstrap/lib/Table";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
@@ -37,7 +39,7 @@ export class PhoneNumbersTab extends Component {
     countPages: null
   };
 
-  componentDidMount() {
+  fetchNumbers() {
     this.props
       .fetchGetPhoneNumbersByGroupId(this.props.tenantId, this.props.groupId, this.props.auth_token)
       .then(() =>
@@ -54,6 +56,16 @@ export class PhoneNumbersTab extends Component {
           () => this.pagination()
         )
       );
+  }
+
+  componentDidMount() {
+    this.fetchNumbers();
+  }
+
+  componentDidUpdate(prevProps) {
+    if (prevProps.phoneDeleted !== this.props.phoneDeleted) {
+      this.fetchNumbers();
+    }
   }
 
   render() {
@@ -103,10 +115,14 @@ export class PhoneNumbersTab extends Component {
             </InputGroup>
           </Col>
           <Col md={1}>
-            <Glyphicon
-              className={"x-large"}
-              glyph="glyphicon glyphicon-plus-sign"
-            />
+            <Link
+              to={`/provisioning/${this.props.match.params.gwName}/tenants/${this.props.tenantId}/groups/${this.props.groupId}/addphone`}
+            >
+              <Glyphicon
+                className={"x-large"}
+                glyph="glyphicon glyphicon-plus-sign"
+              />
+            </Link>
           </Col>
         </Row>
         {paginationPhoneNumbers.length ? (
@@ -297,7 +313,7 @@ export class PhoneNumbersTab extends Component {
       paginationPhoneNumbers: paginationItems,
       pagination: false,
       countPages,
-      page: 0
+      page: this.state.page
     });
   };
 
@@ -426,14 +442,17 @@ export class PhoneNumbersTab extends Component {
 }
 
 const mapStateToProps = state => ({
-  phoneNumbers: state.phoneNumbersByGroup
+  phoneNumbers: state.phoneNumbersByGroup,
+  phoneDeleted: state.phoneDeleted
 });
 
 const mapDispatchToProps = {
   fetchGetPhoneNumbersByGroupId
 };
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(PhoneNumbersTab);
+export default withRouter(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(PhoneNumbersTab)
+);

@@ -85,9 +85,7 @@ class Tenants extends Component {
     return (
       <React.Fragment>
         <div className={"panel-heading"}>
-          <div className={"header"}>
-            Tenant overview
-          </div>
+          <div className={"header"}>Tenant overview</div>
         </div>
         <div className={"panel-body"}>
           <Row>
@@ -157,7 +155,10 @@ class Tenants extends Component {
                     <thead>
                       <tr>
                         <th style={{ width: "24%" }}>
-                          <FormattedMessage id="tenant-id" defaultMessage="ID" />
+                          <FormattedMessage
+                            id="tenant-id"
+                            defaultMessage="ID"
+                          />
                           <Glyphicon
                             glyph="glyphicon glyphicon-sort"
                             onClick={this.sortByID}
@@ -220,7 +221,7 @@ class Tenants extends Component {
               />
             </Col>
           )}
-      </div>
+        </div>
       </React.Fragment>
     );
   }
@@ -267,7 +268,7 @@ class Tenants extends Component {
       paginationTenants: paginationItems,
       pagination: false,
       countPages,
-      page: 0
+      page: this.state.page
     });
   };
 
@@ -281,7 +282,16 @@ class Tenants extends Component {
           tennant.type.toLowerCase().includes(searchValue.toLowerCase())
       )
       .map(tenant => tenant);
-    this.setState({ tenants: SearchArray }, () => this.pagination());
+    this.setState({ tenants: SearchArray }, () => {
+      const tenansSorted = this.state.tenants.sort((a, b) => {
+        if (a.tenantId < b.tenantId) return -1;
+        if (a.tenantId > b.tenantId) return 1;
+        return 0;
+      });
+      this.setState({ tenants: tenansSorted, sortedBy: "id" }, () =>
+        this.pagination()
+      );
+    });
   };
 
   sortByID = () => {

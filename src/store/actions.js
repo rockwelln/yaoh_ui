@@ -130,6 +130,16 @@ export const getTrunkGroupByName = data => ({
   data
 });
 
+export const getPhoneTypes = data => ({
+  type: actionType.GET_PHONE_TYPES,
+  data
+});
+
+export const getPhoneTypesDetails = data => ({
+  type: actionType.GET_PHONE_TYPES_DETAILS,
+  data
+});
+
 export const getUsersByTrunkGroup = data => ({
   type: actionType.GET_USERS_BY_TRUNK_GROUP,
   data
@@ -137,6 +147,71 @@ export const getUsersByTrunkGroup = data => ({
 
 export const getBackupByTrunkGroup = data => ({
   type: actionType.GET_BACKUP_BY_TRUNK_GROUP,
+  data
+});
+
+export const getTemplateDetails = data => ({
+  type: actionType.GET_TEMPLATE_DETAILS,
+  data
+});
+
+export const getApplications = data => ({
+  type: actionType.GET_APPLICATIONS,
+  data
+});
+
+export const getKeysByApplication = data => ({
+  type: actionType.GET_KEYS_BY_APPLICATIONS,
+  data
+});
+
+export const getValueOfKey = data => ({
+  type: actionType.GET_VALUE_OF_KEY,
+  data
+});
+
+export const getTrunksGroupsByGroupFail = data => ({
+  type: actionType.GET_TRUNKS_GROUPS_BY_GROUP_FAIL,
+  data
+});
+
+export const getLocalUsers = data => ({
+  type: actionType.GET_LOCAL_USERS,
+  data
+});
+
+export const getLocalUser = data => ({
+  type: actionType.GET_LOCAL_USER,
+  data
+});
+
+export const getSearchUsers = data => ({
+  type: actionType.GET_SEARCH_USERS,
+  data
+});
+
+export const getSearchGroups = data => ({
+  type: actionType.GET_SEARCH_GROUPS,
+  data
+});
+
+export const getAvailableNumbersByTenantID = data => ({
+  type: actionType.GET_AVAILABLE_NUMBERS_BY_TENANT_ID,
+  data
+});
+
+export const getLanguages = data => ({
+  type: actionType.GET_LANGUAGES,
+  data
+});
+
+export const getTenantLicenses = data => ({
+  type: actionType.GET_TENANT_LICENSES,
+  data
+});
+
+export const getTrunkByTenantID = data => ({
+  type: actionType.GET_TRUNK_BY_TENANT_ID,
   data
 });
 
@@ -188,6 +263,26 @@ export const postCreateUserToGroup = data => ({
   data
 });
 
+export const postAddGroupServicesToGroup = data => ({
+  type: actionType.POST_ADD_GROUP_SERVICES_TO_GROUP,
+  data
+});
+
+export const postAddKeyToApplication = data => ({
+  type: actionType.POST_ADD_KEY_TO_APPLICATION,
+  data
+});
+
+export const postCreateLocalUser = data => ({
+  type: actionType.POST_CREATE_LOCAL_USER,
+  data
+});
+
+export const postAssignPhoneNumbersToGroup = data => ({
+  type: actionType.POST_ASSIGN_PHONE_NUMBERS_TO_GROUP,
+  data
+});
+
 export const putUpdateUser = data => ({
   type: actionType.PUT_UPDATE_USER,
   data
@@ -233,6 +328,36 @@ export const putUpdateTenantDetails = data => ({
   data
 });
 
+export const putUpdateKey = data => ({
+  type: actionType.PUT_UPDATE_KEY,
+  data
+});
+
+export const putUpdateTrunkGroup = data => ({
+  type: actionType.PUT_UPDATE_TRUNK_GROUP,
+  data
+});
+
+export const putUpdateBackupByTrunkGtoup = data => ({
+  type: actionType.PUT_UPDATE_BACKUP_BY_TRUNK_GROUP,
+  data
+});
+
+export const putUpdateLocalUser = data => ({
+  type: actionType.PUT_UPDATE_LOCAL_USER,
+  data
+});
+
+export const putUpdateTrunkByTenantId = data => ({
+  type: actionType.PUT_UPDATE_TRUNK_BY_TENANT_ID,
+  data
+});
+
+export const putUpdateGroupServicesByTenantId = data => ({
+  type: actionType.PUT_UPDATE_GROUP_SERVICES_BY_TENANT_ID,
+  data
+});
+
 export const deleteTenant = data => ({
   type: actionType.DELETE_TENANT,
   data
@@ -268,6 +393,26 @@ export const deleteUserFromGroup = () => ({
 
 export const deleteGroupFromTenant = data => ({
   type: actionType.DELETE_GROUP_FROM_TENANT,
+  data
+});
+
+export const deleteTrunkGroup = data => ({
+  type: actionType.DELETE_TRUNK_GROUP,
+  data
+});
+
+export const deleteKey = data => ({
+  type: actionType.DELETE_KEY,
+  data
+});
+
+export const deleteLocalUser = data => ({
+  type: actionType.DELETE_LOCAL_USER,
+  data
+});
+
+export const deletePhoneFromGroup = data => ({
+  type: actionType.DELETE_PHONE_FROM_GROUP,
   data
 });
 
@@ -566,12 +711,13 @@ export function fetchGetTrunkByGroupID(tenantId, groupId, auth_token) {
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/features/trunk_groups`, auth_token
     )
       .then(data => dispatch(getTrunkByGroupID(data)))
-      .catch(error =>
-        NotificationsManager.error(
-          <FormattedMessage id="fetch-trunk-failed" defaultMessage="Failed to fetch trunk!"/>,
-          error.message
-        )
-      );
+      .catch(error => {
+          dispatch(getTrunksGroupsByGroupFail());
+          NotificationsManager.error(
+              <FormattedMessage id="fetch-trunk-failed" defaultMessage="Failed to fetch trunk!"/>,
+              error.message
+          );
+      });
   };
 }
 
@@ -797,6 +943,258 @@ export function fetchGetTamplatesOfGroup(auth_token) {
   };
 }
 
+export function fetchGetTemplateDetails(category, template) {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/templates/categories/${category}/templates/${template}`
+    )
+      .then(data => dispatch(getTemplateDetails(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-template-details-failed"
+            defaultMessage="Failed to fetch template details!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchGetPhoneTypes() {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/phone_types/`
+    )
+      .then(data => dispatch(getPhoneTypes(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-phone-types-failed"
+            defaultMessage="Failed to fetch phone types!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchGetPhoneTypesDetails(name) {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/phone_types/${name}`
+    )
+      .then(data => dispatch(getPhoneTypesDetails(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-phone-types-failed"
+            defaultMessage="Failed to fetch phone types!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchGetApplications() {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/applications/`
+    )
+      .then(data => dispatch(getApplications(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-applications-failed"
+            defaultMessage="Failed to fetch applications!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchGetKeysByApplication(appName) {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/applications/${appName}`
+    )
+      .then(data => dispatch(getKeysByApplication(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-applications-keys-failed"
+            defaultMessage="Failed to fetch applications keys!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchGetValueOfKey(appName, keyName) {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/applications/${appName}/${keyName}`
+    )
+      .then(data => dispatch(getValueOfKey(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-key-value-failed"
+            defaultMessage="Failed to fetch key value!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchGetLocalUsers() {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/local/apio_users/`
+    )
+      .then(data => dispatch(getLocalUsers(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-local-users-failed"
+            defaultMessage="Failed to fetch local users!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchGetSearchUsers(data) {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/search/users?${data}`
+    )
+      .then(data => dispatch(getSearchUsers(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="search-users-failed"
+            defaultMessage="Failed to search users!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchGetSearchGroups(data) {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/search/groups?${data}`
+    )
+      .then(data => dispatch(getSearchGroups(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="search-groups-failed"
+            defaultMessage="Failed to search groups!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchGetAvailableNumbersByTenantID(tenantId) {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/numbers?available=true`
+    )
+      .then(data => dispatch(getAvailableNumbersByTenantID(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-phone-numbers-failed"
+            defaultMessage="Failed to fetch phone numbers!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchGetLocalUser(username) {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/local/apio_users/${username}`
+    )
+      .then(data => dispatch(getLocalUser(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-local-user-failed"
+            defaultMessage="Failed to fetch local user!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchGetLanguages() {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/system/languages`
+    )
+      .then(data => dispatch(getLanguages(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-languages-failed"
+            defaultMessage="Failed to fetch languages!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchGetTenantLicenses(tenantId) {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/licenses`
+    )
+      .then(data => dispatch(getTenantLicenses(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-licenses-failed"
+            defaultMessage="Failed to fetch licenses!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchGetTrunkByTenantID(tenantId) {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/features/trunk_groups/`
+    )
+      .then(data => dispatch(getTrunkByTenantID(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-trunk-failed"
+            defaultMessage="Failed to fetch trunk!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
 export function fetchPostCreateGroupAdmin(tenantId, groupId, data, auth_token) {
   return function(dispatch) {
     return fetch_post(
@@ -910,8 +1308,91 @@ export function fetchPostCreateUserToGroup(tenantId, groupId, data, auth_token) 
       .catch(error => {
         NotificationsManager.error(
           <FormattedMessage
-            id="failed-create user"
+            id="failed-create-user"
             defaultMessage="Failed create user!"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchPostAddGroupServicesToGroup(tenantId, groupId, data) {
+  return function(dispatch) {
+    return fetch_post(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/services/`,
+      data
+    )
+      .then(res => res.json())
+      .then(data => dispatch(postAddGroupServicesToGroup(data)))
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-add-group-services"
+            defaultMessage="Failed add group services!"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchPostAddKeyToApplication(appName, data) {
+  return function(dispatch) {
+    return fetch_post(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/applications/${appName}/`,
+      data
+    )
+      .then(res => res.json())
+      .then(data => dispatch(postAddKeyToApplication(data)))
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-add-key"
+            defaultMessage="Failed add key!"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchPostCreateLocalUser(data) {
+  return function(dispatch) {
+    return fetch_post(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/local/apio_users/`,
+      data
+    )
+      .then(res => res.json())
+      .then(data => dispatch(postCreateLocalUser(data)))
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-create-local-user"
+            defaultMessage="Failed create local user!"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchPostAssignPhoneNumbersToGroup(tenantId, groupId, data) {
+  return function(dispatch) {
+    return fetch_post(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/numbers/`,
+      data
+    )
+      .then(res => res.json())
+      .then(data => {
+        dispatch(postAssignPhoneNumbersToGroup(data));
+        return "success";
+      })
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-assign-phonenumbers"
+            defaultMessage="Failed to assign phonenumbers!"
           />,
           error.message
         );
@@ -1113,6 +1594,136 @@ export function fetchPutUpdateTenantDetails(tenantId, data, auth_token) {
   };
 }
 
+export function fetchPutUpdateKey(appName, keyName, data) {
+  return function(dispatch) {
+    return fetch_put(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/applications/${appName}/${keyName}/`,
+      data
+    )
+      .then(res => res.json())
+      .then(data => dispatch(putUpdateKey(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="update-kay-failed"
+            defaultMessage="Failed to update key!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchPutUpdateBackupByTrunkGtoup(
+  tenantId,
+  groupId,
+  trunkGroupName,
+  data
+) {
+  return function(dispatch) {
+    return fetch_put(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/services/trunk_groups/${trunkGroupName}/backup`,
+      data
+    )
+      .then(res => res.json())
+      .then(data => dispatch(putUpdateBackupByTrunkGtoup(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="update-trunk-group-backup-failed"
+            defaultMessage="Failed to update trunk group backup!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchPutUpdateLocalUser(username, data) {
+  return function(dispatch) {
+    return fetch_put(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/local/apio_users/${username}/`,
+      data
+    )
+      .then(res => res.json())
+      .then(data => dispatch(putUpdateLocalUser(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="update-local-user-failed"
+            defaultMessage="Failed to update local user!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchPutUpdateTrunkGroup(
+  tenantId,
+  groupId,
+  trunkGroupName,
+  data
+) {
+  return function(dispatch) {
+    return fetch_put(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/services/trunk_groups/${trunkGroupName}/`,
+      data
+    )
+      .then(res => res.json())
+      .then(data => dispatch(putUpdateTrunkGroup(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="update-trunk-group-failed"
+            defaultMessage="Failed to update trunk group!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchPutUpdateTrunkByTenantId(tenantId, data) {
+  return function(dispatch) {
+    return fetch_put(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/features/trunk_groups/`,
+      data
+    )
+      .then(res => res.json())
+      .then(data => dispatch(putUpdateTrunkByTenantId(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="update-trunk-failed"
+            defaultMessage="Failed to update trunk!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchPutUpdateGroupServicesByTenantId(tenantId, data) {
+  return function(dispatch) {
+    return fetch_put(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/licenses/`,
+      data
+    )
+      .then(res => res.json())
+      .then(data => dispatch(putUpdateGroupServicesByTenantId(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="update-trunk-failed"
+            defaultMessage="Failed to update trunk!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
 export function fetchDeleteTenant(ID, auth_token) {
   return function(dispatch) {
     return fetch_delete(`${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${ID}`, auth_token)
@@ -1286,6 +1897,90 @@ export function fetchDeleteGroupFromTenant(tenantId, groupId, auth_token) {
           <FormattedMessage
             id="failed-to-delete-group"
             defaultMessage="Failed to delete group!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchDeleteTrunkGroup(tenantId, groupId, trunkName) {
+  return function(dispatch) {
+    return fetch_delete(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/services/trunk_groups/${trunkName}`
+    )
+      .then(data => {
+        dispatch(deleteTrunkGroup(data));
+        return "deleted";
+      })
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-delete-trunk-group"
+            defaultMessage="Failed to delete trunk group!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchDeleteKey(appName, keyName) {
+  return function(dispatch) {
+    return fetch_delete(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/applications/${appName}/${keyName}`
+    )
+      .then(data => {
+        dispatch(deleteKey(data));
+        return "deleted";
+      })
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-delete-key"
+            defaultMessage="Failed to delete key!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchDeleteLocalUser(username) {
+  return function(dispatch) {
+    return fetch_delete(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/local/apio_users/${username}`
+    )
+      .then(data => {
+        dispatch(deleteLocalUser(data));
+        return "deleted";
+      })
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-delete-user"
+            defaultMessage="Failed to delete user!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchDeletePhoneFromGroup(tenantId, groupId, data) {
+  return function(dispatch) {
+    return fetch_delete(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/numbers/`,
+      data
+    )
+      .then(data => {
+        dispatch(deletePhoneFromGroup(data));
+      })
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-delete-user"
+            defaultMessage="Failed to delete user!"
           />,
           error.message
         )

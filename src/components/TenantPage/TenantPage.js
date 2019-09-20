@@ -12,6 +12,7 @@ import PhoneNumbersTab from "./Tabs/PhoneNumber";
 import Admins from "./Tabs/Admins";
 import Details from "./Tabs/Details";
 import DeleteModal from "./DeleteModal";
+import Licenses from "./Tabs/Licenses";
 
 import {
   fetchGetTenantById,
@@ -64,14 +65,14 @@ class TenantPage extends Component {
         <div className={"panel-body"}>
           <Tabs defaultActiveKey={0} id="tenant_tabs">
             <Tab eventKey={0} title="LICENSES">
-              LICENSES Tab
+              <Licenses />
             </Tab>
             <Tab eventKey={1} title="GROUPS">
               <GroupsTab tenantId={this.props.match.params.tenantId} {...this.props} />
             </Tab>
-            <Tab eventKey={2} title="ENTERPRISE TRUNKS">
+            {/* <Tab eventKey={2} title="ENTERPRISE TRUNKS">
               ENTERPRISE TRUNKS Tab
-            </Tab>
+            </Tab> */}
             <Tab eventKey={3} title="PHONE NUMBERS">
               <PhoneNumbersTab tenantId={this.props.match.params.tenantId} {...this.props} />
             </Tab>

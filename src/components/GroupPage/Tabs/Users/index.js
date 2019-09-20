@@ -75,7 +75,6 @@ export class Users extends Component {
       usersForDelete,
       showDelete
     } = this.state;
-
     if ((isLoading, pagination)) {
       return <Loading />;
     }
@@ -133,14 +132,14 @@ export class Users extends Component {
                       checked={this.state.selectAll}
                       onChange={this.handleSelectAllClick}
                     >
-                      (Un)select all shown numbers
+                      (Un)select all shown users
                     </Checkbox>
                     <Glyphicon
                       glyph="glyphicon glyphicon-trash"
                       onClick={this.deleteSlectedUsers}
                     />
                     <div className={"margin-checbox"}>
-                      Delete selected numbers
+                      Delete selected users
                     </div>
                     <DeleteModal
                       userId={usersForDelete.map(user => user.userId)}
@@ -330,7 +329,7 @@ export class Users extends Component {
       paginationUsers: paginationItems,
       pagination: false,
       countPages,
-      page: 0
+      page: this.state.page
     });
   };
 
@@ -462,10 +461,10 @@ export class Users extends Component {
     );
   };
 
-  handleSingleCheckboxClick = index => {
-    const newArr = this.state.users.map((el, i) => ({
+  handleSingleCheckboxClick = id => {
+    const newArr = this.state.users.map(el => ({
       ...el,
-      userChecked: index === i ? !el.userChecked : el.userChecked
+      userChecked: el.userId === id ? !el.userChecked : el.userChecked
     }));
     this.setState({ users: newArr, selectAll: false }, () => this.pagination());
   };

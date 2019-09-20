@@ -18,7 +18,8 @@ import {
   fetchPostCreateTenantAdmin,
   fetchGetGroupById,
   fetchGetTenantById,
-  clearErrorMassage
+  clearErrorMassage,
+  fetchGetLanguages
 } from "../../store/actions";
 
 import Loading from "../../common/Loading";
@@ -38,6 +39,14 @@ class CreateAdmin extends Component {
   };
 
   componentDidMount() {
+    this.props.fetchGetLanguages().then(() =>
+      this.setState({
+        createAdminData: {
+          ...this.state.createAdminData,
+          language: this.props.languages.defaultLangue
+        }
+      })
+    );
     this.props.match.params.groupId
       ? this.props
           .fetchGetGroupById(
@@ -55,14 +64,10 @@ class CreateAdmin extends Component {
     if (!prevProps.shouldRedirect && this.props.shouldRedirect) {
       this.props.match.params.groupId
         ? this.props.history.push(
-            `/provisioning/${this.props.match.params.gwName}/tenants/${
-              this.props.match.params.tenantId
-            }/groups/${this.props.match.params.groupId}`
+            `/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}/groups/${this.props.match.params.groupId}`
           )
         : this.props.history.push(
-            `/provisioning/${this.props.match.params.gwName}/tenants/${
-              this.props.match.params.tenantId
-            }`
+            `/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}`
           );
     }
   }
@@ -161,11 +166,23 @@ class CreateAdmin extends Component {
               </Col>
               <Col md={9}>
                 <FormControl
-                  type="text"
-                  placeholder="Language"
+                  componentClass="select"
                   defaultValue={createAdminData.language}
-                  disabled
-                />
+                  onChange={e =>
+                    this.setState({
+                      createAdminData: {
+                        ...this.state.createAdminData,
+                        language: e.target.value
+                      }
+                    })
+                  }
+                >
+                  {this.props.languages.availableLanguages.map(lang => (
+                    <option key={`${lang.locale}`} value={lang.name}>
+                      {lang.name}
+                    </option>
+                  ))}
+                </FormControl>
               </Col>
             </FormGroup>
             <FormGroup
@@ -263,7 +280,8 @@ const mapStateToProps = state => ({
   groupDefaultDomain: state.group.defaultDomain,
   tenantDefaultDomain: state.tenant.defaultDomain,
   errorMassage: state.errorMassage,
-  shouldRedirect: state.shouldRedirect
+  shouldRedirect: state.shouldRedirect,
+  languages: state.languages
 });
 
 const mapDispatchToProps = {
@@ -271,7 +289,8 @@ const mapDispatchToProps = {
   fetchPostCreateTenantAdmin,
   fetchGetGroupById,
   fetchGetTenantById,
-  clearErrorMassage
+  clearErrorMassage,
+  fetchGetLanguages
 };
 
 export default withRouter(

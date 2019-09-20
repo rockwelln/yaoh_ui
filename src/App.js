@@ -43,10 +43,16 @@ import UpdateAdmin from "./components/UpdateAdmin";
 import CreateTenant from "./components/CreateTenant";
 import CreateGroup from "./components/CreateGroup";
 import AddPhoneNumberTenant from "./components/AddPhoneNumberTenant";
-import Templates from "./components/Templates";
-import TemplatePage from "./components/TemplatePage";
+import CategoryPage from "./components/CategoryPage";
 import AddUser from "./components/AddUser";
 import TrunkGroupPage from "./components/TrunkGroupPage";
+import ConfigPage from "./components/Configs";
+import TemplatePage from "./components/TemplatePage";
+import LocalUsers from "./components/LocalUsers";
+import AddLocalUsers from "./components/AddLocalUser";
+import UpdateLocalUser from "./components/UpdateLocalUser";
+import AddPhoneNumberGroup from "./components/AddPhoneNumberGroup";
+import SearchPage from "./components/SearchPage";
 
 import UserManagement, { LocalUserProfile } from './system/user_mgm';
 import {StartupEvents} from './startup_events';
@@ -690,10 +696,65 @@ class App extends Component {
                                exact />
                         {/*================ Provisioning UI routes ==============*/}
                         <Route
-                            path="/provisioning/:gwName/templates"
+                            path="/provisioning/:gwName/search"
+                component={props =>
+                  isAllowed(ui_profile, pages.data_tenants) ? (
+                    <SearchPage />
+                  ) : (
+                    <NotAllowed />
+                  )
+                }
+                exact
+              />
+              <Route
+                path="/provisioning/:gwName/localusers"
+                component={props =>
+                  isAllowed(ui_profile, pages.data_tenants) ? (
+                    <LocalUsers />
+                  ) : (
+                    <NotAllowed />
+                  )
+                }
+                exact
+              />
+              <Route
+                path="/provisioning/:gwName/localusers/user/:localUserName"
+                component={props =>
+                  isAllowed(ui_profile, pages.data_tenants) ? (
+                    <UpdateLocalUser />
+                  ) : (
+                    <NotAllowed />
+                  )
+                }
+                exact
+              />
+              <Route
+                path="/provisioning/:gwName/localusers/adduser"
+                component={props =>
+                  isAllowed(ui_profile, pages.data_tenants) ? (
+                    <AddLocalUsers />
+                  ) : (
+                    <NotAllowed />
+                  )
+                }
+                exact
+              />
+              <Route
+                path="/provisioning/:gwName/configs"
+                component={props =>
+                  isAllowed(ui_profile, pages.data_tenants) ? (
+                    <ConfigPage />
+                  ) : (
+                    <NotAllowed />
+                  )
+                }
+                exact
+              />
+              <Route
+                path="/provisioning/:gwName/templates/:categoryName"
                             component={props =>
                                 isAllowed(ui_profile, pages.data_tenants) ? (
-                                <Templates />
+                                <CategoryPage />
                             ) : (
                                 <NotAllowed />
                             )
@@ -701,7 +762,7 @@ class App extends Component {
                             exact />
 
                         <Route
-                            path="/provisioning/:gwName/templates/:templateName"
+                            path="/provisioning/:gwName/templates/:categoryName/template/:templateName"
                             component={props =>
                                 isAllowed(ui_profile, pages.data_tenants) ? (
                                     <TemplatePage />
@@ -765,6 +826,17 @@ class App extends Component {
                             }
                             exact
                         />
+                        <Route
+                            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/addphone"
+                            component={props =>
+                              isAllowed(ui_profile, pages.data_tenants) ? (
+                                <AddPhoneNumberGroup />
+                              ) : (
+                                <NotAllowed />
+                              )
+                            }
+                            exact
+                          />
                         <Route
                             path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/trunkgroup/:trunkGroupName"
                             component={props =>
