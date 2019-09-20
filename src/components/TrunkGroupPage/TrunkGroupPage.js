@@ -18,6 +18,7 @@ import CallScreening from "./Tabs/CallScreening";
 import StatefulRerouting from "./Tabs/StatefulRerouting";
 import CLI from "./Tabs/CLI";
 import Advanced from "./Tabs/Advanced";
+import Authentication from "./Tabs/Authentication";
 
 class TrunkGroupPage extends Component {
   state = {
@@ -57,15 +58,18 @@ class TrunkGroupPage extends Component {
     return (
       <React.Fragment>
         <div className={"panel-heading"}>
-          <div className={"header"}>{`Name: ${
-            this.props.trunkGroup.accessDevice.name
-          }`}</div>
+          <div
+            className={"header"}
+          >{`Name: ${this.props.trunkGroup.accessDevice.name}`}</div>
           <div>{`Level: ${this.props.trunkGroup.accessDevice.level}`}</div>
         </div>
         <div className={"panel-body"}>
           <Tabs defaultActiveKey={0} id="tenant_tabs">
             <Tab eventKey={0} title="Details">
               <Details />
+            </Tab>
+            <Tab eventKey={9} title="Authentication">
+              <Authentication />
             </Tab>
             <Tab eventKey={1} title="Users">
               <Users />
