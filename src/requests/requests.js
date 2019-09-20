@@ -40,7 +40,7 @@ import GridPic from "../grid.gif";
 import draw_editor from "../editor";
 import update from 'immutability-helper';
 import {StaticControl} from "../utils/common";
-import {access_levels, isAllowed, pages} from "../utils/user";
+import {access_levels, isAllowed, modules, pages} from "../utils/user";
 
 export const DATE_FORMAT = 'DD/MM/YYYY HH:mm:ss';
 const SUB_REQUESTS_PAGE_SIZE = 25;
@@ -1775,7 +1775,8 @@ export class Request extends Component {
             return <div><FormattedMessage id='loading' defaultMessage='Loading...'/></div>
         }
 
-        const request_entity = request.entities[0];
+        // devnote: done this way to continue to support Orange API (with request_entities separated)
+        const request_entity = request.entities === undefined ? request : request.entities[0];
         const raw_event = request_entity.details;
 
         const request_ = Object.keys(raw_event).filter(k => !["response", "user"].includes(k)).reduce(
@@ -1880,7 +1881,7 @@ export class Requests extends Component{
         super(props);
         this.cancelLoad = false;
         this.state = {
-            filter_criteria: Requests.criteria_from_params(this.props.location.search, this.props.user_info.ui_profile),
+            filter_criteria: Requests.criteria_from_params(this.props.location.search, this.props.user_info),
             paging_info: {
                 page_number: 1, page_size: 50
             },
@@ -1905,12 +1906,13 @@ export class Requests extends Component{
         this._onClose = this._onClose.bind(this);
     }
 
-    static default_criteria(ui_profile) {
+    static default_criteria(ui_profile, modules) {
+        const request_entities = modules.includes(modules.orange)?'request_entities':'requests';
         return {
             activity_id: {model: 'instances', value: '', op: 'eq'},
-            tenant_id: {model: 'request_entities', value: '', op: 'eq'},
-            site_id: {model: 'request_entities', value: '', op: 'eq'},
-            number: {model: 'request_entities', value: '', op: 'like'},
+            tenant_id: {model: request_entities, value: '', op: 'eq'},
+            site_id: {model: request_entities, value: '', op: 'eq'},
+            number: {model: request_entities, value: '', op: 'like'},
             status: {model: 'instances', value: '', op: 'eq'},
             kind: {model: 'instances', value: '', op: 'eq'},
             created_on: {model: 'requests', value: '', op: 'ge'},
@@ -1921,7 +1923,8 @@ export class Requests extends Component{
         }
     }
 
-    static criteria_from_params(url_params, ui_profile) {
+    static criteria_from_params(url_params, user_info) {
+        const {ui_profile, modules} = user_info;
         const params = queryString.parse(url_params);
         let custom_params = {};
         if (params.filter !== undefined) {
@@ -1930,7 +1933,7 @@ export class Requests extends Component{
             } catch (e) { console.error(e) }
         }
         return update(
-            Requests.default_criteria(ui_profile),
+            Requests.default_criteria(ui_profile, modules),
             {$merge: custom_params}
         );
     }
@@ -1949,7 +1952,7 @@ export class Requests extends Component{
         if (nextProps.location.pathname === this.props.location.pathname &&
             nextProps.location.search !== this.props.location.search) {
             this.setState({
-                filter_criteria: Requests.criteria_from_params(nextProps.location.search, nextProps.user_info.ui_profile)
+                filter_criteria: Requests.criteria_from_params(nextProps.location.search, nextProps.user_info)
             });
         }
     }
@@ -1978,7 +1981,7 @@ export class Requests extends Component{
                     case 'number':
                         // special handling to look into the ranges of the requests
                         return {
-                            model: 'request_entities',
+                            model: filter_criteria[f].model,
                             field: 'numbers',
                             op: filter_criteria[f].op,
                             value: '%' + filter_criteria[f].value.trim() + '%'
@@ -2150,7 +2153,9 @@ export class Requests extends Component{
 
     render() {
         const {filter_criteria, requests, activities, export_url, auto_refresh, sorting_spec, selected_reqs} = this.state;
+        const {user_info} = this.props;
         const invalid_created_on = filter_criteria.created_on.value.length !== 0 && !moment(filter_criteria.created_on.value, "DD/MM/YYYY HH:mm").isValid();
+        const request_entities = user_info.modules && user_info.modules.includes(modules.orange)?"request_entities":"requests";
 
         return (
             <div>
@@ -2528,15 +2533,15 @@ export class Requests extends Component{
                                 },
                                 {
                                     title: <FormattedMessage id="tenant" defaultMessage="Tenant" />,
-                                    field: 'tenant_id', model: 'request_entities',
+                                    field: 'tenant_id', model: request_entities,
                                 },
                                 {
                                     title: <FormattedMessage id="site" defaultMessage="Site" />,
-                                    field: 'site_id', model: 'request_entities',
+                                    field: 'site_id', model: request_entities,
                                 },
                                 {
                                     title: <FormattedMessage id="user-s" defaultMessage="User(s)" />,
-                                    field: 'numbers', model: 'request_entities',
+                                    field: 'numbers', model: request_entities,
                                     style: {
                                         //whiteSpace: 'nowrap',
                                         //width: '100%',
