@@ -47,7 +47,7 @@ const SUB_REQUESTS_PAGE_SIZE = 25;
 
 const workableDefinition = (definition, states) => {
     let new_def = Object.assign({}, definition);
-    
+
     Object.keys(definition.cells).map(k => {
         let c = definition.cells[k];
         //c.name = k;
@@ -58,7 +58,7 @@ const workableDefinition = (definition, states) => {
         new_def.cells[k] = c;
         return null;
     });
-    
+
     new_def.transitions && states && new_def.transitions.map(t => {
         const src = t[0];
         const dst = t[1];
@@ -1907,17 +1907,20 @@ export class Requests extends Component{
     }
 
     static default_criteria(ui_profile, modules) {
-        const request_entities = modules.includes(modules.orange)?'request_entities':'requests';
+        const request_entities = modules.includes(modules.orange) ? 'request_entities' : 'requests';
         return {
-            activity_id: {model: 'instances', value: '', op: 'eq'},
-            tenant_id: {model: request_entities, value: '', op: 'eq'},
-            site_id: {model: request_entities, value: '', op: 'eq'},
-            number: {model: request_entities, value: '', op: 'like'},
-            status: {model: 'instances', value: '', op: 'eq'},
-            kind: {model: 'instances', value: '', op: 'eq'},
-            created_on: {model: 'requests', value: '', op: 'ge'},
-            request_status: {model: 'requests', value: '', op: 'eq'},
-            label: {model: 'bulks', value: '', op: 'eq'},
+            activity_id: { model: 'instances', value: '', op: 'eq' },
+            tenant_id: { model: request_entities, value: '', op: 'eq' },
+            site_id: { model: request_entities, value: '', op: 'eq' },
+            number: { model: request_entities, value: '', op: 'like' },
+            status: { model: 'instances', value: '', op: 'eq' },
+            kind: { model: 'instances', value: '', op: 'eq' },
+            created_on: { model: 'requests', value: '', op: 'ge' },
+            request_status: { model: 'requests', value: '', op: 'eq' },
+            label: { model: 'bulks', value: '', op: 'eq' },
+            proxied_username: { model: 'requests', value: '', op: 'eq' },
+            proxied_url: { model: 'requests', value: '', op: 'eq' },
+            proxied_status: { model: 'processing_traces', value: '', op: 'eq' },
             task_status: undefined,
             end_task_status: undefined,
         }
@@ -1986,6 +1989,23 @@ export class Requests extends Component{
                             op: filter_criteria[f].op,
                             value: '%' + filter_criteria[f].value.trim() + '%'
                         };
+                    case 'proxied_url':
+                        return {
+                            model: filter_criteria[f].model,
+                            field: 'details',
+                            json_field: 'url',
+                            op: filter_criteria[f].op,
+                            value: filter_criteria[f].value
+                        };
+                    case 'proxied_username':
+                            return {
+                                model: filter_criteria[f].model,
+                                field: 'details',
+                                json_field: 'user',
+                                op: filter_criteria[f].op,
+                                value: filter_criteria[f].value
+                        };
+                    case 'proxied_status':
                     case 'task_status':
                     case 'request_status':
                         return {
@@ -2152,10 +2172,11 @@ export class Requests extends Component{
     }
 
     render() {
-        const {filter_criteria, requests, activities, export_url, auto_refresh, sorting_spec, selected_reqs} = this.state;
-        const {user_info} = this.props;
+        const { filter_criteria, requests, activities, export_url, auto_refresh, sorting_spec, selected_reqs } = this.state;
+        const { user_info } = this.props;
         const invalid_created_on = filter_criteria.created_on.value.length !== 0 && !moment(filter_criteria.created_on.value, "DD/MM/YYYY HH:mm").isValid();
-        const request_entities = user_info.modules && user_info.modules.includes(modules.orange)?"request_entities":"requests";
+        const request_entities = user_info.modules && user_info.modules.includes(modules.orange) ? "request_entities" : "requests";
+        const proxy_activated = user_info.modules && user_info.modules.includes(modules.proxy);
 
         return (
             <div>
@@ -2404,7 +2425,102 @@ export class Requests extends Component{
                                 </Col>
                             </FormGroup>
 
-                            <FormGroup validationState={invalid_created_on?"error":null}>
+                            {
+                                proxy_activated &&
+                                <FormGroup>
+                                    <Col componentClass={ControlLabel} sm={2}>
+                                        <FormattedMessage id="owner" defaultMessage="Owner" />
+                                    </Col>
+
+                                    <Col sm={1}>
+                                        <FormControl
+                                            componentClass="select"
+                                            value={filter_criteria.proxied_username.op}
+                                            onChange={e => this.setState({
+                                                filter_criteria: update(this.state.filter_criteria,
+                                                    { proxied_username: { $merge: { op: e.target.value } } })
+                                            })}>
+                                            <option value="eq">==</option>
+                                            <option value="ne">!=</option>
+                                        </FormControl>
+                                    </Col>
+
+                                    <Col sm={8}>
+                                        <FormControl componentClass="input" value={filter_criteria.proxied_username.value}
+                                            onChange={e => this.setState({
+                                                filter_criteria: update(filter_criteria,
+                                                    { proxied_username: { $merge: { value: e.target.value } } })
+                                            })} />
+                                    </Col>
+                                </FormGroup>
+                            }
+
+                            {
+                                proxy_activated &&
+                                <FormGroup>
+                                    <Col componentClass={ControlLabel} sm={2}>
+                                        <FormattedMessage id="proxy-status" defaultMessage="Proxy status" />
+                                    </Col>
+
+                                    <Col sm={1}>
+                                        <FormControl
+                                            componentClass="select"
+                                            value={filter_criteria.proxied_status.op}
+                                            onChange={e => this.setState({
+                                                filter_criteria: update(this.state.filter_criteria,
+                                                    { proxied_status: { $merge: { op: e.target.value } } })
+                                            })}>
+                                            <option value="eq">==</option>
+                                            <option value="ne">!=</option>
+                                            <option value="gt">&gt;</option>
+                                            <option value="ge">&gt;=</option>
+                                            <option value="lt">&lt;</option>
+                                            <option value="le">&lt;=</option>
+                                        </FormControl>
+                                    </Col>
+
+                                    <Col sm={8}>
+                                        <FormControl componentClass="input" value={filter_criteria.proxied_status.value}
+                                            onChange={e => this.setState({
+                                                filter_criteria: update(filter_criteria,
+                                                    { proxied_status: { $merge: { value: e.target.value && parseInt(e.target.value) } } })
+                                            })} />
+                                    </Col>
+                                </FormGroup>
+                            }
+
+                            {
+                                proxy_activated &&
+                                <FormGroup>
+                                    <Col componentClass={ControlLabel} sm={2}>
+                                        <FormattedMessage id="proxy-URL" defaultMessage="Proxy URL" />
+                                    </Col>
+
+                                    <Col sm={1}>
+                                        <FormControl
+                                            componentClass="select"
+                                            value={filter_criteria.proxied_url.op}
+                                            onChange={e => this.setState({
+                                                filter_criteria: update(this.state.filter_criteria,
+                                                    { proxied_url: { $merge: { op: e.target.value } } })
+                                            })}>
+                                            <option value="eq">==</option>
+                                            <option value="ne">!=</option>
+                                            <option value="like">like</option>
+                                        </FormControl>
+                                    </Col>
+
+                                    <Col sm={8}>
+                                        <FormControl componentClass="input" value={filter_criteria.proxied_url.value}
+                                            onChange={e => this.setState({
+                                                filter_criteria: update(filter_criteria,
+                                                    { proxied_url: { $merge: { value: e.target.value } } })
+                                            })} />
+                                    </Col>
+                                </FormGroup>
+                            }
+
+                            <FormGroup validationState={invalid_created_on ? "error" : null}>
                                 <Col componentClass={ControlLabel} sm={2}>
                                     <FormattedMessage id="created-on" defaultMessage="Created on" />
                                 </Col>

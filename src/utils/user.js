@@ -16,6 +16,7 @@ export const pages = Object.freeze({
 
 export const modules = Object.freeze({
     orange: 'orange',
+    proxy: 'proxy',
     provisioning: 'provisioning',
     bulk: 'bulk',
     orchestration: 'orchestration',
@@ -32,7 +33,7 @@ export const access_levels = Object.freeze({
 
 const definition = {
     // give access to all pages for the admin
-    admin: Object.keys(pages).reduce((o, page) => Object.assign(o, {[pages[page]]: true}), {}),
+    admin: Object.keys(pages).reduce((o, page) => Object.assign(o, { [pages[page]]: true }), {}),
 
     user: {
         [pages.data]: true,
