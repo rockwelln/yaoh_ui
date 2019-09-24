@@ -40,9 +40,7 @@ const linkByCrumb = (item, lastItem, i, path, match) => {
   if (path[i - 3] === "tenants" && !lastItem.includes(crumb)) {
     return (
       <Link
-        to={`/provisioning/${match.params.gwName}/tenants/${
-          match.params.tenantId
-        }/groups/${match.params.groupId}/trunkgroup/${crumb}`}
+        to={`/provisioning/${match.params.gwName}/tenants/${match.params.tenantId}/groups/${match.params.groupId}/trunkgroup/${crumb}`}
       >
         {crumb === match.params.trunkGroupName && match.params.trunkGroupName}
       </Link>
@@ -60,6 +58,9 @@ const linkByCrumb = (item, lastItem, i, path, match) => {
   if (crumb === "adduser") {
     return "Add user";
   }
+  if (crumb === "addtrunk") {
+    return "Add trunk";
+  }  
   if (crumb === "localusers") {
     return (
       <Link to={`/provisioning/${match.params.gwName}/localusers`}>

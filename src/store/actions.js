@@ -283,6 +283,11 @@ export const postAssignPhoneNumbersToGroup = data => ({
   data
 });
 
+export const postCreateTrunkGroup = data => ({
+  type: actionType.POST_CREATE_TRUNK_GROUP,
+  data
+});
+
 export const putUpdateUser = data => ({
   type: actionType.PUT_UPDATE_USER,
   data
@@ -1187,7 +1192,7 @@ export function fetchGetTrunkByTenantID(tenantId) {
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-trunk-failed"
-            defaultMessage="Failed to fetch trunk!"
+            defaultMessage="Failed to fetch trunks!"            
           />,
           error.message
         )
@@ -1365,15 +1370,15 @@ export function fetchPostCreateLocalUser(data) {
     )
       .then(res => res.json())
       .then(data => dispatch(postCreateLocalUser(data)))
-      .catch(error => {
+      .catch(error =>
         NotificationsManager.error(
           <FormattedMessage
             id="failed-create-local-user"
             defaultMessage="Failed create local user!"
           />,
           error.message
-        );
-      });
+        )
+      );
   };
 }
 
@@ -1388,11 +1393,34 @@ export function fetchPostAssignPhoneNumbersToGroup(tenantId, groupId, data) {
         dispatch(postAssignPhoneNumbersToGroup(data));
         return "success";
       })
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-add-phone-numbers"
+            defaultMessage="Failed to add phone numbers!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchPostCreateTrunkGroup(tenantId, groupId, data) {
+  return function(dispatch) {
+    return fetch_post(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/services/trunk_groups/`,
+      data
+    )
+      .then(res => res.json())
+      .then(data => {
+        dispatch(postCreateTrunkGroup(data));
+        return "success";
+      })
       .catch(error => {
         NotificationsManager.error(
           <FormattedMessage
-            id="failed-to-assign-phonenumbers"
-            defaultMessage="Failed to assign phonenumbers!"
+            id="failed-to-create-trunk-group"
+            defaultMessage="Failed to create trunk group!"            
           />,
           error.message
         );

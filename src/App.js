@@ -53,6 +53,7 @@ import AddLocalUsers from "./components/AddLocalUser";
 import UpdateLocalUser from "./components/UpdateLocalUser";
 import AddPhoneNumberGroup from "./components/AddPhoneNumberGroup";
 import SearchPage from "./components/SearchPage";
+import AddTrunkGroup from "./components/AddTrunkGroup";
 
 import UserManagement, { LocalUserProfile } from './system/user_mgm';
 import {StartupEvents} from './startup_events';
@@ -812,6 +813,17 @@ class App extends Component {
                             component={props =>
                                 isAllowed(ui_profile, pages.data_tenants) ? <CreateGroup  auth_token={auth_token}/>
                                 : <NotAllowed />
+                            }
+                            exact
+                        />
+                        <Route
+                            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/addtrunk"
+                            component={props =>
+                                isAllowed(ui_profile, pages.data_tenants) ? (
+                                    <AddTrunkGroup />
+                                ) : (
+                                    <NotAllowed />
+                                )
                             }
                             exact
                         />
