@@ -690,7 +690,7 @@ class DeleteUser extends Component {
 
     onDelete() {
         const {user, auth_token} = this.props;
-        fetch_delete(`/api/v01/system/users/${user.id}`, auth_token)
+        fetch_delete(`/api/v01/system/users/${user.id}`)
             .then(this.onClose)
             .catch(error => this.props.notifications.addNotification({
                 title: <FormattedMessage id="user-update-failed" defaultMessage="User update failed!" />,

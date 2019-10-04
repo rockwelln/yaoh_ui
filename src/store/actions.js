@@ -1754,7 +1754,7 @@ export function fetchPutUpdateGroupServicesByTenantId(tenantId, data) {
 
 export function fetchDeleteTenant(ID, auth_token) {
   return function(dispatch) {
-    return fetch_delete(`${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${ID}`, auth_token)
+    return fetch_delete(`${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${ID}`)
       .then(data => {
           dispatch(deleteTenant(data));
           return "deleted";
@@ -1771,7 +1771,7 @@ export function fetchDeleteTenant(ID, auth_token) {
 export function fetchDeleteTenantAdmin(tenantId, adminId, auth_token) {
   return function(dispatch) {
     return fetch_delete(
-      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/admins/${adminId}`, auth_token
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/admins/${adminId}`
     )
       .then(data => dispatch(deleteTenantAdmin()))
       .catch(error =>
@@ -1786,7 +1786,7 @@ export function fetchDeleteTenantAdmin(tenantId, adminId, auth_token) {
 export function fetchDeleteGroupDevice(tenantId, groupId, deviceName, auth_token) {
   return function(dispatch) {
     return fetch_delete(
-      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/access_devices/${deviceName}`, auth_token
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/access_devices/${deviceName}`
     )
       .then(data => dispatch(deleteGroupDevice()))
       .catch(error =>
@@ -1801,7 +1801,7 @@ export function fetchDeleteGroupDevice(tenantId, groupId, deviceName, auth_token
 export function fetchDeleteGroupAdmin(tenantId, groupId, adminId, auth_token) {
   return function(dispatch) {
     return fetch_delete(
-      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/admins/${adminId}`, auth_token
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/admins/${adminId}`
     )
       .then(data => dispatch(deleteGroupAdmin()))
       .catch(error =>
@@ -1823,8 +1823,7 @@ export function fetchDeleteAssignUserServices(
   return function(dispatch) {
     return fetch_delete(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/users/${userName}/services/`,
-      data,
-      auth_token
+      data
     )
       .then(data => {
         dispatch(deleteAssignUserServices());
@@ -1851,8 +1850,7 @@ export function fetchDeleteAssignUserServicePacks(
   return function(dispatch) {
     return fetch_delete(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/users/${userName}/services/`,
-      data,
-      auth_token
+      data
     )
       .then(data => {
         dispatch(deleteAssignUserServicePacks());
@@ -1873,8 +1871,7 @@ export function fetchDeletePhoneFromTenant(tenantId, data, auth_token) {
   return function(dispatch) {
     return fetch_delete(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/numbers/`,
-      data,
-      auth_token
+      data
     )
       .then(data => {
         dispatch(deletePhoneFromTenant());
@@ -1894,7 +1891,7 @@ export function fetchDeletePhoneFromTenant(tenantId, data, auth_token) {
 export function fetchDeleteUserFromGroup(tenantId, groupId, userName, auth_token) {
   return function(dispatch) {
     return fetch_delete(
-      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/users/${userName}/`, auth_token
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/users/${userName}/`
     )
       .then(data => {
         dispatch(deleteUserFromGroup());
@@ -1914,7 +1911,7 @@ export function fetchDeleteUserFromGroup(tenantId, groupId, userName, auth_token
 export function fetchDeleteGroupFromTenant(tenantId, groupId, auth_token) {
   return function(dispatch) {
     return fetch_delete(
-      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/`, auth_token
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/`
     )
       .then(data => {
         dispatch(deleteGroupFromTenant(data));

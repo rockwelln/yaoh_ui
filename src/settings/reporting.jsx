@@ -37,7 +37,7 @@ class Report extends Component {
     }
 
     onDelete() {
-        fetch_delete(`/api/v01/reports/${this.props.report.id}`, this.props.auth_token)
+        fetch_delete(`/api/v01/reports/${this.props.report.id}`)
             .then(() => {
                 this.props.notifications.addNotification({
                     message: <FormattedMessage id="report-deleted" defaultMessage="Report deleted!" />,

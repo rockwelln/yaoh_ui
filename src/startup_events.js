@@ -234,7 +234,7 @@ class CustomRoutes extends Component {
     }
 
     onDeleteCustomRoute(route_id) {
-        fetch_delete(`/api/v01/custom_routes/${route_id}`, this.props.auth_token)
+        fetch_delete(`/api/v01/custom_routes/${route_id}`)
             .then(() => {
                 this.props.notifications.addNotification({
                     message: <FormattedMessage id="delete-custom-route-done" defaultMessage="Custom route deleted!"/>,

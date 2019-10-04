@@ -197,7 +197,7 @@ export class CallbackHandler extends Component {
     }
 
     onDeleteCallback(cb_id) {
-        fetch_delete(`/api/v01/system/users/${this.props.userId}/callbacks/${cb_id}`, this.props.auth_token)
+        fetch_delete(`/api/v01/system/users/${this.props.userId}/callbacks/${cb_id}`)
             .then(() => {
                 this.props.notifications.addNotification({
                     message: <FormattedMessage id="callback-deleted" defaultMessage="Callback deleted"/>,

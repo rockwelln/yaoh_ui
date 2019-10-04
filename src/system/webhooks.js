@@ -494,7 +494,7 @@ class WebhookEvents extends React.Component {
     }
 
     onDelete(event_id) {
-        fetch_delete(`/api/v01/webhooks/events/${event_id}`, this.props.auth_token)
+        fetch_delete(`/api/v01/webhooks/events/${event_id}`)
             .then(() => {
                 NotificationsManager.success(<FormattedMessage id="event-deleted" defaultMessage="Event deleted" />);
                 this.fetchEvents();
@@ -599,7 +599,7 @@ export class Webhooks extends React.Component {
     }
 
     onDelete(webhook_id) {
-        fetch_delete(`/api/v01/webhooks/${webhook_id}`, this.props.auth_token)
+        fetch_delete(`/api/v01/webhooks/${webhook_id}`)
             .then(() => {
                 NotificationsManager.success(<FormattedMessage id="webhook-deleted" defaultMessage="Webhook deleted" />);
                 this.fetchWebhooks();

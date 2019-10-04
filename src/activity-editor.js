@@ -147,7 +147,7 @@ export default class ActivityEditor extends Component {
     }
 
     deleteActivity(activityId, cb) {
-        fetch_delete(`/api/v01/activities/${activityId}`, this.props.auth_token)
+        fetch_delete(`/api/v01/activities/${activityId}`)
             .then(parseJSON)
             .then(data =>{
                 if(cb !== undefined) {
