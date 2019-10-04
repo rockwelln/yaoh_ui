@@ -61,6 +61,7 @@ import ActivityEditor from './activity-editor';
 import {ConfigManagement} from './settings/configuration';
 import {Reporting} from "./settings/reporting.jsx";
 import Gateways from "./system/gateways_mgm";
+import LocalQueues from "./system/queues";
 import {
     API_URL_PREFIX,
     fetch_get,
@@ -360,6 +361,13 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
                       <LinkContainer to={"/system/databases"}>
                           <MenuItem>
                               <FormattedMessage id="databases" defaultMessage="Databases"/>
+                          </MenuItem>
+                      </LinkContainer>
+                  }
+                  { isAllowed(user_info.ui_profile, pages.system_queues) &&
+                      <LinkContainer to={"/system/queues"}>
+                          <MenuItem>
+                              <FormattedMessage id="queues" defaultMessage="Queues"/>
                           </MenuItem>
                       </LinkContainer>
                   }
@@ -1064,6 +1072,13 @@ class App extends Component {
                                            auth_token={auth_token}
                                            notifications={this._notificationSystem.current}
                                            {...props} />:
+                                       <NotAllowed />
+                               )}
+                               exact />
+                        <Route path="/system/queues"
+                               component={props => (
+                                   isAllowed(ui_profile, pages.system_queues) ?
+                                       <LocalQueues {...props} />:
                                        <NotAllowed />
                                )}
                                exact />
