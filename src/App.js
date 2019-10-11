@@ -498,7 +498,7 @@ class App extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            auth_token: this.props.cookies.get("auth_token"),
+            // auth_token: this.props.cookies.get("auth_token"),
             user_info: undefined,
             error_msg: undefined,
         };
@@ -514,15 +514,15 @@ class App extends Component {
         sso_auth_service.manager.events.addUserLoaded(this.ssoTokenToLocalToken.bind(this));
     }
 
-    getUserInfo(auth_token) {
-        fetch_get('/api/v01/system/users/local', auth_token)
+    getUserInfo() {
+        fetch_get('/api/v01/system/users/local')
             .then(data => {
                 this.setState({user_info: data});
                 this.props.onLanguageUpdate(data.language);
             })
             .catch(error => {
                 if(error.response !== undefined && error.response.status === 401) {  // unauthorized
-                    auth_token && this.logout()
+                    this.logout()
                 } else {
                     this.setState({error_msg: <FormattedMessage id="app.no_connection" defaultMessage="Connection issue: Refresh the page or contact the site admin." /> })
                 }
@@ -539,9 +539,9 @@ class App extends Component {
     }
 
     componentWillUpdate() {
-        if(this.isAuthenticated() && !this.state.user_info && this.state.auth_token) {
-            this.getUserInfo(this.state.auth_token);
-            ProvProxiesManager.fetchConfiguration(this.state.auth_token).then(() => {
+        if(this.isAuthenticated() && !this.state.user_info && AuthServiceManager.isAuthenticated()) {
+            this.getUserInfo();
+            ProvProxiesManager.fetchConfiguration().then(() => {
                 this.setState({proxy_fetch: true});
             }).catch(error => console.log(error));
         }
@@ -554,25 +554,22 @@ class App extends Component {
 
     updateToken(token, sso_auth) {
         AuthServiceManager.loadToken(token);
-        let tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate()+1);
-        this.setState({auth_token: token, error_msg: undefined});
-        this.props.cookies.set('auth_token', token, {expires: tomorrow, path: '/'});  // maxAge = 24hours
         this.props.cookies.set('auth_sso', sso_auth?'1':'0', {path: '/'});  // maxAge = 24hours
     }
 
     logout() {
-        this.setState({auth_token: undefined, user_info: undefined});
+        // this.setState({auth_token: undefined, user_info: undefined});
+        this.setState({user_info: undefined});
         console.log('logout');
         AuthServiceManager.logout();
-        this.props.cookies.remove("auth_token", { path: '/' });
+        // this.props.cookies.remove("auth_token", { path: '/' });
         this.props.cookies.remove("auth_sso", { path: '/' });
         this.props.cookies.remove("user_language", { path: '/' });
         sso_auth_service.removeUser().then(() => this.props.onLanguageUpdate(undefined));
     }
 
     ssoTokenToLocalToken(user) {
-        if(this.state.auth_token) {
+        if(AuthServiceManager.isAuthenticated()) {
             return;
         }
 
@@ -598,7 +595,7 @@ class App extends Component {
     }
 
     isAuthenticated() {
-        const local_auth = this.state.auth_token !== undefined;
+        const local_auth = AuthServiceManager.isAuthenticated();
         const sso_auth = sso_auth_service.isLoggedIn();
 
         console.log(`local_auth status: ${local_auth}, sso_auth status: ${sso_auth}`);
@@ -606,8 +603,7 @@ class App extends Component {
     }
 
     render() {
-        const {auth_token, database_status, error_msg, user_info} = this.state;
-        const authenticated = this.isAuthenticated();
+        const {database_status, error_msg, user_info} = this.state;
         const is_reset_password = window.location.pathname.substr(0, RESET_PASSWORD_PREFIX.length) === RESET_PASSWORD_PREFIX;
         const standby_alert = database_status && !database_status.is_master && (
             <Alert bsStyle="danger">
@@ -619,6 +615,8 @@ class App extends Component {
         if(is_reset_password) {
             return <ResetPasswordPage standby_alert={standby_alert}/>
         }
+
+        const authenticated = this.isAuthenticated();
 
         // need to login first
         if(!authenticated || error_msg !== undefined) {
@@ -643,6 +641,7 @@ class App extends Component {
         }
 
         const ui_profile = user_info.ui_profile;
+        const auth_token = AuthServiceManager.getToken();
 
         return (
           <Router>

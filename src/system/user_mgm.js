@@ -299,7 +299,7 @@ class UpdateUser extends Component {
         this.state.error && setTimeout(() => this.setState({error: false}), 2000);
 
         return (
-            <Modal show={this.state.show} onHide={this.onClose} backdrop={false}>
+            <Modal show={this.state.show} onHide={this.onClose} backdrop={false} bsSize="large">
                 <Modal.Header closeButton>
                     <Modal.Title><FormattedMessage id="update-a-user" defaultMessage="Update a user" /></Modal.Title>
                 </Modal.Header>
@@ -424,6 +424,18 @@ class UpdateUser extends Component {
                                         onChange={e => this.setState({diff_user: update(this.state.diff_user, {$merge: {repeated_password: e.target.value}})})}/>
                                 </Col>
                             </FormGroup>
+                            <FormGroup>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="token-expiry" defaultMessage="Token expiry" />
+                                </Col>
+
+                                <Col sm={9}>
+                                    <Checkbox
+                                        checked={user_.token_expiry || false}
+                                        readOnly={!this.props.user_info.is_system} // only "system" user may change it.
+                                        onChange={e => this.setState({diff_user: update(this.state.diff_user, {$merge: {token_expiry: e.target.checked}})})}/>
+                                </Col>
+                            </FormGroup>
                             <FormGroup validationState={"error"}>
                                 <Col componentClass={ControlLabel} sm={2}>
                                     <FormattedMessage id="danger-zone" defaultMessage="Dangerous zone" />
@@ -502,6 +514,7 @@ class NewUser extends Component {
             groups: [],
             password: '',
             repeated_password: '',
+            token_expiry: true,
         }
     }
 
@@ -542,7 +555,7 @@ class NewUser extends Component {
                 <Button bsStyle='primary' onClick={() => this.setState({show: true})}>
                     <FormattedMessage id="add-user" defaultMessage="Add user" />
                 </Button>
-                <Modal show={show} onHide={this.onClose} backdrop={false}>
+                <Modal show={show} onHide={this.onClose} backdrop={false} bsSize="large">
                     <Modal.Header closeButton>
                         <Modal.Title><FormattedMessage id="create-a-user" defaultMessage="Create a user" /></Modal.Title>
                     </Modal.Header>
@@ -656,6 +669,18 @@ class NewUser extends Component {
                                         type="password"
                                         value={user.repeated_password}
                                         onChange={e => this.setState({user: update(user, {$merge: {repeated_password: e.target.value}})})}/>
+                                </Col>
+                            </FormGroup>
+                            <FormGroup>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="token-expiry" defaultMessage="Token expiry" />
+                                </Col>
+
+                                <Col sm={9}>
+                                    <Checkbox
+                                        checked={user.token_expiry || false}
+                                        readOnly={!this.props.user_info.is_system} // only "system" user may change it.
+                                        onChange={e => this.setState({diff_user: update(user, {$merge: {token_expiry: e.target.checked}})})}/>
                                 </Col>
                             </FormGroup>
                         </Form>

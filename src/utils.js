@@ -34,6 +34,8 @@ class AuthService {
 
     loadToken(token) {
         this.token = token;
+
+        createCookie("auth_token", token, 1, "/");
         console.log("token updated!");
     }
 
@@ -48,6 +50,8 @@ class AuthService {
 
     logout() {
         this.token = null;
+
+        removeCookie("auth_token");
     }
 
     isAuthenticated() {
@@ -62,8 +66,8 @@ export const AuthServiceManager = new AuthService();
 class ProvisioningProxies {
     static proxies = [];
 
-    fetchConfiguration(auth_token) {
-      return fetch_get("/api/v01/apio/provisioning/gateways", auth_token)
+    fetchConfiguration() {
+      return fetch_get("/api/v01/apio/provisioning/gateways")
           .then(data => ProvisioningProxies.proxies = data.gateways.map(g => {
               g.id = g.name.toLowerCase().replace(/[. ]/g, "");
               console.log(g);
@@ -118,6 +122,8 @@ export function checkStatus(response) {
         return response
     } else if (response.status === 401) {
         console.log("the request was *not* authorized!");
+        AuthServiceManager.logout();
+        window.location.reload();
     }
 
     const contentType = response.headers.get("content-type");

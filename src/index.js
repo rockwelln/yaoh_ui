@@ -60,9 +60,9 @@ class AppWithIntl extends Component {
         if(locale !== this.state.locale) {
             this.setState({locale: locale});
             if(locale === undefined)
-                this.props.cookies.remove('user_language');
+                this.props.cookies.remove('user_language', {path: '/'});
             else
-                this.props.cookies.set('user_language', locale);
+                this.props.cookies.set('user_language', locale, {path: '/'});
         }
     }
 
