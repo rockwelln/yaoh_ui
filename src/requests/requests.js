@@ -1505,6 +1505,7 @@ export class Transaction extends Component {
         const {error, tx, request, events, logs, activeTab, replaying, messages, subrequests, messageShown, subrequestsShown, subrequests_pagination, externalCallbacks} = this.state;
         const {user_info, auth_token} = this.props;
 
+        const original_event_id = events && ((request && request.event_id) || (events[0] && events[0].event_id));
         const raw_event = events && (request ? events.filter(e => e.event_id === request.event_id)[0] : events[0]);
 
         let alerts = [];
@@ -1574,12 +1575,16 @@ export class Transaction extends Component {
                                         <Button onClick={() => this.onReopen()}><FormattedMessage id="reopen" defaultMessage="Reopen" /></Button>
                                     }
                                     {
-                                        request && request.details &&
-                                        <Button
-                                            href={`/api/v01/apio/requests/${tx.original_request_id}?as=csv&auth_token=${auth_token}`}
-                                        >
-                                            <FormattedMessage id="request-as-csv" defaultMessage="Request as CSV"/>
-                                        </Button>
+                                        request &&
+                                            <Button
+                                                href={
+                                                    request.details ?
+                                                        `/api/v01/apio/requests/${tx.original_request_id}?as=csv&auth_token=${auth_token}` :
+                                                        `/api/v01/transactions/${this.props.match.params.txId}/events/${original_event_id}?as=csv&auth_token=${auth_token}`
+                                                }
+                                            >
+                                                <FormattedMessage id="request-as-csv" defaultMessage="Request as CSV"/>
+                                            </Button>
                                     }
                                 </ButtonGroup>
                             </Panel>
