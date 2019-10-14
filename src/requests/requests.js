@@ -1939,6 +1939,7 @@ export class Requests extends Component{
             request_status: { model: 'requests', value: '', op: 'eq' },
             label: { model: 'bulks', value: '', op: 'eq' },
             proxied_username: { model: 'requests', value: '', op: 'eq' },
+            proxied_method: { model: 'requests', value: '', op: 'eq' },
             proxied_url: { model: 'requests', value: '', op: 'eq' },
             proxied_status: { model: 'processing_traces', value: '', op: 'eq' },
             task_status: undefined,
@@ -2008,6 +2009,14 @@ export class Requests extends Component{
                             field: 'numbers',
                             op: filter_criteria[f].op,
                             value: '%' + filter_criteria[f].value.trim() + '%'
+                        };
+                    case 'proxied_method':
+                        return {
+                            model: filter_criteria[f].model,
+                            field: 'details',
+                            json_field: 'method',
+                            op: filter_criteria[f].op,
+                            value: filter_criteria[f].value
                         };
                     case 'proxied_url':
                         return {
@@ -2536,6 +2545,42 @@ export class Requests extends Component{
                                                 filter_criteria: update(filter_criteria,
                                                     { proxied_url: { $merge: { value: e.target.value } } })
                                             })} />
+                                    </Col>
+                                </FormGroup>
+                            }
+
+                            {
+                                proxy_activated &&
+                                <FormGroup>
+                                    <Col componentClass={ControlLabel} sm={2}>
+                                        <FormattedMessage id="proxy-method" defaultMessage="Proxy method" />
+                                    </Col>
+
+                                    <Col sm={1}>
+                                        <FormControl
+                                            componentClass="select"
+                                            value={filter_criteria.proxied_method.op}
+                                            onChange={e => this.setState({
+                                                filter_criteria: update(this.state.filter_criteria,
+                                                    {proxied_method: {$merge: {op: e.target.value}}})
+                                            })}>
+                                            <option value="eq">==</option>
+                                            <option value="ne">!=</option>
+                                        </FormControl>
+                                    </Col>
+
+                                    <Col sm={8}>
+                                        <FormControl componentClass="select" value={filter_criteria.proxied_method.value}
+                                            onChange={e => this.setState({
+                                                filter_criteria: update(this.state.filter_criteria,
+                                                    {proxied_method: {$merge: {value: e.target.value}}})
+                                            })}>
+                                            <option value='' />
+                                            <option value="get">get</option>
+                                            <option value="post">post</option>
+                                            <option value="put">put</option>
+                                            <option value="delete">delete</option>
+                                        </FormControl>
                                     </Col>
                                 </FormGroup>
                             }
