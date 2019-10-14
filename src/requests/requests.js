@@ -1503,7 +1503,7 @@ export class Transaction extends Component {
 
     render() {
         const {error, tx, request, events, logs, activeTab, replaying, messages, subrequests, messageShown, subrequestsShown, subrequests_pagination, externalCallbacks} = this.state;
-        const {user_info} = this.props;
+        const {user_info, auth_token} = this.props;
 
         const raw_event = events && (request ? events.filter(e => e.event_id === request.event_id)[0] : events[0]);
 
@@ -1572,6 +1572,14 @@ export class Transaction extends Component {
                                     {
                                         tx.status !== "ACTIVE" &&
                                         <Button onClick={() => this.onReopen()}><FormattedMessage id="reopen" defaultMessage="Reopen" /></Button>
+                                    }
+                                    {
+                                        request && request.details &&
+                                        <Button
+                                            href={`/api/v01/apio/requests/${tx.original_request_id}?as=csv&auth_token=${auth_token}`}
+                                        >
+                                            <FormattedMessage id="request-as-csv" defaultMessage="Request as CSV"/>
+                                        </Button>
                                     }
                                 </ButtonGroup>
                             </Panel>
@@ -1770,6 +1778,7 @@ export class Request extends Component {
 
     render() {
         const {request, messages} = this.state;
+        const {auth_token} = this.props;
 
         if (!request) {
             return <div><FormattedMessage id='loading' defaultMessage='Loading...'/></div>
@@ -1809,7 +1818,18 @@ export class Request extends Component {
                         <Panel.Body>
                             <Table condensed>
                                 <tbody>
-                                    <tr><th><FormattedMessage id="requset-id" defaultMessage="Request ID" /></th><td>{ request.request_id }</td></tr>
+                                    <tr>
+                                        <th><FormattedMessage id="requset-id" defaultMessage="Request ID" /></th>
+                                        <td>
+                                            { request.request_id }
+                                            <Button
+                                                bsStyle="link"
+                                                href={`/api/v01/apio/requests/${request.request_id}?as=csv&auth_token=${auth_token}`}
+                                            >
+                                                csv
+                                            </Button>
+                                        </td>
+                                    </tr>
                                     <tr><th><FormattedMessage id="request-status" defaultMessage="Request status" /></th><td>{ request.status }</td></tr>
                                     <tr><th><FormattedMessage id="username" defaultMessage="Username" /></th><td>{ username }</td></tr>
                                     <tr><th><FormattedMessage id="target-type" defaultMessage="Target type" /></th><td>{ request_entity.entity_type }</td></tr>
