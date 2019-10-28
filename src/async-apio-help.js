@@ -1,15 +1,16 @@
 import React, {Component} from 'react';
 import Table from 'react-bootstrap/lib/Table';
 import {FormattedMessage} from 'react-intl';
-import {API_URL_PREFIX} from './utils';
+import {STATIC_URL_PREFIX} from './utils';
 
 const HELP_DOCUMENTS = [
-    {url: `${API_URL_PREFIX}/static/help/high_level_api_guide/index.html`, title: 'High Level API Guide', version: '0.1', summary: ''},
-    {url: `${API_URL_PREFIX}/swagger-ui/index.html`, title: 'SWAGGER API Guide', version: '0.1', summary: ''},
+    // {url: `${STATIC_URL_PREFIX}/static/docs/high_level_api_guide/index.html`, title: 'High Level API Guide', version: '0.1', summary: ''},
+    {url: `${STATIC_URL_PREFIX}/static/docs/_user_guide/index.html`, title: 'User guide doc', version: '0.1', summary: ''},
+    {url: `${STATIC_URL_PREFIX}/static/docs/_admin/index.html`, title: 'Admin / technical doc', version: '0.1', summary: ''},
 ];
 
 export const INTERNAL_HELP_LINKS = {
-    profile_rights: {url: API_URL_PREFIX + '/static/help/user_guide/pages/users.html#current-configuration'}
+    profile_rights: {url: STATIC_URL_PREFIX + '/static/docs/user_guide/pages/users.html#current-configuration'}
 };
 
 export default class AsynApioHelp extends Component {

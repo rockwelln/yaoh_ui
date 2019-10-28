@@ -35,7 +35,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "docs": "markdown-folder-to-html docs/admin; markdown-folder-to-html docs/user_guide",
+    "build-docs": "npm run docs; rm -rf public/static/docs/; mkdir -p public/static/docs; mv docs/_* public/static/docs/"
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -50,6 +52,7 @@
     "babel-plugin-react-intl": "^4.1.20",
     "babel-preset-react": "^6.24.1",
     "babel-preset-stage-0": "^6.24.1",
+    "markdown-folder-to-html": "^2.3.0",
     "react-intl-po": "^2.2.2"
   }
 }
