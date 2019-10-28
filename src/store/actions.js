@@ -1659,7 +1659,15 @@ export function fetchPutUpdateBackupByTrunkGtoup(
       data
     )
       .then(res => res.json())
-      .then(data => dispatch(putUpdateBackupByTrunkGtoup(data)))
+      .then(data => {
+        NotificationsManager.success(
+          <FormattedMessage
+            id="updated"
+            defaultMessage="Updated"
+          />
+        );
+        dispatch(putUpdateBackupByTrunkGtoup(data));
+      })
       .catch(error =>
         NotificationsManager.error(
           <FormattedMessage
@@ -1704,7 +1712,15 @@ export function fetchPutUpdateTrunkGroup(
       data
     )
       .then(res => res.json())
-      .then(data => dispatch(putUpdateTrunkGroup(data)))
+      .then(data => {
+        NotificationsManager.success(
+          <FormattedMessage
+            id="updated"
+            defaultMessage="Updated"
+          />
+        );
+        dispatch(putUpdateTrunkGroup(data));
+      })
       .catch(error =>
         NotificationsManager.error(
           <FormattedMessage
