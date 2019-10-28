@@ -1249,6 +1249,7 @@ export function fetchPostCreateTenant(data, auth_token) {
       data,
       auth_token
     )
+      .then(resp => resp.json())
       .then(data => dispatch(postCreateTenant(data)))
       .catch(error => {
         NotificationsManager.error(
@@ -1269,6 +1270,7 @@ export function fetchPostCreateGroup(tenantId, data, auth_token) {
       data,
       auth_token
     )
+      .then(resp => resp.json())
       .then(data => dispatch(postCreateGroup(data)))
       .catch(error => {
         NotificationsManager.error(
@@ -1289,6 +1291,7 @@ export function fetchPostAddPhoneNumbersToTenant(tenantId, data, auth_token) {
       data,
       auth_token
     )
+      .then(resp => resp.json())
       .then(data => dispatch(postAddPhoneNumbersToTenant(data)))
       .catch(error => {
         NotificationsManager.error(
@@ -1309,6 +1312,7 @@ export function fetchPostCreateUserToGroup(tenantId, groupId, data, auth_token) 
       data,
       auth_token
     )
+      .then(resp => resp.json())
       .then(data => dispatch(postCreateUserToGroup(data)))
       .catch(error => {
         NotificationsManager.error(
@@ -1591,6 +1595,7 @@ export function fetchPutUpdateGroupServicesByGroupId(tenantId, groupId, data, au
       data,
       auth_token
     )
+      .then(resp => resp.json())
       .then(data => dispatch(putUpdateGroupServicesByGroupId(data)))
       .catch(error =>
         NotificationsManager.error(
@@ -1755,6 +1760,7 @@ export function fetchPutUpdateGroupServicesByTenantId(tenantId, data) {
 export function fetchDeleteTenant(ID, auth_token) {
   return function(dispatch) {
     return fetch_delete(`${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${ID}`)
+      .then(resp => resp.json())
       .then(data => {
           dispatch(deleteTenant(data));
           return "deleted";
