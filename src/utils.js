@@ -85,6 +85,10 @@ class ProvisioningProxies {
     listProxies() {
         return ProvisioningProxies.proxies;
     }
+
+    findById(id) {
+        return ProvisioningProxies.proxies.find(p => p.id === id);
+    }
 }
 
 export const ProvProxiesManager = new ProvisioningProxies();
