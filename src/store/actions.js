@@ -1917,6 +1917,7 @@ export function fetchDeleteUserFromGroup(tenantId, groupId, userName, auth_token
     )
       .then(data => {
         dispatch(deleteUserFromGroup());
+        return "deleted";
       })
       .catch(error =>
         NotificationsManager.error(

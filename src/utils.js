@@ -134,7 +134,10 @@ export function checkStatus(response) {
     const contentType = response.headers.get("content-type");
     if(contentType && contentType.indexOf("application/json") !== -1) {
         return response.json().then(function(json) {
-          const message = json.error || response.statusText;
+          const message =
+              (json.errors && json.errors[0] && json.errors[0].message) ?
+                  `${json.errors[0].message}. Status Code: ${response.status}` :
+                  (json.error || response.statusText);
           let error = new Error(message);
           error.response = response;
           if(json.errors) {
