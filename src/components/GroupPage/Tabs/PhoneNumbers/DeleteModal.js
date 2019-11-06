@@ -75,12 +75,20 @@ class DeleteModal extends Component {
           <p>
             <FormattedMessage
               id="confirm-delete-warning"
-              defaultMessage={`You are about to delete the phone ${rangeStart}!`}
+              defaultMessage={
+                rangeStart.length
+                  ? `You are about to delete the phone ${rangeStart}!`
+                  : "Select phone numbers first"
+              }
             />
           </p>
         </Modal.Body>
         <Modal.Footer>
-          <Button onClick={() => this.onDelete(rangeStart)} bsStyle="danger">
+          <Button
+            onClick={() => this.onDelete(rangeStart)}
+            bsStyle="danger"
+            disabled={rangeStart.length === 0}
+          >
             <FormattedMessage id="delete" defaultMessage="Delete" />
           </Button>
           <Button onClick={() => onClose && onClose(false)} disabled={deleting}>

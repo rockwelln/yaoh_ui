@@ -909,7 +909,6 @@ class App extends Component {
                               isAllowed(ui_profile, pages.data_tenants) ? (
                                 <GroupPage
                                     auth_token={auth_token}
-                                    notifications={this._notificationSystem.current}
                                 />
                               ) : (
                                 <NotAllowed />
