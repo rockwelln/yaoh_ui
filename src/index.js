@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import ReactDOM from 'react-dom';
 import {CookiesProvider, withCookies} from 'react-cookie';
-import {IntlProvider, addLocaleData} from 'react-intl';
+import {IntlProvider} from 'react-intl';
 import { createStore, applyMiddleware, compose } from "redux";
 import { Provider } from "react-redux";
 import thunk from "redux-thunk";
@@ -12,16 +12,16 @@ import { unregister } from './registerServiceWorker';
 
 import mainReducer from "./store/reducers";
 
-import en from 'react-intl/locale-data/en';
-import fr from 'react-intl/locale-data/fr';
-import nl from 'react-intl/locale-data/nl';
+//import en from 'react-intl/locale-data/en';
+//import fr from 'react-intl/locale-data/fr';
+//import nl from 'react-intl/locale-data/nl';
 
 //import en_GB from './translations/en.json';
 import fr_FR from './translations/fr.json';
 
-addLocaleData(en);
-addLocaleData(fr);
-addLocaleData(nl);
+//addLocaleData(en);
+//addLocaleData(fr);
+//addLocaleData(nl);
 
 function getMessages(locale) {
   switch(locale) {
