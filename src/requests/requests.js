@@ -451,47 +451,41 @@ class SyncMessagesFlow extends Component {
 
 
 class Message extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            expanded: false,
-            loading: false,
-        };
-        this.fetchDetails = this.fetchDetails.bind(this);
-        this.onExpand = this.onExpand.bind(this);
-    }
+    state = {
+        expanded: false,
+        loading: false,
+    };
 
     fetchDetails() {
         this.setState({loading: true});
         fetch_get(`${API_URL_PROXY_PREFIX}/api/v1/local/audit_records/${this.props.entry.external_id}`, this.props.auth_token)
             .then(data => {
-                this.setState({syncDetails: data, loading: false});
+                this.setState({respSyncDetails: data, loading: false});
             })
             .catch(error => {
-                this.setState({error: error, loading: false})
+                this.setState({loading: false});
+                console.log(error);
             });
     }
 
     onExpand() {
         const {expanded} = this.state;
-        if(!expanded) {
-            this.fetchDetails();
+        const {entry} = this.props;
+        if(!expanded && entry.external_id && !entry.gateway_details) {
+            this.fetchDetails.bind(this)();
         }
         this.setState({expanded: !expanded});
     }
 
-    getStatusColor() {
-        return this.props.entry.status < 400 ? '#a4d1a2' : '#ca6f7b';
-    }
-
     render() {
         const {entry, p} = this.props;
-        const {syncDetails, loading, expanded} = this.state;
-        const statusColor = this.getStatusColor();
+        const {respSyncDetails, loading, expanded} = this.state;
+        const statusColor = this.props.entry.status < 400 ? '#a4d1a2' : '#ca6f7b';
         const expIco = expanded?<Glyphicon glyph="chevron-down"/>:<Glyphicon glyph="chevron-right"/>;
+        const syncDetails = entry.gateway_details || respSyncDetails;
         let rows = [
             <tr
-                onClick={this.onExpand}
+                onClick={this.onExpand.bind(this)}
                 key={`message_summary_${entry.processing_trace_id}`}
             >
                 <td style={{width: '1%'}}>{expIco}</td>
@@ -1376,7 +1370,7 @@ export class Transaction extends Component {
     refreshMessages() {
         this.state.tx.tasks.map(t => {
             const task_name = t.cell_id;
-            fetch_get(`/api/v01/apio/transactions/${this.state.tx.id}/tasks/${t.id}/traces`, this.props.auth_token)
+            fetch_get(`/api/v01/apio/transactions/${this.state.tx.id}/tasks/${t.id}/traces?details=1`)
                 .then(data => {
                     const missing_messages = data.traces.filter(
                         t => this.state.messages.findIndex(m => m.processing_trace_id === t.processing_trace_id) === -1
@@ -1752,7 +1746,7 @@ export class Request extends Component {
     }
 
     fetchDetails() {
-        fetch_get(`/api/v01/apio/requests/${this.props.match.params.reqId}`, this.props.auth_token)
+        fetch_get(`/api/v01/apio/requests/${this.props.match.params.reqId}`)
             .then(data => !this.cancelLoad && this.setState({request: data.request}))
             .catch(error =>
                 !this.cancelLoad && this.props.notifications.addNotification({
@@ -1762,7 +1756,7 @@ export class Request extends Component {
                 })
             );
 
-        fetch_get(`/api/v01/apio/requests/${this.props.match.params.reqId}/traces`, this.props.auth_token)
+        fetch_get(`/api/v01/apio/requests/${this.props.match.params.reqId}/traces?details=1`)
             .then(data => !this.cancelLoad && this.setState({messages: data.traces}))
             .catch(error =>
                 !this.cancelLoad && this.props.notifications.addNotification({
