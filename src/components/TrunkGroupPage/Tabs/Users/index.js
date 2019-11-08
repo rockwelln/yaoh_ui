@@ -40,8 +40,7 @@ export class Users extends Component {
       .fetchGetUsersByTrunkGroup(
         this.props.match.params.tenantId,
         this.props.match.params.groupId,
-        this.props.match.params.trunkGroupName,
-        this.props.auth_token
+        this.props.match.params.trunkGroupName
       )
       .then(() =>
         this.setState(
@@ -113,11 +112,7 @@ export class Users extends Component {
           </Col>
           <Col className={"text-right"} md={1}>
             <Link
-              to={`/provisioning/${this.props.match.params.gwName}/tenants/${
-                this.props.match.params.tenantId
-              }/groups/${this.props.match.params.groupId}/trunkgroup/${
-                this.props.match.params.trunkGroupName
-              }/adduser`}
+              to={`/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}/groups/${this.props.match.params.groupId}/trunkgroup/${this.props.match.params.trunkGroupName}/adduser`}
             >
               <Glyphicon
                 className={"x-large"}
@@ -132,7 +127,7 @@ export class Users extends Component {
               <Col mdOffset={1} md={11}>
                 <div className={"flex space-between indent-top-bottom-1"}>
                   <div className={"flex align-items-center"}>
-                    <Checkbox
+                    {/* <Checkbox
                       className={"margin-checbox"}
                       checked={this.state.selectAll}
                       onChange={this.handleSelectAllClick}
@@ -154,7 +149,7 @@ export class Users extends Component {
                         this.setState({ showDelete: false });
                       }}
                       {...this.props}
-                    />
+                    /> */}
                   </div>
                   <div className={"flex align-items-center"}>
                     <div>Item per page</div>
@@ -183,15 +178,15 @@ export class Users extends Component {
                 <Table hover>
                   <thead>
                     <tr>
-                      <th style={{ width: "5%" }} />
-                      <th style={{ width: "15%" }}>
+                      {/* <th /> */}
+                      <th>
                         <FormattedMessage id="user-id" defaultMessage="ID" />
                         <Glyphicon
                           glyph="glyphicon glyphicon-sort"
                           onClick={this.sortByID}
                         />
                       </th>
-                      <th style={{ width: "15%" }}>
+                      <th>
                         <FormattedMessage
                           id="name"
                           defaultMessage="First name"
@@ -201,7 +196,7 @@ export class Users extends Component {
                           onClick={this.sortByFirstName}
                         />
                       </th>
-                      <th style={{ width: "15%" }}>
+                      <th>
                         <FormattedMessage
                           id="type"
                           defaultMessage="Last name"
@@ -211,7 +206,7 @@ export class Users extends Component {
                           onClick={this.sortByLastName}
                         />
                       </th>
-                      <th style={{ width: "15%" }}>
+                      <th>
                         <FormattedMessage
                           id="type"
                           defaultMessage="Extension"
@@ -221,7 +216,7 @@ export class Users extends Component {
                           onClick={this.sortByExtension}
                         />
                       </th>
-                      <th style={{ width: "15%" }}>
+                      <th>
                         <FormattedMessage
                           id="type"
                           defaultMessage="Phone number"
@@ -231,14 +226,14 @@ export class Users extends Component {
                           onClick={this.sortByPhoneNumber}
                         />
                       </th>
-                      <th style={{ width: "15%" }}>
+                      <th>
                         <FormattedMessage id="type" defaultMessage="Type" />
                         <Glyphicon
                           glyph="glyphicon glyphicon-sort"
                           onClick={this.sortByType}
                         />
                       </th>
-                      <th style={{ width: "5%" }} />
+                      <th />
                     </tr>
                   </thead>
                   <tbody>
@@ -253,7 +248,6 @@ export class Users extends Component {
                           this.handleSingleCheckboxClick
                         }
                         onReload={() => this.fetchUsers()}
-                        auth_token={this.props.auth_token}
                       />
                     ))}
                   </tbody>

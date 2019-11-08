@@ -31,6 +31,7 @@ export default class EditLicenses extends Component {
           <FormControl
             type="number"
             defaultValue={this.props.defaultMaximum}
+            min={0}
             onChange={e =>
               this.props.changePacksMaximum(
                 this.props.index,
