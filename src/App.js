@@ -31,7 +31,8 @@ import {FormattedMessage} from 'react-intl';
 import AsyncApioHelp from './async-apio-help';
 import Dashboard from './dashboard';
 import {Requests, CustomRequests, Transaction, Request} from './requests/requests';
-import {BulkActions} from "./requests/bulk";
+import {Bulks} from "./requests/bulk";
+import {BulkActions} from "./system/bulk_actions";
 import {NdgHistory} from "./requests/ndg_history";
 
 import Tenants from "./components/Tenants";
@@ -278,7 +279,7 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
           </NavDropdown>
           }
 
-          {(!user_info.modules || user_info.modules.includes(modules.bulk)) && isAllowed(user_info.ui_profile, pages.requests_nprequests) &&
+          {(!user_info.modules || user_info.modules.includes(modules.bulk)) && isAllowed(user_info.ui_profile, pages.bulks) &&
           <NavDropdown title={
               <span>
                   <Glyphicon glyph="equalizer" /> {' '}
@@ -378,6 +379,13 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
                       <LinkContainer to={"/system/reporting"}>
                           <MenuItem>
                               <FormattedMessage id="reporting" defaultMessage="Reporting"/>
+                          </MenuItem>
+                      </LinkContainer>
+                  }
+                  { isAllowed(user_info.ui_profile, pages.bulk_actions) &&
+                      <LinkContainer to={"/system/bulk_actions"}>
+                          <MenuItem>
+                              <FormattedMessage id="bulk-actions" defaultMessage="Bulk actions"/>
                           </MenuItem>
                       </LinkContainer>
                   }
@@ -695,10 +703,7 @@ class App extends Component {
                         <Route path="/transactions/bulk"
                                component={props => (
                                    isAllowed(ui_profile, pages.requests_nprequests) ?
-                                   <BulkActions
-                                       auth_token={auth_token}
-                                       notifications={this._notificationSystem.current}
-                                       {...props} /> :
+                                   <Bulks /> :
                                    <NotAllowed/>
                                )}
                                exact />
@@ -1077,6 +1082,13 @@ class App extends Component {
                                component={props => (
                                    isAllowed(ui_profile, pages.system_queues) ?
                                        <LocalQueues {...props} />:
+                                       <NotAllowed />
+                               )}
+                               exact />
+                        <Route path="/system/bulk_actions"
+                               component={props => (
+                                   isAllowed(ui_profile, pages.bulk_actions) ?
+                                       <BulkActions {...props} />:
                                        <NotAllowed />
                                )}
                                exact />

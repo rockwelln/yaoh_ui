@@ -103,6 +103,7 @@ class NotificationsHandler {
 
     error(title, message) {
         NotificationsHandler.rootRef &&
+        NotificationsHandler.rootRef.current &&
         NotificationsHandler.rootRef.current.addNotification({
             title: title,
             message: message,
