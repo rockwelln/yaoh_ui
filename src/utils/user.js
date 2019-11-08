@@ -13,6 +13,8 @@ export const pages = Object.freeze({
     'system_databases': 16,
     'system_reporting': 17,
     'system_queues': 18,
+    'bulks': 23,
+    'bulk_actions': 24,
 });
 
 export const modules = Object.freeze({

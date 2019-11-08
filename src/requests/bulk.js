@@ -1,4 +1,5 @@
 import React, {Component} from 'react';
+
 import Form from 'react-bootstrap/lib/Form';
 import FormControl from 'react-bootstrap/lib/FormControl';
 import FormGroup from 'react-bootstrap/lib/FormGroup';
@@ -15,38 +16,39 @@ import HelpBlock from "react-bootstrap/lib/HelpBlock";
 import Badge from "react-bootstrap/lib/Badge";
 
 import {FormattedMessage} from "react-intl";
-import {fetch_get, fetch_post_raw} from "../utils";
+import {fetch_get, fetch_post_raw, NotificationsManager} from "../utils";
+import update from "immutability-helper";
 
 
 class NewBulk extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
+    state = {
+        bulk: NewBulk.emptyBulk(),
+        source: undefined,
+        actions: [],
+        loading: false,
+        approvedSource: false
+    };
+
+    static emptyBulk() {
+        return {
             label: '',
             source_type: 'csv',
             source: '',
-            action: '',
-            approvedSource: false,
-            actions: [],
-        };
-        this.cancelLoad = false;
-        this.onLoadSource = this.onLoadSource.bind(this);
-        this.onSubmit = this.onSubmit.bind(this);
-        this._fetchActions = this._fetchActions.bind(this);
+            action: ''
+        }
     }
 
-    _fetchActions() {
-        fetch_get('/api/v01/bulks/actions', this.props.auth_token)
+    fetchActions() {
+        fetch_get('/api/v01/bulks/actions')
             .then(d => !this.cancelLoad && this.setState({actions: d.actions}))
-            .catch(error => this.props.notifications.addNotification({
-                title: <FormattedMessage id="fetch-actions-failed" defaultMessage="Failed to fetch actions"/>,
-                message: error.message,
-                level: 'error'
-            }))
+            .catch(error => NotificationsManager.error(
+                <FormattedMessage id="fetch-actions-failed" defaultMessage="Failed to fetch actions"/>,
+                error.message
+            ))
     }
 
     componentDidMount() {
-        this._fetchActions();
+        this.fetchActions();
     }
 
     componentWillUnmount() {
@@ -54,35 +56,34 @@ class NewBulk extends Component {
     }
 
     onLoadSource() {
-        const {action, source} = this.state;
+        const {bulk} = this.state;
 
         let data = new FormData();
-        data.append('action', action);
-        data.append('input_file', source);
+        data.append('action', bulk.action);
+        data.append('input_file', bulk.source);
 
-        this.setState({validationError: undefined, loading: true, approvedSource: false});
-        fetch_post_raw('/api/v01/bulks/validate', data, this.props.auth_token)
+        this.setState({creationError: undefined, validationError: undefined, loading: true, approvedSource: false});
+        fetch_post_raw('/api/v01/bulks/validate', data)
             .then(() => !this.cancelLoad && this.setState({approvedSource: true, loading: false}))
             .catch(error => !this.cancelLoad && this.setState({validationError: error.message, loading: false}));
     }
 
     onSubmit() {
-        const {action, source, label} = this.state;
+        const {bulk} = this.state;
         const {onChange} = this.props;
 
         let data = new FormData();
-        data.append('label', label);
-        data.append('action', action);
-        data.append('input_file', source);
+        data.append('label', bulk.label);
+        data.append('action', bulk.action);
+        data.append('input_file', bulk.source);
 
-        this.setState({loading: true});
+        this.setState({creationError: undefined, loading: true});
         fetch_post_raw('/api/v01/bulks', data, this.props.auth_token)
             .then(() => {
                 this.setState({loading: false});
-                this.props.notifications.addNotification({
-                    title: <FormattedMessage id="fetch-new-bulk-success" defaultMessage="New bulk operation started"/>,
-                    level: 'success'
-                });
+                NotificationsManager.success(
+                    <FormattedMessage id="fetch-new-bulk-success" defaultMessage="New bulk operation started"/>,
+                );
                 onChange && onChange();
             })
             .catch(error => {
@@ -91,21 +92,27 @@ class NewBulk extends Component {
     }
 
     render() {
-        const {label, source_type, source, action, approvedSource, actions, validationError, loading} = this.state;
+        const {bulk, approvedSource, actions, validationError, creationError, loading} = this.state;
+        const action_obj = actions && bulk.action && actions.find(a => a.id === bulk.action);
 
-        const validLabel = label && label.length !== 0 ? "success": null;
-        const validSource = source && source.length !== 0 ? "success": null;
-        const validAction = action && action.length !== 0 ? "success": null;
+        const validLabel = bulk && bulk.label && bulk.label.length !== 0 ? "success": null;
+        const validSource = bulk.source && bulk.source.length !== 0 ? "success": null;
+        const validAction = bulk.action ? "success": null;
         const validForm = validLabel === "success" && validSource === "success" && validAction === "success";
         return (
             <Panel defaultExpanded={true}>
                 <Panel.Heading>
-                    <Panel.Title toggle><FormattedMessage id="new-bulk" defaultMessage="New bulk" /> <Glyphicon glyph="equalizer" /></Panel.Title>
+                    <Panel.Title toggle>
+                        <FormattedMessage id="new-bulk" defaultMessage="New bulk" /> <Glyphicon glyph="equalizer" />
+                    </Panel.Title>
                 </Panel.Heading>
                 <Panel.Body collapsible>
                     <Form horizontal>
                         {
                             validationError && <Alert bsStyle="danger">{validationError}</Alert>
+                        }
+                        {
+                            creationError && <Alert bsStyle="danger">{creationError}</Alert>
                         }
                         <FormGroup validationState={validLabel}>
                             <Col componentClass={ControlLabel} sm={2}>
@@ -115,8 +122,8 @@ class NewBulk extends Component {
                             <Col sm={9}>
                                 <FormControl
                                     componentClass="input"
-                                    value={label}
-                                    onChange={e => this.setState({label: e.target.value})} />
+                                    value={bulk.label}
+                                    onChange={e => this.setState({bulk: update(bulk, {$merge: {label: e.target.value}})})} />
                             </Col>
                         </FormGroup>
                         <FormGroup validationState={validSource}>
@@ -127,8 +134,8 @@ class NewBulk extends Component {
                             <Col sm={1}>
                                 <FormControl
                                     componentClass="select"
-                                    value={source_type}
-                                    onChange={e => this.setState({source_type: e.target.value, approvedSource: false})}>
+                                    value={bulk.source_type}
+                                    onChange={e => this.setState({bulk: update(bulk, {$merge: {source_type: e.target.value}})})} >
                                     <option value="csv">csv</option>
                                 </FormControl>
                             </Col>
@@ -137,11 +144,11 @@ class NewBulk extends Component {
                                 <FormControl
                                     componentClass="input"
                                     type="file"
-                                    accept={`.${source_type}`}
-                                    onChange={e => this.setState({source: e.target.files[0], approvedSource: false})} />
+                                    accept={`.${bulk.source_type}`}
+                                    onChange={e => this.setState({bulk: update(bulk, {$merge: {source: e.target.files[0]}}), approvedSource: false})} />
 
                                 {
-                                    source_type === "csv" &&
+                                    bulk.source_type === "csv" &&
                                         <HelpBlock style={{color: 'grey'}}>
                                             <FormattedMessage
                                                 id="csv-format"
@@ -158,23 +165,27 @@ class NewBulk extends Component {
                             <Col sm={9}>
                                 <FormControl
                                     componentClass="select"
-                                    value={action}
-                                    onChange={e => this.setState({action: e.target.value})}>
+                                    value={bulk.action}
+                                    onChange={e => this.setState({bulk: update(bulk, {$merge: {action: e.target.value ? parseInt(e.target.value) : null}})})}>
                                     <option value="" />
                                     {
-                                        Object.keys(actions).map(a => <option value={a} key={a}>{a}</option>)
+                                        actions.sort((a, b) => {
+                                            if(a.name > b.name) return 1;
+                                            if(a.name < b.name) return -1;
+                                            return 0;
+                                        }).map(a => <option value={a.id} key={a.id}>{a.name}</option>)
                                     }
                                 </FormControl>
 
-                                { action && (
+                                { action_obj && action_obj.validation_schema && (
                                     <HelpBlock style={{color: 'grey'}}>
                                         <FormattedMessage
                                             id="columns-available"
                                             defaultMessage="Columns available (mandatory: *): {cols}"
                                             values={
                                                 {cols: (
-                                                    Object.keys(actions[action].validation_schema.properties)
-                                                        .map(p => actions[action].validation_schema.required.indexOf(p) !== -1?`*${p}*`:p)
+                                                    action_obj.validation_schema.properties
+                                                        .map(p => action_obj.validation_schema.required.indexOf(p) !== -1?`*${p}*`:p)
                                                         .join(", ")
                                                 )}
                                             }/>
@@ -186,11 +197,17 @@ class NewBulk extends Component {
                         <FormGroup>
                             <Col smOffset={2} sm={9}>
                                 <ButtonToolbar>
-                                    <Button bsStyle={approvedSource?"default":"primary"} onClick={this.onLoadSource} disabled={!validForm || loading}>
+                                    <Button
+                                        bsStyle={approvedSource?"default":"primary"}
+                                        onClick={this.onLoadSource.bind(this)}
+                                        disabled={!validForm || loading} >
                                         <FormattedMessage id="validate-source" defaultMessage="Validate source" />
                                     </Button>
 
-                                    <Button bsStyle={approvedSource?"primary":"default"} onClick={this.onSubmit} disabled={!approvedSource || loading}>
+                                    <Button
+                                        bsStyle={approvedSource?"primary":"default"}
+                                        onClick={this.onSubmit.bind(this)}
+                                        disabled={!approvedSource || loading} >
                                         <FormattedMessage id="launch" defaultMessage="Launch" />
                                     </Button>
                                 </ButtonToolbar>
@@ -313,22 +330,108 @@ class InstanceDetails extends Component {
 }
 
 
+const BulkResult = ({result, colOffset}) => {
+    let statusColor = '';
+    let statusGlyph = '';
+    switch(result.status) {
+        case "fail":
+            statusColor = '#ca6f7b';
+            statusGlyph = 'remove';
+            break;
+        case "ok":
+            if (result.instance && result.instance.status) {
+                switch(result.instance.status) {
+                    case "ERROR":
+                        statusColor = '#ca6f7b';
+                        statusGlyph = 'remove';
+                        break;
+                    case "SUCCESS":
+                        statusColor = '#a4d1a2';
+                        statusGlyph = 'ok';
+                        break;
+                    default:
+                        statusColor = '#a4d1a2';
+                        statusGlyph = 'play';
+                }
+            } else {
+                statusColor = '#a4d1a2';
+                statusGlyph = 'ok';
+
+            }
+            break;
+        default:
+            statusColor = '#a4d1a2';
+            statusGlyph = 'play';
+    }
+    const back_link = result.back_link || (result.instance && `/transactions/${result.instance.id}`);
+    let trace = result.trace;
+    try {
+        trace = JSON.stringify(JSON.parse(trace), null, 4)
+    } catch {}
+
+    return (
+        <tr>
+            {
+                colOffset && <td colSpan={colOffset}/>
+            }
+            <td style={{width: '2%'}}><Glyphicon style={{color: statusColor}} glyph={statusGlyph}/></td>
+            <td>
+                {
+                    back_link ?
+                        <a href={back_link} target="_blank" rel="noopener noreferrer">{result.input_ref}</a> :
+                        result.input_ref
+                }<br/>
+                {result.trace && <pre style={{wordWrap: 'break-word', whiteSpace: 'pre-wrap'}}>{trace}</pre>}
+            </td>
+            <td style={{width: '15%'}} />
+            <td style={{width: '15%'}} >
+            {
+                result.instance && result.instance.errors !== 0 &&
+                <Badge style={{backgroundColor: '#ff0808'}}>
+                    {result.instance.errors}{' '}<FormattedMessage id="errors" defaultMessage="error(s)"/>
+                </Badge>
+            }
+            </td>
+        </tr>
+    )
+};
+
+
 class BulkEntry extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            expanded: false
-        };
+    state = {
+        expanded: false,
+        results: []
+    };
+
+    onLoadResults() {
+        const {bulk} = this.props;
+
+        fetch_get(`/api/v01/bulks/${bulk.bulk_id}/results`)
+            .then(data => !this.cancelLoad && this.setState({results: data.results.sort((a, b) => a.bulk_result_id - b.bulk_result_id)}))
+            .catch(error => NotificationsManager.error(
+                <FormattedMessage id="fetch-bulk-results-failed" defaultMessage="Fetch bulk results failed" />,
+                error.message
+            ))
+    }
+
+    componentWillUnmount() {
+        this.cancelLoad = true;
+    }
+
+    componentDidUpdate(prevProps, prevState, snapshot) {
+        if(!prevState.expanded && prevState.expanded !== this.state.expanded) {
+            this.onLoadResults()
+        }
     }
 
     render() {
-        const {expanded} = this.state;
-        const {bulk, auth_token} = this.props;
+        const {expanded, results} = this.state;
+        const {bulk} = this.props;
         const expIco = expanded?<Glyphicon glyph="chevron-down"/>:<Glyphicon glyph="chevron-right"/>;
 
         let rows = [
             <tr key={`bulk_head_${bulk.bulk_id}`} onClick={() => this.setState({expanded: !expanded})}>
-                <td style={{width: '2%'}}>{bulk.related.length !== 0 && expIco}</td>
+                <td style={{width: '2%'}}>{expIco}</td>
                 <td>{bulk.bulk_id}</td>
                 <td>{bulk.label}</td>
                 <td>{bulk.status}</td>
@@ -338,15 +441,16 @@ class BulkEntry extends Component {
         ];
 
         if(expanded) {
-            bulk.related.map(i => rows.push(
-                <InstanceDetails key={`inst_${i.id}`} instance={i} auth_token={auth_token} colOffset={1}/>
+            results.map(r => rows.push(
+                <BulkResult key={`res_${r.id}`} result={r} colOffset={1}/>
             ))
         }
         return rows;
     }
 }
 
-const BulkHistory = ({bulks, auth_token}) => (
+
+const BulkHistory = ({bulks}) => (
     <Panel defaultExpanded={false}>
         <Panel.Heading>
             <Panel.Title toggle><FormattedMessage id="history" defaultMessage="History" /> <Glyphicon glyph="cog" /></Panel.Title>
@@ -359,13 +463,13 @@ const BulkHistory = ({bulks, auth_token}) => (
                         <th>#</th>
                         <th><FormattedMessage id="label" defaultMessage="Label"/></th>
                         <th><FormattedMessage id="status" defaultMessage="Status"/></th>
-                        <th><FormattedMessage id="workflow" defaultMessage="Workflow"/></th>
+                        <th><FormattedMessage id="action" defaultMessage="Action"/></th>
                         <th><FormattedMessage id="creation-date" defaultMessage="Creation date"/></th>
                     </tr>
                 </thead>
                 <tbody>
                 {
-                    bulks && bulks.sort((a, b) => b.bulk_id - a.bulk_id).map(b => <BulkEntry bulk={b} key={`bulk_${b.bulk_id}`} auth_token={auth_token}/>)
+                    bulks && bulks.sort((a, b) => b.bulk_id - a.bulk_id).map(b => <BulkEntry bulk={b} key={`bulk_${b.bulk_id}`}/>)
                 }
                 </tbody>
             </Table>
@@ -374,28 +478,33 @@ const BulkHistory = ({bulks, auth_token}) => (
 );
 
 
-export class BulkActions extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            bulks: []
-        };
-        this.cancelLoad = false;
-        this._fetchHistory = this._fetchHistory.bind(this);
+export class Bulks extends Component {
+    state = {
+        bulks: [],
+        actions: []
+    };
+
+    fetchActions() {
+        fetch_get('/api/v01/bulks/actions')
+            .then(d => !this.cancelLoad && this.setState({actions: d.actions}))
+            .catch(error => NotificationsManager.error(
+                <FormattedMessage id="fetch-actions-failed" defaultMessage="Failed to fetch bulk actions"/>,
+                error.message
+            ))
     }
 
-    _fetchHistory() {
-        fetch_get('/api/v01/bulks', this.props.auth_token)
+    fetchHistory() {
+        fetch_get('/api/v01/bulks')
             .then(d => !this.cancelLoad && this.setState({bulks: d.bulks}))
-            .catch(error => this.props.notifications.addNotification({
-                title: <FormattedMessage id="fetch-bulks-failed" defaultMessage="Failed to fetch bulk operations"/>,
-                message: error.message,
-                level: 'error'
-            }))
+            .catch(error => NotificationsManager.error(
+                <FormattedMessage id="fetch-bulks-failed" defaultMessage="Failed to fetch bulk operations"/>,
+                error.message
+            ))
     }
 
     componentDidMount() {
-        this._fetchHistory()
+        this.fetchActions();
+        this.fetchHistory();
     }
 
     componentWillUnmount() {
@@ -403,6 +512,13 @@ export class BulkActions extends Component {
     }
 
     render() {
+        const {bulks, actions} = this.state;
+        actions && bulks && bulks.map(b => {
+            const action = actions.find(a => a.id === b.action_id);
+            if(action) {
+                b.action = action.name
+            }
+        });
         return (
             <div>
                 <Breadcrumb>
@@ -410,8 +526,8 @@ export class BulkActions extends Component {
                     <Breadcrumb.Item active><FormattedMessage id="bulk" defaultMessage="Bulk"/></Breadcrumb.Item>
                 </Breadcrumb>
 
-                <NewBulk onChange={this._fetchHistory} {...this.props}/>
-                <BulkHistory bulks={this.state.bulks} {...this.props}/>
+                <NewBulk onChange={this.fetchHistory.bind(this)} />
+                <BulkHistory bulks={bulks} />
             </div>
         )
     }
