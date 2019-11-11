@@ -8,6 +8,7 @@ import {fetch_get} from "./utils";
 
 import TransactionsOverTime from './tx-over-time';
 import ActiveTransactionsPerWorkflow from './tx-active-per-workflow';
+import ProxyRequestsOverTime from "./tx-per-proxy-over-time";
 import {EmptyTile, GatewaysStatusTile, ErrorCasesTile} from './dashboard-tiles';
 
 import './dashboard.css';
@@ -85,6 +86,11 @@ export default class Dashboard extends Component {
                     <Col sm={6} md={6} xs={12}>
                         <TransactionsOverTime {...this.props} />
                     </Col>
+                    <Col sm={6} md={6} xs={12}>
+                        <ProxyRequestsOverTime {...this.props} />
+                    </Col>
+                </Row>
+                <Row>
                     <Col sm={6} md={6} xs={12}>
                         <ActiveTransactionsPerWorkflow {...this.props} />
                     </Col>

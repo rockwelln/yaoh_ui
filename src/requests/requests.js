@@ -1917,9 +1917,11 @@ export class Requests extends Component{
             error: undefined,
             auto_refresh: false,
             auto_refresh_remaining: AutoRefreshTime,
+            proxy_hosts: [],
         };
         this._refresh = this._refresh.bind(this);
         this._load_activities = this._load_activities.bind(this);
+        this._load_proxy_hosts = this._load_proxy_hosts.bind(this);
         this._prepare_url = this._prepare_url.bind(this);
         this._onCloseAll = this._onCloseAll.bind(this);
         this._onClose = this._onClose.bind(this);
@@ -1941,6 +1943,7 @@ export class Requests extends Component{
             proxied_method: { model: 'requests', value: '', op: 'eq' },
             proxied_url: { model: 'requests', value: '', op: 'eq' },
             proxied_status: { model: 'processing_traces', value: '', op: 'eq' },
+            proxy_gateway_host: { model: 'requests', value: '', op: 'eq' },
             task_status: undefined,
             end_task_status: undefined,
         }
@@ -1963,6 +1966,7 @@ export class Requests extends Component{
 
     componentDidMount() {
         this._load_activities();
+        this._load_proxy_hosts();
         this._refresh();
     }
 
@@ -1981,13 +1985,20 @@ export class Requests extends Component{
     }
 
     _load_activities() {
-        fetch_get('/api/v01/activities', this.props.auth_token)
+        fetch_get('/api/v01/activities')
             .then(data => !this.cancelLoad && this.setState({activities: data.activities}))
             .catch(error => console.error(error))
     }
 
+    _load_proxy_hosts() {
+        fetch_get('/api/v01/gateways')
+        .then(data =>
+            !this.cancelLoad &&
+            this.setState({proxy_hosts: Object.keys(data.gateways).map(k => { return {name: k, url: data.gateways[k].url}})}))
+    }
+
     _prepare_url(paging_spec, sorting_spec, format, action) {
-        const url = new URL(API_URL_PREFIX + '/api/v01/apio/requests/' + (action?action:"search"));
+        const url = new URL(`${API_URL_PREFIX}/api/v01/apio/requests/${action?action:"search"}`);
         // filter
         const {filter_criteria} = this.state;
         const filter_spec = Object.keys(filter_criteria)
@@ -2200,7 +2211,7 @@ export class Requests extends Component{
     }
 
     render() {
-        const { filter_criteria, requests, activities, export_url, auto_refresh, sorting_spec, selected_reqs } = this.state;
+        const { filter_criteria, requests, activities, export_url, auto_refresh, sorting_spec, selected_reqs, proxy_hosts} = this.state;
         const { user_info } = this.props;
         const invalid_created_on = filter_criteria.created_on.value.length !== 0 && !moment(filter_criteria.created_on.value, "DD/MM/YYYY HH:mm").isValid();
         const request_entities = user_info.modules && user_info.modules.includes(modules.orange) ? "request_entities" : "requests";
@@ -2455,7 +2466,7 @@ export class Requests extends Component{
 
                             {
                                 proxy_activated &&
-                                <FormGroup>
+                                [<FormGroup>
                                     <Col componentClass={ControlLabel} sm={2}>
                                         <FormattedMessage id="owner" defaultMessage="Owner" />
                                     </Col>
@@ -2480,11 +2491,42 @@ export class Requests extends Component{
                                                     { proxied_username: { $merge: { value: e.target.value } } })
                                             })} />
                                     </Col>
-                                </FormGroup>
-                            }
+                                </FormGroup>,
 
-                            {
-                                proxy_activated &&
+                                <FormGroup>
+                                    <Col componentClass={ControlLabel} sm={2}>
+                                        <FormattedMessage id="proxy-host" defaultMessage="Proxy host" />
+                                    </Col>
+
+                                    <Col sm={1}>
+                                        <FormControl
+                                            componentClass="select"
+                                            value={filter_criteria.proxy_gateway_host.op}
+                                            onChange={e => this.setState({
+                                                filter_criteria: update(this.state.filter_criteria,
+                                                    { proxy_gateway_host: { $merge: { op: e.target.value } } })
+                                            })}>
+                                            <option value="eq">==</option>
+                                            <option value="ne">!=</option>
+                                        </FormControl>
+                                    </Col>
+
+                                    <Col sm={8}>
+                                        <FormControl
+                                            componentClass="select"
+                                            value={filter_criteria.proxy_gateway_host.value}
+                                            onChange={e => this.setState({
+                                                filter_criteria: update(filter_criteria,
+                                                    { proxy_gateway_host: { $merge: { value: e.target.value } } })
+                                            })} >
+                                            <option value="" />
+                                            {
+                                                proxy_hosts.map(h => <option value={h.url}>{h.name}</option>)
+                                            }
+                                        </FormControl>
+                                    </Col>
+                                </FormGroup>,
+
                                 <FormGroup>
                                     <Col componentClass={ControlLabel} sm={2}>
                                         <FormattedMessage id="proxy-status" defaultMessage="Proxy status" />
@@ -2514,11 +2556,8 @@ export class Requests extends Component{
                                                     { proxied_status: { $merge: { value: e.target.value && parseInt(e.target.value) } } })
                                             })} />
                                     </Col>
-                                </FormGroup>
-                            }
+                                </FormGroup>,
 
-                            {
-                                proxy_activated &&
                                 <FormGroup>
                                     <Col componentClass={ControlLabel} sm={2}>
                                         <FormattedMessage id="proxy-URL" defaultMessage="Proxy URL" />
@@ -2545,11 +2584,8 @@ export class Requests extends Component{
                                                     { proxied_url: { $merge: { value: e.target.value } } })
                                             })} />
                                     </Col>
-                                </FormGroup>
-                            }
+                                </FormGroup>,
 
-                            {
-                                proxy_activated &&
                                 <FormGroup>
                                     <Col componentClass={ControlLabel} sm={2}>
                                         <FormattedMessage id="proxy-method" defaultMessage="Proxy method" />
@@ -2582,6 +2618,7 @@ export class Requests extends Component{
                                         </FormControl>
                                     </Col>
                                 </FormGroup>
+                                ]
                             }
 
                             <FormGroup validationState={invalid_created_on ? "error" : null}>
