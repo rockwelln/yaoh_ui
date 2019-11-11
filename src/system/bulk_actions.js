@@ -144,8 +144,21 @@ class NewAction extends React.Component {
 
     onSubmit() {
         const {action} = this.state;
+        const diffAction = NewAction.filterFieldsOnType(action);
 
-        fetch_post(`/api/v01/bulks/actions`, NewAction.filterFieldsOnType(action))
+
+        fetch_post(`/api/v01/bulks/actions`,
+            Object.keys(diffAction).reduce(
+                (obj, key) => {
+                    if(["options", "validation_schema"].includes(key)) {
+                        obj[key] = JSON.parse(diffAction[key]);
+                    } else {
+                        obj[key] = diffAction[key];
+                    }
+                    return obj;
+                }, {}
+            )
+        )
             .then(() => {
                 !this.cancelLoad && this.setState({show: false, action: NewAction.empty_action()});
                 NotificationsManager.success(<FormattedMessage id="action-created" defaultMessage="Action created!"/>);
@@ -509,7 +522,24 @@ class Action extends React.Component {
     onSave() {
         const {action} = this.props;
         const {diffAction} = this.state;
-        fetch_put(`/api/v01/bulks/actions/${action.id}`, diffAction)
+
+        fetch_put(
+            `/api/v01/bulks/actions/${action.id}`,
+            Object.keys(diffAction).reduce(
+                (obj, key) => {
+                    if(["options", "validation_schema"].includes(key)) {
+                        if(diffAction[key]) {
+                            obj[key] = JSON.parse(diffAction[key])
+                        } else {
+                            obj[key] = null
+                        }
+                    } else {
+                        obj[key] = diffAction[key];
+                    }
+                    return obj;
+                }, {}
+            )
+        )
             .then(() => {
                 NotificationsManager.success(<FormattedMessage id="action-updated" defaultMessage="Action updated!" />);
                 this.props.onUpdate && this.props.onUpdate();
@@ -525,15 +555,48 @@ class Action extends React.Component {
         if(!action) return <div/>;
 
         const localAction = update(action, {$merge: diffAction});
+        const actionTypeOrchestrated = action.activity_id;
+        const actionTypeUrl = !action.activity_id && action.url;
+        if(localAction.validation_schema && typeof localAction.validation_schema === "object") {
+            localAction.validation_schema = JSON.stringify(localAction.validation_schema);
+        }
+        if(localAction.options && typeof localAction.options === "object") {
+            localAction.options = JSON.stringify(localAction.options);
+        }
 
-        const validName = null; // isValidName(localAction.name);
-        const validSchema = null;
-        const validUrl = null;
-        const validOptions = null;
+        const validName = isValidName(localAction.name);
+        let validOptions = null;
+        if(localAction.options) {
+            try {
+                JSON.parse(localAction.options);
+                validOptions = "success";
+            } catch {
+                validOptions = "error";
+            }
+        }
+
+        let validSchema = null;
+        if(localAction.validation_schema) {
+            try {
+                JSON.parse(localAction.validation_schema);
+                validSchema = "success";
+            } catch {
+                validSchema = "error";
+            }
+        }
+        const validUrl = actionTypeUrl && localAction.url ? localAction.url.startsWith("http") ? "success" : "error" : null;
         const validHeader1 = null;
         const validHeader2 = null;
         const validHeader3 = null;
-        const validForm = validName === "success";
+        const validForm = (
+            validName === "success" &&
+            (!validSchema || validSchema === "success") &&
+            (!validOptions || validOptions === "success") &&
+            (
+                (actionTypeUrl && (localAction.method && validUrl === "success")) ||
+                (actionTypeOrchestrated && localAction.activity_id)
+            )
+        );
 
         return (
             <Panel defaultExpanded={false}>
@@ -759,7 +822,7 @@ class Action extends React.Component {
                         <FormGroup>
                             <Col smOffset={2} sm={9}>
                                 <ButtonToolbar>
-                                    <Button bsStyle="primary" onClick={this.onSave.bind(this)} disabled={true || !validForm}>
+                                    <Button bsStyle="primary" onClick={this.onSave.bind(this)} disabled={!validForm}>
                                         <FormattedMessage id="save" defaultMessage="Save" />
                                     </Button>
                                     <Button bsStyle="danger" onClick={this.onDelete.bind(this)}>
