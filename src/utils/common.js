@@ -13,6 +13,14 @@ import Panel from "react-bootstrap/lib/Panel";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
 
 
+export const NotAllowed = () => (
+    <div>
+        <FormattedMessage
+            id="notAllowed"
+            defaultMessage="Sorry, you are not allowed to see this page!" />
+    </div>
+);
+
 export const StaticControl = ({label, value, validationState}) => (
     <FormGroup validationState={validationState}>
         <Col componentClass={ControlLabel} sm={2}>

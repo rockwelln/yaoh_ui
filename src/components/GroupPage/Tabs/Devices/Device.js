@@ -29,7 +29,6 @@ export default class Device extends Component {
             show={showDelete}
             tenantId={this.props.tenantId}
             groupId={this.props.groupId}
-            notifications={this.props.notifications}
             onClose={e => {
               onReload && onReload();
               this.setState({ showDelete: false });

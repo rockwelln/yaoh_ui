@@ -3,7 +3,7 @@ import "regenerator-runtime/runtime";
 
 import "url-polyfill";
 import "isomorphic-fetch";
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 
 import Alert from 'react-bootstrap/lib/Alert';
 import Button from 'react-bootstrap/lib/Button';
@@ -21,42 +21,20 @@ import NavDropdown from 'react-bootstrap/lib/NavDropdown';
 import MenuItem from 'react-bootstrap/lib/MenuItem';
 import ButtonToolbar from 'react-bootstrap/lib/ButtonToolbar';
 
-import {BrowserRouter as Router, Link, Route, Switch, Redirect} from 'react-router-dom';
-import { LinkContainer } from 'react-router-bootstrap';
+import {BrowserRouter as Router, Link, Redirect, Route, Switch} from 'react-router-dom';
+import {LinkContainer} from 'react-router-bootstrap';
 import NotificationSystem from 'react-notification-system';
 
-import { withCookies } from 'react-cookie';
+import {withCookies} from 'react-cookie';
 import {FormattedMessage} from 'react-intl';
 
 import AsyncApioHelp from './async-apio-help';
 import Dashboard from './dashboard';
-import {Requests, CustomRequests, Transaction, Request} from './requests/requests';
+import {CustomRequests, Request, Requests, Transaction} from './requests/requests';
 import {Bulks} from "./requests/bulk";
 import {BulkActions} from "./system/bulk_actions";
 import {NdgHistory} from "./requests/ndg_history";
-
-import Tenants from "./components/Tenants";
-import TenantPage from "./components/TenantPage";
-import GroupPage from "./components/GroupPage";
-import UserPage from "./components/UserPage";
-import CreateAdmin from "./components/CreateAdmin";
-import UpdateAdmin from "./components/UpdateAdmin";
-import CreateTenant from "./components/CreateTenant";
-import CreateGroup from "./components/CreateGroup";
-import AddPhoneNumberTenant from "./components/AddPhoneNumberTenant";
-import CategoryPage from "./components/CategoryPage";
-import AddUser from "./components/AddUser";
-import TrunkGroupPage from "./components/TrunkGroupPage";
-import ConfigPage from "./components/Configs";
-import TemplatePage from "./components/TemplatePage";
-import LocalUsers from "./components/LocalUsers";
-import AddLocalUsers from "./components/AddLocalUser";
-import UpdateLocalUser from "./components/UpdateLocalUser";
-import AddPhoneNumberGroup from "./components/AddPhoneNumberGroup";
-import SearchPage from "./components/SearchPage";
-import AddTrunkGroup from "./components/AddTrunkGroup";
-
-import UserManagement, { LocalUserProfile } from './system/user_mgm';
+import UserManagement, {LocalUserProfile} from './system/user_mgm';
 import {StartupEvents} from './startup_events';
 import ActivityEditor from './activity-editor';
 import {ConfigManagement} from './settings/configuration';
@@ -65,18 +43,19 @@ import Gateways from "./system/gateways_mgm";
 import LocalQueues from "./system/queues";
 import {
     API_URL_PREFIX,
-    fetch_get,
+    AuthServiceManager,
     checkStatus,
-    parseJSON,
-    ProvProxiesManager,
+    fetch_get,
     NotificationsManager,
-    AuthServiceManager
+    parseJSON,
+    ProvProxiesManager
 } from "./utils";
 import Databases from "./system/databases_mgm";
 import {AuditLogs} from "./system/audit";
 import {isAllowed, modules, pages} from "./utils/user";
-import {LoginOpenIdConnect, AuthCallback, AuthSilentCallback} from "./sso/login";
-import {ResetPasswordPage, RESET_PASSWORD_PREFIX} from "./reset_password";
+import {NotAllowed} from "./utils/common";
+import {AuthCallback, AuthSilentCallback} from "./sso/login";
+import {RESET_PASSWORD_PREFIX, ResetPasswordPage} from "./reset_password";
 
 import './App.css';
 import apio_brand from "./images/apio.png";
@@ -84,6 +63,7 @@ import apio_logo from "./images/logo.png";
 import loading from './loading.gif';
 import {sso_auth_service} from "./sso/auth_service";
 import {Webhooks} from "./system/webhooks";
+import {provisioningRoutes} from "./provisioning";
 
 const ListItemLink = ({to, children}) => (
     <Route path={to} children={({match}) => (
@@ -454,14 +434,6 @@ const NotFound = () => (
     </div>
 );
 
-const NotAllowed = () => (
-    <div>
-        <FormattedMessage
-            id="app.route.notAllowed"
-            defaultMessage="Sorry, you are not allowed to see this page!" />
-    </div>
-);
-
 const LoginPage = ({updateToken, error_msg, standby_alert}) => (
     <div>
         <Row style={{height: "20px", display: "block"}}/>
@@ -707,276 +679,10 @@ class App extends Component {
                                    <NotAllowed/>
                                )}
                                exact />
-                        {/*================ Provisioning UI routes ==============*/}
-                        <Route
-                            path="/provisioning/:gwName/search"
-                component={props =>
-                  isAllowed(ui_profile, pages.data_tenants) ? (
-                    <SearchPage />
-                  ) : (
-                    <NotAllowed />
-                  )
-                }
-                exact
-              />
-              <Route
-                path="/provisioning/:gwName/localusers"
-                component={props =>
-                  isAllowed(ui_profile, pages.data_tenants) ? (
-                    <LocalUsers />
-                  ) : (
-                    <NotAllowed />
-                  )
-                }
-                exact
-              />
-              <Route
-                path="/provisioning/:gwName/localusers/user/:localUserName"
-                component={props =>
-                  isAllowed(ui_profile, pages.data_tenants) ? (
-                    <UpdateLocalUser />
-                  ) : (
-                    <NotAllowed />
-                  )
-                }
-                exact
-              />
-              <Route
-                path="/provisioning/:gwName/localusers/adduser"
-                component={props =>
-                  isAllowed(ui_profile, pages.data_tenants) ? (
-                    <AddLocalUsers />
-                  ) : (
-                    <NotAllowed />
-                  )
-                }
-                exact
-              />
-              <Route
-                path="/provisioning/:gwName/configs"
-                component={props =>
-                  isAllowed(ui_profile, pages.data_tenants) ? (
-                    <ConfigPage />
-                  ) : (
-                    <NotAllowed />
-                  )
-                }
-                exact
-              />
-              <Route
-                path="/provisioning/:gwName/templates/:categoryName"
-                            component={props =>
-                                isAllowed(ui_profile, pages.data_tenants) ? (
-                                <CategoryPage />
-                            ) : (
-                                <NotAllowed />
-                            )
-                            }
-                            exact />
 
-                        <Route
-                            path="/provisioning/:gwName/templates/:categoryName/template/:templateName"
-                            component={props =>
-                                isAllowed(ui_profile, pages.data_tenants) ? (
-                                    <TemplatePage />
-                                ) : (
-                                    <NotAllowed />
-                                )
-                            }
-                            exact />
-
-                        <Route
-                            path="/provisioning/:gwName/tenants"
-                            component={props =>
-                              isAllowed(ui_profile, pages.data_tenants) ? (
-                                <Tenants
-                                    auth_token={auth_token}
-                                    notifications={this._notificationSystem.current}
-                                    {...props}
-                                />
-                              ) : (
-                                <NotAllowed />
-                              )
-                            }
-                            exact />
-
-                        <Route
-                            path="/provisioning/:gwName/tenants/:tenantId/addphone"
-                            component={props =>
-                                isAllowed(ui_profile, pages.data_tenants) ? (
-                                <AddPhoneNumberTenant />
-                                ) : (
-                                    <NotAllowed />
-                                )
-                                }
-                            exact />
-
-                        <Route
-                            path="/provisioning/:gwName/tenants/add"
-                            component={props =>
-                                isAllowed(ui_profile, pages.data_tenants) ? <CreateTenant auth_token={auth_token}/>
-                                : <NotAllowed />
-                            }
-                            exact
-                        />
-
-                        <Route
-                            path="/provisioning/:gwName/tenants/:tenantId/addgroup"
-                            component={props =>
-                                isAllowed(ui_profile, pages.data_tenants) ? <CreateGroup  auth_token={auth_token}/>
-                                : <NotAllowed />
-                            }
-                            exact
-                        />
-                        <Route
-                            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/addtrunk"
-                            component={props =>
-                                isAllowed(ui_profile, pages.data_tenants) ? (
-                                    <AddTrunkGroup />
-                                ) : (
-                                    <NotAllowed />
-                                )
-                            }
-                            exact
-                        />
-                        <Route
-                            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/adduser"
-                            component={props =>
-                                isAllowed(ui_profile, pages.data_tenants) ? (
-                                    <AddUser />
-                                ) : (
-                                    <NotAllowed />
-                                )
-                            }
-                            exact
-                        />
-                        <Route
-                            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/addphone"
-                            component={props =>
-                              isAllowed(ui_profile, pages.data_tenants) ? (
-                                <AddPhoneNumberGroup />
-                              ) : (
-                                <NotAllowed />
-                              )
-                            }
-                            exact
-                          />
-                        <Route
-                            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/trunkgroup/:trunkGroupName"
-                            component={props =>
-                                isAllowed(ui_profile, pages.data_tenants) ? (
-                                    <TrunkGroupPage />
-                                ) : (
-                                    <NotAllowed />
-                                )
-                            }
-                            exact
-                        />
-                        <Route
-                            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/trunkgroup/:trunkGroupName/users/:userName"
-                            component={props =>
-                                isAllowed(ui_profile, pages.data_tenants) ? (
-                                    <UserPage />
-                                ) : (
-                                    <NotAllowed />
-                                )
-                            }
-                            exact
-                        />
-                        <Route
-                            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/trunkgroup/:trunkGroupName/adduser"
-                            component={props =>
-                                isAllowed(ui_profile, pages.data_tenants) ? (
-                                    <AddUser />
-                                ) : (
-                                    <NotAllowed />
-                                )
-                            }
-                            exact
-                        />
-                        <Route
-                            path="/provisioning/:gwName/tenants/:tenantId"
-                            component={props =>
-                              isAllowed(ui_profile, pages.data_tenants) ? (
-                                <TenantPage
-                                    auth_token={auth_token}
-                                    notifications={this._notificationSystem.current}
-                                />
-                              ) : (
-                                <NotAllowed />
-                              )
-                            }
-                            exact
-                        />
-                        <Route
-                            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId"
-                            component={props =>
-                              isAllowed(ui_profile, pages.data_tenants) ? (
-                                <GroupPage
-                                    auth_token={auth_token}
-                                />
-                              ) : (
-                                <NotAllowed />
-                              )
-                            }
-                            exact
-                        />
-                        <Route
-                            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/users/:userName"
-                            component={props =>
-                              isAllowed(ui_profile, pages.data_tenants) ? (
-                                <UserPage auth_token={auth_token} {...props} />
-                              ) : (
-                                <NotAllowed />
-                              )
-                            }
-                            exact
-                        />
-                        <Route
-                            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/addadmin"
-                            component={props =>
-                              isAllowed(ui_profile, pages.data_tenants) ? (
-                                <CreateAdmin auth_token={auth_token} />
-                              ) : (
-                                <NotAllowed />
-                              )
-                            }
-                            exact
-                        />
-                        <Route
-                            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/admins/:adminId"
-                            component={props =>
-                              isAllowed(ui_profile, pages.data_tenants) ? (
-                                <UpdateAdmin auth_token={auth_token} />
-                              ) : (
-                                <NotAllowed />
-                              )
-                            }
-                            exact
-                        />
-                        <Route
-                            path="/provisioning/:gwName/tenants/:tenantId/addadmin"
-                            component={props =>
-                              isAllowed(ui_profile, pages.data_tenants) ? (
-                                <CreateAdmin auth_token={auth_token} />
-                              ) : (
-                                <NotAllowed />
-                              )
-                            }
-                            exact
-                        />
-                        <Route
-                            path="/provisioning/:gwName/tenants/:tenantId/admins/:adminId"
-                            component={props =>
-                              isAllowed(ui_profile, pages.data_tenants) ? (
-                                <UpdateAdmin auth_token={auth_token} />
-                              ) : (
-                                <NotAllowed />
-                              )
-                            }
-                            exact
-                        />
-
+                        {/*================ Provisioning UI routes ==============*/
+                            provisioningRoutes(ui_profile)
+                        }
 
                         <Route path="/transactions/config/startup_events"
                                component={props => (
