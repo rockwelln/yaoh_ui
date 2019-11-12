@@ -1,30 +1,31 @@
 import React from "react";
 import {Route} from "react-router";
-import {isAllowed, pages} from "./utils/user";
-import {NotAllowed} from "./utils/common";
-import SearchPage from "./components/SearchPage";
-import LocalUsers from "./components/LocalUsers";
-import UpdateLocalUser from "./components/UpdateLocalUser";
-import AddLocalUsers from "./components/AddLocalUser";
-import ConfigPage from "./components/Configs";
-import CategoryPage from "./components/CategoryPage";
-import TemplatePage from "./components/TemplatePage";
-import Tenants from "./components/Tenants";
-import AddPhoneNumberTenant from "./components/AddPhoneNumberTenant";
-import CreateTenant from "./components/CreateTenant";
-import CreateGroup from "./components/CreateGroup";
-import AddTrunkGroup from "./components/AddTrunkGroup";
-import AddUser from "./components/AddUser";
-import AddPhoneNumberGroup from "./components/AddPhoneNumberGroup";
-import TrunkGroupPage from "./components/TrunkGroupPage";
-import UserPage from "./components/UserPage";
-import TenantPage from "./components/TenantPage";
-import GroupPage from "./components/GroupPage";
-import CreateAdmin from "./components/CreateAdmin";
-import UpdateAdmin from "./components/UpdateAdmin";
+import {isAllowed, pages} from "../utils/user";
+import {NotAllowed} from "../utils/common";
+
+import SearchPage from "./default/components/SearchPage";
+import LocalUsers from "./default/components/LocalUsers";
+import UpdateLocalUser from "./default/components/UpdateLocalUser";
+import AddLocalUsers from "./default/components/AddLocalUser";
+import ConfigPage from "./default/components/Configs";
+import CategoryPage from "./default/components/CategoryPage";
+import TemplatePage from "./default/components/TemplatePage";
+import Tenants from "./default/components/Tenants";
+import AddPhoneNumberTenant from "./default/components/AddPhoneNumberTenant";
+import CreateTenant from "./default/components/CreateTenant";
+import CreateGroup from "./default/components/CreateGroup";
+import AddTrunkGroup from "./default/components/AddTrunkGroup";
+import AddUser from "./default/components/AddUser";
+import AddPhoneNumberGroup from "./default/components/AddPhoneNumberGroup";
+import TrunkGroupPage from "./default/components/TrunkGroupPage";
+import UserPage from "./default/components/UserPage";
+import TenantPage from "./default/components/TenantPage";
+import GroupPage from "./default/components/GroupPage";
+import CreateAdmin from "./default/components/CreateAdmin";
+import UpdateAdmin from "./default/components/UpdateAdmin";
 
 
-export function provisioningRoutes(ui_profile) {
+function provisioningDefaultRoutes(ui_profile) {
     return [
         <Route
             path="/provisioning/:gwName/search"
@@ -282,3 +283,9 @@ export function provisioningRoutes(ui_profile) {
         />
     ]
 }
+
+function provisioningPraRoutes(ui_profile) {
+    return []
+}
+
+export const provisioningRoutes = process.env.PROVISIONING_UI === "pra"?provisioningPraRoutes:provisioningDefaultRoutes;

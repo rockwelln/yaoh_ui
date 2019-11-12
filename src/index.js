@@ -10,7 +10,7 @@ import App from './App';
 // import registerServiceWorker from './registerServiceWorker';
 import { unregister } from './registerServiceWorker';
 
-import mainReducer from "./store/reducers";
+import mainDefaultProvisioningReducer from "./provisioning/default/store/reducers";
 
 //import en from 'react-intl/locale-data/en';
 //import fr from 'react-intl/locale-data/fr';
@@ -82,7 +82,7 @@ let AppWithIntlAndCookies = withCookies(AppWithIntl);
 const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 
 const store = createStore(
-  mainReducer,
+  process.env.PROVISIONING_UI === "pra"?null:mainDefaultProvisioningReducer,
   composeEnhancers(applyMiddleware(thunk))
 );
 
