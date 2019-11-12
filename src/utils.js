@@ -3,7 +3,7 @@ export const API_URL_PREFIX = process.env.NODE_ENV === 'production'?window.locat
 export const STATIC_URL_PREFIX = process.env.NODE_ENV === 'production'?window.location.origin:'http://127.0.0.1:3000';
 export const API_URL_PROXY_PREFIX = '/api/v01/apio/sync';
 
-function getCookie(name) {
+export function getCookie(name) {
   var value = "; " + document.cookie;
   var parts = value.split("; " + name + "=");
   if (parts.length === 2)
@@ -13,7 +13,7 @@ function getCookie(name) {
       .shift();
 }
 
-function createCookie(name,value,days,path) {
+export function createCookie(name,value,days,path) {
 	var expires = "";
     if (days) {
 		var date = new Date();
@@ -26,7 +26,7 @@ function createCookie(name,value,days,path) {
 	document.cookie = name+"="+value+expires+"; path="+path;
 }
 
-function removeCookie(name) {
+export function removeCookie(name) {
     createCookie(name,"",-1);
 }
 

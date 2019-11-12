@@ -25,7 +25,6 @@ import {BrowserRouter as Router, Link, Redirect, Route, Switch} from 'react-rout
 import {LinkContainer} from 'react-router-bootstrap';
 import NotificationSystem from 'react-notification-system';
 
-import {withCookies} from 'react-cookie';
 import {FormattedMessage} from 'react-intl';
 
 import AsyncApioHelp from './async-apio-help';
@@ -44,11 +43,11 @@ import LocalQueues from "./system/queues";
 import {
     API_URL_PREFIX,
     AuthServiceManager,
-    checkStatus,
-    fetch_get,
+    checkStatus, createCookie,
+    fetch_get, getCookie,
     NotificationsManager,
     parseJSON,
-    ProvProxiesManager
+    ProvProxiesManager, removeCookie
 } from "./utils";
 import Databases from "./system/databases_mgm";
 import {AuditLogs} from "./system/audit";
@@ -529,12 +528,14 @@ class App extends Component {
 
     componentDidMount() {
         this.getDatabaseStatus();
-        this.props.cookies.get('auth_sso') === '1' && !sso_auth_service.isLoggedIn() && sso_auth_service.signinSilent();
+        // this.props.cookies.get('auth_sso') === '1' && !sso_auth_service.isLoggedIn() && sso_auth_service.signinSilent();
+        getCookie('auth_sso') === '1' && !sso_auth_service.isLoggedIn() && sso_auth_service.signinSilent();
     }
 
     updateToken(token, sso_auth) {
         AuthServiceManager.loadToken(token);
-        this.props.cookies.set('auth_sso', sso_auth?'1':'0', {path: '/'});  // maxAge = 24hours
+         // this.props.cookies.set('auth_sso', sso_auth?'1':'0', {path: '/'});  // maxAge = 24hours
+        createCookie("auth_sso", sso_auth?'1':'0', 1, '/');  // maxAge = 24hours
     }
 
     logout() {
@@ -543,8 +544,10 @@ class App extends Component {
         console.log('logout');
         AuthServiceManager.logout();
         // this.props.cookies.remove("auth_token", { path: '/' });
-        this.props.cookies.remove("auth_sso", { path: '/' });
-        this.props.cookies.remove("user_language", { path: '/' });
+        // this.props.cookies.remove("auth_sso", { path: '/' });
+        // this.props.cookies.remove("user_language", { path: '/' });
+        removeCookie("auth_sso");
+        removeCookie("user_language");
         sso_auth_service.removeUser().then(() => this.props.onLanguageUpdate(undefined));
     }
 
@@ -803,7 +806,7 @@ class App extends Component {
                                    <LocalUserProfile
                                        user_info={user_info}
                                        auth_token={auth_token}
-                                       onUserInfoChanged={()=> this.setState({user_info:undefined})}
+                                       onUserInfoChanged={()=> window.location.reload()}
                                        notifications={this._notificationSystem.current}
                                        {...props} />
                                )}
@@ -842,4 +845,4 @@ class App extends Component {
     }
 }
 
-export default withCookies(App);
+export default App;

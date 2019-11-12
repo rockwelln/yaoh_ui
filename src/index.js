@@ -1,6 +1,5 @@
 import React, {Component} from 'react';
 import ReactDOM from 'react-dom';
-import {CookiesProvider, withCookies} from 'react-cookie';
 import {IntlProvider} from 'react-intl';
 import { createStore, applyMiddleware, compose } from "redux";
 import { Provider } from "react-redux";
@@ -18,6 +17,7 @@ import mainReducer from "./store/reducers";
 
 //import en_GB from './translations/en.json';
 import fr_FR from './translations/fr.json';
+import {createCookie, getCookie, removeCookie} from "./utils";
 
 //addLocaleData(en);
 //addLocaleData(fr);
@@ -48,7 +48,7 @@ class AppWithIntl extends Component {
     _getLocale() {
         let locale = this.state?this.state.locale:undefined;
         if(locale === undefined) {
-            locale = this.props.cookies.get("user_language");
+            locale = getCookie("user_language");
         }
         if(locale === undefined || locale === "undefined") {
             locale = navigator.language.substr(0, 2);
@@ -59,10 +59,12 @@ class AppWithIntl extends Component {
     changeLanguage(locale) {
         if(locale !== this.state.locale) {
             this.setState({locale: locale});
-            if(locale === undefined)
-                this.props.cookies.remove('user_language', {path: '/'});
-            else
-                this.props.cookies.set('user_language', locale, {path: '/'});
+            if(locale === undefined) {
+                removeCookie('user_language')
+            } else {
+                createCookie('user_language', locale, null, '/');
+                window.location.reload();
+            }
         }
     }
 
@@ -77,7 +79,6 @@ class AppWithIntl extends Component {
         );
     }
 }
-let AppWithIntlAndCookies = withCookies(AppWithIntl);
 
 const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 
@@ -89,9 +90,7 @@ const store = createStore(
 
 ReactDOM.render(
     <Provider store={store}>
-        <CookiesProvider>
-            <AppWithIntlAndCookies/>
-        </CookiesProvider>
+        <AppWithIntl/>
     </Provider>, document.getElementById('root')
 );
 unregister();
