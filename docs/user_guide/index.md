@@ -12,6 +12,7 @@ So it doesn't cover technical aspects which are described more in-depth in the a
 
 * [Dashboard](./dashboard.html)
 * [Requests](./requests.html)
+* [Bulks](./bulks.html)
 
 ## Contact
 
