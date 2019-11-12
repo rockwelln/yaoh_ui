@@ -5,7 +5,7 @@ import {
   fetch_post,
   ProvProxiesManager,
   NotificationsManager
-} from "../utils";
+} from "../../../utils";
 import * as actionType from "./constants";
 import { FormattedMessage } from "react-intl";
 import React from "react";

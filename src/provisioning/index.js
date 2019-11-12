@@ -3,6 +3,7 @@ import {Route} from "react-router";
 import {isAllowed, pages} from "../utils/user";
 import {NotAllowed} from "../utils/common";
 
+// default routes
 import SearchPage from "./default/components/SearchPage";
 import LocalUsers from "./default/components/LocalUsers";
 import UpdateLocalUser from "./default/components/UpdateLocalUser";
@@ -23,6 +24,17 @@ import TenantPage from "./default/components/TenantPage";
 import GroupPage from "./default/components/GroupPage";
 import CreateAdmin from "./default/components/CreateAdmin";
 import UpdateAdmin from "./default/components/UpdateAdmin";
+
+// PRA routes
+import PraTenants from "./pra/components/Tenants";
+import PraAddEntreprises from "./pra/components/AddEntreprises";
+import PraAddGroup from "./pra/components/AddGroup";
+import PraEntreprisesPage from "./pra/components/EntreprisesPage";
+import PraAddIAD from "./pra/components/AddIAD";
+import PraAddPhoneToGroup from "./pra/components/AddPhoneNumbersToGroup";
+import PraIADPage from "./pra/components/IADPage";
+import PraEnterpriseTrunkPage from "./pra/components/EnterpriseTrunkPage";
+import PraGroupPage from "./pra/components/GroupPage";
 
 
 function provisioningDefaultRoutes(ui_profile) {
@@ -285,7 +297,118 @@ function provisioningDefaultRoutes(ui_profile) {
 }
 
 function provisioningPraRoutes(ui_profile) {
-    return []
+    return [
+        <Route
+            path="/provisioning/:gwName/tenants"
+            component={props =>
+                isAllowed(ui_profile, pages.data_tenants) ? (
+                    <PraTenants/>
+                ) : (
+                    <NotAllowed/>
+                )
+            }
+            exact
+        />,
+        <Route
+            path="/provisioning/:gwName/tenants/add"
+            component={props =>
+                isAllowed(ui_profile, pages.data_tenants) ? (
+                    <PraAddEntreprises/>
+                ) : (
+                    <NotAllowed/>
+                )
+            }
+            exact
+        />,
+        <Route
+            path="/provisioning/:gwName/tenants/:tenantId"
+            component={props =>
+                isAllowed(ui_profile, pages.data_tenants) ? (
+                    <PraEntreprisesPage/>
+                ) : (
+                    <NotAllowed/>
+                )
+            }
+            exact
+        />,
+        <Route
+            path="/provisioning/:gwName/tenants/:tenantId/addgroup"
+            component={props =>
+                isAllowed(ui_profile, pages.data_tenants) ? (
+                    <PraAddGroup/>
+                ) : (
+                    <NotAllowed/>
+                )
+            }
+            exact
+        />,
+        <Route
+            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId"
+            component={props =>
+                isAllowed(ui_profile, pages.data_tenants) ? (
+                    <PraGroupPage/>
+                ) : (
+                    <NotAllowed/>
+                )
+            }
+            exact
+        />,
+        <Route
+            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/addiad"
+            component={props =>
+                isAllowed(ui_profile, pages.data_tenants) ? (
+                    <PraAddIAD/>
+                ) : (
+                    <NotAllowed/>
+                )
+            }
+            exact
+        />,
+        <Route
+            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/addphone"
+            component={props =>
+                isAllowed(ui_profile, pages.data_tenants) ? (
+                    <PraAddPhoneToGroup/>
+                ) : (
+                    <NotAllowed/>
+                )
+            }
+            exact
+        />,
+        <Route
+            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/iad/:iadId"
+            component={props =>
+                isAllowed(ui_profile, pages.data_tenants) ? (
+                    <PraIADPage/>
+                ) : (
+                    <NotAllowed/>
+                )
+            }
+            exact
+        />,
+        <Route
+            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/enterprisetrunk/:entTrunkId"
+            component={props =>
+                isAllowed(ui_profile, pages.data_tenants) ? (
+                    <PraEnterpriseTrunkPage/>
+                ) : (
+                    <NotAllowed/>
+                )
+            }
+            exact
+        />,
+        <Route
+            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/modifyphone"
+            component={props =>
+                isAllowed(ui_profile, pages.data_tenants) ? (
+                    <PraAddPhoneToGroup/>
+                ) : (
+                    <NotAllowed/>
+                )
+            }
+            exact
+        />
+    ]
 }
 
 export const provisioningRoutes = process.env.PROVISIONING_UI === "pra"?provisioningPraRoutes:provisioningDefaultRoutes;
