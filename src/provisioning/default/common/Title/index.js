@@ -3,7 +3,7 @@ import { withRouter } from "react-router";
 
 import "./styles.css";
 import {FormattedMessage} from "react-intl";
-import {ProvProxiesManager} from "../../utils";
+import {ProvProxiesManager} from "../../../../utils";
 
 const Title = ({ location }) => {
   const gateway_id = location.pathname.split("/")[2];

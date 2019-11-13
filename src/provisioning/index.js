@@ -1,30 +1,48 @@
 import React from "react";
 import {Route} from "react-router";
-import {isAllowed, pages} from "./utils/user";
-import {NotAllowed} from "./utils/common";
-import SearchPage from "./components/SearchPage";
-import LocalUsers from "./components/LocalUsers";
-import UpdateLocalUser from "./components/UpdateLocalUser";
-import AddLocalUsers from "./components/AddLocalUser";
-import ConfigPage from "./components/Configs";
-import CategoryPage from "./components/CategoryPage";
-import TemplatePage from "./components/TemplatePage";
-import Tenants from "./components/Tenants";
-import AddPhoneNumberTenant from "./components/AddPhoneNumberTenant";
-import CreateTenant from "./components/CreateTenant";
-import CreateGroup from "./components/CreateGroup";
-import AddTrunkGroup from "./components/AddTrunkGroup";
-import AddUser from "./components/AddUser";
-import AddPhoneNumberGroup from "./components/AddPhoneNumberGroup";
-import TrunkGroupPage from "./components/TrunkGroupPage";
-import UserPage from "./components/UserPage";
-import TenantPage from "./components/TenantPage";
-import GroupPage from "./components/GroupPage";
-import CreateAdmin from "./components/CreateAdmin";
-import UpdateAdmin from "./components/UpdateAdmin";
+import {isAllowed, pages} from "../utils/user";
+import {NotAllowed} from "../utils/common";
+
+// default
+import SearchPage from "./default/components/SearchPage";
+import LocalUsers from "./default/components/LocalUsers";
+import UpdateLocalUser from "./default/components/UpdateLocalUser";
+import AddLocalUsers from "./default/components/AddLocalUser";
+import ConfigPage from "./default/components/Configs";
+import CategoryPage from "./default/components/CategoryPage";
+import TemplatePage from "./default/components/TemplatePage";
+import Tenants from "./default/components/Tenants";
+import AddPhoneNumberTenant from "./default/components/AddPhoneNumberTenant";
+import CreateTenant from "./default/components/CreateTenant";
+import CreateGroup from "./default/components/CreateGroup";
+import AddTrunkGroup from "./default/components/AddTrunkGroup";
+import AddUser from "./default/components/AddUser";
+import AddPhoneNumberGroup from "./default/components/AddPhoneNumberGroup";
+import TrunkGroupPage from "./default/components/TrunkGroupPage";
+import UserPage from "./default/components/UserPage";
+import TenantPage from "./default/components/TenantPage";
+import GroupPage from "./default/components/GroupPage";
+import CreateAdmin from "./default/components/CreateAdmin";
+import UpdateAdmin from "./default/components/UpdateAdmin";
+import mainDefaultProvisioningReducer from "./default/store/reducers";
+// end
+
+// PRA
+import PraTenants from "./pra/components/Tenants";
+import PraAddEntreprises from "./pra/components/AddEntreprises";
+import PraAddGroup from "./pra/components/AddGroup";
+import PraEntreprisesPage from "./pra/components/EntreprisesPage";
+import PraAddIAD from "./pra/components/AddIAD";
+import PraAddPhoneToGroup from "./pra/components/AddPhoneNumbersToGroup";
+import PraIADPage from "./pra/components/IADPage";
+import PraEnterpriseTrunkPage from "./pra/components/EnterpriseTrunkPage";
+import PraGroupPage from "./pra/components/GroupPage";
+import mainPraProvisioningReducer from "./pra/store/reducers";
+// end
 
 
-export function provisioningRoutes(ui_profile) {
+// default
+function provisioningDefaultRoutes(ui_profile) {
     return [
         <Route
             path="/provisioning/:gwName/search"
@@ -282,3 +300,147 @@ export function provisioningRoutes(ui_profile) {
         />
     ]
 }
+// end
+
+// PRA
+function provisioningPraRoutes(ui_profile) {
+    return [
+        <Route
+            path="/provisioning/:gwName/tenants"
+            component={props =>
+                isAllowed(ui_profile, pages.data_tenants) ? (
+                    <PraTenants/>
+                ) : (
+                    <NotAllowed/>
+                )
+            }
+            exact
+        />,
+        <Route
+            path="/provisioning/:gwName/tenants/add"
+            component={props =>
+                isAllowed(ui_profile, pages.data_tenants) ? (
+                    <PraAddEntreprises/>
+                ) : (
+                    <NotAllowed/>
+                )
+            }
+            exact
+        />,
+        <Route
+            path="/provisioning/:gwName/tenants/:tenantId"
+            component={props =>
+                isAllowed(ui_profile, pages.data_tenants) ? (
+                    <PraEntreprisesPage/>
+                ) : (
+                    <NotAllowed/>
+                )
+            }
+            exact
+        />,
+        <Route
+            path="/provisioning/:gwName/tenants/:tenantId/addgroup"
+            component={props =>
+                isAllowed(ui_profile, pages.data_tenants) ? (
+                    <PraAddGroup/>
+                ) : (
+                    <NotAllowed/>
+                )
+            }
+            exact
+        />,
+        <Route
+            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId"
+            component={props =>
+                isAllowed(ui_profile, pages.data_tenants) ? (
+                    <PraGroupPage/>
+                ) : (
+                    <NotAllowed/>
+                )
+            }
+            exact
+        />,
+        <Route
+            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/addiad"
+            component={props =>
+                isAllowed(ui_profile, pages.data_tenants) ? (
+                    <PraAddIAD/>
+                ) : (
+                    <NotAllowed/>
+                )
+            }
+            exact
+        />,
+        <Route
+            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/addphone"
+            component={props =>
+                isAllowed(ui_profile, pages.data_tenants) ? (
+                    <PraAddPhoneToGroup/>
+                ) : (
+                    <NotAllowed/>
+                )
+            }
+            exact
+        />,
+        <Route
+            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/iad/:iadId"
+            component={props =>
+                isAllowed(ui_profile, pages.data_tenants) ? (
+                    <PraIADPage/>
+                ) : (
+                    <NotAllowed/>
+                )
+            }
+            exact
+        />,
+        <Route
+            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/enterprisetrunk/:entTrunkId"
+            component={props =>
+                isAllowed(ui_profile, pages.data_tenants) ? (
+                    <PraEnterpriseTrunkPage/>
+                ) : (
+                    <NotAllowed/>
+                )
+            }
+            exact
+        />,
+        <Route
+            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/modifyphone"
+            component={props =>
+                isAllowed(ui_profile, pages.data_tenants) ? (
+                    <PraAddPhoneToGroup/>
+                ) : (
+                    <NotAllowed/>
+                )
+            }
+            exact
+        />
+    ]
+}
+// end
+
+export let provisioningRoutes = null;
+export let mainReducer = null;
+
+// pra
+provisioningRoutes = provisioningPraRoutes;
+mainReducer = mainPraProvisioningReducer;
+// end
+
+// default
+provisioningRoutes = provisioningDefaultRoutes;
+mainReducer = mainDefaultProvisioningReducer;
+// end
+
+
+/*
+switch (process.env.PROVISIONING_UI) {
+    case "pra":
+        provisioningRoutes = provisioningPraRoutes;
+        mainReducer = mainPraProvisioningReducer;
+        break;
+    default:
+        provisioningRoutes = provisioningDefaultRoutes;
+        mainReducer = mainDefaultProvisioningReducer;
+}
+ */

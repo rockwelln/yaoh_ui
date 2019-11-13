@@ -9,7 +9,7 @@ import App from './App';
 // import registerServiceWorker from './registerServiceWorker';
 import { unregister } from './registerServiceWorker';
 
-import mainReducer from "./store/reducers";
+import { mainReducer } from "./provisioning";
 
 //import en from 'react-intl/locale-data/en';
 //import fr from 'react-intl/locale-data/fr';
