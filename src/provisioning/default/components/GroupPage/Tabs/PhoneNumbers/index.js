@@ -41,7 +41,7 @@ export class PhoneNumbersTab extends Component {
 
   fetchNumbers() {
     this.props
-      .fetchGetPhoneNumbersByGroupId(this.props.tenantId, this.props.groupId, this.props.auth_token)
+      .fetchGetPhoneNumbersByGroupId(this.props.tenantId, this.props.groupId)
       .then(() =>
         this.setState(
           {
@@ -237,8 +237,7 @@ export class PhoneNumbersTab extends Component {
                         onReload={() =>
                           this.props.fetchGetPhoneNumbersByGroupId(
                             this.props.tenantId,
-                            this.props.groupId,
-                            this.props.auth_token
+                            this.props.groupId
                           )
                         }
                       />

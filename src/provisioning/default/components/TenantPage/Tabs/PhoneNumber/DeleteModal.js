@@ -37,7 +37,7 @@ class DeleteModal extends Component {
     };
 
     this.props
-      .fetchDeletePhoneFromTenant(this.props.tenantId, data, this.props.auth_token)
+      .fetchDeletePhoneFromTenant(this.props.tenantId, data)
       .then(() => {
         this.setState({ deleting: false });
         onClose && onClose(true);

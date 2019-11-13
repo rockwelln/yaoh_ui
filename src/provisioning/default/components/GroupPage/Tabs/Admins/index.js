@@ -33,7 +33,7 @@ export class Admins extends Component {
 
   fetchAdmins = () => {
     this.props
-      .fetchGetAdminsByGroupId(this.props.tenantId, this.props.groupId, this.props.auth_token)
+      .fetchGetAdminsByGroupId(this.props.tenantId, this.props.groupId)
       .then(() =>
         this.setState(
           {
@@ -192,8 +192,7 @@ export class Admins extends Component {
                         onReload={() =>
                           this.props.fetchGetAdminsByGroupId(
                             this.props.tenantId,
-                            this.props.groupId,
-                            this.props.auth_token
+                            this.props.groupId
                           )
                         }
                       />

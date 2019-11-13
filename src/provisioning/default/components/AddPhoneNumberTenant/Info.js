@@ -18,7 +18,6 @@ import {
   changeStepOfAddPhoneTenant
 } from "../../store/actions";
 
-
 export class Info extends Component {
   state = {
     addButton: "Add to group"

@@ -31,21 +31,19 @@ class TenantPage extends Component {
 
   fetchRequsts = () => {
     this.props
-      .fetchGetTenantById(this.props.match.params.tenantId, this.props.auth_token)
+      .fetchGetTenantById(this.props.match.params.tenantId)
       .then(() => this.setState({ isLoadingTenant: false }));
     this.props
       .fetchGetGroupById(
         this.props.match.params.tenantId,
-        this.props.match.params.groupId,
-        this.props.auth_token
+        this.props.match.params.groupId
       )
       .then(() => this.setState({ isLoadingGroup: false }));
     this.props
       .fetchGetUserByName(
         this.props.match.params.tenantId,
         this.props.match.params.groupId,
-        this.props.match.params.userName,
-        this.props.auth_token
+        this.props.match.params.userName
       )
       .then(() => this.setState({ isLoadingUser: false }));
   };

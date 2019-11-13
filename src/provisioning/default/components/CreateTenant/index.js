@@ -39,22 +39,22 @@ export class CreateTenant extends Component {
   returnStep = () => {
     switch (this.props.createTenantStep) {
       case "Basic": {
-        return <Basic auth_token={this.props.auth_token} />;
+        return <Basic />;
       }
       case "Template": {
-        return <Template auth_token={this.props.auth_token} />;
+        return <Template />;
       }
       case "Created": {
-        return <Created auth_token={this.props.auth_token} />;
+        return <Created />;
       }
       case "Limits": {
-        return <Limits auth_token={this.props.auth_token} />;
+        return <Limits />;
       }
       case "Admin": {
-        return <Admin auth_token={this.props.auth_token} />;
+        return <Admin />;
       }
       default:
-        return <Basic auth_token={this.props.auth_token} />;
+        return <Basic />;
     }
   };
 }

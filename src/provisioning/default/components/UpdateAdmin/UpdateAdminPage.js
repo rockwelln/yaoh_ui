@@ -47,16 +47,14 @@ class CreateAdmin extends Component {
     this.props
       .fetchGetGroupById(
         this.props.match.params.tenantId,
-        this.props.match.params.groupId,
-        this.props.auth_token
+        this.props.match.params.groupId
       )
       .then(() => this.setState({ isLoadingLevel: false }));
     this.props
       .fetchGetGroupAdminByAdminId(
         this.props.match.params.tenantId,
         this.props.match.params.groupId,
-        this.props.match.params.adminId,
-        this.props.auth_token
+        this.props.match.params.adminId
       )
       .then(() =>
         this.setState({
@@ -68,13 +66,12 @@ class CreateAdmin extends Component {
 
   fetchTenantAdmin = () => {
     this.props
-      .fetchGetTenantById(this.props.match.params.tenantId, this.props.auth_token)
+      .fetchGetTenantById(this.props.match.params.tenantId)
       .then(() => this.setState({ isLoadingLevel: false }));
     this.props
       .fetchGetTenantAdminByAdminId(
         this.props.match.params.tenantId,
-        this.props.match.params.adminId,
-        this.props.auth_token
+        this.props.match.params.adminId
       )
       .then(() =>
         this.setState({
@@ -351,8 +348,7 @@ class CreateAdmin extends Component {
             this.props.match.params.tenantId,
             this.props.match.params.groupId,
             this.props.match.params.adminId,
-            data,
-            this.props.auth_token
+            data
           )
           .then(() =>
             this.setState({
@@ -371,8 +367,7 @@ class CreateAdmin extends Component {
             this.props.match.params.tenantId,
             this.props.match.params.groupId,
             this.props.match.params.adminId,
-            data,
-            this.props.auth_token
+            data
           )
           .then(() =>
             this.setState({
@@ -391,8 +386,7 @@ class CreateAdmin extends Component {
           this.props.match.params.tenantId,
           this.props.match.params.groupId,
           this.props.match.params.adminId,
-          updateAdminData,
-            this.props.auth_token
+          updateAdminData
         )
         .then(() => this.setState({ isUpdatedMassage: "Admin is updated" }))
     );
@@ -413,8 +407,7 @@ class CreateAdmin extends Component {
           .fetchPutUpdateTenantAdmin(
             this.props.match.params.tenantId,
             this.props.match.params.adminId,
-            data,
-            this.props.auth_token
+            data
           )
           .then(() =>
             this.setState({
@@ -432,8 +425,7 @@ class CreateAdmin extends Component {
           .fetchPutUpdateTenantAdmin(
             this.props.match.params.tenantId,
             this.props.match.params.adminId,
-            data,
-            this.props.auth_token
+            data
           )
           .then(() =>
             this.setState({
@@ -451,8 +443,7 @@ class CreateAdmin extends Component {
         .fetchPutUpdateTenantAdmin(
           this.props.match.params.tenantId,
           this.props.match.params.adminId,
-          updateAdminData,
-          this.props.auth_token
+          updateAdminData
         )
         .then(() => this.setState({ isUpdatedMassage: "Admin is updated" }))
     );

@@ -30,7 +30,7 @@ class TenantPage extends Component {
 
   componentDidMount() {
     this.props
-      .fetchGetTenantById(this.props.match.params.tenantId, this.props.auth_token)
+      .fetchGetTenantById(this.props.match.params.tenantId)
       .then(() => this.setState({ isLoading: false }));
     this.props.refuseCreateGroup();
     this.props.refuseAddPhoneToTenant();
@@ -67,25 +67,23 @@ class TenantPage extends Component {
               <Licenses />
             </Tab>
             <Tab eventKey={1} title="GROUPS">
-              <GroupsTab tenantId={this.props.match.params.tenantId} {...this.props} />
+              <GroupsTab tenantId={this.props.match.params.tenantId} />
             </Tab>
             {/* <Tab eventKey={2} title="ENTERPRISE TRUNKS">
               ENTERPRISE TRUNKS Tab
             </Tab> */}
             <Tab eventKey={3} title="PHONE NUMBERS">
-              <PhoneNumbersTab tenantId={this.props.match.params.tenantId} {...this.props} />
+              <PhoneNumbersTab tenantId={this.props.match.params.tenantId} />
             </Tab>
             <Tab eventKey={4} title="ADMINISTRATORS">
               <Admins
                 tenantId={this.props.match.params.tenantId}
-                {...this.props}
               />
             </Tab>
             <Tab eventKey={5} title="DETAILS">
               <Details
                 tenantId={this.props.match.params.tenantId}
                 isLoading={isLoading}
-                {...this.props}
               />
             </Tab>
           </Tabs>

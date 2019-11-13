@@ -38,7 +38,7 @@ export class Users extends Component {
 
   fetchReq() {
     this.props
-      .fetchGetUsersByGroupId(this.props.tenantId, this.props.groupId, this.props.auth_token)
+      .fetchGetUsersByGroupId(this.props.tenantId, this.props.groupId)
       .then(() =>
         this.setState(
           {
@@ -252,8 +252,7 @@ export class Users extends Component {
                         onReload={() =>
                           this.props.fetchGetUsersByGroupId(
                             this.props.tenantId,
-                            this.props.groupId,
-                            this.props.auth_token
+                            this.props.groupId
                           )
                         }
                       />

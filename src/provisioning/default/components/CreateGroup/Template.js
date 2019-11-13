@@ -31,7 +31,7 @@ export class Template extends Component {
 
   componentDidMount() {
     this.props
-      .fetchGetTamplatesOfGroup(this.props.auth_token)
+      .fetchGetTamplatesOfGroup()
       .then(() => this.setState({ isLoading: false }));
   }
 
@@ -136,8 +136,7 @@ export class Template extends Component {
       this.props
         .fetchPostCreateGroup(
           this.props.match.params.tenantId,
-          filteredDataCreateGroup,
-          this.props.auth_token
+          filteredDataCreateGroup
         )
         .then(res =>
           res

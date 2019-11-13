@@ -21,10 +21,10 @@ const TemplateComponent = props => {
         </Col>
         <Col md={10} className={"padding-left-3 padding-right-3"}>
           <Row>
-            <Breadcrumb {...props} />
+            <Breadcrumb />
           </Row>
           <Row className={"panel panel-default"}>
-            <TemplatePage {...props} />
+            <TemplatePage />
           </Row>
         </Col>
       </Row>

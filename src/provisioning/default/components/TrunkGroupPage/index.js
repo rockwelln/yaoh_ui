@@ -9,7 +9,7 @@ import Title from "../../common/Title";
 
 import TrunkGroupPage from "./TrunkGroupPage";
 
-const TrunkGroupComponent = props => {
+const TrunkGroupComponent = () => {
   return (
     <React.Fragment>
       <Row className={"margin-bottom-4"}>
@@ -24,7 +24,7 @@ const TrunkGroupComponent = props => {
             <Breadcrumb />
           </Row>
           <Row className={"panel panel-default"}>
-            <TrunkGroupPage {...props} />
+            <TrunkGroupPage />
           </Row>
         </Col>
       </Row>

@@ -40,8 +40,7 @@ class Details extends Component {
     this.props
       .fetchGetGroupById(
         this.props.match.params.tenantId,
-        this.props.match.params.groupId,
-        this.props.auth_token
+        this.props.match.params.groupId
       )
       .then(() =>
         this.setState({
@@ -251,8 +250,7 @@ class Details extends Component {
         .fetchPutUpdateGroupDetails(
           this.props.match.params.tenantId,
           this.props.match.params.groupId,
-          data,
-          this.props.auth_token
+          data
         )
         .then(() =>
           this.setState(

@@ -327,8 +327,7 @@ export class Admin extends Component {
     this.props
       .fetchPostCreateTenantAdmin(
         this.props.createdTenant.tenantId,
-        this.state.createAdminData,
-        this.props.auth_token
+        this.state.createAdminData
       )
       .then(() => {
         this.props.history.push(

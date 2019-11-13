@@ -48,8 +48,7 @@ export class Services extends Component {
       .fetchGetUserServicesByUserId(
         this.props.match.params.tenantId,
         this.props.match.params.groupId,
-        this.props.match.params.userName,
-        this.props.auth_token
+        this.props.match.params.userName
       )
       .then(data =>
         this.setState(
@@ -214,8 +213,7 @@ export class Services extends Component {
                           this.props.fetchGetUserServicesByUserId(
                             this.props.match.params.tenantId,
                             this.props.match.params.groupId,
-                            this.props.match.params.userName,
-                            this.props.auth_token
+                            this.props.match.params.userName
                           )
                         }
                       />
@@ -303,8 +301,7 @@ export class Services extends Component {
           this.props.match.params.tenantId,
           this.props.match.params.groupId,
           this.props.match.params.userName,
-          postData,
-          this.props.auth_token
+          postData
         )
         .then(() => this.setState({ postServices: true }));
       this.props
@@ -312,8 +309,7 @@ export class Services extends Component {
           this.props.match.params.tenantId,
           this.props.match.params.groupId,
           this.props.match.params.userName,
-          deleteData,
-          this.props.auth_token
+          deleteData
         )
         .then(() => this.setState({ deleteServices: true }));
     });

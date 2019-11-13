@@ -91,8 +91,7 @@ export class EditFrom extends Component {
                             this.props
                               .fetchGetTrunksGroupsByGroup(
                                 this.props.match.params.tenantId,
-                                group.groupId,
-                                this.props.auth_token
+                                group.groupId
                               )
                               .then(() =>
                                 this.setState({

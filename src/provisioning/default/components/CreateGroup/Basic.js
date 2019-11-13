@@ -33,7 +33,7 @@ export class Basic extends Component {
 
   componentDidMount() {
     this.props
-      .fetchGetTenantById(this.props.match.params.tenantId, this.props.auth_token)
+      .fetchGetTenantById(this.props.match.params.tenantId)
       .then(() => this.props.changeDomainOfGroup(this.props.defaultDomain));
   }
 

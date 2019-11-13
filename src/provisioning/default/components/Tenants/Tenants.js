@@ -41,7 +41,7 @@ class Tenants extends Component {
   }
 
   fetchRequsts = () => {
-    this.props.fetchGetTenants(this.cancelLoad, this.props.auth_token).then(() => {
+    this.props.fetchGetTenants(this.cancelLoad).then(() => {
       const sortedTenants = [...this.props.tenants];
       this.setState(
         {
@@ -64,7 +64,7 @@ class Tenants extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.match.params.gwName !== this.props.match.params.gwName) {
+    if (prevProps.tenants.length !== this.props.tenants.length) {
       this.fetchRequsts();
     }
   }

@@ -21,13 +21,10 @@ class DeleteModal extends Component {
     this.setState({ deleting: true });
 
     this.props
-      .fetchDeleteGroupDevice(tenantId, groupId, deviceName, this.props.auth_token)
+      .fetchDeleteGroupDevice(tenantId, groupId, deviceName)
       .then(() => {
         this.setState({ deleting: false });
         onClose && onClose(true);
-      })
-      .catch(error => {
-        this.setState({ deleting: false });
       });
   }
 

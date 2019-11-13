@@ -24,7 +24,7 @@ class DeleteModal extends Component {
 
     const allNumbers = [];
 
-    this.props.rangeStart.forEach(number => {
+    this.props.rangeStart.map(number => {
       if (number.includes(" - ")) {
         const range = number.split(" - ");
         const expandedRange = getRange(range[0], range[1]);
@@ -37,7 +37,7 @@ class DeleteModal extends Component {
     };
 
     this.props
-      .fetchDeletePhoneFromTenant(this.props.tenantId, data, this.props.auth_token)
+      .fetchDeletePhoneFromTenant(this.props.tenantId, data)
       .then(() => {
         this.setState({ deleting: false });
         onClose && onClose(true);

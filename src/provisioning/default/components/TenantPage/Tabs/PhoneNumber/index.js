@@ -40,7 +40,7 @@ export class PhoneNumbersTab extends Component {
   };
 
   fetchNumbers = () => {
-    this.props.fetchGetPhoneNumbersByTenantId(this.props.tenantId, this.props.auth_token).then(() =>
+    this.props.fetchGetPhoneNumbersByTenantId(this.props.tenantId).then(() =>
       this.setState(
         {
           phoneNumbers: this.props.phoneNumbers.sort((a, b) => {
@@ -164,7 +164,6 @@ export class PhoneNumbersTab extends Component {
                         this.fetchNumbers();
                         this.setState({ showDelete: false });
                       }}
-                      {...this.props}
                     />
                   </div>
                   <div className={"flex align-items-center"}>
@@ -240,8 +239,7 @@ export class PhoneNumbersTab extends Component {
                         }
                         onReload={() =>
                           this.props.fetchGetPhoneNumbersByTenantId(
-                            this.props.tenantId,
-                            this.props.auth_token
+                            this.props.tenantId
                           )
                         }
                       />

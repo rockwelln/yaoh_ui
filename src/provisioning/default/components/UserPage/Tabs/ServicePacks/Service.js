@@ -2,7 +2,6 @@ import React, { Component } from "react";
 
 import Checkbox from "react-bootstrap/lib/Checkbox";
 
-
 export default class Sevice extends Component {
   state = { showDelete: false };
   render() {

@@ -9,7 +9,7 @@ import Title from "../../common/Title";
 
 import UserPage from "./UserPage";
 
-const GroupComponent = props => {
+const GroupComponent = () => {
   return (
     <React.Fragment>
       <Row className={"margin-bottom-4"}>
@@ -24,7 +24,7 @@ const GroupComponent = props => {
             <Breadcrumb />
           </Row>
           <Row className={"panel panel-default"}>
-            <UserPage {...props} />
+            <UserPage />
           </Row>
         </Col>
       </Row>

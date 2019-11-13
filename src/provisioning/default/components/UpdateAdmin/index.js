@@ -9,7 +9,7 @@ import Title from "../../common/Title";
 
 import UpdateAdminPage from "./UpdateAdminPage";
 
-const UpdateAdminComponent = props => {
+const UpdateAdminComponent = () => {
   return (
     <React.Fragment>
       <Row className={"margin-bottom-4"}>
@@ -24,7 +24,7 @@ const UpdateAdminComponent = props => {
             <Breadcrumb />
           </Row>
           <Row className={"panel panel-default"}>
-            <UpdateAdminPage {...props} />
+            <UpdateAdminPage />
           </Row>
         </Col>
       </Row>

@@ -32,14 +32,13 @@ export class Trunks extends Component {
     pagination: true,
     countPages: null,
     searchValue: "",
-    showErrorCreate: false    
+    showErrorCreate: false
   };
   fetchTrunks = () => {
     this.props
       .fetchGetTrunksGroupsByGroup(
         this.props.match.params.tenantId,
-        this.props.match.params.groupId,
-        this.props.auth_token
+        this.props.match.params.groupId
       )
       .then(() =>
         this.setState(
@@ -102,7 +101,7 @@ export class Trunks extends Component {
             <Glyphicon
               className={"x-large"}
               glyph="glyphicon glyphicon-plus-sign"
-              onClick={this.addTrunkGroup}        
+              onClick={this.addTrunkGroup}
             />
           </Col>
           <Modal
@@ -206,7 +205,6 @@ export class Trunks extends Component {
                         key={i}
                         trunkGrup={trunkGrup}
                         onReload={() => this.fetchTrunks()}
-                        {...this.props}
                       />
                     ))}
                   </tbody>
@@ -395,7 +393,7 @@ export class Trunks extends Component {
 
 const mapStateToProps = state => ({
   trunks: state.trunksGroups,
-  availableTrunkGroups: state.availableTrunkGroups  
+  availableTrunkGroups: state.availableTrunkGroups
 });
 
 const mapDispatchToProps = {

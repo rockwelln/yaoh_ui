@@ -8,7 +8,7 @@ import Sidebar from "../../common/Sidebar";
 import Title from "../../common/Title";
 import CreateAdminPage from "./CreateAdminPage";
 
-const CreateAdminComponent = props => {
+const CreateAdminComponent = () => {
   return (
     <React.Fragment>
       <Row className={"margin-bottom-4"}>
@@ -23,7 +23,7 @@ const CreateAdminComponent = props => {
             <Breadcrumb />
           </Row>
           <Row>
-            <CreateAdminPage {...props} />
+            <CreateAdminPage />
           </Row>
         </Col>
       </Row>

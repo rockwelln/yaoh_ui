@@ -11,7 +11,6 @@ import FormGroup from "react-bootstrap/lib/FormGroup";
 import Radio from "react-bootstrap/lib/Radio";
 import FormControl from "react-bootstrap/lib/FormControl";
 import Well from "react-bootstrap/lib/Well";
-import { removeEmpty } from "../../../remuveEmptyInObject";
 
 import {
   fetchGetBackupByTrunkGroup,
@@ -20,6 +19,7 @@ import {
 } from "../../../../store/actions";
 import Loading from "../../../../common/Loading";
 import EditFrom from "./EditFrom";
+import { removeEmpty } from "../../../remuveEmptyInObject";
 
 export class Backup extends Component {
   state = {

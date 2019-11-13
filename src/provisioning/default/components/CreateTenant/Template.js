@@ -31,7 +31,7 @@ export class Template extends Component {
 
   componentDidMount() {
     this.props
-      .fetchGetTamplatesOfTenant(this.props.auth_token)
+      .fetchGetTamplatesOfTenant()
       .then(() => this.setState({ isLoading: false }));
   }
 
@@ -137,7 +137,7 @@ export class Template extends Component {
     const filteredDataCreateTenant = removeEmpty(this.props.createTenant);
     this.setState({ creating: "Creating..." }, () => {
       this.props
-        .fetchPostCreateTenant(filteredDataCreateTenant, this.props.auth_token)
+        .fetchPostCreateTenant(filteredDataCreateTenant)
         .then(res =>
           res
             ? this.props.changeStepOfCreateTenant("Created")

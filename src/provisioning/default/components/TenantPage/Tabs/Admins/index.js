@@ -33,7 +33,7 @@ export class Admins extends Component {
   };
 
   fetchAdmins = () => {
-    this.props.fetchGetAdminsByTenantId(this.props.tenantId, this.props.auth_token).then(() =>
+    this.props.fetchGetAdminsByTenantId(this.props.tenantId).then(() =>
       this.setState(
         {
           admins: this.props.admins.sort((a, b) => {
@@ -188,7 +188,7 @@ export class Admins extends Component {
                         admin={admin}
                         onReload={() =>
                           this.props.fetchGetAdminsByTenantId(
-                            this.props.tenantId, this.props.auth_token
+                            this.props.tenantId
                           )
                         }
                       />

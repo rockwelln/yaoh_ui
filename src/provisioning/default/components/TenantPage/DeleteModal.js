@@ -20,8 +20,9 @@ class DeleteModal extends Component {
   onDelete(tenantId) {
     const { onClose } = this.props;
     this.setState({ deleting: true });
+
     this.props
-      .fetchDeleteTenant(tenantId, this.props.auth_token)
+      .fetchDeleteTenant(tenantId)
       .then(res =>
         res
           ? (this.setState({ deleting: false }),

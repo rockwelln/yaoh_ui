@@ -33,8 +33,7 @@ class PhoneNumber extends Component {
       .fetchGetUserByName(
         this.props.match.params.tenantId,
         this.props.match.params.groupId,
-        this.props.match.params.userName,
-        this.props.auth_token
+        this.props.match.params.userName
       )
       .then(() =>
         this.setState({
@@ -47,8 +46,7 @@ class PhoneNumber extends Component {
 
     this.props.fetchGetAvailableNumbersByGroupId(
       this.props.match.params.tenantId,
-      this.props.match.params.groupId,
-      this.props.auth_token
+      this.props.match.params.groupId
     );
   }
 
@@ -209,8 +207,7 @@ class PhoneNumber extends Component {
           this.props.match.params.tenantId,
           this.props.match.params.groupId,
           this.props.match.params.userName,
-          data,
-          this.props.auth_token
+          data
         )
         .then(() =>
           this.setState(

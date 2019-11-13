@@ -51,8 +51,7 @@ class Details extends Component {
       .fetchGetUserByName(
         this.props.match.params.tenantId,
         this.props.match.params.groupId,
-        this.props.match.params.userName,
-        this.props.auth_token
+        this.props.match.params.userName
       )
       .then(() => {
         this.props.user.accessDeviceEndpoint
@@ -60,8 +59,7 @@ class Details extends Component {
               .fetchGetAccessDeviceByName(
                 this.props.match.params.tenantId,
                 this.props.match.params.groupId,
-                this.props.user.accessDeviceEndpoint.accessDevice.name,
-                this.props.auth_token
+                this.props.user.accessDeviceEndpoint.accessDevice.name
               )
               .then(() =>
                 this.setState({
@@ -508,7 +506,7 @@ class Details extends Component {
             </Col>
           </FormGroup>
           <Row>
-             <Col md={12} className={"padding-0"}>
+            <Col md={12} className={"padding-0"}>
               <div className="button-row">
                 <div className="pull-right">
                   <Button
@@ -574,8 +572,7 @@ class Details extends Component {
           this.props.match.params.tenantId,
           this.props.match.params.groupId,
           this.props.match.params.userName,
-          data,
-          this.props.auth_token
+          data
         )
         .then(() =>
           this.setState(

@@ -19,7 +19,7 @@ class DeleteModal extends Component {
   onDelete(tenantId, groupId, adminId) {
     const { onClose } = this.props;
     this.setState({ deleting: true });
-    this.props.fetchDeleteGroupAdmin(tenantId, groupId, adminId, this.props.auth_token).then(() => {
+    this.props.fetchDeleteGroupAdmin(tenantId, groupId, adminId).then(() => {
       this.setState({ deleting: false });
       onClose && onClose(true);
     });

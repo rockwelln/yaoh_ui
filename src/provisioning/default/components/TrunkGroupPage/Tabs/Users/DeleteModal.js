@@ -25,8 +25,7 @@ class DeleteModal extends Component {
       .fetchDeleteUserFromGroup(
         this.props.match.params.tenantId,
         this.props.match.params.groupId,
-        userId,
-        this.props.auth_token
+        userId
       )
       .then(() => {
         this.setState({ deleting: false });

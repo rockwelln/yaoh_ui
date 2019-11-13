@@ -24,8 +24,7 @@ class DeleteModal extends Component {
     this.props
       .fetchDeleteGroupFromTenant(
         this.props.match.params.tenantId,
-        this.props.groupId,
-        this.prop.auth_token
+        this.props.groupId
       )
       .then(res =>
         res

@@ -187,7 +187,6 @@ class Details extends Component {
     );
   }
 
-
   updateTenant = () => {
     const {
       tenantName,
@@ -209,7 +208,7 @@ class Details extends Component {
         : this.state.tenant.useCustomRoutingProfile
     };
 
-    this.props.fetchPutUpdateTenantDetails(this.state.tenant.tenantId, data, this.props.auth_token);
+    this.props.fetchPutUpdateTenantDetails(this.state.tenant.tenantId, data);
   };
 }
 

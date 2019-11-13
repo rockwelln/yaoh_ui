@@ -31,8 +31,7 @@ class TrunkGroupPage extends Component {
       .fetchGetTrunkGroupByName(
         this.props.match.params.tenantId,
         this.props.match.params.groupId,
-        this.props.match.params.trunkGroupName,
-        this.props.auth_token
+        this.props.match.params.trunkGroupName
       )
       .then(() => this.setState({ isLoading: false }));
   }
@@ -71,6 +70,7 @@ class TrunkGroupPage extends Component {
             <Tab eventKey={9} title="Authentication">
               <Authentication />
             </Tab>
+
             <Tab eventKey={1} title="Users">
               <Users />
             </Tab>

@@ -51,12 +51,11 @@ class CreateAdmin extends Component {
       ? this.props
           .fetchGetGroupById(
             this.props.match.params.tenantId,
-            this.props.match.params.groupId,
-            this.props.auth_token
+            this.props.match.params.groupId
           )
           .then(() => this.setState({ isLoading: false }))
       : this.props
-          .fetchGetTenantById(this.props.match.params.tenantId, this.props.auth_token)
+          .fetchGetTenantById(this.props.match.params.tenantId)
           .then(() => this.setState({ isLoading: false }));
   }
 
@@ -265,13 +264,11 @@ class CreateAdmin extends Component {
       ? this.props.fetchPostCreateGroupAdmin(
           this.props.match.params.tenantId,
           this.props.match.params.groupId,
-          createAdminData,
-          this.props.auth_token
+          createAdminData
         )
       : this.props.fetchPostCreateTenantAdmin(
           this.props.match.params.tenantId,
-          createAdminData,
-          this.props.auth_token
+          createAdminData
         );
   };
 }
