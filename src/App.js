@@ -534,8 +534,9 @@ class App extends Component {
 
     updateToken(token, sso_auth) {
         AuthServiceManager.loadToken(token);
-         // this.props.cookies.set('auth_sso', sso_auth?'1':'0', {path: '/'});  // maxAge = 24hours
+        // this.props.cookies.set('auth_sso', sso_auth?'1':'0', {path: '/'});  // maxAge = 24hours
         createCookie("auth_sso", sso_auth?'1':'0', 1, '/');  // maxAge = 24hours
+        this.setState({user_info: this.state.user_info});
     }
 
     logout() {
