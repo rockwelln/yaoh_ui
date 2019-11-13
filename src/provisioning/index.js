@@ -3,7 +3,7 @@ import {Route} from "react-router";
 import {isAllowed, pages} from "../utils/user";
 import {NotAllowed} from "../utils/common";
 
-// default routes
+// default
 import SearchPage from "./default/components/SearchPage";
 import LocalUsers from "./default/components/LocalUsers";
 import UpdateLocalUser from "./default/components/UpdateLocalUser";
@@ -24,8 +24,10 @@ import TenantPage from "./default/components/TenantPage";
 import GroupPage from "./default/components/GroupPage";
 import CreateAdmin from "./default/components/CreateAdmin";
 import UpdateAdmin from "./default/components/UpdateAdmin";
+import mainDefaultProvisioningReducer from "./default/store/reducers";
+// end
 
-// PRA routes
+// PRA
 import PraTenants from "./pra/components/Tenants";
 import PraAddEntreprises from "./pra/components/AddEntreprises";
 import PraAddGroup from "./pra/components/AddGroup";
@@ -35,8 +37,11 @@ import PraAddPhoneToGroup from "./pra/components/AddPhoneNumbersToGroup";
 import PraIADPage from "./pra/components/IADPage";
 import PraEnterpriseTrunkPage from "./pra/components/EnterpriseTrunkPage";
 import PraGroupPage from "./pra/components/GroupPage";
+import mainPraProvisioningReducer from "./pra/store/reducers";
+// end
 
 
+// default
 function provisioningDefaultRoutes(ui_profile) {
     return [
         <Route
@@ -295,7 +300,9 @@ function provisioningDefaultRoutes(ui_profile) {
         />
     ]
 }
+// end
 
+// PRA
 function provisioningPraRoutes(ui_profile) {
     return [
         <Route
@@ -410,5 +417,30 @@ function provisioningPraRoutes(ui_profile) {
         />
     ]
 }
+// end
 
-export const provisioningRoutes = process.env.PROVISIONING_UI === "pra"?provisioningPraRoutes:provisioningDefaultRoutes;
+export let provisioningRoutes = null;
+export let mainReducer = null;
+
+// pra
+provisioningRoutes = provisioningPraRoutes;
+mainReducer = mainPraProvisioningReducer;
+// end
+
+// default
+provisioningRoutes = provisioningDefaultRoutes;
+mainReducer = mainDefaultProvisioningReducer;
+// end
+
+
+/*
+switch (process.env.PROVISIONING_UI) {
+    case "pra":
+        provisioningRoutes = provisioningPraRoutes;
+        mainReducer = mainPraProvisioningReducer;
+        break;
+    default:
+        provisioningRoutes = provisioningDefaultRoutes;
+        mainReducer = mainDefaultProvisioningReducer;
+}
+ */
