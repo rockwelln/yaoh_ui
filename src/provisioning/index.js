@@ -16,6 +16,7 @@ import AddPhoneNumberTenant from "./default/components/AddPhoneNumberTenant";
 import CreateTenant from "./default/components/CreateTenant";
 import CreateGroup from "./default/components/CreateGroup";
 import AddTrunkGroup from "./default/components/AddTrunkGroup";
+import AddDevicePage from "./default/components/AddDevicePage";
 import AddUser from "./default/components/AddUser";
 import AddPhoneNumberGroup from "./default/components/AddPhoneNumberGroup";
 import TrunkGroupPage from "./default/components/TrunkGroupPage";
@@ -206,6 +207,17 @@ function provisioningDefaultRoutes(ui_profile) {
                     <UserPage/>
                 ) : (
                     <NotAllowed/>
+                )
+            }
+            exact
+        />,
+        <Route
+            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/adddevice"
+            component={props =>
+                isAllowed(ui_profile, pages.data_tenants) ? (
+                    <AddDevicePage />
+                ) : (
+                    <NotAllowed />
                 )
             }
             exact

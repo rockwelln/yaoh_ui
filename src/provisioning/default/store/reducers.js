@@ -106,7 +106,9 @@ const initialState = {
   tenantLicenses: {},
   tenantTrunkGroups: {},
   availableTrunkGroups: {},
-  createdTrunkGroup: {}  
+  createdTrunkGroup: {},
+  device: {},
+  userServices: []
 };
 
 function mainReducer(state = initialState, action) {
@@ -194,7 +196,7 @@ function mainReducer(state = initialState, action) {
     case actionType.GET_LICENSES_BY_GROUP_ID: {
       const availableTrunkGroups = action.data.groupServices.filter(
         group => group.name === "Trunk Group"
-      );      
+      );
       const groupServicesShown = action.data.groupServices
         .filter(
           group =>
@@ -235,7 +237,9 @@ function mainReducer(state = initialState, action) {
           groups: groupServices,
           countShown: groupServicesShown.length
         },
-        availableTrunkGroups: availableTrunkGroups[0] && availableTrunkGroups[0]        
+        availableTrunkGroups:
+          availableTrunkGroups[0] && availableTrunkGroups[0],
+        userServices: action.data.userServices
       };
     }
     case actionType.GET_DEVICES_BY_GROUP_ID: {
@@ -511,6 +515,12 @@ function mainReducer(state = initialState, action) {
         tenantTrunkGroups: action.data
       };
     }
+    case actionType.GET_DEVICE: {
+      return {
+        ...state,
+        device: action.data
+      };
+    }
     case actionType.POST_CREATE_GROUP_ADMIN: {
       return {
         ...state,
@@ -550,7 +560,7 @@ function mainReducer(state = initialState, action) {
     case actionType.POST_CREATE_TENANT: {
       return {
         ...state,
-        createTenant: action.data
+        createdTenant: action.data
       };
     }
     case actionType.POST_CREATE_GROUP: {
@@ -619,7 +629,12 @@ function mainReducer(state = initialState, action) {
         ...state,
         createdTrunkGroup: action.data
       };
-    }    
+    }
+    case actionType.POST_CREATE_DEVICE_IN_GROUP: {
+      return {
+        ...state
+      };
+    }
     case actionType.PUT_UPDATE_USER: {
       return {
         ...state,
@@ -706,6 +721,12 @@ function mainReducer(state = initialState, action) {
     case actionType.PUT_UPDATE_GROUP_SERVICES_BY_TENANT_ID: {
       return {
         ...state
+      };
+    }
+    case actionType.PUT_UPDATE_DEVICE: {
+      return {
+        ...state,
+        device: action.data
       };
     }
     case actionType.DELETE_TENANT: {

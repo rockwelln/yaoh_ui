@@ -16,7 +16,7 @@ class User extends Component {
     const { showDelete } = this.state;
     return (
       <tr key={user.userId}>
-          {/* <td>
+        {/* <td>
           <Checkbox
             checked={user.userChecked}
             className={"table-checkbox"}

@@ -215,6 +215,11 @@ export const getTrunkByTenantID = data => ({
   data
 });
 
+export const getDevice = data => ({
+  type: actionType.GET_DEVICE,
+  data
+});
+
 export const postCreateGroupAdmin = data => ({
   type: actionType.POST_CREATE_GROUP_ADMIN,
   data
@@ -286,6 +291,10 @@ export const postAssignPhoneNumbersToGroup = data => ({
 export const postCreateTrunkGroup = data => ({
   type: actionType.POST_CREATE_TRUNK_GROUP,
   data
+});
+
+export const postCreateDeviceInGroup = () => ({
+  type: actionType.POST_CREATE_DEVICE_IN_GROUP
 });
 
 export const putUpdateUser = data => ({
@@ -360,6 +369,11 @@ export const putUpdateTrunkByTenantId = data => ({
 
 export const putUpdateGroupServicesByTenantId = data => ({
   type: actionType.PUT_UPDATE_GROUP_SERVICES_BY_TENANT_ID,
+  data
+});
+
+export const putUpdateDevice = data => ({
+  type: actionType.PUT_UPDATE_DEVICE,
   data
 });
 
@@ -1204,6 +1218,24 @@ export function fetchGetTrunkByTenantID(tenantId) {
   };
 }
 
+export function fetchGetDevice(tenantId, groupId, deviceName) {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/access_devices/${deviceName}`
+    )
+      .then(data => dispatch(getDevice(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-device-failed"
+            defaultMessage="Failed to fetch device!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
 export function fetchPostCreateGroupAdmin(tenantId, groupId, data, auth_token) {
   return function(dispatch) {
     return fetch_post(
@@ -1429,6 +1461,29 @@ export function fetchPostCreateTrunkGroup(tenantId, groupId, data) {
           <FormattedMessage
             id="failed-to-create-trunk-group"
             defaultMessage="Failed to create trunk group!"            
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchPostDeviceInGroup(tenantId, groupId, data) {
+  return function(dispatch) {
+    return fetch_post(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/access_devices/`,
+      data
+    )
+      .then(res => res.json())
+      .then(data => {
+        dispatch(postCreateDeviceInGroup());
+        return "success";
+      })
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-create-trunk-group"
+            defaultMessage="Failed to create trunk group!"
           />,
           error.message
         );
@@ -1770,6 +1825,35 @@ export function fetchPutUpdateGroupServicesByTenantId(tenantId, data) {
           <FormattedMessage
             id="update-trunk-failed"
             defaultMessage="Failed to update trunk!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchPutUpdateDevice(tenantId, groupId, deviceName, data) {
+  return function(dispatch) {
+    return fetch_put(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/access_devices/${deviceName}/`,
+      data
+    )
+      .then(res => res.json())
+      .then(data => {
+        dispatch(putUpdateDevice(data));
+        NotificationsManager.success(
+          <FormattedMessage
+            id="update-device-success"
+            defaultMessage="Device is updated successfully!"
+          />,
+          "Updated"
+        );
+      })
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="update-device-failed"
+            defaultMessage="Failed to update device!"
           />,
           error.message
         )

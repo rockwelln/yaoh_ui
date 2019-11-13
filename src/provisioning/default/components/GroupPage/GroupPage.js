@@ -32,13 +32,12 @@ class TenantPage extends Component {
 
   fetchTennant = () => {
     this.props
-      .fetchGetTenantById(this.props.match.params.tenantId, this.props.auth_token)
+      .fetchGetTenantById(this.props.match.params.tenantId)
       .then(() => this.setState({ isLoadingTenant: false }));
     this.props
       .fetchGetGroupById(
         this.props.match.params.tenantId,
-        this.props.match.params.groupId,
-        this.props.auth_token
+        this.props.match.params.groupId
       )
       .then(() => this.setState({ isLoadingGroup: false }));
   };
@@ -65,9 +64,7 @@ class TenantPage extends Component {
       <React.Fragment>
         <div className={"panel-heading"}>
           <p className={"header"}>
-            {`GROUP: ${group.groupName} (${
-              this.props.match.params.groupId
-            }) of tenant ${tenant.name} (${tenant.tenantId})`}
+            {`GROUP: ${group.groupName} (${this.props.match.params.groupId}) of tenant ${tenant.name} (${tenant.tenantId})`}
             <Glyphicon
               glyph="glyphicon glyphicon-trash"
               onClick={() => this.setState({ showDelete: true })}
@@ -82,19 +79,24 @@ class TenantPage extends Component {
           </p>
         </div>
         <div className={"panel-body"}>
-          <Tabs defaultActiveKey={0} id={`group_tabs${this.tabsIdSuffix}`}>
+          <Tabs
+            defaultActiveKey={
+              this.props.location.state && this.props.location.state.defaultTab
+                ? this.props.location.state.defaultTab
+                : 0
+            }
+            id={`group_tabs${this.tabsIdSuffix}`}
+          >
             <Tab eventKey={0} title="LICENSES">
               <Licenses
                 tenantId={this.props.match.params.tenantId}
                 groupId={this.props.match.params.groupId}
-                {...this.props}
               />
             </Tab>
             <Tab eventKey={1} title="HOSTED PBX USERS">
               <Users
                 tenantId={this.props.match.params.tenantId}
                 groupId={this.props.match.params.groupId}
-                {...this.props}
               />
             </Tab>
             {this.props.fetchTrunksGroupsFail && (
@@ -106,21 +108,18 @@ class TenantPage extends Component {
               <PhoneNumbers
                 tenantId={this.props.match.params.tenantId}
                 groupId={this.props.match.params.groupId}
-                {...this.props}
               />
             </Tab>
             <Tab eventKey={4} title="DEVICES">
               <Devices
                 tenantId={this.props.match.params.tenantId}
                 groupId={this.props.match.params.groupId}
-                {...this.props}
               />
             </Tab>
             <Tab eventKey={5} title="ADMINISTRATORS">
               <Admins
                 tenantId={this.props.match.params.tenantId}
                 groupId={this.props.match.params.groupId}
-                {...this.props}
               />
             </Tab>
             <Tab eventKey={6} title="DETAILS">
