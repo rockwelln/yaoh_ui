@@ -548,8 +548,18 @@ export const postCreateIAD = data => ({
   data
 });
 
+export const putUpdateNumbersStatus = data => ({
+  type: actionType.PUT_UPDATE_NUMBERS_STATUS,
+  data
+});
+
 export const putUpdateIAD = data => ({
   type: actionType.PUT_UPDATE_IAD,
+  data
+});
+
+export const deletePhoneFromGroup = data => ({
+  type: actionType.DELETE_PHONE_FROM_GROUP,
   data
 });
 
@@ -1721,7 +1731,7 @@ export function fetchPutUpdateGroupDetails(tenantId, groupId, data) {
         NotificationsManager.success(
           <FormattedMessage
             id="successfulGroupUpdate"
-            defaultMessage="Successful group ipdate"
+            defaultMessage="Successful group update"
           />,
           "Updated"
         );
@@ -1946,6 +1956,36 @@ export function fetchPutUpdateTrunkGroup(
           <FormattedMessage
             id="update-trunk-group-failed"
             defaultMessage="Failed to update trunk group!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchPutUpdateNumbersStatus(tenantId, groupId, data) {
+  /////////////////////////////
+  return function(dispatch) {
+    return fetch_put(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/telenet_pra/tenants/${tenantId}/groups/${groupId}/numbers/`,
+      data
+    )
+      .then(res => res.json())
+      .then(data => {
+        dispatch(putUpdateNumbersStatus(data));
+        NotificationsManager.success(
+          <FormattedMessage
+            id="update-numbers-success"
+            defaultMessage="Successfully updated numbers!"
+          />,
+          "Successfully updated numbers!"
+        );
+      })
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="update-numbers-failed"
+            defaultMessage="Failed to update numbers!"
           />,
           error.message
         )
@@ -2204,6 +2244,28 @@ export function fetchDeleteLocalUser(username) {
           <FormattedMessage
             id="failed-to-delete-user"
             defaultMessage="Failed to delete user!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchDeletePhoneFromGroup(tenantId, groupId, data) {
+  return function(dispatch) {
+    return fetch_delete(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/telenet_pra/tenants/${tenantId}/groups/${groupId}/numbers/`,
+      data
+    )
+      .then(data => {
+        dispatch(deleteLocalUser(data));
+        return "deleted";
+      })
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-delete-phone-number"
+            defaultMessage="Failed to delete phone number!"
           />,
           error.message
         )

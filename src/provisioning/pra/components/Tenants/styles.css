@@ -289,3 +289,18 @@ textarea {
 .height-20 {
   height: 20px;
 }
+
+.header {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.hide-arrows::-webkit-inner-spin-button,
+.hide-arrows::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.hide-arrows {
+  -moz-appearance: textfield;
+}

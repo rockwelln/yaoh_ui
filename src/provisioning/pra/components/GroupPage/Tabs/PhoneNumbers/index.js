@@ -15,11 +15,14 @@ import Button from "react-bootstrap/lib/Button";
 
 import { FormattedMessage } from "react-intl";
 
-import { fetchGetPhoneNumbersByGroupId } from "../../../../store/actions";
+import {
+  fetchGetPhoneNumbersByGroupId,
+  fetchPutUpdateNumbersStatus
+} from "../../../../store/actions";
 
 import Loading from "../../../../common/Loading";
 import PhoneNumber from "./PhoneNumber";
-import DeleteModal from "./DeleteModal";
+import DeleteModal from "./DeleteMultipleNumbers";
 import { countsPerPages } from "../../../../constants";
 
 import "./styles.css";
@@ -43,7 +46,7 @@ export class PhoneNumbersTab extends Component {
     showWithStatus: false
   };
 
-  componentDidMount() {
+  fetchGetNumbers() {
     this.props
       .fetchGetPhoneNumbersByGroupId(this.props.tenantId, this.props.groupId)
       .then(() =>
@@ -62,18 +65,20 @@ export class PhoneNumbersTab extends Component {
       );
   }
 
+  componentDidMount() {
+    this.fetchGetNumbers();
+  }
+
   render() {
     const {
       isLoading,
-      showDelete,
       numbersForDelete,
+      showDelete,
       countPerPage,
       pagination,
       paginationPhoneNumbers,
       page
     } = this.state;
-
-    const { onReload } = this.props;
 
     if (isLoading && pagination) {
       return <Loading />;
@@ -81,14 +86,14 @@ export class PhoneNumbersTab extends Component {
     return (
       <React.Fragment>
         <Row className={"margin-top-2 flex align-items-center"}>
-          <Col mdOffset={1} md={8}>
+          <Col mdOffset={1} md={10}>
             <InputGroup className={"margin-left-negative-4"}>
               <InputGroup.Addon>
                 <Glyphicon glyph="lyphicon glyphicon-search" />
               </InputGroup.Addon>
               <FormattedMessage
-                id="search_placeholder"
-                defaultMessage="placeholder"
+                id="search_placeholder_numbers"
+                defaultMessage="Numbers or Assigned to or User type"
               >
                 {placeholder => (
                   <FormControl
@@ -118,18 +123,11 @@ export class PhoneNumbersTab extends Component {
               />
             </Link>
           </Col>
-          <Col md={2}>
-            <Link
-              to={`/provisioning/${this.props.match.params.gwName}/tenants/${this.props.tenantId}/groups/${this.props.groupId}/modifyphone`}
-            >
-              modify portability states
-            </Link>
-          </Col>
         </Row>
         {paginationPhoneNumbers.length ? (
           <React.Fragment>
             <Row>
-              <Col mdOffset={1} md={8}>
+              <Col mdOffset={1} md={10}>
                 <div className={"flex space-between indent-top-bottom-1"}>
                   <div className={"flex align-items-center"}>
                     {/* <Checkbox
@@ -139,12 +137,18 @@ export class PhoneNumbersTab extends Component {
                     >
                       (Un)select all shown numbers
                     </Checkbox> */}
-                    <Glyphicon
-                      glyph="glyphicon glyphicon-trash"
+                    <div
                       onClick={this.deleteSlectedNumbers}
-                    />
-                    <div className={"margin-checbox"}>
-                      Delete selected numbers
+                      className={
+                        "cursor-pointer padding-left-05 flex text-align-center align-items-center margin-right-1"
+                      }
+                    >
+                      <Glyphicon
+                        glyph="glyphicon glyphicon-trash"
+                        className={"margin-right-1"}
+                        onClick={this.deleteSlectedNumbers}
+                      />
+                      <div>Delete selected numbers</div>
                     </div>
                     <DeleteModal
                       rangeStart={numbersForDelete.map(
@@ -152,20 +156,31 @@ export class PhoneNumbersTab extends Component {
                       )}
                       show={showDelete}
                       onClose={e => {
-                        onReload && onReload(numbersForDelete);
+                        this.fetchGetNumbers();
                         this.setState({ showDelete: false });
                       }}
                       {...this.props}
                     />
                     <Button
                       onClick={this.getNumbersWithStatus}
-                      className={"btn-primary"}
+                      className={"btn-primary margin-right-1"}
                     >
                       <FormattedMessage
                         id="refreshNumbersStatus"
                         defaultMessage="Refresh with portability status"
                       />
                     </Button>
+                    {this.state.showWithStatus && (
+                      <Button
+                        onClick={this.updateStatus}
+                        className={"btn-primary"}
+                      >
+                        <FormattedMessage
+                          id="updateStatus"
+                          defaultMessage="Update Status"
+                        />
+                      </Button>
+                    )}
                   </div>
 
                   <div className={"flex align-items-center"}>
@@ -290,12 +305,7 @@ export class PhoneNumbersTab extends Component {
                         handleSingleCheckboxClickPreActive={
                           this.handleSingleCheckboxClickPreActive
                         }
-                        onReload={() =>
-                          this.props.fetchGetPhoneNumbersByGroupId(
-                            this.props.tenantId,
-                            this.props.groupId
-                          )
-                        }
+                        onReload={() => this.fetchGetNumbers()}
                       />
                     ))}
                   </tbody>
@@ -326,6 +336,39 @@ export class PhoneNumbersTab extends Component {
     );
   }
 
+  updateStatus = () => {
+    const activeNumbers = this.state.phoneNumbers.filter(el => el.active);
+    const preActiveNumbers = this.state.phoneNumbers.filter(el => el.preActive);
+    const allActiveNumbers = [];
+    const allPreActiveNumbers = [];
+    activeNumbers.map(el => {
+      allActiveNumbers.push(el.phoneNumber);
+    });
+    preActiveNumbers.map(el => {
+      allPreActiveNumbers.push(el.phoneNumber);
+    });
+    const activeData = {
+      numbers: allActiveNumbers.map(number => ({ phoneNumber: number })),
+      status: "active"
+    };
+    const preActiveData = {
+      numbers: allPreActiveNumbers.map(number => ({ phoneNumber: number })),
+      status: "preActive"
+    };
+    allActiveNumbers.length &&
+      this.props.fetchPutUpdateNumbersStatus(
+        this.props.match.params.tenantId,
+        this.props.match.params.groupId,
+        activeData
+      );
+    allPreActiveNumbers.length &&
+      this.props.fetchPutUpdateNumbersStatus(
+        this.props.match.params.tenantId,
+        this.props.match.params.groupId,
+        preActiveData
+      );
+  };
+
   getNumbersWithStatus = () => {
     this.props
       .fetchGetPhoneNumbersByGroupId(
@@ -333,19 +376,21 @@ export class PhoneNumbersTab extends Component {
         this.props.groupId,
         true
       )
-      .then(() => this.setState(
-        {
-          phoneNumbers: this.props.phoneNumbers.sort((a, b) => {
-            if (a.rangeStart < b.rangeStart) return -1;
-            if (a.rangeStart > b.rangeStart) return 1;
-            return 0;
-          }),
-          isLoading: false,
-          sortedBy: "rangeStart",
-          showWithStatus: true
-        },
-        () => this.pagination()
-      ));
+      .then(() =>
+        this.setState(
+          {
+            phoneNumbers: this.props.phoneNumbers.sort((a, b) => {
+              if (a.rangeStart < b.rangeStart) return -1;
+              if (a.rangeStart > b.rangeStart) return 1;
+              return 0;
+            }),
+            isLoading: false,
+            sortedBy: "rangeStart",
+            showWithStatus: true
+          },
+          () => this.pagination()
+        )
+      );
   };
 
   changeCoutOnPage = e => {
@@ -401,8 +446,10 @@ export class PhoneNumbersTab extends Component {
         phone =>
           phone.rangeStart.toLowerCase().includes(searchValue.toLowerCase()) ||
           phone.rangeEnd.toLowerCase().includes(searchValue.toLowerCase()) ||
-          phone.userId.toLowerCase().includes(searchValue.toLowerCase()) ||
-          phone.userType.toLowerCase().includes(searchValue.toLowerCase())
+          (phone.userId &&
+            phone.userId.toLowerCase().includes(searchValue.toLowerCase())) ||
+          (phone.userType &&
+            phone.userType.toLowerCase().includes(searchValue.toLowerCase()))
       )
       .map(phone => phone);
     this.setState({ phoneNumbers: SearchArray }, () => this.pagination());
@@ -490,21 +537,21 @@ export class PhoneNumbersTab extends Component {
     const numbersForDelete = phoneNumbers.filter(phone => {
       return !!phone.phoneChecked;
     });
-    this.setState({ numbersForDelete, showDelete: true }, () =>
-      this.pagination()
-    );
+    this.setState({ numbersForDelete, showDelete: true });
   };
 
   handleSelectAllClickPreActive = e => {
     const isChecked = e.target.checked;
     const newArr = this.state.phoneNumbers.map(el => ({
       ...el,
-      preActive: isChecked
+      preActive: isChecked,
+      active: !isChecked
     }));
     this.setState(
       {
         phoneNumbers: newArr,
-        selectAllPreActive: !this.state.selectAllPreActive
+        selectAllPreActive: !this.state.selectAllPreActive,
+        selectAllActive: this.state.selectAllPreActive
       },
       () => this.pagination()
     );
@@ -514,10 +561,15 @@ export class PhoneNumbersTab extends Component {
     const isChecked = e.target.checked;
     const newArr = this.state.phoneNumbers.map(el => ({
       ...el,
-      active: isChecked
+      active: isChecked,
+      preActive: !isChecked
     }));
     this.setState(
-      { phoneNumbers: newArr, selectAllActive: !this.state.selectAllActive },
+      {
+        phoneNumbers: newArr,
+        selectAllActive: !this.state.selectAllActive,
+        selectAllPreActive: this.state.selectAllActive
+      },
       () => this.pagination()
     );
   };
@@ -546,7 +598,8 @@ export class PhoneNumbersTab extends Component {
   handleSingleCheckboxClickActive = index => {
     const newArr = this.state.phoneNumbers.map((el, i) => ({
       ...el,
-      active: index === i ? !el.active : el.active
+      active: index === i ? !el.active : el.active,
+      preActive: index === i ? !el.preActive : el.preActive
     }));
     this.setState({ phoneNumbers: newArr, selectAllActive: false }, () =>
       this.pagination()
@@ -556,7 +609,8 @@ export class PhoneNumbersTab extends Component {
   handleSingleCheckboxClickPreActive = index => {
     const newArr = this.state.phoneNumbers.map((el, i) => ({
       ...el,
-      preActive: index === i ? !el.preActive : el.preActive
+      preActive: index === i ? !el.preActive : el.preActive,
+      active: index === i ? !el.active : el.active
     }));
     this.setState({ phoneNumbers: newArr, selectAllPreActive: false }, () =>
       this.pagination()
@@ -569,7 +623,8 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = {
-  fetchGetPhoneNumbersByGroupId
+  fetchGetPhoneNumbersByGroupId,
+  fetchPutUpdateNumbersStatus
 };
 
 export default withRouter(
