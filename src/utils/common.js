@@ -62,12 +62,11 @@ export class Search extends React.Component {
 
     static propTypes = {
         searchUrl: PropTypes.string.isRequired,
-        auth_token: PropTypes.string.isRequired,
         location: PropTypes.shape({
             search: PropTypes.string
         }),
         collectionName: PropTypes.string.isRequired,
-        defaultCriteria: PropTypes.array.isRequired,
+        defaultCriteria: PropTypes.object.isRequired,
         defaultSortingSpec: PropTypes.array.isRequired,
         useNotifications: PropTypes.bool.isRequired,
     };
