@@ -35,8 +35,9 @@ import {Bulks} from "./requests/bulk";
 import {BulkActions} from "./system/bulk_actions";
 import {NdgHistory} from "./requests/ndg_history";
 import UserManagement, {LocalUserProfile} from './system/user_mgm';
-import {StartupEvents} from './startup_events';
-import ActivityEditor from './activity-editor';
+import {StartupEvents} from './orchestration/startup_events';
+import ActivityEditor from './orchestration/activity-editor';
+import CronTimers from './orchestration/cron_timers';
 import {ConfigManagement} from './settings/configuration';
 import {Reporting} from "./settings/reporting.jsx";
 import Gateways from "./system/gateways_mgm";
@@ -401,6 +402,13 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
                       </MenuItem>
                   </LinkContainer>
                   }
+                  {isAllowed(user_info.ui_profile, pages.requests_workflow_editor) &&
+                  <LinkContainer to={"/transactions/config/cron_timers"}>
+                      <MenuItem>
+                          <FormattedMessage id="cron-timers" defaultMessage="Cron timers"/>
+                      </MenuItem>
+                  </LinkContainer>
+                  }
               </NavDropdown>
           }
 
@@ -709,7 +717,6 @@ class App extends Component {
                                component={props => (
                                    isAllowed(ui_profile, pages.requests_startup_events) ?
                                        <StartupEvents
-                                           auth_token={auth_token}
                                            notifications={this._notificationSystem.current}
                                            {...props} /> :
                                        <NotAllowed/>
@@ -719,6 +726,13 @@ class App extends Component {
                                component={props => (
                                    isAllowed(ui_profile, pages.requests_workflow_editor) ?
                                        <ActivityEditor auth_token={auth_token} /> :
+                                       <NotAllowed/>
+                               )}
+                               exact />
+                        <Route path="/transactions/config/cron_timers"
+                               component={props => (
+                                   isAllowed(ui_profile, pages.requests_workflow_editor) ?
+                                       <CronTimers /> :
                                        <NotAllowed/>
                                )}
                                exact />

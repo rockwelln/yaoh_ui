@@ -1,8 +1,7 @@
-
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import draw_editor from "./editor";
-import {parseJSON, fetch_post, fetch_get, fetch_delete, fetch_put} from "./utils";
+import {parseJSON, fetch_post, fetch_get, fetch_delete, fetch_put} from "../utils";
 
 import Nav from 'react-bootstrap/lib/Nav';
 import NavItem from 'react-bootstrap/lib/NavItem';
@@ -11,6 +10,8 @@ import Row from 'react-bootstrap/lib/Row';
 import FormControl from 'react-bootstrap/lib/FormControl';
 
 import GridPic from "./grid.gif";
+import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
+import {FormattedMessage} from "react-intl";
 
 
 const NEW_ACTIVITY = {
@@ -167,6 +168,10 @@ export default class ActivityEditor extends Component {
         const {activities} = this.state;
         return (
             <div>
+                <Breadcrumb>
+                    <Breadcrumb.Item active><FormattedMessage id="orchestration" defaultMessage="Orchestration"/></Breadcrumb.Item>
+                    <Breadcrumb.Item active><FormattedMessage id="activity-editor" defaultMessage="Activity editor"/></Breadcrumb.Item>
+                </Breadcrumb>
                 <div role="alert" ref="alert-editor" />
                 <Row>
                     <Col sm={2}>

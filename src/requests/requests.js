@@ -36,8 +36,8 @@ import {
 import {ApioDatatable, Pagination} from "../utils/datatable";
 
 import 'react-datepicker/dist/react-datepicker.css';
-import GridPic from "../grid.gif";
-import draw_editor from "../editor";
+import GridPic from "../orchestration/grid.gif";
+import draw_editor from "../orchestration/editor";
 import update from 'immutability-helper';
 import {StaticControl} from "../utils/common";
 import {access_levels, isAllowed, modules, pages} from "../utils/user";

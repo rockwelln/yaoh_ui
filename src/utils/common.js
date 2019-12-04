@@ -141,7 +141,7 @@ export class Search extends React.Component {
 
     _refresh(p, s) {
         const {filter_criteria, paging_info} = this.state;
-        const {searchUrl, auth_token, collectionName} = this.props;
+        const {searchUrl, collectionName} = this.props;
         const url = new URL(API_URL_PREFIX + searchUrl);
         // filter
         const filter_spec = this._filterCriteriaAsSpec(filter_criteria);
@@ -155,7 +155,7 @@ export class Search extends React.Component {
         //reset collection
         this.setState({resources: undefined});
 
-        fetch_get(url, auth_token)
+        fetch_get(url)
             .then(data => !this.cancelLoad && this.setState({
                     resources: data[collectionName].map(this._normalizeResource),
                     pagination: {

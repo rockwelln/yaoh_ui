@@ -5,7 +5,7 @@ import Button from 'react-bootstrap/lib/Button';
 import ButtonToolbar from 'react-bootstrap/lib/ButtonToolbar';
 import Modal from 'react-bootstrap/lib/Modal';
 import {FormattedMessage} from 'react-intl';
-import {fetch_delete, fetch_get, fetch_post, fetch_put} from "./utils";
+import {fetch_delete, fetch_get, fetch_post, fetch_put} from "../utils";
 import FormGroup from "react-bootstrap/lib/FormGroup";
 import Col from "react-bootstrap/lib/Col";
 import Form from "react-bootstrap/lib/Form";
@@ -16,7 +16,8 @@ import update from 'immutability-helper';
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 import Alert from "react-bootstrap/lib/Alert";
-import {StaticControl} from "./utils/common";
+import {StaticControl} from "../utils/common";
+import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
 
 const CUSTOM_ROUTE_PREFIX = "https://<target>/api/v01/custom";
 const JSON_SCHEMA_SAMPLE = (
@@ -619,6 +620,10 @@ class CustomRoutes extends Component {
 
 export const StartupEvents = ({...props}) => (
     <div>
+        <Breadcrumb>
+            <Breadcrumb.Item active><FormattedMessage id="orchestration" defaultMessage="Orchestration"/></Breadcrumb.Item>
+            <Breadcrumb.Item active><FormattedMessage id="startup-events" defaultMessage="Startup events"/></Breadcrumb.Item>
+        </Breadcrumb>
         <DedicatedStartupEvents {...props} />
         <CustomRoutes {...props} />
     </div>
