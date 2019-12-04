@@ -1,6 +1,6 @@
-const okPic = require("./images/ok.png");
-const errPic = require("./images/error.png");
-const runPic = require("./images/run.png");
+const okPic = require("../images/ok.png");
+const errPic = require("../images/error.png");
+const runPic = require("../images/run.png");
 
 const BASIC_CELL_HEIGHT = 120;
 const CHAR_HEIGHT_APPROX = 7.5;

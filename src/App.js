@@ -30,12 +30,14 @@ import {FormattedMessage} from 'react-intl';
 import AsyncApioHelp from './async-apio-help';
 import Dashboard from './dashboard';
 import {CustomRequests, Request, Requests, Transaction} from './requests/requests';
+import Timers from './requests/timers';
 import {Bulks} from "./requests/bulk";
 import {BulkActions} from "./system/bulk_actions";
 import {NdgHistory} from "./requests/ndg_history";
 import UserManagement, {LocalUserProfile} from './system/user_mgm';
-import {StartupEvents} from './startup_events';
-import ActivityEditor from './activity-editor';
+import {StartupEvents} from './orchestration/startup_events';
+import ActivityEditor from './orchestration/activity-editor';
+import CronTimers from './orchestration/cron_timers';
 import {ConfigManagement} from './settings/configuration';
 import {Reporting} from "./settings/reporting.jsx";
 import Gateways from "./system/gateways_mgm";
@@ -240,20 +242,29 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
                       <FormattedMessage id="apio-requests" defaultMessage="APIO Requests"/>
                   </MenuItem>
               </LinkContainer>
-              {(!user_info.modules || user_info.modules.includes(modules.orange)) && isAllowed(user_info.ui_profile, pages.requests_ndg) &&
-                  <LinkContainer to={"/requests/ndg"}>
-                      <MenuItem>
-                          <FormattedMessage id="ndg-history" defaultMessage="NDG history"/>
-                      </MenuItem>
-                  </LinkContainer>
-              }
-              <MenuItem divider />
               {(!user_info.modules || user_info.modules.includes(modules.orchestration)) &&
-                  <LinkContainer to={"/custom-transactions/list"}>
-                      <MenuItem>
-                          <FormattedMessage id="custom-requests" defaultMessage="Custom Requests"/>
-                      </MenuItem>
-                  </LinkContainer>
+                  [
+                      <LinkContainer to={"/custom-transactions/list"}>
+                          <MenuItem>
+                              <FormattedMessage id="custom-requests" defaultMessage="Custom Requests"/>
+                          </MenuItem>
+                      </LinkContainer>,
+                      <LinkContainer to={"/transactions/timers"}>
+                          <MenuItem>
+                              <FormattedMessage id="timers" defaultMessage="Timers"/>
+                          </MenuItem>
+                      </LinkContainer>,
+                  ]
+              }
+              {(!user_info.modules || user_info.modules.includes(modules.orange)) && isAllowed(user_info.ui_profile, pages.requests_ndg) &&
+                  [
+                      <MenuItem divider/>,
+                      <LinkContainer to={"/requests/ndg"}>
+                          <MenuItem>
+                              <FormattedMessage id="ndg-history" defaultMessage="NDG history"/>
+                          </MenuItem>
+                      </LinkContainer>,
+                  ]
               }
           </NavDropdown>
           }
@@ -314,28 +325,28 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
                       </LinkContainer>
                   }
                   { isAllowed(user_info.ui_profile, pages.system_config) &&
-                      <LinkContainer to={"/system/webhooks"}>
-                          <MenuItem>
-                              <FormattedMessage id="webhooks" defaultMessage="Webhooks"/>
-                          </MenuItem>
-                      </LinkContainer>
-                  }
-                  { isAllowed(user_info.ui_profile, pages.system_config) &&
-                      <LinkContainer to={"/system/config"}>
-                          <MenuItem>
-                              <FormattedMessage id="configuration" defaultMessage="Configuration"/>
-                          </MenuItem>
-                      </LinkContainer>
-                  }
-                  { isAllowed(user_info.ui_profile, pages.system_gateways) &&
-                      <MenuItem divider/>
+                      [
+                          <LinkContainer to={"/system/webhooks"}>
+                              <MenuItem>
+                                  <FormattedMessage id="webhooks" defaultMessage="Webhooks"/>
+                              </MenuItem>
+                          </LinkContainer>,
+                          <LinkContainer to={"/system/config"}>
+                              <MenuItem>
+                                  <FormattedMessage id="configuration" defaultMessage="Configuration"/>
+                              </MenuItem>
+                          </LinkContainer>
+                      ]
                   }
                   { isAllowed(user_info.ui_profile, pages.system_gateways) &&
-                      <LinkContainer to={"/system/gateways"}>
-                          <MenuItem>
-                              <FormattedMessage id="gateways" defaultMessage="Gateways"/>
-                          </MenuItem>
-                      </LinkContainer>
+                      [
+                          <MenuItem divider/>,
+                          <LinkContainer to={"/system/gateways"}>
+                              <MenuItem>
+                                  <FormattedMessage id="gateways" defaultMessage="Gateways"/>
+                              </MenuItem>
+                          </LinkContainer>
+                      ]
                   }
                   { isAllowed(user_info.ui_profile, pages.system_databases) &&
                       <LinkContainer to={"/system/databases"}>
@@ -352,14 +363,14 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
                       </LinkContainer>
                   }
                   { isAllowed(user_info.ui_profile, pages.system_reporting) &&
-                      <MenuItem divider/>
-                  }
-                  { isAllowed(user_info.ui_profile, pages.system_reporting) &&
-                      <LinkContainer to={"/system/reporting"}>
-                          <MenuItem>
-                              <FormattedMessage id="reporting" defaultMessage="Reporting"/>
-                          </MenuItem>
-                      </LinkContainer>
+                      [
+                          <MenuItem divider/>,
+                          <LinkContainer to={"/system/reporting"}>
+                              <MenuItem>
+                                  <FormattedMessage id="reporting" defaultMessage="Reporting"/>
+                              </MenuItem>
+                          </LinkContainer>
+                      ]
                   }
                   { isAllowed(user_info.ui_profile, pages.bulk_actions) &&
                       <LinkContainer to={"/system/bulk_actions"}>
@@ -388,6 +399,13 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
                   <LinkContainer to={"/transactions/config/activities/editor"}>
                       <MenuItem>
                           <FormattedMessage id="editor" defaultMessage="Editor"/>
+                      </MenuItem>
+                  </LinkContainer>
+                  }
+                  {isAllowed(user_info.ui_profile, pages.requests_workflow_editor) &&
+                  <LinkContainer to={"/transactions/config/cron_timers"}>
+                      <MenuItem>
+                          <FormattedMessage id="cron-timers" defaultMessage="Cron timers"/>
                       </MenuItem>
                   </LinkContainer>
                   }
@@ -676,6 +694,13 @@ class App extends Component {
                                    <NotAllowed/>
                                )}
                                exact />
+                        <Route path="/transactions/timers"
+                               component={props => (
+                                   isAllowed(ui_profile, pages.requests_nprequests) ?
+                                   <Timers /> :
+                                   <NotAllowed/>
+                               )}
+                               exact />
                         <Route path="/transactions/bulk"
                                component={props => (
                                    isAllowed(ui_profile, pages.requests_nprequests) ?
@@ -692,7 +717,6 @@ class App extends Component {
                                component={props => (
                                    isAllowed(ui_profile, pages.requests_startup_events) ?
                                        <StartupEvents
-                                           auth_token={auth_token}
                                            notifications={this._notificationSystem.current}
                                            {...props} /> :
                                        <NotAllowed/>
@@ -702,6 +726,13 @@ class App extends Component {
                                component={props => (
                                    isAllowed(ui_profile, pages.requests_workflow_editor) ?
                                        <ActivityEditor auth_token={auth_token} /> :
+                                       <NotAllowed/>
+                               )}
+                               exact />
+                        <Route path="/transactions/config/cron_timers"
+                               component={props => (
+                                   isAllowed(ui_profile, pages.requests_workflow_editor) ?
+                                       <CronTimers /> :
                                        <NotAllowed/>
                                )}
                                exact />

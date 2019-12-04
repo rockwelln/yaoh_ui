@@ -36,11 +36,12 @@ import {
 import {ApioDatatable, Pagination} from "../utils/datatable";
 
 import 'react-datepicker/dist/react-datepicker.css';
-import GridPic from "../grid.gif";
-import draw_editor from "../editor";
+import GridPic from "../orchestration/grid.gif";
+import draw_editor from "../orchestration/editor";
 import update from 'immutability-helper';
 import {StaticControl} from "../utils/common";
 import {access_levels, isAllowed, modules, pages} from "../utils/user";
+import {TimerActions} from "./timers";
 
 export const DATE_FORMAT = 'DD/MM/YYYY HH:mm:ss';
 const SUB_REQUESTS_PAGE_SIZE = 25;
@@ -1104,6 +1105,37 @@ const ContextTable = ({context}) => (
     </Table>
 );
 
+const Timers = ({timers, onUpdate}) => (
+    <Table style={{tableLayout: 'fixed'}}>
+        <thead>
+            <th>#</th>
+            <th>key</th>
+            <th>status</th>
+            <th>run at</th>
+            <th>name</th>
+            <th/>
+        </thead>
+        <tbody>
+        {
+            timers.sort((a, b) => {
+                if(a.id < b.id) return 1;
+                if(a.id > b.id) return -1;
+                return 0;
+            }).map(c =>
+                <tr key={c.id}>
+                    <th>{c.id}</th>
+                    <td>{c.key}</td>
+                    <td>{c.status}</td>
+                    <td>{c.at}</td>
+                    <td style={{wordWrap:'break-word'}}>{c.name}</td>
+                    <td><TimerActions timer={c} onCancel={onUpdate} onUpdate={onUpdate} /></td>
+                </tr>
+            )
+        }
+        </tbody>
+    </Table>
+);
+
 
 const RELOAD_TX = 10 * 1000;
 let USE_WS = false;
@@ -1128,6 +1160,7 @@ export class Transaction extends Component {
             externalCallbacks: [],
             logs: [],
             events: [],
+            timers: [],
         };
         this.cancelLoad = false;
         this.websocket = null;
@@ -1163,22 +1196,26 @@ export class Transaction extends Component {
 
         this.setState(diffState);
 
-        data.original_request_id && fetch_get(`/api/v01/apio/requests/${data.original_request_id}`, this.props.auth_token)
+        data.original_request_id && fetch_get(`/api/v01/apio/requests/${data.original_request_id}`)
             .then(data => !this.cancelLoad && this.setState({request: data.request}))
             .catch(error => !this.cancelLoad && this.setState({error: error}));
 
-        fetch_get(`/api/v01/transactions/${this.props.match.params.txId}/events`, this.props.auth_token)
+        fetch_get(`/api/v01/transactions/${this.props.match.params.txId}/events`)
             .then(data => !this.cancelLoad && this.setState({events: data.events}))
             .catch(error => !this.cancelLoad && this.setState({error: error}));
 
-        fetch_get(`/api/v01/transactions/${this.props.match.params.txId}/logs`, this.props.auth_token)
+        fetch_get(`/api/v01/transactions/${this.props.match.params.txId}/logs`)
             .then(data => !this.cancelLoad && this.setState({
                 logs: data.logs.map(l => {l.type='log'; l.source_entity=l.source; l.content=l.message; return l;})
             }))
             .catch(error => !this.cancelLoad && this.setState({error: error}));
 
-        fetch_get(`/api/v01/apio/transactions/${this.props.match.params.txId}/callbacks`, this.props.auth_token)
+        fetch_get(`/api/v01/apio/transactions/${this.props.match.params.txId}/callbacks`)
             .then(data => !this.cancelLoad && this.setState({externalCallbacks: data.callbacks}))
+            .catch(error => !this.cancelLoad && this.setState({error: error}));
+
+        fetch_get(`/api/v01/transactions/${this.props.match.params.txId}/timers`)
+            .then(data => !this.cancelLoad && this.setState({timers: data.timers}))
             .catch(error => !this.cancelLoad && this.setState({error: error}));
 
         if(this.state.messageShown) {
@@ -1213,9 +1250,10 @@ export class Transaction extends Component {
         }
     }
 
-    fetchTxDetails(reload) {
+    fetchTxDetails(reload, full) {
         this.setState({error: undefined});
-        fetch_get(`/api/v01/transactions/${this.props.match.params.txId}`, this.props.auth_token)
+        const txId = this.props.match.params.txId;
+        fetch_get(`/api/v01/transactions/${txId}`)
             .then(data => {
                 if(this.cancelLoad)
                     return;
@@ -1227,7 +1265,7 @@ export class Transaction extends Component {
                     diffState.activeTab = 2;
                 }
 
-                if(this.state.tx && this.state.tx.status !== "ACTIVE" && data.status !== "ACTIVE") {
+                if(this.state.tx && this.state.tx.status !== "ACTIVE" && data.status !== "ACTIVE" && !full) {
                     this.setState(diffState);
                     reload && setTimeout(() => this.fetchTxDetails(true), RELOAD_TX);
                     return;
@@ -1235,22 +1273,26 @@ export class Transaction extends Component {
 
                 this.setState(diffState);
 
-                data.original_request_id && fetch_get(`/api/v01/apio/requests/${data.original_request_id}`, this.props.auth_token)
+                data.original_request_id && fetch_get(`/api/v01/apio/requests/${data.original_request_id}`)
                     .then(data => !this.cancelLoad && this.setState({request: data.request}))
                     .catch(error => !this.cancelLoad && this.setState({error: error}));
 
-                fetch_get(`/api/v01/transactions/${this.props.match.params.txId}/events`, this.props.auth_token)
+                fetch_get(`/api/v01/transactions/${txId}/events`)
                     .then(data => !this.cancelLoad && this.setState({events: data.events}))
                     .catch(error => !this.cancelLoad && this.setState({error: error}));
 
-                fetch_get(`/api/v01/transactions/${this.props.match.params.txId}/logs`, this.props.auth_token)
+                fetch_get(`/api/v01/transactions/${txId}/logs`)
                     .then(data => !this.cancelLoad && this.setState({
                         logs: data.logs.map(l => {l.type='log'; l.source_entity=l.source; l.content=l.message; return l;})
                     }))
                     .catch(error => !this.cancelLoad && this.setState({error: error}));
 
-                fetch_get(`/api/v01/apio/transactions/${this.props.match.params.txId}/callbacks`, this.props.auth_token)
+                fetch_get(`/api/v01/apio/transactions/${txId}/callbacks`)
                     .then(data => !this.cancelLoad && this.setState({externalCallbacks: data.callbacks}))
+                    .catch(console.error);
+
+                fetch_get(`/api/v01/transactions/${txId}/timers`)
+                    .then(data => !this.cancelLoad && this.setState({timers: data.timers}))
                     .catch(error => !this.cancelLoad && this.setState({error: error}));
 
                 if(this.state.messageShown) {
@@ -1496,7 +1538,22 @@ export class Transaction extends Component {
     }
 
     render() {
-        const {error, tx, request, events, logs, activeTab, replaying, messages, subrequests, messageShown, subrequestsShown, subrequests_pagination, externalCallbacks} = this.state;
+        const {
+            error,
+            tx,
+            request,
+            events,
+            logs,
+            activeTab,
+            replaying,
+            messages,
+            subrequests,
+            messageShown,
+            subrequestsShown,
+            subrequests_pagination,
+            externalCallbacks,
+            timers,
+        } = this.state;
         const {user_info, auth_token} = this.props;
 
         const original_event_id = events && ((request && request.event_id) || (events[0] && events[0].event_id));
@@ -1723,6 +1780,20 @@ export class Transaction extends Component {
                                     </Panel.Heading>
                                     <Panel.Body collapsible>
                                         <Events events={events} logs={logs} />
+                                    </Panel.Body>
+                                </Panel>
+                            )
+                        }
+                        {
+                            timers.length !== 0 && (
+                                <Panel defaultExpanded={true}>
+                                    <Panel.Heading>
+                                        <Panel.Title toggle>
+                                            <FormattedMessage id="timers" defaultMessage="Timers"/>
+                                        </Panel.Title>
+                                    </Panel.Heading>
+                                    <Panel.Body collapsible>
+                                        <Timers timers={timers} onUpdate={() => this.fetchTxDetails(false, true)} />
                                     </Panel.Body>
                                 </Panel>
                             )
