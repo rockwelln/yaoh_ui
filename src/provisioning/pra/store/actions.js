@@ -25,11 +25,6 @@ export const getGroupsByTenantId = data => ({
   data
 });
 
-export const getPhoneNumbersByTenantId = data => ({
-  type: actionType.GET_PHONE_NUMBERS,
-  data
-});
-
 export const getAdminsByTenantId = data => ({
   type: actionType.GET_ADMINS_TENANT,
   data
@@ -513,6 +508,11 @@ export const removeSuccesfulValidPhoneTenant = data => ({
 });
 
 //////////////////////
+export const getNumbersByEnterpriseTrunk = data => ({
+  type: actionType.GET_NUMBERS_BY_ENTERPRISE_TRUNK,
+  data
+});
+
 export const getIADs = data => ({
   type: actionType.GET_IADS,
   data
@@ -543,8 +543,28 @@ export const getPhoneNumbersByGroupNotTP = data => ({
   data
 });
 
+export const getPhoneNumbersWithRefreshDB = data => ({
+  type: actionType.GET_PHONE_NUMBERS_WITH_REFRESH_DB,
+  data
+});
+
+export const getEnterpriseTrunksByTenant = data => ({
+  type: actionType.GET_ENTERPRISE_TRUNKS_BY_TENANT,
+  data
+});
+
+export const getListOfIads = data => ({
+  type: actionType.GET_LIST_OF_IADS,
+  data
+});
+
 export const postCreateIAD = data => ({
   type: actionType.POST_CREATE_IAD,
+  data
+});
+
+export const postCreateEnterpriseTrunk = data => ({
+  type: actionType.POST_CREATE_ENTERPRISE_TRUNK,
   data
 });
 
@@ -558,8 +578,18 @@ export const putUpdateIAD = data => ({
   data
 });
 
+export const putUpdateNumbersByEnterpriseTrunk = data => ({
+  type: actionType.PUT_UPDATE_NUMBERS_BY_ENTERPRISE_TRUNK,
+  data
+});
+
 export const deletePhoneFromGroup = data => ({
   type: actionType.DELETE_PHONE_FROM_GROUP,
+  data
+});
+
+export const deleteEnterpriseTrunk = data => ({
+  type: actionType.DELETE_ENTERPRISE_TRUNK,
   data
 });
 
@@ -576,6 +606,25 @@ export const changeObjectIAD = (object, field, value) => ({
   value
 });
 
+export function fetchGetNumbersByEnterpriseTrunk(tenantId, groupId, trunkId) {
+  ////////////////////
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/telenet_pra/tenants/${tenantId}/groups/${groupId}/enterprise_trunks/${trunkId}/users/`
+    )
+      .then(data => dispatch(getNumbersByEnterpriseTrunk(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-numbers-by-ent-trunk"
+            defaultMessage="Failed to fetch numbers by Enterprise trunks!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
 export function fetchGetIADsByTrunk(tenantId, groupId, trunkId) {
   ////////////////////
   return function(dispatch) {
@@ -588,6 +637,25 @@ export function fetchGetIADsByTrunk(tenantId, groupId, trunkId) {
           <FormattedMessage
             id="fetch-iad-by-trunks-failed"
             defaultMessage="Failed to fetch iad by trunks!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchGetEnterpriseTrunksByTenant(tenantId) {
+  ////////////////////
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/telenet_pra/tenants/${tenantId}/enterprise_trunks/`
+    )
+      .then(data => dispatch(getEnterpriseTrunksByTenant(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-enterprise-trunks-failed"
+            defaultMessage="Failed to fetch enterprise trunks!"
           />,
           error.message
         )
@@ -710,6 +778,7 @@ export function fetchGetConfig() {
 }
 
 export function fetchGetGroupsByTenantId(Id) {
+  ///////////////////////////////////
   return function(dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/telenet_pra/tenants/${Id}/groups/`
@@ -720,24 +789,6 @@ export function fetchGetGroupsByTenantId(Id) {
           <FormattedMessage
             id="fetch-groups-failed"
             defaultMessage="Failed to fetch groups!"
-          />,
-          error.message
-        )
-      );
-  };
-}
-
-export function fetchGetPhoneNumbersByTenantId(Id) {
-  return function(dispatch) {
-    return fetch_get(
-      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${Id}/numbers`
-    )
-      .then(data => dispatch(getPhoneNumbersByTenantId(data)))
-      .catch(error =>
-        NotificationsManager.error(
-          <FormattedMessage
-            id="fetch-numbers-failed"
-            defaultMessage="Failed to fetch phone numbers!"
           />,
           error.message
         )
@@ -789,6 +840,25 @@ export function fetchGetPhoneNumbersByGroupNotTP(tenantId, groupId) {
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/numbers/`
     )
       .then(data => dispatch(getPhoneNumbersByGroupNotTP(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-phone-numbers-failed"
+            defaultMessage="Failed to fetch phone numbers!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchGetPhoneNumbersWithRefreshDB(tenantId, groupId, data) {
+  ///////////////////////////////////
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/telenet_pra/tenants/${tenantId}/groups/${groupId}/numbers?${data}`
+    )
+      .then(data => dispatch(getPhoneNumbersWithRefreshDB(data)))
       .catch(error =>
         NotificationsManager.error(
           <FormattedMessage
@@ -1363,6 +1433,24 @@ export function fetchGetLocalUser(username) {
   };
 }
 
+export function fetchGetListOfIads(tenantId, groupId) {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/telenet_pra/tenants/${tenantId}/groups/${groupId}/enterprise_trunks/list_of_iads/`
+    )
+      .then(data => dispatch(getListOfIads(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-iads-failed"
+            defaultMessage="Failed to fetch iads!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
 export function fetchPostCreateGroupAdmin(tenantId, groupId, data) {
   return function(dispatch) {
     return fetch_post(
@@ -1644,7 +1732,7 @@ export function fetchPostAssignPhoneNumbersToGroup(tenantId, groupId, data) {
         NotificationsManager.error(
           <FormattedMessage
             id="failed-to-add-phonenumbers"
-            defaultMessage="Failed to add phonenumbers!"
+            defaultMessage="Failed to add phone numbers!"
           />,
           error.message
         );
@@ -1698,6 +1786,65 @@ export function fetchPutUpdateUser(tenantId, groupId, userName, data) {
   };
 }
 
+export function fetchPostCreateEnterpriseTrunk(tenantId, groupId, data) {
+  //////////////////////////////////////////////////
+  return function(dispatch) {
+    return fetch_post(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/telenet_pra/tenants/${tenantId}/groups/${groupId}/enterprise_trunks/`,
+      data
+    )
+      .then(res => res.json())
+      .then(data => {
+        dispatch(postCreateEnterpriseTrunk(data));
+        return "created";
+      })
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-create-enterprise-trunk"
+            defaultMessage="Failed to create enterprise trunk!"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchPutUpdateNumbersByEnterpriseTrunk(
+  tenantId,
+  groupId,
+  entTrunk,
+  data
+) {
+  ///////////////////
+  return function(dispatch) {
+    return fetch_put(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/telenet_pra/tenants/${tenantId}/groups/${groupId}/enterprise_trunks/${entTrunk}/users/`,
+      data
+    )
+      .then(res => res.json())
+      .then(data => {
+        dispatch(putUpdateNumbersByEnterpriseTrunk(data));
+        NotificationsManager.success(
+          <FormattedMessage
+            id="successfulNumbersUpdate"
+            defaultMessage="Successful Numbers update"
+          />,
+          "Updated"
+        );
+      })
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="update-numbers-failed"
+            defaultMessage="Failed to update numbers!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
 export function fetchPutUpdateIAD(tenantId, groupId, iadId, data) {
   ///////////////////
   return function(dispatch) {
@@ -1706,7 +1853,16 @@ export function fetchPutUpdateIAD(tenantId, groupId, iadId, data) {
       data
     )
       .then(res => res.json())
-      .then(data => dispatch(putUpdateIAD(data)))
+      .then(data => {
+        dispatch(putUpdateIAD(data));
+        NotificationsManager.success(
+          <FormattedMessage
+            id="successfulIADUpdate"
+            defaultMessage="Successful IAD update"
+          />,
+          "Updated"
+        );
+      })
       .catch(error =>
         NotificationsManager.error(
           <FormattedMessage
@@ -2266,6 +2422,27 @@ export function fetchDeletePhoneFromGroup(tenantId, groupId, data) {
           <FormattedMessage
             id="failed-to-delete-phone-number"
             defaultMessage="Failed to delete phone number!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchDeleteEnterpriseTrunk(tenantId, groupId, entTrunk) {
+  return function(dispatch) {
+    return fetch_delete(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/telenet_pra/tenants/${tenantId}/groups/${groupId}/enterprise_trunks/${entTrunk}`
+    )
+      .then(data => {
+        dispatch(deleteEnterpriseTrunk(data));
+        return "deleted";
+      })
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-delete-enterprise-trunk"
+            defaultMessage="Failed to delete enterprise trunk!"
           />,
           error.message
         )

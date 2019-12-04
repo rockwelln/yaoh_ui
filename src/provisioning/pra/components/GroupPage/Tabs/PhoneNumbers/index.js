@@ -12,12 +12,18 @@ import Col from "react-bootstrap/lib/Col";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 import Pagination from "react-bootstrap/lib/Pagination";
 import Button from "react-bootstrap/lib/Button";
+import Modal from "react-bootstrap/lib/Modal";
+
+import { NotificationsManager } from "../../../../../../utils";
 
 import { FormattedMessage } from "react-intl";
 
+import deepEqual from "../../../deepEqual";
+
 import {
   fetchGetPhoneNumbersByGroupId,
-  fetchPutUpdateNumbersStatus
+  fetchPutUpdateNumbersStatus,
+  fetchGetPhoneNumbersWithRefreshDB
 } from "../../../../store/actions";
 
 import Loading from "../../../../common/Loading";
@@ -43,7 +49,11 @@ export class PhoneNumbersTab extends Component {
     page: 0,
     pagination: true,
     countPages: null,
-    showWithStatus: false
+    showWithStatus: false,
+    showRefreshAllDialog: false,
+    disableDialogButtons: false,
+    disabledUpdateStatusActive: false,
+    disabledUpdateStatusPreActive: false
   };
 
   fetchGetNumbers() {
@@ -67,6 +77,23 @@ export class PhoneNumbersTab extends Component {
 
   componentDidMount() {
     this.fetchGetNumbers();
+  }
+
+  componentDidUpdate(prevProps) {
+    if (!deepEqual(prevProps.phoneNumbers, this.props.phoneNumbers)) {
+      this.setState(
+        {
+          phoneNumbers: this.props.phoneNumbers.sort((a, b) => {
+            if (a.rangeStart < b.rangeStart) return -1;
+            if (a.rangeStart > b.rangeStart) return 1;
+            return 0;
+          }),
+          isLoading: false,
+          sortedBy: "rangeStart"
+        },
+        () => this.pagination()
+      );
+    }
   }
 
   render() {
@@ -93,7 +120,7 @@ export class PhoneNumbersTab extends Component {
               </InputGroup.Addon>
               <FormattedMessage
                 id="search_placeholder_numbers"
-                defaultMessage="Numbers or Assigned to or User type"
+                defaultMessage="Numbers"
               >
                 {placeholder => (
                   <FormControl
@@ -157,31 +184,71 @@ export class PhoneNumbersTab extends Component {
                       show={showDelete}
                       onClose={e => {
                         this.fetchGetNumbers();
-                        this.setState({ showDelete: false });
+                        this.setState({ showDelete: false, selectAll: false });
                       }}
                       {...this.props}
                     />
                     <Button
-                      onClick={this.getNumbersWithStatus}
+                      onClick={this.updateStatus}
+                      className={"btn-primary margin-right-1"}
+                      disabled={
+                        this.state.disabledUpdateStatusActive ||
+                        this.state.disabledUpdateStatusPreActive
+                      }
+                    >
+                      <FormattedMessage
+                        id="updateStatus"
+                        defaultMessage="Update Status"
+                      />
+                    </Button>
+                    <Button
+                      onClick={this.refreshInformation}
                       className={"btn-primary margin-right-1"}
                     >
                       <FormattedMessage
-                        id="refreshNumbersStatus"
-                        defaultMessage="Refresh with portability status"
+                        id="refreshInformation"
+                        defaultMessage="Refresh information"
                       />
                     </Button>
-                    {this.state.showWithStatus && (
-                      <Button
-                        onClick={this.updateStatus}
-                        className={"btn-primary"}
-                      >
-                        <FormattedMessage
-                          id="updateStatus"
-                          defaultMessage="Update Status"
-                        />
-                      </Button>
-                    )}
+                    <Button
+                      onClick={() =>
+                        this.setState({ showRefreshAllDialog: true })
+                      }
+                      className={"btn-primary margin-right-1"}
+                    >
+                      <FormattedMessage
+                        id="refreshAll"
+                        defaultMessage="Refresh all"
+                      />
+                    </Button>
                   </div>
+                  <Modal show={this.state.showRefreshAllDialog}>
+                    <Modal.Header>
+                      <Modal.Title>Refresh All</Modal.Title>
+                    </Modal.Header>
+
+                    <Modal.Body>
+                      This activity could take a long time
+                    </Modal.Body>
+
+                    <Modal.Footer>
+                      <Button
+                        onClick={() =>
+                          this.setState({ showRefreshAllDialog: false })
+                        }
+                        disabled={this.state.disableDialogButtons}
+                      >
+                        Close
+                      </Button>
+                      <Button
+                        disabled={this.state.disableDialogButtons}
+                        onClick={this.refreshAll}
+                        bsStyle="primary"
+                      >
+                        OK
+                      </Button>
+                    </Modal.Footer>
+                  </Modal>
 
                   <div className={"flex align-items-center"}>
                     <div>Item per page</div>
@@ -214,38 +281,36 @@ export class PhoneNumbersTab extends Component {
                           onChange={this.handleSelectAllClick}
                         />
                       </th>
-                      {this.state.showWithStatus && (
-                        <React.Fragment>
-                          <th>
-                            <Checkbox
-                              className={"margin-0"}
-                              checked={this.state.selectAllActive}
-                              onChange={this.handleSelectAllClickActive}
-                            >
-                              <div className={"font-weight-bold"}>
-                                <FormattedMessage
-                                  id="activate"
-                                  defaultMessage="Activate"
-                                />
-                              </div>
-                            </Checkbox>
-                          </th>
-                          <th>
-                            <Checkbox
-                              className={"margin-0"}
-                              checked={this.state.selectAllPreActive}
-                              onChange={this.handleSelectAllClickPreActive}
-                            >
-                              <div className={"font-weight-bold"}>
-                                <FormattedMessage
-                                  id="pre-activate"
-                                  defaultMessage="Pre-activate"
-                                />
-                              </div>
-                            </Checkbox>
-                          </th>
-                        </React.Fragment>
-                      )}
+                      <React.Fragment>
+                        <th>
+                          <Checkbox
+                            className={"margin-0"}
+                            checked={this.state.selectAllActive}
+                            onChange={this.handleSelectAllClickActive}
+                          >
+                            <div className={"font-weight-bold"}>
+                              <FormattedMessage
+                                id="activate"
+                                defaultMessage="Activate"
+                              />
+                            </div>
+                          </Checkbox>
+                        </th>
+                        <th>
+                          <Checkbox
+                            className={"margin-0"}
+                            checked={this.state.selectAllPreActive}
+                            onChange={this.handleSelectAllClickPreActive}
+                          >
+                            <div className={"font-weight-bold"}>
+                              <FormattedMessage
+                                id="pre-activate"
+                                defaultMessage="Pre-activate"
+                              />
+                            </div>
+                          </Checkbox>
+                        </th>
+                      </React.Fragment>
                       <th>
                         <FormattedMessage
                           id="tenant-id"
@@ -268,22 +333,22 @@ export class PhoneNumbersTab extends Component {
                       </th>
                       <th>
                         <FormattedMessage
-                          id="assigned"
-                          defaultMessage="Assigned to"
+                          id="mainNumber"
+                          defaultMessage="Main Number"
                         />
                         <Glyphicon
                           glyph="glyphicon glyphicon-sort"
-                          onClick={this.sortByAssignedToGroup}
+                          //onClick={this.sortByAssignedToGroup}
                         />
                       </th>
                       <th>
                         <FormattedMessage
-                          id="type"
-                          defaultMessage="User type"
+                          id="maintenanceNumber"
+                          defaultMessage="Maintenance Number"
                         />
                         <Glyphicon
                           glyph="glyphicon glyphicon-sort"
-                          onClick={this.sortByAssignedToGroup}
+                          //onClick={this.sortByAssignedToGroup}
                         />
                       </th>
                       <th />
@@ -336,6 +401,55 @@ export class PhoneNumbersTab extends Component {
     );
   }
 
+  refreshAll = () => {
+    this.setState({ disableDialogButtons: true }, () =>
+      this.props
+        .fetchGetPhoneNumbersWithRefreshDB(
+          this.props.match.params.tenantId,
+          this.props.match.params.groupId,
+          "refresh_db=true"
+        )
+        .then(() =>
+          this.setState({
+            showRefreshAllDialog: false,
+            disableDialogButtons: false
+          })
+        )
+    );
+  };
+
+  refreshInformation = () => {
+    const { phoneNumbers } = this.state;
+    const numbersForRefresh = [];
+    phoneNumbers.map(phone => {
+      if (!!phone.phoneChecked) {
+        numbersForRefresh.push(phone.phoneNumber);
+      }
+    });
+    if (!numbersForRefresh.length) {
+      NotificationsManager.error(
+        <FormattedMessage
+          id="notSelectedNumbers"
+          defaultMessage="Numbers is not selcted"
+        />,
+        "Please select numbers at first"
+      );
+      return;
+    }
+    const data = {
+      refresh_db: true,
+      only_for_numbers: numbersForRefresh
+    };
+    const queryString = Object.keys(data)
+      .map(key => key + "=" + data[key])
+      .join("&");
+    this.props.fetchGetPhoneNumbersWithRefreshDB(
+      this.props.match.params.tenantId,
+      this.props.match.params.groupId,
+      queryString
+    );
+  };
+
   updateStatus = () => {
     const activeNumbers = this.state.phoneNumbers.filter(el => el.active);
     const preActiveNumbers = this.state.phoneNumbers.filter(el => el.preActive);
@@ -355,18 +469,26 @@ export class PhoneNumbersTab extends Component {
       numbers: allPreActiveNumbers.map(number => ({ phoneNumber: number })),
       status: "preActive"
     };
+    this.setState({
+      disabledUpdateStatusActive: !!allActiveNumbers.length,
+      disabledUpdateStatusPreActive: !!allPreActiveNumbers.length
+    });
     allActiveNumbers.length &&
-      this.props.fetchPutUpdateNumbersStatus(
-        this.props.match.params.tenantId,
-        this.props.match.params.groupId,
-        activeData
-      );
+      this.props
+        .fetchPutUpdateNumbersStatus(
+          this.props.match.params.tenantId,
+          this.props.match.params.groupId,
+          activeData
+        )
+        .then(() => this.setState({ disabledUpdateStatusActive: false }));
     allPreActiveNumbers.length &&
-      this.props.fetchPutUpdateNumbersStatus(
-        this.props.match.params.tenantId,
-        this.props.match.params.groupId,
-        preActiveData
-      );
+      this.props
+        .fetchPutUpdateNumbersStatus(
+          this.props.match.params.tenantId,
+          this.props.match.params.groupId,
+          preActiveData
+        )
+        .then(() => this.setState({ disabledUpdateStatusPreActive: false }));
   };
 
   getNumbersWithStatus = () => {
@@ -624,7 +746,8 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = {
   fetchGetPhoneNumbersByGroupId,
-  fetchPutUpdateNumbersStatus
+  fetchPutUpdateNumbersStatus,
+  fetchGetPhoneNumbersWithRefreshDB
 };
 
 export default withRouter(

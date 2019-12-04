@@ -18,7 +18,8 @@ import { FormattedMessage } from "react-intl";
 import {
   fetchGetConfig,
   fetchGetGroupById,
-  fetchPostCreateIAD
+  fetchPostCreateIAD,
+  fetchGetIADs
 } from "../../store/actions";
 import { removeEmpty } from "../remuveEmptyInObject";
 
@@ -30,6 +31,7 @@ export class AddIAD extends Component {
     isLoadingConfig: true,
     errorMacAddress: null,
     isLoadingGroup: true,
+    isloadingIADs: true,
     secondEDU: false,
     iadType: "",
     macAddress: "",
@@ -58,7 +60,10 @@ export class AddIAD extends Component {
     direction: "",
     channelsIn: "",
     channelsOut: "",
-    buttonName: "Create"
+    buttonName: "Create",
+    tpid: "",
+    circuitID: "",
+    praByIad: {}
   };
   componentDidMount() {
     this.props
@@ -83,7 +88,16 @@ export class AddIAD extends Component {
           )
         )
       );
+    this.props
+      .fetchGetIADs(
+        this.props.match.params.tenantId,
+        this.props.match.params.groupId
+      )
+      .then(() =>
+        this.setState({ isloadingIADs: false }, () => this.setPraByIad())
+      );
   }
+
   render() {
     const {
       nameEDUA,
@@ -103,7 +117,11 @@ export class AddIAD extends Component {
       pilotNumber,
       errorMacAddress
     } = this.state;
-    if (this.state.isLoadingConfig || this.state.isLoadingGroup) {
+    if (
+      this.state.isLoadingConfig ||
+      this.state.isLoadingGroup ||
+      this.state.isloadingIADs
+    ) {
       return <Loading />;
     }
     return (
@@ -278,6 +296,90 @@ export class AddIAD extends Component {
                 </div>
               </Col>
             </Row>
+            {this.props.group.pbxType === "PRA" && (
+              <Row className={"margin-top-1"}>
+                <Col md={12} className={"flex align-items-center"}>
+                  <div className={"margin-right-1 flex font-24"}>
+                    <FormattedMessage id="praByIad" defaultMessage="PRA info" />
+                  </div>
+                </Col>
+              </Row>
+            )}
+            {this.props.group.pbxType === "PRA" &&
+              Object.keys(this.state.praByIad).map((el, i) => (
+                <React.Fragment key={i + ""}>
+                  <Row className={"margin-top-1"}>
+                    <Col md={12} className={"flex align-items-center"}>
+                      <div className={"margin-right-1 flex font-18"}>
+                        <FormattedMessage
+                          id="praNumber"
+                          defaultMessage={`PRA ${i + 1}`}
+                        />
+                      </div>
+                    </Col>
+                  </Row>
+                  <Row className={"margin-top-1"}>
+                    <Col md={12} className={"flex align-items-center"}>
+                      <div className={"margin-right-1 flex flex-basis-16"}>
+                        <ControlLabel>
+                          <FormattedMessage
+                            id="tpid"
+                            defaultMessage="Tina Product ID"
+                          />
+                        </ControlLabel>
+                      </div>
+                      <div className={"margin-right-1 flex-basis-33"}>
+                        <FormControl
+                          type="text"
+                          placeholder={"Tina Product ID"}
+                          onChange={e =>
+                            this.setState({
+                              praByIad: {
+                                ...this.state.praByIad,
+                                [el]: {
+                                  ...this.state.praByIad[el],
+                                  tpid: e.target.value
+                                }
+                              }
+                            })
+                          }
+                        />
+                      </div>
+                    </Col>
+                  </Row>
+                  <Row className={"margin-top-1"}>
+                    <Col md={12} className={"flex align-items-center"}>
+                      <div className={"margin-right-1 flex flex-basis-16"}>
+                        <ControlLabel>
+                          <FormattedMessage
+                            id="circuitID"
+                            defaultMessage="Circuit ID"
+                          />
+                        </ControlLabel>
+                      </div>
+                      <div className={"margin-right-1 flex-basis-33"}>
+                        <FormControl
+                          type="text"
+                          placeholder={
+                            "Prefix followed by national phone number"
+                          }
+                          onChange={e =>
+                            this.setState({
+                              praByIad: {
+                                ...this.state.praByIad,
+                                [el]: {
+                                  ...this.state.praByIad[el],
+                                  circuit_id: e.target.value
+                                }
+                              }
+                            })
+                          }
+                        />
+                      </div>
+                    </Col>
+                  </Row>
+                </React.Fragment>
+              ))}
             <Row className={"margin-top-1"}>
               <Col md={12} className={"flex align-items-center"}>
                 <div className={"margin-right-1 flex font-24"}>
@@ -832,7 +934,9 @@ export class AddIAD extends Component {
                           value={this.state.channelsIn}
                           placeholder={"In"}
                           onChange={e =>
-                            this.setState({ channelsIn: e.target.value })
+                            this.setState({
+                              channelsIn: Number(e.target.value)
+                            })
                           }
                         />
                       </div>
@@ -847,7 +951,9 @@ export class AddIAD extends Component {
                           value={this.state.channelsOut}
                           placeholder={"Out"}
                           onChange={e =>
-                            this.setState({ channelsOut: e.target.value })
+                            this.setState({
+                              channelsOut: Number(e.target.value)
+                            })
                           }
                         />
                       </div>
@@ -858,12 +964,8 @@ export class AddIAD extends Component {
                   <Col md={12} className={"flex align-items-center"}>
                     <div className={"margin-right-1 flex flex-basis-16"} />
                     <div className={"margin-right-1 flex-basis-33"}>
-                      {"\u002a"}
-                      <FormattedMessage
-                        id="nocInfo"
-                        defaultMessage=" Don't exceed your IADs capacity (avalible:
-                        xxxxx)"
-                      />
+                      {/* {"\u002a"}
+                      <FormattedMessage id="nocInfo" defaultMessage="" /> */}
                     </div>
                   </Col>
                 </Row>
@@ -910,6 +1012,23 @@ export class AddIAD extends Component {
       </React.Fragment>
     );
   }
+
+  setPraByIad = () => {
+    let praByIad = {};
+    const createdIADs = this.props.iads.iads.map(el =>
+      Number(el.iadId.slice(-2))
+    );
+    const unic = Object.keys(this.props.iads.praByIad).filter(
+      el => createdIADs.indexOf(Number(el)) === -1
+    );
+    for (let i = 0; i < this.props.iads.praByIad[unic[0]]; i++) {
+      praByIad = {
+        ...praByIad,
+        [i + 1]: { tpid: "", circuit_id: "" }
+      };
+    }
+    this.setState({ praByIad });
+  };
 
   validateMacAddress = e => {
     let regDots = /^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$/;
@@ -960,7 +1079,9 @@ export class AddIAD extends Component {
       dtmf,
       direction,
       channelsIn,
-      channelsOut
+      channelsOut,
+      tpid,
+      circuitID
     } = this.state;
     const data = {
       iadType,
@@ -1009,7 +1130,8 @@ export class AddIAD extends Component {
         channelsIn,
         channelsOut
       },
-      virtual: this.props.group.virtual
+      virtual: this.props.group.virtual,
+      pra_info: this.state.praByIad
     };
     const clearData = removeEmpty(data);
     this.props
@@ -1018,23 +1140,28 @@ export class AddIAD extends Component {
         this.props.match.params.groupId,
         clearData
       )
-      .then(
-        res =>
-          res === "created" &&
-          this.props.history.push(
-            `/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}/groups/${this.props.match.params.groupId}`,
-            { defaultTab: 3 }
-          )
+      .then(res =>
+        res === "created"
+          ? this.props.history.push(
+              `/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}/groups/${this.props.match.params.groupId}`,
+              { defaultTab: 3 }
+            )
+          : this.setPraByIad()
       );
   };
 }
 
-const mapStateToProps = state => ({ config: state.config, group: state.group });
+const mapStateToProps = state => ({
+  config: state.config,
+  group: state.group,
+  iads: state.iads
+});
 
 const mapDispatchToProps = {
   fetchGetConfig,
   fetchGetGroupById,
-  fetchPostCreateIAD
+  fetchPostCreateIAD,
+  fetchGetIADs
 };
 
 export default withRouter(

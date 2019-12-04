@@ -4,7 +4,6 @@ const initialState = {
   tenants: [],
   tenant: {},
   groups: [],
-  phoneNumbers: [],
   adminsTenant: [],
   group: {},
   users: [],
@@ -104,21 +103,34 @@ const initialState = {
   groupsFound: [],
   ////////////////////////////
   iads: { iads: [] },
-  config: {},
+  config: {
+    tenant: {
+      group: { iad: { iadType: [] } }
+    }
+  },
   createdIad: {},
   iad: {},
   iadForUpdate: {},
   enterpriseTrunks: [],
   iadsByTrunk: {},
-  phoneNumbersByGroupNotTP: []
+  phoneNumbersByGroupNotTP: [],
+  tenantEnterpriseTrunks: [],
+  listOfIads: { main_iads_available: [], other_iads_available: [] },
+  numbersByEnterpriseTrunk: { enterprise_trunk_numbers: [], group_numbers: [] }
 };
 
 function mainReducer(state = initialState, action) {
   switch (action.type) {
     case actionType.GET_IADS: {
+      const iadWithType = action.data.iads.map(el => {
+        const iadType = state.config.tenant.group.iad.iadType.filter(
+          type => type.value === el.iadType
+        );
+        return { ...el, type: iadType[0].label };
+      });
       return {
         ...state,
-        iads: action.data
+        iads: { ...action.data, iads: iadWithType }
       };
     }
     case actionType.GET_TENANTS: {
@@ -139,24 +151,6 @@ function mainReducer(state = initialState, action) {
       return {
         ...state,
         groups: action.data.groups
-      };
-    }
-    case actionType.GET_PHONE_NUMBERS: {
-      const phoneNumbers = action.data.assignement_phoneNumbers.map(phone => ({
-        ...phone,
-        rangeStart:
-          (phone.phoneNumbers && phone.phoneNumbers.split(" - ").slice(0)[0]) ||
-          phone.phoneNumber ||
-          "",
-        rangeEnd:
-          (phone.phoneNumbers &&
-            phone.phoneNumbers.split(" - ").slice(-1)[0]) ||
-          "",
-        phoneChecked: false
-      }));
-      return {
-        ...state,
-        phoneNumbers
       };
     }
     case actionType.GET_ADMINS_TENANT: {
@@ -186,6 +180,24 @@ function mainReducer(state = initialState, action) {
       };
     }
     case actionType.GET_PHONE_NUMBERS_BY_GROUP_ID: {
+      const phoneNumbers = action.data.numbers.map(phone => ({
+        ...phone,
+        rangeStart: phone.phoneNumber.includes("-")
+          ? phone.phoneNumber.split(" - ").slice(0)[0]
+          : phone.phoneNumber,
+        rangeEnd: phone.phoneNumber.includes("-")
+          ? phone.phoneNumber.split(" - ").slice(-1)[0]
+          : "",
+        phoneChecked: false,
+        preActive: phone.status === "preActive" ? true : false,
+        active: phone.status === "active" ? true : false
+      }));
+      return {
+        ...state,
+        phoneNumbersByGroup: phoneNumbers
+      };
+    }
+    case actionType.GET_PHONE_NUMBERS_WITH_REFRESH_DB: {
       const phoneNumbers = action.data.numbers.map(phone => ({
         ...phone,
         rangeStart: phone.phoneNumber.includes("-")
@@ -499,7 +511,7 @@ function mainReducer(state = initialState, action) {
           ...el,
           checked: true
         })),
-        ...action.data.iads_available.map(el => ({
+        ...action.data.other_iads_available.map(el => ({
           ...el,
           checked: false
         }))
@@ -515,6 +527,38 @@ function mainReducer(state = initialState, action) {
         phoneNumbersByGroupNotTP: action.data.numbers
       };
     }
+    case actionType.GET_ENTERPRISE_TRUNKS_BY_TENANT: {
+      const colors = ["#fcece0", "#fff8e4", "#f0f7ed", "e6e3da"];
+      let tenantEnterpriseTrunks = [];
+      Object.keys(action.data.enterpriseTrunks).map((trunk, index) => {
+        if (Array.isArray(action.data.enterpriseTrunks[trunk])) {
+          action.data.enterpriseTrunks[trunk].map(el =>
+            tenantEnterpriseTrunks.push({
+              ...el,
+              color: colors[index],
+              entTrunk: trunk
+            })
+          );
+        }
+      });
+      return {
+        ...state,
+        tenantEnterpriseTrunks
+      };
+    }
+    case actionType.GET_NUMBERS_BY_ENTERPRISE_TRUNK: {
+      return {
+        ...state,
+        numbersByEnterpriseTrunk: action.data
+      };
+    }
+    case actionType.GET_LIST_OF_IADS: {
+      return {
+        ...state,
+        listOfIads: action.data
+      };
+    }
+
     case actionType.POST_CREATE_IAD: {
       return {
         ...state,
@@ -622,6 +666,11 @@ function mainReducer(state = initialState, action) {
           added,
           rejected
         }
+      };
+    }
+    case actionType.POST_CREATE_ENTERPRISE_TRUNK: {
+      return {
+        ...state
       };
     }
     case actionType.PUT_UPDATE_IAD: {
@@ -787,6 +836,11 @@ function mainReducer(state = initialState, action) {
       };
     }
     case actionType.DELETE_PHONE_FROM_GROUP: {
+      return {
+        ...state
+      };
+    }
+    case actionType.DELETE_ENTERPRISE_TRUNK: {
       return {
         ...state
       };

@@ -85,7 +85,7 @@ export class AddPhoneNumber extends Component {
                   <FormControl
                     type="text"
                     value={this.state.arrayFrom}
-                    placeholder={"From"}
+                    placeholder={"From phone number"}
                     onChange={e => this.setState({ arrayFrom: e.target.value })}
                   />
                 </div>
@@ -96,7 +96,7 @@ export class AddPhoneNumber extends Component {
                   <FormControl
                     type="text"
                     value={this.state.arrayTo}
-                    placeholder={"To"}
+                    placeholder={"To phone number"}
                     onChange={e => this.setState({ arrayTo: e.target.value })}
                   />
                 </div>
@@ -114,7 +114,7 @@ export class AddPhoneNumber extends Component {
                       <FormControl
                         type="text"
                         value={number.phoneNumber}
-                        placeholder={"Phonenumber"}
+                        placeholder={"Phone number"}
                         onChange={e => {
                           const val = e.target.value;
                           this.setState(curState => {

@@ -2,13 +2,11 @@ import React, { Component } from "react";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 
+import { fetchDeleteEnterpriseTrunk } from "../../../../store/actions";
+
 import Modal from "react-bootstrap/lib/Modal";
 import Alert from "react-bootstrap/lib/Alert";
 import Button from "react-bootstrap/lib/Button";
-
-import { fetchDeletePhoneFromGroup } from "../../../../store/actions";
-
-import { getRange } from "../../../expandRangeOfPhoneNumber";
 
 import { FormattedMessage } from "react-intl";
 
@@ -20,28 +18,13 @@ class DeleteModal extends Component {
   }
 
   onDelete() {
-    const { onClose } = this.props;
+    const { onClose, trunk } = this.props;
     this.setState({ deleting: true });
-
-    const allNumbers = [];
-
-    this.props.rangeStart.map(number => {
-      if (number.includes(" - ")) {
-        const range = number.split(" - ");
-        const expandedRange = getRange(range[0], range[1]);
-        allNumbers.push(...expandedRange);
-      } else allNumbers.push(number);
-    });
-
-    const data = {
-      numbers: allNumbers.map(number => ({ phoneNumber: number }))
-    };
-
     this.props
-      .fetchDeletePhoneFromGroup(
+      .fetchDeleteEnterpriseTrunk(
         this.props.match.params.tenantId,
         this.props.match.params.groupId,
-        data
+        trunk.name
       )
       .then(() => {
         this.setState({ deleting: false });
@@ -50,8 +33,9 @@ class DeleteModal extends Component {
   }
 
   render() {
-    const { rangeStart, show, onClose } = this.props;
+    const { tenantId, groupId, trunk, show, onClose } = this.props;
     const { deleting } = this.state;
+
     return (
       <Modal
         show={show}
@@ -75,22 +59,12 @@ class DeleteModal extends Component {
           <p>
             <FormattedMessage
               id="confirm-delete-warning"
-              defaultMessage={
-                rangeStart.length
-                  ? `You are about to delete the phone ${rangeStart.join(
-                      ", "
-                    )}!`
-                  : "Select phone numbers first"
-              }
+              defaultMessage={`You are about to delete the enterprise trunk ${trunk.name}!`}
             />
           </p>
         </Modal.Body>
         <Modal.Footer>
-          <Button
-            onClick={() => this.onDelete()}
-            bsStyle="danger"
-            disabled={rangeStart.length === 0}
-          >
+          <Button onClick={() => this.onDelete()} bsStyle="danger">
             <FormattedMessage id="delete" defaultMessage="Delete" />
           </Button>
           <Button onClick={() => onClose && onClose(false)} disabled={deleting}>
@@ -103,7 +77,7 @@ class DeleteModal extends Component {
 }
 
 const mapDispatchToProps = {
-  fetchDeletePhoneFromGroup
+  fetchDeleteEnterpriseTrunk
 };
 
 export default withRouter(
