@@ -14,6 +14,7 @@ import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 import Alert from "react-bootstrap/lib/Alert";
 import HelpBlock from "react-bootstrap/lib/HelpBlock";
 import Badge from "react-bootstrap/lib/Badge";
+import Modal from "react-bootstrap/lib/Modal";
 
 import {FormattedMessage} from "react-intl";
 import {fetch_get, fetch_post_raw, NotificationsManager} from "../utils";
@@ -26,6 +27,7 @@ class NewBulk extends Component {
         source: undefined,
         actions: [],
         loading: false,
+        source_entries: "",
         approvedSource: false
     };
 
@@ -62,9 +64,10 @@ class NewBulk extends Component {
         data.append('action', bulk.action);
         data.append('input_file', bulk.source);
 
-        this.setState({creationError: undefined, validationError: undefined, loading: true, approvedSource: false});
+        this.setState({creationError: undefined, validationError: undefined, loading: true, approvedSource: false, source_entries: ""});
         fetch_post_raw('/api/v01/bulks/validate', data)
-            .then(() => !this.cancelLoad && this.setState({approvedSource: true, loading: false}))
+            .then(resp => resp.json())
+            .then(resp_data => !this.cancelLoad && this.setState({approvedSource: true, loading: false, source_entries: resp_data.nb_entries}))
             .catch(error => !this.cancelLoad && this.setState({validationError: error.message, loading: false}));
     }
 
@@ -92,7 +95,7 @@ class NewBulk extends Component {
     }
 
     render() {
-        const {bulk, approvedSource, actions, validationError, creationError, loading} = this.state;
+        const {bulk, approvedSource, actions, validationError, creationError, loading, source_entries} = this.state;
         const action_obj = actions && bulk.action && actions.find(a => a.id === bulk.action);
 
         const validLabel = bulk && bulk.label && bulk.label.length !== 0 ? "success": null;
@@ -110,6 +113,9 @@ class NewBulk extends Component {
                     <Form horizontal>
                         {
                             validationError && <Alert bsStyle="danger">{validationError}</Alert>
+                        }
+                        {
+                            source_entries && <Alert bsStyle="info"><FormattedMessage id="entries-validated" defaultMessage="{nb_entries} entries validated" values={{nb_entries: source_entries}} /></Alert>
                         }
                         {
                             creationError && <Alert bsStyle="danger">{creationError}</Alert>
@@ -226,6 +232,11 @@ class NewBulk extends Component {
                     </Table>
                         */
                     }
+                    <Modal show={loading}>
+                        <Modal.Body>
+                            <FormattedMessage id="loading" defaultMessage="Loading..." />
+                        </Modal.Body>
+                    </Modal>
                 </Panel.Body>
             </Panel>
         )
