@@ -352,11 +352,11 @@ const BulkResult = ({result, colOffset}) => {
         case "ok":
             if (result.instance && result.instance.status) {
                 switch(result.instance.status) {
-                    case "ERROR":
+                    case "CLOSED_IN_ERROR":
                         statusColor = '#ca6f7b';
                         statusGlyph = 'remove';
                         break;
-                    case "SUCCESS":
+                    case "CLOSED_IN_SUCCESS":
                         statusColor = '#a4d1a2';
                         statusGlyph = 'ok';
                         break;
@@ -441,8 +441,8 @@ class BulkEntry extends Component {
         const expIco = expanded?<Glyphicon glyph="chevron-down"/>:<Glyphicon glyph="chevron-right"/>;
 
         let rows = [
-            <tr key={`bulk_head_${bulk.bulk_id}`} onClick={() => this.setState({expanded: !expanded})}>
-                <td style={{width: '2%'}}>{expIco}</td>
+            <tr key={`bulk_head_${bulk.bulk_id}`} >
+                <td style={{width: '2%'}} onClick={() => this.setState({expanded: !expanded})}>{expIco}</td>
                 <td>{bulk.bulk_id}</td>
                 <td>{bulk.label}</td>
                 <td>{bulk.status}</td>
