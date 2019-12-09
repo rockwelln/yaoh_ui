@@ -17,7 +17,7 @@ import Badge from "react-bootstrap/lib/Badge";
 import Modal from "react-bootstrap/lib/Modal";
 
 import {FormattedMessage} from "react-intl";
-import {fetch_get, fetch_post_raw, NotificationsManager} from "../utils";
+import {fetch_delete, fetch_get, fetch_post_raw, NotificationsManager} from "../utils";
 import update from "immutability-helper";
 
 
@@ -408,6 +408,27 @@ const BulkResult = ({result, colOffset}) => {
 };
 
 
+const DeleteBulk = ({bulk, onClose}) => {
+    const onDelete = () => {
+        fetch_delete(`/api/v01/bulks/${bulk.bulk_id}`)
+            .then(() => {
+                NotificationsManager.success(<FormattedMessage id="bulk-deleted" defaultMessage="Bulk deleted!" />);
+                onClose();
+            })
+            .catch(error => NotificationsManager.error(
+                <FormattedMessage id="bulk-delete-failed" defaultMessage="Bulk delete failed!" />,
+                error.message
+        ))
+    };
+
+    return (
+        <Button onClick={onDelete} bsStyle="danger" style={{marginLeft: '5px', marginRight: '5px'}}>
+            <Glyphicon glyph="remove-sign"/>
+        </Button>
+    )
+};
+
+
 class BulkEntry extends Component {
     state = {
         expanded: false,
@@ -437,7 +458,7 @@ class BulkEntry extends Component {
 
     render() {
         const {expanded, results} = this.state;
-        const {bulk} = this.props;
+        const {bulk, onDelete} = this.props;
         const expIco = expanded?<Glyphicon glyph="chevron-down"/>:<Glyphicon glyph="chevron-right"/>;
 
         let rows = [
@@ -448,12 +469,15 @@ class BulkEntry extends Component {
                 <td>{bulk.status}</td>
                 <td>{bulk.action}</td>
                 <td>{bulk.created_on}</td>
+                <td>
+                    <DeleteBulk bulk={bulk} onClose={onDelete} />
+                </td>
             </tr>
         ];
 
         if(expanded) {
             results.map(r => rows.push(
-                <BulkResult key={`res_${r.id}`} result={r} colOffset={1}/>
+                <BulkResult key={`res_${r.bulk_result_id}`} result={r} colOffset={1}/>
             ))
         }
         return rows;
@@ -461,7 +485,7 @@ class BulkEntry extends Component {
 }
 
 
-const BulkHistory = ({bulks}) => (
+const BulkHistory = ({bulks, onDelete}) => (
     <Panel defaultExpanded={false}>
         <Panel.Heading>
             <Panel.Title toggle><FormattedMessage id="history" defaultMessage="History" /> <Glyphicon glyph="cog" /></Panel.Title>
@@ -476,11 +500,12 @@ const BulkHistory = ({bulks}) => (
                         <th><FormattedMessage id="status" defaultMessage="Status"/></th>
                         <th><FormattedMessage id="action" defaultMessage="Action"/></th>
                         <th><FormattedMessage id="creation-date" defaultMessage="Creation date"/></th>
+                        <th/>
                     </tr>
                 </thead>
                 <tbody>
                 {
-                    bulks && bulks.sort((a, b) => b.bulk_id - a.bulk_id).map(b => <BulkEntry bulk={b} key={`bulk_${b.bulk_id}`}/>)
+                    bulks && bulks.sort((a, b) => b.bulk_id - a.bulk_id).map(b => <BulkEntry bulk={b} onDelete={onDelete} key={`bulk_${b.bulk_id}`}/>)
                 }
                 </tbody>
             </Table>
@@ -524,6 +549,7 @@ export class Bulks extends Component {
 
     render() {
         const {bulks, actions} = this.state;
+        const fetchHistory = this.fetchHistory.bind(this);
         actions && bulks && bulks.map(b => {
             const action = actions.find(a => a.id === b.action_id);
             if(action) {
@@ -537,8 +563,8 @@ export class Bulks extends Component {
                     <Breadcrumb.Item active><FormattedMessage id="bulk" defaultMessage="Bulk"/></Breadcrumb.Item>
                 </Breadcrumb>
 
-                <NewBulk onChange={this.fetchHistory.bind(this)} />
-                <BulkHistory bulks={bulks} />
+                <NewBulk onChange={fetchHistory} />
+                <BulkHistory bulks={bulks} onDelete={fetchHistory} />
             </div>
         )
     }
