@@ -878,7 +878,7 @@ export class BulkActions extends React.Component {
                         <FormattedMessage id="no-action" defaultMessage="No action defined"/>
                     </Alert>
                     :
-                    actions.map((a, i) =>
+                    actions.sort((a, b) => a.id - b.id).map((a, i) =>
                         <Action
                             key={i}
                             action={a}

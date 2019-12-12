@@ -60,6 +60,9 @@ export class NdgHistory extends Search {
             ndgUserId: {value: '', op: 'eq'},
             when: {value: '', op: 'eq'},
         },
+        defaultSortingSpec: [{
+            field: 'when', direction: 'desc'
+        }],
     }});
 
     render() {

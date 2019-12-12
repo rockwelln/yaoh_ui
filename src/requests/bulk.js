@@ -376,9 +376,12 @@ const BulkResult = ({result, colOffset}) => {
     }
     const back_link = result.back_link || (result.instance && `/transactions/${result.instance.id}`);
     let trace = result.trace;
-    try {
-        trace = JSON.stringify(JSON.parse(trace), null, 4)
-    } catch {}
+    if(trace) {
+        try {
+            trace = JSON.stringify(JSON.parse(trace), null, 4)
+        } catch {
+        }
+    }
 
     return (
         <tr>
@@ -386,7 +389,7 @@ const BulkResult = ({result, colOffset}) => {
                 colOffset && <td colSpan={colOffset}/>
             }
             <td style={{width: '2%'}}><Glyphicon style={{color: statusColor}} glyph={statusGlyph}/></td>
-            <td>
+            <td colSpan={2}>
                 {
                     back_link ?
                         <a href={back_link} target="_blank" rel="noopener noreferrer">{result.input_ref}</a> :
@@ -437,13 +440,17 @@ class BulkEntry extends Component {
 
     onLoadResults() {
         const {bulk} = this.props;
+        this.setState({loading: true})
 
         fetch_get(`/api/v01/bulks/${bulk.bulk_id}/results`)
-            .then(data => !this.cancelLoad && this.setState({results: data.results.sort((a, b) => a.bulk_result_id - b.bulk_result_id)}))
-            .catch(error => NotificationsManager.error(
-                <FormattedMessage id="fetch-bulk-results-failed" defaultMessage="Fetch bulk results failed" />,
-                error.message
-            ))
+            .then(data => !this.cancelLoad && this.setState({results: data.results.sort((a, b) => a.bulk_result_id - b.bulk_result_id), loading: false}))
+            .catch(error => {
+                NotificationsManager.error(
+                    <FormattedMessage id="fetch-bulk-results-failed" defaultMessage="Fetch bulk results failed" />,
+                    error.message
+                );
+                !this.cancelLoad && this.setState({loading: false})
+            })
     }
 
     componentWillUnmount() {
@@ -456,8 +463,16 @@ class BulkEntry extends Component {
         }
     }
 
+    completionStatus() {
+        const {results} = this.state;
+        if(!results.length) return null;
+
+        const completed = results.filter(r => r.instance.status !== "ACTIVE").length;
+        return `${completed} / ${results.length}`;
+    }
+
     render() {
-        const {expanded, results} = this.state;
+        const {expanded, results, loading} = this.state;
         const {bulk, onDelete} = this.props;
         const expIco = expanded?<Glyphicon glyph="chevron-down"/>:<Glyphicon glyph="chevron-right"/>;
 
@@ -467,6 +482,7 @@ class BulkEntry extends Component {
                 <td>{bulk.bulk_id}</td>
                 <td>{bulk.label}</td>
                 <td>{bulk.status}</td>
+                <td>{this.completionStatus()}</td>
                 <td>{bulk.action}</td>
                 <td>{bulk.created_on}</td>
                 <td>
@@ -475,7 +491,17 @@ class BulkEntry extends Component {
             </tr>
         ];
 
-        if(expanded) {
+        if(expanded && loading) {
+            rows.push(
+                <tr>
+                    <td/>
+                    <td>
+                        <i className="fa fa-spinner fa-spin" aria-hidden="true" style={{'fontSize': '24px'}}/>
+                    </td>
+                    <td colSpan={5}/>
+                </tr>
+            )
+        } else if (expanded) {
             results.map(r => rows.push(
                 <BulkResult key={`res_${r.bulk_result_id}`} result={r} colOffset={1}/>
             ))
@@ -498,6 +524,7 @@ const BulkHistory = ({bulks, onDelete}) => (
                         <th>#</th>
                         <th><FormattedMessage id="label" defaultMessage="Label"/></th>
                         <th><FormattedMessage id="status" defaultMessage="Status"/></th>
+                        <th/>
                         <th><FormattedMessage id="action" defaultMessage="Action"/></th>
                         <th><FormattedMessage id="creation-date" defaultMessage="Creation date"/></th>
                         <th/>
