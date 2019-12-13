@@ -70,3 +70,13 @@ body {
 .margin-left-8 {
     margin-left: 8px;
 }
+
+.vl {
+    border-right: 1px solid darkgrey;
+    height: 300px;
+}
+
+.log-content {
+    overflow: auto;
+    height: 700px;
+}

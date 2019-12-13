@@ -15,6 +15,7 @@ export const pages = Object.freeze({
     'system_queues': 18,
     'bulks': 23,
     'bulk_actions': 24,
+    'system_logs': 25,
 });
 
 export const modules = Object.freeze({

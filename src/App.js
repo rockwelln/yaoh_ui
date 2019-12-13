@@ -65,6 +65,7 @@ import loading from './loading.gif';
 import {sso_auth_service} from "./sso/auth_service";
 import {Webhooks} from "./system/webhooks";
 import {provisioningRoutes} from "./provisioning";
+import LogsManagement from "./system/logs";
 
 const ListItemLink = ({to, children}) => (
     <Route path={to} children={({match}) => (
@@ -378,6 +379,16 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
                               <FormattedMessage id="bulk-actions" defaultMessage="Bulk actions"/>
                           </MenuItem>
                       </LinkContainer>
+                  }
+                  { isAllowed(user_info.ui_profile, pages.system_logs) &&
+                      [
+                          <MenuItem divider/>,
+                          <LinkContainer to={"/system/logs"}>
+                              <MenuItem>
+                                  <FormattedMessage id="logs" defaultMessage="Logs"/>
+                              </MenuItem>
+                          </LinkContainer>
+                      ]
                   }
               </NavDropdown>
           }
@@ -830,6 +841,13 @@ class App extends Component {
                                component={props => (
                                    isAllowed(ui_profile, pages.bulk_actions) ?
                                        <BulkActions {...props} />:
+                                       <NotAllowed />
+                               )}
+                               exact />
+                        <Route path="/system/logs"
+                               component={props => (
+                                   isAllowed(ui_profile, pages.system_logs) ?
+                                       <LogsManagement />:
                                        <NotAllowed />
                                )}
                                exact />
