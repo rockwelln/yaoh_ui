@@ -30,7 +30,7 @@ export class AddGroup extends Component {
     numberOfChannels: undefined,
     serviceType: "",
     buttonName: "Create",
-    cliName: "",
+    //cliName: "",
     isLoading: true,
     channelHunting: "",
     np1Redundancy: false
@@ -81,7 +81,6 @@ export class AddGroup extends Component {
             <Row className={"margin-top-1"}>
               <Col md={12} className={"flex align-items-center"}>
                 <div className={"margin-right-1 flex font-24"}>
-                  {" "}
                   <FormattedMessage
                     id="siteDetails"
                     defaultMessage="Site details"
@@ -104,7 +103,7 @@ export class AddGroup extends Component {
                 </div>
               </Col>
             </Row>
-            <Row className={"margin-top-1"}>
+            {/* <Row className={"margin-top-1"}>
               <Col md={12} className={"flex align-items-center"}>
                 <div className={"margin-right-1 flex flex-basis-16"}>
                   <FormattedMessage id="cliName" defaultMessage="CLI Name" />
@@ -118,7 +117,7 @@ export class AddGroup extends Component {
                   />
                 </div>
               </Col>
-            </Row>
+            </Row> */}
             <Row className={"margin-top-1"}>
               <Col md={12} className={"flex align-items-center"}>
                 <div className={"margin-right-1 flex flex-basis-16"}>
@@ -409,7 +408,7 @@ export class AddGroup extends Component {
       numberOfChannels,
       serviceType,
       zipCode,
-      cliName,
+      //cliName,
       virtual,
       channelHunting,
       np1Redundancy
@@ -417,7 +416,7 @@ export class AddGroup extends Component {
 
     const data = {
       groupName: siteName,
-      cliName,
+      //cliName,
       zipCode,
       numberOfChannels: Number(numberOfChannels),
       pbxType: typeOfIad,

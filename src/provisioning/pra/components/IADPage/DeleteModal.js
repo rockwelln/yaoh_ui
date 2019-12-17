@@ -1,16 +1,14 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
-import { withRouter } from "react-router";
+
+import { fetchDeleteTrunkGroup } from "../../store/actions";
 
 import Modal from "react-bootstrap/lib/Modal";
 import Alert from "react-bootstrap/lib/Alert";
 import Button from "react-bootstrap/lib/Button";
 
-import { fetchDeletePhoneFromGroup } from "../../../../store/actions";
-
-import { getRange } from "../../../expandRangeOfPhoneNumber";
-
 import { FormattedMessage } from "react-intl";
+import { withRouter } from "react-router";
 
 class DeleteModal extends Component {
   constructor(props) {
@@ -23,38 +21,27 @@ class DeleteModal extends Component {
     const { onClose } = this.props;
     this.setState({ deleting: true });
 
-    const allNumbers = [];
-
-    this.props.rangeStart.map(number => {
-      if (number.includes(" - ")) {
-        const range = number.split(" - ");
-        const expandedRange = getRange(range[0], range[1]);
-        allNumbers.push(...expandedRange);
-      } else {
-        allNumbers.push(number);
-      }
-      return 0;
-    });
-
-    const data = {
-      numbers: allNumbers.map(number => ({ phoneNumber: number }))
-    };
-
     this.props
-      .fetchDeletePhoneFromGroup(
+      .fetchDeleteTrunkGroup(
         this.props.match.params.tenantId,
         this.props.match.params.groupId,
-        data
+        this.props.iadId
       )
-      .then(() => {
-        this.setState({ deleting: false });
-        onClose && onClose(true);
-      });
+      .then(res =>
+        res
+          ? (this.setState({ deleting: false }),
+            onClose && onClose(true),
+            this.props.history.push(
+              `/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}/groups/${this.props.match.params.groupId}`
+            ))
+          : this.setState({ deleting: false })
+      );
   }
 
   render() {
-    const { rangeStart, show, onClose } = this.props;
+    const { iadId, show, onClose } = this.props;
     const { deleting } = this.state;
+
     return (
       <Modal
         show={show}
@@ -78,13 +65,7 @@ class DeleteModal extends Component {
           <p>
             <FormattedMessage
               id="confirm-delete-warning"
-              defaultMessage={
-                rangeStart.length
-                  ? `You are about to delete the phone ${rangeStart.join(
-                      ", "
-                    )}!`
-                  : "Select phone numbers first"
-              }
+              defaultMessage={`You are about to delete the iad ${iadId}!`}
             />
           </p>
         </Modal.Body>
@@ -92,7 +73,7 @@ class DeleteModal extends Component {
           <Button
             onClick={() => this.onDelete()}
             bsStyle="danger"
-            disabled={rangeStart.length === 0}
+            disabled={deleting}
           >
             <FormattedMessage id="delete" defaultMessage="Delete" />
           </Button>
@@ -106,7 +87,7 @@ class DeleteModal extends Component {
 }
 
 const mapDispatchToProps = {
-  fetchDeletePhoneFromGroup
+  fetchDeleteTrunkGroup
 };
 
 export default withRouter(

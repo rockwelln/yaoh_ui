@@ -11,8 +11,6 @@ import Checkbox from "react-bootstrap/lib/Checkbox";
 import Button from "react-bootstrap/lib/Button";
 import ControlLabel from "react-bootstrap/lib/ControlLabel";
 
-import { removeEmpty } from "../../remuveEmptyInObject";
-
 import {
   fetchGetIADsByTrunk,
   fetchPutUpdateEnterpriseTrunk
@@ -29,7 +27,8 @@ export class MainConfig extends Component {
     routeExhaustionAction: "",
     routeExhaustionDestination: ""
   };
-  componentDidMount() {
+
+  fetchIADs = () => {
     this.props
       .fetchGetIADsByTrunk(
         this.props.match.params.tenantId,
@@ -53,6 +52,9 @@ export class MainConfig extends Component {
             : ""
         })
       );
+  };
+  componentDidMount() {
+    this.fetchIADs();
   }
   render() {
     if (this.state.isLoading) {
@@ -271,17 +273,19 @@ export class MainConfig extends Component {
     const checkedIadFromSite = iadFromSite.filter(el => el.checked);
     const data = {
       iads_from_other_sites: checkedIadNotFromSite,
-      main_iads_available: checkedIadFromSite,
+      iads_from_main_site: checkedIadFromSite,
       routeExhaustionAction,
       routeExhaustionDestination
     };
-    const clearData = removeEmpty(data);
-    this.props.fetchPutUpdateEnterpriseTrunk(
-      this.props.match.params.tenantId,
-      this.props.match.params.groupId,
-      this.props.match.params.entTrunkId,
-      clearData
-    );
+    //const clearData = removeEmpty(data);
+    this.props
+      .fetchPutUpdateEnterpriseTrunk(
+        this.props.match.params.tenantId,
+        this.props.match.params.groupId,
+        this.props.match.params.entTrunkId,
+        data
+      )
+      .then(() => this.fetchIADs());
   };
 
   changeStatusOfIadFromSite = (e, i) => {

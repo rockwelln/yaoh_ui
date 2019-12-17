@@ -7,7 +7,6 @@ import Col from "react-bootstrap/lib/Col";
 import FormControl from "react-bootstrap/lib/FormControl";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import Button from "react-bootstrap/lib/Button";
-import Checkbox from "react-bootstrap/lib/Checkbox";
 import FormGroup from "react-bootstrap/lib/FormGroup";
 import Radio from "react-bootstrap/lib/Radio";
 
@@ -115,7 +114,7 @@ export class index extends Component {
             </div>
           </Col>
         </Row>
-        <Row className={"margin-top-1"}>
+        {/* <Row className={"margin-top-1"}>
           <Col md={12} className={"flex align-items-center"}>
             <div className={"margin-right-1 flex flex-basis-16"}>
               <FormattedMessage id="mainNumber" defaultMessage="CLI Name" />
@@ -134,7 +133,7 @@ export class index extends Component {
               />
             </div>
           </Col>
-        </Row>
+        </Row> */}
         <Row className={"margin-top-1"}>
           <Col md={12} className={"flex align-items-center"}>
             <div className={"margin-right-1 flex flex-basis-16"}>
@@ -275,15 +274,13 @@ export class index extends Component {
   updateGroup = () => {
     const {
       groupName,
-      cliName,
+      //cliName,
       zipCode,
-      virtualSite,
       cliPhoneNumber
     } = this.state.group;
     const data = {
       groupName,
-      cliName,
-      //virtualSite,
+      //cliName,
       cliPhoneNumber,
       zipCode
     };
