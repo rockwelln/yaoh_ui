@@ -64,7 +64,7 @@ import apio_logo from "./images/logo.png";
 import loading from './loading.gif';
 import {sso_auth_service} from "./sso/auth_service";
 import {Webhooks} from "./system/webhooks";
-import {provisioningRoutes} from "./provisioning";
+import {ListProvisioningGateways, provisioningRoutes} from "./provisioning";
 import LogsManagement from "./system/logs";
 
 const ListItemLink = ({to, children}) => (
@@ -663,13 +663,16 @@ class App extends Component {
                 {
                     standby_alert
                 }
-                <div className="App-header">
-                  <AsyncApioNavBar
-                      user_info={user_info}
-                      database_status={database_status}
-                      logoutUser={this.logout}
-                      auth_token={auth_token} />
-                </div>
+                {
+                    ui_profile !== "provisioning" &&
+                    <div className="App-header">
+                        <AsyncApioNavBar
+                            user_info={user_info}
+                            database_status={database_status}
+                            logoutUser={this.logout}
+                            auth_token={auth_token}/>
+                    </div>
+                }
                 <Col mdOffset={1} md={10}>
                     <Switch>
                         <Route path="/help"
@@ -723,6 +726,7 @@ class App extends Component {
                         {/*================ Provisioning UI routes ==============*/
                             provisioningRoutes(ui_profile)
                         }
+                        <Route path="/provisioning/list" component={ListProvisioningGateways} exact />
 
                         <Route path="/transactions/config/startup_events"
                                component={props => (
@@ -884,7 +888,9 @@ class App extends Component {
                                exact />
                         <Route path="/auth-silent-callback" component={AuthSilentCallback} exact/>
                         <Route path="/" exact>
-                            <Redirect to="/dashboard" />
+                            {
+                                ui_profile === "provisioning" ? <Redirect to="/provisioning/list" /> : <Redirect to="/dashboard" />
+                            }
                         </Route>
                         <Route component={NotFound} />
                     </Switch>

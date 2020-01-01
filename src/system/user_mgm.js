@@ -371,6 +371,7 @@ class UpdateUser extends Component {
                                         onChange={e => this.setState({diff_user: update(this.state.diff_user, {$merge: {ui_profile: e.target.value}})})}>
                                         <option value="admin">Admin</option>
                                         <option value="user">User</option>
+                                        <option value="provisioning">Provisioning</option>
                                     </FormControl>
                                     <HelpBlock><FormattedMessage id="app.user.profile.help"
                                                                  defaultMessage="The profile has no influence on the rights in the application only the pages the user may see."/></HelpBlock>
@@ -618,6 +619,7 @@ class NewUser extends Component {
                                         onChange={e => this.setState({user: update(user, {$merge: {ui_profile: e.target.value}})})}>
                                         <option value="admin">Admin</option>
                                         <option value="user">User</option>
+                                        <option value="provisioning">Provisioning</option>
                                     </FormControl>
                                     <HelpBlock><FormattedMessage id="app.user.profile.help"
                                                                  defaultMessage="The profile has no influence on the rights in the application only the pages the user may see."/></HelpBlock>

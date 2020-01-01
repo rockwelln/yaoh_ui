@@ -1,7 +1,14 @@
 import React from "react";
-import {Route} from "react-router";
+import {Redirect, Route} from "react-router";
 import {isAllowed, pages} from "../utils/user";
 import {NotAllowed} from "../utils/common";
+
+import {ProvProxiesManager} from "../utils";
+import {Link} from 'react-router-dom';
+import Panel from "react-bootstrap/lib/Panel";
+import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
+import {FormattedMessage} from "react-intl";
+import Table, {tr} from "react-bootstrap/lib/Table";
 
 // default
 import SearchPage from "./default/components/SearchPage";
@@ -444,15 +451,43 @@ provisioningRoutes = provisioningDefaultRoutes;
 mainReducer = mainDefaultProvisioningReducer;
 // end
 
+export class ListProvisioningGateways extends React.Component {
+    render() {
+        const proxies = ProvProxiesManager.listProxies();
+        if(proxies.length === 1) {
+            return <Redirect to={"/provisioning/" + proxies[0].id + "/tenants"}/>
+        }
+        return (
+            <div>
+                <Breadcrumb>
+                    <Breadcrumb.Item active><FormattedMessage id="provisioning" defaultMessage="Provisioning"/></Breadcrumb.Item>
+                </Breadcrumb>
 
-/*
-switch (process.env.PROVISIONING_UI) {
-    case "pra":
-        provisioningRoutes = provisioningPraRoutes;
-        mainReducer = mainPraProvisioningReducer;
-        break;
-    default:
-        provisioningRoutes = provisioningDefaultRoutes;
-        mainReducer = mainDefaultProvisioningReducer;
+                <Panel>
+                    <Panel.Body>
+                        <Table>
+                            {
+                                proxies.map((p, i) =>
+                                    <tr>
+                                        <td>
+                                            <Link to={"/provisioning/" + p.id + "/tenants"} key={i}>
+                                                {p.name}
+                                            </Link>
+                                        </td>
+                                    </tr>
+                                )
+                            }
+                            {
+                                proxies.length === 0 && (
+                                    <tr>
+                                        <td><FormattedMessage id="none" defaultMessage="None" /></td>
+                                    </tr>
+                                )
+                            }
+                        </Table>
+                    </Panel.Body>
+                </Panel>
+            </div>
+        )
+    }
 }
- */

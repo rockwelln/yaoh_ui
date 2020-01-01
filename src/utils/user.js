@@ -16,6 +16,7 @@ export const pages = Object.freeze({
     'bulks': 23,
     'bulk_actions': 24,
     'system_logs': 25,
+    'provisioning': 26,
 });
 
 export const modules = Object.freeze({
@@ -46,6 +47,11 @@ const definition = {
         [pages.data]: true,
         [pages.data_tenants]: true,
     },
+
+    provisioning: {
+        [pages.data_tenants]: true,
+        [pages.provisioning]: true,
+    }
 };
 
 
