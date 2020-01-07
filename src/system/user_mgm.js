@@ -853,6 +853,11 @@ export default class SearchUsers extends Search {
                                 onClose={() => this._refresh()}
                                 user_info={user_info}
                                 auth_token={auth_token} />
+                            <LinkContainer to={"/system/users/profiles"}>
+                                <Button bsStyle='primary'>
+                                    <FormattedMessage id="profiles" defaultMessage="Profiles"/>
+                                </Button>
+                            </LinkContainer>
                             <LinkContainer to={"/system/users/audit"}>
                                 <Button bsStyle='danger'>
                                     <FormattedMessage id="audit" defaultMessage="Audit"/>
