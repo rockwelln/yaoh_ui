@@ -1265,6 +1265,10 @@ export class Transaction extends Component {
                     diffState.activeTab = 2;
                 }
 
+                fetch_get(`/api/v01/transactions/${txId}/timers`)
+                    .then(data => !this.cancelLoad && this.setState({timers: data.timers}))
+                    .catch(error => !this.cancelLoad && this.setState({error: error}));
+
                 if(this.state.tx && this.state.tx.status !== "ACTIVE" && data.status !== "ACTIVE" && !full) {
                     this.setState(diffState);
                     reload && setTimeout(() => this.fetchTxDetails(true), RELOAD_TX);
@@ -1290,10 +1294,6 @@ export class Transaction extends Component {
                 fetch_get(`/api/v01/apio/transactions/${txId}/callbacks`)
                     .then(data => !this.cancelLoad && this.setState({externalCallbacks: data.callbacks}))
                     .catch(console.error);
-
-                fetch_get(`/api/v01/transactions/${txId}/timers`)
-                    .then(data => !this.cancelLoad && this.setState({timers: data.timers}))
-                    .catch(error => !this.cancelLoad && this.setState({error: error}));
 
                 if(this.state.messageShown) {
                     this.refreshMessages();
