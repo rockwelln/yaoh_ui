@@ -66,6 +66,7 @@ import {sso_auth_service} from "./sso/auth_service";
 import {Webhooks} from "./system/webhooks";
 import {ListProvisioningGateways, provisioningRoutes} from "./provisioning";
 import LogsManagement from "./system/logs";
+import UserProfiles from "./system/user_profiles";
 
 const ListItemLink = ({to, children}) => (
     <Route path={to} children={({match}) => (
@@ -245,12 +246,12 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
               </LinkContainer>
               {(!user_info.modules || user_info.modules.includes(modules.orchestration)) &&
                   [
-                      <LinkContainer to={"/custom-transactions/list"}>
+                      <LinkContainer to={"/custom-transactions/list"} key="custom-requests">
                           <MenuItem>
                               <FormattedMessage id="custom-requests" defaultMessage="Custom Requests"/>
                           </MenuItem>
                       </LinkContainer>,
-                      <LinkContainer to={"/transactions/timers"}>
+                      <LinkContainer to={"/transactions/timers"} key="timers">
                           <MenuItem>
                               <FormattedMessage id="timers" defaultMessage="Timers"/>
                           </MenuItem>
@@ -259,8 +260,8 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
               }
               {(!user_info.modules || user_info.modules.includes(modules.orange)) && isAllowed(user_info.ui_profile, pages.requests_ndg) &&
                   [
-                      <MenuItem divider/>,
-                      <LinkContainer to={"/requests/ndg"}>
+                      <MenuItem key="divider-1" divider/>,
+                      <LinkContainer key="ndg-history" to={"/requests/ndg"}>
                           <MenuItem>
                               <FormattedMessage id="ndg-history" defaultMessage="NDG history"/>
                           </MenuItem>
@@ -327,12 +328,12 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
                   }
                   { isAllowed(user_info.ui_profile, pages.system_config) &&
                       [
-                          <LinkContainer to={"/system/webhooks"}>
+                          <LinkContainer to={"/system/webhooks"} key="webhooks">
                               <MenuItem>
                                   <FormattedMessage id="webhooks" defaultMessage="Webhooks"/>
                               </MenuItem>
                           </LinkContainer>,
-                          <LinkContainer to={"/system/config"}>
+                          <LinkContainer to={"/system/config"} key={"configuration"}>
                               <MenuItem>
                                   <FormattedMessage id="configuration" defaultMessage="Configuration"/>
                               </MenuItem>
@@ -341,8 +342,8 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
                   }
                   { isAllowed(user_info.ui_profile, pages.system_gateways) &&
                       [
-                          <MenuItem divider/>,
-                          <LinkContainer to={"/system/gateways"}>
+                          <MenuItem key="divider-2" divider/>,
+                          <LinkContainer to={"/system/gateways"} key="gateways">
                               <MenuItem>
                                   <FormattedMessage id="gateways" defaultMessage="Gateways"/>
                               </MenuItem>
@@ -365,8 +366,8 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
                   }
                   { isAllowed(user_info.ui_profile, pages.system_reporting) &&
                       [
-                          <MenuItem divider/>,
-                          <LinkContainer to={"/system/reporting"}>
+                          <MenuItem key="divider-3" divider/>,
+                          <LinkContainer to={"/system/reporting"} key="reports">
                               <MenuItem>
                                   <FormattedMessage id="reporting" defaultMessage="Reporting"/>
                               </MenuItem>
@@ -382,8 +383,8 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
                   }
                   { isAllowed(user_info.ui_profile, pages.system_logs) &&
                       [
-                          <MenuItem divider/>,
-                          <LinkContainer to={"/system/logs"}>
+                          <MenuItem key="divider-4" divider/>,
+                          <LinkContainer to={"/system/logs"} key="logs">
                               <MenuItem>
                                   <FormattedMessage id="logs" defaultMessage="Logs"/>
                               </MenuItem>
@@ -797,10 +798,15 @@ class App extends Component {
                                component={props => (
                                    isAllowed(ui_profile, pages.system_users) ?
                                        <AuditLogs
-                                           auth_token={auth_token}
                                            user_info={user_info}
-                                           notifications={this._notificationSystem.current}
-                                           {...props} />:
+                                           notifications={this._notificationSystem.current} />:
+                                       <NotAllowed />
+                               )}
+                               exact />
+                        <Route path="/system/users/profiles"
+                               component={props => (
+                                   isAllowed(ui_profile, pages.system_users) ?
+                                       <UserProfiles />:
                                        <NotAllowed />
                                )}
                                exact />
