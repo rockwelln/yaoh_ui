@@ -1,4 +1,4 @@
-import React, { Component, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import FormGroup from 'react-bootstrap/lib/FormGroup';
 import Form from 'react-bootstrap/lib/Form';
@@ -86,6 +86,18 @@ function deleteUser(user_id, onSuccess) {
     .catch(error =>
         NotificationsManager.error(<FormattedMessage id="delete-failed" defaultMessage="Delete failed" />, error.message)
     );
+}
+
+
+function createUser(data, onSuccess) {
+    fetch_post('/api/v01/system/users', data)
+        .then(() => {
+            NotificationsManager.success(<FormattedMessage id="user-created" defaultMessage="User created" />);
+            onSuccess && onSuccess();
+        })
+        .catch(error =>
+            NotificationsManager.error(<FormattedMessage id="creation-failed" defaultMessage="Creation failed" />, error.message)
+        );
 }
 
 
@@ -422,211 +434,188 @@ function UpdateUser(props) {
 }
 
 
-class NewUser extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            user: NewUser._emptyUser(),
-            show: false
-        };
-        this.onClose = this.onClose.bind(this);
-        this.onSubmit = this.onSubmit.bind(this);
-    }
+function NewUser(props) {
+    const [user, setUser] = useState({
+        username: '',
+        email: '',
+        is_system: false,
+        profile_id: null,
+        ui_profile: 'user',
+        language: 'en',
+        groups: [],
+        password: '',
+        token_expiry: true,
+    });
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [profiles, setProfiles] = useState([]);
+    useEffect(() => {
+        props.show && fetch_get("/api/v01/system/user_profiles")
+            .then(data => {
+                setProfiles(data.profiles);
+                setUser(update(user, {$merge: {profile_id: data.profiles[0].id}}));
+            })
+    }, [props.show]);
 
-    static _emptyUser() {
-        return {
-            username: '',
-            email: '',
-            is_system: false,
-            ui_profile: 'user',
-            language: 'en',
-            groups: [],
-            password: '',
-            repeated_password: '',
-            token_expiry: true,
-        }
-    }
+    // email has to contain @
+    const validEmail = (user.email.length === 0) ? null : (user.email.indexOf('@') !== -1) ? "success" : "error";
+    // a password is at least 8 characters long
+    const validPassword = user.password.length === 0 ? null : (user.password.length >= 7) ? "success" : "error";
+    const validRepPassword = user.password.length === 0 ? null : confirmPassword === user.password ? "success" : "error";
 
-    onClose() {
-        this.setState({show: false, user: NewUser._emptyUser(), creating: false});
-        this.props.onClose && this.props.onClose();
-    }
+    const validForm = validEmail === 'success' && ((validPassword === null && validRepPassword === null) || (validPassword === 'success' && validRepPassword === 'success'));
 
-    onSubmit() {
-        const {user} = this.state;
-        let user_data = Object.assign({}, user);
-        delete user_data.repeated_password;
-        if(user_data.password.length===0) {
-            delete user_data.password;
-        }
-        this.setState({creating: true});
+    return (
+        <Modal show={props.show} onHide={props.onClose} backdrop={false} bsSize="large">
+            <Modal.Header closeButton>
+                <Modal.Title><FormattedMessage id="create-a-user" defaultMessage="Create a user" /></Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <Form horizontal>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="username" defaultMessage="Username" />
+                        </Col>
 
-        fetch_post('/api/v01/system/users', user_data, this.props.auth_token)
-            .then(this.onClose)
-            .catch(error => this.setState({error: error, creating: false}))
-    }
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="input"
+                                value={user.username}
+                                onChange={e => setUser(update(user, {$merge: {username: e.target.value}}))}/>
+                        </Col>
+                    </FormGroup>
+                    <FormGroup validationState={validEmail}>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="email" defaultMessage="Email" />
+                        </Col>
 
-    render() {
-        const {user, show, error} = this.state;
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="input"
+                                value={user.email}
+                                onChange={e => setUser(update(user, {$merge: {email: e.target.value}}))}/>
+                        </Col>
+                    </FormGroup>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="system" defaultMessage="System" />
+                        </Col>
 
-        // email has to contain @
-        const validEmail = (user.email.length === 0) ? null : (user.email.indexOf('@') !== -1) ? "success" : "error";
-        // a password is at least 8 characters long
-        const validPassword = user.password.length === 0 ? null : (user.password.length >= 8) ? "success" : "error";
-        const validRepPassword = user.password.length === 0 ? null : user.repeated_password === user.password ? "success" : "error";
+                        <Col sm={9}>
+                            <Checkbox
+                                checked={user.is_system}
+                                readOnly={!props.user_info.is_system} // if the user logged is system, then he can create other "system" user(s), otherwise, not.
+                                onChange={e => setUser(update(user, {$merge: {is_system: e.target.checked}}))}/>
 
-        const validForm = !this.state.creating && validEmail === 'success' && ((validPassword === null && validRepPassword === null) || (validPassword === 'success' && validRepPassword === 'success'));
+                            <HelpBlock><FormattedMessage id="app.user.is_system.label"
+                                                         defaultMessage="This is the 'full-access' flag, you can't set it if you don't have it already."/></HelpBlock>
+                        </Col>
+                    </FormGroup>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="profile" defaultMessage="Profile" />
+                        </Col>
 
-        error && setTimeout(() => this.setState({error: false}), 2000);
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="select"
+                                value={user.profile_id}
+                                onChange={e => setUser(update(user, {$merge: {profile_id: e.target.value && parseInt(e.target.value, 10)}}))}>
+                                {
+                                    profiles.sort((a, b) => a.id - b.id).map((p, i) => <option key={`profile${i}`} value={p.id}>{p.name}</option>)
+                                }
+                            </FormControl>
+                        </Col>
+                    </FormGroup>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="ui-profile" defaultMessage="UI Profile" />
+                        </Col>
 
-        return (
-            <div>
-                <Button bsStyle='primary' onClick={() => this.setState({show: true})}>
-                    <FormattedMessage id="add-user" defaultMessage="Add user" />
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="select"
+                                value={user.ui_profile}
+                                onChange={e => setUser(update(user, {$merge: {ui_profile: e.target.value}}))}>
+                                <option value="admin">Admin</option>
+                                <option value="user">User</option>
+                                <option value="provisioning">Provisioning</option>
+                            </FormControl>
+                            <HelpBlock><FormattedMessage id="app.user.profile.help"
+                                                         defaultMessage="The profile has no influence on the rights in the application only the pages the user may see."/></HelpBlock>
+                            <HelpBlock>
+                                <FormattedMessage id="for-more-information-about-profile-implementation-in-the-right-management-see-" defaultMessage="For more information about profile implementation in the right management see " />
+                                <a href={INTERNAL_HELP_LINKS.profile_rights.url}><FormattedMessage id="here" defaultMessage="here"/></a>
+                            </HelpBlock>
+                        </Col>
+                    </FormGroup>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="language" defaultMessage="Language" />
+                        </Col>
+
+                        <Col sm={2}>
+                            <FormControl
+                                componentClass="select"
+                                value={user.language}
+                                onChange={e => setUser(update(user, {$merge: {language: e.target.value}}))}>
+                                <option value="fr">fr</option>
+                                <option value="nl">nl</option>
+                                <option value="en">en</option>
+                            </FormControl>
+                        </Col>
+                    </FormGroup>
+                    <FormGroup validationState={validPassword}>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="password" defaultMessage="Password" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="input"
+                                placeholder="Password"
+                                type="password"
+                                value={user.password}
+                                onChange={e => setUser(update(user, {$merge: {password: e.target.value}}))}/>
+                        </Col>
+                    </FormGroup>
+                    <FormGroup validationState={validRepPassword}>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="confirm-password" defaultMessage="Confirm password" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="input"
+                                placeholder="Confirm password"
+                                type="password"
+                                value={confirmPassword}
+                                onChange={e => setConfirmPassword(e.target.value)}/>
+                        </Col>
+                    </FormGroup>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="token-expiry" defaultMessage="Token expiry" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <Checkbox
+                                checked={user.token_expiry || false}
+                                readOnly={!props.user_info.is_system} // only "system" user may change it.
+                                onChange={e => setUser(update(user, {$merge: {token_expiry: e.target.checked}}))}/>
+                        </Col>
+                    </FormGroup>
+                </Form>
+            </Modal.Body>
+            <Modal.Footer>
+                <Button onClick={() => createUser(user, props.onClose)} bsStyle="primary" disabled={!validForm}>
+                    <FormattedMessage id="create" defaultMessage="Create" />
                 </Button>
-                <Modal show={show} onHide={this.onClose} backdrop={false} bsSize="large">
-                    <Modal.Header closeButton>
-                        <Modal.Title><FormattedMessage id="create-a-user" defaultMessage="Create a user" /></Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        {
-                            error &&
-                                <Alert bsStyle="danger">
-                                    <FormattedMessage id="fail-to-create-the-user" defaultMessage="Fail to create the user" /><br/>{error.message}
-                                </Alert>
-                        }
-                        <Form horizontal>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="username" defaultMessage="Username" />
-                                </Col>
-
-                                <Col sm={9}>
-                                    <FormControl
-                                        componentClass="input"
-                                        value={user.username}
-                                        onChange={e => this.setState({user: update(user, {$merge: {username: e.target.value}})})}/>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup validationState={validEmail}>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="email" defaultMessage="Email" />
-                                </Col>
-
-                                <Col sm={9}>
-                                    <FormControl
-                                        componentClass="input"
-                                        value={user.email}
-                                        onChange={e => this.setState({user: update(user, {$merge: {email: e.target.value}})})}/>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="system" defaultMessage="System" />
-                                </Col>
-
-                                <Col sm={9}>
-                                    <Checkbox
-                                        checked={user.is_system}
-                                        readOnly={!this.props.user_info.is_system} // if the user logged is system, then he can create other "system" user(s), otherwise, not.
-                                        onChange={e => this.setState({user: update(user, {$merge: {is_system: e.target.checked}})})}/>
-
-                                    <HelpBlock><FormattedMessage id="app.user.is_system.label"
-                                                                 defaultMessage="This is the 'full-access' flag, you can't set it if you don't have it already."/></HelpBlock>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="ui-profile" defaultMessage="UI Profile" />
-                                </Col>
-
-                                <Col sm={9}>
-                                    <FormControl
-                                        componentClass="select"
-                                        value={user.ui_profile}
-                                        onChange={e => this.setState({user: update(user, {$merge: {ui_profile: e.target.value}})})}>
-                                        <option value="admin">Admin</option>
-                                        <option value="user">User</option>
-                                        <option value="provisioning">Provisioning</option>
-                                    </FormControl>
-                                    <HelpBlock><FormattedMessage id="app.user.profile.help"
-                                                                 defaultMessage="The profile has no influence on the rights in the application only the pages the user may see."/></HelpBlock>
-                                    <HelpBlock>
-                                        <FormattedMessage id="for-more-information-about-profile-implementation-in-the-right-management-see-" defaultMessage="For more information about profile implementation in the right management see " />
-                                        <a href={INTERNAL_HELP_LINKS.profile_rights.url}><FormattedMessage id="here" defaultMessage="here"/></a>
-                                    </HelpBlock>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="language" defaultMessage="Language" />
-                                </Col>
-
-                                <Col sm={2}>
-                                    <FormControl
-                                        componentClass="select"
-                                        value={user.language}
-                                        onChange={e => this.setState({user: update(user, {$merge: {language: e.target.value}})})}>
-                                        <option value="fr">fr</option>
-                                        <option value="nl">nl</option>
-                                        <option value="en">en</option>
-                                    </FormControl>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup validationState={validPassword}>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="password" defaultMessage="Password" />
-                                </Col>
-
-                                <Col sm={9}>
-                                    <FormControl
-                                        componentClass="input"
-                                        placeholder="Password"
-                                        type="password"
-                                        value={user.password}
-                                        onChange={e => this.setState({user: update(user, {$merge: {password: e.target.value}})})}/>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup validationState={validRepPassword}>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="confirm-password" defaultMessage="Confirm password" />
-                                </Col>
-
-                                <Col sm={9}>
-                                    <FormControl
-                                        componentClass="input"
-                                        placeholder="Confirm password"
-                                        type="password"
-                                        value={user.repeated_password}
-                                        onChange={e => this.setState({user: update(user, {$merge: {repeated_password: e.target.value}})})}/>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="token-expiry" defaultMessage="Token expiry" />
-                                </Col>
-
-                                <Col sm={9}>
-                                    <Checkbox
-                                        checked={user.token_expiry || false}
-                                        readOnly={!this.props.user_info.is_system} // only "system" user may change it.
-                                        onChange={e => this.setState({diff_user: update(user, {$merge: {token_expiry: e.target.checked}})})}/>
-                                </Col>
-                            </FormGroup>
-                        </Form>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button onClick={this.onSubmit} bsStyle="primary" disabled={!validForm}>
-                            <FormattedMessage id="create" defaultMessage="Create" />
-                        </Button>
-                        <Button onClick={this.onClose}>
-                            <FormattedMessage id="cancel" defaultMessage="Cancel" />
-                        </Button>
-                    </Modal.Footer>
-                </Modal>
-            </div>
-        )
-    }
+                <Button onClick={props.onClose}>
+                    <FormattedMessage id="cancel" defaultMessage="Cancel" />
+                </Button>
+            </Modal.Footer>
+        </Modal>
+    )
 }
 
 
@@ -642,7 +631,7 @@ function DeleteUser(props) {
                 </Form>
             </Modal.Body>
             <Modal.Footer>
-                <Button onClick={() => deleteUser(props.user.user_id, props.onClose)} bsStyle="danger"><FormattedMessage id="delete" defaultMessage="Delete" /></Button>
+                <Button onClick={() => deleteUser(props.user.id, props.onClose)} bsStyle="danger"><FormattedMessage id="delete" defaultMessage="Delete" /></Button>
                 <Button onClick={props.onClose}><FormattedMessage id="cancel" defaultMessage="Cancel" /></Button>
             </Modal.Footer>
         </Modal>
@@ -707,8 +696,8 @@ export default class SearchUsers extends Search {
     }
 
     render() {
-        const {resources, error, sorting_spec, pagination, filter_criteria} = this.state;
-        const {user_info, auth_token} = this.props;
+        const {resources, error, sorting_spec, pagination, filter_criteria, showNew} = this.state;
+        const {user_info} = this.props;
         return (
             <div>
                 <Breadcrumb>
@@ -757,10 +746,9 @@ export default class SearchUsers extends Search {
                 <Panel>
                     <Panel.Body>
                         <ButtonToolbar>
-                            <NewUser
-                                onClose={() => this._refresh()}
-                                user_info={user_info}
-                                auth_token={auth_token} />
+                            <Button bsStyle='primary' onClick={() => this.setState({showNew: true})}>
+                                <FormattedMessage id="add-user" defaultMessage="Add user" />
+                            </Button>
                             <LinkContainer to={"/system/users/profiles"}>
                                 <Button bsStyle='primary'>
                                     <FormattedMessage id="profiles" defaultMessage="Profiles"/>
@@ -772,6 +760,10 @@ export default class SearchUsers extends Search {
                                 </Button>
                             </LinkContainer>
                         </ButtonToolbar>
+                        <NewUser
+                            show={showNew}
+                            onClose={() => {this._refresh(); this.setState({showNew: false});}}
+                            user_info={user_info} />
                     </Panel.Body>
                 </Panel>
             </div>
