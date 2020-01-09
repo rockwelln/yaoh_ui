@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, useState, useEffect } from 'react';
 
 import FormGroup from 'react-bootstrap/lib/FormGroup';
 import Form from 'react-bootstrap/lib/Form';
@@ -22,7 +22,7 @@ import {FormattedMessage} from 'react-intl';
 import 'font-awesome/css/font-awesome.min.css';
 import update from 'immutability-helper';
 
-import {fetch_post, fetch_get, fetch_delete, fetch_put} from "../utils";
+import {fetch_post, fetch_get, fetch_delete, fetch_put, NotificationsManager} from "../utils";
 import {ApioDatatable} from "../utils/datatable";
 import { LinkContainer } from 'react-router-bootstrap';
 import {INTERNAL_HELP_LINKS} from "../async-apio-help";
@@ -32,182 +32,137 @@ import {CallbackHandler} from "./callbacks";
 import PropTypes from 'prop-types';
 
 
-export class LocalUserProfile extends Component {
-    static updatable_field = k => ['language', 'password'].includes(k);
+// helper functions
 
-    static propTypes = {
-        user_info: PropTypes.shape(
-            {
-                id: PropTypes.number.isRequired,
-                language: PropTypes.string,
-                username: PropTypes.string,
-                email: PropTypes.string,
-                is_system: PropTypes.bool
-            }
-        ).isRequired,
-        auth_token: PropTypes.string.isRequired,
-    };
+function updateLocalUser(data, onSuccess) {
+    const updatable_field = k => ['language', 'password'].includes(k);
+    fetch_put(
+        '/api/v01/system/users/local',
+        Object.keys(data).filter(updatable_field).reduce(
+            (obj, key) => {
+                obj[key] = data[key];
+                return obj;
+            }, {}
+        ),
+    )
+    .then(() => {
+        NotificationsManager.success(<FormattedMessage id="user-updated" defaultMessage="User updated" />);
+        onSuccess && onSuccess();
+    })
+    .catch(error =>
+        NotificationsManager.error(<FormattedMessage id="update-failed" defaultMessage="Update failed" />, error.message)
+    )
+}
 
-    constructor(props) {
-        super(props);
-        this.state = Object.assign(
-            {password: '', repeated_password: '', error: undefined, success: undefined},
-            this.props.user_info
-        );
-        this.onSubmit = this.onSubmit.bind(this);
+// React components
+
+export function LocalUserProfile(props) {
+    const {user_info} = props;
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [profileName, setProfileName] = useState('');
+    const [language, setLanguage] = useState(user_info.language);
+
+    const delta = {};
+    if(newPassword.length !== 0) {
+        delta.password = newPassword;
     }
-
-    onSubmit() {
-        let data = Object.assign({}, this.state);
-        if(this.state.password === '') {
-            delete data.password;
-            delete data.repeated_password;
-        }
-
-        this.setState({error: undefined, success: undefined});
-        fetch_put(
-            '/api/v01/system/users/local',
-            Object.keys(data).filter(LocalUserProfile.updatable_field).reduce(
-                (obj, key) => {
-                    obj[key] = data[key];
-                    return obj;
-                }, {}
-            ),
-            this.props.auth_token
-        )
-        .then(() => {
-            this.setState({
-                success: <FormattedMessage id="user-updated" defaultMessage="User updated" />
-            });
-            // delay the trigger to let the alert being shown (before full redraw)
-            setTimeout(this.props.onUserInfoChanged, 1000);
-        })
-        .catch((error) => {
-            console.log('request failed', error);
-            this.setState({
-                error: <div>
-                    <FormattedMessage id="request-failed" defaultMessage="Request failed" /><br/>
-                    {error.message}
-                </div>
-            })
-        })
+    if(language !== user_info.language) {
+        delta.language = language;
     }
+    useEffect(() => {
+        fetch_get("/api/v01/system/user_profiles")
+            .then(data => setProfileName(data.profiles.find(p => p.id === user_info.profile_id).name))
+    }, []);
+    const validPassword = (newPassword === '')?null:(newPassword.length >= 7)?"success":"error";
+    const validRepPassword = (newPassword === '')?null:(confirmPassword === newPassword)?"success":"error";
+    const validForm = validPassword !== 'error' && validRepPassword !== 'error' && Object.keys(delta).length !== 0;
 
-    render() {
-        const {password, repeated_password, error, username, success, email, is_system, ui_profile, groups, registered_on, language, local_user} = this.state;
-        const {user_info} = this.props;
-        const validPassword = (password === '')?null:(password.length >= 8)?"success":"error";
-        const validRepPassword = (password === '')?null:(repeated_password === password)?"success":"error";
-        const validForm = validPassword !== 'error' && validRepPassword !== 'error';
+    return (
+        <Panel>
+            <Panel.Heading>
+                <Panel.Title><FormattedMessage id="user-profile" defaultMessage="User Profile" /> {user_info.username} </Panel.Title>
+            </Panel.Heading>
+            <Panel.Body>
+                <Tabs defaultActiveKey={1} id="local-user-tabs">
+                    <Tab eventKey={1} title={<FormattedMessage id="details" defaultMessage="Details" />}>
+                    <Form horizontal style={{paddingTop: 10}}>
+                        <StaticControl
+                                label={<FormattedMessage id='username' defaultMessage='Username' />}
+                                value={user_info.username}/>
+                        <StaticControl
+                                label={<FormattedMessage id='email' defaultMessage='Email' />}
+                                value={user_info.email}/>
+                        <StaticControl
+                                label={<FormattedMessage id='system' defaultMessage='System' />}
+                                value={
+                                    user_info.is_system?
+                                        <FormattedMessage id="yes" defaultMessage="Yes" />:
+                                        <FormattedMessage id="no" defaultMessage="No" />
+                                }/>
+                        <StaticControl label={<FormattedMessage id='profile' defaultMessage='Profile'/>} value={profileName}/>
+                        <StaticControl label={<FormattedMessage id='ui-profile' defaultMessage='UI Profile'/>} value={user_info.ui_profile}/>
+                        <StaticControl label={<FormattedMessage id='registered-on' defaultMessage='Registered on'/>} value={user_info.registered_on}/>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="language" defaultMessage="Language" />
+                            </Col>
 
-        return (
-            <Panel>
-                <Panel.Heading>
-                    <Panel.Title><FormattedMessage id="user-profile" defaultMessage="User Profile" /> {username} </Panel.Title>
-                </Panel.Heading>
-                <Panel.Body>
-                {error !== undefined ? <Alert bsStyle="danger">{error}</Alert>:
-                 success !== undefined ? <Alert bsStyle="success">{success}</Alert> :''}
-                 <Tabs defaultActiveKey={1} id="local-user-tabs">
-                     <Tab eventKey={1} title={<FormattedMessage id="details" defaultMessage="Details" />}>
-                        <Form horizontal style={{paddingTop: 10}}>
-                            <StaticControl
-                                    label={<FormattedMessage id='username' defaultMessage='Username' />}
-                                    value={username}/>
-                            <StaticControl
-                                    label={<FormattedMessage id='email' defaultMessage='Email' />}
-                                    value={email}/>
-                            <StaticControl
-                                    label={<FormattedMessage id='system' defaultMessage='System' />}
-                                    value={
-                                        is_system?
-                                            <FormattedMessage id="yes" defaultMessage="Yes" />:
-                                            <FormattedMessage id="no" defaultMessage="No" />
-                                    }/>
-                            <StaticControl label={<FormattedMessage id='ui-profile' defaultMessage='UI Profile'/>} value={ui_profile}/>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="groups" defaultMessage="Groups" />
-                                </Col>
+                            <Col sm={2}>
+                                <FormControl
+                                    componentClass="select"
+                                    value={language}
+                                    onChange={(e) => setLanguage(e.target.value)}>
+                                    <option value="fr">fr</option>
+                                    <option value="nl">nl</option>
+                                    <option value="en">en</option>
+                                </FormControl>
+                            </Col>
+                        </FormGroup>
+                        <FormGroup validationState={validPassword}>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="password" defaultMessage="Password" />
+                            </Col>
 
-                                <Col sm={9}>
-                                    {
-                                        groups.map(g => (
-                                            <FormControl.Static key={g.name}>
-                                                {g.name}
-                                                <FormattedMessage id="as" defaultMessage=" as " />
-                                                {g.level}
-                                            </FormControl.Static>
-                                        ))
-                                    }
-                                </Col>
-                            </FormGroup>
-                            <StaticControl label={<FormattedMessage id='registered-on' defaultMessage='Registered on'/>} value={registered_on}/>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="language" defaultMessage="Language" />
-                                </Col>
+                            <Col sm={9}>
+                                <FormControl
+                                    componentClass="input"
+                                    placeholder="Password"
+                                    type="password"
+                                    value={newPassword}
+                                    onChange={e => setNewPassword(e.target.value)} />
+                            </Col>
+                        </FormGroup>
+                        <FormGroup validationState={validRepPassword}>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="repeat-password" defaultMessage="Repeat password" />
+                            </Col>
 
-                                <Col sm={2}>
-                                    <FormControl
-                                        componentClass="select"
-                                        value={language}
-                                        onChange={(e) => this.setState({language: e.target.value})}>
-                                        <option value="fr">fr</option>
-                                        <option value="nl">nl</option>
-                                        <option value="en">en</option>
-                                    </FormControl>
-                                </Col>
-                            </FormGroup>
-                            { local_user && (
-                                <FormGroup validationState={validPassword}>
-                                    <Col componentClass={ControlLabel} sm={2}>
-                                        <FormattedMessage id="password" defaultMessage="Password" />
-                                    </Col>
-
-                                    <Col sm={9}>
-                                        <FormControl
-                                            componentClass="input"
-                                            placeholder="Password"
-                                            type="password"
-                                            value={password}
-                                            onChange={(e) => this.setState({password: e.target.value})} />
-                                    </Col>
-                                </FormGroup>
-                            )}
-                            { local_user && (
-                                <FormGroup validationState={validRepPassword}>
-                                    <Col componentClass={ControlLabel} sm={2}>
-                                        <FormattedMessage id="repeat-password" defaultMessage="Repeat password" />
-                                    </Col>
-
-                                    <Col sm={9}>
-                                        <FormControl
-                                            componentClass="input"
-                                            placeholder="Repeat password"
-                                            type="password"
-                                            value={repeated_password}
-                                            onChange={(e) => this.setState({repeated_password: e.target.value})} />
-                                    </Col>
-                                </FormGroup>
-                            )}
-                            <FormGroup>
-                                <Col smOffset={2} sm={9}>
-                                    <Button bsStyle="primary" onClick={this.onSubmit} disabled={!validForm}>
-                                        <FormattedMessage id="save" defaultMessage="Save" />
-                                    </Button>
-                                </Col>
-                            </FormGroup>
-                        </Form>
-                     </Tab>
-                     <Tab eventKey={2} title={<FormattedMessage id="callbacks" defaultMessage="Callbacks" />}>
-                         {this.props.notifications && <CallbackHandler userId={user_info.id} {...this.props} />}
-                     </Tab>
-                 </Tabs>
-                </Panel.Body>
-            </Panel>
-        )
-    }
+                            <Col sm={9}>
+                                <FormControl
+                                    componentClass="input"
+                                    placeholder="Repeat password"
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)} />
+                            </Col>
+                        </FormGroup>
+                        <FormGroup>
+                            <Col smOffset={2} sm={9}>
+                                <Button bsStyle="primary" onClick={() => updateLocalUser(delta, props.onUserInfoChanged)} disabled={!validForm}>
+                                    <FormattedMessage id="save" defaultMessage="Save" />
+                                </Button>
+                            </Col>
+                        </FormGroup>
+                    </Form>
+                 </Tab>
+                 <Tab eventKey={2} title={<FormattedMessage id="callbacks" defaultMessage="Callbacks" />}>
+                     <CallbackHandler userId={user_info.id} />
+                 </Tab>
+             </Tabs>
+            </Panel.Body>
+        </Panel>
+    )
 }
 
 

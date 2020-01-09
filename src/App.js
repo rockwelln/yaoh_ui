@@ -865,10 +865,7 @@ class App extends Component {
                                component={props => (
                                    <LocalUserProfile
                                        user_info={user_info}
-                                       auth_token={auth_token}
-                                       onUserInfoChanged={()=> window.location.reload()}
-                                       notifications={this._notificationSystem.current}
-                                       {...props} />
+                                       onUserInfoChanged={()=> window.location.reload()} />
                                )}
                                exact />
                         <Route path="/system/config"
