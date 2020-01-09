@@ -29,8 +29,6 @@ import {INTERNAL_HELP_LINKS} from "../async-apio-help";
 import {Search, StaticControl} from "../utils/common";
 import {CallbackHandler} from "./callbacks";
 
-import PropTypes from 'prop-types';
-
 
 // helper functions
 
@@ -54,6 +52,43 @@ function updateLocalUser(data, onSuccess) {
     )
 }
 
+
+function updateUser(user_id, data, onSuccess) {
+    fetch_put(`/api/v01/system/users/${user_id}`, data)
+    .then(() => {
+        NotificationsManager.success(<FormattedMessage id="user-updated" defaultMessage="User updated" />);
+        onSuccess && onSuccess();
+    })
+    .catch(error =>
+        NotificationsManager.error(<FormattedMessage id="update-failed" defaultMessage="Update failed" />, error.message)
+    )
+}
+
+
+function revokeUser(user_id, unblock, onSuccess) {
+    fetch_put(`/api/v01/auth/${user_id}/${unblock?'un':''}revoke`, {})
+    .then(() => {
+        NotificationsManager.success(<FormattedMessage id="user-updated" defaultMessage="User updated" />);
+        onSuccess && onSuccess();
+    })
+    .catch(error =>
+        NotificationsManager.error(<FormattedMessage id="user-revoke-failed" defaultMessage="User access update failed!" />, error.message)
+    )
+}
+
+
+function deleteUser(user_id, onSuccess) {
+    fetch_delete(`/api/v01/system/users/${user_id}`)
+    .then(() => {
+        NotificationsManager.success(<FormattedMessage id="user-deleted" defaultMessage="User deleted" />);
+        onSuccess && onSuccess();
+    })
+    .catch(error =>
+        NotificationsManager.error(<FormattedMessage id="delete-failed" defaultMessage="Delete failed" />, error.message)
+    );
+}
+
+
 // React components
 
 export function LocalUserProfile(props) {
@@ -73,7 +108,7 @@ export function LocalUserProfile(props) {
     useEffect(() => {
         fetch_get("/api/v01/system/user_profiles")
             .then(data => setProfileName(data.profiles.find(p => p.id === user_info.profile_id).name))
-    }, []);
+    }, [user_info.profile_id]);
     const validPassword = (newPassword === '')?null:(newPassword.length >= 7)?"success":"error";
     const validRepPassword = (newPassword === '')?null:(confirmPassword === newPassword)?"success":"error";
     const validForm = validPassword !== 'error' && validRepPassword !== 'error' && Object.keys(delta).length !== 0;
@@ -166,288 +201,226 @@ export function LocalUserProfile(props) {
 }
 
 
-class UpdateUser extends Component {
-    static propTypes = {
-        onClose: PropTypes.func,
-        auth_token: PropTypes.string.isRequired,
-    };
-
-    constructor(props) {
-        super(props);
-        this.state = {diff_user: {}, user: null, show: false};
-        this.onClose = this.onClose.bind(this);
-        this.onSubmit = this.onSubmit.bind(this);
-        this._fetchUserDetails = this._fetchUserDetails.bind(this);
-        this._updateModal = this._updateModal.bind(this);
-    }
-
-    onClose() {
-        this.setState({show: false, diff_user: {}, user: null});
-        this.props.onClose && this.props.onClose();
-    }
-
-    onSubmit() {
-        const {diff_user} = this.state;
-        const {user, auth_token} = this.props;
-        fetch_put(`/api/v01/system/users/${user.id}`, diff_user, auth_token)
-            .then(() => {
-                !this.cancelLoad && this.onClose();
-                this.props.notifications.addNotification({
-                    message: <FormattedMessage id="user-updated" defaultMessage="User saved!" />,
-                    level: 'success'
-                });
-            })
-            .catch(error => this.props.notifications.addNotification({
-                title: <FormattedMessage id="user-update-failed" defaultMessage="User update failed!" />,
-                message: error.message,
-                level: 'error'
-            }))
-    }
-
-    onRevoke(unblock) {
-        const {user, auth_token} = this.props;
-        fetch_put(`/api/v01/auth/${user.id}/${unblock?'un':''}revoke`, {}, auth_token)
-        .then(() => {
-            !this.cancelLoad && this.onClose();
-            this.props.notifications.addNotification({
-                message: <FormattedMessage id="user-updated" defaultMessage="User saved!" />,
-                level: 'success'
-            });
-        })
-        .catch(error => this.props.notifications.addNotification({
-            title: <FormattedMessage id="user-revoke-failed" defaultMessage="User access update failed!" />,
-            message: error.message,
-            level: 'error'
-        }))
-    }
-
-    _fetchUserDetails() {
-        const {user, auth_token} = this.props;
-        fetch_get(`/api/v01/system/users/${user.id}`, auth_token)
-            .then(user => !this.cancelLoad && this.setState({user: user, diff_user: {}}))
+function UpdateUser(props) {
+    const [user, setUser] = useState({});
+    const [diffUser, setDiffUser] = useState({});
+    const [profiles, setProfiles] = useState([]);
+    useEffect(() => {
+        props.show && fetch_get(`/api/v01/system/users/${props.user.id}`)
+            .then(user => setUser(user))
             .catch(console.error)
+    }, [props.user.id, props.show]);
+    useEffect(() => {
+        props.show && fetch_get("/api/v01/system/user_profiles")
+            .then(data => setProfiles(data.profiles))
+    }, [props.show]);
+    const localUser = update(user, {$merge: diffUser});
+    const delta = {...diffUser};
+    if(delta.newPassword) {
+        delta.password = delta.newPassword;
+        delete delta.newPassword;
+        delete delta.confirmPassword;
     }
+    const onClose = () => props.onClose && props.onClose();
 
-    componentWillUpdate(nextProps, nextState) {
-        if(nextState.show === true && this.state.show === false) {
-            this._fetchUserDetails();
-        }
-    }
+    // a valid username is at least 4 characters long
+    const validUsername = (localUser.username === user.username) ? null : (localUser.username.length >= 4) ? "success" : "error";
+    // email has to contain @
+    const validEmail = (localUser.email === user.email) ? null : (localUser.email.indexOf('@') !== -1) ? "success" : "error";
+    // a password is at least 8 characters long
+    const validPassword = (diffUser.newPassword === '' || diffUser.newPassword === undefined) ? null : (diffUser.newPassword.length >= 7) ? "success" : "error";
+    const validRepPassword = (diffUser.confirmPassword === '' || diffUser.newPassword === undefined) ? null : (diffUser.confirmPassword === diffUser.newPassword) ? "success" : "error";
 
-    _updateModal() {
-        const {diff_user, user} = this.state;
-        if(user === null) return null;
+    const validForm = validUsername !== 'error' && validEmail !== 'error' && validPassword !== 'error' && validRepPassword !== 'error' && Object.keys(diffUser).length !== 0;
 
-        const user_ = update(user, {$merge: diff_user});
+    return (
+        <Modal show={props.show} onHide={onClose} backdrop={false} bsSize="large">
+            <Modal.Header closeButton>
+                <Modal.Title><FormattedMessage id="update-a-user" defaultMessage="Update a user" /></Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <Tabs defaultActiveKey={1} id="user-update-tabs">
+                    <Tab eventKey={1} title={<FormattedMessage id="details" defaultMessage="Details" />}>
 
-        // a valid username is at least 4 characters long
-        const validUsername = (user_.username === user.username) ? null : (user_.username.length >= 4) ? "success" : "error";
-        // email has to contain @
-        const validEmail = (user_.email === user.email) ? null : (user_.email.indexOf('@') !== -1) ? "success" : "error";
-        // a password is at least 8 characters long
-        const validPassword = (user_.password === '' || user_.password === undefined) ? null : (user_.password.length >= 8) ? "success" : "error";
-        const validRepPassword = (user_.password === '' || user_.password === undefined) ? null : (user_.repeated_password === user_.password) ? "success" : "error";
+                    <Form horizontal style={{paddingTop: 10}}>
+                        <FormGroup validationState={validUsername}>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="username" defaultMessage="Username" />
+                            </Col>
 
-        const validForm = validUsername !== 'error' && validEmail !== 'error' && validPassword !== 'error' && validRepPassword !== 'error';
+                            <Col sm={9}>
+                                <FormControl
+                                    componentClass="input"
+                                    value={localUser.username}
+                                    onChange={e => setDiffUser(update(diffUser, {$merge: {username: e.target.value}}))}/>
+                            </Col>
+                        </FormGroup>
+                        <FormGroup validationState={validEmail}>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="email" defaultMessage="Email" />
+                            </Col>
 
-        this.state.success && setTimeout(() => this.setState({success: false}), 2000);
-        this.state.error && setTimeout(() => this.setState({error: false}), 2000);
+                            <Col sm={9}>
+                                <FormControl
+                                    componentClass="input"
+                                    value={localUser.email}
+                                    onChange={e => setDiffUser(update(diffUser, {$merge: {email: e.target.value}}))}/>
+                            </Col>
+                        </FormGroup>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="system" defaultMessage="System" />
+                            </Col>
 
-        return (
-            <Modal show={this.state.show} onHide={this.onClose} backdrop={false} bsSize="large">
-                <Modal.Header closeButton>
-                    <Modal.Title><FormattedMessage id="update-a-user" defaultMessage="Update a user" /></Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    {
-                        this.state.success &&
-                            <Alert bsStyle="success">
-                                <FormattedMessage id="saved" defaultMessage="Saved" />
-                            </Alert>
-                    }
-                    {
-                        this.state.error &&
-                            <Alert bsStyle="danger">
-                                <FormattedMessage id="fail-to-save-the-user" defaultMessage="Fail to save the user" /><br/>{this.state.error.message}
-                            </Alert>
-                    }
-                    <Tabs defaultActiveKey={1} id="user-update-tabs">
-                        <Tab eventKey={1} title={<FormattedMessage id="details" defaultMessage="Details" />}>
+                            <Col sm={9}>
+                                <Checkbox
+                                    checked={localUser.is_system || false}
+                                    readOnly={!props.user_info.is_system} // if the user logged is system, then he can create other "system" user(s), otherwise, not.
+                                    onChange={e => setDiffUser(update(diffUser, {$merge: {is_system: e.target.checked}}))}/>
 
-                        <Form horizontal style={{paddingTop: 10}}>
-                            <FormGroup validationState={validUsername}>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="username" defaultMessage="Username" />
-                                </Col>
+                                <HelpBlock><FormattedMessage id="app.user.is_system.label"
+                                                             defaultMessage="This is the 'full-access' flag, you can't set it if you don't have it already."/></HelpBlock>
+                            </Col>
+                        </FormGroup>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="profile" defaultMessage="Profile" />
+                            </Col>
 
-                                <Col sm={9}>
-                                    <FormControl
-                                        componentClass="input"
-                                        value={user_.username}
-                                        onChange={e => this.setState({diff_user: update(this.state.diff_user, {$merge: {username: e.target.value}})})}/>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup validationState={validEmail}>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="email" defaultMessage="Email" />
-                                </Col>
+                            <Col sm={9}>
+                                <FormControl
+                                    componentClass="select"
+                                    value={localUser.profile_id}
+                                    onChange={e => setDiffUser(update(diffUser, {$merge: {profile_id: e.target.value && parseInt(e.target.value, 10)}}))}>
+                                    {
+                                        profiles.sort((a, b) => a.id - b.id).map((p, i) => <option key={`profile${i}`} value={p.id}>{p.name}</option>)
+                                    }
+                                </FormControl>
+                            </Col>
+                        </FormGroup>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="ui-profile" defaultMessage="UI Profile" />
+                            </Col>
 
-                                <Col sm={9}>
-                                    <FormControl
-                                        componentClass="input"
-                                        value={user_.email}
-                                        onChange={e => this.setState({diff_user: update(this.state.diff_user, {$merge: {email: e.target.value}})})}/>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="system" defaultMessage="System" />
-                                </Col>
+                            <Col sm={9}>
+                                <FormControl
+                                    componentClass="select"
+                                    value={localUser.ui_profile}
+                                    onChange={e => setDiffUser(update(diffUser, {$merge: {ui_profile: e.target.value}}))}>
+                                    <option value="admin">Admin</option>
+                                    <option value="user">User</option>
+                                    <option value="provisioning">Provisioning</option>
+                                </FormControl>
+                                <HelpBlock><FormattedMessage id="app.user.profile.help"
+                                                             defaultMessage="The profile has no influence on the rights in the application only the pages the user may see."/></HelpBlock>
+                                <HelpBlock>
+                                    <FormattedMessage id="for-more-information-about-profile-implementation-in-the-right-management-see-" defaultMessage="For more information about profile implementation in the right management see " />
+                                    <a href={INTERNAL_HELP_LINKS.profile_rights.url}><FormattedMessage id="here" defaultMessage="here"/></a>
+                                </HelpBlock>
+                            </Col>
+                        </FormGroup>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="language" defaultMessage="Language" />
+                            </Col>
 
-                                <Col sm={9}>
-                                    <Checkbox
-                                        checked={user_.is_system || false}
-                                        readOnly={!this.props.user_info.is_system} // if the user logged is system, then he can create other "system" user(s), otherwise, not.
-                                        onChange={e => this.setState({diff_user: update(this.state.diff_user, {$merge: {is_system: e.target.checked}})})}/>
+                            <Col sm={2}>
+                                <FormControl
+                                    componentClass="select"
+                                    value={localUser.language}
+                                    onChange={e => setDiffUser(update(diffUser, {$merge: {language: e.target.value}}))}>
+                                    <option value="fr">fr</option>
+                                    <option value="nl">nl</option>
+                                    <option value="en">en</option>
+                                </FormControl>
+                            </Col>
+                        </FormGroup>
+                        <FormGroup validationState={validPassword}>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="password" defaultMessage="Password" />
+                            </Col>
 
-                                    <HelpBlock><FormattedMessage id="app.user.is_system.label"
-                                                                 defaultMessage="This is the 'full-access' flag, you can't set it if you don't have it already."/></HelpBlock>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="ui-profile" defaultMessage="UI Profile" />
-                                </Col>
+                            <Col sm={9}>
+                                <FormControl
+                                    componentClass="input"
+                                    placeholder="Password"
+                                    type="password"
+                                    value={localUser.newPassword || ''}
+                                    onChange={e => setDiffUser(update(diffUser, {$merge: {newPassword: e.target.value}}))}/>
+                            </Col>
+                        </FormGroup>
+                        <FormGroup validationState={validRepPassword}>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="confirm-password" defaultMessage="Confirm password" />
+                            </Col>
 
-                                <Col sm={9}>
-                                    <FormControl
-                                        componentClass="select"
-                                        value={user_.ui_profile}
-                                        onChange={e => this.setState({diff_user: update(this.state.diff_user, {$merge: {ui_profile: e.target.value}})})}>
-                                        <option value="admin">Admin</option>
-                                        <option value="user">User</option>
-                                        <option value="provisioning">Provisioning</option>
-                                    </FormControl>
-                                    <HelpBlock><FormattedMessage id="app.user.profile.help"
-                                                                 defaultMessage="The profile has no influence on the rights in the application only the pages the user may see."/></HelpBlock>
-                                    <HelpBlock>
-                                        <FormattedMessage id="for-more-information-about-profile-implementation-in-the-right-management-see-" defaultMessage="For more information about profile implementation in the right management see " />
-                                        <a href={INTERNAL_HELP_LINKS.profile_rights.url}><FormattedMessage id="here" defaultMessage="here"/></a>
-                                    </HelpBlock>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="language" defaultMessage="Language" />
-                                </Col>
+                            <Col sm={9}>
+                                <FormControl
+                                    componentClass="input"
+                                    placeholder="Confirm password"
+                                    type="password"
+                                    value={localUser.confirmPassword || ''}
+                                    onChange={e => setDiffUser(update(diffUser, {$merge: {confirmPassword: e.target.value}}))}/>
+                            </Col>
+                        </FormGroup>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="token-expiry" defaultMessage="Token expiry" />
+                            </Col>
 
-                                <Col sm={2}>
-                                    <FormControl
-                                        componentClass="select"
-                                        value={user_.language}
-                                        onChange={e => this.setState({diff_user: update(this.state.diff_user, {$merge: {language: e.target.value}})})}>
-                                        <option value="fr">fr</option>
-                                        <option value="nl">nl</option>
-                                        <option value="en">en</option>
-                                    </FormControl>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup validationState={validPassword}>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="password" defaultMessage="Password" />
-                                </Col>
+                            <Col sm={9}>
+                                <Checkbox
+                                    checked={localUser.token_expiry || false}
+                                    readOnly={!props.user_info.is_system} // only "system" user may change it.
+                                    onChange={e => setDiffUser(update(diffUser, {$merge: {token_expiry: e.target.checked}}))}/>
+                            </Col>
+                        </FormGroup>
+                        <FormGroup validationState={"error"}>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="danger-zone" defaultMessage="Dangerous zone" />
+                            </Col>
 
-                                <Col sm={9}>
-                                    <FormControl
-                                        componentClass="input"
-                                        placeholder="Password"
-                                        type="password"
-                                        value={user_.password || ''}
-                                        onChange={e => this.setState({diff_user: update(this.state.diff_user, {$merge: {password: e.target.value}})})}/>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup validationState={validRepPassword}>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="confirm-password" defaultMessage="Confirm password" />
-                                </Col>
-
-                                <Col sm={9}>
-                                    <FormControl
-                                        componentClass="input"
-                                        placeholder="Confirm password"
-                                        type="password"
-                                        value={user_.repeated_password || ''}
-                                        onChange={e => this.setState({diff_user: update(this.state.diff_user, {$merge: {repeated_password: e.target.value}})})}/>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="token-expiry" defaultMessage="Token expiry" />
-                                </Col>
-
-                                <Col sm={9}>
-                                    <Checkbox
-                                        checked={user_.token_expiry || false}
-                                        readOnly={!this.props.user_info.is_system} // only "system" user may change it.
-                                        onChange={e => this.setState({diff_user: update(this.state.diff_user, {$merge: {token_expiry: e.target.checked}})})}/>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup validationState={"error"}>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="danger-zone" defaultMessage="Dangerous zone" />
-                                </Col>
-
-                                <Col sm={9}>
-                                    <ButtonToolbar>
-                                        {
-                                            user_.status === "REVOKED" ?
-                                                <Button onClick={() => this.onRevoke(true)} bsStyle="danger">
-                                                    <FormattedMessage id="allow" defaultMessage="Allow again"/>
-                                                </Button> :
-                                                <Button onClick={() => this.onRevoke(false)} bsStyle="danger">
-                                                    <FormattedMessage id="revoke" defaultMessage="Revoke"/>
-                                                </Button>
-                                        }
-                                    </ButtonToolbar>
-                                    <HelpBlock>
-                                        <FormattedMessage id="user-danger-zone-help" defaultMessage="Careful, these options may impact user access definitively!"/>
-                                    </HelpBlock>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup>
-                                <Col smOffset={2} sm={10}>
-                                    <ButtonToolbar>
-                                        <Button onClick={this.onSubmit} bsStyle="primary" disabled={!validForm}>
-                                            <FormattedMessage id="update" defaultMessage="Update" />
-                                        </Button>
-                                        <Button onClick={this.onClose}>
-                                            <FormattedMessage id="cancel" defaultMessage="Cancel" />
-                                        </Button>
-                                    </ButtonToolbar>
-                                </Col>
-                            </FormGroup>
-                        </Form>
-                        </Tab>
-                        <Tab eventKey={2} title={<FormattedMessage id="callbacks" defaultMessage="Callbacks" />}>
-                            {this.props.notifications && <CallbackHandler userId={user.user_id} {...this.props} />}
-                        </Tab>
-                    </Tabs>
-                </Modal.Body>
-            </Modal>
-        )
-    }
-
-    render() {
-        return (
-            <div>
-                <Button onClick={() => this.setState({show: true})} bsStyle="primary" style={{marginLeft: '5px', marginRight: '5px'}}>
-                    <Glyphicon glyph="pencil"/>
-                </Button>
-                { this._updateModal() }
-            </div>
-        )
-    }
+                            <Col sm={9}>
+                                <ButtonToolbar>
+                                    {
+                                        localUser.status === "REVOKED" ?
+                                            <Button onClick={() => revokeUser(props.user.id, true, onClose)} bsStyle="danger">
+                                                <FormattedMessage id="allow" defaultMessage="Allow again"/>
+                                            </Button> :
+                                            <Button onClick={() => revokeUser(props.user.id, false, onClose)} bsStyle="danger">
+                                                <FormattedMessage id="revoke" defaultMessage="Revoke"/>
+                                            </Button>
+                                    }
+                                </ButtonToolbar>
+                                <HelpBlock>
+                                    <FormattedMessage id="user-danger-zone-help" defaultMessage="Careful, these options may impact user access definitively!"/>
+                                </HelpBlock>
+                            </Col>
+                        </FormGroup>
+                        <FormGroup>
+                            <Col smOffset={2} sm={10}>
+                                <ButtonToolbar>
+                                    <Button onClick={() => updateUser(user.user_id, delta, onClose)} bsStyle="primary" disabled={!validForm}>
+                                        <FormattedMessage id="update" defaultMessage="Update" />
+                                    </Button>
+                                    <Button onClick={onClose}>
+                                        <FormattedMessage id="cancel" defaultMessage="Cancel" />
+                                    </Button>
+                                </ButtonToolbar>
+                            </Col>
+                        </FormGroup>
+                    </Form>
+                    </Tab>
+                    <Tab eventKey={2} title={<FormattedMessage id="callbacks" defaultMessage="Callbacks" />}>
+                        <CallbackHandler userId={props.user.id} />
+                    </Tab>
+                </Tabs>
+            </Modal.Body>
+        </Modal>
+    )
 }
+
 
 class NewUser extends Component {
     constructor(props) {
@@ -656,68 +629,48 @@ class NewUser extends Component {
     }
 }
 
-class DeleteUser extends Component {
-    static propTypes = {
-        onClose: PropTypes.func,
-        user: PropTypes.object.isRequired,
-        auth_token: PropTypes.string.isRequired
-    };
 
-    constructor(props) {
-        super(props);
-        this.state = {};
-        this.onClose = this.onClose.bind(this);
-        this.onDelete = this.onDelete.bind(this);
-    }
-
-    onDelete() {
-        const {user, auth_token} = this.props;
-        fetch_delete(`/api/v01/system/users/${user.id}`)
-            .then(this.onClose)
-            .catch(error => this.props.notifications.addNotification({
-                title: <FormattedMessage id="user-update-failed" defaultMessage="User update failed!" />,
-                message: error.message,
-                level: 'error'
-            }));
-    }
-
-    onClose() {
-        this.setState({show: false});
-        this.props.onClose && this.props.onClose();
-    }
-
-    render() {
-        return (
-            <div>
-                <Button onClick={() => this.setState({show: true})} bsStyle="danger" style={{marginLeft: '5px', marginRight: '5px'}}>
-                    <Glyphicon glyph="remove-sign"/>
-                </Button>
-                <Modal show={this.state.show} onHide={this.onClose} backdrop={false}>
-                    <Modal.Header closeButton>
-                        <Modal.Title><FormattedMessage id="confirm" defaultMessage="Confirm" /></Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <Form horizontal>
-                            <StaticControl label={<FormattedMessage id='username' defaultMessage='Username'/>} value={this.props.user.username}/>
-                        </Form>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button onClick={this.onDelete} bsStyle="danger"><FormattedMessage id="delete" defaultMessage="Delete" /></Button>
-                        <Button onClick={this.onClose}><FormattedMessage id="cancel" defaultMessage="Cancel" /></Button>
-                    </Modal.Footer>
-                </Modal>
-            </div>
-        )
-    }
+function DeleteUser(props) {
+    return (
+        <Modal show={props.show} onHide={props.onClose} backdrop={false}>
+            <Modal.Header closeButton>
+                <Modal.Title><FormattedMessage id="confirm" defaultMessage="Confirm" /></Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <Form horizontal>
+                    <StaticControl label={<FormattedMessage id='username' defaultMessage='Username'/>} value={props.user.username}/>
+                </Form>
+            </Modal.Body>
+            <Modal.Footer>
+                <Button onClick={() => deleteUser(props.user.user_id, props.onClose)} bsStyle="danger"><FormattedMessage id="delete" defaultMessage="Delete" /></Button>
+                <Button onClick={props.onClose}><FormattedMessage id="cancel" defaultMessage="Cancel" /></Button>
+            </Modal.Footer>
+        </Modal>
+    )
 }
 
 
-const UserActions = ({onUserUpdate, onUserDelete, ...props}) => (
-    <ButtonToolbar>
-        <UpdateUser onClose={onUserUpdate} {...props}/>
-        <DeleteUser onClose={onUserDelete} {...props} />
-    </ButtonToolbar>
-);
+function UserActions(props) {
+    const [showUpdate, setShowUpdate] = useState(false);
+    const [showDelete, setShowDelete] = useState(false);
+
+    return (
+        <div>
+            <ButtonToolbar>
+                <Button onClick={() => setShowUpdate(true)} bsStyle="primary"
+                        style={{marginLeft: '5px', marginRight: '5px'}}>
+                    <Glyphicon glyph="pencil"/>
+                </Button>
+                <Button onClick={() => setShowDelete(true)} bsStyle="danger"
+                        style={{marginLeft: '5px', marginRight: '5px'}}>
+                    <Glyphicon glyph="remove-sign"/>
+                </Button>
+            </ButtonToolbar>
+            <UpdateUser show={showUpdate} onClose={() => {setShowUpdate(false); props.onUserUpdate();}} {...props} />
+            <DeleteUser show={showDelete} onClose={() => {setShowDelete(false); props.onUserDelete();}} {...props} />
+        </div>
+    );
+}
 
 
 export default class SearchUsers extends Search {
