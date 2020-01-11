@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import Panel from 'react-bootstrap/lib/Panel';
 import Row from 'react-bootstrap/lib/Row';
@@ -62,33 +62,22 @@ const QueueState = ({name, state}) => {
 };
 
 
-export default class LocalQueues extends Component {
-    state = {
-        queues: [],
-    };
+export default function LocalQueues(props) {
+    const [queues, setQueues] = useState([]);
 
-    fetchQueues() {
-        fetch_get("/api/v01/system/queues")
-            .then(data => this.setState({queues: data.queues}))
-            .catch(error => NotificationsManager.error(<FormattedMessage id="fail-fetch-queues" defaultMessage="Fail to fetch queues"/>, error))
-    }
+    useEffect(() => {
+        const i = setInterval(() => fetch_get("/api/v01/system/queues")
+            .then(data => setQueues(data.queues))
+            .catch(error => NotificationsManager.error(<FormattedMessage id="fail-fetch-queues" defaultMessage="Fail to fetch queues"/>, error)), 1000);
 
-    componentDidMount() {
-        this.reloader = setInterval(() => this.fetchQueues(), 1000);
-    }
+        return () => clearInterval(i);
+    }, []);
 
-    componentWillUnmount() {
-        this.reloader && clearInterval(this.reloader);
-    }
-
-    render() {
-        const {queues} = this.state;
-        return (
-            <div>
-                {
-                    Object.keys(queues).map((name, i) => <QueueState key={i} name={name} state={queues[name]}/>)
-                }
-            </div>
-        )
-    }
+    return (
+        <div>
+            {
+                Object.keys(queues).map((name, i) => <QueueState key={i} name={name} state={queues[name]}/>)
+            }
+        </div>
+    )
 }
