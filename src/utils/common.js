@@ -11,6 +11,7 @@ import update from "immutability-helper/index";
 import PropTypes from 'prop-types';
 import Panel from "react-bootstrap/lib/Panel";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
+import moment from "moment";
 
 
 export const NotAllowed = () => (
@@ -129,10 +130,13 @@ export class Search extends React.Component {
     _filterCriteriaAsSpec(filter_criteria) {
         return Object.keys(filter_criteria)
             .filter(f => this._usableCriteria(filter_criteria[f]))
-            .map(f => (
-                {field: f, op: filter_criteria[f].op, value: filter_criteria[f].value}
-                )
-            );
+            .map(f => {
+                let value = filter_criteria[f].value;
+                if(value instanceof Date) {
+                    value = moment(value).local().format();
+                }
+                return {field: f, op: filter_criteria[f].op, value: value}
+            });
     }
 
     _normalizeResource(e) {

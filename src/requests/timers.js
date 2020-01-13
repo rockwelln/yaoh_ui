@@ -108,7 +108,7 @@ class UpdateTimer extends React.Component {
                                         selected={moment(timer_.at).toDate()}
                                         onChange={d => this.setState({
                                             diffTimer: update(
-                                                diffTimer, {$merge: {at: d.toISOString()}})
+                                                diffTimer, {$merge: {at: moment(d).local().format()}})
                                         })}
                                         dateFormat="dd/MM/yyyy HH:mm"
                                         showTimeInput />
@@ -173,7 +173,7 @@ export default class Timers extends Search {
         defaultCriteria: {
             key: {value: '', op: 'eq'},
             at: {value: '', op: 'eq'},
-            created_on: {value: '', op: 'eq'},
+            created_on: {value: '', op: 'gt'},
             status: {value: '', op: 'eq'},
         },
         defaultSortingSpec: [{
@@ -189,7 +189,7 @@ export default class Timers extends Search {
 
     render() {
         const {filter_criteria, resources, sorting_spec, pagination, selected_timers} = this.state;
-        const invalid_created_on = filter_criteria.created_on.value.length !== 0 && !moment(filter_criteria.created_on.value, "DD/MM/YYYY HH:mm").isValid();
+        const invalid_created_on = filter_criteria.created_on.value && !moment(filter_criteria.created_on.value).isValid();
         return (
             <div>
                  <Breadcrumb>
@@ -290,22 +290,13 @@ export default class Timers extends Search {
                                 <Col sm={8}>
                                     <DatePicker
                                         className="form-control"
-                                        selected={filter_criteria.created_on.value.length !== 0?moment(filter_criteria.created_on.value, "DD/MM/YYYY HH:mm"):null}
-                                        onChangeRaw={d => {
-                                            this.setState({
-                                                filter_criteria: update(
-                                                    this.state.filter_criteria,
-                                                    {created_on: {$merge: {value: d.target.value}}})
-                                            });
-                                            d.target.value.length === 0 && d.preventDefault();
-                                        }}
+                                        selected={filter_criteria.created_on.value}
                                         onChange={d => this.setState({
                                             filter_criteria: update(
                                                 this.state.filter_criteria,
-                                                {created_on: {$merge: {value: d.format("DD/MM/YYYY HH:mm")}}})
+                                                {created_on: {$merge: {value: d}}})
                                         })}
-                                        dateFormat="DD/MM/YYYY HH:mm"
-                                        locale="fr-fr"
+                                        dateFormat="dd/MM/yyyy HH:mm"
                                         showTimeSelect
                                         timeFormat="HH:mm"
                                         timeIntervals={60}/>

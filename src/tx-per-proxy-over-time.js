@@ -23,7 +23,7 @@ export default class ProxyRequestsOverTime extends Component {
     state = {
         data: undefined,
         names: {},
-        start: moment().subtract(DEFAULT_NB_DAYS, "days"),
+        start: moment().subtract(DEFAULT_NB_DAYS, "days").toDate(),
         end: undefined,
     };
 
@@ -35,7 +35,7 @@ export default class ProxyRequestsOverTime extends Component {
             end = moment();
         }
         fetch_get(
-            `/api/v01/apio/proxy_stats?start=${start.format('YYYY-MM-DD')}&end=${end.endOf('day').format('YYYY-MM-DDTHH:mm:ss')}`
+            `/api/v01/apio/proxy_stats?start=${moment(start).format('YYYY-MM-DD')}&end=${moment(end).endOf('day').format('YYYY-MM-DDTHH:mm:ss')}`
         )
         .then(data => !this.cancelLoad && this.setState({data: data.requests}))
         .catch(console.error);
@@ -158,7 +158,7 @@ export default class ProxyRequestsOverTime extends Component {
                                         onChange={d => this.setState({
                                             start: d
                                         })}
-                                        dateFormat="DD/MM/YYYY"
+                                        dateFormat="dd/MM/yyyy"
                                         locale="fr-fr" />
                                 </Col>
                             </FormGroup>
@@ -174,7 +174,7 @@ export default class ProxyRequestsOverTime extends Component {
                                         onChange={d => this.setState({
                                             end: d
                                         })}
-                                        dateFormat="DD/MM/YYYY"
+                                        dateFormat="dd/MM/yyyy"
                                         locale="fr-fr" />
                                     <HelpBlock><FormattedMessage id="end-help-note" defaultMessage="Leave empty to analyze up until now"/></HelpBlock>
                                 </Col>

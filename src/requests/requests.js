@@ -2141,14 +2141,19 @@ export class Requests extends Component{
                             op: filter_criteria[f].op,
                             value: filter_criteria[f].value
                         };
+                    case 'created_on':
+                        return {
+                            model: filter_criteria[f].model,
+                            field: f,
+                            op: filter_criteria[f].op,
+                            value: moment(filter_criteria[f].value).local().format()
+                        };
                     default:
                         return {
                             model: filter_criteria[f].model, // needed in multi-model query
                             field: f,
                             op: filter_criteria[f].op,
-                            value: f === 'created_on' || f === 'due_date' ?
-                                moment(filter_criteria[f].value, 'DD/MM/YYYY HH:mm').format() :
-                                filter_criteria[f].value.trim()
+                            value: filter_criteria[f].value.trim()
                         }
                 }
             });
@@ -2291,7 +2296,7 @@ export class Requests extends Component{
     render() {
         const { filter_criteria, requests, activities, export_url, auto_refresh, sorting_spec, selected_reqs, proxy_hosts} = this.state;
         const { user_info } = this.props;
-        const invalid_created_on = filter_criteria.created_on.value.length !== 0 && !moment(filter_criteria.created_on.value, "DD/MM/YYYY HH:mm").isValid();
+        const invalid_created_on = filter_criteria.created_on.value.length !== 0 && !moment(filter_criteria.created_on.value).isValid();
         const request_entities = user_info.modules && user_info.modules.includes(modules.orange) ? "request_entities" : "requests";
         const proxy_activated = user_info.modules && user_info.modules.includes(modules.proxy);
 
@@ -2722,21 +2727,15 @@ export class Requests extends Component{
                                 <Col sm={8}>
                                     <DatePicker
                                         className="form-control"
-                                        selected={filter_criteria.created_on.value.length !== 0?moment(filter_criteria.created_on.value, "DD/MM/YYYY HH:mm"):null}
-                                        onChangeRaw={d => {
+                                        selected={filter_criteria.created_on.value.length !== 0?moment(filter_criteria.created_on.value).toDate():null}
+                                        onChange={d => {
                                             this.setState({
                                                 filter_criteria: update(
                                                     this.state.filter_criteria,
-                                                    {created_on: {$merge: {value: d.target.value}}})
-                                            });
-                                            d.target.value.length === 0 && d.preventDefault();
+                                                    {created_on: {$merge: {value: d || ""}}})
+                                            })
                                         }}
-                                        onChange={d => this.setState({
-                                            filter_criteria: update(
-                                                this.state.filter_criteria,
-                                                {created_on: {$merge: {value: d.format("DD/MM/YYYY HH:mm")}}})
-                                        })}
-                                        dateFormat="DD/MM/YYYY HH:mm"
+                                        dateFormat="dd/MM/yyyy HH:mm"
                                         locale="fr-fr"
                                         showTimeSelect
                                         timeFormat="HH:mm"
@@ -3019,15 +3018,20 @@ export class CustomRequests extends Component{
                             op: criteria.op,
                             value: criteria.value
                         };
+                    case 'created_on':
+                        return {
+                            model: criteria.model,
+                            field: f,
+                            op: criteria.op,
+                            value: moment(criteria.value).local().format()
+                        };
                     default:
                         return {
                             model: criteria.model, // needed in multi-model query
                             field: f,
                             op: criteria.op,
-                            value: f === 'created_on' || f === 'due_date' ?
-                                moment(criteria.value, 'DD/MM/YYYY HH:mm').format() :
-                                criteria.value.trim()
-                        }
+                            value: criteria.value.trim()
+                        };
                 }
             });
         url.searchParams.append('filter', JSON.stringify(filter_spec));
@@ -3275,21 +3279,13 @@ export class CustomRequests extends Component{
                                 <Col sm={8}>
                                     <DatePicker
                                         className="form-control"
-                                        selected={filter_criteria.created_on.value.length !== 0?moment(filter_criteria.created_on.value, "DD/MM/YYYY HH:mm"):null}
-                                        onChangeRaw={d => {
-                                            this.setState({
-                                                filter_criteria: update(
-                                                    this.state.filter_criteria,
-                                                    {created_on: {$merge: {value: d.target.value}}})
-                                            });
-                                            d.target.value.length === 0 && d.preventDefault();
-                                        }}
+                                        selected={filter_criteria.created_on.value.length !== 0?moment(filter_criteria.created_on.value).toDate():null}
                                         onChange={d => this.setState({
                                             filter_criteria: update(
                                                 this.state.filter_criteria,
-                                                {created_on: {$merge: {value: d.format("DD/MM/YYYY HH:mm")}}})
+                                                {created_on: {$merge: {value: d || ""}}})
                                         })}
-                                        dateFormat="DD/MM/YYYY HH:mm"
+                                        dateFormat="dd/MM/yyyy HH:mm"
                                         locale="fr-fr"
                                         showTimeSelect
                                         timeFormat="HH:mm"
