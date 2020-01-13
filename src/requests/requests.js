@@ -1971,7 +1971,7 @@ export class Requests extends Component{
         super(props);
         this.cancelLoad = false;
         this.state = {
-            filter_criteria: Requests.criteria_from_params(this.props.location.search, this.props.user_info),
+            filter_criteria: Requests.criteria_from_params(this.props.location.search),
             paging_info: {
                 page_number: 1, page_size: 50
             },
@@ -1998,13 +1998,12 @@ export class Requests extends Component{
         this._onClose = this._onClose.bind(this);
     }
 
-    static default_criteria(ui_profile, modules) {
-        const request_entities = modules.includes(modules.orange) ? 'request_entities' : 'requests';
+    static default_criteria() {
         return {
             activity_id: { model: 'instances', value: '', op: 'eq' },
-            tenant_id: { model: request_entities, value: '', op: 'eq' },
-            site_id: { model: request_entities, value: '', op: 'eq' },
-            number: { model: request_entities, value: '', op: 'like' },
+            tenant_id: { model: 'requests', value: '', op: 'eq' },
+            site_id: { model: 'requests', value: '', op: 'eq' },
+            number: { model: 'requests', value: '', op: 'like' },
             status: { model: 'instances', value: '', op: 'eq' },
             kind: { model: 'instances', value: '', op: 'eq' },
             created_on: { model: 'requests', value: '', op: 'ge' },
@@ -2020,8 +2019,7 @@ export class Requests extends Component{
         }
     }
 
-    static criteria_from_params(url_params, user_info) {
-        const {ui_profile, modules} = user_info;
+    static criteria_from_params(url_params) {
         const params = queryString.parse(url_params);
         let custom_params = {};
         if (params.filter !== undefined) {
@@ -2030,7 +2028,7 @@ export class Requests extends Component{
             } catch (e) { console.error(e) }
         }
         return update(
-            Requests.default_criteria(ui_profile, modules),
+            Requests.default_criteria(),
             {$merge: custom_params}
         );
     }
@@ -2050,7 +2048,7 @@ export class Requests extends Component{
         if (nextProps.location.pathname === this.props.location.pathname &&
             nextProps.location.search !== this.props.location.search) {
             this.setState({
-                filter_criteria: Requests.criteria_from_params(nextProps.location.search, nextProps.user_info)
+                filter_criteria: Requests.criteria_from_params(nextProps.location.search)
             });
         }
     }
@@ -2072,6 +2070,7 @@ export class Requests extends Component{
         const url = new URL(`${API_URL_PREFIX}/api/v01/apio/requests/${action?action:"search"}`);
         // filter
         const {filter_criteria} = this.state;
+        const request_data_model = this.props.user_info.modules.includes(modules.orange) ? 'request_entities' : 'requests';
         const filter_spec = Object.keys(filter_criteria)
             .filter(f =>
                 filter_criteria[f] &&
@@ -2086,7 +2085,7 @@ export class Requests extends Component{
                     case 'number':
                         // special handling to look into the ranges of the requests
                         return {
-                            model: filter_criteria[f].model,
+                            model: request_data_model,
                             field: 'numbers',
                             op: filter_criteria[f].op,
                             value: '%' + filter_criteria[f].value.trim() + '%'
@@ -2134,6 +2133,14 @@ export class Requests extends Component{
                     case 'end_task_status':
                         // filter transparently sent
                         return filter_criteria[f];
+                    case 'tenant_id':
+                    case 'site_id':
+                        return {
+                            model: request_data_model,
+                            field: f,
+                            op: filter_criteria[f].op,
+                            value: filter_criteria[f].value
+                        };
                     default:
                         return {
                             model: filter_criteria[f].model, // needed in multi-model query
