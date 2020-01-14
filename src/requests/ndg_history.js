@@ -58,10 +58,10 @@ export class NdgHistory extends Search {
             site_id: {value: '', op: 'eq'},
             ndg: {value: '', op: 'eq'},
             ndgUserId: {value: '', op: 'eq'},
-            when: {value: '', op: 'eq'},
+            created_on: {value: '', op: 'eq'},
         },
         defaultSortingSpec: [{
-            field: 'when', direction: 'desc'
+            field: 'created_on', direction: 'desc'
         }],
     }});
 
