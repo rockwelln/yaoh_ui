@@ -467,7 +467,7 @@ class BulkEntry extends Component {
         const {results} = this.state;
         if(!results.length) return null;
 
-        const completed = results.filter(r => r.instance.status !== "ACTIVE").length;
+        const completed = results.filter(r => r.status !== "active" || (r.instance && r.instance.status !== "ACTIVE")).length;
         return `${completed} / ${results.length}`;
     }
 
