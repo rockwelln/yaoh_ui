@@ -283,6 +283,13 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
                       <FormattedMessage id="bulk" defaultMessage="Bulk"/>
                   </MenuItem>
               </LinkContainer>
+              { isAllowed(user_info.ui_profile, pages.bulk_actions) && isAllowed(user_info.ui_profile, pages.system) &&
+                  <LinkContainer to={"/system/bulk_actions"}>
+                      <MenuItem>
+                          <FormattedMessage id="bulk-actions" defaultMessage="Bulk actions"/>
+                      </MenuItem>
+                  </LinkContainer>
+              }
           </NavDropdown>
           }
 
@@ -373,13 +380,6 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
                               </MenuItem>
                           </LinkContainer>
                       ]
-                  }
-                  { isAllowed(user_info.ui_profile, pages.bulk_actions) &&
-                      <LinkContainer to={"/system/bulk_actions"}>
-                          <MenuItem>
-                              <FormattedMessage id="bulk-actions" defaultMessage="Bulk actions"/>
-                          </MenuItem>
-                      </LinkContainer>
                   }
                   { isAllowed(user_info.ui_profile, pages.system_logs) &&
                       [
