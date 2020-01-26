@@ -67,6 +67,7 @@ import {Webhooks} from "./system/webhooks";
 import {ListProvisioningGateways, provisioningRoutes} from "./provisioning";
 import LogsManagement from "./system/logs";
 import UserProfiles from "./system/user_profiles";
+import Templates from "./system/templates";
 
 const ListItemLink = ({to, children}) => (
     <Route path={to} children={({match}) => (
@@ -381,9 +382,18 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
                           </LinkContainer>
                       ]
                   }
-                  { isAllowed(user_info.ui_profile, pages.system_logs) &&
+                  { isAllowed(user_info.ui_profile, pages.system_templates) &&
                       [
                           <MenuItem key="divider-4" divider/>,
+                          <LinkContainer to={"/system/templates"} key="templates">
+                              <MenuItem>
+                                  <FormattedMessage id="templates" defaultMessage="Templates"/>
+                              </MenuItem>
+                          </LinkContainer>
+                      ]
+                  }
+                  { isAllowed(user_info.ui_profile, pages.system_logs) &&
+                      [
                           <LinkContainer to={"/system/logs"} key="logs">
                               <MenuItem>
                                   <FormattedMessage id="logs" defaultMessage="Logs"/>
@@ -851,6 +861,13 @@ class App extends Component {
                                component={props => (
                                    isAllowed(ui_profile, pages.bulk_actions) ?
                                        <BulkActions {...props} />:
+                                       <NotAllowed />
+                               )}
+                               exact />
+                        <Route path="/system/templates"
+                               component={props => (
+                                   isAllowed(ui_profile, pages.system_templates) ?
+                                       <Templates />:
                                        <NotAllowed />
                                )}
                                exact />
