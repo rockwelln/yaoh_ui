@@ -703,7 +703,7 @@ function createInput(param, value, cells, cells_defs) {
                     return opt;
                 })
                 .forEach(o => input.appendChild(o));
-            input.value = value;
+            input.value = value || "";
             break;
         case 'timer':
             input = document.createElement('select');
@@ -722,7 +722,7 @@ function createInput(param, value, cells, cells_defs) {
                     return opt;
                 })
                 .forEach(o => input.appendChild(o));
-            input.value = value;
+            input.value = value || null;
             break;
         case 'list':
             input = document.createElement('select');
@@ -740,7 +740,7 @@ function createInput(param, value, cells, cells_defs) {
             input.innerText = value;
             input.rows = 10;
             input.className = 'form-control';
-            input.value = value;
+            input.value = value || "";
             break;
         case 'bool':
             // todo: should become a checkbox!!
@@ -757,7 +757,7 @@ function createInput(param, value, cells, cells_defs) {
         default:
             input = document.createElement('input');
             input.type = 'text';
-            input.value = value;
+            input.value = value || "";
             input.className = 'form-control';
             break;
     }
@@ -940,7 +940,7 @@ function newCell(defs, cells, modal, editor, spacer, entities_defs) {
             c.params && c.params.map(p => {
                 const param_name = p.name || p;
                 let e = paramsFields[param_name];
-                node.setAttribute(param_name, e.value);
+                node.setAttribute(param_name, e.value || '');
                 return null;
             });
             let v = undefined;
@@ -1019,29 +1019,30 @@ function editCellProperty(cell, modal, spacer, editable, cells_defs, cells, refr
     // 3. add the possible parameters (+ values)
     let form = document.createElement('form');
     let attrs = {};
-    if(cell.getAttribute('attrList') !== undefined) {
-        cell.getAttribute('attrList').split(',').map(a => {
-            let gp = document.createElement('div');
-            gp.className = 'form-group';
+    let params_list = cell_def?cell_def.params.map(p => p.name):[];
+    params_list.concat(cell.getAttribute('attrList') ? cell.getAttribute('attrList').split(',') : []);
 
-            let name = document.createElement('label');
-            name.innerHTML = a;
-            gp.appendChild(name);
+    params_list.map(a => {
+        let gp = document.createElement('div');
+        gp.className = 'form-group';
 
-            let p = a;
-            if(cell_def) {
-                p = cell_def.params.find(p => p.name === a || p === a);
-            }
-            const value = createInput(p, cell.getAttribute(a), cells, cells_defs);
+        let name = document.createElement('label');
+        name.innerHTML = a;
+        gp.appendChild(name);
 
-            if(!editable) value.disabled="disabled";
-            gp.appendChild(value);
-            attrs[a] = value;
+        let p = a;
+        if(cell_def) {
+            p = cell_def.params.find(p => p.name === a || p === a);
+        }
+        const value = createInput(p, cell.getAttribute(a), cells, cells_defs);
 
-            form.appendChild(gp);
-            return null;
-        })
-    }
+        if(!editable) value.disabled="disabled";
+        gp.appendChild(value);
+        attrs[a] = value;
+
+        form.appendChild(gp);
+        return null;
+    });
 
     // 4. allow changing outputs (order)
     let list_;
@@ -1111,7 +1112,7 @@ function editCellProperty(cell, modal, spacer, editable, cells_defs, cells, refr
             e.preventDefault();
             // 4.1 save params in the cell.
             if (cell.getAttribute('attrList') !== undefined) {
-                const params = cell.getAttribute('attrList').split(',');
+                const params = cell_def ? cell_def.params.map(p => p.name) : cell.getAttribute('attrList').split(',');
                 // 4.2 validate inputs if possible
                 if(cell_def && cell_def.params && params.map(a => {
                     const p = cell_def.params.find(p => p.name === a || p === a);
@@ -1125,6 +1126,7 @@ function editCellProperty(cell, modal, spacer, editable, cells_defs, cells, refr
                 }
 
                 params.forEach(a => cell.setAttribute(a, attrs[a].value));
+                cell.setAttribute('attrList', params.map(p => p.name || p).join(','))
             }
             if(cell.getAttribute('outputs') || (cell_def && cell_def.outputs)) {
                 const outputs = Array.from(list_.childNodes).filter(c => c.childNodes[0].checked).map(c => c.childNodes[1].innerText).join(',');
