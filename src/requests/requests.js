@@ -1155,8 +1155,8 @@ export class Transaction extends Component {
             messages: [],
             messageShown: true,
             subrequests: [],
-            subrequestsShown: true,
             subrequests_paging_info: {page_number: 1, page_size: SUB_REQUESTS_PAGE_SIZE},
+            subrequestsFilter: "all",
             externalCallbacks: [],
             logs: [],
             events: [],
@@ -1221,9 +1221,7 @@ export class Transaction extends Component {
         if(this.state.messageShown) {
             this.refreshMessages();
         }
-        if(this.state.subrequestsShown) {
-            this.refreshSubInstances();
-        }
+        this.refreshSubInstances();
     }
 
     fetchDetails() {
@@ -1298,9 +1296,7 @@ export class Transaction extends Component {
                 if(this.state.messageShown) {
                     this.refreshMessages();
                 }
-                if(this.state.subrequestsShown) {
-                    this.refreshSubInstances();
-                }
+                this.refreshSubInstances();
                 
                 reload && setTimeout(() => this.fetchTxDetails(true), RELOAD_TX);
             })
@@ -1346,7 +1342,8 @@ export class Transaction extends Component {
                 externalCallbacks: [],
                 messages: [],
                 subrequests: [],
-                subrequests_paging_info: {page_number: 1, page_size: SUB_REQUESTS_PAGE_SIZE}
+                subrequests_paging_info: {page_number: 1, page_size: SUB_REQUESTS_PAGE_SIZE},
+                subrequestsFilter: "all"
             });
             if(USE_WS) {
                 this.websocket && this.websocket.send(JSON.stringify({"reload": true}));
@@ -1430,9 +1427,12 @@ export class Transaction extends Component {
         });
     }
 
-    refreshSubInstances(p) {
-        const {subrequests_paging_info} = this.state;
-        const url = new URL(API_URL_PREFIX + `/api/v01/apio/transactions/${this.state.tx.id}/sub_requests`);
+    refreshSubInstances(p, f) {
+        const {subrequests_paging_info, subrequestsFilter, tx} = this.state;
+        const url = new URL(API_URL_PREFIX + `/api/v01/apio/transactions/${tx.id}/sub_requests`);
+        // filtering
+        url.searchParams.append('filter', f || subrequestsFilter);
+
         // paging
         const paging_spec = p === undefined ? subrequests_paging_info : update(subrequests_paging_info, {$merge: p});
         url.searchParams.append('paging', JSON.stringify(paging_spec));
@@ -1448,6 +1448,7 @@ export class Transaction extends Component {
                         total_results: data.pagination[3],
                     },
                     subrequests_paging_info: paging_spec,
+                    subrequestsFilter: data.filter,
                 });
             })
             .catch(error => console.error(error));
@@ -1549,10 +1550,10 @@ export class Transaction extends Component {
             messages,
             subrequests,
             messageShown,
-            subrequestsShown,
             subrequests_pagination,
             externalCallbacks,
             timers,
+            subrequestsFilter,
         } = this.state;
         const {user_info, auth_token} = this.props;
 
@@ -1713,20 +1714,23 @@ export class Transaction extends Component {
                             )
                         }
                         {
-                            subrequests.length !== 0 && (
-                                <Panel
-                                    expanded={subrequestsShown}
-                                    onToggle={e => {
-                                        this.setState({subrequestsShown: e});
-                                        e && this.refreshSubInstances();
-                                    }}
-                                >
+                            (subrequests.length !== 0 || subrequestsFilter !== "all") && (
+                                <Panel>
                                     <Panel.Heading>
-                                        <Panel.Title toggle>
+                                        <Panel.Title>
                                             <FormattedMessage id="sub-instances" defaultMessage="Sub instances"/>
+                                            <select
+                                                className="pull-right"
+                                                value={subrequestsFilter}
+                                                onChange={e => this.refreshSubInstances(undefined, e.target.value)}
+                                            >
+                                                <option value="all">all</option>
+                                                <option value="active">active</option>
+                                                <option value="blocked">active & blocked</option>
+                                            </select>
                                         </Panel.Title>
                                     </Panel.Heading>
-                                    <Panel.Body collapsible>
+                                    <Panel.Body>
                                         <SubRequestsTable
                                             subrequests={subrequests}
                                             tasks={tx.tasks}
