@@ -679,6 +679,30 @@ function isValid(p, v) {
     return true;
 }
 
+function getHelpbox(nature, helpText) {
+    const span = document.createElement("span");
+    span.style = "color: grey";
+    span.className = "help-block";
+    if(helpText) {
+        span.innerText = helpText;
+    } else {
+        switch (nature) {
+            case "python_bool":
+                span.innerText = "A piece of python code which can be evaluated into True or False (ex: request.body['flag'] == '1')";
+                break;
+            case "url":
+                span.innerText = "A jinja2 template which output a valid and complete URL";
+                break;
+            case "json":
+                span.innerText = "A jinja2 template which output a valid JSON";
+                break;
+            default:
+                return null;
+        }
+    }
+    return span;
+}
+
 const TIMER = 2; // refer to TaskType enum in the API server.
 
 function createInput(param, value, cells, cells_defs) {
@@ -735,10 +759,12 @@ function createInput(param, value, cells, cells_defs) {
             }).forEach(o => input.appendChild(o));
             input.value = value;
             break;
+        case 'jinja':
+        case 'python':
         case 'json':
             input = document.createElement('textarea');
             input.innerText = value;
-            input.rows = 10;
+            input.rows = param.nature === "jinja" ? 4: 10;
             input.className = 'form-control';
             input.value = value || "";
             break;
@@ -878,6 +904,9 @@ function newCell(defs, cells, modal, editor, spacer, entities_defs) {
                 const value = createInput(param, '', cells, defs);
                 gp.appendChild(value);
                 paramsFields[param_name] = value;
+
+                const help = getHelpbox(param.nature, param.help);
+                help && gp.appendChild(help);
 
                 params.appendChild(gp);
 
@@ -1039,6 +1068,9 @@ function editCellProperty(cell, modal, spacer, editable, cells_defs, cells, refr
         if(!editable) value.disabled="disabled";
         gp.appendChild(value);
         attrs[a] = value;
+
+        const help = getHelpbox(p.nature, p.help);
+        help && gp.appendChild(help);
 
         form.appendChild(gp);
         return null;
