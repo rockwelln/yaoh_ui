@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useEffect, useState} from "react";
 import {FormattedMessage} from "react-intl";
 
 import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
@@ -42,69 +42,60 @@ const JSON_TRANS_OPTIONS_SAMPLE = (
 );
 
 
-class Playground extends React.Component {
-    state = {
-        input : "",
-        output: "",
-        error: ""
+function playground(input, validation_schema, options, onError, onSuccess) {
+    fetch_post(`/api/v01/bulks/actions/t_playground`,
+        {
+            input: input,
+            validation_schema: validation_schema && JSON.parse(validation_schema),
+            options: options && JSON.parse(options)
+        })
+        .then(resp => resp.json())
+        .then(data => onSuccess(data.output))
+        .catch(error => onError(error.message))
+}
+
+
+function Playground(props) {
+    const [input, setInput] = useState("");
+    const [output, setOutput] = useState("");
+    const [error, setError] = useState("");
+
+    const onPlayground = () => {
+        setError("");
+        playground(input, props.validation_schema, props.options, msg => {setError(msg); setOutput("");}, setOutput);
     };
 
-    componentWillUnmount() {
-        this.cancelLoad = true;
-    }
-
-    onPlayground() {
-        const {input} = this.state;
-        const {validation_schema, options} = this.props;
-
-        this.setState({error: undefined});
-
-        fetch_post(`/api/v01/bulks/actions/t_playground`,
+    return (
+        <div>
+            <Row>
+                <Col sm={10}>
+                    <FormControl
+                        componentClass="textarea"
+                        value={input || ""}
+                        rows={2}
+                        placeholder="input..."
+                        onChange={e => setInput(e.target.value)} />
+                </Col>
+                <Col sm={1}>
+                    <Button
+                        onClick={onPlayground}
+                        disabled={!input}>
+                        <FormattedMessage id="try" defaultMessage="Try"/>
+                    </Button>
+                </Col>
+            </Row>
             {
-                input: input,
-                validation_schema: validation_schema && JSON.parse(validation_schema),
-                options: options && JSON.parse(options)
-            })
-            .then(resp => resp.json())
-            .then(data => !this.cancelLoad && this.setState({output: data.output}))
-            .catch(error => !this.cancelLoad && this.setState({error: error.message, output: ""}))
-    }
-
-    render() {
-        const {input, output, error} = this.state;
-
-        return (
-            <div>
-                <Row>
-                    <Col sm={10}>
-                        <FormControl
-                            componentClass="textarea"
-                            value={input || ""}
-                            rows={2}
-                            placeholder="input..."
-                            onChange={e => this.setState({input: e.target.value})} />
-                    </Col>
-                    <Col sm={1}>
-                        <Button
-                            onClick={this.onPlayground.bind(this)}
-                            disabled={!input}>
-                            <FormattedMessage id="try" defaultMessage="Try"/>
-                        </Button>
-                    </Col>
-                </Row>
-                {
-                    error &&
-                        <HelpBlock style={{color: "red"}}>{error}</HelpBlock>
-                }
-                <FormControl
-                    componentClass="textarea"
-                    value={output ? JSON.stringify(output, null, 4) : ""}
-                    rows={5}
-                    placeholder="playground output..."
-                    readOnly />
-            </div>
-        )
-    }
+                error &&
+                    <HelpBlock style={{color: "red"}}>{error}</HelpBlock>
+            }
+            <FormControl
+                componentClass="textarea"
+                value={output ? JSON.stringify(output, null, 4) : ""}
+                rows={5}
+                placeholder="playground output..."
+                readOnly />
+        </div>
+    )
 }
 
 
@@ -841,62 +832,51 @@ class Action extends React.Component {
     }
 }
 
-export class BulkActions extends React.Component {
-    state = {
-        actions: []
-    };
+function fetchActions(onLoading, onSuccess) {
+    onLoading();
+    fetch_get("/api/v01/bulks/actions")
+        .then(data => onSuccess(data.actions))
+        .catch(error => NotificationsManager.error(
+            <FormattedMessage id="list-actions-error" defaultMessage="Failed to list actions"/>,
+            error.message
+        ))
+}
 
-    fetchActions() {
-        this.setState({actions: []});
-        fetch_get("/api/v01/bulks/actions")
-            .then(data => !this.cancelLoad && this.setState({actions: data.actions}))
-            .catch(error => NotificationsManager.error(
-                <FormattedMessage id="list-actions-error" defaultMessage="Failed to list actions"/>,
-                error.message
-            ))
-    }
+export function BulkActions(props) {
+    const [actions, setActions] = useState([]);
+    const fetchActions_ = () => fetchActions(() => setActions([]), setActions);
+    useEffect(fetchActions_, []);
 
-    componentDidMount() {
-        this.fetchActions()
-    }
+    return (
+        <div>
+            <Breadcrumb>
+                <Breadcrumb.Item active><FormattedMessage id="system" defaultMessage="System"/></Breadcrumb.Item>
+                <Breadcrumb.Item active><FormattedMessage id="bulk-actions" defaultMessage="Bulk actions"/></Breadcrumb.Item>
+            </Breadcrumb>
 
-    componentWillUnmount() {
-        this.cancelLoad = true;
-    }
+            { actions.length === 0 ?
+                <Alert bsStyle="info">
+                    <FormattedMessage id="no-action" defaultMessage="No action defined"/>
+                </Alert>
+                :
+                actions.sort((a, b) => a.id - b.id).map((a, i) =>
+                    <Action
+                        key={i}
+                        action={a}
+                        onUpdate={fetchActions_}
+                        onDelete={fetchActions_} />
+                )
+            }
 
-    render() {
-        const {actions} = this.state;
-        return (
-            <div>
-                <Breadcrumb>
-                    <Breadcrumb.Item active><FormattedMessage id="system" defaultMessage="System"/></Breadcrumb.Item>
-                    <Breadcrumb.Item active><FormattedMessage id="bulk-actions" defaultMessage="Bulk actions"/></Breadcrumb.Item>
-                </Breadcrumb>
-
-                { actions.length === 0 ?
-                    <Alert bsStyle="info">
-                        <FormattedMessage id="no-action" defaultMessage="No action defined"/>
-                    </Alert>
-                    :
-                    actions.sort((a, b) => a.id - b.id).map((a, i) =>
-                        <Action
-                            key={i}
-                            action={a}
-                            onUpdate={this.fetchActions.bind(this)}
-                            onDelete={this.fetchActions.bind(this)} />
-                    )
-                }
-
-                <Panel>
-                    <Panel.Body>
-                        <ButtonToolbar>
-                            <NewAction
-                                onClose={this.fetchActions.bind(this)}
-                                {...this.props} />
-                        </ButtonToolbar>
-                    </Panel.Body>
-                </Panel>
-            </div>
-        )
-    }
+            <Panel>
+                <Panel.Body>
+                    <ButtonToolbar>
+                        <NewAction
+                            onClose={fetchActions_}
+                            {...props} />
+                    </ButtonToolbar>
+                </Panel.Body>
+            </Panel>
+        </div>
+    )
 }
