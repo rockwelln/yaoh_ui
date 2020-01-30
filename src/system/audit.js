@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, {useState} from 'react';
 import {fetch_get} from "../utils";
 import Panel from 'react-bootstrap/lib/Panel';
 import Button from 'react-bootstrap/lib/Button';
@@ -34,21 +34,14 @@ const audit_target_types = [
 ];
 
 
-class AuditActions extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            showDetails: false,
-        };
-    }
+function AuditActions(props) {
+    const {entry} = props;
+    const [showDetails, setShowDetails] = useState(false);
+    const onClose = () => setShowDetails(false);
 
-    render() {
-        const {entry} = this.props;
-        const {showDetails} = this.state;
-        const onClose = () => this.setState({showDetails: false});
-
-        return (<div>
-            <Button onClick={() => this.setState({showDetails: true})} bsStyle="info">
+    return (
+        <div>
+            <Button onClick={() => setShowDetails(true)} bsStyle="info">
                 <Glyphicon glyph="search"/>
             </Button>
             {
@@ -78,8 +71,8 @@ class AuditActions extends Component {
                     </Modal>
                 )
             }
-        </div>);
-    }
+        </div>
+    );
 }
 
 export class AuditLogs extends Search {
