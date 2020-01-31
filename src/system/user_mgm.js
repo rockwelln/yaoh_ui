@@ -228,8 +228,10 @@ function UpdateUser(props) {
     }, [props.show]);
     const localUser = update(user, {$merge: diffUser});
     const delta = {...diffUser};
-    if(delta.newPassword) {
-        delta.password = delta.newPassword;
+    if(delta.hasOwnProperty("newPassword")) {
+        if(delta.newPassword) {
+            delta.password = delta.newPassword;
+        }
         delete delta.newPassword;
         delete delta.confirmPassword;
     }
@@ -241,9 +243,9 @@ function UpdateUser(props) {
     const validEmail = (localUser.email === user.email) ? null : (localUser.email.indexOf('@') !== -1) ? "success" : "error";
     // a password is at least 8 characters long
     const validPassword = (diffUser.newPassword === '' || diffUser.newPassword === undefined) ? null : (diffUser.newPassword.length >= 7) ? "success" : "error";
-    const validRepPassword = (diffUser.confirmPassword === '' || diffUser.newPassword === undefined) ? null : (diffUser.confirmPassword === diffUser.newPassword) ? "success" : "error";
+    const validRepPassword = (diffUser.newPassword === '' || diffUser.newPassword === undefined) ? null : (diffUser.confirmPassword === diffUser.newPassword) ? "success" : "error";
 
-    const validForm = validUsername !== 'error' && validEmail !== 'error' && validPassword !== 'error' && validRepPassword !== 'error' && Object.keys(diffUser).length !== 0;
+    const validForm = validUsername !== 'error' && validEmail !== 'error' && validPassword !== 'error' && validRepPassword !== 'error' && Object.keys(delta).length !== 0;
 
     return (
         <Modal show={props.show} onHide={onClose} backdrop={false} bsSize="large">
@@ -276,6 +278,7 @@ function UpdateUser(props) {
                                 <FormControl
                                     componentClass="input"
                                     value={localUser.email}
+                                    autocomplete="off"
                                     onChange={e => setDiffUser(update(diffUser, {$merge: {email: e.target.value}}))}/>
                             </Col>
                         </FormGroup>
@@ -304,6 +307,7 @@ function UpdateUser(props) {
                                     componentClass="select"
                                     value={localUser.profile_id}
                                     onChange={e => setDiffUser(update(diffUser, {$merge: {profile_id: e.target.value && parseInt(e.target.value, 10)}}))}>
+                                    <option value={null}>*none*</option>
                                     {
                                         profiles.sort((a, b) => a.id - b.id).map((p, i) => <option key={`profile${i}`} value={p.id}>{p.name}</option>)
                                     }
@@ -358,6 +362,7 @@ function UpdateUser(props) {
                                     componentClass="input"
                                     placeholder="Password"
                                     type="password"
+                                    autocomplete="off"
                                     value={localUser.newPassword || ''}
                                     onChange={e => setDiffUser(update(diffUser, {$merge: {newPassword: e.target.value}}))}/>
                             </Col>
@@ -372,6 +377,7 @@ function UpdateUser(props) {
                                     componentClass="input"
                                     placeholder="Confirm password"
                                     type="password"
+                                    autocomplete="off"
                                     value={localUser.confirmPassword || ''}
                                     onChange={e => setDiffUser(update(diffUser, {$merge: {confirmPassword: e.target.value}}))}/>
                             </Col>
@@ -450,10 +456,7 @@ function NewUser(props) {
     const [profiles, setProfiles] = useState([]);
     useEffect(() => {
         props.show && fetch_get("/api/v01/system/user_profiles")
-            .then(data => {
-                setProfiles(data.profiles);
-                setUser(update(user, {$merge: {profile_id: data.profiles[0].id}}));
-            })
+            .then(data => setProfiles(data.profiles))
     }, [props.show]);
 
     // email has to contain @
@@ -491,6 +494,7 @@ function NewUser(props) {
                         <Col sm={9}>
                             <FormControl
                                 componentClass="input"
+                                autocomplete="off"
                                 value={user.email}
                                 onChange={e => setUser(update(user, {$merge: {email: e.target.value}}))}/>
                         </Col>
@@ -520,6 +524,7 @@ function NewUser(props) {
                                 componentClass="select"
                                 value={user.profile_id}
                                 onChange={e => setUser(update(user, {$merge: {profile_id: e.target.value && parseInt(e.target.value, 10)}}))}>
+                                <option value={null}>*none*</option>
                                 {
                                     profiles.sort((a, b) => a.id - b.id).map((p, i) => <option key={`profile${i}`} value={p.id}>{p.name}</option>)
                                 }
@@ -574,6 +579,7 @@ function NewUser(props) {
                                 componentClass="input"
                                 placeholder="Password"
                                 type="password"
+                                autocomplete="off"
                                 value={user.password}
                                 onChange={e => setUser(update(user, {$merge: {password: e.target.value}}))}/>
                         </Col>
@@ -588,6 +594,7 @@ function NewUser(props) {
                                 componentClass="input"
                                 placeholder="Confirm password"
                                 type="password"
+                                autocomplete="off"
                                 value={confirmPassword}
                                 onChange={e => setConfirmPassword(e.target.value)}/>
                         </Col>
