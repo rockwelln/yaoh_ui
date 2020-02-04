@@ -2846,7 +2846,7 @@ export class Requests extends Component{
                                         overflow: 'hidden',
                                         textOverflow: 'ellipsis',
                                         overflowWrap: 'unset',
-                                        wordWrap:'break-word'
+                                        wordWrap:'normal'
                                     },
                                 },
                                 {
