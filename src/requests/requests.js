@@ -1161,6 +1161,7 @@ export class Transaction extends Component {
             logs: [],
             events: [],
             timers: [],
+            autoRefresh: false,
         };
         this.cancelLoad = false;
         this.websocket = null;
@@ -1251,6 +1252,10 @@ export class Transaction extends Component {
     fetchTxDetails(reload, full) {
         this.setState({error: undefined});
         const txId = this.props.match.params.txId;
+        if(reload && this.state.tx && !this.state.autoRefresh) {
+            setTimeout(() => this.fetchTxDetails(true), RELOAD_TX);
+            return;
+        }
         fetch_get(`/api/v01/transactions/${txId}`)
             .then(data => {
                 if(this.cancelLoad)
@@ -1638,6 +1643,7 @@ export class Transaction extends Component {
                                                 <FormattedMessage id="request-as-csv" defaultMessage="Request as CSV"/>
                                             </Button>
                                     }
+                                    <Button onClick={() => this.setState({autoRefresh: !this.state.autoRefresh})} active={this.state.autoRefresh}>Auto-refresh</Button>
                                 </ButtonGroup>
                             </Panel>
                             { tx.context && tx.context.length !== 0 &&
