@@ -2833,7 +2833,15 @@ export class Requests extends Component{
                                 {
                                     title: <FormattedMessage id="workflow" defaultMessage="Workflow" />,
                                     field: 'activity_id', model: 'instances',
-                                    render: n => activities && n.activity_id ? activities.find(a => a.id === n.activity_id).name : "-"
+                                    render: n => {
+                                        if(activities && n.activity_id) {
+                                            const a = activities.find(a => a.id === n.activity_id);
+                                            if(a) {
+                                                return a.name;
+                                            }
+                                        }
+                                        return "-";
+                                    }
                                 },
                                 {
                                     title: <FormattedMessage id="tenant" defaultMessage="Tenant" />,
