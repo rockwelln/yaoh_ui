@@ -1048,8 +1048,9 @@ function editCellProperty(cell, modal, spacer, editable, cells_defs, cells, refr
     // 3. add the possible parameters (+ values)
     let form = document.createElement('form');
     let attrs = {};
-    let params_list = cell_def?cell_def.params.map(p => p.name):[];
-    params_list.concat(cell.getAttribute('attrList') ? cell.getAttribute('attrList').split(',') : []);
+    const defAttrList = cell_def?cell_def.params.map(p => p.name):[];
+    const attrList = cell.getAttribute('attrList') ? cell.getAttribute('attrList').split(',') : [];
+    const params_list = defAttrList.concat(attrList.filter(e => !defAttrList.includes(e)));
 
     params_list.map(a => {
         let gp = document.createElement('div');
