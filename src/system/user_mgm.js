@@ -176,6 +176,7 @@ export function LocalUserProfile(props) {
                                     componentClass="input"
                                     placeholder="Password"
                                     type="password"
+                                    autocomplete="off"
                                     value={newPassword}
                                     onChange={e => setNewPassword(e.target.value)} />
                             </Col>
@@ -190,6 +191,7 @@ export function LocalUserProfile(props) {
                                     componentClass="input"
                                     placeholder="Repeat password"
                                     type="password"
+                                    autocomplete="off"
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)} />
                             </Col>
