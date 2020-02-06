@@ -641,6 +641,21 @@ const SubRequest = ({req, tasks, colOffset, onRollback, onReplay}) => {
             statusColor = '#a4d1a2';
             statusGlyph = 'ok';
             break;
+        case null:
+            switch(instance_.status) {
+                case "CLOSED_IN_SUCCESS":
+                    statusColor = '#a4d1a2';
+                    statusGlyph = 'ok';
+                    break;
+                case "CLOSED_IN_ERROR":
+                    statusColor = '#ca6f7b';
+                    statusGlyph = 'remove';
+                    break;
+                default:
+                    statusColor = '#a4d1a2';
+                    statusGlyph = 'play';
+            }
+            break;
         default:
             statusColor = '#a4d1a2';
             statusGlyph = 'play';
