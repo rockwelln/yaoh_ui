@@ -17,8 +17,10 @@ import Badge from "react-bootstrap/lib/Badge";
 import Modal from "react-bootstrap/lib/Modal";
 
 import {FormattedMessage} from "react-intl";
-import {fetch_delete, fetch_get, fetch_post_raw, NotificationsManager} from "../utils";
+import {AuthServiceManager, fetch_delete, fetch_get, fetch_post_raw, NotificationsManager} from "../utils";
 import update from "immutability-helper";
+import queryString from "query-string";
+import {Link} from "react-router-dom";
 
 
 class NewBulk extends Component {
@@ -440,10 +442,18 @@ class BulkEntry extends Component {
 
     onLoadResults() {
         const {bulk} = this.props;
-        this.setState({loading: true})
+        this.setState({loading: true});
 
         fetch_get(`/api/v01/bulks/${bulk.bulk_id}/results`)
-            .then(data => !this.cancelLoad && this.setState({results: data.results.sort((a, b) => a.bulk_result_id - b.bulk_result_id), loading: false}))
+            .then(data => {
+                if(this.cancelLoad) {
+                    return;
+                }
+                if(data.results.length > 250) {
+                    data.results.length = 250;
+                }
+                this.setState({results: data.results, loading: false})
+            })
             .catch(error => {
                 NotificationsManager.error(
                     <FormattedMessage id="fetch-bulk-results-failed" defaultMessage="Fetch bulk results failed" />,
@@ -475,6 +485,7 @@ class BulkEntry extends Component {
         const {expanded, results, loading} = this.state;
         const {bulk, onDelete} = this.props;
         const expIco = expanded?<Glyphicon glyph="chevron-down"/>:<Glyphicon glyph="chevron-right"/>;
+        const resultsLink = `/api/v01/bulks/${bulk.bulk_id}/results?as=log&auth_token=${AuthServiceManager.getToken()}`;
 
         let rows = [
             <tr key={`bulk_head_${bulk.bulk_id}`} >
@@ -504,7 +515,24 @@ class BulkEntry extends Component {
         } else if (expanded) {
             results.map(r => rows.push(
                 <BulkResult key={`res_${r.bulk_result_id}`} result={r} colOffset={1}/>
-            ))
+            ));
+            rows.push(
+                <tr>
+                    <td colSpan={7}>
+                        <p>
+                            The result list is limited to 250 results. Click here to have the full results:
+                            <Button bsStyle="link" href={resultsLink}>here</Button>
+                        </p>
+                        {
+                            results.length && results[0].instance && <p>
+                                See generated <Link to={{pathname: "/transactions/list", search: queryString.stringify({
+                                    filter: JSON.stringify({label: { model: 'bulks', value: bulk.label, op: 'eq' }})
+                                })}}>requests</Link>
+                            </p>
+                        }
+                    </td>
+                </tr>
+            );
         }
         return rows;
     }
