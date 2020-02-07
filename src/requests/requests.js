@@ -1477,7 +1477,7 @@ export class Transaction extends Component {
     changeTxStatus(new_status) {
         fetch_put(`/api/v01/transactions/${this.state.tx.id}`, {status: new_status}, this.props.auth_token)
             .then(() =>
-                this.state.tx.original_request_id &&
+                this.state.tx.original_request_id ?
                 fetch_put(`/api/v01/apio/requests/${this.state.tx.original_request_id}`, {status: new_status === "CLOSED_IN_ERROR"?"ERROR":new_status}, this.props.auth_token)
                     .then(() => {
                         if(USE_WS) {
@@ -1496,6 +1496,7 @@ export class Transaction extends Component {
                             level: 'error'
                         })
                     )
+                : this.fetchTxDetails(false)
             )
             .catch(error => this.props.notifications.addNotification({
                     title: <FormattedMessage id="instance-update-failed" defaultMessage="Instance status update failed!"/>,
