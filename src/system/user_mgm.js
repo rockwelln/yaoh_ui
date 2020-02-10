@@ -118,8 +118,9 @@ export function LocalUserProfile(props) {
         delta.language = language;
     }
     useEffect(() => {
-        fetch_get("/api/v01/system/user_profiles")
+        user_info.profile_id && fetch_get("/api/v01/system/user_profiles")
             .then(data => setProfileName(data.profiles.find(p => p.id === user_info.profile_id).name))
+            .catch(console.error)
     }, [user_info.profile_id]);
     const validPassword = (newPassword === '')?null:(newPassword.length >= 7)?"success":"error";
     const validRepPassword = (newPassword === '')?null:(confirmPassword === newPassword)?"success":"error";
