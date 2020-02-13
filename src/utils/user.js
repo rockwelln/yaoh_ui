@@ -44,6 +44,7 @@ const definition = {
     user: {
         [pages.data]: true,
         [pages.requests]: true,
+        [pages.bulks]: true,
         [pages.requests_nprequests]: true,
         [pages.data]: true,
         [pages.data_tenants]: true,
