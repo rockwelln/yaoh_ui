@@ -695,6 +695,7 @@ class App extends Component {
                                component={props => (
                                    <Dashboard
                                        auth_token={auth_token}
+                                       user_info={user_info}
                                        notifications={this._notificationSystem.current}
                                        {...props} />
                                )}
