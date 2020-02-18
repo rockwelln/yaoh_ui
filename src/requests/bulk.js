@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React, {Component, useState, useEffect} from 'react';
 
 import Form from 'react-bootstrap/lib/Form';
 import FormControl from 'react-bootstrap/lib/FormControl';
@@ -17,10 +17,18 @@ import Badge from "react-bootstrap/lib/Badge";
 import Modal from "react-bootstrap/lib/Modal";
 
 import {FormattedMessage} from "react-intl";
-import {AuthServiceManager, fetch_delete, fetch_get, fetch_post_raw, NotificationsManager} from "../utils";
+import {
+    API_URL_PREFIX,
+    AuthServiceManager,
+    fetch_delete,
+    fetch_get,
+    fetch_post_raw,
+    NotificationsManager
+} from "../utils";
 import update from "immutability-helper";
 import queryString from "query-string";
 import {Link} from "react-router-dom";
+import {Pagination} from "../utils/datatable";
 
 
 class NewBulk extends Component {
@@ -539,7 +547,7 @@ class BulkEntry extends Component {
 }
 
 
-const BulkHistory = ({bulks, onDelete}) => (
+const BulkHistory = ({bulks, onDelete, pagination, onPagination}) => (
     <Panel defaultExpanded={false}>
         <Panel.Heading>
             <Panel.Title toggle><FormattedMessage id="history" defaultMessage="History" /> <Glyphicon glyph="cog" /></Panel.Title>
@@ -560,67 +568,94 @@ const BulkHistory = ({bulks, onDelete}) => (
                 </thead>
                 <tbody>
                 {
-                    bulks && bulks.sort((a, b) => b.bulk_id - a.bulk_id).map(b => <BulkEntry bulk={b} onDelete={onDelete} key={`bulk_${b.bulk_id}`}/>)
+                    bulks && bulks.map(b => <BulkEntry bulk={b} onDelete={onDelete} key={`bulk_${b.bulk_id}`}/>)
                 }
                 </tbody>
             </Table>
+            <Pagination
+                onChange={onPagination}
+                page_number={pagination.page_number}
+                num_pages={pagination.num_pages}
+                total_results={pagination.total_results}
+            />
         </Panel.Body>
     </Panel>
 );
 
 
-export class Bulks extends Component {
-    state = {
-        bulks: [],
-        actions: []
-    };
+function fetchActions(onSuccess) {
+    fetch_get('/api/v01/bulks/actions')
+        .then(d => onSuccess(d.actions))
+        .catch(error => NotificationsManager.error(
+            <FormattedMessage id="fetch-actions-failed" defaultMessage="Failed to fetch bulk actions"/>,
+            error.message
+        ))
+}
 
-    fetchActions() {
-        fetch_get('/api/v01/bulks/actions')
-            .then(d => !this.cancelLoad && this.setState({actions: d.actions}))
-            .catch(error => NotificationsManager.error(
-                <FormattedMessage id="fetch-actions-failed" defaultMessage="Failed to fetch bulk actions"/>,
-                error.message
-            ))
-    }
 
-    fetchHistory() {
-        fetch_get('/api/v01/bulks')
-            .then(d => !this.cancelLoad && this.setState({bulks: d.bulks}))
-            .catch(error => NotificationsManager.error(
-                <FormattedMessage id="fetch-bulks-failed" defaultMessage="Failed to fetch bulk operations"/>,
-                error.message
-            ))
-    }
+function fetchHistory(pagination, onSuccess) {
+    const url = new URL(API_URL_PREFIX + "/api/v01/bulks");
+    url.searchParams.append("paging", JSON.stringify(pagination));
+    fetch_get(url)
+        .then(d => onSuccess(
+            d.bulks,
+            {
+                page_number: d.pagination[0], // page_number, page_size, num_pages, total_results
+                page_size: d.pagination[1],
+                num_pages: d.pagination[2],
+                total_results: d.pagination[3],
+            }
+        ))
+        .catch(error => NotificationsManager.error(
+            <FormattedMessage id="fetch-bulks-failed" defaultMessage="Failed to fetch bulk operations"/>,
+            error.message
+        ))
+}
 
-    componentDidMount() {
-        this.fetchActions();
-        this.fetchHistory();
-    }
 
-    componentWillUnmount() {
-        this.cancelLoad = true;
-    }
+export function Bulks(props) {
+    const [bulks, setBulks] = useState([]);
+    const [actions, setActions] = useState([]);
+    const [pagination, setPagination] = useState({
+        page_number: 1,
+        page_size: 20,
+        num_pages: 1,
+    });
 
-    render() {
-        const {bulks, actions} = this.state;
-        const fetchHistory = this.fetchHistory.bind(this);
-        actions && bulks && bulks.map(b => {
+    const setBulksWithPage = (bulks, pagination) => {setBulks(bulks); setPagination(pagination)};
+
+    useEffect(() => {
+        fetchActions(setActions);
+        fetchHistory(pagination, setBulksWithPage);
+    }, []);
+
+    useEffect(() => {
+        fetchHistory(pagination, setBulks);
+    }, [pagination]);
+
+    useEffect(() => {
+        bulks.map(b => {
             const action = actions.find(a => a.id === b.action_id);
             if(action) {
                 b.action = action.name
             }
-        });
-        return (
-            <div>
-                <Breadcrumb>
-                    <Breadcrumb.Item active><FormattedMessage id="requests" defaultMessage="Requests"/></Breadcrumb.Item>
-                    <Breadcrumb.Item active><FormattedMessage id="bulk" defaultMessage="Bulk"/></Breadcrumb.Item>
-                </Breadcrumb>
+        })
+    }, [actions, bulks]);
 
-                <NewBulk onChange={fetchHistory} />
-                <BulkHistory bulks={bulks} onDelete={fetchHistory} />
-            </div>
-        )
-    }
+    return (
+        <div>
+            <Breadcrumb>
+                <Breadcrumb.Item active><FormattedMessage id="requests" defaultMessage="Requests"/></Breadcrumb.Item>
+                <Breadcrumb.Item active><FormattedMessage id="bulk" defaultMessage="Bulk"/></Breadcrumb.Item>
+            </Breadcrumb>
+
+            <NewBulk onChange={() => fetchHistory(pagination, setBulksWithPage)} />
+            <BulkHistory
+                bulks={bulks}
+                onDelete={() => fetchHistory(pagination, setBulksWithPage)}
+                pagination={pagination}
+                onPagination={e => setPagination(update(pagination, {$merge: e}))}
+            />
+        </div>
+    )
 }
