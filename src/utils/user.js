@@ -26,6 +26,7 @@ export const modules = Object.freeze({
     provisioning: 'provisioning',
     bulk: 'bulk',
     orchestration: 'orchestration',
+    telenet: 'telenet',
 });
 
 export const privileges = Object.freeze({
@@ -36,6 +37,12 @@ export const access_levels = Object.freeze({
     'read': 0,
     'modify': 1, // include read
 });
+
+const UI_PROFILES = {
+    "default": ["user", "admin", "provisioning"],
+    "orange": ["user", "admin"],
+    "telenet": ["user", "admin", "CPM", "HelpDesk1",  "HelpDesk2",  "HelpDesk3", "VoiceOps", "VoiceEng"],
+};
 
 const definition = {
     // give access to all pages for the admin
@@ -56,6 +63,16 @@ const definition = {
     }
 };
 
+
+export function get_ui_profiles(m) {
+    if(m.includes(modules.orange)) {
+        return UI_PROFILES["orange"];
+    }
+    if(m.includes(modules.telenet)) {
+        return UI_PROFILES["telenet"];
+    }
+    return UI_PROFILES["default"];
+}
 
 export function isAllowed(profile, page, requested_level, requested_privilege) {
     // system access all pages

@@ -28,6 +28,7 @@ import { LinkContainer } from 'react-router-bootstrap';
 import {INTERNAL_HELP_LINKS} from "../async-apio-help";
 import {Search, StaticControl} from "../utils/common";
 import {CallbackHandler} from "./callbacks";
+import {get_ui_profiles} from "../utils/user";
 
 
 // helper functions
@@ -327,9 +328,9 @@ function UpdateUser(props) {
                                     componentClass="select"
                                     value={localUser.ui_profile}
                                     onChange={e => setDiffUser(update(diffUser, {$merge: {ui_profile: e.target.value}}))}>
-                                    <option value="admin">Admin</option>
-                                    <option value="user">User</option>
-                                    <option value="provisioning">Provisioning</option>
+                                    {
+                                        get_ui_profiles(props.user_info.modules).map((p, i) => <option value={p} key={i}>{p}</option>)
+                                    }
                                 </FormControl>
                                 <HelpBlock><FormattedMessage id="app.user.profile.help"
                                                              defaultMessage="The profile has no influence on the rights in the application only the pages the user may see."/></HelpBlock>
@@ -544,9 +545,9 @@ function NewUser(props) {
                                 componentClass="select"
                                 value={user.ui_profile}
                                 onChange={e => setUser(update(user, {$merge: {ui_profile: e.target.value}}))}>
-                                <option value="admin">Admin</option>
-                                <option value="user">User</option>
-                                <option value="provisioning">Provisioning</option>
+                                {
+                                    get_ui_profiles(props.user_info.modules).map((p, i) => <option value={p} key={i}>{p}</option>)
+                                }
                             </FormControl>
                             <HelpBlock><FormattedMessage id="app.user.profile.help"
                                                          defaultMessage="The profile has no influence on the rights in the application only the pages the user may see."/></HelpBlock>
