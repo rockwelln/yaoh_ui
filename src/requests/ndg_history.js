@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useState} from "react";
 import {FormattedMessage} from "react-intl";
 import Panel from "react-bootstrap/lib/Panel";
 import {Search, SearchFieldsPanel} from "../utils/common";
@@ -11,42 +11,39 @@ import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import FormControl from "react-bootstrap/lib/FormControl";
 import FormGroup from "react-bootstrap/lib/FormGroup";
 import InputGroup from "react-bootstrap/lib/InputGroup";
-import {fetch_get} from "../utils";
+import {fetch_get, NotificationsManager} from "../utils";
 import {Link} from "react-router-dom";
 import Button from "react-bootstrap/lib/Button";
 
 
-class NdgPassword extends React.Component {
-    state = {
-        decrypted: false,
-    };
+function fetchDecrypted(entryId, onSuccess) {
+    fetch_get(`/api/v01/apio/ndg/${entryId}`)
+        .then(data => onSuccess(data.password))
+        .catch(error => NotificationsManager.error(
+            <FormattedMessage id="fetch-ndg-failed" defaultMessage="Failed to fetch clear password"/>,
+            error.message
+        ))
+}
 
-    onDecrypt() {
-        fetch_get(`/api/v01/apio/ndg/${this.props.entry.id}`, this.props.auth_token)
-            .then(data => this.setState({clear_password: data.password, decrypted: true}))
-            .catch(error => this.props.notifications.addNotification({
-                title: <FormattedMessage id="fetch-ndg-failed" defaultMessage="Failed to fetch clear password"/>,
-                message: error.message,
-                level: 'error'
-            }))
-    }
 
-    render() {
-        const {decrypted, clear_password} = this.state;
+function NdgPassword(props) {
+    const [decrypted, setDecrypted] = useState(false);
+    const [clearPassword, setClearPassword] = useState(undefined);
 
-        return (
-            <div>
-                <InputGroup>
-                    <FormControl readOnly type={decrypted?"text":"password"} value={decrypted?clear_password:"......."}/>
-                    <div className="input-group-addon">
-                        <a onClick={this.onDecrypt.bind(this)}>
-                            <i className="fa fa-eye-slash" aria-hidden="true" />
-                        </a>
-                    </div>
-                </InputGroup>
-            </div>
-        )
-    }
+    const decrypt = () => fetchDecrypted(props.entry.id, clearPassword => { setClearPassword(clearPassword); setDecrypted(true); });
+
+    return (
+        <div>
+            <InputGroup>
+                <FormControl readOnly type={decrypted?"text":"password"} value={decrypted?clearPassword:"......."}/>
+                <div className="input-group-addon">
+                    <a onClick={decrypt}>
+                        <i className="fa fa-eye-slash" aria-hidden="true" />
+                    </a>
+                </div>
+            </InputGroup>
+        </div>
+    );
 }
 
 export class NdgHistory extends Search {
