@@ -33,6 +33,7 @@ import GroupPage from "./default/components/GroupPage";
 import CreateAdmin from "./default/components/CreateAdmin";
 import UpdateAdmin from "./default/components/UpdateAdmin";
 import mainDefaultProvisioningReducer from "./default/store/reducers";
+import AddTrunkGroupUser from "./default/components/AddUserToTrunkGroup";
 // end
 
 // PRA
@@ -89,7 +90,7 @@ function provisioningDefaultRoutes(ui_profile) {
             path="/provisioning/:gwName/localusers/adduser"
             component={props =>
                 isAllowed(ui_profile, pages.data_tenants) ? (
-                    <AddLocalUsers/>
+                    <AddTrunkGroupUser />
                 ) : (
                     <NotAllowed/>
                 )

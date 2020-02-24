@@ -220,6 +220,11 @@ export const getDevice = data => ({
   data
 });
 
+export const getTrunkGroupByTenant = data => ({
+  type: actionType.GET_TENANT_TRUNK_GROUP,
+  data
+});
+
 export const postCreateGroupAdmin = data => ({
   type: actionType.POST_CREATE_GROUP_ADMIN,
   data
@@ -377,6 +382,10 @@ export const putUpdateDevice = data => ({
   data
 });
 
+export const putUpdateTenantServicePacks = () => ({
+  type: actionType.PUT_UPDATE_TENANT_SERVICE_PACKS
+});
+
 export const deleteTenant = data => ({
   type: actionType.DELETE_TENANT,
   data
@@ -433,6 +442,10 @@ export const deleteLocalUser = data => ({
 export const deletePhoneFromGroup = data => ({
   type: actionType.DELETE_PHONE_FROM_GROUP,
   data
+});
+
+export const deleteTrunkGroupFromTenant = () => ({
+  type: actionType.DELETE_TRUNK_GROUP_FROM_TENANT
 });
 
 export const clearErrorMassage = () => ({
@@ -554,6 +567,10 @@ export const saveValidatedNumbersTenant = data => ({
 export const removeSuccesfulValidPhoneTenant = data => ({
   type: actionType.REMOVE_SUCCESFUL_VALID_PHONE_TENANT,
   data
+});
+
+export const trunkNotAuthorisedTenant = () => ({
+  type: actionType.TRUNK_NOT_AUTHORISED_TENANT
 });
 
 export function fetchGetTenants(cancelLoad) {
@@ -1243,7 +1260,7 @@ export function fetchGetLanguages() {
 export function fetchGetTenantLicenses(tenantId) {
   return function(dispatch) {
     return fetch_get(
-      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/licenses`
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/licenses?includeServicePacks=true`
     )
       .then(data => dispatch(getTenantLicenses(data)))
       .catch(error =>
@@ -1264,15 +1281,19 @@ export function fetchGetTrunkByTenantID(tenantId) {
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/features/trunk_groups/`
     )
       .then(data => dispatch(getTrunkByTenantID(data)))
-      .catch(error =>
+      .catch(error => {
+        if (error.response.status === 404) {
+          dispatch(trunkNotAuthorisedTenant());
+          return;
+        }
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-trunk-failed"
             defaultMessage="Failed to fetch trunks!"
           />,
           error.message
-        )
-      );
+        );
+      });
   };
 }
 
@@ -1291,6 +1312,28 @@ export function fetchGetDevice(tenantId, groupId, deviceName) {
           error.message
         )
       );
+  };
+}
+
+export function fetchGetTrunkGroupByTenant(tenantId) {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/services/trunk_groups/`
+    )
+      .then(data => dispatch(getTrunkGroupByTenant(data)))
+      .catch(error => {
+        if (error.response.status === 404) {
+          dispatch(trunkNotAuthorisedTenant());
+          return;
+        }
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-trunk-groups-failed"
+            defaultMessage="Failed to fetch trunk groups!"
+          />,
+          error.message
+        );
+      });
   };
 }
 
@@ -1454,7 +1497,10 @@ export function fetchPostCreateUserToGroup(tenantId, groupId, data) {
       data
     )
       .then(res => res.json())
-      .then(data => dispatch(postCreateUserToGroup(data)))
+      .then(data => {
+        dispatch(postCreateUserToGroup(data));
+        return "success";
+      })
       .catch(error => {
         NotificationsManager.error(
           <FormattedMessage
@@ -1707,7 +1753,10 @@ export function fetchPutUpdateServicePacksByGroupId(tenantId, groupId, data) {
       data
     )
       .then(res => res.json())
-      .then(data => dispatch(putUpdateServicePacksByGroupId(data)))
+      .then(data => {
+        dispatch(putUpdateServicePacksByGroupId(data));
+        return "updated";
+      })
       .catch(error =>
         NotificationsManager.error(
           <FormattedMessage
@@ -1895,7 +1944,10 @@ export function fetchPutUpdateGroupServicesByTenantId(tenantId, data) {
       data
     )
       .then(res => res.json())
-      .then(data => dispatch(putUpdateGroupServicesByTenantId(data)))
+      .then(data => {
+        dispatch(putUpdateGroupServicesByTenantId(data));
+        return "updated";
+      })
       .catch(error =>
         NotificationsManager.error(
           <FormattedMessage
@@ -1930,6 +1982,26 @@ export function fetchPutUpdateDevice(tenantId, groupId, deviceName, data) {
           <FormattedMessage
             id="update-device-failed"
             defaultMessage="Failed to update device!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchPutUpdateTenantServicePacks(tenantId, servicePack, data) {
+  return function(dispatch) {
+    return fetch_put(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/service_packs/${servicePack}/`,
+      data
+    )
+      .then(res => res.json())
+      .then(() => dispatch(putUpdateTenantServicePacks()))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="update-trunk-failed"
+            defaultMessage="Failed to update trunk!"
           />,
           error.message
         )
@@ -2221,6 +2293,27 @@ export function fetchDeletePhoneFromGroup(tenantId, groupId, data) {
           <FormattedMessage
             id="failed-to-delete-user"
             defaultMessage="Failed to delete user!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchDeleteTrunkGroupFromTenant(tenantId, trunkName) {
+  return function(dispatch) {
+    return fetch_delete(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/services/trunk_groups/${trunkName}`
+    )
+      .then(res => res.json())
+      .then(() => {
+        dispatch(deleteTrunkGroupFromTenant());
+      })
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-delete-trunk-group"
+            defaultMessage="Failed to delete trunk group!"
           />,
           error.message
         )

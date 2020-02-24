@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
+import { withRouter } from "react-router";
 
 import Modal from "react-bootstrap/lib/Modal";
 import Row from "react-bootstrap/lib/Row";
@@ -7,23 +8,33 @@ import Col from "react-bootstrap/lib/Col";
 import Pagination from "react-bootstrap/lib/Pagination";
 import Table from "react-bootstrap/lib/Table";
 import Button from "react-bootstrap/lib/Button";
+import FormControl from "react-bootstrap/lib/FormControl";
 
 import { FormattedMessage } from "react-intl";
 
+import {
+  fetchPutUpdateGroupServicesByTenantId,
+  fetchPutUpdateServicePacksByGroupId
+} from "../../store/actions";
+
 import ServicePack from "./ServicePack";
+
+import equal from "../deepEqual";
 
 export class ServicePackAuthorisation extends Component {
   state = {
     countPerPage: 25,
     userServices: [],
     page: 0,
-    paginationServices: []
+    paginationServices: [],
+    disabledButton: false
   };
   componentDidMount() {
     this.setState({ userServices: this.props.userServices }, () =>
       this.pagination()
     );
   }
+
   render() {
     return (
       <Modal show={this.props.isOpen} onHide={this.props.handleHide}>
@@ -42,7 +53,16 @@ export class ServicePackAuthorisation extends Component {
                 <thead>
                   <tr>
                     <th>
-                      <FormattedMessage id="name" defaultMessage="Name" />
+                      <FormControl
+                        type="text"
+                        placeholder={"Name"}
+                        value={this.state.searchValue}
+                        onChange={e =>
+                          this.setState({ searchValue: e.target.value }, () =>
+                            this.filterBySearchValue()
+                          )
+                        }
+                      />
                     </th>
                     <th>
                       <FormattedMessage
@@ -62,7 +82,16 @@ export class ServicePackAuthorisation extends Component {
                   <tbody>
                     {this.state.paginationServices[this.state.page].map(
                       (el, i) => (
-                        <ServicePack key={i + ""} userService={el} />
+                        <ServicePack
+                          key={i + ""}
+                          userService={el}
+                          changeUserServicesUnlimeted={
+                            this.changeUserServicesUnlimeted
+                          }
+                          changeUserServicesMaximum={
+                            this.changeUserServicesMaximum
+                          }
+                        />
                       )
                     )}
                   </tbody>
@@ -86,9 +115,10 @@ export class ServicePackAuthorisation extends Component {
               <div className="button-row">
                 <div className="pull-right">
                   <Button
-                    //onClick={this.addDevice}
                     type="submit"
                     className="btn-primary"
+                    onClick={this.update}
+                    disabled={this.state.disabledButton}
                   >
                     <FormattedMessage id="update" defaultMessage="Update" />
                   </Button>
@@ -100,6 +130,98 @@ export class ServicePackAuthorisation extends Component {
       </Modal>
     );
   }
+
+  filterBySearchValue = () => {
+    const { searchValue } = this.state;
+    const SearchArray = this.props.userServices
+      .filter(service =>
+        service.name.toLowerCase().includes(searchValue.toLowerCase())
+      )
+      .map(service => service);
+    this.setState({ userServices: SearchArray }, () => this.pagination());
+  };
+
+  update = () => {
+    const { userServices } = this.state;
+    const data = {
+      userServices
+    };
+    this.setState({ disabledButton: true }, () => {
+      if (this.props.level === "tenant") {
+        this.props
+          .fetchPutUpdateGroupServicesByTenantId(
+            this.props.match.params.tenantId,
+            data
+          )
+          .then(res => {
+            if (res === "updated") {
+              this.setState({ disabledButton: false });
+              this.props.handleHide();
+            } else {
+              this.setState({ disabledButton: false });
+            }
+          });
+      } else if (this.props.level === "group") {
+        this.props
+          .fetchPutUpdateServicePacksByGroupId(
+            this.props.match.params.tenantId,
+            this.props.match.params.groupId,
+            data
+          )
+          .then(res => {
+            if (res === "updated") {
+              this.setState({ disabledButton: false });
+              this.props.handleHide();
+            } else {
+              this.setState({ disabledButton: false });
+            }
+          });
+      } else {
+        this.setState({ disabledButton: false });
+      }
+    });
+  };
+
+  changeUserServicesUnlimeted = (service, checked) => {
+    const index = this.state.userServices.findIndex(el => el.name === service);
+    this.setState(
+      prevState => ({
+        userServices: [
+          ...prevState.userServices.slice(0, index),
+          {
+            ...prevState.userServices[index],
+            allocated: {
+              ...prevState.userServices[index].allocated,
+              unlimited: checked
+            }
+          },
+          ...prevState.userServices.slice(index + 1)
+        ]
+      }),
+      () => this.pagination()
+    );
+  };
+
+  changeUserServicesMaximum = (service, max) => {
+    const index = this.state.userServices.findIndex(el => el.name === service);
+    this.setState(
+      prevState => ({
+        userServices: [
+          ...prevState.userServices.slice(0, index),
+          {
+            ...prevState.userServices[index],
+            allocated: {
+              ...prevState.userServices[index].allocated,
+              maximum: max
+            }
+          },
+          ...prevState.userServices.slice(index + 1)
+        ]
+      }),
+      () => this.pagination()
+    );
+  };
+
   incrementPage = () => {
     if (this.state.page >= this.state.countPages - 1) {
       return;
@@ -143,9 +265,14 @@ export class ServicePackAuthorisation extends Component {
 
 const mapStateToProps = state => ({});
 
-const mapDispatchToProps = {};
+const mapDispatchToProps = {
+  fetchPutUpdateGroupServicesByTenantId,
+  fetchPutUpdateServicePacksByGroupId
+};
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(ServicePackAuthorisation);
+export default withRouter(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(ServicePackAuthorisation)
+);

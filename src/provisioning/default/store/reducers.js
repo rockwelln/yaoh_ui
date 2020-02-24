@@ -12,6 +12,7 @@ const initialState = {
   licensesByGroup: [],
   servicePacks: [],
   groupServices: [],
+  tenantServicePacks: [],
   devices: [],
   user: {},
   trunkGroups: {},
@@ -24,7 +25,8 @@ const initialState = {
   userServices: [],
   userServicePacks: [],
   groupTrunkErrorMassage: "",
-  createTenantStep: "Basic",
+  createTenantStep: "Limits",
+  //createTenantStep: "Basic",
   createTenant: {
     tenantId: "",
     type: "",
@@ -109,7 +111,9 @@ const initialState = {
   createdTrunkGroup: {},
   device: {},
   userServicesGroup: [],
-  userServicesTenant: []
+  userServicesTenant: [],
+  isAuthorisedTrunkTenant: true,
+  trunkGroupsByTenant: []
 };
 
 function mainReducer(state = initialState, action) {
@@ -508,19 +512,27 @@ function mainReducer(state = initialState, action) {
           groups: groupServices,
           countShown: groupServicesShown.length
         },
-        userServicesTenant: action.data.userServices
+        userServicesTenant: action.data.userServices,
+        tenantServicePacks: action.data.servicePacks
       };
     }
     case actionType.GET_TRUNK_BY_TENANT_ID: {
       return {
         ...state,
-        tenantTrunkGroups: action.data
+        tenantTrunkGroups: action.data,
+        isAuthorisedTrunkTenant: true
       };
     }
     case actionType.GET_DEVICE: {
       return {
         ...state,
         device: action.data
+      };
+    }
+    case actionType.GET_TENANT_TRUNK_GROUP: {
+      return {
+        ...state,
+        trunkGroupsByTenant: action.data.tenantTrunks
       };
     }
     case actionType.POST_CREATE_GROUP_ADMIN: {
@@ -798,6 +810,11 @@ function mainReducer(state = initialState, action) {
         ...state
       };
     }
+    case actionType.DELETE_TRUNK_GROUP_FROM_TENANT: {
+      return {
+        ...state
+      };
+    }
     case actionType.CLEAR_ERROR_MASSAGE: {
       return {
         ...state,
@@ -1069,6 +1086,12 @@ function mainReducer(state = initialState, action) {
           ...state.validatedNumbersTenant,
           ok: newArray
         }
+      };
+    }
+    case actionType.TRUNK_NOT_AUTHORISED_TENANT: {
+      return {
+        ...state,
+        isAuthorisedTrunkTenant: false
       };
     }
     default:

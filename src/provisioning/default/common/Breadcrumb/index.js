@@ -8,6 +8,9 @@ import { Link } from "react-router-dom";
 import "./styles.css";
 
 const convertCrumb = crumb => {
+  if (crumb === "broadsoft_xsp1_as1") {
+    return "broadsoft XSP 1 / AS 1";
+  }
   return crumb;
 };
 
@@ -63,7 +66,7 @@ const linkByCrumb = (item, lastItem, i, path, match) => {
   }
   if (crumb === "addtrunk") {
     return "Add trunk";
-  }  
+  }
   if (crumb === "localusers") {
     return (
       <Link to={`/provisioning/${match.params.gwName}/localusers`}>

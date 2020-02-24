@@ -12,6 +12,7 @@ import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import HelpBlock from "react-bootstrap/lib/HelpBlock";
 import FormGroup from "react-bootstrap/lib/FormGroup";
 import Checkbox from "react-bootstrap/lib/Checkbox";
+import Select from "react-select";
 
 import Loading from "../../common/Loading";
 
@@ -28,7 +29,7 @@ export class AddDevicePage extends Component {
     macAddress: "",
     isLoading: true,
     deviceName: "",
-    deviceType: "",
+    deviceType: { value: "Other", label: "Other" },
     showMore: false,
     netAddress: "",
     netPort: "",
@@ -39,7 +40,8 @@ export class AddDevicePage extends Component {
     description: "",
     physicalLocation: "",
     transportProtocol: "",
-    useCustomUserNamePassword: false
+    useCustomUserNamePassword: false,
+    customDeviceType: ""
   };
 
   componentDidMount() {
@@ -47,8 +49,11 @@ export class AddDevicePage extends Component {
       this.setState({
         isLoading: false,
         deviceType: this.props.phoneTypes.technicalName
-          ? this.props.phoneTypes[0].technicalName
-          : ""
+          ? {
+              value: this.props.phoneTypes[0].technicalName,
+              label: this.props.phoneTypes[0].displayName
+            }
+          : { value: "Other", label: "Other" }
       })
     );
   }
@@ -100,24 +105,25 @@ export class AddDevicePage extends Component {
                   </ControlLabel>
                 </div>
                 <div className={"margin-right-1 flex flex-basis-33"}>
-                  <FormControl
-                    componentClass="select"
-                    value={this.state.deviceType}
-                    onChange={e =>
-                      this.setState({ deviceType: e.target.value })
+                  <Select
+                    className={"width-100p"}
+                    defaultValue={this.state.deviceType}
+                    onChange={selected =>
+                      this.setState({ deviceType: selected })
                     }
-                  >
-                    <option value={"Other"}>{"Other"}</option>
-                    {this.props.phoneTypes.map((el, i) => (
-                      <option key={i} value={el.technicalName}>
-                        {el.displayName}
-                      </option>
-                    ))}
-                  </FormControl>
+                    options={[
+                      { value: "Other", label: "Other" },
+                      { value: "", label: "none" },
+                      ...this.props.phoneTypes.map(type => ({
+                        value: type.technicalName,
+                        label: type.displayName
+                      }))
+                    ]}
+                  />
                 </div>
               </Col>
             </Row>
-            {this.state.deviceType === "Other" && (
+            {!!(this.state.deviceType.value === "Other") && (
               <Row className={"margin-top-1"}>
                 <Col md={12} className={"flex align-items-center"}>
                   <div className={"margin-right-1 flex flex-basis-16"}>
@@ -130,7 +136,14 @@ export class AddDevicePage extends Component {
                     </ControlLabel>
                   </div>
                   <div className={"margin-right-1 flex-basis-33"}>
-                    <FormControl type="text" placeholder={"Device type"} />
+                    <FormControl
+                      type="text"
+                      placeholder={"Device type"}
+                      value={this.state.customDeviceType}
+                      onChange={e =>
+                        this.setState({ customDeviceType: e.target.value })
+                      }
+                    />
                   </div>
                 </Col>
               </Row>
@@ -448,7 +461,10 @@ export class AddDevicePage extends Component {
                       className="btn-primary"
                       disabled={
                         !this.state.deviceName ||
-                        !this.state.deviceType ||
+                        //!this.state.deviceType.value ||
+                        !(this.state.deviceType.value === "Other"
+                          ? this.state.customDeviceType
+                          : this.state.deviceType.value) ||
                         this.state.errorMacAddress === "error"
                       }
                     >
@@ -478,13 +494,15 @@ export class AddDevicePage extends Component {
       description,
       physicalLocation,
       transportProtocol,
-      useCustomUserNamePassword
+      useCustomUserNamePassword,
+      customDeviceType
     } = this.state;
 
     const data = {
       macAddress,
       deviceName,
-      deviceType,
+      deviceType:
+        deviceType.value === "Other" ? customDeviceType : deviceType.value,
       netAddress,
       netPort,
       errorTPCIP,

@@ -15,6 +15,8 @@ import Checkbox from "react-bootstrap/lib/Checkbox";
 import FormGroup from "react-bootstrap/lib/FormGroup";
 import HelpBlock from "react-bootstrap/lib/HelpBlock";
 
+import { FormattedMessage } from "react-intl";
+
 import {
   refuseCreateGroup,
   fetchPostCreateGroupAdmin,
@@ -45,7 +47,12 @@ export class Admin extends Component {
         <div className={"panel-heading"}>
           <Row>
             <Col md={12}>
-              <div className={"header"}>Add admin to tenant</div>
+              <div className={"header"}>
+                <FormattedMessage
+                  id="add-admin-header-group"
+                  defaultMessage="Add admin to group"
+                />
+              </div>
             </Col>
           </Row>
         </div>
@@ -55,7 +62,12 @@ export class Admin extends Component {
           {/* EXPLANATION */}
           <Row>
             <Col md={12}>
-              <p>Add an administrator who can manage this group</p>
+              <p>
+                <FormattedMessage
+                  id="add-admin-header-group"
+                  defaultMessage="Add an administrator who can manage this group"
+                />
+              </p>
             </Col>
           </Row>
 
@@ -242,6 +254,7 @@ export class Admin extends Component {
               <div class="button-row">
                 <div class="pull-left">
                   {/* BACK BUTTON */}
+
                   <Button
                     className={"btn-success"}
                     onClick={() => this.props.changeStepOfCreateGroup("Limits")}
@@ -253,13 +266,17 @@ export class Admin extends Component {
 
                 <div class="pull-right">
                   {/* CREATE & FINISH */}
-                  <Button
-                    onClick={() => this.createAdmin()}
-                    className={"btn-primary"}
+                  <Link
+                    to={`/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}/groups/${this.props.createdGroup.groupId}`}
                   >
-                    <Glyphicon glyph="glyphicon glyphicon-ok" />
-                    {this.state.creating ? "Creating..." : "Create"}
-                  </Button>
+                    <Button
+                      onClick={() => this.createAdmin()}
+                      className={"btn-primary"}
+                    >
+                      <Glyphicon glyph="glyphicon glyphicon-ok" />
+                      {this.state.creating ? "Creating..." : "Create"}
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </Col>
@@ -269,7 +286,7 @@ export class Admin extends Component {
               <div class="button-row">
                 <div class="pull-right">
                   <Link
-                    to={`/provisioning/${this.props.match.params.gwName}/tenants/${this.props.createdTenant.tenantId}`}
+                    to={`/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}/groups/${this.props.createdGroup.groupId}`}
                   >
                     {/* SKIP & FINISH */}
                     <Button
