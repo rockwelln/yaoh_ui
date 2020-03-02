@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React, {Component, useState, useEffect} from 'react';
 import ReactDOM from 'react-dom';
 
 import Alert from 'react-bootstrap/lib/Alert';
@@ -578,25 +578,18 @@ const MessagesTable = ({messages, auth_token})  => (
 );
 
 
-class ExternalCallback extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {show_details: false}
-    }
-
-    render() {
-        const {entry, tasks} = this.props;
-        const task = tasks.find(t => t.id === entry.origin_task_id);
-        return (
-            <tr>
-                <td>{entry.callback_id}</td>
-                <td>{entry.entity}</td>
-                <td>{entry.external_id}</td>
-                <td>{task && <Badge>{task.cell_id}</Badge>}</td>
-                <td>{entry.status}</td>
-            </tr>
-        )
-    }
+function ExternalCallback(props) {
+    const {entry, tasks} = props;
+    const task = tasks.find(t => t.id === entry.origin_task_id);
+    return (
+        <tr>
+            <td>{entry.callback_id}</td>
+            <td>{entry.entity}</td>
+            <td>{entry.external_id}</td>
+            <td>{task && <Badge>{task.cell_id}</Badge>}</td>
+            <td>{entry.status}</td>
+        </tr>
+    )
 }
 
 const ExternalCallbacks = ({callbacks, tasks}) => (
@@ -706,156 +699,129 @@ const SubRequestsTable = ({subrequests, tasks, ...props}) => (
 );
 
 
-class Comments extends Component {
-    constructor(props) {
-        super(props);
-        this.cancelLoad = false;
-        this.state = {
-            comments: [],
-            error: undefined,
-            save_error: undefined,
-            showAddModal: false,
-            comment: '',
-        };
-        this.fetchComments = this.fetchComments.bind(this);
-    }
+function fetchComments(tx_id, onSuccess) {
+    fetch_get(`/api/v01/transactions/${tx_id}/comments?load_user_info=1`)
+        .then(data => onSuccess(data.comments))
+        .catch(error => NotificationsManager.error(<FormattedMessage id="failed-fetch-comment" defaultMessage="Failed to fetch comments"/>, error.message))
+}
 
-    componentWillUnmount() {
-        this.cancelLoad = true;
-    }
+function saveComment(tx_id, comment, onSuccess) {
+    fetch_post(
+        `/api/v01/transactions/${tx_id}/comments`,
+        {comment: comment}
+    )
+        .then(() => onSuccess())
+        .catch(error => NotificationsManager.error(<FormattedMessage id="failed-save-comment" defaultMessage="Failed to save comment"/>, error.message))
+}
 
-    fetchComments() {
-        fetch_get(`/api/v01/transactions/${this.props.req_id}/comments?load_user_info=1`, this.props.auth_token)
-            .then(data => !this.cancelLoad && this.setState({comments: data.comments}))
-            .catch(error => !this.cancelLoad && this.setState({error: error}))
-    }
+function Comments(props) {
+    const [comments, setComments] = useState([]);
+    const [comment, setComment] = useState("");
+    const [showAddModal, setShowAddModal] = useState(false);
 
-    componentDidMount() {
-        this.fetchComments()
-    }
+    useEffect(() => fetchComments(props.req_id, setComments), []);
 
-    saveNewComment() {
-        fetch_post(
-            `/api/v01/transactions/${this.props.req_id}/comments`,
-            {comment: this.state.comment},
-            this.props.auth_token
-        )
-        .then(parseJSON)
-        .then(() => {
-            this.setState({showAddModal: false, comment: '', save_error: undefined});
-            this.props.notifications.addNotification({
-                message: <FormattedMessage id="new-comment-added" defaultMessage="Your comment has been added!"/>,
-                level: 'success'
-            });
-            this.fetchComments();
-        })
-        .catch(error => this.setState({save_error: error}))
-    }
+    const closeModal = () => {
+        setShowAddModal(false);
+        setComment("");
+    };
 
-    render() {
-        const {comments, showAddModal, comment, save_error} = this.state;
-        const closeModal = () => this.setState({showAddModal: false, comment: '', save_error: undefined});
-
-        return (<div>
-            <Table condensed>
-                <tbody>
-                    {comments && comments.map(c => (
-                        <tr key={c.id}>
-                            <th style={{width: '15%'}}>{c.user.username}<br/>{moment(c.created_on).format(DATE_FORMAT)}</th>
-                            <td>{c.content.split('\n').map((e, i) => <div key={i}>{e}</div>)}</td>
-                        </tr>
-                        ))
-                    }
-                    <tr>
-                        <td colSpan={4}>
-                            <Button onClick={() => this.setState({showAddModal: true})} bsStyle="info"><FormattedMessage id="new-comment" defaultMessage="New comment"/></Button>
-                        </td>
+    return (<div>
+        <Table condensed>
+            <tbody>
+                {comments && comments.map(c => (
+                    <tr key={c.id}>
+                        <th style={{width: '15%'}}>{c.user.username}<br/>{moment(c.created_on).format(DATE_FORMAT)}</th>
+                        <td>{c.content.split('\n').map((e, i) => <div key={i}>{e}</div>)}</td>
                     </tr>
-                </tbody>
-            </Table>
-            <Modal show={showAddModal} onHide={closeModal} backdrop={false}>
+                    ))
+                }
+                <tr>
+                    <td colSpan={4}>
+                        <Button onClick={() => setShowAddModal(true)} bsStyle="info">
+                            <FormattedMessage id="new-comment" defaultMessage="New comment"/>
+                        </Button>
+                    </td>
+                </tr>
+            </tbody>
+        </Table>
+        <Modal show={showAddModal} onHide={closeModal} backdrop={false}>
+            <Modal.Header closeButton>
+                <Modal.Title><FormattedMessage id="new-comment" defaultMessage="New comment"/></Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <Form>
+                    <FormGroup controlId="comment">
+                        <FormControl componentClass="textarea"
+                                     placeholder="..."
+                                     value={comment}
+                                     onChange={e => setComment(e.target.value)}
+                                     autoFocus />
+                    </FormGroup>
+                </Form>
+            </Modal.Body>
+            <Modal.Footer>
+                <Button
+                    onClick={() => saveComment(props.req_id, comment, () => {
+                        closeModal();
+                        fetchComments(props.req_id, setComments);
+                    })}
+                    bsStyle="primary"
+                    disabled={comment.length === 0}>
+                    <FormattedMessage id="save" defaultMessage="Save"/>
+                </Button>
+                <Button onClick={closeModal}><FormattedMessage id="cancel" defaultMessage="Cancel"/></Button>
+            </Modal.Footer>
+        </Modal>
+    </div>);
+}
+
+function ErrorEntry(props){
+    const [showDetails, setShowDetails] = useState(false);
+
+    const {entry} = props;
+    const summary = entry.output?entry.output:<FormattedMessage id="see-description" defaultMessage="See description" />;
+    return (
+        <tr key={entry.id}>
+            <th>{entry.cell_id}</th>
+            <td>
+                {summary.split("\n").map((l, i) => <div key={i}>{l}<br/></div>)}
+                <br/>
+                <Button bsStyle="link" onClick={() => setShowDetails(true)}>...</Button>
+            </td>
+            <td>{moment(entry.created_on).format(DATE_FORMAT)}</td>
+            <Modal show={showDetails} onHide={() => setShowDetails(false)}>
                 <Modal.Header closeButton>
-                    <Modal.Title><FormattedMessage id="new-comment" defaultMessage="New comment"/></Modal.Title>
+                    <Modal.Title><FormattedMessage id="error-details" defaultMessage="Error details" /></Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    {
-                        save_error &&
-                            <Alert bsStyle="danger">
-                                <FormattedMessage id="fail-save-comment" defaultMessage="Failed to save comment."/><br/>
-                            </Alert>
-                    }
-                    <Form>
-                        <FormGroup controlId="comment">
-                            <FormControl componentClass="textarea"
-                                         placeholder="..."
-                                         value={comment}
-                                         onChange={e => this.setState({comment: e.target.value})}
-                                         autoFocus />
+                    <Form horizontal>
+                        <StaticControl label={<FormattedMessage id='source' defaultMessage='Source'/>} value={entry.cell_id}/>
+                        <StaticControl label={<FormattedMessage id='when' defaultMessage='When'/>} value={moment(entry.created_on).format(DATE_FORMAT)}/>
+
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="summary" defaultMessage="Summary" />
+                            </Col>
+
+                            <Col sm={9}>
+                                {summary.split("\n").map((l, i) => <FormControl.Static key={i}>{l}</FormControl.Static>)}
+                            </Col>
+                        </FormGroup>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="description" defaultMessage="Description" />
+                            </Col>
+
+                            <Col sm={9}>
+                                {entry.description && entry.description.split("\n").map((l, i) => <FormControl.Static key={i}>{l}</FormControl.Static>)}
+                            </Col>
                         </FormGroup>
                     </Form>
                 </Modal.Body>
-                <Modal.Footer>
-                    <Button onClick={this.saveNewComment.bind(this)} bsStyle="primary" disabled={comment.length === 0}>
-                        <FormattedMessage id="save" defaultMessage="Save"/>
-                    </Button>
-                    <Button onClick={closeModal}><FormattedMessage id="cancel" defaultMessage="Cancel"/></Button>
-                </Modal.Footer>
             </Modal>
-        </div>);
-    }
-}
-
-class Error extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {};
-    }
-
-    render() {
-        const {entry} = this.props;
-        const summary = entry.output?entry.output:<FormattedMessage id="see-description" defaultMessage="See description" />;
-        return (
-            <tr key={entry.id}>
-                <th>{entry.cell_id}</th>
-                <td>
-                    {summary.split("\n").map((l, i) => <div key={i}>{l}<br/></div>)}
-                    <br/>
-                    <Button bsStyle="link" onClick={() => this.setState({showDetails:true})}>...</Button>
-                </td>
-                <td>{moment(entry.created_on).format(DATE_FORMAT)}</td>
-                <Modal show={this.state.showDetails} onHide={() => this.setState({showDetails: false})}>
-                    <Modal.Header closeButton>
-                        <Modal.Title><FormattedMessage id="error-details" defaultMessage="Error details" /></Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <Form horizontal>
-                            <StaticControl label={<FormattedMessage id='source' defaultMessage='Source'/>} value={entry.cell_id}/>
-                            <StaticControl label={<FormattedMessage id='when' defaultMessage='When'/>} value={moment(entry.created_on).format(DATE_FORMAT)}/>
-
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="summary" defaultMessage="Summary" />
-                                </Col>
-
-                                <Col sm={9}>
-                                    {summary.split("\n").map((l, i) => <FormControl.Static key={i}>{l}</FormControl.Static>)}
-                                </Col>
-                            </FormGroup>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="description" defaultMessage="Description" />
-                                </Col>
-
-                                <Col sm={9}>
-                                    {entry.description && entry.description.split("\n").map((l, i) => <FormControl.Static key={i}>{l}</FormControl.Static>)}
-                                </Col>
-                            </FormGroup>
-                        </Form>
-                    </Modal.Body>
-                </Modal>
-            </tr>
-        )
-    }
+        </tr>
+    )
 }
 
 const Errors = ({errors, user_info}) => (
@@ -876,7 +842,7 @@ const Errors = ({errors, user_info}) => (
                     return 0;
                 }
             ).map(
-                e => (!e.advanced || user_info.ui_profile === "admin") && <Error key={e.id} entry={e} />
+                e => (!e.advanced || user_info.ui_profile === "admin") && <ErrorEntry key={e.id} entry={e} />
             )
         }
         </tbody>
