@@ -49,6 +49,10 @@ export default function AsynApioHelp() {
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td>ui</td>
+                    <td>yaoh_ui_version</td>
+                </tr>
             {
                 packages && Object.keys(packages).map((p, i) => (
                     <tr key={i}>
