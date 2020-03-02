@@ -976,6 +976,18 @@ const FORCEABLE_TASKS = [
     "delete @ENUM",
 ];
 
+function timer(ms) {
+ return new Promise(res => setTimeout(res, ms));
+}
+
+const ReplayingSubInstancesModal = ({show}) => (
+    <Modal show={show} backdrop={false}>
+        <Modal.Header>
+            <Modal.Title><FormattedMessage id="replay in progress" defaultMessage="Replay in progress..."/></Modal.Title>
+        </Modal.Header>
+    </Modal>
+);
+
 const titleCase = s => s[0].toUpperCase() + s.substr(1);
 
 const TasksTable = ({tasks, onReplay, onRollback, user_can_replay, tx_id}) => (
@@ -1440,6 +1452,27 @@ export class Transaction extends Component {
             .catch(error => console.error(error));
     }
 
+    onGlobalActionSubInstances(action) {
+        const {subrequestsFilter, tx} = this.state;
+        const meta = action === "skip" ? "meta=" + JSON.stringify({replay_behaviour: "skip"}) : null;
+        const url = new URL(API_URL_PREFIX + `/api/v01/apio/transactions/${tx.id}/sub_requests`);
+        // filtering (but no paging -> get all sub-instances)
+        url.searchParams.append('filter', subrequestsFilter);
+        this.setState({replaying: true});
+        fetch_get(url).then(data => {
+            if(this.cancelLoad) return;
+
+            return Promise.all(data.requests.map(async r => {
+                const errorTask = r.tasks.find(t => t.status === "ERROR");
+                if(!errorTask) return;
+                fetch_put(`/api/v01/transactions/${r.instance.id}/tasks/${errorTask.task_id}?${meta}`);
+                await timer(500);
+            }));
+        })
+            .then(() => this.setState({replaying: false}))
+            .catch(error => this.setState({replaying: false}));
+    }
+
     changeTxStatus(new_status) {
         fetch_put(`/api/v01/transactions/${this.state.tx.id}`, {status: new_status}, this.props.auth_token)
             .then(() =>
@@ -1591,6 +1624,7 @@ export class Transaction extends Component {
         return (
             <div>
                 {alerts}
+                <ReplayingSubInstancesModal show={replaying}/>
                 <Tabs defaultActiveKey={1} activeKey={activeTab} onSelect={e => this.setState({activeTab: e})} id="request-tabs">
                     <Tab eventKey={1} title={<FormattedMessage id="request" defaultMessage="Request" />}>
                         <Col xs={12} sm={6} md={8} lg={8} style={{marginTop: '10px'}}>
@@ -1715,6 +1749,15 @@ export class Transaction extends Component {
                                                 <option value="all">all</option>
                                                 <option value="active">active</option>
                                                 <option value="blocked">active & blocked</option>
+                                            </select>
+                                            <select
+                                                className="pull-right"
+                                                defaultValue=""
+                                                onChange={e => this.onGlobalActionSubInstances(e.target.value)}
+                                            >
+                                                <option value="">*global action*</option>
+                                                <option value="replay"><FormattedMessage id="replay" defaultMessage="replay"/></option>
+                                                <option value="skip"><FormattedMessage id="skip" defaultMessage="skip"/></option>
                                             </select>
                                         </Panel.Title>
                                     </Panel.Heading>
