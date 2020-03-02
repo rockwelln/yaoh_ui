@@ -451,109 +451,98 @@ class SyncMessagesFlow extends Component {
 }
 
 
-class Message extends Component {
-    state = {
-        expanded: false,
-        loading: false,
-    };
+function fetchDetails(external_id, onSuccess, onLoading, onLoaded) {
+    onLoading();
+    fetch_get(`${API_URL_PROXY_PREFIX}/api/v1/local/audit_records/${external_id}`)
+        .then(data => onSuccess(data))
+        .catch(error => console.log(error))
+        .then(data => onLoaded());
+}
 
-    fetchDetails() {
-        this.setState({loading: true});
-        fetch_get(`${API_URL_PROXY_PREFIX}/api/v1/local/audit_records/${this.props.entry.external_id}`, this.props.auth_token)
-            .then(data => {
-                this.setState({respSyncDetails: data, loading: false});
-            })
-            .catch(error => {
-                this.setState({loading: false});
-                console.log(error);
-            });
-    }
 
-    onExpand() {
-        const {expanded} = this.state;
-        const {entry} = this.props;
-        if(!expanded && entry.external_id && !entry.gateway_details) {
-            this.fetchDetails.bind(this)();
+function Message(props) {
+    const [expanded, setExpanded] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [respSyncDetails, setRespSyncDetails] = useState(false);
+
+    useEffect(() => {
+        if(expanded && entry.external_id && !entry.gateway_details) {
+            fetchDetails(entry.external_id, setRespSyncDetails, () => setLoading(true), () => setLoading(false))
         }
-        this.setState({expanded: !expanded});
-    }
+    }, [expanded]);
 
-    render() {
-        const {entry, p} = this.props;
-        const {respSyncDetails, loading, expanded} = this.state;
-        const statusColor = this.props.entry.status < 400 ? '#a4d1a2' : '#ca6f7b';
-        const expIco = expanded?<Glyphicon glyph="chevron-down"/>:<Glyphicon glyph="chevron-right"/>;
-        const syncDetails = entry.gateway_details || respSyncDetails;
-        let rows = [
-            <tr
-                onClick={this.onExpand.bind(this)}
-                key={`message_summary_${entry.processing_trace_id}`}
-            >
-                <td style={{width: '1%'}}>{expIco}</td>
-                <td style={{width: '1%'}}>{`${p+1}. `}</td>
-                <td style={{width: '2%'}}><Glyphicon style={{color: statusColor}} glyph={entry.status < 400?"ok":"remove"}/></td>
-                <td style={{width: '16%'}}>{entry.label}</td>
-                <td style={{width: '5%'}}>{entry.status}</td>
-                <td style={{width: '60%'}}>{moment(entry.created_on).format(DATE_FORMAT)}</td>
-                <td style={{width: '15%'}}><Badge>{entry.task_name}</Badge></td>
+    const {entry, p} = props;
+    const statusColor = entry.status < 400 ? '#a4d1a2' : '#ca6f7b';
+    const expIco = expanded?<Glyphicon glyph="chevron-down"/>:<Glyphicon glyph="chevron-right"/>;
+    const syncDetails = entry.gateway_details || respSyncDetails;
+    let rows = [
+        <tr
+            onClick={() => setExpanded(!expanded)}
+            key={`message_summary_${entry.processing_trace_id}`}
+        >
+            <td style={{width: '1%'}}>{expIco}</td>
+            <td style={{width: '1%'}}>{`${p+1}. `}</td>
+            <td style={{width: '2%'}}><Glyphicon style={{color: statusColor}} glyph={entry.status < 400?"ok":"remove"}/></td>
+            <td style={{width: '16%'}}>{entry.label}</td>
+            <td style={{width: '5%'}}>{entry.status}</td>
+            <td style={{width: '60%'}}>{moment(entry.created_on).format(DATE_FORMAT)}</td>
+            <td style={{width: '15%'}}><Badge>{entry.task_name}</Badge></td>
+        </tr>
+    ];
+
+    if (expanded && entry.input) {
+        rows.push(
+            <tr key={`message_input_${entry.processing_trace_id}`}>
+                <td><Glyphicon glyph="forward"/></td>
+                <td colSpan={6}>
+                    <pre style={{wordWrap: 'break-word', whiteSpace: 'pre-wrap'}}>
+                        # request <br/>
+                        {pp_as_json(entry.input)}
+                    </pre>
+                </td>
             </tr>
-        ];
+        )
+    }
 
-        if (expanded && entry.input) {
-            rows.push(
-                <tr key={`message_input_${entry.processing_trace_id}`}>
-                    <td><Glyphicon glyph="forward"/></td>
-                    <td colSpan={6}>
-                        <pre style={{wordWrap: 'break-word', whiteSpace: 'pre-wrap'}}>
-                            # request <br/>
-                            {pp_as_json(entry.input)}
-                        </pre>
-                    </td>
-                </tr>
-            )
-        }
+    if (loading) {
+        rows.push(
+            <tr key={`message_loading_${entry.processing_trace_id}`}>
+                <td colSpan={7}><FormattedMessage id="loading" defaultMessage="Loading..."/></td>
+            </tr>
+        )
+    } else if (expanded) {
+        rows.push(
+            <tr key={`message_details_${entry.processing_trace_id}`}>
+                <td><Glyphicon glyph="backward"/></td>
+                <td colSpan={6}>
+                    <pre style={{wordWrap: 'break-word', whiteSpace: 'pre-wrap'}}>
+                        # response <br/>
+                        {pp_as_json(entry.output)}
+                    </pre>
+                </td>
+            </tr>
+        );
 
-        if (loading) {
-            rows.push(
-                <tr key={`message_loading_${entry.processing_trace_id}`}>
-                    <td colSpan={7}><FormattedMessage id="loading" defaultMessage="Loading..."/></td>
-                </tr>
-            )
-        } else if (expanded) {
-            rows.push(
-                <tr key={`message_details_${entry.processing_trace_id}`}>
-                    <td><Glyphicon glyph="backward"/></td>
-                    <td colSpan={6}>
-                        <pre style={{wordWrap: 'break-word', whiteSpace: 'pre-wrap'}}>
-                            # response <br/>
-                            {pp_as_json(entry.output)}
-                        </pre>
+        try {
+            syncDetails && rows.push(
+                <tr key={`message_flow_sync_${entry.processing_trace_id}`}>
+                    <td colSpan={7}>
+                        <Tabs defaultActiveKey={1} id="syn-messages-flow">
+                            <Tab eventKey={1} title={<FormattedMessage id="flows" defaultMessage="Flows" />}>
+                                <SyncMessagesFlow data={JSON.parse(syncDetails.south_data)} />
+                            </Tab>
+                            <Tab eventKey={2} title={<FormattedMessage id="messages" defaultMessage="Messages" />}>
+                                <SyncMessagesDetails data={JSON.parse(syncDetails.south_data)} />
+                            </Tab>
+                        </Tabs>
                     </td>
                 </tr>
             );
-
-            try {
-                syncDetails && rows.push(
-                    <tr key={`message_flow_sync_${entry.processing_trace_id}`}>
-                        <td colSpan={7}>
-                            <Tabs defaultActiveKey={1} id="syn-messages-flow">
-                                <Tab eventKey={1} title={<FormattedMessage id="flows" defaultMessage="Flows" />}>
-                                    <SyncMessagesFlow data={JSON.parse(syncDetails.south_data)} />
-                                </Tab>
-                                <Tab eventKey={2} title={<FormattedMessage id="messages" defaultMessage="Messages" />}>
-                                    <SyncMessagesDetails data={JSON.parse(syncDetails.south_data)} />
-                                </Tab>
-                            </Tabs>
-                        </td>
-                    </tr>
-                );
-            } catch {
-                console.error("invalid sync details")
-            }
-
+        } catch {
+            console.error("invalid sync details on", syncDetails);
         }
-        return rows;
     }
+    return rows;
 }
 
 
