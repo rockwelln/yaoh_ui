@@ -7,21 +7,14 @@ import thunk from "redux-thunk";
 
 import App from './App';
 // import registerServiceWorker from './registerServiceWorker';
-import { unregister } from './registerServiceWorker';
+import register from './registerServiceWorker';
 
 import { mainReducer } from "./provisioning";
 
-//import en from 'react-intl/locale-data/en';
-//import fr from 'react-intl/locale-data/fr';
-//import nl from 'react-intl/locale-data/nl';
-
-//import en_GB from './translations/en.json';
 import fr_FR from './translations/fr.json';
 import {createCookie, getCookie, removeCookie} from "./utils";
+import AutoReload from "./utils/autoReload";
 
-//addLocaleData(en);
-//addLocaleData(fr);
-//addLocaleData(nl);
 
 function getMessages(locale) {
   switch(locale) {
@@ -75,6 +68,9 @@ class AppWithIntl extends Component {
         return (
             <IntlProvider locale={locale} key={locale} messages={messages}>
                 <App onLanguageUpdate={this.changeLanguage}/>
+                <AutoReload
+                    url="/index.html" tryDelay={10 * 60 * 1000}
+                />
             </IntlProvider>
         );
     }
@@ -93,4 +89,4 @@ ReactDOM.render(
         <AppWithIntl/>
     </Provider>, document.getElementById('root')
 );
-unregister();
+register();
