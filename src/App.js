@@ -17,6 +17,7 @@ import Glyphicon from 'react-bootstrap/lib/Glyphicon';
 import Row from 'react-bootstrap/lib/Row';
 import Nav from 'react-bootstrap/lib/Nav';
 import Navbar from 'react-bootstrap/lib/Navbar';
+import NavItem from 'react-bootstrap/lib/NavItem';
 import NavDropdown from 'react-bootstrap/lib/NavDropdown';
 import MenuItem from 'react-bootstrap/lib/MenuItem';
 import ButtonToolbar from 'react-bootstrap/lib/ButtonToolbar';
@@ -45,15 +46,18 @@ import LocalQueues from "./system/queues";
 import {
     API_URL_PREFIX,
     AuthServiceManager,
-    checkStatus, createCookie,
-    fetch_get, getCookie,
+    checkStatus,
+    createCookie,
+    fetch_get,
+    getCookie,
     NotificationsManager,
     parseJSON,
-    ProvProxiesManager, removeCookie
+    ProvProxiesManager,
+    removeCookie
 } from "./utils";
 import Databases from "./system/databases_mgm";
 import {AuditLogs} from "./system/audit";
-import {isAllowed, modules, pages} from "./utils/user";
+import {getHomePage, isAllowed, modules, pages} from "./utils/user";
 import {NotAllowed} from "./utils/common";
 import {AuthCallback, AuthSilentCallback} from "./sso/login";
 import {RESET_PASSWORD_PREFIX, ResetPasswordPage} from "./reset_password";
@@ -294,7 +298,7 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
           </NavDropdown>
           }
 
-          {(!user_info.modules || user_info.modules.includes(modules.provisioning)) && isAllowed(user_info.ui_profile, pages.data) &&
+          {(!user_info.modules || user_info.modules.includes(modules.provisioning)) && isAllowed(user_info.ui_profile, pages.provisioning) &&
               <NavDropdown
                 eventKey={4}
                 title={
@@ -434,32 +438,34 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
               </NavDropdown>
           }
 
-        <NavDropdown title={<Glyphicon glyph="user" />} id="nav-local-user">
-          <LinkContainer to={"/user/profile"}>
-              <MenuItem>
-                  <FormattedMessage id="profile" defaultMessage="Profile" />
-              </MenuItem>
-          </LinkContainer>
-          <MenuItem divider />
-          <MenuItem onClick={logoutUser}>
-              <FormattedMessage id="logout" defaultMessage="Logout" />
-          </MenuItem>
-        </NavDropdown>
+        </Nav>
+        <Nav pullRight>
+            <NavDropdown title={<Glyphicon glyph="user"/>} id="nav-local-user">
+                <LinkContainer to={"/user/profile"}>
+                    <MenuItem>
+                        <FormattedMessage id="profile" defaultMessage="Profile"/>
+                    </MenuItem>
+                </LinkContainer>
+                <MenuItem divider/>
+                <MenuItem onClick={logoutUser}>
+                    <FormattedMessage id="logout" defaultMessage="Logout"/>
+                </MenuItem>
+            </NavDropdown>
 
-        <ListItemLink to={"/help"}>
-            <Glyphicon glyph="question-sign" />
-        </ListItemLink>
-      </Nav>
-      <Navbar.Text
-          pullRight
-          style={{
-              color: (database_status && database_status.env === 'TEST')?'#ef0803':'#777',
-              fontWeight: (database_status && database_status.env === 'TEST')?'bold':'normal',
-          }}>
-          {
-              (database_status && database_status.env) ? database_status.env : "unknown"
-          }
-      </Navbar.Text>
+            <ListItemLink to={"/help"}>
+                <Glyphicon glyph="question-sign"/>
+            </ListItemLink>
+
+            <Navbar.Text
+                style={{
+                    color: (database_status && database_status.env === 'TEST') ? '#ef0803' : '#777',
+                    fontWeight: (database_status && database_status.env === 'TEST') ? 'bold' : 'normal',
+                }}>
+                {
+                    (database_status && database_status.env) ? database_status.env : "unknown"
+                }
+            </Navbar.Text>
+        </Nav>
     </Navbar.Collapse>
   </Navbar>
 );
@@ -911,9 +917,7 @@ class App extends Component {
                                exact />
                         <Route path="/auth-silent-callback" component={AuthSilentCallback} exact/>
                         <Route path="/" exact>
-                            {
-                                ui_profile === "provisioning" ? <Redirect to="/provisioning/list" /> : <Redirect to="/dashboard" />
-                            }
+                            <Redirect to={getHomePage(ui_profile)} />
                         </Route>
                         <Route component={NotFound} />
                     </Switch>

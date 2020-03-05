@@ -1,23 +1,23 @@
 export const pages = Object.freeze({
-    'requests': 19,
-    'requests_nprequests': 0,
-    'requests_ndg': 22,
-    'requests_startup_events': 4,
-    'requests_workflow_editor': 5,
-    'data': 20,
-    'data_tenants': 6,
-    'system': 21,
-    'system_users': 12,
-    'system_config': 14,
-    'system_gateways': 15,
-    'system_databases': 16,
-    'system_reporting': 17,
-    'system_queues': 18,
-    'system_templates': 27,
-    'bulks': 23,
-    'bulk_actions': 24,
-    'system_logs': 25,
-    'provisioning': 26,
+    requests: 19,
+    requests_nprequests: 0,
+    requests_ndg: 22,
+    requests_startup_events: 4,
+    requests_workflow_editor: 5,
+    data: 20,
+    data_tenants: 6,
+    system: 21,
+    system_users: 12,
+    system_config: 14,
+    system_gateways: 15,
+    system_databases: 16,
+    system_reporting: 17,
+    system_queues: 18,
+    system_templates: 27,
+    bulks: 23,
+    bulk_actions: 24,
+    system_logs: 25,
+    provisioning: 26,
     edit_group_iad_advanced_clock_master: 100,
     edit_group_iad_pra_info_tpid: 101,
     edit_group_iad_pra_info_circuit_id: 102,
@@ -72,6 +72,21 @@ const UI_PROFILES = {
     "orange": ["user", "admin"],
     "telenet": ["user", "admin", "CPM", "HelpDesk1",  "HelpDesk2",  "HelpDesk3", "VoiceOps", "VoiceEng"],
 };
+
+const HOME_PAGES = {
+    "provisioning": "/provisioning/list",
+    "CPM": "/provisioning/list",
+    "HelpDesk1": "/provisioning/list",
+    "HelpDesk2": "/provisioning/list",
+    "HelpDesk3": "/provisioning/list",
+    "VoiceOps": "/provisioning/list",
+    "VoiceEng": "/provisioning/list"
+};
+
+export function getHomePage(ui_profile) {
+    if (HOME_PAGES[ui_profile] !== undefined) return HOME_PAGES[ui_profile];
+    else return "/dashboard";
+}
 
 const definition = {
     // give access to all pages for the admin
