@@ -21,7 +21,7 @@ import Loading from "../../../common/Loading";
 
 export class MainConfig extends Component {
   state = {
-    isLoading: false,
+    isLoading: true,
     iadFromSite: [],
     iadNotFromSite: [],
     routeExhaustionAction: "",
@@ -74,7 +74,7 @@ export class MainConfig extends Component {
                 type="text"
                 placeholder={"Name"}
                 disabled
-                value={this.props.match.params.entTrunkId}
+                defaultValue={this.props.match.params.entTrunkId}
               />
             </div>
           </Col>

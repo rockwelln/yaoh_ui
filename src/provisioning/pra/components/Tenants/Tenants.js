@@ -19,6 +19,8 @@ import Loading from "../../common/Loading";
 import Tenant from "./Tenant";
 import { countsPerPages } from "../../constants";
 
+import { isAllowed, pages } from "../../../../utils/user";
+
 class Tenants extends Component {
   constructor(props) {
     super(props);
@@ -63,7 +65,10 @@ class Tenants extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.tenants.length !== this.props.tenants.length) {
+    if (
+      prevProps.tenants.length !== this.props.tenants.length ||
+      prevProps.match.params.gwName !== this.props.match.params.gwName
+    ) {
       this.fetchRequsts();
     }
   }
@@ -106,7 +111,7 @@ class Tenants extends Component {
                 </InputGroup.Addon>
                 <FormattedMessage
                   id="search_placeholder"
-                  defaultMessage="Entreprise ID or Entreprise Name or Customer ID"
+                  defaultMessage="Enterprise ID or Enterprise Name or Customer ID"
                 >
                   {placeholder => (
                     <FormControl
@@ -126,16 +131,21 @@ class Tenants extends Component {
                 </FormattedMessage>
               </InputGroup>
             </Col>
-            <Col md={1}>
-              <Link
-                to={`/provisioning/${this.props.match.params.gwName}/tenants/add`}
-              >
-                <Glyphicon
-                  className={"x-large"}
-                  glyph="glyphicon glyphicon-plus-sign"
-                />
-              </Link>
-            </Col>
+            {isAllowed(
+              localStorage.getItem("userProfile"),
+              pages.add_access
+            ) && (
+              <Col md={1}>
+                <Link
+                  to={`/provisioning/${this.props.match.params.gwName}/tenants/add`}
+                >
+                  <Glyphicon
+                    className={"x-large"}
+                    glyph="glyphicon glyphicon-plus-sign"
+                  />
+                </Link>
+              </Col>
+            )}
           </Row>
           <Row>
             <Col md={11}>
@@ -173,7 +183,7 @@ class Tenants extends Component {
                         <th>
                           <FormattedMessage
                             id="tenant-id"
-                            defaultMessage="Entreprise id"
+                            defaultMessage="Enterprise id"
                           />
                           <Glyphicon
                             glyph="glyphicon glyphicon-sort"
@@ -183,7 +193,7 @@ class Tenants extends Component {
                         <th>
                           <FormattedMessage
                             id="tenant-id"
-                            defaultMessage="Entreprise name"
+                            defaultMessage="Enterprise name"
                           />
                           <Glyphicon
                             glyph="glyphicon glyphicon-sort"

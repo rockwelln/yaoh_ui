@@ -20,6 +20,8 @@ import { removeEmpty } from "../remuveEmptyInObject";
 import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 
+import { validateInputPhoneNumber } from "../validateInputPhoneNumber";
+
 export class AddGroup extends Component {
   state = {
     siteName: "",
@@ -33,7 +35,8 @@ export class AddGroup extends Component {
     //cliName: "",
     isLoading: true,
     channelHunting: "",
-    np1Redundancy: false
+    np1Redundancy: false,
+    mainNumber: ""
   };
 
   componentDidMount = () => {
@@ -184,6 +187,29 @@ export class AddGroup extends Component {
             </Row>
             <Row className={"margin-top-1"}>
               <Col md={12} className={"flex align-items-center"}>
+                <div className={"margin-right-1 flex flex-basis-16"}>
+                  <FormattedMessage
+                    id="mainNumber"
+                    defaultMessage="Main number"
+                  />
+                  {"\u002a"}
+                </div>
+                <div className={"margin-right-1 flex-basis-33"}>
+                  <FormControl
+                    className={"hide-arrows"}
+                    type="number"
+                    value={this.state.mainNumber}
+                    placeholder={"Main number"}
+                    onKeyDown={validateInputPhoneNumber}
+                    onChange={e => {
+                      this.setState({ mainNumber: e.target.value });
+                    }}
+                  />
+                </div>
+              </Col>
+            </Row>
+            <Row className={"margin-top-1"}>
+              <Col md={12} className={"flex align-items-center"}>
                 <div className={"margin-right-1 flex font-24"}>
                   <FormattedMessage
                     id="productType"
@@ -266,26 +292,29 @@ export class AddGroup extends Component {
                 </div>
               </Col>
             </Row>
-            <Row className={"margin-top-1"}>
-              <Col md={12} className={"flex align-items-center"}>
-                <div className={"margin-right-1 flex flex-basis-16"}>
-                  <ControlLabel>
-                    <FormattedMessage
-                      id="np1Redundancy"
-                      defaultMessage="N+1 Redundancy"
+            {(this.state.typeOfIad === "SIP" ||
+              this.state.typeOfIad === "SIP_PRA") && (
+              <Row className={"margin-top-1"}>
+                <Col md={12} className={"flex align-items-center"}>
+                  <div className={"margin-right-1 flex flex-basis-16"}>
+                    <ControlLabel>
+                      <FormattedMessage
+                        id="np1Redundancy"
+                        defaultMessage="N+1 Redundancy"
+                      />
+                    </ControlLabel>
+                  </div>
+                  <div className={"margin-right-1 flex-basis-33"}>
+                    <Checkbox
+                      defaultChecked={this.state.np1Redundancy}
+                      onChange={e =>
+                        this.setState({ np1Redundancy: e.target.checked })
+                      }
                     />
-                  </ControlLabel>
-                </div>
-                <div className={"margin-right-1 flex-basis-33"}>
-                  <Checkbox
-                    defaultChecked={this.state.np1Redundancy}
-                    onChange={e =>
-                      this.setState({ np1Redundancy: e.target.checked })
-                    }
-                  />
-                </div>
-              </Col>
-            </Row>
+                  </div>
+                </Col>
+              </Row>
+            )}
             <Row className={"margin-top-1"}>
               <Col md={12} className={"flex align-items-center"}>
                 <div className={"margin-right-1 flex flex-basis-16"}>
@@ -316,10 +345,17 @@ export class AddGroup extends Component {
             <Row className={"margin-top-1"}>
               <Col md={12} className={"flex align-items-center"}>
                 <div className={"margin-right-1 flex flex-basis-16"}>
-                  <FormattedMessage
-                    id="numbersOfChannels"
-                    defaultMessage="Numbers of Channels"
-                  />
+                  {this.state.typeOfIad === "PRA" ? (
+                    <FormattedMessage
+                      id="numberOfPRA"
+                      defaultMessage="Number of PRA"
+                    />
+                  ) : (
+                    <FormattedMessage
+                      id="numbersOfChannels"
+                      defaultMessage="Numbers of Channels"
+                    />
+                  )}
                   {"\u002a"}
                 </div>
                 <div className={"margin-right-1 flex-basis-33"}>
@@ -411,7 +447,8 @@ export class AddGroup extends Component {
       //cliName,
       virtual,
       channelHunting,
-      np1Redundancy
+      np1Redundancy,
+      mainNumber
     } = this.state;
 
     const data = {
@@ -424,7 +461,8 @@ export class AddGroup extends Component {
       serviceType,
       virtual,
       channelHunting,
-      np1Redundancy
+      np1Redundancy,
+      cliPhoneNumber: mainNumber
     };
     const clearData = removeEmpty(data);
     this.setState({ buttonName: "Creating..." }, () =>

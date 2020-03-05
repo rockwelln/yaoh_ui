@@ -538,6 +538,7 @@ class App extends Component {
             .then(data => {
                 this.setState({user_info: data});
                 this.props.onLanguageUpdate(data.language);
+                localStorage.setItem("userProfile", data.ui_profile);
             })
             .catch(error => {
                 if(error.response !== undefined && error.response.status === 401) {  // unauthorized
@@ -584,6 +585,7 @@ class App extends Component {
         this.setState({user_info: undefined});
         console.log('logout');
         AuthServiceManager.logout();
+        localStorage.removeItem("userProfile");
         // this.props.cookies.remove("auth_token", { path: '/' });
         // this.props.cookies.remove("auth_sso", { path: '/' });
         // this.props.cookies.remove("user_language", { path: '/' });

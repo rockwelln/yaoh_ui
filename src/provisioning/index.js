@@ -9,12 +9,10 @@ import Panel from "react-bootstrap/lib/Panel";
 import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
 import {FormattedMessage} from "react-intl";
 import Table, {tr} from "react-bootstrap/lib/Table";
-
 // default
 import SearchPage from "./default/components/SearchPage";
 import LocalUsers from "./default/components/LocalUsers";
 import UpdateLocalUser from "./default/components/UpdateLocalUser";
-import AddLocalUsers from "./default/components/AddLocalUser";
 import ConfigPage from "./default/components/Configs";
 import CategoryPage from "./default/components/CategoryPage";
 import TemplatePage from "./default/components/TemplatePage";
@@ -38,15 +36,21 @@ import AddTrunkGroupUser from "./default/components/AddUserToTrunkGroup";
 
 // PRA
 import PraTenants from "./pra/components/Tenants";
-import PraAddEntreprises from "./pra/components/AddEntreprises";
-import PraAddGroup from "./pra/components/AddGroup";
-import PraEntreprisesPage from "./pra/components/EntreprisesPage";
-import PraAddIAD from "./pra/components/AddIAD";
-import PraAddPhoneToGroup from "./pra/components/AddPhoneNumbersToGroup";
-import PraIADPage from "./pra/components/IADPage";
-import PraEnterpriseTrunkPage from "./pra/components/EnterpriseTrunkPage";
+import AddEntreprises from "./pra/components/AddEntreprises";
+import AddGroup from "./pra/components/AddGroup";
+import EntreprisesPage from "./pra/components/EntreprisesPage";
+import AddIAD from "./pra/components/AddIAD";
+import AddPhoneToGroup from "./pra/components/AddPhoneNumbersToGroup";
+import IADPage from "./pra/components/IADPage";
+import EnterpriseTrunkPage from "./pra/components/EnterpriseTrunkPage";
 import PraGroupPage from "./pra/components/GroupPage";
 import mainPraProvisioningReducer from "./pra/store/reducers";
+import Configs from "./pra/components/Configs";
+import AddReconciliationTeam from "./pra/components/AddReconciliationTeam";
+import ReconciliationTeamPage from "./pra/components/ReconciliationTeamPage";
+import Reconciliations from "./pra/components/Reconciliations";
+import MassIADReboot from "./pra/components/MassIADReboot";
+import AnomaliesPage from "./pra/components/AnomaliesPage";
 // end
 
 
@@ -328,8 +332,74 @@ function provisioningPraRoutes(ui_profile) {
         <Route
             path="/provisioning/:gwName/tenants"
             component={props =>
-                isAllowed(ui_profile, pages.data_tenants) ? (
+                isAllowed(ui_profile, pages.common_page_access) ? (
                     <PraTenants/>
+                ) : (
+                    <NotAllowed/>
+                )
+            }
+            exact
+        />,
+        <Route
+            path="/provisioning/:gwName/configs"
+            component={props =>
+                isAllowed(ui_profile, pages.common_page_access) ? (
+                    <Configs/>
+                ) : (
+                    <NotAllowed/>
+                )
+            }
+            exact
+        />,
+        <Route
+            path="/provisioning/:gwName/reconciliations"
+            component={props =>
+                isAllowed(ui_profile, pages.common_page_access) ? (
+                    <Reconciliations/>
+                ) : (
+                    <NotAllowed/>
+                )
+            }
+            exact
+        />,
+        <Route
+            path="/provisioning/:gwName/iadreboot"
+            component={props =>
+                isAllowed(ui_profile, pages.common_page_access) ? (
+                    <MassIADReboot/>
+                ) : (
+                    <NotAllowed/>
+                )
+            }
+            exact
+        />,
+        <Route
+            path="/provisioning/:gwName/reconciliations/:anomalyHash"
+            component={props =>
+                isAllowed(ui_profile, pages.common_page_access) ? (
+                    <AnomaliesPage/>
+                ) : (
+                    <NotAllowed/>
+                )
+            }
+            exact
+        />,
+        <Route
+            path="/provisioning/:gwName/configs/addteam"
+            component={props =>
+                isAllowed(ui_profile, pages.add_access) ? (
+                    <AddReconciliationTeam/>
+                ) : (
+                    <NotAllowed/>
+                )
+            }
+            exact
+        />,
+        <Route
+            path="/provisioning/:gwName/configs/reconciliationteam/:teamName"
+            component={props =>
+                isAllowed(ui_profile, pages.common_page_access) ? (
+                    <ReconciliationTeamPage/>
                 ) : (
                     <NotAllowed/>
                 )
@@ -339,8 +409,8 @@ function provisioningPraRoutes(ui_profile) {
         <Route
             path="/provisioning/:gwName/tenants/add"
             component={props =>
-                isAllowed(ui_profile, pages.data_tenants) ? (
-                    <PraAddEntreprises/>
+                isAllowed(ui_profile, pages.add_access) ? (
+                    <AddEntreprises/>
                 ) : (
                     <NotAllowed/>
                 )
@@ -350,8 +420,8 @@ function provisioningPraRoutes(ui_profile) {
         <Route
             path="/provisioning/:gwName/tenants/:tenantId"
             component={props =>
-                isAllowed(ui_profile, pages.data_tenants) ? (
-                    <PraEntreprisesPage/>
+                isAllowed(ui_profile, pages.common_page_access) ? (
+                    <EntreprisesPage/>
                 ) : (
                     <NotAllowed/>
                 )
@@ -361,8 +431,8 @@ function provisioningPraRoutes(ui_profile) {
         <Route
             path="/provisioning/:gwName/tenants/:tenantId/addgroup"
             component={props =>
-                isAllowed(ui_profile, pages.data_tenants) ? (
-                    <PraAddGroup/>
+                isAllowed(ui_profile, pages.add_access) ? (
+                    <AddGroup/>
                 ) : (
                     <NotAllowed/>
                 )
@@ -372,7 +442,7 @@ function provisioningPraRoutes(ui_profile) {
         <Route
             path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId"
             component={props =>
-                isAllowed(ui_profile, pages.data_tenants) ? (
+                isAllowed(ui_profile, pages.common_page_access) ? (
                     <PraGroupPage/>
                 ) : (
                     <NotAllowed/>
@@ -383,8 +453,8 @@ function provisioningPraRoutes(ui_profile) {
         <Route
             path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/addiad"
             component={props =>
-                isAllowed(ui_profile, pages.data_tenants) ? (
-                    <PraAddIAD/>
+                isAllowed(ui_profile, pages.add_access) ? (
+                    <AddIAD/>
                 ) : (
                     <NotAllowed/>
                 )
@@ -394,8 +464,8 @@ function provisioningPraRoutes(ui_profile) {
         <Route
             path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/addphone"
             component={props =>
-                isAllowed(ui_profile, pages.data_tenants) ? (
-                    <PraAddPhoneToGroup/>
+                isAllowed(ui_profile, pages.add_access) ? (
+                    <AddPhoneToGroup/>
                 ) : (
                     <NotAllowed/>
                 )
@@ -405,8 +475,8 @@ function provisioningPraRoutes(ui_profile) {
         <Route
             path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/iad/:iadId"
             component={props =>
-                isAllowed(ui_profile, pages.data_tenants) ? (
-                    <PraIADPage/>
+                isAllowed(ui_profile, pages.add_access) ? (
+                    <IADPage/>
                 ) : (
                     <NotAllowed/>
                 )
@@ -416,19 +486,8 @@ function provisioningPraRoutes(ui_profile) {
         <Route
             path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/enterprisetrunk/:entTrunkId"
             component={props =>
-                isAllowed(ui_profile, pages.data_tenants) ? (
-                    <PraEnterpriseTrunkPage/>
-                ) : (
-                    <NotAllowed/>
-                )
-            }
-            exact
-        />,
-        <Route
-            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/modifyphone"
-            component={props =>
-                isAllowed(ui_profile, pages.data_tenants) ? (
-                    <PraAddPhoneToGroup/>
+                isAllowed(ui_profile, pages.common_page_access) ? (
+                    <EnterpriseTrunkPage/>
                 ) : (
                     <NotAllowed/>
                 )

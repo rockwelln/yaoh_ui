@@ -13,7 +13,8 @@ import Button from "react-bootstrap/lib/Button";
 import {
   fetchGetConfig,
   fetchGetGroupById,
-  fetchPutUpdateGroupDetails
+  fetchPutUpdateGroupDetails,
+  fetchGetIADs
 } from "../../../../store/actions";
 import { FormattedMessage } from "react-intl";
 import { removeEmpty } from "../../../remuveEmptyInObject";
@@ -26,7 +27,10 @@ export class Channels extends Component {
     group: {},
     channelsInError: null,
     channelsOutError: null,
-    disableButton: false
+    disableButton: false,
+    channelsOut: 0,
+    channelsIn: 0,
+    numberOfChannelsError: null
   };
   componentDidMount() {
     this.props
@@ -47,7 +51,10 @@ export class Channels extends Component {
                 channelHunting:
                   this.state.group.channelHunting ||
                   this.props.config.tenant.group.channelHunting[0].value
-              }
+              },
+              channelsOut:
+                this.state.group.channelsOut || this.state.channelsOut,
+              channelsIn: this.state.group.channelsIn || this.state.channelsIn
             })
           )
         )
@@ -60,70 +67,90 @@ export class Channels extends Component {
 
     return (
       <React.Fragment>
-        <Row className={"margin-top-1"}>
-          <Col md={12} className={"flex align-items-center"}>
-            <div className={"margin-right-1 flex flex-basis-16"}>
-              <ControlLabel>
-                <FormattedMessage
-                  id="numberOfChannels"
-                  defaultMessage="Number of Channels"
-                />
-              </ControlLabel>
-            </div>
-            <div className={"margin-right-1 flex-basis-33"}>
-              <FormControl
-                componentClass="select"
-                value={this.state.group.numberOfChannels}
-                onChange={e =>
-                  this.setState({
-                    group: {
-                      ...this.state.group,
-                      numberOfChannels: e.target.value
-                    }
-                  })
-                }
-              >
-                {this.state.group.pbxType === "PRA"
-                  ? ~this.props.config.tenant.group.iad[
-                      "2EDUsForServiceTypes"
-                    ].indexOf(this.state.group.serviceType)
-                    ? this.props.config.tenant.group.capacity.PRA.redundant.map(
-                        (type, i) => (
-                          <option key={i} value={type.value}>
-                            {type.label}
-                          </option>
+        <FormGroup
+          controlId="channelIn"
+          validationState={this.state.numberOfChannelsError}
+        >
+          <Row className={"margin-top-1"}>
+            <Col md={12} className={"flex align-items-center"}>
+              <div className={"margin-right-1 flex flex-basis-16"}>
+                <ControlLabel>
+                  {this.state.group.pbxType === "PRA" ? (
+                    <FormattedMessage
+                      id="numberOfPRA"
+                      defaultMessage="Number of PRA"
+                    />
+                  ) : (
+                    <FormattedMessage
+                      id="numberOfChannels"
+                      defaultMessage="Number of Channels"
+                    />
+                  )}
+                </ControlLabel>
+              </div>
+              <div className={"margin-right-1 flex-basis-33"}>
+                <FormControl
+                  componentClass="select"
+                  value={this.state.group.numberOfChannels}
+                  onChange={this.changeNumberOfChannels}
+                >
+                  {this.state.group.pbxType === "PRA"
+                    ? ~this.props.config.tenant.group.iad[
+                        "2EDUsForServiceTypes"
+                      ].indexOf(this.state.group.serviceType)
+                      ? this.props.config.tenant.group.capacity.PRA.redundant.map(
+                          (type, i) => (
+                            <option key={i} value={type.value}>
+                              {type.label}
+                            </option>
+                          )
                         )
-                      )
-                    : this.props.config.tenant.group.capacity.PRA.nonRedundant.map(
-                        (type, i) => (
-                          <option key={i} value={type.value}>
-                            {type.label}
-                          </option>
+                      : this.props.config.tenant.group.capacity.PRA.nonRedundant.map(
+                          (type, i) => (
+                            <option key={i} value={type.value}>
+                              {type.label}
+                            </option>
+                          )
                         )
-                      )
-                  : this.state.group.pbxType === "SIP"
-                  ? ~this.props.config.tenant.group.iad[
-                      "2EDUsForServiceTypes"
-                    ].indexOf(this.state.group.serviceType)
-                    ? this.props.config.tenant.group.capacity.SIP.redundant.map(
-                        (type, i) => (
-                          <option key={i} value={type.value}>
-                            {type.label}
-                          </option>
+                    : this.state.group.pbxType === "SIP"
+                    ? ~this.props.config.tenant.group.iad[
+                        "2EDUsForServiceTypes"
+                      ].indexOf(this.state.group.serviceType)
+                      ? this.props.config.tenant.group.capacity.SIP.redundant.map(
+                          (type, i) => (
+                            <option key={i} value={type.value}>
+                              {type.label}
+                            </option>
+                          )
                         )
-                      )
-                    : this.props.config.tenant.group.capacity.SIP.nonRedundant.map(
-                        (type, i) => (
-                          <option key={i} value={type.value}>
-                            {type.label}
-                          </option>
+                      : this.props.config.tenant.group.capacity.SIP.nonRedundant.map(
+                          (type, i) => (
+                            <option key={i} value={type.value}>
+                              {type.label}
+                            </option>
+                          )
                         )
-                      )
-                  : null}
-              </FormControl>
-            </div>
-          </Col>
-        </Row>
+                    : null}
+                </FormControl>
+              </div>
+            </Col>
+          </Row>
+          {this.state.numberOfChannelsError && (
+            <Row className={"margin-top-1"}>
+              <Col md={12} className={"flex align-items-center"}>
+                <div className={"margin-right-1 flex flex-basis-16"}></div>
+                <div className={"margin-right-1 flex-basis-33"}>
+                  <HelpBlock>
+                    <FormattedMessage
+                      id="numberOfChannelsError"
+                      defaultMessage="It is not allowed to decrease the capacity"
+                    />
+                  </HelpBlock>
+                </div>
+              </Col>
+            </Row>
+          )}
+        </FormGroup>
         <Row className={"margin-top-1"}>
           <Col md={12} className={"flex align-items-center"}>
             <div className={"margin-right-1 flex flex-basis-16"}>
@@ -169,13 +196,13 @@ export class Channels extends Component {
                   <div className={"margin-right-1 flex-basis-33"}>
                     <FormControl
                       type="number"
-                      defaultValue={this.state.group.channelsIn}
+                      defaultValue={this.state.channelsIn}
                       placeholder={"Channels In"}
                       onChange={this.changeChannelsIn}
                       min={0}
                       max={
                         this.state.group.numberOfChannels -
-                        this.state.group.channelOut
+                        this.state.group.channelsOut
                       }
                     />
                   </div>
@@ -214,7 +241,7 @@ export class Channels extends Component {
                   <div className={"margin-right-1 flex-basis-33"}>
                     <FormControl
                       type="number"
-                      defaultValue={this.state.group.channelOut}
+                      defaultValue={this.state.channelsOut}
                       placeholder={"Channels Out"}
                       onChange={this.changeChannelsOut}
                       min={0}
@@ -287,7 +314,8 @@ export class Channels extends Component {
                 disabled={
                   !!this.state.channelsOutError ||
                   !!this.state.channelsInError ||
-                  this.state.disableButton
+                  this.state.disableButton ||
+                  this.state.numberOfChannelsError === "error"
                 }
               >
                 {this.state.disableButton ? (
@@ -306,20 +334,36 @@ export class Channels extends Component {
     );
   }
 
+  changeNumberOfChannels = e => {
+    const targetValue = e.target.value;
+    if (this.props.group.numberOfChannels > Number(targetValue)) {
+      this.setState({ numberOfChannelsError: "error" });
+      return;
+    }
+
+    this.setState({
+      group: {
+        ...this.state.group,
+        numberOfChannels: Number(targetValue)
+      },
+      numberOfChannelsError: null
+    });
+  };
+
   updateChannels = () => {
     const {
       numberOfChannels,
       channelHunting,
       direction,
       channelsIn,
-      channelOut
+      channelsOut
     } = this.state.group;
     const data = {
       numberOfChannels,
       channelHunting,
       direction,
       channelsIn,
-      channelOut
+      channelsOut
     };
     this.setState({ disableButton: true });
     const clearData = removeEmpty(data);
@@ -329,15 +373,21 @@ export class Channels extends Component {
         this.props.match.params.groupId,
         clearData
       )
-      .then(() => this.setState({ disableButton: false }));
+      .then(() => {
+        this.props.fetchGetIADs(
+          this.props.match.params.tenantId,
+          this.props.match.params.groupId
+        );
+        this.setState({ disableButton: false });
+      });
   };
 
   changeChannelsIn = e => {
-    const { channelOut, numberOfChannels } = this.state.group;
+    const { channelsOut, numberOfChannels } = this.state.group;
     this.setState({ channelsInError: null, channelsOutError: null });
     if (
       e.target.value < 0 ||
-      Number(e.target.value) + (!!channelOut && channelOut) > numberOfChannels
+      Number(e.target.value) + (!!channelsOut && channelsOut) > numberOfChannels
     ) {
       this.setState({
         channelsInError: "error",
@@ -367,7 +417,7 @@ export class Channels extends Component {
         channelsOutError: "error",
         group: {
           ...this.state.group,
-          channelOut: Number(e.target.value)
+          channelsOut: Number(e.target.value)
         }
       });
       return;
@@ -375,7 +425,7 @@ export class Channels extends Component {
     this.setState({
       group: {
         ...this.state.group,
-        channelOut: Number(e.target.value)
+        channelsOut: Number(e.target.value)
       }
     });
   };
@@ -386,7 +436,8 @@ const mapStateToProps = state => ({ group: state.group, config: state.config });
 const mapDispatchToProps = {
   fetchGetConfig,
   fetchGetGroupById,
-  fetchPutUpdateGroupDetails
+  fetchPutUpdateGroupDetails,
+  fetchGetIADs
 };
 
 export default withRouter(

@@ -40,51 +40,6 @@ export const getTrunkByGroupID = data => ({
   data
 });
 
-export const postCreateTenant = data => ({
-  type: actionType.POST_CREATE_TENANT,
-  data
-});
-
-export const postCreateGroup = data => ({
-  type: actionType.POST_CREATE_GROUP,
-  data
-});
-
-export const postAssignPhoneNumbersToGroup = data => ({
-  type: actionType.POST_ASSIGN_PHONE_NUMBERS_TO_GROUP,
-  data
-});
-
-export const putUpdateEnterpriseTrunk = data => ({
-  type: actionType.PUT_UPDATE_ENTERPRISE_TRNUK,
-  data
-});
-
-export const putUpdateGroupDetails = data => ({
-  type: actionType.PUT_UPDATE_GROUP_DETAILS,
-  data
-});
-
-export const putUpdateTenantDetails = data => ({
-  type: actionType.PUT_UPDATE_TENANT_DETAILS,
-  data
-});
-
-export const deleteTenant = data => ({
-  type: actionType.DELETE_TENANT,
-  data
-});
-
-export const deleteGroupFromTenant = data => ({
-  type: actionType.DELETE_GROUP_FROM_TENANT,
-  data
-});
-
-export const deleteTrunkGroup = data => ({
-  type: actionType.DELETE_TRUNK_GROUP,
-  data
-});
-//////////////////////
 export const getNumbersByEnterpriseTrunk = data => ({
   type: actionType.GET_NUMBERS_BY_ENTERPRISE_TRUNK,
   data
@@ -135,6 +90,56 @@ export const getListOfIads = data => ({
   data
 });
 
+export const getReconciliationTeams = data => ({
+  type: actionType.GET_RECONCILIATION_TEAMS,
+  data
+});
+
+export const getTeam = data => ({
+  type: actionType.GET_TEAM,
+  data
+});
+
+export const getAnomalies = data => ({
+  type: actionType.GET_ANOMALIES,
+  data
+});
+
+export const getAnomaly = data => ({
+  type: actionType.GET_ANOMALY,
+  data
+});
+
+export const getSearchIADs = data => ({
+  type: actionType.GET_SEARCH_IADS,
+  data
+});
+
+export const getTimerForIAD = data => ({
+  type: actionType.GET_TIMER_FOR_IAD,
+  data
+});
+
+export const postCreateTenant = data => ({
+  type: actionType.POST_CREATE_TENANT,
+  data
+});
+
+export const postCreateGroup = data => ({
+  type: actionType.POST_CREATE_GROUP,
+  data
+});
+
+export const postAssignPhoneNumbersToGroup = data => ({
+  type: actionType.POST_ASSIGN_PHONE_NUMBERS_TO_GROUP,
+  data
+});
+
+export const postCreateReconciliationTeams = data => ({
+  type: actionType.POST_CREATE_RECONCILIATION_TEAMS,
+  data
+});
+
 export const postCreateIAD = data => ({
   type: actionType.POST_CREATE_IAD,
   data
@@ -142,6 +147,26 @@ export const postCreateIAD = data => ({
 
 export const postCreateEnterpriseTrunk = data => ({
   type: actionType.POST_CREATE_ENTERPRISE_TRUNK,
+  data
+});
+
+export const postEmergencyRouting = data => ({
+  type: actionType.POST_EMERGENCY_ROUTING,
+  data
+});
+
+export const putUpdateEnterpriseTrunk = data => ({
+  type: actionType.PUT_UPDATE_ENTERPRISE_TRNUK,
+  data
+});
+
+export const putUpdateGroupDetails = data => ({
+  type: actionType.PUT_UPDATE_GROUP_DETAILS,
+  data
+});
+
+export const putUpdateTenantDetails = data => ({
+  type: actionType.PUT_UPDATE_TENANT_DETAILS,
   data
 });
 
@@ -160,6 +185,30 @@ export const putUpdateNumbersByEnterpriseTrunk = data => ({
   data
 });
 
+export const putUpdateTeam = data => ({
+  type: actionType.PUT_UPDATE_TEAM,
+  data
+});
+
+export const putUpdateAnomaly = data => ({
+  type: actionType.PUT_UPDATE_ANOMALY,
+  data
+});
+
+export const putMassIADsReboot = () => ({
+  type: actionType.PUT_MASS_IADS_REBOOT
+});
+
+export const deleteTenant = data => ({
+  type: actionType.DELETE_TENANT,
+  data
+});
+
+export const deleteGroupFromTenant = data => ({
+  type: actionType.DELETE_GROUP_FROM_TENANT,
+  data
+});
+
 export const deletePhoneFromGroup = data => ({
   type: actionType.DELETE_PHONE_FROM_GROUP,
   data
@@ -167,6 +216,21 @@ export const deletePhoneFromGroup = data => ({
 
 export const deleteEnterpriseTrunk = data => ({
   type: actionType.DELETE_ENTERPRISE_TRUNK,
+  data
+});
+
+export const deleteTrunkGroup = data => ({
+  type: actionType.DELETE_TRUNK_GROUP,
+  data
+});
+
+export const deleteTeam = data => ({
+  type: actionType.DELETE_TEAM,
+  data
+});
+
+export const deleteAnomaly = data => ({
+  type: actionType.DELETE_ANOMALY,
   data
 });
 
@@ -181,6 +245,27 @@ export const changeObjectIAD = (object, field, value) => ({
   object,
   field,
   value
+});
+
+export const clearIad = () => ({
+  type: actionType.CLEAR_IAD
+});
+
+export const clearCreatedTenant = () => ({
+  type: actionType.CLEAR_CREATED_TENANT
+});
+
+export const clearSearchedIADs = () => ({
+  type: actionType.CLEAR_SEARCHED_IADS
+});
+
+export const setTransferedIADs = data => ({
+  type: actionType.SET_TRANSFERED_IADS,
+  data
+});
+
+export const clearTransferedIADs = () => ({
+  type: actionType.CLEAR_TRANSFERED_IADS
 });
 
 export function fetchGetNumbersByEnterpriseTrunk(tenantId, groupId, trunkId) {
@@ -470,6 +555,149 @@ export function fetchGetListOfIads(tenantId, groupId) {
   };
 }
 
+export function fetchGetReconciliationTeams() {
+  /////////////////////////////////
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/telenet_pra/reconciliation/teams/`
+    )
+      .then(data => dispatch(getReconciliationTeams(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-teams-failed"
+            defaultMessage="Failed to fetch teams!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchGetTeam(teamName) {
+  /////////////////////////////////
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/telenet_pra/reconciliation/teams/${teamName}`
+    )
+      .then(data => dispatch(getTeam(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-team-failed"
+            defaultMessage="Failed to fetch team!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchGetAnomalies() {
+  /////////////////////////////////
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/telenet_pra/reconciliation/anomalies/`
+    )
+      .then(data => dispatch(getAnomalies(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-anomalies-failed"
+            defaultMessage="Failed to fetch anomalies!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchGetAnomaly(hash) {
+  /////////////////////////////////
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/telenet_pra/reconciliation/anomalies/${hash}`
+    )
+      .then(data => dispatch(getAnomaly(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-anomaly-failed"
+            defaultMessage="Failed to fetch anomaly!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchGetTimerForIAD(iadId) {
+  /////////////////////////////////
+  return function(dispatch) {
+    return fetch_get(
+      `/api/v01/timers/search?filter=[{"field":"key","op":"eq","value":"${iadId}"}]`
+    )
+      .then(data => {
+        dispatch(getTimerForIAD(data));
+        return data;
+      })
+      .catch(error => {
+        if (error.response.status === 404) {
+          return;
+        }
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-timer-failed"
+            defaultMessage="Failed to fetch timer!"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchGetSearchIADs(data) {
+  /////////////////////////////////
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/telenet_pra/search/iads?${data}`
+    )
+      .then(data => dispatch(getSearchIADs(data)))
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-iads-failed"
+            defaultMessage="Failed to fetch iads!"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchPostEmergencyRouting(data) {
+  /////////////////////////////////////
+  return function(dispatch) {
+    return fetch_post(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/telenet_pra/emergency_routing/`,
+      data
+    )
+      .then(resp => resp.json())
+      .then(data => {
+        dispatch(postEmergencyRouting(data));
+      })
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-emergency-routing"
+            defaultMessage="Emergency Routing Failed"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
 export function fetchPostCreateTenant(data) {
   /////////////////////////////////////
   return function(dispatch) {
@@ -559,6 +787,30 @@ export function fetchPostAssignPhoneNumbersToGroup(tenantId, groupId, data) {
           <FormattedMessage
             id="failed-to-add-phonenumbers"
             defaultMessage="Failed to add phone numbers!"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchPostCreateReconciliationTeams(data) {
+  //////////////////////////////////////////////////
+  return function(dispatch) {
+    return fetch_post(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/telenet_pra/reconciliation/teams/`,
+      data
+    )
+      .then(res => res.json())
+      .then(data => {
+        dispatch(postCreateReconciliationTeams(data));
+        return "success";
+      })
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-create-reconciliation-team"
+            defaultMessage="Failed to create reconciliation team!"
           />,
           error.message
         );
@@ -677,6 +929,7 @@ export function fetchPutUpdateIAD(tenantId, groupId, iadId, data) {
           />,
           "Updated"
         );
+        return "successful";
       })
       .catch(error =>
         NotificationsManager.error(
@@ -707,6 +960,7 @@ export function fetchPutUpdateGroupDetails(tenantId, groupId, data) {
           "Updated"
         );
         dispatch(putUpdateGroupDetails(data));
+        return "successful";
       })
       .catch(error =>
         NotificationsManager.error(
@@ -729,6 +983,36 @@ export function fetchPutUpdateTenantDetails(tenantId, data) {
     )
       .then(res => res.json())
       .then(data => dispatch(putUpdateTenantDetails(data)))
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="update-tenant-details-failed"
+            defaultMessage="Failed to update tenant details!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchPutUpdateTeam(teamName, data) {
+  //////////////////////////////////////
+  return function(dispatch) {
+    return fetch_put(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/telenet_pra/reconciliation/teams/${teamName}/`,
+      data
+    )
+      .then(res => res.json())
+      .then(data => {
+        dispatch(putUpdateTeam(data));
+        NotificationsManager.success(
+          <FormattedMessage
+            id="update-team-success"
+            defaultMessage="Successfully updated team!"
+          />,
+          "Successfully updated team!"
+        );
+      })
       .catch(error =>
         NotificationsManager.error(
           <FormattedMessage
@@ -764,6 +1048,70 @@ export function fetchPutUpdateNumbersStatus(tenantId, groupId, data) {
           <FormattedMessage
             id="update-numbers-failed"
             defaultMessage="Failed to update numbers!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchPutUpdateAnomaly(hash, data) {
+  /////////////////////////////
+  return function(dispatch) {
+    return fetch_put(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/telenet_pra/reconciliation/anomalies/${hash}/`,
+      data
+    )
+      .then(res => res.json())
+      .then(data => {
+        dispatch(putUpdateAnomaly(data));
+        NotificationsManager.success(
+          <FormattedMessage
+            id="update-anomaly-success"
+            defaultMessage="Successfully updated anomaly!"
+          />,
+          "Successfully updated anomaly!"
+        );
+        return "success";
+      })
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="update-anomaly-failed"
+            defaultMessage="Failed to update anomaly!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchPutMassIADsReboot(iadsForUpdate) {
+  /////////////////////////////
+  const { tenantId, groupId, ...data } = iadsForUpdate;
+  return function(dispatch) {
+    return fetch_put(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/telenet_pra/tenants/${tenantId}/groups/${groupId}/trunk_groups/reboot/`,
+      data
+    )
+      .then(res => res.json())
+      .then(() => {
+        dispatch(putMassIADsReboot());
+        NotificationsManager.success(
+          <FormattedMessage
+            id="reboot-iads-success"
+            defaultMessage="Reboot request(s) recorded"
+          />,
+          data.rebootRequest
+            ? "Reboot request(s) planned"
+            : "Reboot request(s) initiated"
+        );
+      })
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="reboot-iads-failed"
+            defaultMessage="Reboot request failed"
           />,
           error.message
         )
@@ -828,8 +1176,8 @@ export function fetchDeleteTrunkGroup(tenantId, groupId, trunkName) {
       .catch(error =>
         NotificationsManager.error(
           <FormattedMessage
-            id="failed-to-delete-trunk-group"
-            defaultMessage="Failed to delete trunk group!"
+            id="failed-to-delete-iad"
+            defaultMessage="Failed to delete iad!"
           />,
           error.message
         )
@@ -875,6 +1223,51 @@ export function fetchDeleteEnterpriseTrunk(tenantId, groupId, entTrunk) {
           <FormattedMessage
             id="failed-to-delete-enterprise-trunk"
             defaultMessage="Failed to delete enterprise trunk!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchDeleteTeam(teamName) {
+  /////////////////////////////////
+  return function(dispatch) {
+    return fetch_delete(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/telenet_pra/reconciliation/teams/${teamName}/`
+    )
+      .then(data => {
+        dispatch(deleteTeam(data));
+        return "deleted";
+      })
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-delete-team"
+            defaultMessage="Failed to delete team!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchDeleteAnomaly(hash, data) {
+  /////////////////////////////////
+  return function(dispatch) {
+    return fetch_delete(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/telenet_pra/reconciliation/anomalies/${hash}/`,
+      data
+    )
+      .then(data => {
+        dispatch(deleteTeam(data));
+        return "deleted";
+      })
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-delete-anomaly"
+            defaultMessage="Failed to delete anomaly!"
           />,
           error.message
         )

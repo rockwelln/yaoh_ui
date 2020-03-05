@@ -19,6 +19,8 @@ import {
   fetchPutUpdateGroupDetails
 } from "../../../../store/actions";
 
+import { isAllowed, pages } from "../../../../../../utils/user";
+
 export class Service extends Component {
   state = {
     isLoading: true,
@@ -254,37 +256,43 @@ export class Service extends Component {
             </div>
           </Col>
         </Row>
-        <Row className={"margin-top-1"}>
-          <Col md={12} className={"flex align-items-center"}>
-            <div className={"margin-right-1 flex flex-basis-16"}>
-              <ControlLabel>
-                <FormattedMessage id="aoc" defaultMessage="AOC" />
-              </ControlLabel>
-            </div>
-            <div className={"margin-right-1 flex-basis-33"}>
-              <FormControl
-                componentClass="select"
-                value={this.state.group.aoc}
-                onChange={e =>
-                  this.setState({
-                    group: {
-                      ...this.state.group,
-                      aoc: e.target.value
-                    }
-                  })
-                }
-                disabled={this.state.isDisabled}
-              >
-                {this.props.config.tenant.group.aoc.map((el, i) => (
-                  <option key={i} value={el.value}>
-                    {el.label}
-                  </option>
-                ))}
-              </FormControl>
-            </div>
-          </Col>
-        </Row>
-        {this.state.group.pbxType === "SIP" && (
+        {(this.state.group.pbxType === "PRA" ||
+          this.state.group.pbxType === "PRA_SIP" ||
+          this.state.group.pbxType === "SIP_PRA") && (
+          <Row className={"margin-top-1"}>
+            <Col md={12} className={"flex align-items-center"}>
+              <div className={"margin-right-1 flex flex-basis-16"}>
+                <ControlLabel>
+                  <FormattedMessage id="aoc" defaultMessage="AOC" />
+                </ControlLabel>
+              </div>
+              <div className={"margin-right-1 flex-basis-33"}>
+                <FormControl
+                  componentClass="select"
+                  value={this.state.group.aoc}
+                  onChange={e =>
+                    this.setState({
+                      group: {
+                        ...this.state.group,
+                        aoc: e.target.value
+                      }
+                    })
+                  }
+                  disabled={this.state.isDisabled}
+                >
+                  {this.props.config.tenant.group.aoc.map((el, i) => (
+                    <option key={i} value={el.value}>
+                      {el.label}
+                    </option>
+                  ))}
+                </FormControl>
+              </div>
+            </Col>
+          </Row>
+        )}
+        {(this.state.group.pbxType === "SIP" ||
+          this.state.group.pbxType === "PRA_SIP" ||
+          this.state.group.pbxType === "SIP_PRA") && (
           <Row className={"margin-top-1"}>
             <Col md={12} className={"flex align-items-center"}>
               <div className={"margin-right-1 flex flex-basis-16"}>
@@ -304,7 +312,13 @@ export class Service extends Component {
                       }
                     })
                   }
-                  disabled={this.state.isDisabled}
+                  disabled={
+                    this.state.isDisabled ||
+                    !isAllowed(
+                      localStorage.getItem("userProfile"),
+                      pages.edit_group_dtmf
+                    )
+                  }
                 >
                   {this.props.config.tenant.group.dtmf.map((el, i) => (
                     <option key={i} value={el.value}>

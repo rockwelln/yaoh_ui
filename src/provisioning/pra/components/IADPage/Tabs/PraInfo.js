@@ -15,6 +15,8 @@ import { FormattedMessage } from "react-intl";
 import { changeIAD, fetchPutUpdateIAD } from "../../../store/actions";
 import { removeEmpty } from "../../remuveEmptyInObject";
 
+import { isAllowed, pages } from "../../../../../utils/user";
+
 export class PraInfo extends Component {
   state = {
     praByIad: {},
@@ -73,7 +75,7 @@ export class PraInfo extends Component {
               <Col md={12} className={"flex align-items-center"}>
                 <div className={"margin-right-1 flex flex-basis-16"}>
                   <ControlLabel>
-                    <FormattedMessage id="praId" defaultMessage="PRA ID" />
+                    <FormattedMessage id="praPort" defaultMessage="PRA Port" />
                   </ControlLabel>
                 </div>
                 <div className={"margin-right-1 flex-basis-33"}>
@@ -114,6 +116,12 @@ export class PraInfo extends Component {
                         () => this.storeUpdate()
                       );
                     }}
+                    disabled={
+                      !isAllowed(
+                        localStorage.getItem("userProfile"),
+                        pages.edit_group_iad_pra_info_pra_port
+                      )
+                    }
                   >
                     {this.state.arrayOfPraId.map((el, i) => (
                       <option
@@ -157,6 +165,12 @@ export class PraInfo extends Component {
                         () => this.storeUpdate()
                       )
                     }
+                    disabled={
+                      !isAllowed(
+                        localStorage.getItem("userProfile"),
+                        pages.edit_group_iad_pra_info_tpid
+                      )
+                    }
                   />
                 </div>
               </Col>
@@ -190,6 +204,12 @@ export class PraInfo extends Component {
                         () => this.storeUpdate()
                       )
                     }
+                    disabled={
+                      !isAllowed(
+                        localStorage.getItem("userProfile"),
+                        pages.edit_group_iad_pra_info_circuit_id
+                      )
+                    }
                   />
                 </div>
               </Col>
@@ -217,6 +237,12 @@ export class PraInfo extends Component {
                           }
                         },
                         () => this.storeUpdate()
+                      )
+                    }
+                    disabled={
+                      !isAllowed(
+                        localStorage.getItem("userProfile"),
+                        pages.edit_group_iad_pra_info_enabled
                       )
                     }
                   />

@@ -8,7 +8,7 @@ import Sidebar from "../../common/Sidebar";
 import Title from "../../common/Title";
 import IADPage from "./IADPage";
 
-const GroupComponent = notifications => {
+const GroupComponent = () => {
   return (
     <React.Fragment>
       <Row className={"margin-bottom-4"}>
@@ -20,7 +20,7 @@ const GroupComponent = notifications => {
         </Col>
         <Col md={10}>
           <Row>
-            <Breadcrumb />
+            <Breadcrumb hash={"#iads"} />
           </Row>
           <Row className={"panel panel-default"}>
             <IADPage />

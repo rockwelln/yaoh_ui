@@ -11,7 +11,7 @@ import ControlLabel from "react-bootstrap/lib/ControlLabel";
 
 import { FormattedMessage } from "react-intl";
 
-import { API_URL_PREFIX, checkStatus, parseJSON } from "../../utils";
+import { API_URL_PREFIX, checkStatus, parseJSON } from "../../../../utils";
 
 export default class LoginForm extends Component {
   constructor(props) {

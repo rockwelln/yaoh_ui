@@ -72,7 +72,7 @@ export class AddEntrepriseTrunk extends Component {
             <div className={"header"}>
               <FormattedMessage
                 id="addEnterprises"
-                defaultMessage="ADD ENTREPRISES TRUNK"
+                defaultMessage="ADD ENTERPRISES TRUNK"
               />
 
               <Button
@@ -315,7 +315,7 @@ export class AddEntrepriseTrunk extends Component {
     const checkedMainIadsAvalible = mainIadsAvalible.filter(el => el.checked);
     const data = {
       iads_from_other_sites: checkedOtherIadsAvalible,
-      main_iads_available: checkedMainIadsAvalible,
+      iads_from_main_site: checkedMainIadsAvalible,
       routeExhaustionAction,
       routeExhaustionDestination,
       channelHunting: routingMode === "weighted" ? "Loadbalanced" : ""

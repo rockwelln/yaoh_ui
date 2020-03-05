@@ -12,8 +12,8 @@ import { Link, Route } from "react-router-dom";
 
 import { FormattedMessage } from "react-intl";
 
-import { isAllowed, pages } from "../../utils/user";
-import apio_brand from "../../images/apio.png";
+import { isAllowed, pages } from "../../../../utils/user";
+import apio_brand from "../../../../images/apio.png";
 
 const ListItemLink = ({ to, children }) => (
   <Route
@@ -55,7 +55,10 @@ const AsyncApioNavBar = ({
           <FormattedMessage id="dashboard" defaultMessage="Dashboard" />
         </ListItemLink>
 
-        {isAllowed(user_group, pages.data) && (
+        {isAllowed(
+          localStorage.getItem("userProfile"),
+          pages.common_page_access
+        ) && (
           <NavDropdown
             eventKey={4}
             title={

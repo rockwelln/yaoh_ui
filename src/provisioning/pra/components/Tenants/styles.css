@@ -28,6 +28,9 @@
 .margin-bottom-1 {
   margin-bottom: 10px !important;
 }
+.margin-bottom-2 {
+  margin-bottom: 20px !important;
+}
 .margin-bottom-4 {
   margin-bottom: 40px !important;
 }
@@ -303,4 +306,14 @@ textarea {
 
 .hide-arrows {
   -moz-appearance: textfield;
+}
+
+.ip-address-styles {
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+.no-wrap {
+  white-space: nowrap;
 }

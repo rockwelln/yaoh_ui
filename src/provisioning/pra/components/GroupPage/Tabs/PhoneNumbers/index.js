@@ -31,6 +31,8 @@ import PhoneNumber from "./PhoneNumber";
 import DeleteModal from "./DeleteMultipleNumbers";
 import { countsPerPages } from "../../../../constants";
 
+import { isAllowed, pages } from "../../../../../../utils/user";
+
 import "./styles.css";
 
 export class PhoneNumbersTab extends Component {
@@ -140,16 +142,18 @@ export class PhoneNumbersTab extends Component {
               </FormattedMessage>
             </InputGroup>
           </Col>
-          <Col md={1}>
-            <Link
-              to={`/provisioning/${this.props.match.params.gwName}/tenants/${this.props.tenantId}/groups/${this.props.groupId}/addphone`}
-            >
-              <Glyphicon
-                className={"x-large"}
-                glyph="glyphicon glyphicon-plus-sign"
-              />
-            </Link>
-          </Col>
+          {isAllowed(localStorage.getItem("userProfile"), pages.add_access) && (
+            <Col md={1}>
+              <Link
+                to={`/provisioning/${this.props.match.params.gwName}/tenants/${this.props.tenantId}/groups/${this.props.groupId}/addphone`}
+              >
+                <Glyphicon
+                  className={"x-large"}
+                  glyph="glyphicon glyphicon-plus-sign"
+                />
+              </Link>
+            </Col>
+          )}
         </Row>
         {/* {paginationPhoneNumbers.length ? ( */}
         <React.Fragment>
@@ -164,19 +168,24 @@ export class PhoneNumbersTab extends Component {
                     >
                       (Un)select all shown numbers
                     </Checkbox> */}
-                  <div
-                    onClick={this.deleteSlectedNumbers}
-                    className={
-                      "cursor-pointer padding-left-05 flex text-align-center align-items-center margin-right-1"
-                    }
-                  >
-                    <Glyphicon
-                      glyph="glyphicon glyphicon-trash"
-                      className={"margin-right-1"}
+                  {isAllowed(
+                    localStorage.getItem("userProfile"),
+                    pages.delete_access
+                  ) && (
+                    <div
                       onClick={this.deleteSlectedNumbers}
-                    />
-                    <div>Delete selected numbers</div>
-                  </div>
+                      className={
+                        "cursor-pointer padding-left-05 flex text-align-center align-items-center margin-right-1"
+                      }
+                    >
+                      <Glyphicon
+                        glyph="glyphicon glyphicon-trash"
+                        className={"margin-right-1"}
+                        onClick={this.deleteSlectedNumbers}
+                      />
+                      <div>Delete selected numbers</div>
+                    </div>
+                  )}
                   <DeleteModal
                     rangeStart={numbersForDelete.map(
                       number => number.phoneNumbers || number.phoneNumber
@@ -333,7 +342,7 @@ export class PhoneNumbersTab extends Component {
                       />
                       <Glyphicon
                         glyph="glyphicon glyphicon-sort"
-                        //onClick={this.sortByAssignedToGroup}
+                        onClick={this.sortByMainNumber}
                       />
                     </th>
                     <th>
@@ -343,7 +352,7 @@ export class PhoneNumbersTab extends Component {
                       />
                       <Glyphicon
                         glyph="glyphicon glyphicon-sort"
-                        //onClick={this.sortByAssignedToGroup}
+                        onClick={this.sortByMaintenanceNumber}
                       />
                     </th>
                     <th />
@@ -433,13 +442,12 @@ export class PhoneNumbersTab extends Component {
       );
       return;
     }
-    const data = {
-      refresh_db: true,
-      only_for_numbers: numbersForRefresh
-    };
-    const queryString = Object.keys(data)
-      .map(key => key + "=" + data[key])
-      .join("&");
+    const queryNumbers = numbersForRefresh.reduce(
+      (numbersString, number) =>
+        (numbersString = `${numbersString}&only_for_numbers=${number}`),
+      ""
+    );
+    const queryString = `refresh_db=true${queryNumbers}`;
     this.props.fetchGetPhoneNumbersWithRefreshDB(
       this.props.match.params.tenantId,
       this.props.match.params.groupId,
@@ -448,8 +456,13 @@ export class PhoneNumbersTab extends Component {
   };
 
   updateStatus = () => {
-    const activeNumbers = this.state.phoneNumbers.filter(el => el.active);
-    const preActiveNumbers = this.state.phoneNumbers.filter(el => el.preActive);
+    const activeNumbers = this.state.phoneNumbers.filter(
+      el => el.active && el.isChanged
+    );
+    const preActiveNumbers = this.state.phoneNumbers.filter(
+      el => el.preActive && el.isChanged
+    );
+    console.log(activeNumbers, preActiveNumbers);
     const allActiveNumbers = [];
     const allPreActiveNumbers = [];
     activeNumbers.map(el => {
@@ -611,42 +624,42 @@ export class PhoneNumbersTab extends Component {
     }
   };
 
-  sortByAssignedToGroup = () => {
+  sortByMainNumber = () => {
     const { phoneNumbers, sortedBy } = this.state;
-    if (sortedBy === "assignedToGroup") {
+    if (sortedBy === "main_number") {
       const phonesSorted = phoneNumbers.reverse();
       this.setState({ phoneNumbers: phonesSorted }, () => this.pagination());
     } else {
       const phonesSorted = phoneNumbers.sort((a, b) => {
-        if (a.userId < b.userId) return -1;
-        if (a.userId > b.userId) return 1;
+        if (a.main_number > b.main_number) return -1;
+        if (a.main_number < b.main_number) return 1;
         return 0;
       });
       this.setState(
         {
           phoneNumbers: phonesSorted,
-          sortedBy: "assignedToGroup"
+          sortedBy: "main_number"
         },
         () => this.pagination()
       );
     }
   };
 
-  sortByAssignedToGroup = () => {
+  sortByMaintenanceNumber = () => {
     const { phoneNumbers, sortedBy } = this.state;
-    if (sortedBy === "userType") {
+    if (sortedBy === "maintenance_number") {
       const phonesSorted = phoneNumbers.reverse();
       this.setState({ phoneNumbers: phonesSorted }, () => this.pagination());
     } else {
       const phonesSorted = phoneNumbers.sort((a, b) => {
-        if (a.userType < b.userType) return -1;
-        if (a.userType > b.userType) return 1;
+        if (a.maintenance_number > b.maintenance_number) return -1;
+        if (a.maintenance_number < b.maintenance_number) return 1;
         return 0;
       });
       this.setState(
         {
           phoneNumbers: phonesSorted,
-          sortedBy: "userType"
+          sortedBy: "maintenance_number"
         },
         () => this.pagination()
       );
@@ -666,7 +679,8 @@ export class PhoneNumbersTab extends Component {
     const newArr = this.state.phoneNumbers.map(el => ({
       ...el,
       preActive: isChecked,
-      active: !isChecked
+      active: !isChecked,
+      isChanged: !el.isChanged
     }));
     this.setState(
       {
@@ -683,7 +697,8 @@ export class PhoneNumbersTab extends Component {
     const newArr = this.state.phoneNumbers.map(el => ({
       ...el,
       active: isChecked,
-      preActive: !isChecked
+      preActive: !isChecked,
+      isChanged: !el.isChanged
     }));
     this.setState(
       {
@@ -720,7 +735,8 @@ export class PhoneNumbersTab extends Component {
     const newArr = this.state.phoneNumbers.map((el, i) => ({
       ...el,
       active: index === i ? !el.active : el.active,
-      preActive: index === i ? !el.preActive : el.preActive
+      preActive: index === i ? !el.preActive : el.preActive,
+      isChanged: index === i ? !el.isChanged : el.isChanged
     }));
     this.setState({ phoneNumbers: newArr, selectAllActive: false }, () =>
       this.pagination()
@@ -731,7 +747,8 @@ export class PhoneNumbersTab extends Component {
     const newArr = this.state.phoneNumbers.map((el, i) => ({
       ...el,
       preActive: index === i ? !el.preActive : el.preActive,
-      active: index === i ? !el.active : el.active
+      active: index === i ? !el.active : el.active,
+      isChanged: index === i ? !el.isChanged : el.isChanged
     }));
     this.setState({ phoneNumbers: newArr, selectAllPreActive: false }, () =>
       this.pagination()

@@ -8,6 +8,8 @@ import { LinkContainer } from "react-router-bootstrap";
 
 //import CategoriesSideBar from "../../components/CategoriesSideBar";
 
+import "./styles.css";
+
 export class Sidebar extends Component {
   state = {
     activeKey: 0
@@ -21,45 +23,40 @@ export class Sidebar extends Component {
           stacked
           activeKey={this.state.activeKey}
           onSelect={this.handleSelect}
+          className={"sidebar-container "}
         >
           <LinkContainer
             to={`/provisioning/${this.props.match.params.gwName}/tenants`}
+            className={"li-width"}
           >
             <NavItem eventKey={0} className={"text-align-center"}>
-              ENTREPRISES
+              ENTERPRISES
             </NavItem>
           </LinkContainer>
-          {/* <LinkContainer
-            to={`/provisioning/${this.props.match.params.gwName}/search`}
-          >
-            <NavItem eventKey={1}>SEARCH</NavItem>
-          </LinkContainer>
-          <DropdownButton
-            title={"TEMPLATES"}
-            className={"width-100p flex space-between align-items-center"}
-            componentClass={Nav}
-            id={"category"}
-          >
-            <Nav
-              bsStyle="pills"
-              stacked
-              activeKey={this.state.activeKeyTemplate}
-              onSelect={this.handleSelectTemplate}
-              className={"width-100p"}
-            >
-              <CategoriesSideBar />
-            </Nav>
-          </DropdownButton>
           <LinkContainer
             to={`/provisioning/${this.props.match.params.gwName}/configs`}
+            className={"li-width"}
           >
-            <NavItem eventKey={3}>CONFIGS</NavItem>
+            <NavItem eventKey={3} className={"text-align-center"}>
+              CONFIGS
+            </NavItem>
           </LinkContainer>
           <LinkContainer
-            to={`/provisioning/${this.props.match.params.gwName}/localusers`}
+            to={`/provisioning/${this.props.match.params.gwName}/reconciliations`}
+            className={"li-width"}
           >
-            <NavItem eventKey={0}>LOCAL USERS</NavItem>
-          </LinkContainer> */}
+            <NavItem eventKey={4} className={"text-align-center"}>
+              RECONCILIATIONS
+            </NavItem>
+          </LinkContainer>
+          <LinkContainer
+            to={`/provisioning/${this.props.match.params.gwName}/iadreboot`}
+            className={"li-width"}
+          >
+            <NavItem eventKey={4} className={"text-align-center"}>
+              MASS IAD REBOOT
+            </NavItem>
+          </LinkContainer>
         </Nav>
       </React.Fragment>
     );

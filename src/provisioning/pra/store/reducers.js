@@ -10,7 +10,7 @@ const initialState = {
   createdTenant: {},
   createdGroup: {},
   addedNumbersToGroup: {},
-  iads: { iads: [] },
+  iads: { iads: [], praByIad: {} },
   config: {
     tenant: {
       group: { iad: { iadType: [] } }
@@ -24,7 +24,16 @@ const initialState = {
   phoneNumbersByGroupNotTP: [],
   tenantEnterpriseTrunks: [],
   listOfIads: { main_iads_available: [], other_iads_available: [] },
-  numbersByEnterpriseTrunk: { enterprise_trunk_numbers: [], group_numbers: [] }
+  numbersByEnterpriseTrunk: { enterprise_trunk_numbers: [], group_numbers: [] },
+  emergencyRouting: [],
+  reconciliationTeams: [],
+  createdReconciliationTeam: [],
+  team: { users: [] },
+  anomalies: [],
+  anomaly: {},
+  iadTimer: [],
+  searchedIADs: [],
+  transferedIADs: []
 };
 
 function mainReducer(state = initialState, action) {
@@ -78,7 +87,8 @@ function mainReducer(state = initialState, action) {
           : "",
         phoneChecked: false,
         preActive: phone.status === "preActive" ? true : false,
-        active: phone.status === "active" ? true : false
+        active: phone.status === "active" ? true : false,
+        isChanged: false
       }));
       return {
         ...state,
@@ -160,17 +170,37 @@ function mainReducer(state = initialState, action) {
       };
     }
     case actionType.GET_ENTERPRISE_TRUNKS_BY_TENANT: {
-      const colors = ["#fcece0", "#fff8e4", "#f0f7ed", "e6e3da"];
+      const colors = [
+        "#fcece0",
+        "#fff8e4",
+        "#f0f7ed",
+        "e6e3da",
+        "e612da",
+        "#21f8e4",
+        "#fcece0",
+        "#fff8e4",
+        "#f0f7ed",
+        "e6e3da",
+        "e612da",
+        "#21f8e4"
+      ];
       let tenantEnterpriseTrunks = [];
       Object.keys(action.data.enterpriseTrunks).map((trunk, index) => {
         if (Array.isArray(action.data.enterpriseTrunks[trunk])) {
-          action.data.enterpriseTrunks[trunk].map(el =>
+          //if (action.data.enterpriseTrunks[trunk].length) {
+          action.data.enterpriseTrunks[trunk].map(el => {
             tenantEnterpriseTrunks.push({
               ...el,
               color: colors[index],
               entTrunk: trunk
-            })
-          );
+            });
+          });
+          // } else {
+          //   tenantEnterpriseTrunks.push({
+          //     color: colors[index],
+          //     entTrunk: trunk
+          //   });
+          //}
         }
         return 0;
       });
@@ -189,6 +219,74 @@ function mainReducer(state = initialState, action) {
       return {
         ...state,
         listOfIads: action.data
+      };
+    }
+    case actionType.GET_RECONCILIATION_TEAMS: {
+      return {
+        ...state,
+        reconciliationTeams: action.data.teams
+      };
+    }
+    case actionType.GET_TEAM: {
+      return {
+        ...state,
+        team: action.data
+      };
+    }
+    case actionType.GET_ANOMALIES: {
+      // const event = state.config.reconciliation.anomaly.event.find(
+      //   evnt => evnt.value === this.props.anomalies.anomaly_event
+      // );
+      // const status = state.config.reconciliation.anomaly.status.find(
+      //   evnt => evnt.value === this.props.anomalies.anomaly_status
+      // );
+      // const result = state.config.reconciliation.anomaly.result.find(
+      //   evnt => evnt.value === this.props.anomalies.result
+      // );
+      let anomalies = [];
+      action.data.anomalies.forEach(anomaly => {
+        const event = state.config.reconciliation.anomaly.event.find(
+          evnt => evnt.value === anomaly.anomaly_event
+        );
+        const status = state.config.reconciliation.anomaly.status.find(
+          evnt => evnt.value === anomaly.anomaly_status
+        );
+        const result = state.config.reconciliation.anomaly.result.find(
+          evnt => evnt.value === anomaly.result
+        );
+        const newAnomaly = {
+          ...anomaly,
+          event: typeof event === "object" ? event.label : "",
+          status: typeof status === "object" ? status.label : "",
+          resultText: typeof result === "object" ? result.label : ""
+        };
+        anomalies.push(newAnomaly);
+      });
+      return {
+        ...state,
+        anomalies
+      };
+    }
+    case actionType.GET_ANOMALY: {
+      return {
+        ...state,
+        anomaly: action.data
+      };
+    }
+    case actionType.GET_TIMER_FOR_IAD: {
+      return {
+        ...state,
+        iadTimer: action.data.timers
+      };
+    }
+    case actionType.GET_SEARCH_IADS: {
+      const searchedIADs = action.data.results.map(iad => ({
+        iad: iad,
+        checked: true
+      }));
+      return {
+        ...state,
+        searchedIADs
       };
     }
     case actionType.POST_CREATE_IAD: {
@@ -229,6 +327,18 @@ function mainReducer(state = initialState, action) {
     case actionType.POST_CREATE_ENTERPRISE_TRUNK: {
       return {
         ...state
+      };
+    }
+    case actionType.POST_EMERGENCY_ROUTING: {
+      return {
+        ...state,
+        emergencyRouting: action.data.results
+      };
+    }
+    case actionType.POST_CREATE_RECONCILIATION_TEAMS: {
+      return {
+        ...state,
+        createdReconciliationTeam: action.data
       };
     }
     case actionType.PUT_UPDATE_IAD: {
@@ -292,6 +402,18 @@ function mainReducer(state = initialState, action) {
         iadsByTrunk: { ...action.data, iadFromSite, iadNotFromSite }
       };
     }
+    case actionType.PUT_UPDATE_TEAM: {
+      return {
+        ...state,
+        team: action.data
+      };
+    }
+    case actionType.PUT_UPDATE_ANOMALY: {
+      return {
+        ...state,
+        anomaly: action.data
+      };
+    }
     case actionType.DELETE_TENANT: {
       return {
         ...state
@@ -317,6 +439,11 @@ function mainReducer(state = initialState, action) {
         ...state
       };
     }
+    case actionType.DELETE_ANOMALY: {
+      return {
+        ...state
+      };
+    }
     case actionType.CHANGE_IAD_FOR_UPDATE: {
       return {
         ...state,
@@ -337,6 +464,41 @@ function mainReducer(state = initialState, action) {
             [action.field]: action.value
           }
         }
+      };
+    }
+
+    case actionType.CLEAR_CREATED_TENANT: {
+      return {
+        ...state,
+        createdTenant: {}
+      };
+    }
+
+    case actionType.CLEAR_IAD: {
+      return {
+        ...state,
+        iad: {}
+      };
+    }
+
+    case actionType.CLEAR_SEARCHED_IADS: {
+      return {
+        ...state,
+        searchedIADs: []
+      };
+    }
+
+    case actionType.SET_TRANSFERED_IADS: {
+      return {
+        ...state,
+        transferedIADs: action.data
+      };
+    }
+
+    case actionType.CLEAR_TRANSFERED_IADS: {
+      return {
+        ...state,
+        transferedIADs: []
       };
     }
 

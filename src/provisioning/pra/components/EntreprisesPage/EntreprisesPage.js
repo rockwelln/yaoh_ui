@@ -68,7 +68,7 @@ class TenantPage extends Component {
                   <div className={"margin-right-1 flex-basis-33"}>
                     <FormControl
                       type="text"
-                      placeholder={"ENTREPRISES NAME"}
+                      placeholder={"ENTERPRISES NAME"}
                       value={this.state.tenant.name}
                       disabled={this.state.isDisabled}
                       className={"header flex-basis-50 margin-right-2"}
@@ -201,11 +201,15 @@ class TenantPage extends Component {
               </Row>
               <Row className={"margin-top-1"}>
                 <Col md={12}>
-                  <Tabs defaultActiveKey={0} id="enterprice_tabs">
+                  <Tabs
+                    activeKey={this.returnActiveKey()}
+                    id="enterprice_tabs"
+                    onSelect={key => this.tabRouting(key)}
+                  >
                     <Tab
                       eventKey={0}
                       title={
-                        <FormattedMessage id="groups" defaultMessage="Groups" />
+                        <FormattedMessage id="sites" defaultMessage="Sites" />
                       }
                     >
                       <Groups />
@@ -231,6 +235,29 @@ class TenantPage extends Component {
       </React.Fragment>
     );
   }
+
+  tabRouting = key => {
+    switch (key) {
+      case 0:
+        this.props.history.push("#sites");
+        break;
+      case 1:
+        this.props.history.push("#routingNumbers");
+        break;
+    }
+  };
+
+  returnActiveKey = () => {
+    switch (this.props.location.hash) {
+      case "#sites":
+        return 0;
+
+      case "#routingNumbers":
+        return 1;
+      default:
+        return 0;
+    }
+  };
 
   tenantUpdate = () => {
     const data = {

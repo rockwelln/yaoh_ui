@@ -20,6 +20,8 @@ import IAD from "./IAD";
 import { fetchGetIADs, fetchGetConfig } from "../../../../store/actions";
 import { countsPerPages } from "../../../../constants";
 
+import { isAllowed, pages } from "../../../../../../utils/user";
+
 export class IADs extends Component {
   state = {
     paginationIads: [],
@@ -80,7 +82,7 @@ export class IADs extends Component {
                 <FormattedMessage
                   id="moreIads"
                   defaultMessage={`You still need to create ${this.props.iads
-                    .nbrIadsNeeded - this.props.iads.iads.length} Trunk Groups`}
+                    .nbrIadsNeeded - this.props.iads.iads.length} IADs`}
                 />
               </Alert>
             ) : (
@@ -119,18 +121,19 @@ export class IADs extends Component {
               </FormattedMessage>
             </InputGroup>
           </Col>
-          {this.props.iads.iads.length < this.props.iads.nbrIadsNeeded && (
-            <Col md={1}>
-              <Link
-                to={`/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}/groups/${this.props.match.params.groupId}/addiad`}
-              >
-                <Glyphicon
-                  className={"x-large"}
-                  glyph="glyphicon glyphicon-plus-sign"
-                />
-              </Link>
-            </Col>
-          )}
+          {isAllowed(localStorage.getItem("userProfile"), pages.add_access) &&
+            (this.props.iads.iads.length < this.props.iads.nbrIadsNeeded && (
+              <Col md={1}>
+                <Link
+                  to={`/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}/groups/${this.props.match.params.groupId}/addiad`}
+                >
+                  <Glyphicon
+                    className={"x-large"}
+                    glyph="glyphicon glyphicon-plus-sign"
+                  />
+                </Link>
+              </Col>
+            ))}
         </Row>
         <Row>
           <Col md={11}>
@@ -191,13 +194,22 @@ export class IADs extends Component {
                           onClick={this.sortByMacAddress}
                         />
                       </th>
-
+                      <th>
+                        <FormattedMessage
+                          id="rebootPlanned"
+                          defaultMessage="Reboot planned"
+                        />
+                        {/* <Glyphicon
+                          glyph="glyphicon glyphicon-sort"
+                          onClick={this.sortByMacAddress}
+                        /> */}
+                      </th>
                       <th />
                     </tr>
                   </thead>
                   <tbody>
                     {paginationIads[page].map(
-                      iad =>
+                      (iad, i) =>
                         this.props.config.tenant && (
                           <IAD
                             key={iad.iadId}

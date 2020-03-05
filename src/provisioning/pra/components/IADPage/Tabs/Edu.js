@@ -8,6 +8,9 @@ import FormControl from "react-bootstrap/lib/FormControl";
 import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import Button from "react-bootstrap/lib/Button";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
+import Checkbox from "react-bootstrap/lib/Checkbox";
+
+import { get } from "../../get";
 
 import { FormattedMessage } from "react-intl";
 
@@ -20,6 +23,7 @@ import { removeEmpty } from "../../remuveEmptyInObject";
 
 export class Edu extends Component {
   state = {
+    normLocalUpdate: false,
     edu1: {
       name: "",
       lanPort: "",
@@ -32,7 +36,9 @@ export class Edu extends Component {
       norm_status_edu: "",
       norm_error_edu: "",
       norm_status_sr: "",
-      norm_error_sr: ""
+      norm_error_sr: "",
+      ip_sr: "",
+      ip_edu: ""
     },
     edu2: {
       name: "",
@@ -46,7 +52,9 @@ export class Edu extends Component {
       norm_status_edu: "",
       norm_error_edu: "",
       norm_status_sr: "",
-      norm_error_sr: ""
+      norm_error_sr: "",
+      ip_sr: "",
+      ip_edu: ""
     },
     disabledButton: false
   };
@@ -60,6 +68,50 @@ export class Edu extends Component {
   render() {
     return (
       <React.Fragment>
+        <Row className={"margin-top-1"}>
+          <Col md={12} className={"flex align-items-center"}>
+            <div className={"margin-right-1 flex flex-basis-16"}>
+              <ControlLabel>
+                <FormattedMessage
+                  id="updateOnlyLocally"
+                  defaultMessage="Update only locally"
+                />
+              </ControlLabel>
+            </div>
+            <div className={"margin-right-1 flex-basis-33"}>
+              <Checkbox
+                checked={this.state.normLocalUpdate}
+                onChange={e =>
+                  this.setState({ normLocalUpdate: e.target.checked })
+                }
+              />
+            </div>
+          </Col>
+        </Row>
+        <Row>
+          <Col md={6} className={"flex align-items-center"}>
+            <div className={"margin-right-1 flex flex-basis-33"}>
+              <ControlLabel>
+                <FormattedMessage
+                  id="iadLoopbackIP"
+                  defaultMessage="IAD Loopback IP"
+                />
+              </ControlLabel>
+            </div>
+            <div className={"margin-right-1 flex-basis-66"}>
+              <FormControl
+                type="text"
+                defaultValue={
+                  get(this.props, "iad.norm.loopback")
+                    ? this.props.iad.norm.loopback
+                    : ""
+                }
+                placeholder={"Loopback"}
+                disabled
+              />
+            </div>
+          </Col>
+        </Row>
         <Row className={"margin-top-1"}>
           <Col md={6} className={"flex align-items-center"}>
             <div className={"margin-right-1 flex flex-basis-33"}>
@@ -106,7 +158,12 @@ export class Edu extends Component {
                 type="text"
                 value={this.state.edu1.lanPort}
                 placeholder={"LAN port"}
-                onChange={this.changeEdu1Lan}
+                onChange={e => {
+                  if (isNaN(e.target.value)) {
+                    return;
+                  }
+                  this.changeEdu1Lan(e);
+                }}
               />
             </div>
           </Col>
@@ -122,7 +179,12 @@ export class Edu extends Component {
                   type="text"
                   value={this.state.edu2.lanPort}
                   placeholder={"LAN port"}
-                  onChange={this.changeEdu2Lan}
+                  onChange={e => {
+                    if (isNaN(e.target.value)) {
+                      return;
+                    }
+                    this.changeEdu2Lan(e);
+                  }}
                 />
               </div>
             </Col>
@@ -140,7 +202,12 @@ export class Edu extends Component {
                 type="text"
                 value={this.state.edu1.wanPort}
                 placeholder={"WAN port"}
-                onChange={this.changeEdu1Wan}
+                onChange={e => {
+                  if (isNaN(e.target.value)) {
+                    return;
+                  }
+                  this.changeEdu1Wan(e);
+                }}
               />
             </div>
           </Col>
@@ -156,7 +223,12 @@ export class Edu extends Component {
                   type="text"
                   value={this.state.edu2.wanPort}
                   placeholder={"WAN port"}
-                  onChange={this.changeEdu2Wan}
+                  onChange={e => {
+                    if (isNaN(e.target.value)) {
+                      return;
+                    }
+                    this.changeEdu2Wan(e);
+                  }}
                 />
               </div>
             </Col>
@@ -174,7 +246,16 @@ export class Edu extends Component {
                 type="text"
                 value={this.state.edu1.vlan}
                 placeholder={"EDU VLAN ID"}
-                onChange={this.changeEdu1Vlan}
+                onChange={e => {
+                  if (
+                    isNaN(e.target.value) ||
+                    e.target.value < 0 ||
+                    e.target.value > 4096
+                  ) {
+                    return;
+                  }
+                  this.changeEdu1Vlan(e);
+                }}
               />
             </div>
           </Col>
@@ -193,7 +274,16 @@ export class Edu extends Component {
                   type="text"
                   value={this.state.edu2.vlan}
                   placeholder={"EDU VLAN ID"}
-                  onChange={this.changeEdu2Vlan}
+                  onChange={e => {
+                    if (
+                      isNaN(e.target.value) ||
+                      e.target.value < 0 ||
+                      e.target.value > 4096
+                    ) {
+                      return;
+                    }
+                    this.changeEdu2Vlan(e);
+                  }}
                 />
               </div>
             </Col>
@@ -489,6 +579,70 @@ export class Edu extends Component {
             </Col>
           )}
         </Row>
+        <Row className={"margin-top-1"}>
+          <Col md={6} className={"flex align-items-center"}>
+            <div className={"margin-right-1 flex flex-basis-33"}>
+              <ControlLabel>
+                <FormattedMessage id="ip_sr" defaultMessage="SR WAN IP" />
+              </ControlLabel>
+            </div>
+            <div className={"margin-right-1 flex-basis-66"}>
+              <FormControl
+                type="text"
+                defaultValue={this.state.edu1.ip_sr}
+                disabled
+              />
+            </div>
+          </Col>
+          {this.props.iad.edu2 && (
+            <Col md={6} className={"flex align-items-center"}>
+              <div className={"margin-right-1 flex flex-basis-33"}>
+                <ControlLabel>
+                  <FormattedMessage id="ip_sr" defaultMessage="SR WAN IP" />
+                </ControlLabel>
+              </div>
+              <div className={"margin-right-1 flex-basis-66"}>
+                <FormControl
+                  type="text"
+                  defaultValue={this.state.edu2.ip_sr}
+                  disabled
+                />
+              </div>
+            </Col>
+          )}
+        </Row>
+        <Row className={"margin-top-1"}>
+          <Col md={6} className={"flex align-items-center"}>
+            <div className={"margin-right-1 flex flex-basis-33"}>
+              <ControlLabel>
+                <FormattedMessage id="ip_iad" defaultMessage="IAD WAN IP" />
+              </ControlLabel>
+            </div>
+            <div className={"margin-right-1 flex-basis-66"}>
+              <FormControl
+                type="text"
+                defaultValue={this.state.edu1.ip_iad}
+                disabled
+              />
+            </div>
+          </Col>
+          {this.props.iad.edu2 && (
+            <Col md={6} className={"flex align-items-center"}>
+              <div className={"margin-right-1 flex flex-basis-33"}>
+                <ControlLabel>
+                  <FormattedMessage id="ip_iad" defaultMessage="IAD WAN IP" />
+                </ControlLabel>
+              </div>
+              <div className={"margin-right-1 flex-basis-66"}>
+                <FormControl
+                  type="text"
+                  defaultValue={this.state.edu2.ip_iad}
+                  disabled
+                />
+              </div>
+            </Col>
+          )}
+        </Row>
         <Row>
           <Col md={12}>
             <div className="button-row">
@@ -511,8 +665,8 @@ export class Edu extends Component {
   }
 
   updateIAD = () => {
-    const { edu1, edu2 } = this.state;
-    const data = { edu1, edu2 };
+    const { edu1, edu2, normLocalUpdate } = this.state;
+    const data = { edu1, edu2, normLocalUpdate };
     const clearData = removeEmpty(data);
     if (Object.keys(clearData).length) {
       this.setState({ disabledButton: true }, () =>

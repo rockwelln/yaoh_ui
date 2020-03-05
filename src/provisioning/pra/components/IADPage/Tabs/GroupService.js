@@ -15,10 +15,15 @@ import { changeObjectIAD, fetchPutUpdateIAD } from "../../../store/actions";
 
 import { removeEmpty } from "../../remuveEmptyInObject";
 
+import RebootWindow from "../RebootWindow";
+
+import { isAllowed, pages } from "../../../../../utils/user";
+
 export class GroupService extends Component {
   state = {
     services: { dtmf: "", direction: "", channelsIn: "", channelsOut: "" },
-    disabledButton: false
+    disabledButton: false,
+    showRebootDialog: false
   };
   componentDidMount() {
     this.setState({
@@ -30,30 +35,40 @@ export class GroupService extends Component {
   render() {
     return (
       <React.Fragment>
-        <Row className={"margin-top-1"}>
-          <Col md={12} className={"flex align-items-center"}>
-            <div className={"margin-right-1 flex flex-basis-16"}>
-              <ControlLabel>
-                <FormattedMessage id="dtmf" defaultMessage="DTMF" />
-              </ControlLabel>
-            </div>
-            <div className={"margin-right-1 flex"}>
-              <FormControl
-                componentClass="select"
-                value={this.state.services.dtmf}
-                onChange={this.changeDtmf}
-              >
-                {this.props.config.tenant.group.iad.dtmfOverride.map(
-                  (el, i) => (
-                    <option key={i} value={el.value}>
-                      {el.label}
-                    </option>
-                  )
-                )}
-              </FormControl>
-            </div>
-          </Col>
-        </Row>
+        {(this.props.iad.protocolMode === "SIP" ||
+          this.props.iad.protocolMode === "PRA_SIP" ||
+          this.props.iad.protocolMode === "SIP_PRA") && (
+          <Row className={"margin-top-1"}>
+            <Col md={12} className={"flex align-items-center"}>
+              <div className={"margin-right-1 flex flex-basis-16"}>
+                <ControlLabel>
+                  <FormattedMessage id="dtmf" defaultMessage="DTMF" />
+                </ControlLabel>
+              </div>
+              <div className={"margin-right-1 flex"}>
+                <FormControl
+                  componentClass="select"
+                  value={this.state.services.dtmf}
+                  onChange={this.changeDtmf}
+                  disabled={
+                    !isAllowed(
+                      localStorage.getItem("userProfile"),
+                      pages.edit_group_iad_services_dtmf
+                    )
+                  }
+                >
+                  {this.props.config.tenant.group.iad.dtmfOverride.map(
+                    (el, i) => (
+                      <option key={i} value={el.value}>
+                        {el.label}
+                      </option>
+                    )
+                  )}
+                </FormControl>
+              </div>
+            </Col>
+          </Row>
+        )}
         <Row className={"margin-top-1"}>
           <Col md={12} className={"flex align-items-center"}>
             <div className={"margin-right-1 flex flex-basis-16"}>
@@ -102,7 +117,11 @@ export class GroupService extends Component {
                   <div className={"margin-right-1 flex-basis-11"}>
                     <FormControl
                       type="text"
-                      value={this.state.services.channelsIn}
+                      value={
+                        this.state.services.channelsIn === "groupValue"
+                          ? this.state.services.channelsIn_group_value
+                          : this.state.services.channelsIn
+                      }
                       placeholder={"In"}
                       onChange={this.changeChannelsIn}
                     />
@@ -115,7 +134,11 @@ export class GroupService extends Component {
                   <div className={"margin-right-1 flex-basis-11"}>
                     <FormControl
                       type="text"
-                      value={this.state.services.channelsOut}
+                      value={
+                        this.state.services.channelsOut === "groupValue"
+                          ? this.state.services.channelsOut_group_value
+                          : this.state.services.channelsOut
+                      }
                       placeholder={"Out"}
                       onChange={this.changeChannelsOut}
                     />
@@ -151,14 +174,40 @@ export class GroupService extends Component {
             </div>
           </Col>
         </Row>
+        <RebootWindow
+          data={this.state.data}
+          show={this.state.showRebootDialog}
+          onClose={() => this.setState({ showRebootDialog: false })}
+        />
       </React.Fragment>
     );
   }
 
   updateIAD = () => {
-    const { services } = this.state;
-    const data = { services };
+    const {
+      channelHunting,
+      channelsIn,
+      channelsOut,
+      direction,
+      dtmf
+    } = this.state.services;
+    const data = {
+      services: {
+        channelHunting,
+        channelsIn: channelsIn === "groupValue" ? null : channelsIn,
+        channelsOut: channelsOut === "groupValue" ? null : channelsOut,
+        direction
+      }
+    };
     const clearData = removeEmpty(data);
+    if (!this.props.iad.services && dtmf) {
+      this.setState({ showRebootDialog: true, data: clearData });
+      return;
+    }
+    if (dtmf !== this.props.iad.services.dtmf) {
+      this.setState({ showRebootDialog: true, data: clearData });
+      return;
+    }
     if (Object.keys(clearData).length) {
       this.setState({ disabledButton: true }, () =>
         this.props

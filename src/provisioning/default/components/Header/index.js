@@ -12,8 +12,8 @@ import { Link, Route } from "react-router-dom";
 
 import { FormattedMessage } from "react-intl";
 
-import { isAllowed, pages } from "../../utils/user";
-import apio_brand from "../../images/apio.png";
+import { isAllowed, pages } from "../../../../utils/user";
+import apio_brand from "../../../../images/apio.png";
 
 const ListItemLink = ({ to, children }) => (
   <Route
