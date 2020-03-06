@@ -1448,15 +1448,21 @@ export class Transaction extends Component {
         // filtering (but no paging -> get all sub-instances)
         url.searchParams.append('filter', subrequestsFilter);
         this.setState({replaying: true});
-        fetch_get(url).then(data => {
+        fetch_get(url).then(async data => {
             if(this.cancelLoad) return;
 
-            return Promise.all(data.requests.map(async r => {
-                const errorTask = r.tasks.find(t => t.status === "ERROR");
-                if(!errorTask) return;
-                fetch_put(`/api/v01/transactions/${r.instance.id}/tasks/${errorTask.task_id}?${meta}`);
+            for(var i=0;i < data.requests.length;i++) {
+                const r = data.requests[i];
+                if(action === "force-close") {
+                    if(r.instance.status !== "ACTIVE") continue;
+                    fetch_put(`/api/v01/transactions/${r.instance.id}`, {status: "CLOSE_IN_ERROR"});
+                } else {
+                    const errorTask = r.tasks.find(t => t.status === "ERROR");
+                    if (!errorTask) continue;
+                    fetch_put(`/api/v01/transactions/${r.instance.id}/tasks/${errorTask.task_id}?${meta}`);
+                }
                 await timer(500);
-            }));
+            }
         })
             .then(() => this.setState({replaying: false}))
             .catch(error => this.setState({replaying: false}));
@@ -1747,6 +1753,7 @@ export class Transaction extends Component {
                                                 <option value="">*global action*</option>
                                                 <option value="replay"><FormattedMessage id="replay" defaultMessage="replay"/></option>
                                                 <option value="skip"><FormattedMessage id="skip" defaultMessage="skip"/></option>
+                                                <option value="force-close"><FormattedMessage id="force-close" defaultMessage="force close"/></option>
                                             </select>
                                         </Panel.Title>
                                     </Panel.Heading>
