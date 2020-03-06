@@ -1,4 +1,4 @@
-import React, {Component} from "react";
+import React, {useEffect, useState} from "react";
 
 import Button from "react-bootstrap/lib/Button";
 import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
@@ -12,7 +12,7 @@ import Col from "react-bootstrap/lib/Col";
 import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import {FormattedMessage} from "react-intl";
 import update from "immutability-helper";
-import {fetch_delete, fetch_get, fetch_post, fetch_put} from "../utils";
+import {fetch_delete, fetch_get, fetch_post, fetch_put, NotificationsManager} from "../utils";
 
 
 const isJsonValid = e => {
@@ -156,132 +156,114 @@ const CallbacksTable = ({callbacks, onEdit, onDelete, onAdd}) => (
     </Table>
 );
 
-
-export class CallbackHandler extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {};
-        this.cancelLoad = false;
-        this.onDeleteCallback = this.onDeleteCallback.bind(this);
-        this.onAddCallback = this.onAddCallback.bind(this);
-        this.onUpdateCallback = this.onUpdateCallback.bind(this);
-    }
-
-    componentDidMount() {
-        !this.cancelLoad && this.refresh()
-    }
-
-    componentWillUnmount() {
-        this.cancelLoad = true;
-    }
-
-    refresh() {
-        fetch_get(`/api/v01/system/users/${this.props.userId}/callbacks`, this.props.auth_token)
-            .then(data => (
-                !this.cancelLoad &&
-                this.setState({
-                    callbacks: data.callbacks.map(cb => {
-                        if(cb.endpoint_extra) {
-                            cb.endpoint_extra = JSON.stringify(cb.endpoint_extra, null, 2)
-                        }
-                        return cb;
-                        }),
-                    editCallback: undefined
+function fetchUserCallbacks(userId, onSuccess) {
+    fetch_get(`/api/v01/system/users/${userId}/callbacks`)
+        .then(data => (
+            onSuccess(
+                data.callbacks.map(cb => {
+                    if(cb.endpoint_extra) {
+                        cb.endpoint_extra = JSON.stringify(cb.endpoint_extra, null, 2)
+                    }
+                    return cb;
                 })
-            ))
-            .catch(error => this.props.notifications.addNotification({
-                title: <FormattedMessage id="Callbacks refresh"/>,
-                message: error.message,
-                level: 'error'
-            }))
-    }
+            )
+        ))
+        .catch(error => NotificationsManager.error(
+            <FormattedMessage id="Callbacks refresh"/>,
+            error.message
+        ))
+}
 
-    onDeleteCallback(cb_id) {
-        fetch_delete(`/api/v01/system/users/${this.props.userId}/callbacks/${cb_id}`)
-            .then(() => {
-                this.props.notifications.addNotification({
-                    message: <FormattedMessage id="callback-deleted" defaultMessage="Callback deleted"/>,
-                    level: 'success'
-                });
-                !this.cancelLoad && this.refresh();
-            })
-            .catch(error => this.props.notifications.addNotification({
-                title: <FormattedMessage id="Callback removal failed"/>,
-                message: error.message,
-                level: 'error'
-            }))
-    }
 
-    onAddCallback(cb) {
-        let body = Object.assign(cb, {});
-        if(body.endpoint_extra) {
-            body.endpoint_extra = JSON.parse(body.endpoint_extra);
-        } else {
-            delete body.endpoint_extra;
-        }
-        fetch_post(`/api/v01/system/users/${this.props.userId}/callbacks`, body, this.props.auth_token)
-            .then(() => {
-                this.props.notifications.addNotification({
-                    message: <FormattedMessage id="callback-added" defaultMessage="Callback added"/>,
-                    level: 'success'
-                });
-                !this.cancelLoad && this.refresh()
-            })
-            .catch(error => this.props.notifications.addNotification({
-                title: <FormattedMessage id="Callback creation failed"/>,
-                message: error.message,
-                level: 'error'
-            }))
-    }
+function deleteUserCallback(userId, cbId, onSuccess) {
+    fetch_delete(`/api/v01/system/users/${userId}/callbacks/${cbId}`)
+        .then(() => {
+            NotificationsManager.success(
+                <FormattedMessage id="callback-deleted" defaultMessage="Callback deleted"/>
+            );
+            onSuccess();
+        })
+        .catch(error => NotificationsManager.error(
+            <FormattedMessage id="Callback removal failed"/>,
+            error.message
+        ))
+}
 
-    onUpdateCallback(cb) {
-        let body = Object.assign(cb, {});
-        if(body.endpoint_extra) {
-            body.endpoint_extra = JSON.parse(body.endpoint_extra);
-        } else {
-            body.endpoint_extra = null;
-        }
-        fetch_put(
-            `/api/v01/system/users/${this.props.userId}/callbacks/${cb.callback_id}`,
-            Object.keys(body).filter(k => ['scope', 'event_category', 'endpoint', 'endpoint_extra'].includes(k)).reduce(
-                (obj, key) => {
-                    obj[key] = cb[key];
-                    return obj;
-                }, {}
-            ),
-            this.props.auth_token
+
+function addUserCallback(userId, cb, onSuccess) {
+    let body = Object.assign(cb, {});
+    if(body.endpoint_extra) {
+        body.endpoint_extra = JSON.parse(body.endpoint_extra);
+    } else {
+        delete body.endpoint_extra;
+    }
+    fetch_post(`/api/v01/system/users/${userId}/callbacks`, body)
+        .then(() => {
+            NotificationsManager.success(
+                <FormattedMessage id="callback-added" defaultMessage="Callback added"/>
+            );
+            onSuccess();
+        })
+        .catch(error => NotificationsManager.error(
+            <FormattedMessage id="Callback creation failed"/>,
+            error.message
+        ))
+}
+
+
+function updateUserCallback(userId, cb, onSuccess) {
+    let body = Object.assign(cb, {});
+    if(body.endpoint_extra) {
+        body.endpoint_extra = JSON.parse(body.endpoint_extra);
+    } else {
+        body.endpoint_extra = null;
+    }
+    fetch_put(
+        `/api/v01/system/users/${userId}/callbacks/${cb.callback_id}`,
+        Object.keys(body).filter(k => ['scope', 'event_category', 'endpoint', 'endpoint_extra'].includes(k)).reduce(
+            (obj, key) => {
+                obj[key] = cb[key];
+                return obj;
+            }, {}
         )
-            .then(() => {
-                this.props.notifications.addNotification({
-                    message: <FormattedMessage id="callback-update" defaultMessage="Callback updated"/>,
-                    level: 'success'
-                });
-                !this.cancelLoad && this.refresh()
-            })
-            .catch(error => this.props.notifications.addNotification({
-                title: <FormattedMessage id="Callback update failed"/>,
-                message: error.message,
-                level: 'error'
-            }))
-    }
+    )
+        .then(() => {
+            NotificationsManager.success(
+                <FormattedMessage id="callback-update" defaultMessage="Callback updated"/>
+            );
+            onSuccess()
+        })
+        .catch(error => NotificationsManager.error(
+            <FormattedMessage id="Callback update failed"/>,
+            error.message
+        ))
+}
 
-    render() {
-        const {editCallback, callbacks} = this.state;
 
-        return (
-            editCallback ?
-                 <CallbackDetails
-                     cb={editCallback}
-                     onChange={cb => this.setState({editCallback: cb})}
-                     onCancel={() => this.setState({editCallback: undefined})}
-                     onSave={() => editCallback.callback_id ? this.onUpdateCallback(editCallback) : this.onAddCallback(editCallback)}
-                 /> :
-                 <CallbacksTable
-                     callbacks={callbacks}
-                     onAdd={() => this.setState({editCallback: {event_category: '', scope: '', endpoint: ''}})}
-                     onDelete={cb_i => this.onDeleteCallback(cb_i)}
-                     onEdit={cb_i => this.setState({editCallback: callbacks[cb_i]})}
-                 />
-        )
-    }
+export function CallbackHandler(props) {
+    const [callbacks, setCallbacks] = useState([]);
+    const [editCallback, setEditCallback] = useState(undefined);
+
+    const refresh = () => fetchUserCallbacks(props.userId, cb => {setCallbacks(cb); setEditCallback(undefined)});
+    useEffect(refresh, []);
+
+    return (
+        editCallback ?
+             <CallbackDetails
+                 cb={editCallback}
+                 onChange={setEditCallback}
+                 onCancel={() => setEditCallback(undefined)}
+                 onSave={() =>
+                     editCallback.callback_id ?
+                         updateUserCallback(props.userId, editCallback, refresh) :
+                         addUserCallback(props.userId, editCallback, refresh)
+                 }
+             /> :
+             <CallbacksTable
+                 callbacks={callbacks}
+                 onAdd={() => setEditCallback({event_category: '', scope: '', endpoint: ''})}
+                 onDelete={cb_i => deleteUserCallback(props.userId, cb_i, refresh)}
+                 onEdit={cb_i => setEditCallback(callbacks[cb_i])}
+             />
+    )
 }
