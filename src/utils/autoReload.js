@@ -21,7 +21,8 @@ class AutoReload extends Component {
   }
 
   fetchSource() {
-    return fetch(this.props.url)
+    const now = new Date();
+    return fetch(this.props.url + "?t=" + now.toISOString())
       .then(response => {
         if (response.status !== 200) {
           throw new Error("offline");
