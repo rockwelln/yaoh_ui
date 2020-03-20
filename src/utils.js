@@ -101,21 +101,23 @@ class NotificationsHandler {
         NotificationsHandler.rootRef = ref_;
     }
 
-    error(title, message) {
+    error(title, message, extra) {
         NotificationsHandler.rootRef &&
         NotificationsHandler.rootRef.current &&
         NotificationsHandler.rootRef.current.addNotification({
             title: title,
             message: message,
-            level: 'error'
+            level: 'error',
+            ...extra
         });
     }
 
-    success(message) {
+    success(message, extra) {
         NotificationsHandler.rootRef &&
         NotificationsHandler.rootRef.current.addNotification({
             message: message,
-            level: 'success'
+            level: 'success',
+            ...extra
         });
     }
 }
