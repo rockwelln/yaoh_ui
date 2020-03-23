@@ -205,12 +205,12 @@ function draw_editor(container, handlers, placeholders, props) {
                                     e.source.children.find(c => c.id === sourcePortId).value,
                                     e.target.getAttribute('label')
                                 ]
-                            }))
+                            }), props)
                         ;
                     })
                 )
             } else {
-                editCellProperty(cell, modal, spacer, this.isEnabled(), [], this.getModel().cells)
+                editCellProperty(cell, modal, spacer, this.isEnabled(), [], this.getModel().cells, undefined, props)
             }
         }
         // Disables any default behaviour for the double click
@@ -285,7 +285,7 @@ function draw_editor(container, handlers, placeholders, props) {
         getCellDefinitions(data_cells => {
             getEntities(data_entities => {
                 const model = editor.graph.getModel();
-                newCell(data_cells, model.cells, modal, editor, spacer, data_entities);
+                newCell(data_cells, model.cells, modal, editor, spacer, data_entities, props);
             });
         });
     });
@@ -705,9 +705,30 @@ function getHelpbox(nature, helpText) {
 
 const TIMER = 2; // refer to TaskType enum in the API server.
 
-function createInput(param, value, cells, cells_defs) {
+function createInput(param, value, cells, cells_defs, config) {
     let input = null;
     switch(param.nature) {
+        case 'session_holder':
+            input = document.createElement('select');
+            input.className = 'form-control';
+            config && config.gateways && Object.keys(config.gateways)
+                .filter(c => config.gateways[c].session_holder !== undefined)
+                .map(c => config.gateways[c].session_holder)
+                .sort((a, b) => {
+                    const a_ = a.toLowerCase(), b_ = b.toLowerCase();
+                    if(a_ < b_) return -1;
+                    if(a_ > b_) return 1;
+                    return 0;
+                })
+                .map(v => {
+                    const opt = document.createElement('option');
+                    opt.value = v;
+                    opt.innerText = v;
+                    return opt;
+                })
+                .forEach(o => input.appendChild(o));
+            input.value = value || null;
+            break;
         case 'task':
             input = document.createElement('select');
             input.className = 'form-control';
@@ -790,7 +811,7 @@ function createInput(param, value, cells, cells_defs) {
     return input;
 }
 
-function newCell(defs, cells, modal, editor, spacer, entities_defs) {
+function newCell(defs, cells, modal, editor, spacer, entities_defs, props) {
     let modalEntities = prepareModal(modal);
     let modalHeader = modalEntities[0];
     let modalBody = modalEntities[1];
@@ -901,7 +922,7 @@ function newCell(defs, cells, modal, editor, spacer, entities_defs) {
                 name.innerHTML = param_name;
                 gp.appendChild(name);
 
-                const value = createInput(param, '', cells, defs);
+                const value = createInput(param, '', cells, defs, props.configuration);
                 gp.appendChild(value);
                 paramsFields[param_name] = value;
 
@@ -1022,7 +1043,7 @@ function newCell(defs, cells, modal, editor, spacer, entities_defs) {
     modal.style.overflowY = "scroll";
 }
 
-function editCellProperty(cell, modal, spacer, editable, cells_defs, cells, refresh_cb, transitions) {
+function editCellProperty(cell, modal, spacer, editable, cells_defs, cells, refresh_cb, transitions, props) {
     const modalEntities = prepareModal(modal);
     const modalHeader = modalEntities[0];
     const modalBody = modalEntities[1];
@@ -1064,7 +1085,7 @@ function editCellProperty(cell, modal, spacer, editable, cells_defs, cells, refr
         if(cell_def) {
             p = cell_def.params.find(p => p.name === a || p === a);
         }
-        const value = createInput(p, cell.getAttribute(a), cells, cells_defs);
+        const value = createInput(p, cell.getAttribute(a), cells, cells_defs, props.configuration);
 
         if(!editable) value.disabled="disabled";
         gp.appendChild(value);

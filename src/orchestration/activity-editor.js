@@ -24,11 +24,36 @@ const NEW_ACTIVITY = {
     },
 };
 
+function fetchCells(onSuccess) {
+    fetch_get('/api/v01/cells')
+        .then(data => onSuccess(data.cells))
+        .catch(console.error);
+}
+
+function fetchEntities(onSuccess) {
+    fetch_get('/api/v01/entities')
+        .then(data => onSuccess(data.entities))
+        .catch(console.error);
+}
+
+function fetchActivities(onSuccess) {
+    fetch_get('/api/v01/activities')
+        .then(data => onSuccess(data.activities))
+        .catch(console.error);
+}
+
+function fetchConfiguration(onSuccess) {
+    fetch_get('/api/v01/system/configuration')
+        .then(data => onSuccess(data.content))
+        .catch(console.error);
+}
+
 export default class ActivityEditor extends Component {
     constructor(props) {
         super(props);
         this.state = {
             activities: [],
+            configuration: {},
             currentActivity: null,
             newActivity: true,
         };
@@ -37,18 +62,11 @@ export default class ActivityEditor extends Component {
         this.saveActivity = this.saveActivity.bind(this);
         this.deleteActivity = this.deleteActivity.bind(this);
         this.fetchActivity = this.fetchActivity.bind(this);
-        this.fetchCells = this.fetchCells.bind(this);
-        this.fetchEntities = this.fetchEntities.bind(this);
-    }
-
-    fetchActivities() {
-        fetch_get('/api/v01/activities', this.props.auth_token)
-            .then(data => this.setState({activities: data.activities}))
-            .catch(console.log);
     }
 
     componentDidMount() {
-        this.fetchActivities();
+        fetchActivities(a => this.setState({activities: a}));
+        fetchConfiguration(c => this.setState({configuration: c}));
     }
 
     fetchActivity(actId, cb) {
@@ -57,20 +75,8 @@ export default class ActivityEditor extends Component {
             .catch(console.error);
     }
 
-    fetchCells(cb) {
-        fetch_get('/api/v01/cells', this.props.auth_token)
-            .then(data => cb(data.cells))
-            .catch(console.error);
-    }
-
-    fetchEntities(cb) {
-        fetch_get('/api/v01/entities', this.props.auth_token)
-            .then(data => cb(data.entities))
-            .catch(console.error);
-    }
-
     componentDidUpdate() {
-        let getData = this.state.currentActivity===null && !this.state.newActivity?null:
+        const getData = this.state.currentActivity===null && !this.state.newActivity?null:
         (cb)=> {
             if (this.state.newActivity) {
                 cb(JSON.parse(JSON.stringify(NEW_ACTIVITY)));
@@ -79,11 +85,13 @@ export default class ActivityEditor extends Component {
             }
         };
         let onDelete = this.state.newActivity?undefined:() => this.deleteActivity(this.state.currentActivity);
-        this.renderGrid(getData, this.saveActivity, onDelete, this.fetchCells, this.fetchEntities);
+        this.renderGrid(getData, this.saveActivity, onDelete);
     }
 
-    renderGrid(getActivity, onSave, onDelete, getCells, getEntities) {
+    renderGrid(getActivity, onSave, onDelete) {
         if (getActivity === null) return;
+        const {configuration} = this.state;
+
         let node = ReactDOM.findDOMNode(this.refs['editor']);
         let toolbar = ReactDOM.findDOMNode(this.refs['toolbar']);
         let title = ReactDOM.findDOMNode(this.refs['title']);
@@ -92,12 +100,14 @@ export default class ActivityEditor extends Component {
             get: getActivity,
             onSave: onSave,
             onDelete: onDelete,
-            getCellDefinitions: getCells,
-            getEntities: getEntities,
+            getCellDefinitions: fetchCells,
+            getEntities: fetchEntities,
             }, {
             toolbar: toolbar,
             title: title,
-            }, {}
+            }, {
+            configuration: configuration,
+            }
         )
     }
 
@@ -115,7 +125,7 @@ export default class ActivityEditor extends Component {
         .then(data_ => {
             cb && cb(data_);
             this.showAlert("Activity saved !");
-            this.fetchActivities();
+            fetchActivities(a => this.setState({activities: a}));
 
             if(data.id === undefined) { // new activity created, we have to fetch again the activity list.
                 this.setState({newActivity: false, currentActivity: data_.id});
@@ -156,7 +166,7 @@ export default class ActivityEditor extends Component {
                 }
                 setTimeout(() => this.showAlert("Activity deleted successfully"), 1000);
                 this.setState({currentActivity: null, newActivity: true});
-                this.fetchActivities();
+                fetchActivities(a => this.setState({activities: a}));
             })
             .catch((error) => {
                 console.log(error);
