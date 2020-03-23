@@ -1145,7 +1145,7 @@ function editCellProperty(cell, modal, spacer, editable, cells_defs, cells, refr
             e.preventDefault();
             // 4.1 save params in the cell.
             if (cell.getAttribute('attrList') !== undefined) {
-                const params = cell_def ? cell_def.params.map(p => p.name) : cell.getAttribute('attrList').split(',');
+                const params = cell_def ? cell_def.params.map(p => p.name || p) : cell.getAttribute('attrList').split(',');
                 // 4.2 validate inputs if possible
                 if(cell_def && cell_def.params && params.map(a => {
                     const p = cell_def.params.find(p => p.name === a || p === a);
