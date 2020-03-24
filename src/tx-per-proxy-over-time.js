@@ -39,7 +39,7 @@ export default function ProxyRequestsOverTime(props) {
     const [showSettings, setShowSettings] = useState(false);
     const [showBig, setShowBig] = useState(false);
 
-    const refreshData = () => fetchData(start, end, setData);
+    const refreshData = () => {fetchData(start, end, setData);};
     useEffect(refreshData, [start, end]);
     useEffect(() => {
         const handler = setInterval(refreshData, REFRESH_CYCLE * 1000);

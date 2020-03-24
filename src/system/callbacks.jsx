@@ -244,7 +244,7 @@ export function CallbackHandler(props) {
     const [callbacks, setCallbacks] = useState([]);
     const [editCallback, setEditCallback] = useState(undefined);
 
-    const refresh = () => fetchUserCallbacks(props.userId, cb => {setCallbacks(cb); setEditCallback(undefined)});
+    const refresh = () => {fetchUserCallbacks(props.userId, cb => {setCallbacks(cb); setEditCallback(undefined)});}
     useEffect(refresh, []);
 
     return (

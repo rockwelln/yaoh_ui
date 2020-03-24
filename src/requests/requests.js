@@ -708,7 +708,7 @@ function Comments(props) {
     const [comment, setComment] = useState("");
     const [showAddModal, setShowAddModal] = useState(false);
 
-    useEffect(() => fetchComments(props.req_id, setComments), []);
+    useEffect(() => {fetchComments(props.req_id, setComments)}, []);
 
     const closeModal = () => {
         setShowAddModal(false);

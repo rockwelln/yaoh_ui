@@ -214,7 +214,7 @@ function NewTemplate(props) {
 
 export default function Templates() {
     const [templates, setTemplates] = useState([]);
-    const refresh = () => fetchTemplates(setTemplates);
+    const refresh = () => {fetchTemplates(setTemplates);}
 
     useEffect(refresh, []);
 

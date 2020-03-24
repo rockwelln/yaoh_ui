@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useState, useEffect} from "react";
 
 import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
 import Panel from "react-bootstrap/lib/Panel";
@@ -9,7 +9,6 @@ import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import Modal from "react-bootstrap/lib/Modal";
 import Form from "react-bootstrap/lib/Form";
 import HelpBlock from "react-bootstrap/lib/HelpBlock";
-import Alert from "react-bootstrap/lib/Alert";
 
 import {FormattedMessage} from "react-intl";
 import {fetch_delete, fetch_get, fetch_post, fetch_put, NotificationsManager} from "../utils";
@@ -23,673 +22,801 @@ import Tabs from "react-bootstrap/lib/Tabs";
 import Tab from "react-bootstrap/lib/Tab";
 
 
-class HistoryLine extends React.Component {
-    state = {
-        expended: false,
-    };
+function HistoryLine(props) {
+    const [expanded, setExpanded] = useState(false);
+    const {h} = props;
+    const expIco = expanded?<Glyphicon glyph="chevron-down"/>:<Glyphicon glyph="chevron-right"/>;
 
-    render() {
-        const {expanded} = this.state;
-        const {h} = this.props;
-        const expIco = expanded?<Glyphicon glyph="chevron-down"/>:<Glyphicon glyph="chevron-right"/>;
+    let v = [
+        <tr key={h.unique_id} onClick={() => setExpanded(!expanded)}>
+            <td>{expIco}</td>
+            <td>{h.unique_id}</td>
+            <td>{h.created_on}</td>
+        </tr>
+    ];
 
-        let v = [
-            <tr key={h.unique_id} onClick={() => this.setState({expanded: !expanded})}>
-                <td>{expIco}</td>
-                <td>{h.unique_id}</td>
-                <td>{h.created_on}</td>
+    if(expanded) {
+        v.push(
+            <tr key={h.unique_id + "_details"}>
+                <td colSpan={3}>
+                    <Tabs defaultActiveKey={0} id={`hl-det-${h.unique_id}`}>
+                        <Tab eventKey={0} title={<FormattedMessage id="request" defaultMessage="Request" />} style={{paddingTop: "15px"}}>
+                            <pre>
+                                {JSON.stringify(h.request.body, null, 2)}
+                            </pre>
+                        </Tab>
+                        <Tab eventKey={1} title={<FormattedMessage id="response" defaultMessage="Response: {status}" values={{status: h.response.status}} /> } style={{paddingTop: "15px"}}>
+                            <pre>
+                                {JSON.stringify(h.response.body, null, 2)}
+                            </pre>
+                        </Tab>
+                    </Tabs>
+                </td>
             </tr>
-        ];
-
-        if(expanded) {
-            v.push(
-                <tr key={h.unique_id + "_details"}>
-                    <td colSpan={3}>
-                        <Tabs defaultActiveKey={1}>
-                            <Tab eventKey={1} title={<FormattedMessage id="request" defaultMessage="Request" />} style={{paddingTop: "15px"}}>
-                                <pre>
-                                    {JSON.stringify(h.request.body, null, 2)}
-                                </pre>
-                            </Tab>
-                            <Tab eventKey={2} title={<FormattedMessage id="response" defaultMessage="Response: {status}" values={{status: h.response.status}} /> } style={{paddingTop: "15px"}}>
-                                <pre>
-                                    {JSON.stringify(h.response.body, null, 2)}
-                                </pre>
-                            </Tab>
-                        </Tabs>
-                    </td>
-                </tr>
-            )
-        }
-
-        return v;
-    }
-}
-
-class NewWebhook extends React.Component {
-    static newWb = {
-        name: '',
-        active: true,
-        target: '',
-        format: 'json',
-        secret: '',
-        custom_header: '',
-        custom_header_value: '',
-        events: [],
-    };
-    state = {
-        wb: NewWebhook.newWb,
-        events: [],
-        wb_history: [],
-    };
-    title = <FormattedMessage id="new-webhook" defaultMessage="New webhook" />;
-    fakeEventGenerator = false;
-
-    loadEvents() {
-        fetch_get("/api/v01/webhooks/events", this.props.auth_token)
-            .then(data => this.setState({events: data.events}))
-            .catch(error => NotificationsManager.error(
-                <FormattedMessage id="fetch_webhooks-events-failed" defaultMessage="Fetch webhooks events failed!" />,
-                error.message,
-            ))
-    }
-
-    componentDidUpdate(prevProps, prevState, snapshot) {
-        if(prevProps.show !== this.props.show && this.props.show) {
-            this.setState({wb: NewWebhook.newWb});
-            this.loadEvents();
-        }
-    }
-
-    onSave() {
-        fetch_post("/api/v01/webhooks", this.state.wb, this.props.auth_token)
-            .then(() => {
-                NotificationsManager.success(<FormattedMessage id="webhook-created" defaultMessage="Webhook created" />)
-                this.props.onClose(true);
-            })
-            .catch(error => NotificationsManager.error(
-                <FormattedMessage id="webhooks-creation-failed" defaultMessage="Webhook creation failed!" />,
-                error.message,
-            ))
-    }
-
-    onGenerateFakeEvent() {}
-
-    render() {
-        const {show, onClose} = this.props;
-        const {wb, events, wb_history} = this.state;
-
-        return (
-            <Modal show={show} onHide={() => onClose(false)} backdrop={false} bsSize="large">
-                <Modal.Header closeButton>
-                        <Modal.Title>{this.title}</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <Form horizontal>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="active" defaultMessage="Active" />
-                                </Col>
-
-                                <Col sm={9}>
-                                    <Checkbox
-                                        checked={wb.active}
-                                        onChange={e => e.stopPropagation()}
-                                        onClick={e =>
-                                            this.setState({wb: update(wb, {$merge: {active: e.target.checked}})})
-                                        } />
-                                </Col>
-                            </FormGroup>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="name" defaultMessage="Name" />
-                                </Col>
-
-                                <Col sm={9}>
-                                    <FormControl
-                                        componentClass="input"
-                                        value={wb.name}
-                                        onChange={e => this.setState({wb: update(wb, {$merge: {name: e.target.value}})})}/>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="target" defaultMessage="Target" />
-                                </Col>
-
-                                <Col sm={9}>
-                                    <FormControl
-                                        componentClass="input"
-                                        placeholder="http://my-webhook/handler"
-                                        value={wb.target}
-                                        onChange={e => this.setState({wb: update(wb, {$merge: {target: e.target.value}})})}/>
-                                    <HelpBlock>
-                                        <FormattedMessage id="webhook-target-help" defaultMessage="need to be an URL"/>
-                                    </HelpBlock>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="secret" defaultMessage="Secret" />
-                                </Col>
-
-                                <Col sm={9}>
-                                    <FormControl
-                                        type="password"
-                                        value={wb.secret}
-                                        onChange={e => this.setState({wb: update(wb, {$merge: {secret: e.target.value}})})}/>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="custom-header" defaultMessage="Custom header" />
-                                </Col>
-
-                                <Col sm={9}>
-                                    <FormControl
-                                        componentClass="input"
-                                        placeholder="X-API-HEADER"
-                                        value={wb.custom_header}
-                                        onChange={e => this.setState({wb: update(wb, {$merge: {custom_header: e.target.value}})})}/>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="custom-header-value" defaultMessage="Custom header value" />
-                                </Col>
-
-                                <Col sm={9}>
-                                    <FormControl
-                                        componentClass="input"
-                                        placeholder="..."
-                                        value={wb.custom_header_value}
-                                        onChange={e => this.setState({wb: update(wb, {$merge: {custom_header_value: e.target.value}})})}/>
-                                </Col>
-                            </FormGroup>
-                            <hr/>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="events" defaultMessage="Events" />
-                                </Col>
-
-                                <Col sm={9}>
-                                    {
-                                        events.sort((a, b) => {
-                                            if(a.event_id > b.event_id) return 1;
-                                            if(a.event_id < b.event_id) return -1;
-                                            return 0;
-                                        }).map(e =>
-                                            <Checkbox
-                                                checked={wb.events.includes(e.event_id)}
-                                                onChange={ev => {
-                                                    if(ev.target.checked) {
-                                                        this.setState({wb: update(wb, {events: {"$push": [e.event_id]}})})
-                                                    } else {
-                                                        this.setState({wb: update(wb, {events: {"$splice": [[wb.events.indexOf(e.event_id), 1]]}})})
-                                                    }
-                                                }}
-                                            >
-                                                {e.label}
-                                            </Checkbox>
-                                        )
-                                    }
-                                </Col>
-                            </FormGroup>
-                        </Form>
-                        <hr/>
-                        <ButtonToolbar>
-                            <Button onClick={this.onSave.bind(this)} bsStyle="primary"><FormattedMessage id="save" defaultMessage="Save" /></Button>
-                            <Button onClick={() => onClose(false)}><FormattedMessage id="cancel" defaultMessage="Cancel" /></Button>
-                            {
-                                this.fakeEventGenerator &&
-                                <Button onClick={() => this.onGenerateFakeEvent()}>
-                                    <FormattedMessage id="fake-event" defaultMessage="Generate test event"/>
-                                </Button>
-                            }
-                        </ButtonToolbar>
-                        <hr/>
-                        { this.fakeEventGenerator &&
-                        <Form>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="history" defaultMessage="History"/>
-                                </Col>
-                                <Table>
-                                    <tbody>
-                                    {
-                                        wb_history.sort((a, b) => {
-                                            if (a.history_id < b.history_id) return 1;
-                                            if (a.history_id > b.history_id) return -1;
-                                            return 0;
-                                        }).map(h =>
-                                            <HistoryLine h={h}/>
-                                        )
-                                    }
-                                    </tbody>
-                                </Table>
-                            </FormGroup>
-                        </Form>
-                        }
-                    </Modal.Body>
-            </Modal>
         )
     }
+
+    return v;
 }
 
 
-class UpdateWebhook extends NewWebhook {
-    title = <FormattedMessage id="update-webhook" defaultMessage="Update webhook" />;
-    static updatableFields = ["name", "active", "target", "secret", "custom_header", "custom_header_value", "events"];
-    fakeEventGenerator = true;
+const newWb = {
+    name: '',
+    active: true,
+    target: '',
+    format: 'json',
+    secret: '',
+    custom_header: '',
+    custom_header_value: '',
+    events: [],
+};
 
-    loadWebhookHistory(webhook_id) {
-        fetch_get(`/api/v01/webhooks/${webhook_id}/history`, this.props.auth_token)
-            .then(data => this.setState({wb_history: data.history}))
-            .catch(error =>
-                NotificationsManager.error(
-                    <FormattedMessage id="webhook-fetch-history-error" defaultMessage="Failed to fetch webhook history" />,
-                    error.message
-                )
-            )
-    }
 
-    onGenerateFakeEvent() {
-        fetch_post(`/api/v01/webhooks/${this.props.wb.webhook_id}/test`, this.state.wb, this.props.auth_token)
-            .then(() => {
-                NotificationsManager.success(<FormattedMessage id="webhook-tested" defaultMessage="Test call generated" />);
-                setTimeout(() => this.loadWebhookHistory(this.props.wb.webhook_id), 1000);
-            })
-            .catch(error => NotificationsManager.error(
-                <FormattedMessage id="test-call-failed" defaultMessage="Test call failed!" />,
-                error.message,
-            ))
-    }
-
-    componentDidUpdate(prevProps, prevState, snapshot) {
-        if(prevProps.show !== this.props.show && this.props.show) {
-            this.props.wb && this.setState({wb: this.props.wb});
-            this.loadWebhookHistory(this.props.wb.webhook_id);
-            this.loadEvents();
-        }
-    }
-
-    onSave() {
-        const {wb} = this.state;
-        const wb_ = Object.keys(wb)
-            .filter(k => UpdateWebhook.updatableFields.includes(k))
-            .reduce(
-                (obj, key) => {
-                    obj[key] = wb[key];
-                    return obj;
-                }, {}
-            );
-        fetch_put(`/api/v01/webhooks/${this.props.wb.webhook_id}`, wb_, this.props.auth_token)
-            .then(() => {
-                NotificationsManager.success(<FormattedMessage id="webhook-update" defaultMessage="Webhook updated" />);
-                this.props.onClose(true);
-            })
-            .catch(error => NotificationsManager.error(
-                <FormattedMessage id="webhooks-update-failed" defaultMessage="Webhook update failed!" />,
-                error.message,
-            ))
-    }
+function fetchEvents(onSuccess) {
+    fetch_get("/api/v01/webhooks/events")
+        .then(data => onSuccess(data.events))
+        .catch(error => NotificationsManager.error(
+            <FormattedMessage id="fetch_webhooks-events-failed" defaultMessage="Fetch webhooks events failed!" />,
+            error.message,
+        ))
 }
 
 
-class NewEvent extends React.Component {
-    static newEvent = {
-        label: '',
-        tag: 'BW',
-        method: 'post',
-        url: '',
-    };
-    state = {
-        ev: NewEvent.newEvent,
-    };
-    title = <FormattedMessage id="new-event" defaultMessage="New event" />;
+function createNewWebhook(data, onSuccess) {
+    fetch_post("/api/v01/webhooks", data)
+        .then(() => {
+            NotificationsManager.success(<FormattedMessage id="webhook-created" defaultMessage="Webhook created" />);
+            onSuccess();
+        })
+        .catch(error => NotificationsManager.error(
+            <FormattedMessage id="webhooks-creation-failed" defaultMessage="Webhook creation failed!" />,
+            error.message,
+        ))
+}
 
-    componentDidUpdate(prevProps, prevState, snapshot) {
-        if(prevProps.show !== this.props.show && this.props.show) {
-            this.setState({ev: NewEvent.newEvent});
-        }
-    }
 
-    onSave() {
-        fetch_post("/api/v01/webhooks/events", this.state.ev, this.props.auth_token)
-            .then(() => {
-                NotificationsManager.success(<FormattedMessage id="event-created" defaultMessage="Event created" />)
-                this.props.onClose(true);
-            })
-            .catch(error => NotificationsManager.error(
-                <FormattedMessage id="event-creation-failed" defaultMessage="Event creation failed!" />,
-                error.message,
-            ))
-    }
+function NewWebhook(props) {
+    const {show, onClose} = props;
+    const [wb, setWb] = useState(newWb);
+    const [events, setEvents] = useState([]);
 
-    render() {
-        const {show, onClose} = this.props;
-        const {ev} = this.state;
+    useEffect(() => {if(show) {setWb(newWb); fetchEvents(setEvents);}}, [show]);
 
-        return (
-            <Modal show={show} onHide={() => onClose(false)} backdrop={false}>
-                <Modal.Header closeButton>
-                        <Modal.Title>{this.title}</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <Form horizontal>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="label" defaultMessage="Label" />
-                                </Col>
+    return (
+        <Modal show={show} onHide={() => onClose(false)} backdrop={false} bsSize="large">
+            <Modal.Header closeButton>
+                    <Modal.Title>
+                        <FormattedMessage id="new-webhook" defaultMessage="New webhook" />
+                    </Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Form horizontal>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="active" defaultMessage="Active" />
+                            </Col>
 
-                                <Col sm={9}>
-                                    <FormControl
-                                        componentClass="input"
-                                        value={ev.label}
-                                        onChange={e => this.setState({ev: update(ev, {$merge: {label: e.target.value}})})}/>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="tag" defaultMessage="Tag" />
-                                </Col>
+                            <Col sm={9}>
+                                <Checkbox
+                                    checked={wb.active}
+                                    onChange={e => e.stopPropagation()}
+                                    onClick={e =>
+                                        setWb(update(wb, {$merge: {active: e.target.checked}}))
+                                    } />
+                            </Col>
+                        </FormGroup>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="name" defaultMessage="Name" />
+                            </Col>
 
-                                <Col sm={9}>
-                                    <FormControl
-                                        componentClass="select"
-                                        value={ev.tag}
-                                        onChange={e => this.setState({ev: update(ev, {$merge: {tag: e.target.value}})})}>
-                                        <option value="BW">BroadSoft AS</option>
-                                    </FormControl>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="method" defaultMessage="Method" />
-                                </Col>
+                            <Col sm={9}>
+                                <FormControl
+                                    componentClass="input"
+                                    value={wb.name}
+                                    onChange={e => setWb(update(wb, {$merge: {name: e.target.value}}))}/>
+                            </Col>
+                        </FormGroup>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="target" defaultMessage="Target" />
+                            </Col>
 
-                                <Col sm={9}>
-                                    <FormControl
-                                        componentClass="select"
-                                        value={ev.method}
-                                        onChange={e => this.setState({ev: update(ev, {$merge: {method: e.target.value}})})}>
-                                        <option value="post">post</option>
-                                        <option value="put">put</option>
-                                        <option value="delete">delete</option>
-                                    </FormControl>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="url" defaultMessage="Url" />
-                                </Col>
+                            <Col sm={9}>
+                                <FormControl
+                                    componentClass="input"
+                                    placeholder="http://my-webhook/handler"
+                                    value={wb.target}
+                                    onChange={e => setWb(update(wb, {$merge: {target: e.target.value}}))}/>
+                                <HelpBlock>
+                                    <FormattedMessage id="webhook-target-help" defaultMessage="need to be an URL"/>
+                                </HelpBlock>
+                            </Col>
+                        </FormGroup>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="secret" defaultMessage="Secret" />
+                            </Col>
 
-                                <Col sm={9}>
-                                    <FormControl
-                                        type="input"
-                                        placeholder="/api/v1/tenants"
-                                        value={ev.url}
-                                        onChange={e => this.setState({ev: update(ev, {$merge: {url: e.target.value}})})}/>
-                                </Col>
-                            </FormGroup>
-                        </Form>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button onClick={this.onSave.bind(this)} bsStyle="primary"><FormattedMessage id="save" defaultMessage="Save" /></Button>
+                            <Col sm={9}>
+                                <FormControl
+                                    type="password"
+                                    value={wb.secret}
+                                    onChange={e => setWb(update(wb, {$merge: {secret: e.target.value}}))}/>
+                            </Col>
+                        </FormGroup>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="custom-header" defaultMessage="Custom header" />
+                            </Col>
+
+                            <Col sm={9}>
+                                <FormControl
+                                    componentClass="input"
+                                    placeholder="X-API-HEADER"
+                                    value={wb.custom_header}
+                                    onChange={e => setWb(update(wb, {$merge: {custom_header: e.target.value}}))}/>
+                            </Col>
+                        </FormGroup>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="custom-header-value" defaultMessage="Custom header value" />
+                            </Col>
+
+                            <Col sm={9}>
+                                <FormControl
+                                    componentClass="input"
+                                    placeholder="..."
+                                    value={wb.custom_header_value}
+                                    onChange={e => setWb(update(wb, {$merge: {custom_header_value: e.target.value}}))}/>
+                            </Col>
+                        </FormGroup>
+                        <hr/>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="events" defaultMessage="Events" />
+                            </Col>
+
+                            <Col sm={9}>
+                                {
+                                    events.sort((a, b) => a.event_id - b.event_id).map(e =>
+                                        <Checkbox
+                                            key={e.event_id}
+                                            checked={wb.events.includes(e.event_id)}
+                                            onChange={ev => {
+                                                if(ev.target.checked) {
+                                                    setWb(update(wb, {events: {"$push": [e.event_id]}}))
+                                                } else {
+                                                    setWb(update(wb, {events: {"$splice": [[wb.events.indexOf(e.event_id), 1]]}}))
+                                                }
+                                            }}
+                                        >
+                                            {e.label}
+                                        </Checkbox>
+                                    )
+                                }
+                            </Col>
+                        </FormGroup>
+                    </Form>
+                    <hr/>
+                    <ButtonToolbar>
+                        <Button onClick={() => createNewWebhook(wb, () => onClose(true))} bsStyle="primary">
+                            <FormattedMessage id="save" defaultMessage="Save" />
+                        </Button>
                         <Button onClick={() => onClose(false)}><FormattedMessage id="cancel" defaultMessage="Cancel" /></Button>
-                    </Modal.Footer>
-            </Modal>
+                    </ButtonToolbar>
+                </Modal.Body>
+        </Modal>
+    )
+}
+
+
+function loadWebhookHistory(webhookID, onSuccess) {
+    fetch_get(`/api/v01/webhooks/${webhookID}/history`)
+        .then(data => onSuccess(data.history))
+        .catch(error =>
+            NotificationsManager.error(
+                <FormattedMessage id="webhook-fetch-history-error" defaultMessage="Failed to fetch webhook history" />,
+                error.message
+            )
         )
-    }
 }
 
 
-class UpdateEvent extends NewEvent {
-    title = <FormattedMessage id="update-event" defaultMessage="Update event" />;
-    static updatableFields = ["label", "tag", "method", "url"];
+function generateFakeEvent(webhookID, entry, onSuccess) {
+    fetch_post(`/api/v01/webhooks/${webhookID}/test`, entry)
+        .then(() => {
+            NotificationsManager.success(<FormattedMessage id="webhook-tested" defaultMessage="Test call generated" />);
+            onSuccess();
+        })
+        .catch(error => NotificationsManager.error(
+            <FormattedMessage id="test-call-failed" defaultMessage="Test call failed!" />,
+            error.message,
+        ))
+}
 
-    componentDidUpdate(prevProps, prevState, snapshot) {
-        if(prevProps.show !== this.props.show && this.props.show) {
-            this.props.event && this.setState({ev: this.props.event});
+
+function updateWebhook(webhookID, entry, onSuccess) {
+    fetch_put(`/api/v01/webhooks/${webhookID}`, entry)
+        .then(() => {
+            NotificationsManager.success(<FormattedMessage id="webhook-update" defaultMessage="Webhook updated" />);
+            onSuccess();
+        })
+        .catch(error => NotificationsManager.error(
+            <FormattedMessage id="webhooks-update-failed" defaultMessage="Webhook update failed!" />,
+            error.message,
+        ))
+}
+
+
+function UpdateWebhook(props) {
+    const {show, onClose, entry} = props;
+    const [diff, setDiff] = useState({});
+    const [events, setEvents] = useState([]);
+    const [wbHistory, setWebHistory] = useState([]);
+
+    useEffect(() => {
+        if(show) {
+            setDiff({events: entry.events});
+            fetchEvents(setEvents);
+            loadWebhookHistory(entry.webhook_id, setWebHistory);
         }
+    }, [show]);
+    if(entry === undefined) {
+        return <div/>;
     }
+    const localEntry = update(entry, {$merge: diff});
 
-    onSave() {
-        const {ev} = this.state;
-        const ev_ = Object.keys(ev)
-            .filter(k => UpdateEvent.updatableFields.includes(k))
-            .reduce(
-                (obj, key) => {
-                    obj[key] = ev[key];
-                    return obj;
-                }, {}
-            );
-        fetch_put(`/api/v01/webhooks/events/${this.props.event.event_id}`, ev_, this.props.auth_token)
-            .then(() => {
-                NotificationsManager.success(<FormattedMessage id="event-update" defaultMessage="Event updated" />)
-                this.props.onClose(true);
-            })
-            .catch(error => NotificationsManager.error(
-                <FormattedMessage id="event-update-failed" defaultMessage="Event update failed!" />,
-                error.message,
-            ))
-    }
-}
+    return (
+        <Modal show={show} onHide={() => onClose(false)} backdrop={false} bsSize="large">
+            <Modal.Header closeButton>
+                <Modal.Title>
+                    <FormattedMessage id="update-webhook" defaultMessage="Update webhook" />
+                    { entry.name }
+                </Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <Form horizontal>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="active" defaultMessage="Active" />
+                        </Col>
 
+                        <Col sm={9}>
+                            <Checkbox
+                                checked={localEntry.active}
+                                onChange={e => e.stopPropagation()}
+                                onClick={e =>
+                                    setDiff(update(diff, {$merge: {active: e.target.checked}}))
+                                } />
+                        </Col>
+                    </FormGroup>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="name" defaultMessage="Name" />
+                        </Col>
 
-class WebhookEvents extends React.Component {
-    state = {
-        newEvent: false,
-        updateEvent: undefined,
-        events: [],
-    };
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="input"
+                                value={localEntry.name}
+                                onChange={e => setDiff(update(diff, {$merge: {name: e.target.value}}))}/>
+                        </Col>
+                    </FormGroup>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="target" defaultMessage="Target" />
+                        </Col>
 
-    fetchEvents() {
-        fetch_get("/api/v01/webhooks/events", this.props.auth_token)
-            .then(data => this.setState({events: data.events}))
-            .catch(error => NotificationsManager.error(
-                <FormattedMessage id="fetch-events-failed" defaultMessage="Fetch events failed!" />,
-                error.message,
-            ));
-    }
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="input"
+                                placeholder="http://my-webhook/handler"
+                                value={localEntry.target}
+                                onChange={e => setDiff(update(diff, {$merge: {target: e.target.value}}))}/>
+                            <HelpBlock>
+                                <FormattedMessage id="webhook-target-help" defaultMessage="need to be an URL"/>
+                            </HelpBlock>
+                        </Col>
+                    </FormGroup>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="secret" defaultMessage="Secret" />
+                        </Col>
 
-    onDelete(event_id) {
-        fetch_delete(`/api/v01/webhooks/events/${event_id}`)
-            .then(() => {
-                NotificationsManager.success(<FormattedMessage id="event-deleted" defaultMessage="Event deleted" />);
-                this.fetchEvents();
-            })
-            .catch(error => NotificationsManager.error(
-                <FormattedMessage id="delete-event-failed" defaultMessage="Delete event failed!" />,
-                error.message,
-            ))
-    }
+                        <Col sm={9}>
+                            <FormControl
+                                type="password"
+                                value={localEntry.secret}
+                                onChange={e => setDiff(update(diff, {$merge: {secret: e.target.value}}))}/>
+                        </Col>
+                    </FormGroup>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="custom-header" defaultMessage="Custom header" />
+                        </Col>
 
-    componentDidMount() {
-        this.fetchEvents()
-    }
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="input"
+                                placeholder="X-API-HEADER"
+                                value={localEntry.custom_header}
+                                onChange={e => setDiff(update(diff, {$merge: {custom_header: e.target.value}}))}/>
+                        </Col>
+                    </FormGroup>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="custom-header-value" defaultMessage="Custom header value" />
+                        </Col>
 
-    render() {
-        const {events} = this.state;
-        return (
-            <div>
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="input"
+                                placeholder="..."
+                                value={localEntry.custom_header_value}
+                                onChange={e => setDiff(update(diff, {$merge: {custom_header_value: e.target.value}}))}/>
+                        </Col>
+                    </FormGroup>
+                    <hr/>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="events" defaultMessage="Events" />
+                        </Col>
+
+                        <Col sm={9}>
+                            {
+                                events.sort((a, b) => a.event_id - b.event_id).map(e =>
+                                    <Checkbox
+                                        key={e.event_id}
+                                        checked={localEntry.events.includes(e.event_id)}
+                                        onChange={ev => {
+                                            if(ev.target.checked) {
+                                                setDiff(update(diff, {events: {"$push": [e.event_id]}}))
+                                            } else {
+                                                setDiff(update(diff, {events: {"$splice": [[diff.events.indexOf(e.event_id), 1]]}}))
+                                            }
+                                        }}
+                                    >
+                                        {e.label}
+                                    </Checkbox>
+                                )
+                            }
+                        </Col>
+                    </FormGroup>
+                </Form>
                 <hr/>
-                <Panel>
-                    <Panel.Heading>
-                        <Panel.Title><FormattedMessage id="events" defaultMessage="Events" /></Panel.Title>
-                    </Panel.Heading>
-                    <Panel.Body>
+                <ButtonToolbar>
+                    <Button onClick={() => updateWebhook(entry.webhook_id, diff, () => onClose(true))} bsStyle="primary">
+                        <FormattedMessage id="save" defaultMessage="Save" />
+                    </Button>
+                    <Button onClick={() => onClose(false)}><FormattedMessage id="cancel" defaultMessage="Cancel" /></Button>
+                    <Button onClick={() => generateFakeEvent(entry.webhook_id, localEntry, () => setTimeout(() => loadWebhookHistory(entry.webhook_id, setWebHistory), 1000))}>
+                        <FormattedMessage id="fake-event" defaultMessage="Generate test event"/>
+                    </Button>
+                </ButtonToolbar>
+                <hr/>
+                <Form>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="history" defaultMessage="History"/>
+                        </Col>
                         <Table>
                             <tbody>
                             {
-                                events && events.sort(
-                                    (a, b) => {
-                                        if(a.event_id > b.event_id) return 1;
-                                        if(a.event_id < b.event_id) return 1;
-                                        return 0;
-                                    }
-                                ).map(e =>
-                                    <tr>
-                                        <td>{ e.label }</td>
-                                        <td>{ e.tag }</td>
-                                        <td>{ e.method }</td>
-                                        <td>{ e.url }</td>
-                                        <td style={{width: "20%"}}>
-                                            <Button onClick={() => this.setState({updateEvent: e})} bsStyle="primary" style={{marginLeft: '5px', marginRight: '5px'}}>
-                                                <Glyphicon glyph="pencil"/>
-                                            </Button>
-                                            <Button onClick={() => this.onDelete(e.event_id)} bsStyle="danger" style={{marginLeft: '5px', marginRight: '5px'}}>
-                                                <Glyphicon glyph="remove-sign"/>
-                                            </Button>
-                                        </td>
-                                    </tr>
+                                wbHistory.sort((a, b) => a.history_id - b.history_id).map(h =>
+                                    <HistoryLine key={h.history_id} h={h}/>
                                 )
                             }
                             </tbody>
                         </Table>
-                    </Panel.Body>
-                </Panel>
-                <Panel>
-                    <Panel.Body>
-                        <ButtonToolbar>
-                            <Button bsStyle='primary' onClick={() => this.setState({newEvent: true})}>
-                                <FormattedMessage id="new" defaultMessage="New" />
-                            </Button>
-                        </ButtonToolbar>
-                    </Panel.Body>
-                </Panel>
-
-                <NewEvent
-                    show={this.state.newEvent}
-                    onClose={refresh => {
-                        refresh && this.fetchEvents();
-                        this.setState({newEvent: false})
-                    }}
-                    {...this.props} />
-
-                <UpdateEvent
-                    show={this.state.updateEvent}
-                    event={this.state.updateEvent}
-                    onClose={refresh => {
-                        refresh && this.fetchEvents();
-                        this.setState({updateEvent: undefined})
-                    }}
-                    {...this.props} />
-
-            </div>
-        )
-    }
+                    </FormGroup>
+                </Form>
+            </Modal.Body>
+        </Modal>
+    )
 }
 
 
-export class Webhooks extends React.Component {
-    state = {
-        webhooks: undefined,
-        updateWebhook: undefined,
-        newWebhook: false,
-    };
+const newEvent = {
+    label: '',
+    tag: 'BW',
+    method: 'post',
+    url: '',
+};
 
-    fetchWebhooks() {
-        fetch_get("/api/v01/webhooks", this.props.auth_token)
-            .then(data => this.setState({webhooks: data.webhooks}))
-            .catch(error => NotificationsManager.error(
-                <FormattedMessage id="fetch_webhooks-failed" defaultMessage="Fetch webhooks failed!" />,
-                error.message,
-            ));
+
+function createEvent(entry, onSuccess) {
+    fetch_post("/api/v01/webhooks/events", entry)
+        .then(() => {
+            NotificationsManager.success(<FormattedMessage id="event-created" defaultMessage="Event created" />)
+            onSuccess();
+        })
+        .catch(error => NotificationsManager.error(
+            <FormattedMessage id="event-creation-failed" defaultMessage="Event creation failed!" />,
+            error.message,
+        ))
+}
+
+function NewEvent(props) {
+    const {show, onClose} = props;
+    const [event, setEvent] = useState(newEvent);
+
+    useEffect(() => {show && setEvent(newEvent)}, [show]);
+    return (
+        <Modal show={show} onHide={() => onClose(false)} backdrop={false}>
+            <Modal.Header closeButton>
+                    <Modal.Title>
+                        <FormattedMessage id="new-event" defaultMessage="New event" />
+                    </Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Form horizontal>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="label" defaultMessage="Label" />
+                            </Col>
+
+                            <Col sm={9}>
+                                <FormControl
+                                    componentClass="input"
+                                    value={event.label}
+                                    onChange={e => setEvent(update(event, {$merge: {label: e.target.value}}))}/>
+                            </Col>
+                        </FormGroup>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="tag" defaultMessage="Tag" />
+                            </Col>
+
+                            <Col sm={9}>
+                                <FormControl
+                                    componentClass="select"
+                                    value={event.tag}
+                                    onChange={e => setEvent(update(event, {$merge: {tag: e.target.value}}))}>
+                                    <option value="BW">BroadSoft AS</option>
+                                </FormControl>
+                            </Col>
+                        </FormGroup>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="method" defaultMessage="Method" />
+                            </Col>
+
+                            <Col sm={9}>
+                                <FormControl
+                                    componentClass="select"
+                                    value={event.method}
+                                    onChange={e => setEvent(update(event, {$merge: {method: e.target.value}}))}>
+                                    <option value="post">post</option>
+                                    <option value="put">put</option>
+                                    <option value="delete">delete</option>
+                                </FormControl>
+                            </Col>
+                        </FormGroup>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="url" defaultMessage="Url" />
+                            </Col>
+
+                            <Col sm={9}>
+                                <FormControl
+                                    type="input"
+                                    placeholder="/api/v1/tenants"
+                                    value={event.url}
+                                    onChange={e => setEvent(update(event, {$merge: {url: e.target.value}}))}/>
+                            </Col>
+                        </FormGroup>
+                    </Form>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button onClick={() => createEvent(event, () => onClose(true))} bsStyle="primary"><FormattedMessage id="save" defaultMessage="Save" /></Button>
+                    <Button onClick={() => onClose(false)}><FormattedMessage id="cancel" defaultMessage="Cancel" /></Button>
+                </Modal.Footer>
+        </Modal>
+    )
+}
+
+
+function updateEvent(eventID, diff, onSuccess) {
+    fetch_put(`/api/v01/webhooks/events/${eventID}`, diff)
+        .then(() => {
+            NotificationsManager.success(<FormattedMessage id="event-update" defaultMessage="Event updated" />);
+            onSuccess();
+        })
+        .catch(error => NotificationsManager.error(
+            <FormattedMessage id="event-update-failed" defaultMessage="Event update failed!" />,
+            error.message,
+        ))
+}
+
+
+function UpdateEvent(props) {
+    const {entry, show, onHide} = props;
+    const [diff, setDiff] = useState({});
+
+    useEffect(() => {show && setDiff({})}, [show]);
+    if(entry === undefined) {
+        return <div/>;
     }
+    const localEntry = update(entry, {$merge: diff});
 
-    onDelete(webhook_id) {
-        fetch_delete(`/api/v01/webhooks/${webhook_id}`)
-            .then(() => {
-                NotificationsManager.success(<FormattedMessage id="webhook-deleted" defaultMessage="Webhook deleted" />);
-                this.fetchWebhooks();
-            })
-            .catch(error => NotificationsManager.error(
-                <FormattedMessage id="delete_webhook-failed" defaultMessage="Delete webhook failed!" />,
-                error.message,
-            ))
-    }
+    return (
+        <Modal show={show} onHide={() => onHide(false)} backdrop={false} bsSize="large">
+            <Modal.Header closeButton>
+                <Modal.Title>
+                    <FormattedMessage id="update-event" defaultMessage="Update event" />
+                </Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <Form horizontal>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="label" defaultMessage="Label" />
+                        </Col>
 
-    componentDidMount() {
-        this.fetchWebhooks()
-    }
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="input"
+                                value={localEntry.label}
+                                onChange={e => setDiff(update(diff, {$merge: {label: e.target.value}}))}/>
+                        </Col>
+                    </FormGroup>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="tag" defaultMessage="Tag" />
+                        </Col>
 
-    render() {
-        const {webhooks} = this.state;
-        const {user_info} = this.props;
-        const can_edit_webhook_events = user_info.is_system;
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="select"
+                                value={localEntry.tag}
+                                onChange={e => setDiff(update(diff, {$merge: {tag: e.target.value}}))}>
+                                <option value="BW">BroadSoft AS</option>
+                            </FormControl>
+                        </Col>
+                    </FormGroup>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="method" defaultMessage="Method" />
+                        </Col>
 
-        return (
-            <div>
-                <Breadcrumb>
-                    <Breadcrumb.Item active><FormattedMessage id="system" defaultMessage="System"/></Breadcrumb.Item>
-                    <Breadcrumb.Item active><FormattedMessage id="webhooks" defaultMessage="Webhooks"/></Breadcrumb.Item>
-                </Breadcrumb>
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="select"
+                                value={localEntry.method}
+                                onChange={e => setDiff(update(diff, {$merge: {method: e.target.value}}))}>
+                                <option value="post">post</option>
+                                <option value="put">put</option>
+                                <option value="delete">delete</option>
+                            </FormControl>
+                        </Col>
+                    </FormGroup>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="url" defaultMessage="Url" />
+                        </Col>
 
-                <Alert bsStyle="danger">This feature is experimental and shouldn't be used without pre-approval of the Netaxis dev team! (contact: norman.denayer@netaxis.be)</Alert>
+                        <Col sm={9}>
+                            <FormControl
+                                type="input"
+                                placeholder="/api/v1/tenants"
+                                value={localEntry.url}
+                                onChange={e => setDiff(update(diff, {$merge: {url: e.target.value}}))}/>
+                        </Col>
+                    </FormGroup>
+                </Form>
+                <hr/>
+                <ButtonToolbar>
+                    <Button onClick={() => updateEvent(entry.event_id, diff, () => onHide(true))} bsStyle="primary">
+                        <FormattedMessage id="save" defaultMessage="Save" />
+                    </Button>
+                    <Button onClick={() => onHide(false)}><FormattedMessage id="cancel" defaultMessage="Cancel" /></Button>
+                </ButtonToolbar>
+            </Modal.Body>
+        </Modal>
+    )
+}
 
-                <Panel>
-                    <Panel.Heading>
-                        <Panel.Title><FormattedMessage id="webhooks" defaultMessage="Webhooks" /></Panel.Title>
-                    </Panel.Heading>
-                    <Panel.Body>
-                        <Table>
-                            <tbody>
-                            {
-                                webhooks && webhooks.sort((a, b) => {
-                                    if(a.webhook_id > b.webhook_id) return 1;
-                                    if(a.webhook_id < b.webhook_id) return -1;
-                                    return 0;
-                                }).map(wh => (
-                                    <tr>
-                                        <td style={{width: "5%"}}>{wh.active?<Glyphicon glyph="ok"/>:<Glyphicon glyph="remove"/>}</td>
-                                        <td style={{width: "75%"}}>{wh.target}</td>
-                                        <td style={{width: "20%"}}>
-                                            <Button onClick={() => this.setState({updateWebhook: wh})} bsStyle="primary" style={{marginLeft: '5px', marginRight: '5px'}}>
-                                                <Glyphicon glyph="pencil"/>
-                                            </Button>
-                                            <Button onClick={() => this.onDelete(wh.webhook_id)} bsStyle="danger" style={{marginLeft: '5px', marginRight: '5px'}}>
-                                                <Glyphicon glyph="remove-sign"/>
-                                            </Button>
-                                        </td>
-                                    </tr>
-                                ))
-                            }
-                            </tbody>
-                        </Table>
-                    </Panel.Body>
-                </Panel>
-                <Panel>
-                    <Panel.Body>
-                        <ButtonToolbar>
-                            <Button bsStyle='primary' onClick={() => this.setState({newWebhook: true})}>
-                                <FormattedMessage id="new" defaultMessage="New" />
-                            </Button>
-                        </ButtonToolbar>
-                    </Panel.Body>
-                </Panel>
 
-                <NewWebhook
-                    show={this.state.newWebhook}
-                    onClose={refresh => {
-                        refresh && this.fetchWebhooks();
-                        this.setState({newWebhook: false})
-                    }}
-                    {...this.props} />
+function deleteEvent(eventId, onSuccess) {
+    fetch_delete(`/api/v01/webhooks/events/${eventId}`)
+        .then(() => {
+            NotificationsManager.success(<FormattedMessage id="event-deleted" defaultMessage="Event deleted" />);
+            onSuccess();
+        })
+        .catch(error => NotificationsManager.error(
+            <FormattedMessage id="delete-event-failed" defaultMessage="Delete event failed!" />,
+            error.message,
+        ))
+}
 
-                <UpdateWebhook
-                    show={this.state.updateWebhook}
-                    wb={this.state.updateWebhook}
-                    onClose={refresh => {
-                        refresh && this.fetchWebhooks();
-                        this.setState({updateWebhook: undefined})
-                    }}
-                    {...this.props} />
 
-                {
-                    can_edit_webhook_events && <WebhookEvents auth_token={this.props.auth_token} />
-                }
-            </div>
-        );
-    }
+function WebhookEvents(props) {
+    const [events, setEvents] = useState([]);
+    const [showNew, setShowNew] = useState(false);
+    const [updateEvent, setUpdateEvent] = useState(undefined);
+
+    useEffect(() => {fetchEvents(setEvents);}, []);
+
+    return (
+        <div>
+            <hr/>
+            <Panel>
+                <Panel.Heading>
+                    <Panel.Title><FormattedMessage id="events" defaultMessage="Events" /></Panel.Title>
+                </Panel.Heading>
+                <Panel.Body>
+                    <Table>
+                        <tbody>
+                        {
+                            events && events.sort(
+                                (a, b) => a.event_id - b.event_id
+                            ).map(e =>
+                                <tr key={e.event_id}>
+                                    <td>{ e.label }</td>
+                                    <td>{ e.tag }</td>
+                                    <td>{ e.method }</td>
+                                    <td>{ e.url }</td>
+                                    <td style={{width: "20%"}}>
+                                        <Button onClick={() => setUpdateEvent(e)} bsStyle="primary" style={{marginLeft: '5px', marginRight: '5px'}}>
+                                            <Glyphicon glyph="pencil"/>
+                                        </Button>
+                                        <Button onClick={() => deleteEvent(e.event_id, () => fetchEvents(setEvents))} bsStyle="danger" style={{marginLeft: '5px', marginRight: '5px'}}>
+                                            <Glyphicon glyph="remove-sign"/>
+                                        </Button>
+                                    </td>
+                                </tr>
+                            )
+                        }
+                        </tbody>
+                    </Table>
+                </Panel.Body>
+            </Panel>
+            <Panel>
+                <Panel.Body>
+                    <ButtonToolbar>
+                        <Button bsStyle='primary' onClick={() => setShowNew(true)}>
+                            <FormattedMessage id="new" defaultMessage="New" />
+                        </Button>
+                    </ButtonToolbar>
+                </Panel.Body>
+            </Panel>
+
+            <NewEvent
+                show={showNew}
+                onClose={refresh => {
+                    refresh && fetchEvents(setEvents);
+                    setShowNew(false);
+                }}
+                />
+
+            <UpdateEvent
+                show={updateEvent !== undefined}
+                entry={updateEvent}
+                onHide={refresh => {
+                    refresh && fetchEvents(setEvents);
+                    setUpdateEvent(undefined);
+                }}
+                />
+        </div>
+    )
+}
+
+
+function fetchWebhooks(onSuccess) {
+    fetch_get("/api/v01/webhooks")
+        .then(data => onSuccess(data.webhooks))
+        .catch(error => NotificationsManager.error(
+            <FormattedMessage id="fetch_webhooks-failed" defaultMessage="Fetch webhooks failed!" />,
+            error.message,
+        ));
+}
+
+
+function deleteWebhook(webhookId, onSuccess) {
+    fetch_delete(`/api/v01/webhooks/${webhookId}`)
+        .then(() => {
+            NotificationsManager.success(<FormattedMessage id="webhook-deleted" defaultMessage="Webhook deleted" />);
+            onSuccess();
+        })
+        .catch(error => NotificationsManager.error(
+            <FormattedMessage id="delete_webhook-failed" defaultMessage="Delete webhook failed!" />,
+            error.message,
+        ))
+}
+
+export function Webhooks(props) {
+    const [webhooks, setWebhooks] = useState([]);
+    const [showNew, setShowNew] = useState(false);
+    const [updateWh, setUpdateWh] = useState(undefined);
+
+    useEffect(() => {fetchWebhooks(setWebhooks);}, []);
+
+    const {user_info} = props;
+    const can_edit_webhook_events = user_info.is_system;
+
+    return (
+        <div>
+            <Breadcrumb>
+                <Breadcrumb.Item active><FormattedMessage id="system" defaultMessage="System"/></Breadcrumb.Item>
+                <Breadcrumb.Item active><FormattedMessage id="webhooks" defaultMessage="Webhooks"/></Breadcrumb.Item>
+            </Breadcrumb>
+
+            <Panel>
+                <Panel.Heading>
+                    <Panel.Title><FormattedMessage id="webhooks" defaultMessage="Webhooks" /></Panel.Title>
+                </Panel.Heading>
+                <Panel.Body>
+                    <Table>
+                        <tbody>
+                        {
+                            webhooks && webhooks.sort((a, b) => a.webhook_id - b.webhook_id).map(wh => (
+                                <tr key={wh.webhook_id}>
+                                    <td style={{width: "5%"}}>{wh.active?<Glyphicon glyph="ok"/>:<Glyphicon glyph="remove"/>}</td>
+                                    <td style={{width: "75%"}}>{wh.target}</td>
+                                    <td style={{width: "20%"}}>
+                                        <Button onClick={() => setUpdateWh(wh)} bsStyle="primary" style={{marginLeft: '5px', marginRight: '5px'}}>
+                                            <Glyphicon glyph="pencil"/>
+                                        </Button>
+                                        <Button onClick={() => deleteWebhook(wh.webhook_id, () => fetchWebhooks(setWebhooks))} bsStyle="danger" style={{marginLeft: '5px', marginRight: '5px'}}>
+                                            <Glyphicon glyph="remove-sign"/>
+                                        </Button>
+                                    </td>
+                                </tr>
+                            ))
+                        }
+                        </tbody>
+                    </Table>
+                </Panel.Body>
+            </Panel>
+            <Panel>
+                <Panel.Body>
+                    <ButtonToolbar>
+                        <Button bsStyle='primary' onClick={() => setShowNew(true)}>
+                            <FormattedMessage id="new" defaultMessage="New" />
+                        </Button>
+                    </ButtonToolbar>
+                </Panel.Body>
+            </Panel>
+
+            <NewWebhook
+                show={showNew}
+                onClose={refresh => {
+                    refresh && fetchWebhooks(setWebhooks);
+                    setShowNew(false);
+                }}
+                />
+
+            <UpdateWebhook
+                show={updateWh !== undefined}
+                entry={updateWh}
+                onClose={refresh => {
+                    refresh && fetchWebhooks(setWebhooks);
+                    setUpdateWh(undefined);
+                }}
+                />
+
+            <WebhookEvents />
+        </div>
+    );
 }

@@ -844,7 +844,7 @@ function fetchActions(onLoading, onSuccess) {
 
 export function BulkActions(props) {
     const [actions, setActions] = useState([]);
-    const fetchActions_ = () => fetchActions(() => setActions([]), setActions);
+    const fetchActions_ = () => {fetchActions(() => setActions([]), setActions)};
     useEffect(fetchActions_, []);
 
     return (
