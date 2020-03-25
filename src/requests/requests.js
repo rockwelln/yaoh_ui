@@ -3382,7 +3382,7 @@ export class CustomRequests extends Component{
                                 {
                                     title: <FormattedMessage id="workflow" defaultMessage="Workflow" />,
                                     field: 'activity_id', model: 'instances', sortable: true,
-                                    render: n => activities && n.activity_id ? activities.find(a => a.id === n.activity_id).name : "-"
+                                    render: n => activities && n.activity_id && activities.find(a => a.id === n.activity_id) ? activities.find(a => a.id === n.activity_id).name : "-"
                                 },
                                 {
                                     title: <FormattedMessage id="route" defaultMessage="Route" />,
