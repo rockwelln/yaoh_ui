@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React, {useEffect, useState} from 'react';
 
 import Col from 'react-bootstrap/lib/Col';
 import Panel from 'react-bootstrap/lib/Panel';
@@ -6,7 +6,7 @@ import Table, {tr, td, th, thead, tbody} from 'react-bootstrap/lib/Table';
 import Breadcrumb from 'react-bootstrap/lib/Breadcrumb';
 
 import {FormattedMessage} from 'react-intl';
-import {fetch_get} from '../utils';
+import {fetch_get, NotificationsManager} from '../utils';
 
 const REFRESH_CYCLE = 15;
 
@@ -86,49 +86,37 @@ const DatabaseDetails = ({info}) => (
 );
 
 
-export default class Databases extends Component {
-    constructor(props) {
-        super(props);
-        this.cancelLoad = false;
-        this.state = { databases:[] };
-        this._refresh = this._refresh.bind(this);
-    }
+function _refresh(onSuccess) {
+    fetch_get('/api/v01/system/databases')
+        .then(data => onSuccess(data.databases))
+        .catch(error => NotificationsManager.error(
+            <FormattedMessage id="database-refresh-failed" defaultMessage="Failed to fetch database information"/>,
+            error.message
+        ))
+}
 
-    _refresh() {
-        fetch_get('/api/v01/system/databases', this.props.auth_token)
-            .then(data => !this.cancelLoad && this.setState({databases: data.databases}))
-            .catch(error => this.props.notifications.addNotification({
-                title: <FormattedMessage id="database-refresh-failed" defaultMessage="Failed to fetch database information"/>,
-                message: error.message,
-                level: 'error'
-            }));
-    }
+export default function Databases(props) {
+    const [databases, setDatabases] = useState([]);
 
-    componentWillUnmount() {
-        this.cancelLoad = true;
-        this._refreshInterval && clearInterval(this._refreshInterval);
-    }
+    useEffect(() => {
+        _refresh(setDatabases);
+        const i = setInterval(() => _refresh(setDatabases), REFRESH_CYCLE * 1000);
+        return () => clearInterval(i);
+    }, []);
 
-    componentDidMount() {
-        this._refresh();
-        this._refreshInterval = setInterval(this._refresh, REFRESH_CYCLE * 1000);
-    }
-
-    render() {
-        return (
-            <div>
-                <Breadcrumb>
-                    <Breadcrumb.Item active><FormattedMessage id="system" defaultMessage="System"/></Breadcrumb.Item>
-                    <Breadcrumb.Item active><FormattedMessage id="databases" defaultMessage="Databases"/></Breadcrumb.Item>
-                </Breadcrumb>
-                {
-                    this.state.databases.map((db, i) => (
-                        <Col xs={12} sm={6} key={'db-' + i}>
-                            <DatabaseDetails info={db}/>
-                        </Col>
-                    ))
-                }
-            </div>
-        )
-    }
+    return (
+        <div>
+            <Breadcrumb>
+                <Breadcrumb.Item active><FormattedMessage id="system" defaultMessage="System"/></Breadcrumb.Item>
+                <Breadcrumb.Item active><FormattedMessage id="databases" defaultMessage="Databases"/></Breadcrumb.Item>
+            </Breadcrumb>
+            {
+                databases.map((db, i) => (
+                    <Col xs={12} sm={6} key={'db-' + i}>
+                        <DatabaseDetails info={db}/>
+                    </Col>
+                ))
+            }
+        </div>
+    )
 }

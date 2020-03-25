@@ -281,7 +281,8 @@ function UpdateWebhook(props) {
             fetchEvents(setEvents);
             loadWebhookHistory(entry.webhook_id, setWebHistory);
         }
-    }, [show]);
+    }, [show, entry]);
+
     if(entry === undefined) {
         return <div/>;
     }
