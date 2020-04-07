@@ -35,7 +35,7 @@ function min_cell_height(cell, name) {
 }
 
 
-function draw_editor(container, handlers, placeholders, props) {
+function draw_editor(container, activity, handlers, placeholders, props) {
     console.log("rendering 2");
     let toolbar = placeholders.toolbar;
     let title = placeholders.title;
@@ -512,8 +512,13 @@ function draw_editor(container, handlers, placeholders, props) {
           (margin + ch - h * s) / (4 * s) - bounds.y / graph.view.scale
           /*originally: (margin + ch - h * s) / (2 * s) - bounds.y / graph.view.scale*/);
     }
-    console.log('getting data');
-    getData(updateModel);
+    if(activity.id) {
+        console.log('getting data');
+        getData(activity.id, updateModel);
+    } else {
+        console.log('new activity');
+        updateModel(activity);
+    }
 }
 
 /**

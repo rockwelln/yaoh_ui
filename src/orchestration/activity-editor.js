@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import draw_editor from "./editor";
 import {parseJSON, fetch_post, fetch_get, fetch_delete, fetch_put} from "../utils";
@@ -42,13 +42,154 @@ function fetchActivities(onSuccess) {
         .catch(console.error);
 }
 
+function fetchActivity(activityId, cb) {
+    fetch_get('/api/v01/activities/' + activityId)
+        .then(data => cb(data.activity))
+        .catch(console.error);
+}
+
+function deleteActivity(activityId, cb) {
+    fetch_delete(`/api/v01/activities/${activityId}`)
+        .then(parseJSON)
+        .then(data =>{
+            if(cb !== undefined) {
+                cb(data);
+            }
+            // setTimeout(() => this.showAlert("Activity deleted successfully"), 1000);
+            // this.setState({currentActivity: null, newActivity: true});
+            // fetchActivities(a => this.setState({activities: a}));
+        })
+        .catch((error) => {
+            console.log(error);
+            // this.showAlert("Impossible to delete the activity (" + error + ")", "danger");
+        });
+}
+
+function saveActivity(data, cb) {
+    const method = data.id === undefined?fetch_post:fetch_put;
+
+    method(
+        `/api/v01/activities${data.id === undefined?'':'/'+data.id}`,
+        {
+            'name': data.name,
+            'definition': data.definition,
+        }
+    )
+    .then(data_ => {
+        cb && cb(data_);
+        // this.showAlert("Activity saved !");
+        // fetchActivities(a => this.setState({activities: a}));
+
+        if(data.id === undefined) { // new activity created, we have to fetch again the activity list.
+            // this.setState({newActivity: false, currentActivity: data_.id});
+        }
+    })
+    .catch(error => {
+        console.error(error);
+        if(error.response.status === 409) {
+            // this.showAlert("Duplicate name!")
+        } else if(error.response.status === 404 && data.id !== undefined) {
+            // we tried to update a resource not found. so we retry to create it instead.
+            delete data.id;
+            // this.saveActivity(data, cb);
+        } else {
+            // this.showAlert(`Impossible to save the activity (${error})`, "danger");
+        }
+    });
+}
+
 function fetchConfiguration(onSuccess) {
     fetch_get('/api/v01/system/configuration')
         .then(data => onSuccess(data.content))
         .catch(console.error);
 }
 
-export default class ActivityEditor extends Component {
+export default function ActivityEditor_(props) {
+    const [activities, setActivities] = useState([]);
+    const [configuration, setConfiguration] = useState({});
+    const [currentActivity, setCurrentActivity] = useState(null);
+    const [newActivity, setNewActivity] = useState(true);
+
+    useEffect(() => {
+        fetchActivities(setActivities);
+        fetchConfiguration(setConfiguration);
+    }, []);
+
+    const editor = useRef(null);
+    const toolbar = useRef(null);
+    const title = useRef(null);
+
+    useEffect(() => {
+        // (container, handlers, placeholders, props)
+        draw_editor(
+            ReactDOM.findDOMNode(editor.current),
+            newActivity?NEW_ACTIVITY:currentActivity,
+            {
+                get: fetchActivity,
+                onSave: (activity, onSuccess) => saveActivity(activity, p => {onSuccess(p); fetchActivities(setActivities); }),
+                onDelete: deleteActivity,
+                getCellDefinitions: fetchCells,
+                getEntities: fetchEntities,
+            },
+            {
+                toolbar: ReactDOM.findDOMNode(toolbar.current),
+                title: ReactDOM.findDOMNode(title.current),
+            },
+            {
+                configuration: configuration,
+            }
+        )
+    }, [editor, toolbar, title, currentActivity, newActivity]);
+
+    return (
+        <>
+            <Breadcrumb>
+                <Breadcrumb.Item active><FormattedMessage id="orchestration" defaultMessage="Orchestration"/></Breadcrumb.Item>
+                <Breadcrumb.Item active><FormattedMessage id="activity-editor" defaultMessage="Activity editor"/></Breadcrumb.Item>
+            </Breadcrumb>
+            <Row>
+                <Col sm={2}>
+                    <FormControl componentClass="input" placeholder="Name" ref={title}/>
+                </Col>
+                <Col smOffset={2}>
+                    <div ref={toolbar} />
+                </Col>
+            </Row>
+            <hr />
+            <Row>
+                <Col sm={2}>
+                    <Nav bsSize="small" bsStyle="pills" stacked>
+                        <NavItem onClick={() => setNewActivity(true)}>+ New</NavItem>
+                        {
+                            activities
+                                .sort((a, b) => {
+                                    if(a.name > b.name) return 1;
+                                    if(a.name < b.name) return -1;
+                                    return 0;
+                                })
+                                .map(a => (
+                                    <NavItem key={a.name} onClick={() => {
+                                        setCurrentActivity(a);
+                                        setNewActivity(false);
+                                    }}>
+                                        {a.name}
+                                    </NavItem>
+                                )
+                            )
+                        }
+                    </Nav>
+                </Col>
+
+                <Col sm={10}>
+                    <div ref={editor} style={{overflow: 'hidden', backgroundImage: `url(${GridPic})`}} />
+                </Col>
+            </Row>
+
+        </>
+    );
+}
+
+export  class ActivityEditor extends Component {
     constructor(props) {
         super(props);
         this.state = {
