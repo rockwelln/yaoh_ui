@@ -1,7 +1,7 @@
-import React, { Component, useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import draw_editor from "./editor";
-import {parseJSON, fetch_post, fetch_get, fetch_delete, fetch_put} from "../utils";
+import {fetch_post, fetch_get, fetch_delete, fetch_put, NotificationsManager} from "../utils";
 
 import Nav from 'react-bootstrap/lib/Nav';
 import NavItem from 'react-bootstrap/lib/NavItem';
@@ -50,51 +50,33 @@ function fetchActivity(activityId, cb) {
 
 function deleteActivity(activityId, cb) {
     fetch_delete(`/api/v01/activities/${activityId}`)
-        .then(parseJSON)
+        .then(r => r.json())
         .then(data =>{
-            if(cb !== undefined) {
-                cb(data);
-            }
-            // setTimeout(() => this.showAlert("Activity deleted successfully"), 1000);
-            // this.setState({currentActivity: null, newActivity: true});
-            // fetchActivities(a => this.setState({activities: a}));
+            cb && cb(data);
+            NotificationsManager.success("Activity deleted");
         })
-        .catch((error) => {
-            console.log(error);
-            // this.showAlert("Impossible to delete the activity (" + error + ")", "danger");
+        .catch(error => {
+            NotificationsManager.error("Failed to save activity", error.message);
         });
 }
 
-function saveActivity(data, cb) {
-    const method = data.id === undefined?fetch_post:fetch_put;
+function saveActivity(activity, cb) {
+    const method = activity.id === undefined?fetch_post:fetch_put;
 
     method(
-        `/api/v01/activities${data.id === undefined?'':'/'+data.id}`,
+        `/api/v01/activities${activity.id === undefined?'':'/'+activity.id}`,
         {
-            'name': data.name,
-            'definition': data.definition,
+            'name': activity.name,
+            'definition': activity.definition,
         }
     )
-    .then(data_ => {
-        cb && cb(data_);
-        // this.showAlert("Activity saved !");
-        // fetchActivities(a => this.setState({activities: a}));
-
-        if(data.id === undefined) { // new activity created, we have to fetch again the activity list.
-            // this.setState({newActivity: false, currentActivity: data_.id});
-        }
+    .then(r => r.json())
+    .then(data => {
+        NotificationsManager.success("Activity saved");
+        cb && cb(data);
     })
     .catch(error => {
-        console.error(error);
-        if(error.response.status === 409) {
-            // this.showAlert("Duplicate name!")
-        } else if(error.response.status === 404 && data.id !== undefined) {
-            // we tried to update a resource not found. so we retry to create it instead.
-            delete data.id;
-            // this.saveActivity(data, cb);
-        } else {
-            // this.showAlert(`Impossible to save the activity (${error})`, "danger");
-        }
+        NotificationsManager.error("Failed to save activity", error.message);
     });
 }
 
@@ -106,6 +88,8 @@ function fetchConfiguration(onSuccess) {
 
 export default function ActivityEditor_(props) {
     const [activities, setActivities] = useState([]);
+    const [entities, setEntities] = useState([]);
+    const [cells, setCells] = useState([]);
     const [configuration, setConfiguration] = useState({});
     const [currentActivity, setCurrentActivity] = useState(null);
     const [newActivity, setNewActivity] = useState(true);
@@ -113,6 +97,8 @@ export default function ActivityEditor_(props) {
     useEffect(() => {
         fetchActivities(setActivities);
         fetchConfiguration(setConfiguration);
+        fetchCells(setCells);
+        fetchEntities((setEntities));
     }, []);
 
     const editor = useRef(null);
@@ -126,10 +112,17 @@ export default function ActivityEditor_(props) {
             newActivity?NEW_ACTIVITY:currentActivity,
             {
                 get: fetchActivity,
-                onSave: (activity, onSuccess) => saveActivity(activity, p => {onSuccess(p); fetchActivities(setActivities); }),
-                onDelete: deleteActivity,
-                getCellDefinitions: fetchCells,
-                getEntities: fetchEntities,
+                onSave: (activity, onSuccess) => saveActivity(
+                    activity,
+                    p => {
+                        onSuccess(p);
+                        fetchActivities(setActivities);
+                        activity.id=p.id;
+                        setCurrentActivity(activity);
+                        setNewActivity(false);
+                    }
+                ),
+                onDelete: () => deleteActivity(currentActivity.id, () => {setNewActivity(true); fetchActivities(setActivities); }),
             },
             {
                 toolbar: ReactDOM.findDOMNode(toolbar.current),
@@ -137,9 +130,11 @@ export default function ActivityEditor_(props) {
             },
             {
                 configuration: configuration,
+                cells: cells,
+                entities: entities,
             }
         )
-    }, [editor, toolbar, title, currentActivity, newActivity]);
+    }, [editor, toolbar, title, currentActivity, newActivity, cells, entities]);
 
     return (
         <>
@@ -188,7 +183,7 @@ export default function ActivityEditor_(props) {
         </>
     );
 }
-
+/*
 export  class ActivityEditor extends Component {
     constructor(props) {
         super(props);
@@ -363,3 +358,4 @@ export  class ActivityEditor extends Component {
         );
     }
 }
+*/

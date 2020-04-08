@@ -1,3 +1,5 @@
+import Ajv from "ajv";
+
 const okPic = require("../images/ok.png");
 const errPic = require("../images/error.png");
 const runPic = require("../images/run.png");
@@ -6,20 +8,62 @@ const BASIC_CELL_HEIGHT = 120;
 const CHAR_HEIGHT_APPROX = 7.5;
 const BASE_Y = 35;
 
-const mxUtils = window.mxUtils;
-const mxClient = window.mxClient;
-const mxEdgeStyle = window.mxEdgeStyle;
-const mxConstants = window.mxConstants;
-const mxEditor = window.mxEditor;
-const mxPerimeter = window.mxPerimeter;
-const mxGraphHandler = window.mxGraphHandler;
-const mxDivResizer = window.mxDivResizer;
-const mxMultiplicity = window.mxMultiplicity;
-const mxEvent = window.mxEvent;
-const mxPoint = window.mxPoint;
-const mxImage = window.mxImage;
-const mxCellOverlay = window.mxCellOverlay;
+const {
+    mxUtils,
+    mxClient,
+    mxEdgeStyle,
+    mxConstants,
+    mxEditor,
+    mxPerimeter,
+    mxGraphHandler,
+    mxDivResizer,
+    mxMultiplicity,
+    mxEvent,
+    mxPoint,
+    mxImage,
+    mxCellOverlay
+} = window;
 
+const SCHEMA_DEFINITION = {
+  "type": "object",
+  "properties": {
+      "cells": {
+          "type": "object",
+          "additionalProperties": {
+              "type": "object",
+              "properties": {
+                  "original_name": {"type": "string"},
+                  "name": {"type": "string"},
+                  "x": {"type": "number"},
+                  "y": {"type": "number"},
+                  "params": {"type": "object"},
+                  "outputs": {"type": "array", "items": {"type": "string"}}
+              },
+              "required": ["original_name", "x", "y"],
+              "additionalProperties": false
+          }
+      },
+      "entities": {
+          "type": "array",
+          "items": {
+              "type": "object",
+              "properties": {
+                  "original_name": {"type": "string"},
+                  "name": {"type": "string"},
+                  "x": {"type": "number"},
+                  "y": {"type": "number"},
+                  "params": {"type": "object"},
+                  "outputs": {"type": "array", "items": {"type": "string"}}
+              },
+              "required": ["name", "original_name", "x", "y"],
+              "additionalProperties": false
+          }
+      },
+      "transitions": { "type": "array", "items": {"type": "array", "minItems": 2, "maxItems": 2} }
+  },
+  "required": ["cells", "transitions"],
+  "additionalProperties": false
+};
 
 function min_cell_height(cell, name) {
     let c_height = cell.outputs.reduce(
@@ -35,16 +79,131 @@ function min_cell_height(cell, name) {
 }
 
 
-function draw_editor(container, activity, handlers, placeholders, props) {
-    console.log("rendering 2");
-    let toolbar = placeholders.toolbar;
-    let title = placeholders.title;
+function getDefinition(editor, title) {
+    let model = editor.graph.getModel();
+    console.log(model.cells);
+    let activity = Object.assign({}, editor.graph.getDefaultParent().originalActivity);
+    activity.name = title;
+    activity.definition = {};
+    activity.definition.cells = {};
+    activity.definition.entities = [];
+    activity.definition.transitions = [];
+    let hasAStart = false;
+    for (let cellId in model.cells) {
+        if (model.cells.hasOwnProperty(cellId)) {
+            let c = model.cells[cellId];
+            if(c.geometry === undefined || c.getAttribute('label') === undefined) continue;
+            let outputs = c.getAttribute('outputs') || "";
+            let cell = {
+                name: c.getAttribute('label'),
+                original_name: c.getAttribute('original_name'),
+                x: c.geometry.x,
+                y: c.geometry.y,
+                params: {},
+                outputs: outputs.split(",").filter(o => o !== ""),
+            };
+            if(c.getAttribute('original_name') === 'start') hasAStart = true;
+            if(c.hasAttribute('attrList') && c.getAttribute('attrList') !== undefined) {
+                cell.params = c.getAttribute('attrList').split(",").reduce((xa, a) => {xa[a] = c.getAttribute(a); return xa;}, {});
+            }
 
-    const getData = handlers.get;
-    const getCellDefinitions = handlers.getCellDefinitions;
-    const getEntities = handlers.getEntities;
-    const saveData = handlers.onSave;
-    const deleteHandler = handlers.onDelete;
+            if(c.style === 'entity') activity.definition.entities.push(cell);
+            else activity.definition.cells[c.getAttribute('label')] = cell;
+
+            activity.definition.transitions = activity.definition.transitions.concat(model.getOutgoingEdges(c).map((e) => {
+                let sourcePortId = e.style.split(';')
+                    .map(s => s.split('='))
+                    .filter(s => s[0] === 'sourcePort')[0][1];
+
+                return [e.source.getAttribute('label') + '.' + e.source.children.find(c => c.id === sourcePortId).value,
+                    e.target.getAttribute('label')
+                ]
+            }));
+        }
+    }
+    return {activity: activity, hasAStart: hasAStart};
+}
+
+
+function saveActivity(editor, title, saveHandler) {
+    if(title.length === 0) {
+        alert("The workflow need a name");
+        return;
+    }
+    const r = getDefinition(editor, title);
+    if(!r.hasAStart) {
+        alert("the workflow need a `start`");
+        return;
+    }
+    Object.keys(r.activity.definition.cells).map(c => delete r.activity.definition.cells[c].name);
+
+    saveHandler(r.activity, () => {
+        // update the original activity stored *if* everything went well.
+        editor.graph.getDefaultParent().originalActivity = r.activity;
+    });
+}
+
+
+function downloadDefinition(editor, title) {
+    const r = getDefinition(editor, title);
+    const text = JSON.stringify(r.activity, null, 4);
+    const filename = `${title}.json`;
+
+    let element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+    element.setAttribute('download', filename);
+
+    element.style.display = 'none';
+    document.body.appendChild(element);
+
+    element.click();
+
+    document.body.removeChild(element);
+}
+
+
+function new_editor() {
+    let editor = new mxEditor();
+    let graph = editor.graph;
+    // Centers the port icon on the target port
+    graph.connectionHandler.targetConnectImage = true;
+    // Does not allow dangling edges
+    graph.setAllowDanglingEdges(false);
+    // Allow new connections
+    graph.setConnectable(true);
+    // allow HTML tags in the cell labels
+    graph.setHtmlLabels(true);
+    // let the mouse click move the whole graph
+    graph.panningHandler.useLeftButtonForPanning = true;
+    graph.setPanning(true);
+    graph.pageFormat = mxConstants.PAGE_FORMAT_A4_LANDSCAPE;
+    // Ports are used as terminals for edges, sources and targets
+    graph.isPort = function(cell)
+    {
+        let geo = this.getCellGeometry(cell);
+        return (geo !== null) ? geo.relative : false;
+    };
+
+    graph.setMultigraph(false);
+    // set the validation rules:
+    graph.multiplicities = [];
+    graph.multiplicities.push(new mxMultiplicity(
+				   true, 'Target', null, null, 0, 0, null,
+				   'Target Must Never be the start of an edge',  //
+				   null));
+    graph.multiplicities.push(new mxMultiplicity(
+				   false, 'Source', null, null, 0, 0, null,
+				   'Source cannot be the end of an edge',  //
+				   null));
+    // Installs automatic validation (use editor.validation = true if you are using an mxEditor instance)
+    editor.validation = true;
+    return editor;
+}
+
+
+export default function draw_editor(container, activity, handlers, placeholders, props) {
+    console.log("rendering editor");
+    let {toolbar, title} = placeholders;
 
     container.innerHTML = ''; // cleanup the element;
     if (toolbar !== undefined) {
@@ -69,70 +228,15 @@ function draw_editor(container, activity, handlers, placeholders, props) {
         new mxDivResizer(toolbar);
     }
 
-    let editor = new mxEditor();
+    let editor = new_editor();
     let graph = editor.graph;
     let readOnly = props.readOnly === undefined ? false : props.readOnly;
     let height = props.height === undefined ? 600 : props.height;
-    // Centers the port icon on the target port
-    graph.connectionHandler.targetConnectImage = true;
-    // Does not allow dangling edges
-    graph.setAllowDanglingEdges(false);
-    // Allow new connections
-    graph.setConnectable(true);
-    //graph.setTooltips(true);
+
     editor.setGraphContainer(container);
-    // allow HTML tags in the cell labels
-    graph.setHtmlLabels(true);
     // force the width of the container
     graph.doResizeContainer(container.getBoundingClientRect().width, height);
-    // let the mouse click move the whole graph
-    graph.panningHandler.useLeftButtonForPanning = true;
-    graph.setPanning(true);
     graph.setEnabled(!readOnly);
-    graph.pageFormat = mxConstants.PAGE_FORMAT_A4_LANDSCAPE;
-
-    //let config = mxUtils.load(
-    //    'editors/config/keyhandler-commons.xml').getDocumentElement();
-    //editor.configure(config);
-
-    // Does not allow selection of locked cells
-    // graph.isCellSelectable = function(cell)
-    // {
-    //     return !this.isCellLocked(cell);
-    // };
-
-    // Ports are used as terminals for edges, sources and targets
-    graph.isPort = function(cell)
-    {
-        let geo = this.getCellGeometry(cell);
-        return (geo !== null) ? geo.relative : false;
-    };
-
-    graph.setMultigraph(false);
-    // set the validation rules:
-    graph.multiplicities = [];
-    graph.multiplicities.push(new mxMultiplicity(
-				   true, 'Target', null, null, 0, 0, null,
-				   'Target Must Never be the start of an edge',  //
-				   null));
-    graph.multiplicities.push(new mxMultiplicity(
-				   false, 'Source', null, null, 0, 0, null,
-				   'Source cannot be the end of an edge',  //
-				   null));
-    // Installs automatic validation (use editor.validation = true if you are using an mxEditor instance)
-    editor.validation = true;
-
-    // Implements a tooltip that shows the actual
-    // source and target of an edge
-    //graph.getTooltipForCell = function(cell)
-    //{
-    //    if (this.model.isEdge(cell))
-    //    {
-    //        return this.convertValueToString(this.model.getTerminal(cell, true)) + ' => ' +
-    //            this.convertValueToString(this.model.getTerminal(cell, false))
-    //    }
-    //    return mxGraph.prototype.getTooltipForCell.apply(this, arguments);
-    //};
 
     configureStylesheet(graph);
 
@@ -188,27 +292,22 @@ function draw_editor(container, activity, handlers, placeholders, props) {
             cell !== null && cell !== undefined &&
             this.isCellEditable(cell) && !this.model.isEdge(cell))
         {
-            if(getCellDefinitions) {
-                getCellDefinitions(data_cells =>
-                    getEntities(data_entities => {
-                        editCellProperty(cell, modal, spacer, this.isEnabled(), data_cells.concat(data_entities), this.getModel().cells,
-                            () => {
-                                const r = getDefinition(editor);
-                                updateModel(r.activity, {clear: true, nofit: true});
-                            },
-                            this.getModel().getOutgoingEdges(cell).map(e => {
-                                const sourcePortId = e.style.split(';')
-                                    .map(s => s.split('='))
-                                    .filter(s => s[0] === 'sourcePort')[0][1];
+            if(props.cells) {
+                editCellProperty(cell, modal, spacer, this.isEnabled(), props.cells.concat(props.entities), this.getModel().cells,
+                    () => {
+                        const r = getDefinition(editor, title.value);
+                        updateModel(r.activity, {clear: true, nofit: true});
+                    },
+                    this.getModel().getOutgoingEdges(cell).map(e => {
+                        const sourcePortId = e.style.split(';')
+                            .map(s => s.split('='))
+                            .filter(s => s[0] === 'sourcePort')[0][1];
 
-                                return [
-                                    e.source.children.find(c => c.id === sourcePortId).value,
-                                    e.target.getAttribute('label')
-                                ]
-                            }), props)
-                        ;
-                    })
-                )
+                        return [
+                            e.source.children.find(c => c.id === sourcePortId).value,
+                            e.target.getAttribute('label')
+                        ]
+                    }), props)
             } else {
                 editCellProperty(cell, modal, spacer, this.isEnabled(), [], this.getModel().cells, undefined, props)
             }
@@ -217,94 +316,12 @@ function draw_editor(container, activity, handlers, placeholders, props) {
         mxEvent.consume(evt);
     };
 
-    function getDefinition(editor) {
-        let model = editor.graph.getModel();
-        console.log(model.cells);
-        let activity = Object.assign({}, editor.graph.getDefaultParent().originalActivity);
-        activity.name = title.value;
-        activity.definition = {};
-        activity.definition.cells = {};
-        activity.definition.entities = [];
-        activity.definition.transitions = [];
-        let hasAStart = false;
-        for (let cellId in model.cells) {
-            if (model.cells.hasOwnProperty(cellId)) {
-                let c = model.cells[cellId];
-                if(c.geometry === undefined || c.getAttribute('label') === undefined) continue;
-                let outputs = c.getAttribute('outputs') || "";
-                let cell = {
-                    name: c.getAttribute('label'),
-                    original_name: c.getAttribute('original_name'),
-                    x: c.geometry.x,
-                    y: c.geometry.y,
-                    params: {},
-                    outputs: outputs.split(",").filter(o => o !== ""),
-                };
-                if(c.getAttribute('original_name') === 'start') hasAStart = true;
-                if(c.hasAttribute('attrList') && c.getAttribute('attrList') !== undefined) {
-                    cell.params = c.getAttribute('attrList').split(",").reduce((xa, a) => {xa[a] = c.getAttribute(a); return xa;}, {});
-                }
-
-                if(c.style === 'entity') activity.definition.entities.push(cell);
-                else activity.definition.cells[c.getAttribute('label')] = cell;
-
-                activity.definition.transitions = activity.definition.transitions.concat(model.getOutgoingEdges(c).map((e) => {
-                    let sourcePortId = e.style.split(';')
-                        .map(s => s.split('='))
-                        .filter(s => s[0] === 'sourcePort')[0][1];
-
-                    return [e.source.getAttribute('label') + '.' + e.source.children.find(c => c.id === sourcePortId).value,
-                        e.target.getAttribute('label')
-                    ]
-                }));
-            }
-        }
-        return {activity: activity, hasAStart: hasAStart};
-    }
-
     // Defines export XML action
-    editor.addAction('export', function(editor, cell)
-    {
-        if(title.value.length === 0) {
-            alert("The workflow need a name");
-            return;
-        }
-        const r = getDefinition(editor);
-        if(!r.hasAStart) {
-            alert("the workflow need a `start`");
-            return;
-        }
-        Object.keys(r.activity.definition.cells).map(c => delete r.activity.definition.cells[c].name);
-
-        saveData(r.activity, () => {
-            // update the original activity stored *if* everything went well.
-            editor.graph.getDefaultParent().originalActivity = r.activity;
-        });
-    });
+    editor.addAction('export', (editor, cell) => saveActivity(editor, title.value, handlers.onSave));
     editor.addAction('add_process', (editor, cell) => {
-        getCellDefinitions(data_cells => {
-            getEntities(data_entities => {
-                const model = editor.graph.getModel();
-                newCell(data_cells, model.cells, modal, editor, spacer, data_entities, props);
-            });
-        });
+        newCell(props.cells, editor.graph.getModel().cells, modal, editor, spacer, props.entities, props);
     });
-    editor.addAction('download_definition', (editor, cell) => {
-        const r = getDefinition(editor);
-        const text = JSON.stringify(r.activity, null, 4);
-        const filename = `${title.value}.json`;
-
-        let element = document.createElement('a');
-        element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-        element.setAttribute('download', filename);
-
-        element.style.display = 'none';
-        document.body.appendChild(element);
-
-        element.click();
-
-        document.body.removeChild(element);
-    });
+    editor.addAction('download_definition', editor => downloadDefinition(editor, title.value));
     editor.addAction('upload_definition', (editor, cell) => {
         if (typeof window.FileReader !== 'function') {
           alert("The file API isn't supported on this browser yet.");
@@ -312,21 +329,49 @@ function draw_editor(container, activity, handlers, placeholders, props) {
         }
         uploadDefinition(modal, spacer, editor, updateModel);
     });
+    editor.addAction("showDefinition", (editor, cell) => {
+        showDefinition(modal, spacer, editor, updateModel);
+    });
+    /*
+    editor.addAction("autoLayout", (editor, cell) => {
+        var layout = new mxHierarchicalLayout(graph, mxConstants.DIRECTION_WEST);
+        graph.getModel().beginUpdate();
+        try
+        {
+            layout.execute(graph.getDefaultParent());
+        }
+        catch (e)
+        {
+            throw e;
+        }
+        finally
+        {
+            // New API for animating graph layout results asynchronously
+            var morph = new mxMorphing(graph);
+            morph.addListener(mxEvent.DONE, mxUtils.bind(this, function()
+            {
+                graph.getModel().endUpdate();
+            }));
+
+            morph.startAnimation();
+        }
+    });
+    */
     if(toolbar !== undefined) {
-        if(saveData !== undefined) {
+        if(handlers.onSave !== undefined) {
             addToolbarButton(editor, toolbar, 'export', 'Save');
         }
-        if(deleteHandler !== undefined) {
-            addToolbarButton(editor, toolbar, null, 'Delete', null, false, deleteHandler);
+        if(handlers.onDelete !== undefined) {
+            addToolbarButton(editor, toolbar, null, 'Delete', null, false, e => handlers.onDelete());
         }
-        if(saveData !== undefined || deleteHandler !== undefined) {
+        if(handlers.onSave !== undefined || handlers.onDelete !== undefined) {
             toolbar.appendChild(spacer.cloneNode(true));
         }
-        if(getCellDefinitions !== undefined) {
+        if(props.cells !== undefined) {
             addToolbarButton(editor, toolbar, 'add_process', '+', null, false, null, 'add a process');
             toolbar.appendChild(spacer.cloneNode(true));
         }
-        if(saveData !== undefined) {
+        if(handlers.onSave !== undefined) {
             addToolbarButton(editor, toolbar, 'delete', '✘', null, false, null, 'delete an element');
             toolbar.appendChild(spacer.cloneNode(true));
             addToolbarButton(editor, toolbar, 'undo', '⤾');
@@ -338,13 +383,14 @@ function draw_editor(container, activity, handlers, placeholders, props) {
         }
         addToolbarButton(editor, toolbar, 'zoomIn', '🔍 +', null, false, null, 'zoom in');
         addToolbarButton(editor, toolbar, 'zoomOut', '🔍 -', null, false, null, 'zoom out');
-        if(saveData !== undefined) {
+        if(handlers.onSave !== undefined) {
             // devnote: not needed to be able to fit ++ outside the editor (for now)
             addToolbarButton(editor, toolbar, 'actualSize', '1:1', null, false, null, 'actual size');
             addToolbarButton(editor, toolbar, 'fit', 'Fit');
         }
         addToolbarButton(editor, toolbar, 'show', '👓');
-        if(saveData !== undefined) {
+        addToolbarButton(editor, toolbar, 'showDefinition', 'txt');
+        if(handlers.onSave !== undefined) {
             const saveElt = document.createElement('span');
             saveElt.className = 'glyphicon glyphicon-save';
             addToolbarButton(editor, toolbar, 'download_definition', '', saveElt, false, null, 'download the definition');
@@ -514,7 +560,7 @@ function draw_editor(container, activity, handlers, placeholders, props) {
     }
     if(activity.id) {
         console.log('getting data');
-        getData(activity.id, updateModel);
+        handlers.get(activity.id, updateModel);
     } else {
         console.log('new activity');
         updateModel(activity);
@@ -545,7 +591,7 @@ function prepareModal(modal) {
     };
     modal.innerHTML = '';
     let dialog = document.createElement('div');
-    dialog.className = 'modal-dialog';
+    dialog.className = 'modal-lg modal-dialog';
     modal.appendChild(dialog);
 
     let content = document.createElement('div');
@@ -577,10 +623,91 @@ function prepareModal(modal) {
     return [hdr, bdy]
 }
 
+function showDefinition(modal, spacer, editor, updateModel) {
+    let [modalHeader, modalBody] = prepareModal(modal);
+
+    // set the header
+    let h = document.createElement('h3');
+    h.innerHTML = '<i>Definition</i>';
+    modalHeader.appendChild(h);
+
+    let errors = document.createElement('div');
+    modalBody.appendChild(errors);
+
+    let form = document.createElement('form');
+    modalBody.appendChild(form);
+
+    // set the implementation
+    let gp = document.createElement('div');
+    gp.className = 'form-group';
+
+    let value = document.createElement('textarea');
+    value.id = 'definition';
+    value.rows = '40';
+    value.className = 'form-control';
+    value.value = JSON.stringify(getDefinition(editor).activity.definition, undefined, 2);
+
+    gp.appendChild(value);
+    form.appendChild(gp);
+
+    let btn = document.createElement('button');
+    btn.className = 'btn btn-success';
+    btn.innerHTML = 'Load';
+    btn.onclick = function(e) {
+        e.preventDefault();
+
+        errors.innerHTML = '';
+        const li = document.createElement("ul");
+        let newDef;
+        try {
+            newDef = JSON.parse(value.value);
+        } catch (e) {
+            let elt = document.createElement("li");
+            elt.innerHTML = e;
+            li.appendChild(elt);
+            errors.appendChild(li);
+            return;
+        }
+
+        let ajv = Ajv({allErrors: true});
+        let valid = ajv.validate(SCHEMA_DEFINITION, newDef);
+        console.log(valid);
+        if(!valid) {
+            console.log(ajv.errors);
+            for(let i=0; i<ajv.errors.length;i++) {
+                let e = document.createElement("li");
+                const {dataPath, message} = ajv.errors[i];
+                e.innerHTML = `[${dataPath}] ${message}`;
+                li.appendChild(e);
+            }
+            errors.appendChild(li);
+            return;
+        }
+        const activity = getDefinition(editor).activity;
+        activity.definition = newDef;
+        console.log(activity);
+        updateModel(activity, {clear: true});
+        modal.style.display = "none";
+    };
+    form.appendChild(btn);
+    form.appendChild(spacer.cloneNode(true));
+
+    // cancel action
+    btn = document.createElement('button');
+    btn.className = 'btn btn-warning';
+    btn.innerHTML = 'Cancel';
+    btn.onclick = function(e) {
+        e.preventDefault();
+        modal.style.display = "none";
+    };
+    form.appendChild(btn);
+
+    modal.style.display = "block";
+    modal.style.overflowY = "scroll";
+}
+
 function uploadDefinition(modal, spacer, editor, updateModel) {
-    let upload_definition = prepareModal(modal);
-    let modalHeader = upload_definition[0];
-    let modalBody = upload_definition[1];
+    let [modalHeader, modalBody] = prepareModal(modal);
 
     // set the header
     let h = document.createElement('h3');
@@ -777,7 +904,7 @@ function createInput(param, value, cells, cells_defs, config) {
         case 'list':
             input = document.createElement('select');
             input.className = 'form-control';
-            param.values.map(v => {
+            ['', ...param.values].map(v => {
                 const opt = document.createElement('option');
                 opt.value = v;
                 opt.innerText = v;
@@ -798,7 +925,7 @@ function createInput(param, value, cells, cells_defs, config) {
             // todo: should become a checkbox!!
             input = document.createElement('select');
             input.className = 'form-control';
-            ["true", "false"].map(v => {
+            ["", "true", "false"].map(v => {
                 const opt = document.createElement('option');
                 opt.value = v;
                 opt.innerText = v;
@@ -1074,7 +1201,7 @@ function editCellProperty(cell, modal, spacer, editable, cells_defs, cells, refr
     // 3. add the possible parameters (+ values)
     let form = document.createElement('form');
     let attrs = {};
-    const defAttrList = cell_def?cell_def.params.map(p => p.name || p):[];
+    const defAttrList = cell_def && cell_def.params?cell_def.params.map(p => p.name || p):[];
     const attrList = cell.getAttribute('attrList') ? cell.getAttribute('attrList').split(',') : [];
     const params_list = defAttrList.concat(attrList.filter(e => !defAttrList.includes(e)));
 
@@ -1376,4 +1503,4 @@ function addToolbarButton(editor, toolbar, action, label, image, isTransparent, 
     toolbar.appendChild(button);
 }
 
-module.exports = draw_editor;
+// module.exports = draw_editor;
