@@ -35,7 +35,7 @@ import mainDefaultProvisioningReducer from "./default/store/reducers";
 import AddTrunkGroupUser from "./default/components/AddUserToTrunkGroup";
 // end
 
-// PRA
+// pra
 import PraTenants from "./pra/components/Tenants";
 import AddEntreprises from "./pra/components/AddEntreprises";
 import AddGroup from "./pra/components/AddGroup";
@@ -327,7 +327,7 @@ function provisioningDefaultRoutes(ui_profile) {
 }
 // end
 
-// PRA
+// pra
 function provisioningPraRoutes(ui_profile) {
     return [
         <Route
