@@ -11,7 +11,6 @@ import Button from "react-bootstrap/lib/Button";
 import FormControl from "react-bootstrap/lib/FormControl";
 import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import InputGroup from "react-bootstrap/lib/InputGroup";
-import Checkbox from "react-bootstrap/lib/Checkbox";
 import FormGroup from "react-bootstrap/lib/FormGroup";
 import HelpBlock from "react-bootstrap/lib/HelpBlock";
 
@@ -148,29 +147,6 @@ export class Admin extends Component {
             </Col>
           </Row>
 
-          {/* E-MAIL */}
-          <Row className={"margin-1"}>
-            <Col componentClass={ControlLabel} md={2}>
-              E-mail{"\u002a"}
-            </Col>
-            <Col md={10}>
-              <FormControl type="text" placeholder="E-mail" />
-            </Col>
-          </Row>
-          <Row className={"margin-1"}>
-            <Col componentClass={ControlLabel} md={2} className={"text-left"}>
-              Language
-            </Col>
-            <Col md={10}>
-              <FormControl
-                type="text"
-                placeholder="Language"
-                defaultValue={this.state.createAdminData.language}
-                disabled
-              />
-            </Col>
-          </Row>
-
           {/* PASSWORD */}
           <Row className={"margin-1"}>
             <FormGroup
@@ -234,25 +210,11 @@ export class Admin extends Component {
             </FormGroup>
           </Row>
 
-          {/* SEND WELCOME EMAIL FLAG */}
-          <Row className={"margin-1"}>
-            <Col md={12}>
-              <Checkbox>Send welcome email</Checkbox>
-            </Col>
-          </Row>
-          {this.state.emptyFieldError && (
-            <Row className={"margin-1 color-error"}>
-              <Col md={12}>
-                <p>{this.state.emptyFieldError}</p>
-              </Col>
-            </Row>
-          )}
-
           {/* BUTTONS */}
           <Row>
             <Col md={12}>
-              <div class="button-row">
-                <div class="pull-left">
+              <div className="button-row">
+                <div className="pull-left">
                   {/* BACK BUTTON */}
 
                   <Button
@@ -264,7 +226,7 @@ export class Admin extends Component {
                   </Button>
                 </div>
 
-                <div class="pull-right">
+                <div className="pull-right">
                   {/* CREATE & FINISH */}
                   <Link
                     to={`/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}/groups/${this.props.createdGroup.groupId}`}
@@ -283,8 +245,8 @@ export class Admin extends Component {
           </Row>
           <Row>
             <Col md={12}>
-              <div class="button-row">
-                <div class="pull-right">
+              <div className="button-row">
+                <div className="pull-right">
                   <Link
                     to={`/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}/groups/${this.props.createdGroup.groupId}`}
                   >

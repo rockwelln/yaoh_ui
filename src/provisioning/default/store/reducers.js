@@ -1,4 +1,5 @@
 import * as actionType from "./constants";
+import { get } from "../components/get";
 
 const initialState = {
   tenants: [],
@@ -13,6 +14,8 @@ const initialState = {
   servicePacks: [],
   groupServices: [],
   tenantServicePacks: [],
+  tenantServicePack: { allocated: { unlimited: undefined } },
+  tenantGroupService: { allocated: { unlimited: undefined } },
   devices: [],
   user: {},
   trunkGroups: {},
@@ -113,7 +116,11 @@ const initialState = {
   userServicesGroup: [],
   userServicesTenant: [],
   isAuthorisedTrunkTenant: true,
-  trunkGroupsByTenant: []
+  trunkGroupsByTenant: [],
+  trunkGroupsTemplates: [],
+  trunkGroupNotAuthorisedGroup: true,
+  trunkGroupTemplate: {},
+  selfcareUrl: {}
 };
 
 function mainReducer(state = initialState, action) {
@@ -202,6 +209,7 @@ function mainReducer(state = initialState, action) {
       const availableTrunkGroups = action.data.groupServices.filter(
         group => group.name === "Trunk Group"
       );
+      ////////
       const groupServicesShown = action.data.groupServices
         .filter(
           group =>
@@ -218,22 +226,29 @@ function mainReducer(state = initialState, action) {
           if (a.name > b.name) return 1;
           return 0;
         });
-      const groupServicesHide = action.data.groupServices
-        .filter(
-          group =>
-            group.name !== "Auto Attendant" &&
-            group.name !== "Auto Attendant - Standard" &&
-            group.name !== "Call Pickup" &&
-            group.name !== "Hunt Group" &&
-            group.name !== "Group Paging" &&
-            group.name !== "Meet-me Conferencing" &&
-            group.name !== "Trunk Group"
-        )
-        .sort((a, b) => {
-          if (a.name < b.name) return -1;
-          if (a.name > b.name) return 1;
-          return 0;
-        });
+      const groupServicesHide = [];
+      action.data.groupServices.forEach(group => {
+        if (
+          group.name !== "Auto Attendant" &&
+          group.name !== "Auto Attendant - Standard" &&
+          group.name !== "Call Pickup" &&
+          group.name !== "Hunt Group" &&
+          group.name !== "Group Paging" &&
+          group.name !== "Meet-me Conferencing" &&
+          group.name !== "Trunk Group"
+        ) {
+          groupServicesHide.push({
+            ...group,
+            hide: true,
+            additional: true
+          });
+        }
+      });
+      groupServicesHide.sort((a, b) => {
+        if (a.name < b.name) return -1;
+        if (a.name > b.name) return 1;
+        return 0;
+      });
       const groupServices = [...groupServicesShown, ...groupServicesHide];
       return {
         ...state,
@@ -356,7 +371,8 @@ function mainReducer(state = initialState, action) {
     case actionType.GET_TRUNKS_GROUPS_BY_GROUP: {
       return {
         ...state,
-        trunksGroups: action.data.trunks
+        trunksGroups: action.data.trunks,
+        trunkGroupNotAuthorisedGroup: true
       };
     }
     case actionType.GET_TRUNK_GROUP_BY_NAME: {
@@ -489,22 +505,29 @@ function mainReducer(state = initialState, action) {
           if (a.name > b.name) return 1;
           return 0;
         });
-      const groupServicesHide = action.data.groupServices
-        .filter(
-          group =>
-            group.name !== "Auto Attendant" &&
-            group.name !== "Auto Attendant - Standard" &&
-            group.name !== "Call Pickup" &&
-            group.name !== "Hunt Group" &&
-            group.name !== "Group Paging" &&
-            group.name !== "Meet-me Conferencing" &&
-            group.name !== "Trunk Group"
-        )
-        .sort((a, b) => {
-          if (a.name < b.name) return -1;
-          if (a.name > b.name) return 1;
-          return 0;
-        });
+      const groupServicesHide = [];
+      action.data.groupServices.forEach(group => {
+        if (
+          group.name !== "Auto Attendant" &&
+          group.name !== "Auto Attendant - Standard" &&
+          group.name !== "Call Pickup" &&
+          group.name !== "Hunt Group" &&
+          group.name !== "Group Paging" &&
+          group.name !== "Meet-me Conferencing" &&
+          group.name !== "Trunk Group"
+        ) {
+          groupServicesHide.push({
+            ...group,
+            hide: true,
+            additional: true
+          });
+        }
+      });
+      groupServicesHide.sort((a, b) => {
+        if (a.name < b.name) return -1;
+        if (a.name > b.name) return 1;
+        return 0;
+      });
       const groupServices = [...groupServicesShown, ...groupServicesHide];
       return {
         ...state,
@@ -533,6 +556,42 @@ function mainReducer(state = initialState, action) {
       return {
         ...state,
         trunkGroupsByTenant: action.data.tenantTrunks
+      };
+    }
+    case actionType.GET_TENANT_SERVICE_PACK: {
+      return {
+        ...state,
+        tenantServicePack: action.data
+      };
+    }
+    case actionType.GET_TENANT_GROUP_SERIVCE: {
+      const tenantGroupService = action.data.groupServices.find(
+        el => el.name === action.data.groupServiceName
+      );
+      return {
+        ...state,
+        tenantGroupService
+      };
+    }
+    case actionType.GET_TRUNK_GROUP_TEMPLATES: {
+      return {
+        ...state,
+        trunkGroupsTemplates: action.data.templates
+      };
+    }
+    case actionType.GET_TRUNK_GROUP_TEMPLATE: {
+      return {
+        ...state,
+        trunkGroupTemplate: action.data
+      };
+    }
+    case actionType.GET_SELFCARE_URL: {
+      const selfcareUrl =
+        get(action, "data.data") &&
+        JSON.parse(action.data.data.replace(/\\r|\\t|\\n|\\/g, ""));
+      return {
+        ...state,
+        selfcareUrl
       };
     }
     case actionType.POST_CREATE_GROUP_ADMIN: {
@@ -1091,7 +1150,43 @@ function mainReducer(state = initialState, action) {
     case actionType.TRUNK_NOT_AUTHORISED_TENANT: {
       return {
         ...state,
-        isAuthorisedTrunkTenant: false
+        tenantLicenses: false
+      };
+    }
+    case actionType.SHOW_HIDE_ADDITIONAL_SERVICES_TENANT: {
+      const newTanantLicenses = [];
+      state.tenantLicenses.groups &&
+        state.tenantLicenses.groups.forEach(el => {
+          if (el.additional) {
+            newTanantLicenses.push({ ...el, hide: action.data });
+          } else {
+            newTanantLicenses.push(el);
+          }
+        });
+      return {
+        ...state,
+        tenantLicenses: { ...state.tenantLicenses, groups: newTanantLicenses }
+      };
+    }
+    case actionType.SHOW_HIDE_ADDITIONAL_SERVICES_GROUP: {
+      const newGroupServices = [];
+      state.groupServices.groups &&
+        state.groupServices.groups.forEach(el => {
+          if (el.additional) {
+            newGroupServices.push({ ...el, hide: action.data });
+          } else {
+            newGroupServices.push(el);
+          }
+        });
+      return {
+        ...state,
+        groupServices: { ...state.groupServices, groups: newGroupServices }
+      };
+    }
+    case actionType.TRUNK_NOT_AUTHORISED_GROUP: {
+      return {
+        ...state,
+        trunkGroupNotAuthorisedGroup: false
       };
     }
     default:

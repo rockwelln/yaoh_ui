@@ -12,6 +12,8 @@ import { Form } from "react-bootstrap";
 
 import Loading from "../../../../common/Loading";
 
+import { removeEmpty } from "../../../remuveEmptyInObject";
+
 import {
   fetchPutUpdateTenantDetails,
   fetchGetTenantById
@@ -48,12 +50,6 @@ class Details extends Component {
     return (
       <Col md={8}>
         <Form horizontal className={"margin-1"}>
-          <FormGroup controlId="resellerSelect">
-            <ControlLabel className={"margin-1"}>RESELLER</ControlLabel>
-            <FormControl componentClass="select" placeholder="select">
-              <option value="select">None</option>
-            </FormControl>
-          </FormGroup>
           <FormGroup controlId="Details">
             <ControlLabel className={"margin-1"}>DETAILS</ControlLabel>
             <FormGroup controlId="tentantID">
@@ -192,7 +188,8 @@ class Details extends Component {
       tenantName,
       defaultDomain,
       useTenantLanguages,
-      useCustomRoutingProfile
+      useCustomRoutingProfile,
+      addressInformation
     } = this.state;
 
     const data = {
@@ -205,10 +202,15 @@ class Details extends Component {
         : this.state.tenant.useTenantLanguages,
       useCustomRoutingProfile: useCustomRoutingProfile
         ? useCustomRoutingProfile
-        : this.state.tenant.useCustomRoutingProfile
+        : this.state.tenant.useCustomRoutingProfile,
+      addressInformation
     };
+    const clearData = removeEmpty(data);
 
-    this.props.fetchPutUpdateTenantDetails(this.state.tenant.tenantId, data);
+    this.props.fetchPutUpdateTenantDetails(
+      this.state.tenant.tenantId,
+      clearData
+    );
   };
 }
 

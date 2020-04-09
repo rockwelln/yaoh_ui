@@ -108,6 +108,8 @@ class NotificationsHandler {
             title: title,
             message: message,
             level: 'error',
+            autoDismiss: 5 * 60,
+            dismissible: "both",
             ...extra
         });
     }
