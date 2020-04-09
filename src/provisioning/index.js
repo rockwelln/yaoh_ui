@@ -12,6 +12,7 @@ import Table, {tr} from "react-bootstrap/lib/Table";
 // default
 import SearchPage from "./default/components/SearchPage";
 import LocalUsers from "./default/components/LocalUsers";
+import AddLocalUsers from "./default/components/AddLocalUser";
 import UpdateLocalUser from "./default/components/UpdateLocalUser";
 import ConfigPage from "./default/components/Configs";
 import CategoryPage from "./default/components/CategoryPage";
@@ -94,7 +95,7 @@ function provisioningDefaultRoutes(ui_profile) {
             path="/provisioning/:gwName/localusers/adduser"
             component={props =>
                 isAllowed(ui_profile, pages.data_tenants) ? (
-                    <AddTrunkGroupUser />
+                    <AddLocalUsers />
                 ) : (
                     <NotAllowed/>
                 )
@@ -238,7 +239,7 @@ function provisioningDefaultRoutes(ui_profile) {
             path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/trunkgroup/:trunkGroupName/adduser"
             component={props =>
                 isAllowed(ui_profile, pages.data_tenants) ? (
-                    <AddUser/>
+                    <AddTrunkGroupUser />
                 ) : (
                     <NotAllowed/>
                 )
