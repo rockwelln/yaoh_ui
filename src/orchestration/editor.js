@@ -381,7 +381,7 @@ export default function draw_editor(container, activity, handlers, placeholders,
                         ]
                     }), props)
             } else {
-                editCellProperty(cell, modal, spacer, this.isEnabled(), [], this.getModel().cells, undefined, props)
+                editCellProperty(cell, modal, spacer, this.isEnabled(), [], this.getModel().cells, undefined, undefined, props)
             }
         }
         // Disables any default behaviour for the double click
