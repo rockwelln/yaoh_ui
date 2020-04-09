@@ -146,11 +146,11 @@ function saveActivity(editor, title, saveHandler) {
 
 function downloadDefinition(editor, title) {
     const r = getDefinition(editor, title);
-    const text = JSON.stringify(r.activity, null, 4);
-    const filename = `${title}.json`;
+    const text = JSON.stringify(r.activity.definition, null, 2);
+    const filename = `${r.activity.name}.json`;
 
     let element = document.createElement('a');
-    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+    element.setAttribute('href', 'data:application/json;charset=utf-8,' + encodeURIComponent(text));
     element.setAttribute('download', filename);
 
     element.style.display = 'none';
@@ -197,9 +197,83 @@ function new_editor() {
 				   null));
     // Installs automatic validation (use editor.validation = true if you are using an mxEditor instance)
     editor.validation = true;
+    configureStylesheet(graph);
     return editor;
 }
 
+
+function setup_toolbar(editor, container, spacer, handlers, cells) {
+    const {onSave, onDelete} = handlers;
+
+    if(onSave !== undefined) {
+        addToolbarButton(editor, container, 'export', 'Save');
+    }
+    if(onDelete !== undefined) {
+        addToolbarButton(editor, container, null, 'Delete', null, false, e => onDelete());
+    }
+    if(onSave !== undefined || onDelete !== undefined) {
+        container.appendChild(spacer.cloneNode(true));
+    }
+    if(cells !== undefined) {
+        addToolbarButton(editor, container, 'add_process', '+', null, false, null, 'add a process');
+        container.appendChild(spacer.cloneNode(true));
+    }
+    if(onSave !== undefined) {
+        addToolbarButton(editor, container, 'delete', '✘', null, false, null, 'delete an element');
+        container.appendChild(spacer.cloneNode(true));
+        addToolbarButton(editor, container, 'undo', '⤾');
+        addToolbarButton(editor, container, 'redo', '⤿');
+        container.appendChild(spacer.cloneNode(true));
+        // devnote: not needed to be able to print out outside the editor (for now)
+        // addToolbarButton(editor, toolbar, 'print', '🖨');
+        container.appendChild(spacer.cloneNode(true));
+    }
+    addToolbarButton(editor, container, 'zoomIn', '🔍 +', null, false, null, 'zoom in');
+    addToolbarButton(editor, container, 'zoomOut', '🔍 -', null, false, null, 'zoom out');
+    if(onSave !== undefined) {
+        // devnote: not needed to be able to fit ++ outside the editor (for now)
+        addToolbarButton(editor, container, 'actualSize', '1:1', null, false, null, 'actual size');
+        addToolbarButton(editor, container, 'fit', 'Fit');
+    }
+    addToolbarButton(editor, container, 'show', '👓');
+    addToolbarButton(editor, container, 'showDefinition', 'txt');
+    if(onSave !== undefined) {
+        container.appendChild(spacer.cloneNode(true));
+        const saveElt = document.createElement('span');
+        saveElt.className = 'glyphicon glyphicon-save';
+        addToolbarButton(editor, container, 'download_definition', '', saveElt, false, null, 'download the definition');
+        const openElt = document.createElement('span');
+        openElt.className = 'glyphicon glyphicon-open';
+        addToolbarButton(editor, container, 'upload_definition', '', openElt, false, null, 'upload a definition');
+    }
+}
+
+
+function setup_actions(editor, title, spacer, handlers, modal, props, updateModel) {
+    editor.addAction('export', (editor, cell) => saveActivity(editor, title.value, handlers.onSave));
+    editor.addAction('add_process', (editor, cell) => {
+        newCell(props.cells, editor.graph.getModel().cells, modal, editor, spacer, props.entities, props);
+    });
+    editor.addAction('download_definition', editor => downloadDefinition(editor, title.value));
+    editor.addAction('upload_definition', (editor, cell) => {
+        if (typeof window.FileReader !== 'function') {
+          alert("The file API isn't supported on this browser yet.");
+          return;
+        }
+        uploadDefinition(modal, spacer, (newDef, filename) => {
+            const activity = getDefinition(editor, title.value || filename).activity;
+            activity.definition = newDef;
+            updateModel(activity, {clear: true});
+        });
+    });
+    editor.addAction("showDefinition", (editor, cell) => {
+        showDefinition(modal, spacer, getDefinition(editor).activity.definition, newDef => {
+            const activity = getDefinition(editor, title.value).activity;
+            activity.definition = newDef;
+            updateModel(activity, {clear: true});
+        });
+    });
+}
 
 export default function draw_editor(container, activity, handlers, placeholders, props) {
     console.log("rendering editor");
@@ -237,8 +311,6 @@ export default function draw_editor(container, activity, handlers, placeholders,
     // force the width of the container
     graph.doResizeContainer(container.getBoundingClientRect().width, height);
     graph.setEnabled(!readOnly);
-
-    configureStylesheet(graph);
 
     // use the 'label' attribute of the cells as shown value (but allow other attributes ;-))
     let convertValueToString = graph.convertValueToString; // store the original function
@@ -316,88 +388,12 @@ export default function draw_editor(container, activity, handlers, placeholders,
         mxEvent.consume(evt);
     };
 
-    // Defines export XML action
-    editor.addAction('export', (editor, cell) => saveActivity(editor, title.value, handlers.onSave));
-    editor.addAction('add_process', (editor, cell) => {
-        newCell(props.cells, editor.graph.getModel().cells, modal, editor, spacer, props.entities, props);
-    });
-    editor.addAction('download_definition', editor => downloadDefinition(editor, title.value));
-    editor.addAction('upload_definition', (editor, cell) => {
-        if (typeof window.FileReader !== 'function') {
-          alert("The file API isn't supported on this browser yet.");
-          return;
-        }
-        uploadDefinition(modal, spacer, editor, updateModel);
-    });
-    editor.addAction("showDefinition", (editor, cell) => {
-        showDefinition(modal, spacer, editor, updateModel);
-    });
-    /*
-    editor.addAction("autoLayout", (editor, cell) => {
-        var layout = new mxHierarchicalLayout(graph, mxConstants.DIRECTION_WEST);
-        graph.getModel().beginUpdate();
-        try
-        {
-            layout.execute(graph.getDefaultParent());
-        }
-        catch (e)
-        {
-            throw e;
-        }
-        finally
-        {
-            // New API for animating graph layout results asynchronously
-            var morph = new mxMorphing(graph);
-            morph.addListener(mxEvent.DONE, mxUtils.bind(this, function()
-            {
-                graph.getModel().endUpdate();
-            }));
+    // Defines actions
+    setup_actions(editor, title, spacer, handlers, modal, props, updateModel);
 
-            morph.startAnimation();
-        }
-    });
-    */
+    // setup toolbar
     if(toolbar !== undefined) {
-        if(handlers.onSave !== undefined) {
-            addToolbarButton(editor, toolbar, 'export', 'Save');
-        }
-        if(handlers.onDelete !== undefined) {
-            addToolbarButton(editor, toolbar, null, 'Delete', null, false, e => handlers.onDelete());
-        }
-        if(handlers.onSave !== undefined || handlers.onDelete !== undefined) {
-            toolbar.appendChild(spacer.cloneNode(true));
-        }
-        if(props.cells !== undefined) {
-            addToolbarButton(editor, toolbar, 'add_process', '+', null, false, null, 'add a process');
-            toolbar.appendChild(spacer.cloneNode(true));
-        }
-        if(handlers.onSave !== undefined) {
-            addToolbarButton(editor, toolbar, 'delete', '✘', null, false, null, 'delete an element');
-            toolbar.appendChild(spacer.cloneNode(true));
-            addToolbarButton(editor, toolbar, 'undo', '⤾');
-            addToolbarButton(editor, toolbar, 'redo', '⤿');
-            toolbar.appendChild(spacer.cloneNode(true));
-            // devnote: not needed to be able to print out outside the editor (for now)
-            // addToolbarButton(editor, toolbar, 'print', '🖨');
-            toolbar.appendChild(spacer.cloneNode(true));
-        }
-        addToolbarButton(editor, toolbar, 'zoomIn', '🔍 +', null, false, null, 'zoom in');
-        addToolbarButton(editor, toolbar, 'zoomOut', '🔍 -', null, false, null, 'zoom out');
-        if(handlers.onSave !== undefined) {
-            // devnote: not needed to be able to fit ++ outside the editor (for now)
-            addToolbarButton(editor, toolbar, 'actualSize', '1:1', null, false, null, 'actual size');
-            addToolbarButton(editor, toolbar, 'fit', 'Fit');
-        }
-        addToolbarButton(editor, toolbar, 'show', '👓');
-        addToolbarButton(editor, toolbar, 'showDefinition', 'txt');
-        if(handlers.onSave !== undefined) {
-            const saveElt = document.createElement('span');
-            saveElt.className = 'glyphicon glyphicon-save';
-            addToolbarButton(editor, toolbar, 'download_definition', '', saveElt, false, null, 'download the definition');
-            const openElt = document.createElement('span');
-            openElt.className = 'glyphicon glyphicon-open';
-            addToolbarButton(editor, toolbar, 'upload_definition', '', openElt, false, null, 'upload a definition');
-        }
+        setup_toolbar(editor, toolbar, spacer, handlers, props.cells);
     }
 
     let xmlDocument = mxUtils.createXmlDocument();
@@ -546,6 +542,9 @@ export default function draw_editor(container, activity, handlers, placeholders,
         var margin = 2;
         var max = 1;
 
+        // reset the graph start to adjust correctly the view afterwards
+        graph.view.setTranslate(0, 0);
+
         var bounds = graph.getGraphBounds();
         var cw = graph.container.clientWidth - margin;
         var ch = graph.container.clientHeight - margin;
@@ -623,7 +622,7 @@ function prepareModal(modal) {
     return [hdr, bdy]
 }
 
-function showDefinition(modal, spacer, editor, updateModel) {
+function showDefinition(modal, spacer, currentDefinition, onSuccess) {
     let [modalHeader, modalBody] = prepareModal(modal);
 
     // set the header
@@ -645,7 +644,7 @@ function showDefinition(modal, spacer, editor, updateModel) {
     value.id = 'definition';
     value.rows = '40';
     value.className = 'form-control';
-    value.value = JSON.stringify(getDefinition(editor).activity.definition, undefined, 2);
+    value.value = JSON.stringify(currentDefinition, undefined, 2);
 
     gp.appendChild(value);
     form.appendChild(gp);
@@ -683,10 +682,7 @@ function showDefinition(modal, spacer, editor, updateModel) {
             errors.appendChild(li);
             return;
         }
-        const activity = getDefinition(editor).activity;
-        activity.definition = newDef;
-        console.log(activity);
-        updateModel(activity, {clear: true});
+        onSuccess(newDef);
         modal.style.display = "none";
     };
     form.appendChild(btn);
@@ -706,7 +702,7 @@ function showDefinition(modal, spacer, editor, updateModel) {
     modal.style.overflowY = "scroll";
 }
 
-function uploadDefinition(modal, spacer, editor, updateModel) {
+function uploadDefinition(modal, spacer, onSuccess) {
     let [modalHeader, modalBody] = prepareModal(modal);
 
     // set the header
@@ -715,8 +711,11 @@ function uploadDefinition(modal, spacer, editor, updateModel) {
     modalHeader.appendChild(h);
 
     let help = document.createElement('p');
-    help.innerHTML = 'Careful, the workflow loaded are not automatically saved!';
+    help.innerHTML = 'Careful, the definition will replace the current workflow!';
     modalBody.appendChild(help);
+
+    let errors = document.createElement('div');
+    modalBody.appendChild(errors);
 
     let form = document.createElement('form');
     modalBody.appendChild(form);
@@ -755,9 +754,33 @@ function uploadDefinition(modal, spacer, editor, updateModel) {
           let file = value.files[0];
           let fr = new FileReader();
           fr.onload = e => {
-               const activity = JSON.parse(e.target.result);
-               console.log(activity);
-               updateModel(activity, {clear: true});
+              errors.innerHTML = '';
+              const li = document.createElement("ul");
+              let newDef;
+              try {
+                 newDef = JSON.parse(e.target.result);
+              } catch (e) {
+                  let elt = document.createElement("li");
+                  elt.innerHTML = e;
+                  li.appendChild(elt);
+                  errors.appendChild(li);
+                  return;
+              }
+
+              let ajv = Ajv({allErrors: true});
+              let valid = ajv.validate(SCHEMA_DEFINITION, newDef);
+              console.log(valid);
+              if(!valid) {
+                  for(let i=0; i<ajv.errors.length;i++) {
+                      let e = document.createElement("li");
+                      const {dataPath, message, params} = ajv.errors[i];
+                      e.innerHTML = `[${dataPath}] ${message} (${JSON.stringify(params)})`;
+                      li.appendChild(e);
+                  }
+                  errors.appendChild(li);
+                  return;
+              }
+              onSuccess(newDef, file.name);
           };
           fr.readAsText(file);
         }
