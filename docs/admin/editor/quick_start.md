@@ -25,13 +25,12 @@ Let's add another cell to mark the end of the workflow
 
 ### Organise the cells
 
-Now that you created all the tasks,
-you can drag them wherever you want to organise to be visually convenient for you and your users.
+Now that you created all the tasks, you can drag them wherever you want to be visually convenient for you and your users.
 
 Then you can link them together to organise their transitions from "start" to "end".
 (use your mouse drag & drop any output* to any input**)
 
-*: outputs are bullet on the right of the tasks
+*: outputs are bullet on the right of the tasks  
 **: inputs are bullets on the left of the tasks
 
 ![compose hello world](./images/compose_hello_word.png "compose hello world")
