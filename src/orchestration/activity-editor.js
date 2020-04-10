@@ -1,7 +1,7 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import draw_editor from "./editor";
-import {parseJSON, fetch_post, fetch_get, fetch_delete, fetch_put} from "../utils";
+import {fetch_post, fetch_get, fetch_delete, fetch_put, NotificationsManager} from "../utils";
 
 import Nav from 'react-bootstrap/lib/Nav';
 import NavItem from 'react-bootstrap/lib/NavItem';
@@ -42,13 +42,149 @@ function fetchActivities(onSuccess) {
         .catch(console.error);
 }
 
+function fetchActivity(activityId, cb) {
+    fetch_get('/api/v01/activities/' + activityId)
+        .then(data => cb(data.activity))
+        .catch(console.error);
+}
+
+function deleteActivity(activityId, cb) {
+    fetch_delete(`/api/v01/activities/${activityId}`)
+        .then(r => r.json())
+        .then(data =>{
+            cb && cb(data);
+            NotificationsManager.success("Activity deleted");
+        })
+        .catch(error => {
+            NotificationsManager.error("Failed to save activity", error.message);
+        });
+}
+
+function saveActivity(activity, cb) {
+    const method = activity.id === undefined?fetch_post:fetch_put;
+
+    method(
+        `/api/v01/activities${activity.id === undefined?'':'/'+activity.id}`,
+        {
+            'name': activity.name,
+            'definition': activity.definition,
+        }
+    )
+    .then(r => r.json())
+    .then(data => {
+        NotificationsManager.success("Activity saved");
+        cb && cb(data);
+    })
+    .catch(error => {
+        NotificationsManager.error("Failed to save activity", error.message);
+    });
+}
+
 function fetchConfiguration(onSuccess) {
     fetch_get('/api/v01/system/configuration')
         .then(data => onSuccess(data.content))
         .catch(console.error);
 }
 
-export default class ActivityEditor extends Component {
+export default function ActivityEditor_(props) {
+    const [activities, setActivities] = useState([]);
+    const [entities, setEntities] = useState([]);
+    const [cells, setCells] = useState([]);
+    const [configuration, setConfiguration] = useState({});
+    const [currentActivity, setCurrentActivity] = useState(null);
+    const [newActivity, setNewActivity] = useState(true);
+
+    useEffect(() => {
+        fetchActivities(setActivities);
+        fetchConfiguration(setConfiguration);
+        fetchCells(setCells);
+        fetchEntities((setEntities));
+    }, []);
+
+    const editor = useRef(null);
+    const toolbar = useRef(null);
+    const title = useRef(null);
+
+    useEffect(() => {
+        // (container, handlers, placeholders, props)
+        draw_editor(
+            ReactDOM.findDOMNode(editor.current),
+            newActivity?NEW_ACTIVITY:currentActivity,
+            {
+                get: fetchActivity,
+                onSave: (activity, onSuccess) => saveActivity(
+                    activity,
+                    p => {
+                        onSuccess(p);
+                        fetchActivities(setActivities);
+                        activity.id=p.id;
+                        setCurrentActivity(activity);
+                        setNewActivity(false);
+                    }
+                ),
+                onDelete: () => deleteActivity(currentActivity.id, () => {setNewActivity(true); fetchActivities(setActivities); }),
+            },
+            {
+                toolbar: ReactDOM.findDOMNode(toolbar.current),
+                title: ReactDOM.findDOMNode(title.current),
+            },
+            {
+                configuration: configuration,
+                cells: cells,
+                entities: entities,
+            }
+        )
+    }, [editor, toolbar, title, currentActivity, newActivity, cells, entities]);
+
+    return (
+        <>
+            <Breadcrumb>
+                <Breadcrumb.Item active><FormattedMessage id="orchestration" defaultMessage="Orchestration"/></Breadcrumb.Item>
+                <Breadcrumb.Item active><FormattedMessage id="activity-editor" defaultMessage="Activity editor"/></Breadcrumb.Item>
+            </Breadcrumb>
+            <Row>
+                <Col sm={2}>
+                    <FormControl componentClass="input" placeholder="Name" ref={title}/>
+                </Col>
+                <Col smOffset={2}>
+                    <div ref={toolbar} />
+                </Col>
+            </Row>
+            <hr />
+            <Row>
+                <Col sm={2}>
+                    <Nav bsSize="small" bsStyle="pills" stacked>
+                        <NavItem onClick={() => setNewActivity(true)}>+ New</NavItem>
+                        {
+                            activities
+                                .sort((a, b) => {
+                                    if(a.name > b.name) return 1;
+                                    if(a.name < b.name) return -1;
+                                    return 0;
+                                })
+                                .map(a => (
+                                    <NavItem key={a.name} onClick={() => {
+                                        setCurrentActivity(a);
+                                        setNewActivity(false);
+                                    }}>
+                                        {a.name}
+                                    </NavItem>
+                                )
+                            )
+                        }
+                    </Nav>
+                </Col>
+
+                <Col sm={10}>
+                    <div ref={editor} style={{overflow: 'hidden', backgroundImage: `url(${GridPic})`}} />
+                </Col>
+            </Row>
+
+        </>
+    );
+}
+/*
+export  class ActivityEditor extends Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -222,3 +358,4 @@ export default class ActivityEditor extends Component {
         );
     }
 }
+*/

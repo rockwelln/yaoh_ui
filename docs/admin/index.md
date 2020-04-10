@@ -13,7 +13,7 @@ This documentation is intended for users with admin privileges and technical kno
 * [Architecture](./architecture.html)
 * [Installation](./installation.html)
 * [Configuration](./configuration.html)
-* [Orchestration](./orchstration.html)
+* [Orchestration editor](./editor/index.html)
 * [Bulk](./bulk.html)
 * [Gateways](./gateways.html)
 * [Maintenance & Backup](./maintenance_and_backup.html)

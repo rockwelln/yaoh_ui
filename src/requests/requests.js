@@ -98,17 +98,20 @@ class TransactionFlow extends Component {
         this._refreshGrid = this._refreshGrid.bind(this);
     }
 
-    _renderGrid(getActivity) {
-        const node = ReactDOM.findDOMNode(this.flowGraphRef.current);
-        const toolbarNode = ReactDOM.findDOMNode(this.toolbarRef.current);
-        draw_editor(node, {
-            get: getActivity
-        }, {
-            toolbar: toolbarNode,
-        }, {
-            readOnly: true,
-            height: 300,
-        });
+    _renderGrid() {
+        const {definition, states} = this.props;
+        draw_editor(
+            ReactDOM.findDOMNode(this.flowGraphRef.current),
+            {definition: workableDefinition(JSON.parse(definition), states)},
+            {},
+            {
+                toolbar: ReactDOM.findDOMNode(this.toolbarRef.current),
+            },
+            {
+                readOnly: true,
+                height: 300,
+            }
+        );
     }
 
     _refreshGrid(force) {
@@ -116,11 +119,7 @@ class TransactionFlow extends Component {
         if(!width) return;
         if(width !== this.state.eltWidth || force) {
             this.setState({eltWidth: width});
-
-            const {definition, states} = this.props;
-            width !== 0 && this._renderGrid(
-                cb => cb({definition: workableDefinition(JSON.parse(definition), states)})
-            );
+            width !== 0 && this._renderGrid();
         }
     }
 
