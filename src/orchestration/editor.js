@@ -82,7 +82,7 @@ function min_cell_height(cell, name) {
 }
 
 
-function getDefinition(editor, title) {
+export function getDefinition(editor, title) {
     let model = editor.graph.getModel();
     console.log(model.cells);
     let activity = Object.assign({}, editor.graph.getDefaultParent().originalActivity);
@@ -165,6 +165,30 @@ function downloadDefinition(editor, title) {
 }
 
 
+function debugActivity(editor, title, debugHandler) {
+    const r = getDefinition(editor, title);
+    if(!r.hasAStart) {
+        alert("the workflow need a `start`");
+        return;
+    }
+
+    Object.keys(r.activity.definition.cells).map(c => delete r.activity.definition.cells[c].name);
+
+    // prepare a body??
+    const body = '{"body": "hello, world"}';
+
+    debugHandler(r.activity, body, resp => {
+        // what is expected here ?????
+        // resp.errors
+        // resp.tasks
+        // resp.events
+        // resp.callbacks
+        // resp.sub_instances (with labels)
+        // resp.context (final one)
+    });
+}
+
+
 function new_editor() {
     let editor = new mxEditor();
     let graph = editor.graph;
@@ -224,6 +248,7 @@ function setup_toolbar(editor, container, spacer, handlers, props) {
     }
     if(onSave !== undefined) {
         addToolbarButton(editor, container, 'delete', '✘', null, false, null, 'delete an element');
+        addToolbarButton(editor, container, 'debug', '🐛');
         container.appendChild(spacer.cloneNode(true));
         addToolbarButton(editor, container, 'undo', '⤾');
         addToolbarButton(editor, container, 'redo', '⤿');
@@ -264,6 +289,7 @@ function setup_actions(editor, title, spacer, handlers, modal, props, updateMode
     editor.addAction('add_process', (editor, cell) => {
         newCell(props.cells, editor.graph.getModel().cells, modal, editor, spacer, props.entities, props);
     });
+    editor.addAction('debug', (editor, cell) => debugActivity(editor, title.value, handlers.onDebug));
     editor.addAction('download_definition', editor => downloadDefinition(editor, title.value));
     editor.addAction('upload_definition', (editor, cell) => {
         if (typeof window.FileReader !== 'function') {
@@ -574,6 +600,7 @@ export default function draw_editor(container, activity, handlers, placeholders,
         console.log('new activity');
         updateModel(activity);
     }
+    return editor;
 }
 
 /**
