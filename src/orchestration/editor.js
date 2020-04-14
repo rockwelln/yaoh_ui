@@ -866,6 +866,10 @@ function createInput(param, value, cells, cells_defs, config) {
         case 'session_holder':
             input = document.createElement('select');
             input.className = 'form-control';
+            const opt = document.createElement('option');
+            opt.value = "";
+            opt.innerText = "";
+            input.appendChild(opt);
             config && config.gateways && Object.keys(config.gateways)
                 .filter(c => config.gateways[c].session_holder !== undefined)
                 .map(c => config.gateways[c].session_holder)
