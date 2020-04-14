@@ -1,17 +1,27 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
+import {Redirect} from "react-router";
 import draw_editor from "./editor";
 import {fetch_post, fetch_get, fetch_delete, fetch_put, NotificationsManager} from "../utils";
 
-import Nav from 'react-bootstrap/lib/Nav';
-import NavItem from 'react-bootstrap/lib/NavItem';
 import Col from 'react-bootstrap/lib/Col';
 import Row from 'react-bootstrap/lib/Row';
+import Table from 'react-bootstrap/lib/Table';
+import Button from 'react-bootstrap/lib/Button';
 import FormControl from 'react-bootstrap/lib/FormControl';
 
 import GridPic from "./grid.gif";
 import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
 import {FormattedMessage} from "react-intl";
+import Glyphicon from "react-bootstrap/lib/Glyphicon";
+import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
+import {LinkContainer} from "react-router-bootstrap";
+import Panel from "react-bootstrap/lib/Panel";
+import Modal from "react-bootstrap/lib/Modal";
+import Form from "react-bootstrap/lib/Form";
+import FormGroup from "react-bootstrap/lib/FormGroup";
+import ControlLabel from "react-bootstrap/lib/ControlLabel";
+import update from "immutability-helper";
 
 
 const NEW_ACTIVITY = {
@@ -56,7 +66,7 @@ function deleteActivity(activityId, cb) {
             NotificationsManager.success("Activity deleted");
         })
         .catch(error => {
-            NotificationsManager.error("Failed to save activity", error.message);
+            NotificationsManager.error("Failed to delete activity", error.message);
         });
 }
 
@@ -86,8 +96,135 @@ function fetchConfiguration(onSuccess) {
         .catch(console.error);
 }
 
-export default function ActivityEditor_(props) {
+function NewActivity(props) {
+    const {show, onClose} = props;
+    const [newActivity, setNewActivity] = useState(NEW_ACTIVITY);
+    const [redirect, setRedirect] = useState(null);
+
+    return (
+        <Modal show={show} onHide={onClose} backdrop={false} bsSize="large">
+            <Modal.Header closeButton>
+                <Modal.Title><FormattedMessage id="new-activity" defaultMessage="New activity" /></Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <Form horizontal>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="name" defaultMessage="Name" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="input"
+                                value={newActivity.name}
+                                onChange={e => setNewActivity(update(newActivity, {$merge: {name: e.target.value}}))}/>
+                        </Col>
+                    </FormGroup>
+                    <FormGroup>
+                        <Col smOffset={2} sm={10}>
+                            <ButtonToolbar>
+                                <Button
+                                    type="submit"
+                                    onClick={e => {
+                                        e.preventDefault();
+                                        saveActivity(newActivity, a => setRedirect(a.id));
+                                    }}
+                                    disabled={!newActivity.name || newActivity.name.length === 0}
+                                    bsStyle="primary">
+                                    <FormattedMessage id="create" defaultMessage="Create" />
+                                </Button>
+                                <Button onClick={onClose}>
+                                    <FormattedMessage id="cancel" defaultMessage="Cancel" />
+                                </Button>
+                            </ButtonToolbar>
+                            {
+                                redirect && <Redirect to={`/transactions/config/activities/editor/${redirect}`}/>
+                            }
+                        </Col>
+                    </FormGroup>
+                </Form>
+            </Modal.Body>
+        </Modal>
+    )
+}
+
+export function Activities(props) {
     const [activities, setActivities] = useState([]);
+    const [showNew, setShowNew] = useState(false);
+
+    useEffect(() => {
+        fetchActivities(setActivities);
+    }, []);
+
+    return (
+        <>
+            <Breadcrumb>
+                <Breadcrumb.Item active><FormattedMessage id="orchestration" defaultMessage="Orchestration"/></Breadcrumb.Item>
+                <Breadcrumb.Item active><FormattedMessage id="activity-editor" defaultMessage="Activities"/></Breadcrumb.Item>
+            </Breadcrumb>
+
+            <Panel>
+                <Panel.Body>
+                    <Table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Status</th>
+                                <th>Created on</th>
+                                <th/>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {
+                            activities
+                                .sort((a, b) => a.name.localeCompare(b.name))
+                                .map(a => (
+                                    <tr key={a.id}>
+                                        <td>{a.name}</td>
+                                        <td>{a.status}</td>
+                                        <td>{a.created_on}</td>
+
+                                        <td>
+                                            <ButtonToolbar>
+                                                <LinkContainer to={`/transactions/config/activities/editor/${a.id}`}>
+                                                    <Button bsStyle="primary"
+                                                            style={{marginLeft: '5px', marginRight: '5px'}}>
+                                                        <Glyphicon glyph="pencil"/>
+                                                    </Button>
+                                                </LinkContainer>
+                                                <Button onClick={() => deleteActivity(a.id, () => fetchActivities(setActivities))} bsStyle="danger"
+                                                        style={{marginLeft: '5px', marginRight: '5px'}}>
+                                                    <Glyphicon glyph="remove-sign"/>
+                                                </Button>
+                                            </ButtonToolbar>
+                                        </td>
+                                    </tr>
+                                )
+                            )
+                        }
+                        </tbody>
+                    </Table>
+                </Panel.Body>
+            </Panel>
+
+            <Panel>
+                <Panel.Body>
+                    <ButtonToolbar>
+                        <Button bsStyle='primary' onClick={() => setShowNew(true)}>
+                            <FormattedMessage id="new" defaultMessage="New" />
+                        </Button>
+                    </ButtonToolbar>
+                    <NewActivity
+                        show={showNew}
+                        onClose={() => {setShowNew(false);}}
+                         />
+                </Panel.Body>
+            </Panel>
+        </>
+    )
+}
+
+export function ActivityEditor(props) {
     const [entities, setEntities] = useState([]);
     const [cells, setCells] = useState([]);
     const [configuration, setConfiguration] = useState({});
@@ -95,7 +232,6 @@ export default function ActivityEditor_(props) {
     const [newActivity, setNewActivity] = useState(true);
 
     useEffect(() => {
-        fetchActivities(setActivities);
         fetchConfiguration(setConfiguration);
         fetchCells(setCells);
         fetchEntities((setEntities));
@@ -116,13 +252,12 @@ export default function ActivityEditor_(props) {
                     activity,
                     p => {
                         onSuccess(p);
-                        fetchActivities(setActivities);
                         activity.id=p.id;
                         setCurrentActivity(activity);
                         setNewActivity(false);
                     }
                 ),
-                onDelete: () => deleteActivity(currentActivity.id, () => {setNewActivity(true); fetchActivities(setActivities); }),
+                // onDelete: () => deleteActivity(currentActivity.id, () => setNewActivity(true)),
             },
             {
                 toolbar: ReactDOM.findDOMNode(toolbar.current),
@@ -136,11 +271,26 @@ export default function ActivityEditor_(props) {
         )
     }, [editor, toolbar, title, currentActivity, newActivity, cells, entities]);
 
+    useEffect(() => {
+        if(props.match.params.activityId) {
+            fetchActivity(
+                props.match.params.activityId,
+                activity => {
+                    setCurrentActivity(activity);
+                    setNewActivity(false);
+                }
+            );
+        }
+    }, [props.match.params.activityId]);
+
     return (
         <>
             <Breadcrumb>
                 <Breadcrumb.Item active><FormattedMessage id="orchestration" defaultMessage="Orchestration"/></Breadcrumb.Item>
-                <Breadcrumb.Item active><FormattedMessage id="activity-editor" defaultMessage="Activity editor"/></Breadcrumb.Item>
+                <LinkContainer to={`/transactions/config/activities/editor`}>
+                    <Breadcrumb.Item><FormattedMessage id="activity-editor" defaultMessage="Activities"/></Breadcrumb.Item>
+                </LinkContainer>
+                <Breadcrumb.Item active>{(currentActivity && currentActivity.name) || props.match.params.activityId}</Breadcrumb.Item>
             </Breadcrumb>
             <Row>
                 <Col sm={2}>
@@ -152,30 +302,7 @@ export default function ActivityEditor_(props) {
             </Row>
             <hr />
             <Row>
-                <Col sm={2}>
-                    <Nav bsSize="small" bsStyle="pills" stacked>
-                        <NavItem onClick={() => setNewActivity(true)}>+ New</NavItem>
-                        {
-                            activities
-                                .sort((a, b) => {
-                                    if(a.name > b.name) return 1;
-                                    if(a.name < b.name) return -1;
-                                    return 0;
-                                })
-                                .map(a => (
-                                    <NavItem key={a.name} onClick={() => {
-                                        setCurrentActivity(a);
-                                        setNewActivity(false);
-                                    }}>
-                                        {a.name}
-                                    </NavItem>
-                                )
-                            )
-                        }
-                    </Nav>
-                </Col>
-
-                <Col sm={10}>
+                <Col>
                     <div ref={editor} style={{overflow: 'hidden', backgroundImage: `url(${GridPic})`}} />
                 </Col>
             </Row>
