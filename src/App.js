@@ -17,7 +17,6 @@ import Glyphicon from 'react-bootstrap/lib/Glyphicon';
 import Row from 'react-bootstrap/lib/Row';
 import Nav from 'react-bootstrap/lib/Nav';
 import Navbar from 'react-bootstrap/lib/Navbar';
-import NavItem from 'react-bootstrap/lib/NavItem';
 import NavDropdown from 'react-bootstrap/lib/NavDropdown';
 import MenuItem from 'react-bootstrap/lib/MenuItem';
 import ButtonToolbar from 'react-bootstrap/lib/ButtonToolbar';
@@ -37,7 +36,7 @@ import {BulkActions} from "./system/bulk_actions";
 import {NdgHistory} from "./requests/ndg_history";
 import UserManagement, {LocalUserProfile} from './system/user_mgm';
 import {StartupEvents} from './orchestration/startup_events';
-import ActivityEditor from './orchestration/activity-editor';
+import {Activities, ActivityEditor} from './orchestration/activity-editor';
 import CronTimers from './orchestration/cron_timers';
 import {ConfigManagement} from './settings/configuration';
 import {Reporting} from "./settings/reporting.jsx";
@@ -760,7 +759,14 @@ class App extends Component {
                         <Route path="/transactions/config/activities/editor"
                                component={props => (
                                    isAllowed(ui_profile, pages.requests_workflow_editor) ?
-                                       <ActivityEditor auth_token={auth_token} /> :
+                                       <Activities /> :
+                                       <NotAllowed/>
+                               )}
+                               exact />
+                        <Route path="/transactions/config/activities/editor/:activityId"
+                               component={props => (
+                                   isAllowed(ui_profile, pages.requests_workflow_editor) ?
+                                       <ActivityEditor {...props} /> :
                                        <NotAllowed/>
                                )}
                                exact />
