@@ -1,4 +1,5 @@
 import Ajv from "ajv";
+import {fetchRoles} from "../system/user_roles";
 
 const okPic = require("../images/ok.png");
 const errPic = require("../images/error.png");
@@ -831,6 +832,15 @@ function isValid(p, v) {
         default:
             break;
     }
+    if(p.schema) {
+        console.log(v);
+        const ajv = Ajv();
+        const v_ = ajv.validate(p.schema, p.nature === "outputs"?v.split(","):v);
+        if(!v_) {
+            alert(`Invalid ${p.name}: ${ajv.errors}`);
+        }
+        return v_;
+    }
     return true;
 }
 
@@ -909,6 +919,21 @@ function createInput(param, value, cells, cells_defs, config) {
                 .forEach(o => input.appendChild(o));
             input.value = value || "";
             break;
+        case 'user_role':
+            input = document.createElement('select');
+            input.className = 'form-control';
+            fetchRoles(roles => {
+                roles
+                .map(v => {
+                    const opt = document.createElement('option');
+                    opt.value = v.id;
+                    opt.innerText = v.name;
+                    return opt;
+                })
+                .forEach(o => input.appendChild(o))
+            });
+            input.value = value || "";
+            break;
         case 'timer':
             input = document.createElement('select');
             input.className = 'form-control';
@@ -959,6 +984,65 @@ function createInput(param, value, cells, cells_defs, config) {
                 return opt;
             }).forEach(o => input.appendChild(o));
             input.value = value;
+            break;
+        case 'outputs':
+            input = document.createElement('ul');
+            value && value.split(",").map(
+                v => {
+                    const li = document.createElement('li');
+
+                    const spanText = document.createElement("span");
+                    spanText.innerText = v;
+                    li.appendChild(spanText);
+
+                    const spanDelete = document.createElement("span");
+                    spanDelete.setAttribute("class", "delete");
+                    spanDelete.innerHTML = "&nbsp;&#10007;&nbsp;";
+                    spanDelete.onclick = e => {
+                        const pe = e.target.parentElement;
+                        input.removeChild(pe);
+                        input.value = Array.from(input.childNodes).map(n => n.childNodes[0].innerText).filter(o => o.length !== 0).join(",");
+                    };
+
+                    li.appendChild(spanDelete);
+                    return li;
+                }
+            ).map(n => input.appendChild(n));
+            const li = document.createElement('li');
+            const inputText = document.createElement('input');
+            inputText.type = 'text';
+            li.appendChild(inputText);
+
+            const spanAdd = document.createElement("span");
+            spanAdd.setAttribute("class", "add");
+            spanAdd.innerHTML = "&nbsp;+&nbsp;";
+            spanAdd.onclick = e => {
+                const newNode = document.createElement('li');
+
+                const spanText = document.createElement("span");
+                spanText.innerText = inputText.value;
+                newNode.appendChild(spanText);
+
+                const spanDelete = document.createElement("span");
+                // spanDelete.setAttribute("id", i);
+                spanDelete.setAttribute("class", "delete");
+                spanDelete.innerHTML = "&nbsp;&#10007;&nbsp;";
+                spanDelete.onclick = e => {
+                    const pe = e.target.parentElement;
+                    input.removeChild(pe);
+                    input.value = Array.from(input.childNodes).map(n => n.childNodes[0].innerText).filter(o => o.length !== 0).join(",");
+                };
+
+                newNode.appendChild(spanDelete);
+
+                inputText.value = "";
+                input.insertBefore(newNode, input.lastChild);
+                input.value = Array.from(input.childNodes).map(n => n.childNodes[0].innerText).filter(o => o.length !== 0).join(",");
+            };
+            li.appendChild(spanAdd);
+
+            input.value = value;
+            input.appendChild(li);
             break;
         default:
             input = document.createElement('input');
@@ -1137,6 +1221,14 @@ function newCell(defs, cells, modal, editor, spacer, entities_defs, props) {
             return;
         }
 
+        if(c.params) {
+            const p = c.params.find(p => p.nature === "outputs")
+            if(p) {
+                const p_value = paramsFields[p.name || p].value;
+                c.outputs = p_value ? p_value.split(",") : c.outputs;
+            }
+        }
+
         let graph = editor.graph;
         let parent = graph.getDefaultParent();
         graph.getModel().beginUpdate();
@@ -1282,6 +1374,7 @@ function editCellProperty(cell, modal, spacer, editable, cells_defs, cells, refr
         if (cell_def && cell_def.outputs) {
             outputs = outputs.concat(cell_def.outputs.filter(o => visible_outputs.findIndex(vo => vo === o) === -1));
         }
+        const custom_outputs = cell_def && cell_def.params.find(p => p.nature === "outputs");
         outputs.map(o => {
             const entry = document.createElement('li');
             entry.draggable = true;
@@ -1304,7 +1397,7 @@ function editCellProperty(cell, modal, spacer, editable, cells_defs, cells, refr
             visibility.id = o + '_visible';
             visibility.checked = visible_outputs.findIndex(vo => vo === o) !== -1;
             visibility.style.margin = '.4em';
-            visibility.disabled = transitions.filter(t => t[0] === o).length !== 0;
+            visibility.disabled = transitions.filter(t => t[0] === o).length !== 0 || custom_outputs;
             entry.appendChild(visibility);
             const label = document.createElement('label');
             label.innerText = o;
@@ -1342,7 +1435,18 @@ function editCellProperty(cell, modal, spacer, editable, cells_defs, cells, refr
                 cell.setAttribute('attrList', params.map(p => p.name || p).join(','))
             }
             if(cell.getAttribute('outputs') || (cell_def && cell_def.outputs)) {
-                const outputs = Array.from(list_.childNodes).filter(c => c.childNodes[0].checked).map(c => c.childNodes[1].innerText).join(',');
+                let outputs = [];
+
+                const cell_outputs = cell_def && cell_def.params.find(p => p.nature === "outputs");
+                if(cell_outputs) {
+                    outputs = cell_def
+                        .outputs
+                        .concat(cell.getAttribute(cell_outputs.name).split(","))
+                        .reduce((u, i) => u.includes(i) ? u : [...u, i], [])
+                        .join(",");
+                } else {
+                    outputs = Array.from(list_.childNodes).filter(c => c.childNodes[0].checked).map(c => c.childNodes[1].innerText).join(',');
+                }
                 if(outputs !== cell.getAttribute('outputs')) {
                     cell.setAttribute('outputs', outputs);
                     refresh_cb && setTimeout(refresh_cb, 50);
