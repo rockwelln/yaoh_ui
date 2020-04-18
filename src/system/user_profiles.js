@@ -1,4 +1,5 @@
 import React, {useState, useEffect} from 'react';
+import {LinkContainer} from 'react-router-bootstrap';
 import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
 import {FormattedMessage} from "react-intl";
 import {Panel} from "react-bootstrap";
@@ -400,7 +401,9 @@ export default function UserProfiles() {
         <div>
             <Breadcrumb>
                 <Breadcrumb.Item active><FormattedMessage id="system" defaultMessage="System"/></Breadcrumb.Item>
-                <Breadcrumb.Item active><FormattedMessage id="users" defaultMessage="Users"/></Breadcrumb.Item>
+                <LinkContainer to={"/system/users"}>
+                    <Breadcrumb.Item><FormattedMessage id="users" defaultMessage="Users"/></Breadcrumb.Item>
+                </LinkContainer>
                 <Breadcrumb.Item active><FormattedMessage id="profiles" defaultMessage="Profiles"/></Breadcrumb.Item>
             </Breadcrumb>
 
