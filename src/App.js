@@ -71,6 +71,7 @@ import {ListProvisioningGateways, provisioningRoutes} from "./provisioning";
 import LogsManagement from "./system/logs";
 import UserProfiles from "./system/user_profiles";
 import Templates from "./system/templates";
+import {UserRoles} from "./system/user_roles";
 
 const ListItemLink = ({to, children}) => (
     <Route path={to} children={({match}) => (
@@ -832,6 +833,13 @@ class App extends Component {
                                component={props => (
                                    isAllowed(ui_profile, pages.system_users) ?
                                        <UserProfiles />:
+                                       <NotAllowed />
+                               )}
+                               exact />
+                        <Route path="/system/users/roles"
+                               component={props => (
+                                   isAllowed(ui_profile, pages.system_users) ?
+                                       <UserRoles />:
                                        <NotAllowed />
                                )}
                                exact />

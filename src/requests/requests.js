@@ -42,6 +42,7 @@ import update from 'immutability-helper';
 import {StaticControl} from "../utils/common";
 import {access_levels, isAllowed, modules, pages} from "../utils/user";
 import {TimerActions} from "./timers";
+import {fetchRoles} from "../system/user_roles";
 
 export const DATE_FORMAT = 'DD/MM/YYYY HH:mm:ss';
 const SUB_REQUESTS_PAGE_SIZE = 25;
@@ -580,6 +581,56 @@ function ExternalCallback(props) {
     )
 }
 
+function triggerManualAction(transactionId, actionId, output, onSuccess) {
+    fetch_post(`/api/v01/transactions/${transactionId}/manual_actions/${actionId}`, {"output": output})
+        .then(() => onSuccess())
+        .catch(error => NotificationsManager.error("Failed to trigger the action", error.message))
+}
+
+function ManualActions(props) {
+    const {actions, tasks} = props;
+    const [roles, setRoles] = useState([]);
+
+    useEffect(() => {
+        fetchRoles(setRoles);
+    }, []);
+
+    return (
+        <Table condensed>
+            <thead>
+                <tr>
+                    <th>id</th>
+                    <th>role</th>
+                    <th>task</th>
+                    <th>answer</th>
+                    <th>description</th>
+                </tr>
+            </thead>
+            <tbody>
+            {
+                actions.sort(
+                    (a, b) => a.id - b.id
+                ).map(
+                    (a, i) => {
+                        const task = ((tasks && tasks.find(t => t.id === a.created_by_task_id)) || {}).cell_id;
+                        const role = ((roles && roles.find(r => r.id === a.role_id)) || {}).name;
+                        return (
+                            <tr key={i}>
+                                <td>{a.id}</td>
+                                <td>{role || "?"}</td>
+                                <td>{task || "?"}</td>
+                                <td>{a.output || "waiting"}</td>
+                                <td>{a.description}</td>
+                            </tr>
+                        );
+                    }
+                )
+            }
+            </tbody>
+        </Table>
+    )
+}
+
 const ExternalCallbacks = ({callbacks, tasks}) => (
     <Table condensed>
         <thead>
@@ -594,11 +645,7 @@ const ExternalCallbacks = ({callbacks, tasks}) => (
         <tbody>
         {
             callbacks.sort(
-                (a, b) => {
-                    if(a.callback_id < b.callback_id) return -1;
-                    if(a.callback_id > b.callback_id) return 1;
-                    return 0;
-                }
+                (a, b) => a.callback_id - b.callback_id
             ).map(
                 (e, i) => <ExternalCallback key={`ext_cb_${i}`} entry={e} p={i} tasks={tasks} />
             )
@@ -1139,6 +1186,7 @@ export class Transaction extends Component {
             subrequests_paging_info: {page_number: 1, page_size: SUB_REQUESTS_PAGE_SIZE},
             subrequestsFilter: "all",
             externalCallbacks: [],
+            manualActions: [],
             logs: [],
             events: [],
             timers: [],
@@ -1194,6 +1242,10 @@ export class Transaction extends Component {
 
         fetch_get(`/api/v01/apio/transactions/${this.props.match.params.txId}/callbacks`)
             .then(data => !this.cancelLoad && this.setState({externalCallbacks: data.callbacks}))
+            .catch(error => !this.cancelLoad && this.setState({error: error}));
+
+        fetch_get(`/api/v01/transactions/${this.props.match.params.txId}/manual_actions`)
+            .then(data => !this.cancelLoad && this.setState({manualActions: data.manual_actions}))
             .catch(error => !this.cancelLoad && this.setState({error: error}));
 
         fetch_get(`/api/v01/transactions/${this.props.match.params.txId}/timers`)
@@ -1279,6 +1331,10 @@ export class Transaction extends Component {
                     .then(data => !this.cancelLoad && this.setState({externalCallbacks: data.callbacks}))
                     .catch(console.error);
 
+                fetch_get(`/api/v01/transactions/${txId}/manual_actions`)
+                    .then(data => !this.cancelLoad && this.setState({manualActions: data.manual_actions}))
+                    .catch(console.error);
+
                 if(this.state.messageShown) {
                     this.refreshMessages();
                 }
@@ -1326,6 +1382,7 @@ export class Transaction extends Component {
                 logs: [],
                 events: [],
                 externalCallbacks: [],
+                manualActions: [],
                 messages: [],
                 subrequests: [],
                 subrequests_paging_info: {page_number: 1, page_size: SUB_REQUESTS_PAGE_SIZE},
@@ -1566,6 +1623,7 @@ export class Transaction extends Component {
             messageShown,
             subrequests_pagination,
             externalCallbacks,
+            manualActions,
             timers,
             subrequestsFilter,
         } = this.state;
@@ -1581,6 +1639,26 @@ export class Transaction extends Component {
                     <p>{error.message || error}</p>
                 </Alert>
             );
+        }
+        if(tx && tx.status === 'ACTIVE' && manualActions.length !== 0) {
+            manualActions
+                .filter(a => !a.output && user_info.roles.find(ur => ur.id === a.role_id))
+                .map(a => alerts.push(
+                    <Alert bsStyle="warning" key={`request-action-${a.id}`}>
+                        Action required for {user_info.roles.find(ur => ur.id === a.role_id).name}<br/>
+                        {a.description} <br/>
+                        <ButtonToolbar>
+                            {
+                            a.possible_outputs.split(",").map(o => (
+                                <Button
+                                    onClick={() => triggerManualAction(tx.id, a.id, o, () => this.fetchTxDetails(false))}>
+                                    {o}
+                                </Button>
+                            ))
+                            }
+                        </ButtonToolbar>
+                    </Alert>
+                ))
         }
         if(request && request.status === 'ERROR') {
             alerts.push(
@@ -1798,6 +1876,18 @@ export class Transaction extends Component {
                                     </Panel.Heading>
                                     <Panel.Body collapsible>
                                         <ExternalCallbacks callbacks={externalCallbacks} tasks={tx.tasks} />
+                                    </Panel.Body>
+                                </Panel>
+                            )
+                        }
+                        {
+                            manualActions.length !== 0 && (
+                                <Panel defaultExpanded={false}>
+                                    <Panel.Heading>
+                                        <Panel.Title toggle><FormattedMessage id="manual-actions" defaultMessage="Manual actions" /></Panel.Title>
+                                    </Panel.Heading>
+                                    <Panel.Body collapsible>
+                                        <ManualActions actions={manualActions} tasks={tx.tasks}/>
                                     </Panel.Body>
                                 </Panel>
                             )

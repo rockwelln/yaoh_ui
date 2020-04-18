@@ -16,6 +16,7 @@ import ControlLabel from 'react-bootstrap/lib/ControlLabel';
 import Breadcrumb from 'react-bootstrap/lib/Breadcrumb';
 import Tab from 'react-bootstrap/lib/Tab';
 import Tabs from 'react-bootstrap/lib/Tabs';
+import Table from 'react-bootstrap/lib/Table';
 
 import {FormattedMessage} from 'react-intl';
 
@@ -102,6 +103,19 @@ function createUser(data, onSuccess) {
 }
 
 
+function assignRole(userId, roleId, onSuccess) {
+    fetch_post(`/api/v01/system/users/${userId}/roles/${roleId}`)
+        .then(() => onSuccess())
+        .catch(error => NotificationsManager.error(<FormattedMessage id="assignation-failed" defaultMessage="Assignation failed" />, error.message))
+}
+
+
+function deassignRole(userId, roleId, onSuccess) {
+    fetch_delete(`/api/v01/system/users/${userId}/roles/${roleId}`)
+        .then(() => onSuccess())
+        .catch(error => NotificationsManager.error(<FormattedMessage id="deassignation-failed" defaultMessage="De-assignation failed" />, error.message))
+}
+
 // React components
 
 export function LocalUserProfile(props) {
@@ -130,7 +144,7 @@ export function LocalUserProfile(props) {
     return (
         <Panel>
             <Panel.Heading>
-                <Panel.Title><FormattedMessage id="user-profile" defaultMessage="User Profile" /> {user_info.username} </Panel.Title>
+                <Panel.Title><FormattedMessage id="user" defaultMessage="User" /> {user_info.username} </Panel.Title>
             </Panel.Heading>
             <Panel.Body>
                 <Tabs defaultActiveKey={1} id="local-user-tabs">
@@ -168,6 +182,32 @@ export function LocalUserProfile(props) {
                                 </FormControl>
                             </Col>
                         </FormGroup>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="roles" defaultMessage="Roles" />
+                            </Col>
+
+                            <Col sm={9}>
+                                <Table>
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Assignation time</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    {
+                                        user_info.roles && user_info.roles.sort((a, b) => a.id - b.id).map(
+                                            r => <tr key={r.id}>
+                                                <td>r.name</td>
+                                                <td>r.created_on</td>
+                                            </tr>
+                                        )
+                                    }
+                                    </tbody>
+                                </Table>
+                            </Col>
+                        </FormGroup>
                         <FormGroup validationState={validPassword}>
                             <Col componentClass={ControlLabel} sm={2}>
                                 <FormattedMessage id="password" defaultMessage="Password" />
@@ -198,6 +238,9 @@ export function LocalUserProfile(props) {
                                     onChange={(e) => setConfirmPassword(e.target.value)} />
                             </Col>
                         </FormGroup>
+                        <StaticControl
+                            label={<FormattedMessage id='token' defaultMessage='Token' />}
+                            value={user_info.token} />
                         <FormGroup>
                             <Col smOffset={2} sm={9}>
                                 <Button bsStyle="primary" onClick={() => updateLocalUser(delta, props.onUserInfoChanged)} disabled={!validForm}>
@@ -218,19 +261,26 @@ export function LocalUserProfile(props) {
 
 
 function UpdateUser(props) {
-    const [user, setUser] = useState({});
+    const {show, user, onClose} = props;
+
+    const [fullUser, setFullUser] = useState({});
     const [diffUser, setDiffUser] = useState({});
     const [profiles, setProfiles] = useState([]);
+    const [roles, setRoles] = useState([]);
     useEffect(() => {
-        props.show && fetch_get(`/api/v01/system/users/${props.user.id}`)
-            .then(user => setUser(user))
-            .catch(console.error)
-    }, [props.user.id, props.show]);
+        show ? fetch_get(`/api/v01/system/users/${user.id}`)
+            .then(user => setFullUser(user))
+            .catch(console.error) : setFullUser({})
+    }, [user.id, show]);
+
     useEffect(() => {
-        props.show && fetch_get("/api/v01/system/user_profiles")
-            .then(data => setProfiles(data.profiles))
-    }, [props.show]);
-    const localUser = update(user, {$merge: diffUser});
+        show && fetch_get("/api/v01/system/user_profiles")
+            .then(data => setProfiles(data.profiles));
+        show && fetch_get("/api/v01/system/user_roles")
+            .then(data => setRoles(data.roles))
+    }, [show]);
+
+    const localUser = update(fullUser, {$merge: diffUser});
     const delta = {...diffUser};
     if(delta.hasOwnProperty("newPassword")) {
         if(delta.newPassword) {
@@ -239,12 +289,11 @@ function UpdateUser(props) {
         delete delta.newPassword;
         delete delta.confirmPassword;
     }
-    const onClose = () => props.onClose && props.onClose();
 
     // a valid username is at least 4 characters long
-    const validUsername = (localUser.username === user.username) ? null : (localUser.username.length >= 4) ? "success" : "error";
+    const validUsername = (localUser.username === fullUser.username) ? null : (localUser.username.length >= 4) ? "success" : "error";
     // email has to contain @
-    const validEmail = (localUser.email === user.email) ? null : (localUser.email.indexOf('@') !== -1) ? "success" : "error";
+    const validEmail = (localUser.email === fullUser.email) ? null : (localUser.email.indexOf('@') !== -1) ? "success" : "error";
     // a password is at least 8 characters long
     const validPassword = (diffUser.newPassword === '' || diffUser.newPassword === undefined) ? null : (diffUser.newPassword.length >= 7) ? "success" : "error";
     const validRepPassword = (diffUser.newPassword === '' || diffUser.newPassword === undefined) ? null : (diffUser.confirmPassword === diffUser.newPassword) ? "success" : "error";
@@ -252,7 +301,7 @@ function UpdateUser(props) {
     const validForm = validUsername !== 'error' && validEmail !== 'error' && validPassword !== 'error' && validRepPassword !== 'error' && Object.keys(delta).length !== 0;
 
     return (
-        <Modal show={props.show} onHide={onClose} backdrop={false} bsSize="large">
+        <Modal show={show} onHide={onClose} backdrop={false} bsSize="large">
             <Modal.Header closeButton>
                 <Modal.Title><FormattedMessage id="update-a-user" defaultMessage="Update a user" /></Modal.Title>
             </Modal.Header>
@@ -407,10 +456,10 @@ function UpdateUser(props) {
                                 <ButtonToolbar>
                                     {
                                         localUser.status === "REVOKED" ?
-                                            <Button onClick={() => revokeUser(props.user.id, true, onClose)} bsStyle="danger">
+                                            <Button onClick={() => revokeUser(user.id, true, onClose)} bsStyle="danger">
                                                 <FormattedMessage id="allow" defaultMessage="Allow again"/>
                                             </Button> :
-                                            <Button onClick={() => revokeUser(props.user.id, false, onClose)} bsStyle="danger">
+                                            <Button onClick={() => revokeUser(user.id, false, onClose)} bsStyle="danger">
                                                 <FormattedMessage id="revoke" defaultMessage="Revoke"/>
                                             </Button>
                                     }
@@ -423,7 +472,7 @@ function UpdateUser(props) {
                         <FormGroup>
                             <Col smOffset={2} sm={10}>
                                 <ButtonToolbar>
-                                    <Button onClick={() => updateUser(user.user_id, delta, onClose)} bsStyle="primary" disabled={!validForm}>
+                                    <Button onClick={() => updateUser(user.id, delta, onClose)} bsStyle="primary" disabled={!validForm}>
                                         <FormattedMessage id="update" defaultMessage="Update" />
                                     </Button>
                                     <Button onClick={onClose}>
@@ -435,7 +484,30 @@ function UpdateUser(props) {
                     </Form>
                     </Tab>
                     <Tab eventKey={2} title={<FormattedMessage id="callbacks" defaultMessage="Callbacks" />}>
-                        <CallbackHandler userId={props.user.id} />
+                        <CallbackHandler userId={user.id} />
+                    </Tab>
+                    <Tab eventKey={3} title={<FormattedMessage id="roles" defaultMessage="Roles" />}>
+                        <Form horizontal style={{paddingTop: 10}}>
+                            <FormGroup>
+                                <Col smOffset={1} sm={10}>
+                                    {
+                                        roles.sort((a, b) => a.name.localeCompare(b.name)).map(r => (
+                                            <Checkbox
+                                                key={r.id}
+                                                onChange={e => {
+                                                    e.target.checked?
+                                                        assignRole(user.id, r.id, () => setFullUser(update(fullUser, {roles: {$push: [{id: r.id}]}}))):
+                                                        deassignRole(user.id, r.id, () => setFullUser(update(fullUser, {roles: {$splice: [[fullUser.roles.findIndex(fur => fur.id === r.id), 1]]}})))
+                                                }}
+                                                checked={fullUser.roles && fullUser.roles.map(ur => ur.id).includes(r.id)}>
+                                                {r.name}
+                                                <HelpBlock>{r.description}</HelpBlock>
+                                            </Checkbox>
+                                        ))
+                                    }
+                                </Col>
+                            </FormGroup>
+                        </Form>
                     </Tab>
                 </Tabs>
             </Modal.Body>
@@ -710,7 +782,7 @@ export default class SearchUsers extends Search {
         const {resources, error, sorting_spec, pagination, filter_criteria, showNew} = this.state;
         const {user_info} = this.props;
         return (
-            <div>
+            <>
                 <Breadcrumb>
                     <Breadcrumb.Item active><FormattedMessage id="system" defaultMessage="System"/></Breadcrumb.Item>
                     <Breadcrumb.Item active><FormattedMessage id="users" defaultMessage="Users"/></Breadcrumb.Item>
@@ -765,6 +837,11 @@ export default class SearchUsers extends Search {
                                     <FormattedMessage id="profiles" defaultMessage="Profiles"/>
                                 </Button>
                             </LinkContainer>
+                            <LinkContainer to={"/system/users/roles"}>
+                                <Button bsStyle='primary'>
+                                    <FormattedMessage id="roles" defaultMessage="Roles"/>
+                                </Button>
+                            </LinkContainer>
                             <LinkContainer to={"/system/users/audit"}>
                                 <Button bsStyle='danger'>
                                     <FormattedMessage id="audit" defaultMessage="Audit"/>
@@ -777,7 +854,7 @@ export default class SearchUsers extends Search {
                             user_info={user_info} />
                     </Panel.Body>
                 </Panel>
-            </div>
+            </>
         )
     }
 }
