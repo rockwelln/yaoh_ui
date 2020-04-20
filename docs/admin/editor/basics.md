@@ -41,6 +41,17 @@ Every string evaluation methods (described hereunder) are interpreted with a set
 | settings                  | dict<key: value>                                 | copy of the configuration available \(careful, it may contain senstive data\)                                                      |
 | sub\_instances\_responses | list<dict<instance\_id: instance\_id, value: v>> | is the list of sub instances results \(if any\)\.  the value is the content of the key "\*cb\_response\*" within the sub\_workflow |
 
+Note about `request`:  
+When instantiated by a custom route, the JSON body contains always:
+
+| request attribute    | description                                                  |
+|----------------------|--------------------------------------------------------------|
+| method               | the HTTP method                                              |
+| url                  | The url triggered                                            |
+| params               | parameters from the query string as a dict                   |
+| match_info           | a dict of URL parameters if any (e.g /t/{tenant_id}/tasks)   |
+| body                 | body as string or dict                                       |
+
 ## Templates
 
 Many cells accepts inputs as jinja2 template to go beyond simple strings and access some other parts of the platform.  
