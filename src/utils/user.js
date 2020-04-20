@@ -56,6 +56,7 @@ export const modules = Object.freeze({
     bulk: 'bulk',
     orchestration: 'orchestration',
     telenet: 'telenet',
+    manualActions: 'manualActions',
 });
 
 export const privileges = Object.freeze({

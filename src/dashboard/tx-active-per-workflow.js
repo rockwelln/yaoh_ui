@@ -4,7 +4,7 @@ import {Doughnut} from 'react-chartjs-2';
 import {DashboardPanel} from './dashboard-panel';
 import ColorHash from 'color-hash';
 
-import {fetch_get} from "./utils";
+import {fetch_get} from "../utils";
 import {FormattedMessage} from 'react-intl';
 
 const REFRESH_CYCLE = 60;

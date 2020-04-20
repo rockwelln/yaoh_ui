@@ -4,15 +4,16 @@ import Col from 'react-bootstrap/lib/Col';
 import Row from 'react-bootstrap/lib/Row';
 
 import {FormattedMessage} from 'react-intl';
-import {fetch_get, NotificationsManager} from "./utils";
+import {fetch_get, NotificationsManager} from "../utils";
 
 import TransactionsOverTime from './tx-over-time';
 import ActiveTransactionsPerWorkflow from './tx-active-per-workflow';
 import ProxyRequestsOverTime from "./tx-per-proxy-over-time";
 import {EmptyTile, GatewaysStatusTile, ErrorCasesTile} from './dashboard-tiles';
+import ManualActionsBox from "./manualActions";
 
 import './dashboard.css';
-import {modules} from "./utils/user";
+import {modules} from "../utils/user";
 const REFRESH_CYCLE = 30;
 
 
@@ -67,7 +68,8 @@ export default function Dashboard(props) {
         <TransactionsOverTime {...props} />,
         // todo to be improved!!
         props.user_info.modules.includes(modules.orange) ? "" : <ProxyRequestsOverTime {...props} />,
-        <ActiveTransactionsPerWorkflow {...props} />
+        <ActiveTransactionsPerWorkflow {...props} />,
+        props.user_info.modules.includes(modules.manualActions) ? <ManualActionsBox {...props} /> : "",
     ];
 
     return (

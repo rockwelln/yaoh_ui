@@ -12,7 +12,7 @@ import moment from 'moment';
 import ColorHash from 'color-hash';
 
 import {FormattedMessage} from 'react-intl';
-import {fetch_get} from "./utils";
+import {fetch_get} from "../utils";
 import {DashboardPanel} from './dashboard-panel';
 
 const DEFAULT_NB_DAYS = 30;

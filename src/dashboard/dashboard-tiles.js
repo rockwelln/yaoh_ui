@@ -9,7 +9,7 @@ import {FormattedMessage} from 'react-intl';
 import {
     activeCriteria,
     errorCriteria,
-} from "./requests/requests";
+} from "../requests/requests";
 
 
 const Tile = ({className, children}) => (
