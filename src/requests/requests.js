@@ -2109,6 +2109,7 @@ export class Requests extends Component{
             auto_refresh: false,
             auto_refresh_remaining: AutoRefreshTime,
             proxy_hosts: [],
+            roles: [],
         };
         this._refresh = this._refresh.bind(this);
         this._load_activities = this._load_activities.bind(this);
@@ -2134,6 +2135,7 @@ export class Requests extends Component{
             proxied_url: { model: 'requests', value: '', op: 'eq' },
             proxied_status: { model: 'processing_traces', value: '', op: 'eq' },
             proxy_gateway_host: { model: 'requests', value: '', op: 'eq' },
+            role_id: { model: 'manual_actions', value: '', op: 'eq' },
             task_status: undefined,
             end_task_status: undefined,
         }
@@ -2154,6 +2156,7 @@ export class Requests extends Component{
     }
 
     componentDidMount() {
+        fetchRoles(roles => this.setState({roles: roles}));
         this._load_activities();
         this._load_proxy_hosts();
         this._refresh();
@@ -2268,6 +2271,20 @@ export class Requests extends Component{
                             op: filter_criteria[f].op,
                             value: moment(filter_criteria[f].value).local().format()
                         };
+                    case 'role_id':
+                        return { "and": [
+                            {
+                                model: filter_criteria[f].model,
+                                field: f,
+                                op: filter_criteria[f].op,
+                                value: filter_criteria[f].value
+                            },
+                            {
+                                model: "manual_actions",
+                                field: "output",
+                                op: "is_null"
+                            }
+                        ]};
                     default:
                         return {
                             model: filter_criteria[f].model, // needed in multi-model query
@@ -2414,11 +2431,12 @@ export class Requests extends Component{
     }
 
     render() {
-        const { filter_criteria, requests, activities, export_url, auto_refresh, sorting_spec, selected_reqs, proxy_hosts} = this.state;
+        const { filter_criteria, requests, activities, export_url, auto_refresh, sorting_spec, selected_reqs, proxy_hosts, roles} = this.state;
         const { user_info } = this.props;
         const invalid_created_on = filter_criteria.created_on.value.length !== 0 && !moment(filter_criteria.created_on.value).isValid();
         const request_entities = user_info.modules && user_info.modules.includes(modules.orange) ? "request_entities" : "requests";
         const proxy_activated = user_info.modules && user_info.modules.includes(modules.proxy);
+        const manualActions = user_info.modules && user_info.modules.includes(modules.manualActions);
 
         return (
             <div>
@@ -2668,8 +2686,48 @@ export class Requests extends Component{
                             </FormGroup>
 
                             {
+                                manualActions &&
+                                    <FormGroup>
+                                        <Col componentClass={ControlLabel} sm={2}>
+                                            <FormattedMessage id="pending-action-role" defaultMessage="Pending action role" />
+                                        </Col>
+
+                                        <Col sm={1}>
+                                            <FormControl
+                                                componentClass="select"
+                                                value={filter_criteria.role_id.op}
+                                                onChange={e => this.setState({
+                                                    filter_criteria: update(this.state.filter_criteria,
+                                                        { role_id: { $merge: { op: e.target.value } } })
+                                                })}>
+                                                <option value="eq">==</option>
+                                                <option value="ne">!=</option>
+                                                <option value="is_not_null">*any*</option>
+                                            </FormControl>
+                                        </Col>
+
+                                        <Col sm={8}>
+                                            <FormControl
+                                                componentClass="select"
+                                                disabled={filter_criteria.role_id.op === "is_not_null"}
+                                                value={filter_criteria.role_id.value}
+                                                onChange={e => this.setState({
+                                                    filter_criteria: update(filter_criteria,
+                                                        { role_id: { $merge: { value: e.target.value && parseInt(e.target.value, 10) } } })
+                                                })} >
+                                                <option value=""/>
+                                                {
+                                                    roles.map(r => <option key={`role-${r.id}`} value={r.id}>{r.name}</option>)
+                                                }
+                                            </FormControl>
+                                        </Col>
+                                    </FormGroup>
+                            }
+
+                            {
                                 proxy_activated &&
-                                [<FormGroup>
+                                <>
+                                <FormGroup>
                                     <Col componentClass={ControlLabel} sm={2}>
                                         <FormattedMessage id="owner" defaultMessage="Owner" />
                                     </Col>
@@ -2694,7 +2752,7 @@ export class Requests extends Component{
                                                     { proxied_username: { $merge: { value: e.target.value } } })
                                             })} />
                                     </Col>
-                                </FormGroup>,
+                                </FormGroup>
 
                                 <FormGroup>
                                     <Col componentClass={ControlLabel} sm={2}>
@@ -2728,7 +2786,7 @@ export class Requests extends Component{
                                             }
                                         </FormControl>
                                     </Col>
-                                </FormGroup>,
+                                </FormGroup>
 
                                 <FormGroup>
                                     <Col componentClass={ControlLabel} sm={2}>
@@ -2759,7 +2817,7 @@ export class Requests extends Component{
                                                     { proxied_status: { $merge: { value: e.target.value && parseInt(e.target.value) } } })
                                             })} />
                                     </Col>
-                                </FormGroup>,
+                                </FormGroup>
 
                                 <FormGroup>
                                     <Col componentClass={ControlLabel} sm={2}>
@@ -2787,7 +2845,7 @@ export class Requests extends Component{
                                                     { proxied_url: { $merge: { value: e.target.value } } })
                                             })} />
                                     </Col>
-                                </FormGroup>,
+                                </FormGroup>
 
                                 <FormGroup>
                                     <Col componentClass={ControlLabel} sm={2}>
@@ -2821,7 +2879,7 @@ export class Requests extends Component{
                                         </FormControl>
                                     </Col>
                                 </FormGroup>
-                                ]
+                                </>
                             }
 
                             <FormGroup validationState={invalid_created_on ? "error" : null}>
@@ -3052,6 +3110,7 @@ export class CustomRequests extends Component{
             error: undefined,
             auto_refresh: false,
             auto_refresh_remaining: AutoRefreshTime,
+            roles: [],
         };
         this._refresh = this._refresh.bind(this);
         this._load_activities = this._load_activities.bind(this);
@@ -3066,6 +3125,7 @@ export class CustomRequests extends Component{
             url: {model: 'events', value: '', op: 'like'},
             user: {value: '', op: 'eq'},
             task_status: undefined,
+            role_id: {model: 'manual_actions', value: '', op: 'eq'},
         }
     }
 
@@ -3084,6 +3144,7 @@ export class CustomRequests extends Component{
     }
 
     componentDidMount() {
+        fetchRoles(roles => this.setState({roles: roles}));
         this._load_activities();
         this._refresh();
     }
@@ -3117,7 +3178,7 @@ export class CustomRequests extends Component{
                 filter_criteria[f] &&
                 (
                     (filter_criteria[f].value && filter_criteria[f].op) ||
-                    filter_criteria[f].or || filter_criteria[f].and || filter_criteria[f].op === 'is_null' || typeof(filter_criteria[f].value) === 'boolean'
+                    filter_criteria[f].or || filter_criteria[f].and || filter_criteria[f].op === 'is_not_null' || filter_criteria[f].op === 'is_null' || typeof(filter_criteria[f].value) === 'boolean'
                 )
             )
             .map(f => {
@@ -3153,6 +3214,20 @@ export class CustomRequests extends Component{
                             op: criteria.op,
                             value: moment(criteria.value).local().format()
                         };
+                    case 'role_id':
+                        return { "and": [
+                            {
+                                model: criteria.model,
+                                field: f,
+                                op: criteria.op,
+                                value: criteria.value
+                            },
+                            {
+                                model: "manual_actions",
+                                field: "output",
+                                op: "is_null"
+                            }
+                        ]};
                     default:
                         return {
                             model: criteria.model, // needed in multi-model query
@@ -3206,7 +3281,8 @@ export class CustomRequests extends Component{
                         filter_criteria[f].or ||
                         filter_criteria[f].and ||
                         filter_criteria[f].in ||
-                        filter_criteria[f].op === 'is_null')
+                        filter_criteria[f].op === 'is_null' ||
+                        filter_criteria[f].op === 'is_not_null')
                     ).reduce((obj, key) => {
                         obj[key] = filter_criteria[key];
                         return obj;
@@ -3243,8 +3319,10 @@ export class CustomRequests extends Component{
     }
 
     render() {
-        const {filter_criteria, requests, activities, export_url, auto_refresh} = this.state;
+        const {filter_criteria, requests, activities, export_url, auto_refresh, roles} = this.state;
+        const { user_info } = this.props;
         const invalid_created_on = filter_criteria.created_on.value.length !== 0 && !moment(filter_criteria.created_on.value, "DD/MM/YYYY HH:mm").isValid();
+        const manualActions =  user_info.modules && user_info.modules.includes(modules.manualActions);
 
         return (
             <div>
@@ -3383,6 +3461,45 @@ export class CustomRequests extends Component{
                                     </FormControl>
                                 </Col>
                             </FormGroup>
+
+                            {
+                                manualActions &&
+                                    <FormGroup>
+                                        <Col componentClass={ControlLabel} sm={2}>
+                                            <FormattedMessage id="pending-action-role" defaultMessage="Pending action role" />
+                                        </Col>
+
+                                        <Col sm={1}>
+                                            <FormControl
+                                                componentClass="select"
+                                                value={filter_criteria.role_id.op}
+                                                onChange={e => this.setState({
+                                                    filter_criteria: update(this.state.filter_criteria,
+                                                        { role_id: { $merge: { op: e.target.value } } })
+                                                })}>
+                                                <option value="eq">==</option>
+                                                <option value="ne">!=</option>
+                                                <option value="is_not_null">*any*</option>
+                                            </FormControl>
+                                        </Col>
+
+                                        <Col sm={8}>
+                                            <FormControl
+                                                componentClass="select"
+                                                disabled={filter_criteria.role_id.op === "is_not_null"}
+                                                value={filter_criteria.role_id.value}
+                                                onChange={e => this.setState({
+                                                    filter_criteria: update(filter_criteria,
+                                                        { role_id: { $merge: { value: e.target.value && parseInt(e.target.value, 10) } } })
+                                                })} >
+                                                <option value=""/>
+                                                {
+                                                    roles.map(r => <option key={`role-${r.id}`} value={r.id}>{r.name}</option>)
+                                                }
+                                            </FormControl>
+                                        </Col>
+                                    </FormGroup>
+                            }
 
                             <FormGroup validationState={invalid_created_on?"error":null}>
                                 <Col componentClass={ControlLabel} sm={2}>
