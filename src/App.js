@@ -38,7 +38,7 @@ import UserManagement, {LocalUserProfile} from './system/user_mgm';
 import {StartupEvents} from './orchestration/startup_events';
 import {Activities, ActivityEditor} from './orchestration/activity-editor';
 import CronTimers from './orchestration/cron_timers';
-import {ConfigManagement} from './settings/configuration';
+import Configuration from './settings/configuration';
 import {Reporting} from "./settings/reporting.jsx";
 import Gateways from "./system/gateways_mgm";
 import LocalQueues from "./system/queues";
@@ -911,10 +911,7 @@ class App extends Component {
                         <Route path="/system/config"
                                component={props => (
                                    isAllowed(ui_profile, pages.system_config) ?
-                                       <ConfigManagement
-                                           auth_token={auth_token}
-                                           notifications={this._notificationSystem.current}
-                                           {...props} />:
+                                       <Configuration />:
                                        <NotAllowed />
                                )}
                                exact />
