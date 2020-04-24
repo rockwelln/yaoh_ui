@@ -832,12 +832,12 @@ function isValid(p, v) {
         default:
             break;
     }
-    if(p.schema) {
+    if(p.schema && v) {
         console.log(v);
         const ajv = Ajv();
         const v_ = ajv.validate(p.schema, p.nature === "outputs"?v.split(","):v);
         if(!v_) {
-            alert(`Invalid ${p.name}: ${ajv.errors}`);
+            alert(`Invalid ${p.name}: ${ajv.errors.map(e => e.message).join(", ")}`);
         }
         return v_;
     }
