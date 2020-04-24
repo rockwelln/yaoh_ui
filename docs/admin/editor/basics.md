@@ -40,6 +40,7 @@ Every string evaluation methods (described hereunder) are interpreted with a set
 | request                   | dict or string                                   | original event content loaded as JSON if possible \(with properties "body", "url" and "method"\); or as a string if not JSON       |
 | settings                  | dict<key: value>                                 | copy of the configuration available \(careful, it may contain senstive data\)                                                      |
 | sub\_instances\_responses | list<dict<instance\_id: instance\_id, value: v>> | is the list of sub instances results \(if any\)\.  the value is the content of the key "\*cb\_response\*" within the sub\_workflow |
+| parent\_instance\_context | dict<key: value as string>                       | is the copy of the context of the direct parent workflow (if any, empty dict otherwise)                                            |
 
 Note about `request`:  
 When instantiated by a custom route, the JSON body contains always:
