@@ -119,6 +119,7 @@ class TransactionFlow extends Component {
         const width = this.flowGraphRef.current?ReactDOM.findDOMNode(this.flowGraphRef.current).getBoundingClientRect().width:null;
         if(!width) return;
         if(width !== this.state.eltWidth || force) {
+            console.log("resized-2", width, this.state.elWidth);
             this.setState({eltWidth: width});
             width !== 0 && this._renderGrid();
         }
@@ -149,7 +150,7 @@ class TransactionFlow extends Component {
     }
 
     componentDidUpdate(prevProps, prevState) {
-        this._refreshGrid(true);
+        this._refreshGrid();
     }
 
     render() {
