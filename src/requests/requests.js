@@ -1680,6 +1680,29 @@ export class Transaction extends Component {
                 <Alert bsStyle="info" key='super-instance'>
                     <FormattedMessage id="super-instance-link" defaultMessage="The request is a sub-instance of the request: "/>
                     <Link to={`/transactions/${tx.super_instance.id}`}>{tx.super_instance.id}</Link>
+                  {
+                    tx.super_instance_chain &&
+                      <Button
+                        style={{marginLeft: '5px', marginRight: '5px'}}
+                        bsSize={"xsmall"}
+                        onClick={() => this.setState({showParentsChain: !this.state.showParentsChain})}
+                      >
+                        <Glyphicon glyph={`menu-${this.state.showParentsChain?"up":"down"}`}/>
+                      </Button>
+                  }
+                  {
+                    this.state.showParentsChain && tx.super_instance_chain.reduce((f, p) =>
+                      <ul className="tree">
+                        <li>
+                          <Link to={`/transactions/${p.id}`}>{p.id} - {p.status}</Link>
+                          {f}
+                        </li>
+                      </ul>,
+                      <ul className="tree">
+                          <li>{tx.id} (current)</li>
+                      </ul>
+                    )
+                  }
                 </Alert>
             );
         }
