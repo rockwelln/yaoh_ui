@@ -1026,7 +1026,7 @@ const ReplayingSubInstancesModal = ({show}) => (
 
 const titleCase = s => s[0].toUpperCase() + s.substr(1);
 
-const TasksTable = ({tasks, onReplay, onRollback, user_can_replay, tx_id}) => (
+const TasksTable = ({tasks, definition, onReplay, onRollback, user_can_replay, tx_id}) => (
     <Table condensed>
         <thead>
         <tr>
@@ -1050,9 +1050,9 @@ const TasksTable = ({tasks, onReplay, onRollback, user_can_replay, tx_id}) => (
                     const replayable = onReplay && user_can_replay;
                     const can_replay = (replayable || t.cell_id === 'end') && t.status === 'ERROR' &&
                         t.id === Math.max(tasks.filter(ot => ot.cell_id === t.cell_id).map(oot => oot.id));
-                    const support_rollback = !["end", "start", "mark request success", "mark request error"].includes(t.cell_id);
+                    const support_rollback = definition.cells && definition.cells.find(c => c.cell_id === t.cell_id).outputs.includes("rollback");
                     const support_force = FORCEABLE_TASKS.includes(t.cell_id);
-                    const support_skip = support_rollback;
+                    const support_skip = definition.cells && definition.cells.find(c => c.cell_id === t.cell_id).outputs.includes("skip");
 
                     return (
                         <tr key={t.id}>
@@ -1799,6 +1799,7 @@ export class Transaction extends Component {
                                 <TransactionFlow definition={tx.definition} states={tx.tasks} />
                                 <TasksTable
                                     tasks={tx.tasks}
+                                    definition={tx.definition}
                                     onReplay={this.onReplay}
                                     onRollback={this.onRollback}
                                     user_can_replay={can_act && tx.status === 'ACTIVE' && !replaying}

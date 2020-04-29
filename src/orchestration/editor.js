@@ -1388,7 +1388,6 @@ function editCellProperty(cell, modal, spacer, editable, cells_defs, cells, refr
         if (cell_def && cell_def.outputs) {
             outputs = outputs.concat(cell_def.outputs.filter(o => visible_outputs.findIndex(vo => vo === o) === -1));
         }
-        const custom_outputs = cell_def && cell_def.params.find(p => p.nature === "outputs");
         outputs.map(o => {
             const entry = document.createElement('li');
             entry.draggable = true;
@@ -1411,7 +1410,7 @@ function editCellProperty(cell, modal, spacer, editable, cells_defs, cells, refr
             visibility.id = o + '_visible';
             visibility.checked = visible_outputs.findIndex(vo => vo === o) !== -1;
             visibility.style.margin = '.4em';
-            visibility.disabled = transitions.filter(t => t[0] === o).length !== 0 || custom_outputs;
+            visibility.disabled = transitions.filter(t => t[0] === o).length !== 0 || !cell_def.outputs.includes(o);
             entry.appendChild(visibility);
             const label = document.createElement('label');
             label.innerText = o;
@@ -1456,14 +1455,16 @@ function editCellProperty(cell, modal, spacer, editable, cells_defs, cells, refr
                 let outputs = [];
 
                 const cell_outputs = cell_def && cell_def.params.find(p => p.nature === "outputs");
+                const visible_outputs = Array.from(list_.childNodes).filter(c => c.childNodes[0].checked).map(c => c.childNodes[1].innerText).join(',');
                 if(cell_outputs) {
                     outputs = cell_def
                         .outputs
+                        .filter(o => visible_outputs.includes(o))
                         .concat(cell.getAttribute(cell_outputs.name).split(","))
                         .reduce((u, i) => u.includes(i) ? u : [...u, i], [])
                         .join(",");
                 } else {
-                    outputs = Array.from(list_.childNodes).filter(c => c.childNodes[0].checked).map(c => c.childNodes[1].innerText).join(',');
+                    outputs = visible_outputs;
                 }
                 if(outputs !== cell.getAttribute('outputs')) {
                     cell.setAttribute('outputs', outputs);
