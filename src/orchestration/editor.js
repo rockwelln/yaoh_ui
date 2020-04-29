@@ -872,6 +872,14 @@ const TIMER = 2; // refer to TaskType enum in the API server.
 
 function createInput(param, value, cells, cells_defs, config) {
     let input = null;
+    if(param === undefined) { // usually the case when the parameter is not in the definition
+      input = document.createElement('input');
+      input.type = 'text';
+      input.value = value || "";
+      input.className = 'form-control';
+      input.disabled = true;
+      return input;
+    }
     switch(param.nature) {
         case 'session_holder':
             input = document.createElement('select');
@@ -1342,8 +1350,10 @@ function editCellProperty(cell, modal, spacer, editable, cells_defs, cells, refr
         gp.appendChild(value);
         attrs[a] = value;
 
-        const help = getHelpbox(p.nature, p.help);
-        help && gp.appendChild(help);
+        if(p) {
+          const help = getHelpbox(p.nature, p.help);
+          help && gp.appendChild(help);
+        }
 
         form.appendChild(gp);
         return null;
@@ -1418,7 +1428,11 @@ function editCellProperty(cell, modal, spacer, editable, cells_defs, cells, refr
             e.preventDefault();
             // 4.1 save params in the cell.
             if (cell.getAttribute('attrList') !== undefined) {
-                const params = cell_def ? cell_def.params.map(p => p.name || p) : cell.getAttribute('attrList').split(',');
+                // concatenate params from definition and attrList (and exclude duplicates)
+                const params = cell
+                  .getAttribute('attrList').split(',')
+                  .concat(cell_def ? cell_def.params.map(p => p.name || p) : [])
+                  .reduce((u, i) => u.includes(i) ? u : [...u, i], []);
                 // 4.2 validate inputs if possible
                 if(cell_def && cell_def.params && params.map(a => {
                     const p = cell_def.params.find(p => p.name === a || p === a);
@@ -1431,7 +1445,7 @@ function editCellProperty(cell, modal, spacer, editable, cells_defs, cells, refr
                     return;
                 }
 
-                params.forEach(a => cell.setAttribute(a, attrs[a].value));
+                params.forEach(a => cell.setAttribute(a, attrs[a].value || ""));
                 cell.setAttribute('attrList', params.map(p => p.name || p).join(','))
             }
             if(cell.getAttribute('outputs') || (cell_def && cell_def.outputs)) {
