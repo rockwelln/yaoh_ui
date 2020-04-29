@@ -1223,6 +1223,8 @@ function newCell(defs, cells, modal, editor, spacer, entities_defs, props) {
             cls = 'entity';
         }
 
+        c = Object.assign({}, c); // shallow copy of the definition to avoid changing the definition params (ex: output)
+
         if(c.params && c.params.map(p =>
             isValid(p, paramsFields[p.name || p].value)
         ).indexOf(false) !== -1){
@@ -1230,10 +1232,12 @@ function newCell(defs, cells, modal, editor, spacer, entities_defs, props) {
         }
 
         if(c.params) {
-            const p = c.params.find(p => p.nature === "outputs")
+            const p = c.params.find(p => p.nature === "outputs");
             if(p) {
                 const p_value = paramsFields[p.name || p].value;
-                c.outputs = p_value ? p_value.split(",") : c.outputs;
+                if(p_value) {
+                  c.outputs = c.outputs.concat(p_value.split(",")).reduce((u, i) => u.includes(i) ? u : [...u, i], []);
+                }
             }
         }
 
