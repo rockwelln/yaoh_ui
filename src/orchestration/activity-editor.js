@@ -46,7 +46,7 @@ function fetchEntities(onSuccess) {
         .catch(console.error);
 }
 
-function fetchActivities(onSuccess) {
+export function fetchActivities(onSuccess) {
     fetch_get('/api/v01/activities')
         .then(data => onSuccess(data.activities))
         .catch(console.error);

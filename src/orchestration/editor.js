@@ -1,5 +1,6 @@
 import Ajv from "ajv";
 import {fetchRoles} from "../system/user_roles";
+import {fetchActivities} from "./activity-editor";
 
 const okPic = require("../images/ok.png");
 const errPic = require("../images/error.png");
@@ -871,6 +872,7 @@ function getHelpbox(nature, helpText) {
 const TIMER = 2; // refer to TaskType enum in the API server.
 
 function createInput(param, value, cells, cells_defs, config) {
+    var opt;
     let input = null;
     if(param === undefined) { // usually the case when the parameter is not in the definition
       input = document.createElement('input');
@@ -884,7 +886,7 @@ function createInput(param, value, cells, cells_defs, config) {
         case 'session_holder':
             input = document.createElement('select');
             input.className = 'form-control';
-            const opt = document.createElement('option');
+            opt = document.createElement('option');
             opt.value = "";
             opt.innerText = "";
             input.appendChild(opt);
@@ -927,6 +929,26 @@ function createInput(param, value, cells, cells_defs, config) {
                 .forEach(o => input.appendChild(o));
             input.value = value || "";
             break;
+        case 'activity':
+            input = document.createElement('select');
+            input.className = 'form-control';
+            opt = document.createElement('option');
+            opt.value = "";
+            opt.innerText = "";
+            input.appendChild(opt);
+            fetchActivities(activities => {
+                activities
+                .map(v => {
+                    const opt = document.createElement('option');
+                    opt.value = v.name;
+                    opt.innerText = v.name;
+                    return opt;
+                })
+                .forEach(o => input.appendChild(o));
+                input.value = input._value || "";
+            });
+            input._value = value || "";
+            break;
         case 'user_role':
             input = document.createElement('select');
             input.className = 'form-control';
@@ -938,9 +960,10 @@ function createInput(param, value, cells, cells_defs, config) {
                     opt.innerText = v.name;
                     return opt;
                 })
-                .forEach(o => input.appendChild(o))
+                .forEach(o => input.appendChild(o));
+                input.value = input._value || "";
             });
-            input.value = value || "";
+            input._value = value || "";
             break;
         case 'timer':
             input = document.createElement('select');
