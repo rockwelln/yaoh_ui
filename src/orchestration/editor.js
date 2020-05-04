@@ -1154,10 +1154,10 @@ function newCell(defs, cells, modal, editor, spacer, entities_defs, props) {
         let option = document.createElement('option');
         option.value = c.name;
         option.innerHTML = c.name;
-        optGroup = optGroups.find(o => c.category?c.category === o.label.split(' ')[0]:"direct processing");
+        optGroup = optGroups.find(o => c.category?c.category === o.label:"direct processing");
         if(optGroup === undefined) {
             optGroup = document.createElement('optgroup');
-            optGroup.label = (c.path?c.path.split('.')[2]:"direct") + ' processing';
+            optGroup.label = c.category || "direct processing";
             value.appendChild(optGroup);
             optGroups.push(optGroup);
         }
