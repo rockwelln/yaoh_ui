@@ -389,7 +389,7 @@ function GuiForm(props) {
 
               <Col sm={9}>
                 {
-                  ["orange", "orchestration", "bulk", "provisioning", "telenet"].map(m =>
+                  ["orange", "orchestration", "bulk", "provisioning", "telenet", "proxy", "manualActions"].map(m =>
                     <Checkbox
                       key={`modules-${m}`}
                       checked={gui.modules.includes(m)}
