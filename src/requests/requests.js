@@ -43,6 +43,7 @@ import {StaticControl} from "../utils/common";
 import {access_levels, isAllowed, modules, pages} from "../utils/user";
 import {TimerActions} from "./timers";
 import {fetchRoles} from "../system/user_roles";
+import {LinkContainer} from "react-router-bootstrap";
 
 export const DATE_FORMAT = 'DD/MM/YYYY HH:mm:ss';
 const SUB_REQUESTS_PAGE_SIZE = 25;
@@ -1735,7 +1736,21 @@ export class Transaction extends Component {
         const can_act = isAllowed(user_info.ui_profile, pages.requests_nprequests, access_levels.modify);
 
         return (
-            <div>
+            <>
+                <Breadcrumb>
+                    <Breadcrumb.Item active><FormattedMessage id="requests" defaultMessage="Requests"/></Breadcrumb.Item>
+                    <LinkContainer to={`/custom-transactions/list`}>
+                        <Breadcrumb.Item><FormattedMessage id="custom-requests" defaultMessage="Custom requests"/></Breadcrumb.Item>
+                    </LinkContainer>
+                    {
+                        tx.super_instance_chain && tx.super_instance_chain.map(sup_i => (
+                            <LinkContainer to={`/transactions/${sup_i.id}`} key={`sup-${sup_i.id}`}>
+                                <Breadcrumb.Item>{sup_i.id}</Breadcrumb.Item>
+                            </LinkContainer>
+                        ))
+                    }
+                    <Breadcrumb.Item active>{tx.id}</Breadcrumb.Item>
+                </Breadcrumb>
                 {alerts}
                 <ReplayingSubInstancesModal show={replaying}/>
                 <Tabs defaultActiveKey={1} activeKey={activeTab} onSelect={e => this.setState({activeTab: e})} id="request-tabs">
@@ -1962,7 +1977,7 @@ export class Transaction extends Component {
                         }
                     </Tab>
                 </Tabs>
-            </div>)
+            </>)
     }
 }
 
@@ -2030,7 +2045,14 @@ export class Request extends Component {
         const username = raw_event.user;
 
         return (
-            <div>
+            <>
+                <Breadcrumb>
+                    <Breadcrumb.Item active><FormattedMessage id="Requests" defaultMessage="Requests"/></Breadcrumb.Item>
+                    <LinkContainer to={`/transactions/list`}>
+                        <Breadcrumb.Item><FormattedMessage id="requests" defaultMessage="requests"/></Breadcrumb.Item>
+                    </LinkContainer>
+                    <Breadcrumb.Item active>{request.request_id}</Breadcrumb.Item>
+                </Breadcrumb>
                 <Col xs={12} sm={6} md={8} lg={8} style={{marginTop: '10px'}}>
                     <Panel>
                         <Panel.Body>
@@ -2091,7 +2113,7 @@ export class Request extends Component {
                         )
                     }
                 </Col>
-            </div>
+            </>
         )
     }
 }
