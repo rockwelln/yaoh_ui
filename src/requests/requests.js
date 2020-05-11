@@ -27,7 +27,7 @@ import moment from 'moment';
 import {Link} from 'react-router-dom';
 import {FormattedMessage} from 'react-intl';
 import queryString from 'query-string';
-import 'font-awesome/css/font-awesome.min.css';
+// import 'font-awesome/css/font-awesome.min.css';
 import ReactJson from 'react-json-view';
 
 import {

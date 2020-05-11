@@ -13,7 +13,7 @@ import Table, {thead, th, tr, td, tbody} from 'react-bootstrap/lib/Table';
 import {FormattedMessage} from 'react-intl';
 import update from "immutability-helper/index";
 
-import 'font-awesome/css/font-awesome.min.css';
+// import 'font-awesome/css/font-awesome.min.css';
 
 
 export const Pagination = ({num_pages, page_number, onChange, total_results}) => {

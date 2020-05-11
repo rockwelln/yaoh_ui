@@ -24,6 +24,7 @@ import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import update from "immutability-helper";
 import InputGroup from "react-bootstrap/lib/InputGroup";
 import InputGroupButton from "react-bootstrap/lib/InputGroupButton";
+import {DeleteConfirmButton} from "../utils/deleteConfirm";
 
 
 const NEW_ACTIVITY = {
@@ -221,10 +222,10 @@ export function Activities(props) {
                                                         <Glyphicon glyph="pencil"/>
                                                     </Button>
                                                 </LinkContainer>
-                                                <Button onClick={() => deleteActivity(a.id, () => fetchActivities(setActivities))} bsStyle="danger"
-                                                        style={{marginLeft: '5px', marginRight: '5px'}}>
-                                                    <Glyphicon glyph="remove-sign"/>
-                                                </Button>
+                                                <DeleteConfirmButton
+                                                    resourceName={a.name}
+                                                    style={{marginLeft: '5px', marginRight: '5px'}}
+                                                    onConfirm={() => deleteActivity(a.id, () => fetchActivities(setActivities))} />
                                             </ButtonToolbar>
                                         </td>
                                     </tr>

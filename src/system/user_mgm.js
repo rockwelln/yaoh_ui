@@ -20,7 +20,7 @@ import Table from 'react-bootstrap/lib/Table';
 
 import {FormattedMessage} from 'react-intl';
 
-import 'font-awesome/css/font-awesome.min.css';
+// import 'font-awesome/css/font-awesome.min.css';
 import update from 'immutability-helper';
 
 import {fetch_post, fetch_get, fetch_delete, fetch_put, NotificationsManager} from "../utils";
