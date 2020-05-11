@@ -22,6 +22,8 @@ import Form from "react-bootstrap/lib/Form";
 import FormGroup from "react-bootstrap/lib/FormGroup";
 import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import update from "immutability-helper";
+import InputGroup from "react-bootstrap/lib/InputGroup";
+import InputGroupButton from "react-bootstrap/lib/InputGroupButton";
 
 
 const NEW_ACTIVITY = {
@@ -148,9 +150,34 @@ function NewActivity(props) {
     )
 }
 
+function SearchBar(props) {
+    const {onSearch, size} = props;
+    const [filter, setFilter] = useState("");
+
+    return (
+        <Form onSubmit={e => {e.preventDefault(); onSearch(filter);}}>
+            <Col smOffset={12 - (size || 4)} sm={size || 4}>
+                <InputGroup>
+                    <FormControl
+                        type="text"
+                        value={filter}
+                        placeholder="search"
+                        onChange={e => setFilter(e.target.value)} />
+                    <InputGroupButton>
+                        <Button type='submit'>
+                            <Glyphicon glyph="search" />
+                        </Button>
+                    </InputGroupButton>
+                </InputGroup>
+            </Col>
+        </Form>
+    )
+}
+
 export function Activities(props) {
     const [activities, setActivities] = useState([]);
     const [showNew, setShowNew] = useState(false);
+    const [filter, setFilter] = useState("");
 
     useEffect(() => {
         fetchActivities(setActivities);
@@ -165,6 +192,7 @@ export function Activities(props) {
 
             <Panel>
                 <Panel.Body>
+                    <SearchBar onSearch={setFilter} />
                     <Table>
                         <thead>
                             <tr>
@@ -177,6 +205,7 @@ export function Activities(props) {
                         <tbody>
                         {
                             activities
+                                .filter(a => filter.length === 0 || a.name.includes(filter))
                                 .sort((a, b) => a.name.localeCompare(b.name))
                                 .map(a => (
                                     <tr key={a.id}>
