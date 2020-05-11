@@ -54,6 +54,7 @@ class NewCronTimer extends React.Component {
     static new_timer() {
         return {
             job_id: "",
+            request_body: "",
             enabled: true
         }
     }
@@ -210,6 +211,19 @@ class NewCronTimer extends React.Component {
                                             .map(a => <option value={a.id} key={a.id}>{a.name}</option>)
                                         }
                                     </FormControl>
+                                </Col>
+                            </FormGroup>
+                            <FormGroup>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="request-body" defaultMessage="Request body" />
+                                </Col>
+
+                                <Col sm={9}>
+                                    <FormControl
+                                        componentClass="textarea"
+                                        value={new_timer.request_body}
+                                        placeholder='{"body": {"username": "fool"}}'
+                                        onChange={e => this.setState({new_timer: update(new_timer, {$merge: {request_body: e.target.value}})})}/>
                                 </Col>
                             </FormGroup>
                         </Form>
@@ -383,6 +397,19 @@ class UpdateTimer extends React.Component {
                                             .map(a => <option value={a.id} key={a.id}>{a.name}</option>)
                                         }
                                     </FormControl>
+                                </Col>
+                            </FormGroup>
+                            <FormGroup>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="request-body" defaultMessage="Request body" />
+                                </Col>
+
+                                <Col sm={9}>
+                                    <FormControl
+                                        componentClass="textarea"
+                                        value={new_timer.request_body}
+                                        placeholder='{"body": {"username": "fool"}}'
+                                        onChange={e => this.setState({diff_timer: update(diff_timer, {$merge: {request_body: e.target.value}})})}/>
                                 </Col>
                             </FormGroup>
                         </Form>

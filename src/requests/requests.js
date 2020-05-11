@@ -1166,6 +1166,22 @@ const Timers = ({timers, onUpdate}) => (
     </Table>
 );
 
+function RequestBody(props) {
+    const {content} = props;
+    let parsedContent = content
+    try {
+        parsedContent = JSON.parse(raw_event.content);
+        if(typeof parsedContent === "object") {
+            return <ReactJson src={parsedContent}/>
+        }
+    } catch (e) {
+        console.error(e);
+    }
+    return (
+        <pre>{parsedContent}</pre>
+    )
+}
+
 
 const RELOAD_TX = 10 * 1000;
 let USE_WS = false;
@@ -1728,7 +1744,7 @@ export class Transaction extends Component {
                             <Panel>
                                 <Panel.Body>
                                 {
-                                    raw_event && <ReactJson src={JSON.parse(raw_event.content)}/>
+                                    raw_event && <RequestBody content={content} />
                                 }
                                 </Panel.Body>
                             </Panel>
