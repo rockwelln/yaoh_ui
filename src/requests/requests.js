@@ -3165,6 +3165,7 @@ export class CustomRequests extends Component{
             created_on: {value: '', op: 'ge'},
             method: {model: 'events', value: '', op: 'eq'},
             url: {model: 'events', value: '', op: 'like'},
+            cron: undefined,
             user: {value: '', op: 'eq'},
             task_status: undefined,
             role_id: {model: 'manual_actions', value: '', op: 'eq'},
@@ -3249,6 +3250,13 @@ export class CustomRequests extends Component{
                             op: criteria.op,
                             value: criteria.value
                         };
+                    case 'cron':
+                        return {
+                            model: 'events',
+                            field: 'source_entity',
+                            op: criteria.op,
+                            value: 'cron'
+                        }
                     case 'created_on':
                         return {
                             model: criteria.model,
@@ -3601,7 +3609,21 @@ export class CustomRequests extends Component{
                                         )} >
                                         <FormattedMessage id="with-errors" defaultMessage="With errors" />
                                     </Checkbox>
-
+                                    <Checkbox
+                                        checked={filter_criteria.cron && filter_criteria.cron.value === 'cron'}
+                                        onChange={e => (
+                                            e.target.checked ?
+                                                this.setState({
+                                                    filter_criteria: update(this.state.filter_criteria,
+                                                        {$merge:  {cron: {model: 'events', value: 'cron', op: 'eq'}}})
+                                                }) :
+                                                this.setState({
+                                                    filter_criteria: update(this.state.filter_criteria,
+                                                        {$unset: ['cron']})
+                                                })
+                                        )} >
+                                        <FormattedMessage id="cron-jobs" defaultMessage="Cron jobs" />
+                                    </Checkbox>
                                 </Col>
                             </FormGroup>
 
