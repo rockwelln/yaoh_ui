@@ -925,7 +925,7 @@ class Events extends Component {
                                     {moment(e.created_on).format(DATE_FORMAT)}
                                 </th>
                                 <td>
-                                    {e.content.substr(0, 50)}
+                                    {e.content ? e.content.substr(0, 50): ""}
                                     <br/>
                                     <Button bsStyle="link" onClick={() => this.setState({show_details: true, selected_evt: e})}>...</Button>
                                 </td>
@@ -1170,8 +1170,8 @@ function RequestBody(props) {
     const {content} = props;
     let parsedContent = content
     try {
-        parsedContent = JSON.parse(raw_event.content);
-        if(typeof parsedContent === "object") {
+        parsedContent = JSON.parse(content);
+        if(parsedContent !== null && typeof parsedContent === "object") {
             return <ReactJson src={parsedContent}/>
         }
     } catch (e) {
@@ -1744,7 +1744,7 @@ export class Transaction extends Component {
                             <Panel>
                                 <Panel.Body>
                                 {
-                                    raw_event && <RequestBody content={content} />
+                                    raw_event && <RequestBody content={raw_event.content} />
                                 }
                                 </Panel.Body>
                             </Panel>
