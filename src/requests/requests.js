@@ -100,7 +100,7 @@ class TransactionFlow extends Component {
     }
 
     _renderGrid() {
-        const {definition, states} = this.props;
+        const {definition, states, activityId} = this.props;
         draw_editor(
             ReactDOM.findDOMNode(this.flowGraphRef.current),
             {definition: workableDefinition(JSON.parse(definition), states)},
@@ -111,6 +111,7 @@ class TransactionFlow extends Component {
             {
                 readOnly: true,
                 height: 300,
+                activityId: activityId,
             }
         );
     }
@@ -1796,7 +1797,7 @@ export class Transaction extends Component {
                                 <Panel.Title><FormattedMessage id="tasks" defaultMessage="Tasks" /></Panel.Title>
                             </Panel.Heading>
                             <Panel.Body>
-                                <TransactionFlow definition={tx.definition} states={tx.tasks} />
+                                <TransactionFlow definition={tx.definition} states={tx.tasks} activityId={tx.activity_id} />
                                 <TasksTable
                                     tasks={tx.tasks}
                                     definition={tx.definition}

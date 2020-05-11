@@ -239,6 +239,9 @@ function setup_toolbar(editor, container, spacer, handlers, cells) {
     }
     addToolbarButton(editor, container, 'show', '👓');
     addToolbarButton(editor, container, 'showDefinition', 'txt');
+    if(onSave === undefined) {
+      addToolbarButton(editor, container, 'redirectToDefinition', 'def');
+    }
     if(onSave !== undefined) {
         container.appendChild(spacer.cloneNode(true));
         const saveElt = document.createElement('span');
@@ -257,6 +260,7 @@ function setup_actions(editor, title, spacer, handlers, modal, props, updateMode
         newCell(props.cells, editor.graph.getModel().cells, modal, editor, spacer, props.entities, props);
     });
     editor.addAction('download_definition', editor => downloadDefinition(editor, title.value));
+    editor.addAction('redirectToDefinition', editor => { window.location=`/transactions/config/activities/editor/${props.activityId}` });
     editor.addAction('upload_definition', (editor, cell) => {
         if (typeof window.FileReader !== 'function') {
           alert("The file API isn't supported on this browser yet.");
