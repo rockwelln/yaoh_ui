@@ -942,6 +942,7 @@ function createInput(param, value, cells, cells_defs, config) {
             input.appendChild(opt);
             fetchActivities(activities => {
                 activities
+                .sort((a, b) => a.name.localeCompare(b.name))
                 .map(v => {
                     const opt = document.createElement('option');
                     opt.value = v.name;
