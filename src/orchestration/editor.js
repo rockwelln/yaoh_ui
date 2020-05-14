@@ -359,7 +359,7 @@ export default function draw_editor(container, activity, handlers, placeholders,
 
     let modal = document.createElement('div');
     modal.className = 'modal';
-    document.body.appendChild(modal);
+    container.appendChild(modal);
 
     //see process details
     graph.dblClick = function(evt, cell)
