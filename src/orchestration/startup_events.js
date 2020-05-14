@@ -18,6 +18,7 @@ import Checkbox from "react-bootstrap/lib/Checkbox";
 import Alert from "react-bootstrap/lib/Alert";
 import {StaticControl} from "../utils/common";
 import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
+import {DeleteConfirmButton} from "../utils/deleteConfirm";
 
 const CUSTOM_ROUTE_PREFIX = "https://<target>/api/v01/custom";
 const JSON_SCHEMA_SAMPLE = (
@@ -383,9 +384,10 @@ class CustomRoutes extends Component {
                                                     style={{marginLeft: '5px', marginRight: '5px'}} >
                                                     <Glyphicon glyph="pencil"/>
                                                 </Button>
-                                                <Button onClick={() => this.onDeleteCustomRoute(route.route_id)} bsStyle="danger" style={{marginLeft: '5px', marginRight: '5px'}}>
-                                                    <Glyphicon glyph="remove-sign"/>
-                                                </Button>
+                                                <DeleteConfirmButton
+                                                    resourceName={`${route.method} ${route.route}`}
+                                                    style={{marginLeft: '5px', marginRight: '5px'}}
+                                                    onConfirm={() => this.onDeleteCustomRoute(route.route_id)} />
                                             </ButtonToolbar>
                                         </td>
                                     </tr>
