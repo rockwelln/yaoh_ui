@@ -199,8 +199,34 @@ export function LocalUserProfile(props) {
                                     {
                                         user_info.roles && user_info.roles.sort((a, b) => a.id - b.id).map(
                                             r => <tr key={r.id}>
-                                                <td>r.name</td>
-                                                <td>r.created_on</td>
+                                                <td>{r.name}</td>
+                                                <td>{r.created_on}</td>
+                                            </tr>
+                                        )
+                                    }
+                                    </tbody>
+                                </Table>
+                            </Col>
+                        </FormGroup>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="properties" defaultMessage="Properties" />
+                            </Col>
+
+                            <Col sm={9}>
+                                <Table>
+                                    <thead>
+                                        <tr>
+                                            <th>Key</th>
+                                            <th>Value</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    {
+                                        user_info.properties && Object.keys(user_info.properties).sort((a, b) => a.localeCompare(b)).map(
+                                            p => <tr key={p}>
+                                                <td>{p}</td>
+                                                <td>{user_info.properties[p]}</td>
                                             </tr>
                                         )
                                     }
@@ -267,6 +293,7 @@ function UpdateUser(props) {
     const [diffUser, setDiffUser] = useState({});
     const [profiles, setProfiles] = useState([]);
     const [roles, setRoles] = useState([]);
+    const [newProp, setNewProp] = useState({key: "", value: ""});
     useEffect(() => {
         show ? fetch_get(`/api/v01/system/users/${user.id}`)
             .then(user => setFullUser(user))
@@ -405,6 +432,65 @@ function UpdateUser(props) {
                                 </FormControl>
                             </Col>
                         </FormGroup>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="properties" defaultMessage="Properties" />
+                            </Col>
+
+                            <Col sm={9}>
+                                <Table>
+                                    <thead>
+                                        <tr>
+                                            <th>Key</th>
+                                            <th>Value</th>
+                                            <th/>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    {
+                                        localUser.properties && Object.keys(localUser.properties).map(
+                                            (p, i) => <tr key={p}>
+                                                <td>
+                                                    {p}
+                                                </td>
+                                                <td>
+                                                    <input value={localUser.properties[p]} placeholder="value" onChange={e => {
+                                                        setDiffUser(update(diffUser, {properties: {$merge: {[p]: e.target.value}}}));
+                                                    }} />
+                                                </td>
+                                                <td><Button onClick={() => {
+                                                    let n = {...diffUser};
+                                                    if(diffUser.properties === undefined) {
+                                                        n = update(diffUser, {properties: {$set: localUser.properties}})
+                                                    }
+                                                    setDiffUser(update(n, {properties: {$unset: [p]}}))
+                                                }}>-</Button></td>
+                                            </tr>
+                                        )
+                                    }
+                                    <tr>
+                                        <td>
+                                            <input value={newProp.key} placeholder="value" onChange={e => setNewProp(update(newProp, {$merge: {key: e.target.value}}))} />
+                                        </td>
+                                        <td>
+                                            <input value={newProp.value} placeholder="value" onChange={e => setNewProp(update(newProp, {$merge: {value: e.target.value}}))} />
+                                        </td>
+                                        <td>
+                                            <Button onClick={() => {
+                                                let n = {...diffUser};
+                                                if(diffUser.properties === undefined) {
+                                                    n = update(diffUser, {properties: {$set: localUser.properties || {}}})
+                                                }
+                                                setDiffUser(update(n, {properties: {$merge: {[newProp.key]: newProp.value}}}))
+
+                                                setNewProp({key: "", value: ""})
+                                            }}>+</Button>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </Table>
+                            </Col>
+                        </FormGroup>
                         <FormGroup validationState={validPassword}>
                             <Col componentClass={ControlLabel} sm={2}>
                                 <FormattedMessage id="password" defaultMessage="Password" />
@@ -527,9 +613,11 @@ function NewUser(props) {
         groups: [],
         password: '',
         token_expiry: true,
+        properties: {},
     });
     const [confirmPassword, setConfirmPassword] = useState('');
     const [profiles, setProfiles] = useState([]);
+    const [newProp, setNewProp] = useState({key: "", value: ""});
     useEffect(() => {
         props.show && fetch_get("/api/v01/system/user_profiles")
             .then(data => setProfiles(data.profiles))
@@ -643,6 +731,56 @@ function NewUser(props) {
                                 <option value="nl">nl</option>
                                 <option value="en">en</option>
                             </FormControl>
+                        </Col>
+                    </FormGroup>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="properties" defaultMessage="Properties" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <Table>
+                                <thead>
+                                    <tr>
+                                        <th>Key</th>
+                                        <th>Value</th>
+                                        <th/>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                {
+                                    Object.keys(user.properties).map(
+                                        (p, i) => <tr key={p}>
+                                            <td>
+                                                {p}
+                                            </td>
+                                            <td>
+                                                <input value={user.properties[p]} placeholder="value" onChange={e => {
+                                                    setUser(update(user, {properties: {$merge: {[p]: e.target.value}}}));
+                                                }} />
+                                            </td>
+                                            <td><Button onClick={() => {
+                                                setUser(update(user, {properties: {$unset: [p]}}))
+                                            }}>-</Button></td>
+                                        </tr>
+                                    )
+                                }
+                                <tr>
+                                    <td>
+                                        <input value={newProp.key} placeholder="value" onChange={e => setNewProp(update(newProp, {$merge: {key: e.target.value}}))} />
+                                    </td>
+                                    <td>
+                                        <input value={newProp.value} placeholder="value" onChange={e => setNewProp(update(newProp, {$merge: {value: e.target.value}}))} />
+                                    </td>
+                                    <td>
+                                        <Button onClick={() => {
+                                            setUser(update(user, {properties: {$merge: {[newProp.key]: newProp.value}}}))
+                                            setNewProp({key: "", value: ""})
+                                        }}>+</Button>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </Table>
                         </Col>
                     </FormGroup>
                     <FormGroup validationState={validPassword}>
