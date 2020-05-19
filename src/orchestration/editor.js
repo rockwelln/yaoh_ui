@@ -204,7 +204,8 @@ function new_editor() {
 }
 
 
-function setup_toolbar(editor, container, spacer, handlers, cells) {
+function setup_toolbar(editor, container, spacer, handlers, props) {
+    const {cells, activityId} = props;
     const {onSave, onDelete} = handlers;
 
     if(onSave !== undefined) {
@@ -240,7 +241,10 @@ function setup_toolbar(editor, container, spacer, handlers, cells) {
     addToolbarButton(editor, container, 'show', '👓');
     addToolbarButton(editor, container, 'showDefinition', 'txt');
     if(onSave === undefined) {
-      addToolbarButton(editor, container, 'redirectToDefinition', 'def');
+        addToolbarButton(editor, container, null, 'def', null, false, () => {
+            var win = window.open(`/transactions/config/activities/editor/${activityId}`, '_blank');
+            win.focus();
+        });
     }
     if(onSave !== undefined) {
         container.appendChild(spacer.cloneNode(true));
@@ -260,7 +264,6 @@ function setup_actions(editor, title, spacer, handlers, modal, props, updateMode
         newCell(props.cells, editor.graph.getModel().cells, modal, editor, spacer, props.entities, props);
     });
     editor.addAction('download_definition', editor => downloadDefinition(editor, title.value));
-    editor.addAction('redirectToDefinition', editor => { window.location=`/transactions/config/activities/editor/${props.activityId}` });
     editor.addAction('upload_definition', (editor, cell) => {
         if (typeof window.FileReader !== 'function') {
           alert("The file API isn't supported on this browser yet.");
@@ -399,7 +402,7 @@ export default function draw_editor(container, activity, handlers, placeholders,
 
     // setup toolbar
     if(toolbar !== undefined) {
-        setup_toolbar(editor, toolbar, spacer, handlers, props.cells);
+        setup_toolbar(editor, toolbar, spacer, handlers, props);
     }
 
     let xmlDocument = mxUtils.createXmlDocument();
