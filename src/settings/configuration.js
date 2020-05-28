@@ -859,13 +859,13 @@ export default function Configuration(props) {
         </Tab>
         <Tab eventKey={5} title="Provisioning">
           <ProvisioningPanels
-            prov={config.content.provisioning}
+            prov={config.content.provisioning || {}}
             onChange={v => setConfig(update(config, {content: {provisioning: {$merge: v}}}))}
           />
         </Tab>
         <Tab eventKey={6} title="Logs">
           <LogsPanel
-            logs={config.content.logs}
+            logs={config.content.logs || {}}
             onChange={v => setConfig(update(config, {content: {logs: {$set: v}}}))}
           />
         </Tab>
