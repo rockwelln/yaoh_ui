@@ -14,6 +14,30 @@ import FormControl from "react-bootstrap/lib/FormControl";
 import FormGroup from "react-bootstrap/lib/FormGroup";
 import Alert from "react-bootstrap/lib/Alert";
 
+function messages2instance(messages) {
+    let o = {
+        id: null,
+        tasks: [],
+        subinstances: [],
+    };
+    let m = messages.find(m => m.event === "simulation started");
+    if(m) {
+        o.id = m.instance_id;
+    }
+    messages.filter(m => m.event.startsWith("tasks:") && m.instance_id === o.id).reduce(
+        (m, tasks) => {
+            if(m.event === "tasks:started") {
+                tasks.push(m)
+            } else {
+                t = tasks.find(t => t.cell_id === m.cell_id)
+                t.
+            }
+            return tasks;
+        }
+    , []);
+    return o;
+}
+
 export function SimulatorPanel(props) {
     const {activity, onStop} = props;
     const [connectionStatus, setConnectionStatus] = useState("");
@@ -50,6 +74,8 @@ export function SimulatorPanel(props) {
         setSocket(s);
         return () => s.close();
     }, []);
+
+    const instance = messages2instance(messages);
 
     return (
         <Panel>
@@ -105,7 +131,22 @@ export function SimulatorPanel(props) {
                 <h4>Running status: {connectionStatus}</h4>
                 <Tabs defaultActiveKey={0} id="events_tabs">
                     <Tab title="Tasks" eventKey={0}>
-                        <Table/>
+                        <Table>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>cell</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {
+                                instance.tasks.map(t => <tr key={`task-${t.task_id}`}>
+                                    <td>{t.task_id}</td>
+                                    <td>{t.task_name}</td>
+                                </tr>)
+                            }
+                            </tbody>
+                        </Table>
                     </Tab>
                     <Tab title="Raw events" eventKey={1}>
                         <Table>

@@ -415,7 +415,7 @@ export function ActivityEditor(props) {
                 <Col sm={2}>
                     <FormControl componentClass="input" placeholder="Name" ref={titleRef}/>
                 </Col>
-                <Col smOffset={2}>
+                <Col>
                     <div ref={toolbarRef} />
                 </Col>
             </Row>

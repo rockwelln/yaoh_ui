@@ -164,7 +164,7 @@ function downloadDefinition(editor, title) {
     document.body.removeChild(element);
 }
 
-
+/*
 function debugActivity(editor, title, debugHandler) {
     const r = getDefinition(editor, title);
     if(!r.hasAStart) {
@@ -187,6 +187,7 @@ function debugActivity(editor, title, debugHandler) {
         // resp.context (final one)
     });
 }
+ */
 
 
 function new_editor() {
@@ -248,7 +249,12 @@ function setup_toolbar(editor, container, spacer, handlers, props) {
     }
     if(onSave !== undefined) {
         addToolbarButton(editor, container, 'delete', '✘', null, false, null, 'delete an element');
-        addToolbarButton(editor, container, 'debug', '🐛');
+        addToolbarButton(editor, container, 'debug', '🐛', null, false, (e, button) => {
+            // button.style.borderStyle = (button.style.borderStyle!=='inset' ? 'inset' : 'outset');
+            handlers.onDebug(button.style.borderStyle!=='inset', loaded => {
+                button.style.borderStyle=loaded?'inset':'outset';
+            });
+        });
         container.appendChild(spacer.cloneNode(true));
         addToolbarButton(editor, container, 'undo', '⤾');
         addToolbarButton(editor, container, 'redo', '⤿');
@@ -289,7 +295,6 @@ function setup_actions(editor, title, spacer, handlers, modal, props, updateMode
     editor.addAction('add_process', (editor, cell) => {
         newCell(props.cells, editor.graph.getModel().cells, modal, editor, spacer, props.entities, props);
     });
-    editor.addAction('debug', (editor, cell) => debugActivity(editor, title.value, handlers.onDebug));
     editor.addAction('download_definition', editor => downloadDefinition(editor, title.value));
     editor.addAction('upload_definition', (editor, cell) => {
         if (typeof window.FileReader !== 'function') {
