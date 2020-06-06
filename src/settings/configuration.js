@@ -10,7 +10,7 @@ import {FormattedMessage} from 'react-intl';
 
 import {fetch_get, fetch_put, NotificationsManager} from "../utils";
 import update from 'immutability-helper';
-import Ajv from 'ajv';
+//import Ajv from 'ajv';
 import {Panel} from "react-bootstrap";
 import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 import Form from "react-bootstrap/lib/Form";
@@ -55,6 +55,7 @@ const newGateway = {
   url: "",
   timeout: 10,
   session_holder: "",
+  auth: "default",
   login_url: "/api/v1/login/",
   check: false
 };
@@ -106,30 +107,6 @@ function NewGatewayModal(props) {
           </FormGroup>
           <FormGroup>
             <Col componentClass={ControlLabel} sm={2}>
-              <FormattedMessage id="username" defaultMessage="Username"/>
-            </Col>
-
-            <Col sm={9}>
-              <FormControl
-                componentClass="input"
-                value={entry.username}
-                onChange={e => setEntry(update(entry, {$merge: {username: e.target.value}}))}/>
-            </Col>
-          </FormGroup>
-          <FormGroup>
-            <Col componentClass={ControlLabel} sm={2}>
-              <FormattedMessage id="password" defaultMessage="Password"/>
-            </Col>
-
-            <Col sm={9}>
-              <FormControl
-                componentClass="input"
-                value={entry.password}
-                onChange={e => setEntry(update(entry, {$merge: {password: e.target.value}}))}/>
-            </Col>
-          </FormGroup>
-          <FormGroup>
-            <Col componentClass={ControlLabel} sm={2}>
               <FormattedMessage id="timeout" defaultMessage="Timeout"/>
             </Col>
 
@@ -159,6 +136,23 @@ function NewGatewayModal(props) {
               </HelpBlock>
             </Col>
           </FormGroup>
+          <hr/>
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="auth" defaultMessage="Auth"/>
+            </Col>
+
+            <Col sm={9}>
+              <FormControl
+                componentClass="select"
+                value={entry.auth || "default"}
+                onChange={e => setEntry(update(entry, {$merge: {auth: e.target.value}}))}>
+                  <option value="default">default</option>
+                  <option value="oauth2">oauth2</option>
+              </FormControl>
+
+            </Col>
+          </FormGroup>
           <FormGroup>
             <Col componentClass={ControlLabel} sm={2}>
               <FormattedMessage id="login-url" defaultMessage="Login url"/>
@@ -171,6 +165,65 @@ function NewGatewayModal(props) {
                 onChange={e => setEntry(update(entry, {$merge: {login_url: e.target.value}}))}/>
             </Col>
           </FormGroup>
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="username" defaultMessage="Username"/>
+            </Col>
+
+            <Col sm={9}>
+              <FormControl
+                componentClass="input"
+                value={entry.username}
+                onChange={e => setEntry(update(entry, {$merge: {username: e.target.value}}))}/>
+              <HelpBlock>
+                Empty the username to disable the authentication
+              </HelpBlock>
+            </Col>
+          </FormGroup>
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="password" defaultMessage="Password"/>
+            </Col>
+
+            <Col sm={9}>
+              <FormControl
+                componentClass="input"
+                value={entry.password}
+                onChange={e => setEntry(update(entry, {$merge: {password: e.target.value}}))}/>
+            </Col>
+          </FormGroup>
+            {
+              entry.auth === "oauth2" &&
+              <>
+                <FormGroup>
+                  <Col componentClass={ControlLabel} sm={2}>
+                    <FormattedMessage id="client-id" defaultMessage="Client id"/>
+                  </Col>
+
+                  <Col sm={9}>
+                    <FormControl
+                      componentClass="input"
+                      value={entry.client_id || ""}
+                      onChange={e => setEntry(update(entry, {$merge: {client_id: e.target.value}}))}/>
+
+                  </Col>
+                </FormGroup>
+                <FormGroup>
+                  <Col componentClass={ControlLabel} sm={2}>
+                    <FormattedMessage id="client-secret" defaultMessage="Client secret"/>
+                  </Col>
+
+                  <Col sm={9}>
+                    <FormControl
+                      componentClass="input"
+                      value={entry.client_secret || ""}
+                      onChange={e => setEntry(update(entry, {$merge: {client_secret: e.target.value}}))}/>
+
+                  </Col>
+                </FormGroup>
+              </>
+            }
+
         </Form>
       </Modal.Body>
       <Modal.Footer>
@@ -224,34 +277,6 @@ function GatewaysPanel(props) {
 
                     <FormGroup>
                       <Col componentClass={ControlLabel} sm={2}>
-                        <FormattedMessage id="username" defaultMessage="Username"/>
-                      </Col>
-
-                      <Col sm={9}>
-                        <FormControl
-                          componentClass="input"
-                          value={gateway.username}
-                          onChange={e => onChange(update(gateways, {[g]: {$merge: {username: e.target.value}}}))}/>
-
-                      </Col>
-                    </FormGroup>
-
-                    <FormGroup>
-                      <Col componentClass={ControlLabel} sm={2}>
-                        <FormattedMessage id="password" defaultMessage="Password"/>
-                      </Col>
-
-                      <Col sm={9}>
-                        <FormControl
-                          componentClass="input"
-                          value={gateway.password}
-                          onChange={e => onChange(update(gateways, {[g]: {$merge: {password: e.target.value}}}))}/>
-
-                      </Col>
-                    </FormGroup>
-
-                    <FormGroup>
-                      <Col componentClass={ControlLabel} sm={2}>
                         <FormattedMessage id="timeout" defaultMessage="Timeout"/>
                       </Col>
 
@@ -263,21 +288,6 @@ function GatewaysPanel(props) {
                         <HelpBlock>
                           Timeout in seconds for the connection
                         </HelpBlock>
-                      </Col>
-                    </FormGroup>
-
-                    <FormGroup>
-                      <Col componentClass={ControlLabel} sm={2}>
-                        <FormattedMessage id="login-url" defaultMessage="Login url"/>
-                      </Col>
-
-                      <Col sm={9}>
-                        <FormControl
-                          componentClass="input"
-                          value={gateway.login_url}
-                          placeholder="/auth/login"
-                          onChange={e => onChange(update(gateways, {[g]: {$merge: {login_url: e.target.value}}}))}/>
-
                       </Col>
                     </FormGroup>
 
@@ -316,6 +326,102 @@ function GatewaysPanel(props) {
                         </HelpBlock>
                       </Col>
                     </FormGroup>
+
+                    <hr/>
+
+                    <FormGroup>
+                      <Col componentClass={ControlLabel} sm={2}>
+                        <FormattedMessage id="auth" defaultMessage="Auth"/>
+                      </Col>
+
+                      <Col sm={9}>
+                        <FormControl
+                          componentClass="select"
+                          value={gateway.auth || "default"}
+                          onChange={e => onChange(update(gateways, {[g]: {$merge: {auth: e.target.value}}}))}>
+                            <option value="default">default</option>
+                            <option value="oauth2">oauth2</option>
+                        </FormControl>
+
+                      </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                      <Col componentClass={ControlLabel} sm={2}>
+                        <FormattedMessage id="login-url" defaultMessage="Login url"/>
+                      </Col>
+
+                      <Col sm={9}>
+                        <FormControl
+                          componentClass="input"
+                          value={gateway.login_url}
+                          placeholder="/auth/login"
+                          onChange={e => onChange(update(gateways, {[g]: {$merge: {login_url: e.target.value}}}))}/>
+
+                      </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                      <Col componentClass={ControlLabel} sm={2}>
+                        <FormattedMessage id="username" defaultMessage="Username"/>
+                      </Col>
+
+                      <Col sm={9}>
+                        <FormControl
+                          componentClass="input"
+                          value={gateway.username}
+                          onChange={e => onChange(update(gateways, {[g]: {$merge: {username: e.target.value}}}))}/>
+                          <HelpBlock>
+                            Empty the username to disable the authentication
+                          </HelpBlock>
+                      </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                      <Col componentClass={ControlLabel} sm={2}>
+                        <FormattedMessage id="password" defaultMessage="Password"/>
+                      </Col>
+
+                      <Col sm={9}>
+                        <FormControl
+                          componentClass="input"
+                          value={gateway.password}
+                          onChange={e => onChange(update(gateways, {[g]: {$merge: {password: e.target.value}}}))}/>
+
+                      </Col>
+                    </FormGroup>
+
+                    {
+                      gateway.auth === "oauth2" &&
+                      <>
+                        <FormGroup>
+                          <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="client-id" defaultMessage="Client id"/>
+                          </Col>
+
+                          <Col sm={9}>
+                            <FormControl
+                              componentClass="input"
+                              value={gateway.client_id}
+                              onChange={e => onChange(update(gateways, {[g]: {$merge: {client_id: e.target.value}}}))}/>
+
+                          </Col>
+                        </FormGroup>
+                        <FormGroup>
+                          <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="client-secret" defaultMessage="Client secret"/>
+                          </Col>
+
+                          <Col sm={9}>
+                            <FormControl
+                              componentClass="input"
+                              value={gateway.client_secret}
+                              onChange={e => onChange(update(gateways, {[g]: {$merge: {client_secret: e.target.value}}}))}/>
+
+                          </Col>
+                        </FormGroup>
+                      </>
+                    }
 
                     <FormGroup>
                       <Col smOffset={2} sm={9}>
@@ -822,7 +928,7 @@ export default function Configuration(props) {
   useEffect(() => fetchConfiguration(setConfig), []);
   const editConfig = e => setConfig(update(config, {$merge: {content: e.updated_src}}));
 
-  const ajv = new Ajv();
+  // const ajv = new Ajv();
 
   if (config.content === undefined) {
     return <div/>
