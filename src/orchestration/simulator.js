@@ -1,5 +1,5 @@
-import React, {useState, useEffect, useRef} from "react";
-import {API_WS_URL, AuthServiceManager, NotificationsManager} from "../utils";
+import React, {useState, useEffect} from "react";
+import {API_WS_URL, AuthServiceManager} from "../utils";
 import Form from "react-bootstrap/lib/Form";
 import Tab from "react-bootstrap/lib/Tab";
 import Tabs from "react-bootstrap/lib/Tabs";
@@ -24,13 +24,20 @@ function messages2instance(messages) {
     if(m) {
         o.id = m.instance_id;
     }
-    messages.filter(m => m.event.startsWith("tasks:") && m.instance_id === o.id).reduce(
-        (m, tasks) => {
+    o.tasks = messages.filter(m => m.event.startsWith("tasks:") && m.instance_id === o.id).reduce(
+        (tasks, m) => {
             if(m.event === "tasks:started") {
-                tasks.push(m)
-            } else {
-                t = tasks.find(t => t.cell_id === m.cell_id)
-                t.
+                tasks.push({
+                    cell_id: m.cell_id,
+                    task_id: m.task_id,
+                    status: 'running...',
+                });
+            } else if (m.event.startsWith("tasks:")) {
+                const t = tasks.find(t => t.task_id === m.task_id);
+                if(t) {
+                    t.status = m.event === 'tasks:ended' ? 'completed' : 'waiting...';
+                    t.output = m.output;
+                }
             }
             return tasks;
         }
@@ -136,13 +143,15 @@ export function SimulatorPanel(props) {
                                 <tr>
                                     <th>#</th>
                                     <th>cell</th>
+                                    <th>status</th>
                                 </tr>
                             </thead>
                             <tbody>
                             {
                                 instance.tasks.map(t => <tr key={`task-${t.task_id}`}>
                                     <td>{t.task_id}</td>
-                                    <td>{t.task_name}</td>
+                                    <td>{t.cell_id}</td>
+                                    <td>{t.status}</td>
                                 </tr>)
                             }
                             </tbody>
