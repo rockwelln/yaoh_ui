@@ -149,6 +149,7 @@ function NewGatewayModal(props) {
                 onChange={e => setEntry(update(entry, {$merge: {auth: e.target.value}}))}>
                   <option value="default">default</option>
                   <option value="oauth2">oauth2</option>
+                  <option value="basic">basic</option>
               </FormControl>
 
             </Col>
@@ -163,6 +164,9 @@ function NewGatewayModal(props) {
                 componentClass="input"
                 value={entry.login_url}
                 onChange={e => setEntry(update(entry, {$merge: {login_url: e.target.value}}))}/>
+              <HelpBlock>
+                Ignored for basic auth
+              </HelpBlock>
             </Col>
           </FormGroup>
           <FormGroup>
@@ -341,6 +345,7 @@ function GatewaysPanel(props) {
                           onChange={e => onChange(update(gateways, {[g]: {$merge: {auth: e.target.value}}}))}>
                             <option value="default">default</option>
                             <option value="oauth2">oauth2</option>
+                            <option value="basic">basic</option>
                         </FormControl>
 
                       </Col>
@@ -357,7 +362,9 @@ function GatewaysPanel(props) {
                           value={gateway.login_url}
                           placeholder="/auth/login"
                           onChange={e => onChange(update(gateways, {[g]: {$merge: {login_url: e.target.value}}}))}/>
-
+                        <HelpBlock>
+                          Ignored for basic auth.
+                        </HelpBlock>
                       </Col>
                     </FormGroup>
 
