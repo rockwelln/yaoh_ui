@@ -1,6 +1,7 @@
 import Ajv from "ajv";
 import {fetchRoles} from "../system/user_roles";
 import {fetchActivities} from "./activity-editor";
+import {fetchProfiles} from "../system/user_profiles";
 
 const okPic = require("../images/ok.png");
 const errPic = require("../images/error.png");
@@ -972,6 +973,29 @@ function createInput(param, value, cells, cells_defs, config) {
                 input.value = input._value || "";
             });
             input._value = value || "";
+            break;
+        case 'user_profile':
+            input = document.createElement('select');
+            input.className = 'form-control';
+            fetchProfiles(profiles => {
+                profiles
+                .map(v => {
+                    const opt = document.createElement('option');
+                    opt.value = v.id;
+                    opt.innerText = v.name;
+                    return opt;
+                })
+                .forEach(o => input.appendChild(o));
+                input.value = input._value || "";
+            });
+            input._value = value || "";
+            break;
+        case 'user_properties':
+            input = document.createElement('textarea');
+            input.innerText = value;
+            input.rows = 4;
+            input.className = 'form-control';
+            input.value = value || "";
             break;
         case 'timer':
             input = document.createElement('select');

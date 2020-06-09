@@ -29,6 +29,15 @@ function fetchProfileDetails(profile_id) {
 }
 
 
+export function fetchProfiles(onSuccess) {
+    return fetch_get("/api/v01/system/user_profiles")
+        .then(data => onSuccess(data.profiles))
+        .catch(error => NotificationsManager.error(
+            <FormattedMessage id="failed-fetch-profiles" defaultMessage="Failed to fetch user profiles"/>,
+            error.message
+        ))
+}
+
 function deleteProfile(profile_id, onSuccess) {
     return fetch_delete(`/api/v01/system/user_profiles/${profile_id}`)
         .then(r => {
@@ -389,12 +398,7 @@ function UpdateProfile(props) {
 
 export default function UserProfiles() {
     const [profiles, setProfiles] = useState([]);
-    const refresh = () => {
-        fetch_get("/api/v01/system/user_profiles")
-            .then(data => setProfiles(data.profiles))
-            .catch(error => NotificationsManager.error(<FormattedMessage id="failed-fetch-profiles"
-                                                                         defaultMessage="Failed to fetch user profiles"/>, error.message))
-    };
+    const refresh = () => fetchProfiles(setProfiles);
     useEffect(refresh, []);
 
     return (
