@@ -2053,6 +2053,14 @@ export class Request extends Component {
                     </LinkContainer>
                     <Breadcrumb.Item active>{request.request_id}</Breadcrumb.Item>
                 </Breadcrumb>
+                {
+                    request.instance_id && (
+                        <Alert bsStyle="info" key='instance'>
+                            <FormattedMessage id="instance-link" defaultMessage="The request is part of the instance: "/>
+                            <Link to={`/transactions/${request.instance_id}`}>{request.instance_id}</Link>
+                        </Alert>
+                    )
+                }
                 <Col xs={12} sm={6} md={8} lg={8} style={{marginTop: '10px'}}>
                     <Panel>
                         <Panel.Body>
