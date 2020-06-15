@@ -1052,9 +1052,9 @@ const TasksTable = ({tasks, definition, onReplay, onRollback, user_can_replay, t
                     const replayable = onReplay && user_can_replay;
                     const can_replay = (replayable || t.cell_id === 'end') && t.status === 'ERROR' &&
                         t.id === Math.max(tasks.filter(ot => ot.cell_id === t.cell_id).map(oot => oot.id));
-                    const support_rollback = definition.cells && definition.cells.find(c => c.cell_id === t.cell_id).outputs.includes("rollback");
+                    const support_rollback = definition.cells && definition.cells[t.cell_id] && definition.cells[t.cell_id].outputs.includes("rollback");
                     const support_force = FORCEABLE_TASKS.includes(t.cell_id);
-                    const support_skip = definition.cells && definition.cells.find(c => c.cell_id === t.cell_id).outputs.includes("skip");
+                    const support_skip = definition.cells && definition.cells[t.cell_id] && definition.cells[t.cell_id].outputs.includes("skip");
 
                     return (
                         <tr key={t.id}>
@@ -1139,12 +1139,14 @@ const ContextTable = ({context}) => (
 const Timers = ({timers, onUpdate}) => (
     <Table style={{tableLayout: 'fixed'}}>
         <thead>
-            <th>#</th>
-            <th>key</th>
-            <th>status</th>
-            <th>run at</th>
-            <th>name</th>
-            <th/>
+            <tr>
+                <th>#</th>
+                <th>key</th>
+                <th>status</th>
+                <th>run at</th>
+                <th>name</th>
+                <th/>
+            </tr>
         </thead>
         <tbody>
         {
@@ -1831,7 +1833,7 @@ export class Transaction extends Component {
                                 <TransactionFlow definition={tx.definition} states={tx.tasks} activityId={tx.activity_id} />
                                 <TasksTable
                                     tasks={tx.tasks}
-                                    definition={tx.definition}
+                                    definition={JSON.parse(tx.definition)}
                                     onReplay={this.onReplay}
                                     onRollback={this.onRollback}
                                     user_can_replay={can_act && tx.status === 'ACTIVE' && !replaying}

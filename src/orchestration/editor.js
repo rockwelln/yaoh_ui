@@ -854,7 +854,7 @@ function isValid(p, v) {
 }
 
 function getHelpbox(nature, helpText) {
-    const span = document.createElement("span");
+    let span = document.createElement("span");
     span.style = "color: grey";
     span.className = "help-block";
     if(helpText) {
