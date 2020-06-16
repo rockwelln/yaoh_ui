@@ -12,6 +12,8 @@ import Table, {thead, th, tr, td, tbody} from 'react-bootstrap/lib/Table';
 
 import {FormattedMessage} from 'react-intl';
 import update from "immutability-helper/index";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSortDown, faSortUp, faSort, faSpinner } from "@fortawesome/free-solid-svg-icons";
 
 // import 'font-awesome/css/font-awesome.min.css';
 
@@ -125,8 +127,7 @@ export const ApioDatatable = ({sorting_spec, headers, pagination, data, labels, 
 
     const renderSortIcon = field => {
         const e = sorting_spec.find(s => s.field === field);
-        const sortClass = e !== undefined?(' fa-sort-' + e.direction):'';
-        return <i className={"fa fa-sort" + sortClass + " fa-fw"} aria-hidden="true" />;
+        return <FontAwesomeIcon icon={e === undefined ? faSort : e.direction === "desc" ? faSortDown : faSortUp} />
     };
 
     const getSortDirection = field => {
@@ -137,7 +138,7 @@ export const ApioDatatable = ({sorting_spec, headers, pagination, data, labels, 
     if(data === undefined) {
         return (
             <div>
-                <i className="fa fa-spinner fa-spin" aria-hidden="true" style={{'fontSize': '24px'}}/>
+                <FontAwesomeIcon icon={faSpinner} aria-hidden="true" style={{'fontSize': '24px'}} spin />
             </div>
         )
     }

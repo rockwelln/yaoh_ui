@@ -29,6 +29,8 @@ import update from "immutability-helper";
 import queryString from "query-string";
 import {Link} from "react-router-dom";
 import {Pagination} from "../utils/datatable";
+import {faSpinner} from "@fortawesome/free-solid-svg-icons";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 
 
 class NewBulk extends Component {
@@ -515,7 +517,7 @@ class BulkEntry extends Component {
                 <tr>
                     <td/>
                     <td>
-                        <i className="fa fa-spinner fa-spin" aria-hidden="true" style={{'fontSize': '24px'}}/>
+                        <FontAwesomeIcon icon="spinner" aria-hidden="true" style={{'fontSize': '24px'}} spin />
                     </td>
                     <td colSpan={5}/>
                 </tr>

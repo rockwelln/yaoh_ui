@@ -14,6 +14,8 @@ import InputGroup from "react-bootstrap/lib/InputGroup";
 import {fetch_get, NotificationsManager} from "../utils";
 import {Link} from "react-router-dom";
 import Button from "react-bootstrap/lib/Button";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 
 
 function fetchDecrypted(entryId, onSuccess) {
@@ -38,7 +40,7 @@ function NdgPassword(props) {
                 <FormControl readOnly type={decrypted?"text":"password"} value={decrypted?clearPassword:"......."}/>
                 <div className="input-group-addon">
                     <a onClick={decrypt}>
-                        <i className="fa fa-eye-slash" aria-hidden="true" />
+                        <FontAwesomeIcon icon={faEyeSlash} aria-hidden="true" />
                     </a>
                 </div>
             </InputGroup>
