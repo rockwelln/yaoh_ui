@@ -567,9 +567,7 @@ class App extends Component {
     componentWillUpdate() {
         if(this.isAuthenticated() && !this.state.user_info && AuthServiceManager.isAuthenticated()) {
             this.getUserInfo();
-            ProvProxiesManager.fetchConfiguration().then(() => {
-                this.setState({proxy_fetch: true});
-            }).catch(error => console.log(error));
+            ProvProxiesManager.fetchConfiguration().then(() => this.setState({proxy_fetch: true})).catch(console.log);
         }
     }
 
@@ -581,6 +579,7 @@ class App extends Component {
 
     updateToken(token, sso_auth) {
         AuthServiceManager.loadToken(token);
+        ProvProxiesManager.fetchConfiguration().then(() => this.setState({proxy_fetch: true})).catch(console.log);
         // this.props.cookies.set('auth_sso', sso_auth?'1':'0', {path: '/'});  // maxAge = 24hours
         createCookie("auth_sso", sso_auth?'1':'0', 1, '/');  // maxAge = 24hours
         this.setState({user_info: this.state.user_info});
