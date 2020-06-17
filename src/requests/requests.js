@@ -1037,6 +1037,7 @@ const TasksTable = ({tasks, definition, onReplay, onRollback, user_can_replay, t
             <th><FormattedMessage id="output" defaultMessage="Output" /></th>
             <th><FormattedMessage id="created" defaultMessage="Created" /></th>
             <th><FormattedMessage id="updated" defaultMessage="Updated" /></th>
+            <th><FormattedMessage id="runtime" defaultMessage="Runtime" /></th>
             <th/>
         </tr>
         </thead>
@@ -1063,6 +1064,7 @@ const TasksTable = ({tasks, definition, onReplay, onRollback, user_can_replay, t
                             <td>{t.output}</td>
                             <td>{moment(t.created_on).format(DATE_FORMAT)}</td>
                             <td>{t.updated_on?moment(t.updated_on).format(DATE_FORMAT):'-'}</td>
+                            <td>{t.runtime?`${t.runtime.toFixed(3)} sec(s)`:'-'}</td>
                             <td>
                                 <ButtonToolbar>
                                     {
