@@ -157,7 +157,7 @@ class CustomRoutes extends Component {
     }
 
     static new_route() {
-        return {method: "get", sync: false, route: "", schema: null}
+        return {method: "get", sync: false, enabled:true, route: "", schema: null}
     }
 
     fetchRoutes() {
@@ -197,14 +197,30 @@ class CustomRoutes extends Component {
     }
 
     onSyncUpdate(route_id, new_sync) {
-        fetch_put(`/api/v01/custom_routes/${route_id}`, {sync: new_sync}, this.props.auth_token)
+        fetch_put(`/api/v01/custom_routes/${route_id}`, {sync: new_sync})
             .then(() => {
                 this.props.notifications.addNotification({
                     message: <FormattedMessage id="update-custom-route-done" defaultMessage="Custom route saved!"/>,
                     level: 'success'
                 });
                 this.fetchRoutes();
-                this.setState({showSyncWarning: false, pending_route: undefined})
+                this.setState({showSyncWarning: false, pending_route: undefined});
+            })
+            .catch(error => this.props.notifications.addNotification({
+                title: <FormattedMessage id="update-custom-routes-failed" defaultMessage="Failed to update custom route"/>,
+                message: error.message,
+                level: 'error'
+            }));
+    }
+
+    onEnabledUpdate(route_id, new_enabled) {
+        fetch_put(`/api/v01/custom_routes/${route_id}`, {enabled: new_enabled})
+            .then(() => {
+                this.props.notifications.addNotification({
+                    message: <FormattedMessage id="update-custom-route-done" defaultMessage="Custom route saved!"/>,
+                    level: 'success'
+                });
+                this.fetchRoutes();
             })
             .catch(error => this.props.notifications.addNotification({
                 title: <FormattedMessage id="update-custom-routes-failed" defaultMessage="Failed to update custom route"/>,
@@ -219,7 +235,7 @@ class CustomRoutes extends Component {
         if(new_route.schema) {
             new_route.schema = JSON.parse(new_route.schema);
         }
-        fetch_post('/api/v01/custom_routes', new_route, this.props.auth_token)
+        fetch_post('/api/v01/custom_routes', new_route)
             .then(() => {
                 this.props.notifications.addNotification({
                     message: <FormattedMessage id="update-custom-route-done" defaultMessage="Custom route saved!"/>,
@@ -253,7 +269,7 @@ class CustomRoutes extends Component {
 
     onUpdateCustomRoute() {
         const {pending_route} = this.state;
-        const route = Object.keys(pending_route).filter(k => ["activity_id", "schema", "sync"].includes(k)).reduce(
+        const route = Object.keys(pending_route).filter(k => ["activity_id", "schema", "sync", "enabled"].includes(k)).reduce(
             (obj, key) => {
                 obj[key] = pending_route[key];
                 return obj;
@@ -264,7 +280,7 @@ class CustomRoutes extends Component {
         } else {
             route.schema = null;
         }
-        fetch_put(`/api/v01/custom_routes/${pending_route.route_id}`, route, this.props.auth_token)
+        fetch_put(`/api/v01/custom_routes/${pending_route.route_id}`, route)
             .then(() => {
                 this.props.notifications.addNotification({
                     message: <FormattedMessage id="update-custom-route-done" defaultMessage="Custom route updated!"/>,
@@ -332,6 +348,7 @@ class CustomRoutes extends Component {
                             <th><FormattedMessage id="method" defaultMessage="Method" /></th>
                             <th><FormattedMessage id="route" defaultMessage="Route (prefix: {prefix})" values={{prefix: CUSTOM_ROUTE_PREFIX}} /></th>
                             <th><FormattedMessage id="handler" defaultMessage="Activity" /></th>
+                            <th><FormattedMessage id="enabled" defaultMessage="Enabled" /></th>
                             <th><FormattedMessage id="sync" defaultMessage="Sync" /></th>
                             <th/>
                         </tr>
@@ -361,6 +378,15 @@ class CustomRoutes extends Component {
                                                     .map(a => <option value={a.id} key={a.id}>{a.name}</option>)
                                                 }
                                             </select>
+                                        </td>
+                                        <td>
+                                            <Checkbox
+                                                checked={route.enabled}
+                                                onChange={e => e.preventDefault()}
+                                                onClick={e => {
+                                                    e.preventDefault();
+                                                    this.onEnabledUpdate(route.route_id, e.target.checked);
+                                                }} />
                                         </td>
                                         <td>
                                             <Checkbox
@@ -477,6 +503,18 @@ class CustomRoutes extends Component {
 
                                  <FormGroup>
                                      <Col componentClass={ControlLabel} sm={2}>
+                                         <FormattedMessage id="enabled" defaultMessage="Enabled" />
+                                     </Col>
+
+                                     <Col sm={9}>
+                                         <Checkbox
+                                             checked={new_route.enabled}
+                                             onChange={e => this.setState({new_route: update(new_route, {$merge: {enabled: e.target.checked}})})}/>
+                                     </Col>
+                                 </FormGroup>
+
+                                 <FormGroup>
+                                     <Col componentClass={ControlLabel} sm={2}>
                                          <FormattedMessage id="sync" defaultMessage="Sync" />
                                      </Col>
 
@@ -552,6 +590,18 @@ class CustomRoutes extends Component {
                                              <HelpBlock>
                                                  <FormattedMessage id="custom-route-schema" defaultMessage="When set, the body is systematically checked against the schema associated to the route."/>
                                              </HelpBlock>
+                                         </Col>
+                                     </FormGroup>
+
+                                     <FormGroup>
+                                         <Col componentClass={ControlLabel} sm={2}>
+                                             <FormattedMessage id="enabled" defaultMessage="Enabled" />
+                                         </Col>
+
+                                         <Col sm={9}>
+                                             <Checkbox
+                                                 checked={pending_route.enabled}
+                                                 onChange={e => this.setState({pending_route: update(pending_route, {$merge: {enabled: e.target.checked}})})}/>
                                          </Col>
                                      </FormGroup>
 
