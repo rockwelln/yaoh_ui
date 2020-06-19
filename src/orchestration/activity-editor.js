@@ -25,6 +25,9 @@ import update from "immutability-helper";
 import InputGroup from "react-bootstrap/lib/InputGroup";
 import InputGroupButton from "react-bootstrap/lib/InputGroupButton";
 import {DeleteConfirmButton} from "../utils/deleteConfirm";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faStethoscope, faChartBar } from "@fortawesome/free-solid-svg-icons";
+import {Link} from "react-router-dom";
 
 
 const NEW_ACTIVITY = {
@@ -97,6 +100,14 @@ function fetchConfiguration(onSuccess) {
     fetch_get('/api/v01/system/configuration')
         .then(data => onSuccess(data.content))
         .catch(console.error);
+}
+
+function fetchActivityStats(id, onSuccess) {
+    fetch_get(`/api/v01/activities/${id}/stats`)
+        .then(resp => onSuccess(resp))
+        .catch(error => {
+            NotificationsManager.error("Failed to fetch statistics", error.message);
+        });
 }
 
 function NewActivity(props) {
@@ -254,12 +265,87 @@ export function Activities(props) {
     )
 }
 
+
+function ActivityStatsModal(props) {
+    const {show, onHide, id} = props;
+    const [stats, setStats] = useState({});
+
+    useEffect(() => {
+        show && fetchActivityStats(id, setStats);
+    }, [show]);
+
+    return (
+        <Modal show={show} onHide={onHide}>
+            <Modal.Header closeButton>
+                <Modal.Title>Run statistics</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <Table>
+                    <tbody>
+                        <tr>
+                            <th>run count</th>
+                            <td>{stats.run_count || "-"}</td>
+                        </tr>
+                        <tr>
+                            <th>first run</th>
+                            <td>
+                                {
+                                    stats.first_run ?
+                                        <Link to={`/transactions/${stats.first_run.instance_id}`}>
+                                            {stats.first_run.instance_id}
+                                        </Link> :
+                                        "-"
+                                }
+                            </td>
+                            <td>{stats.first_run ? stats.first_run.created_on : "-"}</td>
+                        </tr>
+                        <tr>
+                            <th>last run</th>
+                            <td>
+                                {
+                                    stats.last_run ?
+                                        <Link to={`/transactions/${stats.last_run.instance_id}`}>
+                                            {stats.last_run.instance_id}
+                                        </Link> :
+                                        "-"
+                                }
+                            </td>
+                            <td>{stats.last_run ? stats.last_run.created_on : "-"}</td>
+                        </tr>
+                    </tbody>
+                </Table>
+                <Table>
+                    <thead>
+                        <tr>
+                            <th>cell</th>
+                            <th>min(runtime)</th>
+                            <th>max(runtime)</th>
+                            <th>avg(runtime)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {
+                        stats.tasks && stats.tasks.sort((a, b) => a.cell_id.localeCompare(b.cell_id) ).map((t, i) => <tr key={i}>
+                            <td>{t.cell_id}</td>
+                            <td>{t.min_1 ? t.min_1.toFixed(3) : "-"} sec(s)</td>
+                            <td>{t.max_1 ? t.max_1.toFixed(3) : "-"} sec(s)</td>
+                            <td>{t.avg_1 ? t.avg_1.toFixed(3) : "-"} sec(s)</td>
+                        </tr>)
+                    }
+                    </tbody>
+                </Table>
+            </Modal.Body>
+        </Modal>
+    )
+}
+
 export function ActivityEditor(props) {
     const [entities, setEntities] = useState([]);
     const [cells, setCells] = useState([]);
     const [configuration, setConfiguration] = useState({});
     const [currentActivity, setCurrentActivity] = useState(null);
     const [newActivity, setNewActivity] = useState(true);
+    const [showStats, setShowStats] = useState(false);
 
     useEffect(() => {
         fetchConfiguration(setConfiguration);
@@ -326,8 +412,12 @@ export function ActivityEditor(props) {
                 <Col sm={2}>
                     <FormControl componentClass="input" placeholder="Name" ref={title}/>
                 </Col>
-                <Col smOffset={2}>
+                <Col sm={8}>
                     <div ref={toolbar} />
+                </Col>
+                <Col sm={2}>
+                    <Button disabled><FontAwesomeIcon icon={faStethoscope} /></Button>
+                    <Button onClick={() => setShowStats(true)}><FontAwesomeIcon icon={faChartBar} /></Button>
                 </Col>
             </Row>
             <hr />
@@ -336,183 +426,10 @@ export function ActivityEditor(props) {
                     <div ref={editor} style={{overflow: 'hidden', backgroundImage: `url(${GridPic})`}} />
                 </Col>
             </Row>
-
+            <ActivityStatsModal
+                show={showStats}
+                onHide={() => setShowStats(false)}
+                id={props.match.params.activityId} />
         </>
     );
 }
-/*
-export  class ActivityEditor extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            activities: [],
-            configuration: {},
-            currentActivity: null,
-            newActivity: true,
-        };
-
-        this.renderGrid = this.renderGrid.bind(this);
-        this.saveActivity = this.saveActivity.bind(this);
-        this.deleteActivity = this.deleteActivity.bind(this);
-        this.fetchActivity = this.fetchActivity.bind(this);
-    }
-
-    componentDidMount() {
-        fetchActivities(a => this.setState({activities: a}));
-        fetchConfiguration(c => this.setState({configuration: c}));
-    }
-
-    fetchActivity(actId, cb) {
-        fetch_get('/api/v01/activities/' + actId, this.props.auth_token)
-            .then(data => cb(data.activity))
-            .catch(console.error);
-    }
-
-    componentDidUpdate() {
-        const getData = this.state.currentActivity===null && !this.state.newActivity?null:
-        (cb)=> {
-            if (this.state.newActivity) {
-                cb(JSON.parse(JSON.stringify(NEW_ACTIVITY)));
-            } else {
-                this.fetchActivity(this.state.currentActivity, cb)
-            }
-        };
-        let onDelete = this.state.newActivity?undefined:() => this.deleteActivity(this.state.currentActivity);
-        this.renderGrid(getData, this.saveActivity, onDelete);
-    }
-
-    renderGrid(getActivity, onSave, onDelete) {
-        if (getActivity === null) return;
-        const {configuration} = this.state;
-
-        let node = ReactDOM.findDOMNode(this.refs['editor']);
-        let toolbar = ReactDOM.findDOMNode(this.refs['toolbar']);
-        let title = ReactDOM.findDOMNode(this.refs['title']);
-        // (container, handlers, placeholders, props)
-        draw_editor(node, {
-            get: getActivity,
-            onSave: onSave,
-            onDelete: onDelete,
-            getCellDefinitions: fetchCells,
-            getEntities: fetchEntities,
-            }, {
-            toolbar: toolbar,
-            title: title,
-            }, {
-            configuration: configuration,
-            }
-        )
-    }
-
-    saveActivity(data, cb) {
-        const method = data.id === undefined?fetch_post:fetch_put;
-
-        method(
-            `/api/v01/activities${data.id === undefined?'':'/'+data.id}`,
-            {
-                'name': data.name,
-                'definition': data.definition,
-            },
-            this.props.auth_token
-        )
-        .then(data_ => {
-            cb && cb(data_);
-            this.showAlert("Activity saved !");
-            fetchActivities(a => this.setState({activities: a}));
-
-            if(data.id === undefined) { // new activity created, we have to fetch again the activity list.
-                this.setState({newActivity: false, currentActivity: data_.id});
-            }
-        })
-        .catch(error => {
-            console.error(error);
-            if(error.response.status === 409) {
-                this.showAlert("Duplicate name!")
-            } else if(error.response.status === 404 && data.id !== undefined) {
-                // we tried to update a resource not found. so we retry to create it instead.
-                delete data.id;
-                this.saveActivity(data, cb);
-            } else {
-                this.showAlert(`Impossible to save the activity (${error})`, "danger");
-            }
-        });
-    }
-
-    showAlert(message, type) {
-        if(type === undefined) type = "success";
-        let node = ReactDOM.findDOMNode(this.refs['alert-editor']);
-        node.className = "alert alert-" + type + " editor-fadeOut";
-        node.innerHTML = message;
-
-        setTimeout(() => {
-            node.className = "";
-            node.innerHTML = "";
-        }, 2 * 1000);
-    }
-
-    deleteActivity(activityId, cb) {
-        fetch_delete(`/api/v01/activities/${activityId}`)
-            .then(parseJSON)
-            .then(data =>{
-                if(cb !== undefined) {
-                    cb(data);
-                }
-                setTimeout(() => this.showAlert("Activity deleted successfully"), 1000);
-                this.setState({currentActivity: null, newActivity: true});
-                fetchActivities(a => this.setState({activities: a}));
-            })
-            .catch((error) => {
-                console.log(error);
-                this.showAlert("Impossible to delete the activity (" + error + ")", "danger");
-            });
-    }
-
-    render() {
-        const {activities} = this.state;
-        return (
-            <div>
-                <Breadcrumb>
-                    <Breadcrumb.Item active><FormattedMessage id="orchestration" defaultMessage="Orchestration"/></Breadcrumb.Item>
-                    <Breadcrumb.Item active><FormattedMessage id="activity-editor" defaultMessage="Activity editor"/></Breadcrumb.Item>
-                </Breadcrumb>
-                <div role="alert" ref="alert-editor" />
-                <Row>
-                    <Col sm={2}>
-                        <FormControl componentClass="input" placeholder="Name" ref="title"/>
-                    </Col>
-                    <Col smOffset={2}>
-                        <div ref="toolbar" />
-                    </Col>
-                </Row>
-                <hr />
-                <Row>
-                    <Col sm={2}>
-                        <Nav bsSize="small" bsStyle="pills" stacked>
-                            <NavItem onClick={() => this.setState({newActivity: true})}>+ New</NavItem>
-                            {
-                                activities
-                                    .sort((a, b) => {
-                                        if(a.name > b.name) return 1;
-                                        if(a.name < b.name) return -1;
-                                        return 0;
-                                    })
-                                    .map(a => (
-                                        <NavItem key={a.name} onClick={() => this.setState({currentActivity:a.id, newActivity: false})}>
-                                            {a.name}
-                                        </NavItem>
-                                    )
-                                )
-                            }
-                        </Nav>
-                    </Col>
-
-                    <Col sm={10}>
-                        <div ref="editor" style={{overflow: 'hidden', backgroundImage: `url(${GridPic})`}} />
-                    </Col>
-                </Row>
-
-            </div>
-        );
-    }
-}
-*/
