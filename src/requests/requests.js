@@ -1763,7 +1763,9 @@ export class Transaction extends Component {
                             <Panel>
                                 <Panel.Body>
                                 {
-                                    raw_event && <RequestBody content={raw_event.content} />
+                                    raw_event ?
+                                      <RequestBody content={raw_event.content} /> :
+                                      (request && request.details) && <ReactJson src={request.details}/>
                                 }
                                 </Panel.Body>
                             </Panel>
