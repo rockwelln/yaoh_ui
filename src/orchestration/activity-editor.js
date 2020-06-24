@@ -415,18 +415,17 @@ export function ActivityEditor(props) {
                 <Col sm={2}>
                     <FormControl componentClass="input" placeholder="Name" ref={titleRef}/>
                 </Col>
-                <Col>
+                <Col sm={7}>
                     <div ref={toolbarRef} />
+                </Col>
+                <Col sm={2}>
+                    <Button onClick={() => setShowStats(true)}><FontAwesomeIcon icon={faChartBar} /></Button>
                 </Col>
             </Row>
             <hr />
             <Row>
                 <Col>
                     <div ref={editorRef} style={{overflow: 'hidden', backgroundImage: `url(${GridPic})`}} />
-                </Col>
-                <Col sm={2}>
-                    <Button disabled><FontAwesomeIcon icon={faStethoscope} /></Button>
-                    <Button onClick={() => setShowStats(true)}><FontAwesomeIcon icon={faChartBar} /></Button>
                 </Col>
             </Row>
             <hr />

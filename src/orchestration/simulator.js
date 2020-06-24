@@ -13,16 +13,22 @@ import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import FormControl from "react-bootstrap/lib/FormControl";
 import FormGroup from "react-bootstrap/lib/FormGroup";
 import Alert from "react-bootstrap/lib/Alert";
+import Glyphicon from "react-bootstrap/lib/Glyphicon";
 
 function messages2instance(messages) {
     let o = {
         id: null,
         tasks: [],
         subinstances: [],
+        final_report: null,
     };
     let m = messages.find(m => m.event === "simulation started");
     if(m) {
         o.id = m.instance_id;
+    }
+    m = messages.find(m => m.event === "simulation ended");
+    if(m) {
+        o.final_report = Object.assign({}, m.instance);
     }
     o.tasks = messages.filter(m => m.event.startsWith("tasks:") && m.instance_id === o.id).reduce(
         (tasks, m) => {
@@ -31,12 +37,34 @@ function messages2instance(messages) {
                     cell_id: m.cell_id,
                     task_id: m.task_id,
                     status: 'running...',
+                    context: {},
+                    traces: [],
+                    subinstances: [],  // to be filled!!
+                    errors: [],
                 });
             } else if (m.event.startsWith("tasks:")) {
                 const t = tasks.find(t => t.task_id === m.task_id);
                 if(t) {
-                    t.status = m.event === 'tasks:ended' ? 'completed' : 'waiting...';
+                    switch(m.event) {
+                      case 'tasks:ended':
+                        t.status = 'completed';
+                        break;
+                      case 'tasks:blocking_error':
+                        t.status = 'error';
+                        break;
+                      default:
+                        t.status = 'waiting...'
+                    }
                     t.output = m.output;
+                    if(m.context) {
+                        t.context = m.context;
+                    }
+                    if(m.trace) {
+                        t.traces = update(t.traces, {$push: [m.trace]});
+                    }
+                    if(m.event === "tasks:blocking_error") {
+                        t.errors = update(t.errors, {$push: [m.message]});
+                    }
                 }
             }
             return tasks;
@@ -45,8 +73,90 @@ function messages2instance(messages) {
     return o;
 }
 
+function TaskEntry(props) {
+  const {task} = props;
+  const [expanded, setExpanded] = useState(false);
+
+  const expandable = Object.keys(task.context).length !== 0 || task.errors.length !== 0;
+  const expIco = !expandable ? null : expanded?<Glyphicon glyph="chevron-down"/>:<Glyphicon glyph="chevron-right"/>;
+
+  return (
+    <>
+      <tr>
+          <td style={{width: '100px'}} onClick={() => expandable && setExpanded(!expanded)}>{expIco} {task.task_id}</td>
+          <td>{task.cell_id}</td>
+          <td>{task.status}</td>
+      </tr>
+      {
+        expanded && task.errors && (
+          <tr>
+            <td/>
+            <td colSpan={2}>
+              <Table>
+                <tbody>
+                {
+                  task.errors.map((e, i) => <tr key={`error-${task.task_id}-${i}`}>
+                    <td colSpan={3}>
+                      <Alert bsStyle="danger">{e}</Alert>
+                    </td>
+                  </tr>)
+                }
+                </tbody>
+              </Table>
+            </td>
+          </tr>
+        )
+      }
+      {
+        expanded && (
+          <tr>
+            <td/>
+            <td colSpan={2}>
+              <Tabs defaultActiveKey={0} id={`tasks_tabs-${task.task_id}`}>
+                <Tab title="details" eventKey={0}>
+                  <Table>
+                    <tbody>
+                    <tr>
+                      <th>Context (after run)</th>
+                      <td>
+                        <Table>
+                          <tbody>
+                          {
+                            task.context && Object.keys(task.context).map(key => <tr key={`context-${task.task_id}-${key}`}><th>{key}</th><td>{task.context[key]}</td></tr>)
+                          }
+                          </tbody>
+                        </Table>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>Traces</th>
+                      <td>
+                        <Table>
+                          <tbody>
+                          {
+                            task.traces && task.traces.map((t, i) => <tr key={`trace-${task.task_id}-${i}`}><pre>{JSON.stringify(t, undefined, 2)}</pre></tr>)
+                          }
+                          </tbody>
+                        </Table>
+                      </td>
+                    </tr>
+                    </tbody>
+                  </Table>
+                </Tab>
+                <Tab title="sub-workflows" eventKey={1}>
+                </Tab>
+              </Tabs>
+            </td>
+          </tr>
+        )
+      }
+    </>
+  )
+}
+
+
 export function SimulatorPanel(props) {
-    const {activity, onStop} = props;
+    const {activity} = props;
     const [connectionStatus, setConnectionStatus] = useState("");
     const [messages, setMessages] = useState([]);
     const [serverError, setServerError] = useState(null);
@@ -55,25 +165,26 @@ export function SimulatorPanel(props) {
 
     useEffect(() => {
         if(!socket) return;
+
         socket.onmessage = event => {
-            const msg = JSON.parse(event.data);
-            if(msg.event === "simulation started") setConnectionStatus("started...");
-            if(msg.event === "simulation ended") setConnectionStatus("connected");
-            setMessages(messages.concat([msg]));
+          const msg = JSON.parse(event.data);
+          setMessages(m => m.concat(msg));
+          if (msg.event === "simulation started") {
+            setConnectionStatus("started...");
+          }
+          else if (msg.event === "simulation ended") {
+            setConnectionStatus("connected");
+          } else {
+            connectionStatus === "started..." && setConnectionStatus(`running... (${messages.length})`);
+          }
         };
         socket.onopen = () => {
             setConnectionStatus("connected");
         };
-        socket.onclose = event => {
-            setConnectionStatus("closed");
-            switch (event.code) {
-                case 1000:	// CLOSE_NORMAL
-                    console.log("WebSocket: closed");
-                    break;
-                default:	// Abnormal closure
-                    setConnectionStatus(`abnormal closure (${event.code})`);
-                    break;
-            }
+        socket.onclose = e => {
+            setConnectionStatus("Worker disconnected...");
+            console.log("closing ...", e);
+            // setTimeout(() => setReconnect(true), 5000);
         };
     });
     useEffect(() => {
@@ -130,7 +241,13 @@ export function SimulatorPanel(props) {
                         setServerError(null);
                         setMessages([]);
                         const a = activity();
-                        socket.send(JSON.stringify({name: a.name, definition: a.definition, body: inputBody}));
+                        let input = Object.assign({}, inputBody);
+                        try {
+                          input.body = JSON.parse(input.body);
+                        } catch {
+                          console.log("failed to turn the body into a JSON", input.body);
+                        }
+                        socket.send(JSON.stringify({name: a.name, definition: a.definition, body: input}));
                     }} disabled={socket === null || connectionStatus !== "connected"}>
                         <FormattedMessage id="go" defaultMessage="Go" />
                     </Button>
@@ -148,16 +265,30 @@ export function SimulatorPanel(props) {
                             </thead>
                             <tbody>
                             {
-                                instance.tasks.map(t => <tr key={`task-${t.task_id}`}>
-                                    <td>{t.task_id}</td>
-                                    <td>{t.cell_id}</td>
-                                    <td>{t.status}</td>
-                                </tr>)
+                                instance.tasks.map(t => <TaskEntry task={t} key={`task-${t.task_id}`} />)
                             }
                             </tbody>
                         </Table>
                     </Tab>
-                    <Tab title="Raw events" eventKey={1}>
+                    <Tab title="Context" eventKey={1} disabled={!instance || !instance.final_report}>
+                      <Table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>key</th>
+                                <th>value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {
+                          instance.final_report && instance.final_report.context.map((c, i) => (
+                            <tr key={c.key}><th>{ c.key }</th><td>{ c.value }</td></tr>
+                          ))
+                        }
+                        </tbody>
+                      </Table>
+                    </Tab>
+                    <Tab title="Raw events" eventKey={2}>
                         <Table>
                             <thead>
                                 <tr>
