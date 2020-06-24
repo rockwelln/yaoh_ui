@@ -19,6 +19,7 @@ import Modal from "react-bootstrap/lib/Modal";
 const DESCRIPTIONS = {
     'errors': <FormattedMessage id="errors-report-description" defaultMessage="This report is usually generated once a day and sent by mail with the list of cases open blocked with tasks still in error state."/>,
     't7': <FormattedMessage id="t7-report-description" defaultMessage="This report is generated once a day (around 1am) and sent by mail with the list of NP cases open with a timer T7 expiring today and which didn't got the IVR signal yet."/>,
+    'usage': <FormattedMessage id="usage-report-description" defaultMessage="This report is generated once a day and sent by mail with the usage statistics of the workflow engine."/>,
 };
 const validateName = name => name === ''?null:name.length < 4?"error":"success";
 const validateType = type => type === undefined || type === ""?null:"success";
@@ -309,6 +310,7 @@ class NewReport extends Component {
                                         value={report.type}
                                         onChange={e => this.setState({report: update(report, {$merge: {type: e.target.value}})})}>
                                         <option value=""/>
+                                        <option value="usage">usage</option>
                                         <option value="errors">Errors</option>
                                         <option value="t7">T7</option>
                                     </FormControl>
@@ -380,6 +382,7 @@ export class Reporting extends Component {
 
     getReport(report) {
         switch(report.type) {
+            case 'usage':
             case 'errors':
             case 't7': return <Report key={report.id} report={report} onDelete={this._refresh} onSaved={this._refresh} {...this.props} />;
             case 'almost_overdue': return <RequestAlmostOverdueReport key={report.id} report={report} onDelete={this._refresh} {...this.props} />;
