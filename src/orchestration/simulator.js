@@ -108,7 +108,7 @@ function TaskEntry(props) {
         )
       }
       {
-        expanded && (
+        expanded && false && (
           <tr>
             <td/>
             <td colSpan={2}>
