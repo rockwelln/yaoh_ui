@@ -12,7 +12,7 @@ import {
 } from "../requests/requests";
 
 
-const Tile = ({className, children}) => (
+export const Tile = ({className, children}) => (
     <Col md={2} sm={4} xs={6}>
         <div className={"tile " + className}>
             {children}
@@ -24,7 +24,7 @@ export const EmptyTile = ({className}) => (
     <Col md={2} sm={4} xs={6} className={className} />
 );
 
-const TileHeader = ({children}) => (
+export const TileHeader = ({children}) => (
     <div className="header">
         {children}
     </div>
