@@ -23,13 +23,10 @@ import update from "immutability-helper/index";
 
 export function fetchOperators(token, onSuccess, onError) {
     fetch_get('/api/v01/voo/operators', token)
-        .then(data => {
-            let operators = data.operators.sort((a, b) => (a.name < b.name) ? -1 : 1);
-            onSuccess && onSuccess(operators);
-        })
-        .catch(error => {
-            onError && onError(error)
-        });
+        .then(data => (
+            onSuccess && onSuccess(data.operators.sort((a, b) => (a.name < b.name) ? -1 : 1))
+        ))
+        .catch(error => onError && onError(error));
 }
 
 

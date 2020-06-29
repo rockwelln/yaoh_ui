@@ -11,6 +11,7 @@ import ActiveTransactionsPerWorkflow from './tx-active-per-workflow';
 import ProxyRequestsOverTime from "./tx-per-proxy-over-time";
 import {EmptyTile, GatewaysStatusTile, ErrorCasesTile} from './dashboard-tiles';
 import ManualActionsBox from "./manualActions";
+import {TransactionsNeedApprovalTile} from "../np/dashboard_tiles";
 
 import './dashboard.css';
 import {modules} from "../utils/user";
@@ -24,8 +25,8 @@ function fetch_gateways(onSuccess) {
 }
 
 
-function fetch_stats(onSuccess) {
-    fetch_get('/api/v01/apio/stats')
+function fetch_stats(isNpact, onSuccess) {
+    fetch_get(`/api/v01/${isNpact?"voo":"apio"}/stats`)
         .then(data => onSuccess(data))
         .catch(error => NotificationsManager.error(
                 <FormattedMessage id="core-stats-fect-failed" defaultMessage="Failed to fetch statistics"/>,
@@ -51,6 +52,7 @@ function _buildPadding(nbTiles) {
 export default function Dashboard(props) {
     const [stats, setStats] = useState({active_requests: {}});
     const [gateways, setGateways] = useState({});
+    const isNpact = props.user_info.modules.includes(modules.npact);
 
     useEffect(() => {
         fetch_gateways(setGateways);
@@ -59,26 +61,32 @@ export default function Dashboard(props) {
     }, []);
 
     useEffect(() => {
-        fetch_stats(setStats);
-        const interval = setInterval(() => fetch_stats(setStats), REFRESH_CYCLE * 1000);
+        fetch_stats(isNpact, setStats);
+        const interval = setInterval(() => fetch_stats(isNpact, setStats), REFRESH_CYCLE * 1000);
         return () => clearInterval(interval);
-    }, []);
+    }, [isNpact]);
 
-    const statsPanels = [
-        <TransactionsOverTime {...props} />,
-        // todo to be improved!!
-        props.user_info.modules.includes(modules.orange) ? "" : <ProxyRequestsOverTime {...props} />,
-        <ActiveTransactionsPerWorkflow {...props} />,
-        props.user_info.modules.includes(modules.manualActions) ? <ManualActionsBox {...props} /> : "",
+    let statsPanels = [
+        <TransactionsOverTime {...props} />
     ];
+    if(props.user_info.modules.includes(modules.orange)) {
+        statsPanels.push(<ProxyRequestsOverTime {...props} />);
+    }
+    statsPanels.push(<ActiveTransactionsPerWorkflow {...props} />);
+    if(props.user_info.modules.includes(modules.manualActions)) {
+        statsPanels.push(<ManualActionsBox {...props} />);
+    }
 
     return (
         <div>
             <Row>
                 {
-                    _buildPadding(1 + Object.keys(gateways).length)
+                    _buildPadding((isNpact?2:1) + Object.keys(gateways).length)
                 }
                 <ErrorCasesTile count={stats.active_requests.with_errors} total={stats.active_requests.total}/>
+                {
+                    isNpact && <TransactionsNeedApprovalTile count={stats.active_requests.need_approval} />
+                }
                 {
                     Object.keys(gateways).slice(0, 5).map(k => <GatewaysStatusTile key={k} label={k} status={gateways[k]} />)
                 }
