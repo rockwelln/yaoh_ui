@@ -473,7 +473,10 @@ function GatewaysPanel(props) {
 
 
 function GuiForm(props) {
-  const {gui, onChange} = props;
+  const { gui, onChange } = props;
+  if (gui.modules === undefined) {
+    gui.modules = [];
+  }
 
   return (
     <>
@@ -502,7 +505,7 @@ function GuiForm(props) {
 
               <Col sm={9}>
                 {
-                  ["orange", "orchestration", "bulk", "provisioning", "telenet", "proxy", "manualActions"].map(m =>
+                  ["orange", "orchestration", "bulk", "provisioning", "telenet", "proxy", "manualActions", "npact"].map(m =>
                     <Checkbox
                       key={`modules-${m}`}
                       checked={gui.modules.includes(m)}
@@ -842,8 +845,11 @@ function NewProvisioningGatewayModal(props) {
 }
 
 function ProvisioningPanels(props) {
-  const {prov, onChange} = props;
+  const { prov, onChange } = props;
   const [showNew, setShowNew] = useState(false);
+  if (prov.gateways === undefined) {
+    prov.gateways = [];
+  }
 
   return (
     <>
