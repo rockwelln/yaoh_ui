@@ -90,7 +90,7 @@ const pp_as_json = (s) => {
     }
 };
 
-class TransactionFlow extends Component {
+export class TransactionFlow extends Component {
     constructor(props, context) {
         super(props, context);
         this.state = {};
@@ -752,7 +752,7 @@ function saveComment(tx_id, comment, onSuccess) {
         .catch(error => NotificationsManager.error(<FormattedMessage id="failed-save-comment" defaultMessage="Failed to save comment"/>, error.message))
 }
 
-function Comments(props) {
+export function Comments(props) {
     const [comments, setComments] = useState([]);
     const [comment, setComment] = useState("");
     const [showAddModal, setShowAddModal] = useState(false);
@@ -862,7 +862,7 @@ function ErrorEntry(props){
     )
 }
 
-const Errors = ({errors, user_info}) => (
+export const Errors = ({errors, user_info}) => (
     <Table condensed>
         <thead>
         <tr>
@@ -1028,7 +1028,7 @@ const ReplayingSubInstancesModal = ({show}) => (
 
 const titleCase = s => s[0].toUpperCase() + s.substr(1);
 
-const TasksTable = ({tasks, definition, onReplay, onRollback, user_can_replay, tx_id}) => (
+export const TasksTable = ({tasks, definition, onReplay, onRollback, user_can_replay, tx_id}) => (
     <Table condensed>
         <thead>
         <tr>
@@ -1108,7 +1108,7 @@ const TasksTable = ({tasks, definition, onReplay, onRollback, user_can_replay, t
 );
 
 
-const TxTable = ({tx, request}) => (
+export const TxTable = ({tx, request}) => (
     <Table condensed>
         <tbody>
             <tr><th><FormattedMessage id="id" defaultMessage="ID" /></th><td>{tx.id}</td></tr>
@@ -1122,7 +1122,7 @@ const TxTable = ({tx, request}) => (
 );
 
 
-const ContextTable = ({context}) => (
+export const ContextTable = ({context}) => (
     <Table style={{tableLayout: 'fixed'}}>
         <tbody>
         {
