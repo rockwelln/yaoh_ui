@@ -120,7 +120,7 @@ function DedicatedEvents(props) {
                     </thead>
                     <tbody>
                     {
-                       events.sort((a, b) => a.name.localecompare(b.name)).map(event => (
+                       events.sort((a, b) => a.name.localeCompare(b.name)).map(event => (
                             <tr key={event.name}>
                                 <td>{event.name}</td>
                                 <td>
@@ -130,7 +130,7 @@ function DedicatedEvents(props) {
                                         </FormattedMessage>
                                         {
                                             activities
-                                                .sort((a,b) => a.name.localecompare(b.name))
+                                                .sort((a,b) => a.name.localeCompare(b.name))
                                                 .map(h => <option value={h.id} key={h.id}>{h.name}</option>)
                                         }
                                     </select>
