@@ -10,16 +10,16 @@ import { activeCriteria } from "../requests/requests";
 
 
 export const TransactionsNeedApprovalTile = ({ count }) => (
-    <Link to={{
-        pathname: "/transactions/list", search: queryString.stringify({
-            filter: JSON.stringify(update(needApprovalCriteria, { $merge: activeCriteria }))
-        })
-    }}>
-        <Tile className="warning">
-            <TileHeader>
-                <div className="count">{count}</div>
-                <div className="title"><FormattedMessage id="cases-approval" defaultMessage="Case(s) need approval" /></div>
-            </TileHeader>
-        </Tile>
-    </Link>
+  <Link to={{
+    pathname: "/transactions/list", search: queryString.stringify({
+      filter: JSON.stringify(update(needApprovalCriteria, { $merge: activeCriteria }))
+    })
+  }}>
+    <Tile className="warning">
+      <TileHeader>
+        <div className="count">{count}</div>
+        <div className="title"><FormattedMessage id="cases-approval" defaultMessage="Case(s) need approval" /></div>
+      </TileHeader>
+    </Tile>
+  </Link>
 );
