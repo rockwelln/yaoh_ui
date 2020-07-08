@@ -11,7 +11,6 @@ import { Redirect } from 'react-router-dom';
 import { FormattedMessage } from 'react-intl';
 import update from 'immutability-helper';
 import { fetchOperators } from "../data/operator_mgm";
-import { RangeInput } from "../utils";
 import { NotificationsManager, fetch_get, fetch_post, parseJSON } from "../../utils";
 
 export const DEFAULT_RECIPIENT = "ITC";
@@ -104,6 +103,93 @@ function newRequest(request, onSuccess, onError) {
     onError && onError();
   });
 }
+
+const RangeInput = ({ ranges, onChange, multipleRanges }) => (
+  <div>
+    <Table>
+      <thead>
+        <tr>
+          <th><FormattedMessage id="from" defaultMessage="From" /></th>
+          <th><FormattedMessage id="to" defaultMessage="To" /></th>
+          <th><FormattedMessage id="data-number" defaultMessage="Data number" /></th>
+          <th><FormattedMessage id="fax-number" defaultMessage="Fax number" /></th>
+          <th />
+        </tr>
+      </thead>
+      <tbody>
+        {
+          ranges.map((range, index) => {
+            return (
+              <tr key={index}>
+                <td>
+                  <FormControl type="number"
+                    value={range.from}
+                    onChange={e => (
+                      onChange(update(ranges,
+                        { [index]: { $merge: { from: e.target.value } } }
+                      )))
+                    } />
+                </td>
+                <td>
+                  <FormControl type="number"
+                    value={range.to}
+                    onChange={e => (
+                      onChange(update(ranges,
+                        { [index]: { $merge: { to: e.target.value } } }
+                      )))
+                    } />
+                </td>
+                <td>
+                  <FormControl type="number"
+                    value={range.data_number}
+                    onChange={e => (
+                      onChange(update(ranges,
+                        { [index]: { $merge: { data_number: e.target.value } } }
+                      )))
+                    } />
+                </td>
+                <td>
+                  <FormControl type="number"
+                    value={range.fax_number}
+                    onChange={e => (
+                      onChange(update(ranges,
+                        { [index]: { $merge: { fax_number: e.target.value } } }
+                      )))
+                    } />
+                </td>
+                {multipleRanges && (
+                  <td>
+                    <Button onClick={() => {
+                      let ranges_ = ranges;
+                      ranges_.splice(index, 1);
+                      onChange(ranges_)
+                    }}>-</Button>
+                  </td>
+                )}
+              </tr>
+            )
+          })
+        }
+
+        {multipleRanges && (
+          <tr>
+            <td colSpan={4}>
+              <Button
+                onClick={() =>
+                  onChange(update(ranges, { $push: [{ from: '', to: '', data_number: '', fax_number: '' }] }))
+                }>
+                +
+                    </Button>
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </Table>
+    <HelpBlock>
+      <FormattedMessage id="range-one-number-note" defaultMessage="To work with only 1 number, you may just put it in the from cell." />
+    </HelpBlock>
+  </div>
+);
 
 function validateRanges(ranges) {
   return ranges.map((r, index) => {

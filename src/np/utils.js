@@ -8,7 +8,7 @@ import DatePicker from 'react-datepicker';
 import moment from 'moment';
 import update from 'immutability-helper';
 import { FormattedMessage } from 'react-intl';
-import {fetch_get} from "../utils";
+import { fetch_get } from "../utils";
 
 
 function addBusinessDays(m, days) {
@@ -90,8 +90,6 @@ export const RangeInput = ({ ranges, onChange, multipleRanges }) => (
         <tr>
           <th><FormattedMessage id="from" defaultMessage="From" /></th>
           <th><FormattedMessage id="to" defaultMessage="To" /></th>
-          <th><FormattedMessage id="data-number" defaultMessage="Data number" /></th>
-          <th><FormattedMessage id="fax-number" defaultMessage="Fax number" /></th>
           <th />
         </tr>
       </thead>
@@ -115,24 +113,6 @@ export const RangeInput = ({ ranges, onChange, multipleRanges }) => (
                     onChange={e => (
                       onChange(update(ranges,
                         { [index]: { $merge: { to: e.target.value } } }
-                      )))
-                    } />
-                </td>
-                <td>
-                  <FormControl type="number"
-                    value={range.data_number}
-                    onChange={e => (
-                      onChange(update(ranges,
-                        { [index]: { $merge: { data_number: e.target.value } } }
-                      )))
-                    } />
-                </td>
-                <td>
-                  <FormControl type="number"
-                    value={range.fax_number}
-                    onChange={e => (
-                      onChange(update(ranges,
-                        { [index]: { $merge: { fax_number: e.target.value } } }
                       )))
                     } />
                 </td>
