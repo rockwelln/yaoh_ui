@@ -34,11 +34,11 @@ import { fetchOperators } from "./data/operator_mgm";
 import { ApioDatatable } from "../utils/datatable";
 
 import 'react-datepicker/dist/react-datepicker.css';
-import { TransactionFlow, Comments, Errors, ContextTable, TxTable, TasksTable } from "../requests/requests";
+import { TransactionFlow, Comments, Errors, ContextTable, TxTable, TasksTable, triggerManualAction } from "../requests/requests";
 import update from 'immutability-helper';
 import { StaticControl } from "../utils/common";
 import { access_levels, is_admin, isAllowed, pages } from "../utils/user";
-import { DEFAULT_RECIPIENT as citcRecipient, rejection_codes } from "./requests/crdb-rsa";
+import { DEFAULT_RECIPIENT as citcRecipient, rejection_codes, RequestTable, disabledAction } from "./requests/crdb-rsa";
 
 export const DATE_FORMAT = 'DD/MM/YYYY HH:mm:ss';
 export const DEFAULT_RECIPIENT = citcRecipient;
@@ -190,7 +190,7 @@ class Events extends Component {
   }
 }
 
-
+/*
 class RequestTable extends Component {
   constructor(props) {
     super(props);
@@ -337,6 +337,7 @@ class RequestTable extends Component {
     )
   }
 }
+ */
 
 class RejectionReason extends Component {
   constructor(props) {
@@ -400,6 +401,17 @@ class RejectionReason extends Component {
   }
 }
 
+function updateRequest(requestId, diffEntry, onSuccess) {
+  fetch_put(`/api/v01/voo/np_requests/${requestId}`, diffEntry)
+    .then(data => onSuccess())
+    .catch(error => NotificationsManager.error("Failed to update request", error.message));
+}
+
+function updateRequestRange(requestId, rangeId, diffEntry, onSuccess) {
+  fetch_put(`/api/v01/voo/np_requests/${requestId}/ranges/${rangeId}`, diffEntry)
+    .then(data => onSuccess())
+    .catch(error => NotificationsManager.error("Failed to update range", error.message));
+}
 
 const RELOAD_TX = 10 * 1000;
 
@@ -411,6 +423,7 @@ export class NPTransaction extends Component {
       error: undefined,
       sending: false,
       activeTab: 1,
+      manualActions: [],
     };
     this.cancelLoad = false;
 
@@ -428,6 +441,7 @@ export class NPTransaction extends Component {
 
   fetchTxDetails(reload) {
     this.setState({ error: undefined });
+    const txId = this.props.match.params.txId;
     fetch_get(`/api/v01/transactions/${this.props.match.params.txId}`, this.props.auth_token)
       .then(data => {
         if (this.cancelLoad)
@@ -438,6 +452,10 @@ export class NPTransaction extends Component {
         fetch_get(`/api/v01/voo/np_requests/${data.original_request_id}`, this.props.auth_token)
           .then(data => !this.cancelLoad && this.setState({ request: data }))
           .catch(error => !this.cancelLoad && this.setState({ error: error }));
+
+        fetch_get(`/api/v01/transactions/${txId}/manual_actions`)
+          .then(data => !this.cancelLoad && this.setState({manualActions: data.manual_actions}))
+          .catch(console.error);
 
         reload && setTimeout(() => this.fetchTxDetails(true), RELOAD_TX);
       })
@@ -621,7 +639,8 @@ export class NPTransaction extends Component {
   }
 
   render() {
-    const { sending, error, tx, request, activeTab } = this.state;
+    const { sending, error, tx, request, activeTab, manualActions } = this.state;
+    const {user_info} = this.props;
     let alerts = [];
     error && alerts.push(
       <Alert bsStyle="danger" key='fail-fetch-tx'>
@@ -632,6 +651,31 @@ export class NPTransaction extends Component {
       return <div>{alerts.map(e => e)}</div>
     } else if (!tx) {
       return <div><FormattedMessage id='loading' defaultMessage='Loading...' /></div>
+    }
+
+    if (tx && tx.status === 'ACTIVE' && manualActions.length !== 0) {
+      manualActions
+          .filter(a => !a.output && user_info.roles.find(ur => ur.id === a.role_id))
+          .map(a => alerts.push(
+              <Alert bsStyle="warning" key={`request-action-${a.id}`}>
+                Action required for {user_info.roles.find(ur => ur.id === a.role_id).name}<br/>
+                {a.description} <br/>
+                <ButtonToolbar>
+                  {
+                    a.possible_outputs.split(",").map(o => (
+                      <Button
+                        onClick={() => {
+                          triggerManualAction(tx.id, a.id, o, () => this.fetchTxDetails(false));
+                        }}
+                        disabled={disabledAction(a, o, request)}
+                      >
+                        {o}
+                      </Button>
+                    ))
+                  }
+                </ButtonToolbar>
+              </Alert>
+          ))
     }
 
     let actions_required = [];
@@ -680,12 +724,15 @@ export class NPTransaction extends Component {
             <Col xs={12} sm={6} md={8} lg={8}>
               <RequestTable
                 request={request}
-                edit_mode={this.state.edit_request === true}
-                onEditEnd={() => {
-                  this.setState({ edit_request: false });
-                  this.fetchTxDetails(false);
+                actions={manualActions}
+                onChangeRequest={r => {
+                  updateRequest(request.id, r, () => this.fetchTxDetails(false));
                 }}
-                {...this.props} />
+                onChangeRange={(range_id, r) => {
+                  updateRequestRange(request.id, range_id, r, () => this.fetchTxDetails(false));
+                }}
+              />
+
             </Col>
             <Col xs={12} sm={6} md={4} lg={4}>
               {can_act &&

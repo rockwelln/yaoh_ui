@@ -584,7 +584,7 @@ function ExternalCallback(props) {
     )
 }
 
-function triggerManualAction(transactionId, actionId, output, onSuccess) {
+export function triggerManualAction(transactionId, actionId, output, onSuccess) {
     fetch_post(`/api/v01/transactions/${transactionId}/manual_actions/${actionId}`, {"output": output})
         .then(() => onSuccess())
         .catch(error => NotificationsManager.error("Failed to trigger the action", error.message))

@@ -3,14 +3,15 @@
   "version": "0.8.0",
   "private": true,
   "dependencies": {
-    "chart.js": "^2.9.3",
-    "color-hash": "^1.0.3",
-    "core-js": "^3.6.5",
-    "es6-promise": "^4.2.8",
     "@fortawesome/fontawesome-svg-core": "^1.2.29",
     "@fortawesome/free-brands-svg-icons": "^5.13.1",
     "@fortawesome/free-solid-svg-icons": "^5.13.1",
     "@fortawesome/react-fontawesome": "^0.1.11",
+    "ajv": "latest",
+    "chart.js": "^2.9.3",
+    "color-hash": "^1.0.3",
+    "core-js": "^3.6.5",
+    "es6-promise": "^4.2.8",
     "immutability-helper": "2.9.0",
     "isomorphic-fetch": "^2.2.1",
     "oidc-client": "^1.10.1",
@@ -19,7 +20,7 @@
     "react": "^16.13.1",
     "react-bootstrap": "^0.33.1",
     "react-chartjs-2": "^2.9.0",
-    "react-datepicker": "^2.12.1",
+    "react-datepicker": "^3.1.3",
     "react-dom": "^16.13.1",
     "react-intl": "^5.0.2",
     "react-json-view": "^1.19.1",
@@ -33,8 +34,7 @@
     "redux": "^4.0.5",
     "redux-thunk": "^2.3.0",
     "regenerator-runtime": "^0.13.5",
-    "url-polyfill": "^1.1.9",
-    "ajv": "latest"
+    "url-polyfill": "^1.1.9"
   },
   "scripts": {
     "start": "react-scripts start",

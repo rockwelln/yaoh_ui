@@ -119,9 +119,9 @@ export const RangeInput = ({ ranges, onChange, multipleRanges }) => (
                 {multipleRanges && (
                   <td>
                     <Button onClick={() => {
-                      let ranges_ = ranges;
-                      ranges_.splice(index, 1);
-                      onChange(ranges_)
+                      onChange(update(ranges,
+                        { $splice: [[index, 1]] }
+                      ))
                     }}>-</Button>
                   </td>
                 )}

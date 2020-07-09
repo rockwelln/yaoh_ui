@@ -14,13 +14,19 @@ import Breadcrumb from 'react-bootstrap/lib/Breadcrumb';
 
 import { FormattedMessage } from 'react-intl';
 
-import { fetch_post, fetch_delete, fetch_put } from "../../utils";
+import {fetch_get, fetch_post, fetch_delete, fetch_put, NotificationsManager} from "../../utils";
 import update from "immutability-helper/index";
 import { ApioDatatable } from "../../utils/datatable";
 import { Search, StaticControl } from "../../utils/common";
 import { access_levels, pages, isAllowed } from "../../utils/user";
 import { fetchOperators } from './operator_mgm';
 
+
+export function fetchRoutes(onSuccess) {
+  fetch_get("/api/v01/voo/routing_info/search")
+    .then(data => onSuccess(data.routing_info))
+    .catch(error => NotificationsManager.error("Failed to fetch routes", error.message))
+}
 
 class NewRoutingInfo extends Component {
   constructor(props) {
