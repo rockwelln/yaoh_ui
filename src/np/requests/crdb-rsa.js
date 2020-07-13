@@ -505,9 +505,31 @@ export function disabledAction(action, output, request) {
   }
   switch (action.description) {
     case "Plan port":
-      return !request.due_date || request.due_date.length === 0
+      return !request.due_date || request.due_date.length === 0;
   }
   return false;
+}
+
+function getRangeFlags(actions, ranges) {
+  const canAccept = actions.find(a => a.output === null && a.description.toLowerCase() === "port-out approval") !== undefined;
+  const canNotif = actions.find(a => a.output === null && a.description.toLowerCase() === "plan port") !== undefined;
+  const canActivate = false; // tobe checked but it seems the flag cannot be changed anyway;
+  const canCancel = false;
+  /* ???
+  reversed
+  reversal_accepted
+  reversal_activated
+   */
+  const canAcceptAddrChange = false;
+
+  let cols = []
+  if (canAccept || ranges.find(r => r.accepted !== null)) cols.push({header: "Acc.", disabled: !canAccept, flag: "accepted"});
+  if (canNotif || ranges.find(r => r.notif_ordered !== null)) cols.push({header: "Notif. ordered", disabled: !canNotif, flag: "notif_ordered"});
+  if (canActivate || ranges.find(r => r.activated !== null)) cols.push({header: "Act.", disabled: !canActivate, flag: "activated"});
+  if (canCancel || ranges.find(r => r.cancel_not_cancelled !== null)) cols.push({header: "Can.", disabled: !canCancel, flag: "cancel_not_cancelled"});
+  if (canAcceptAddrChange || ranges.find(r => r.change_addr_accepted !== null)) cols.push({header: "Change add. accepted", disabled: !canAcceptAddrChange, flag: "change_addr_accepted"});
+
+  return cols;
 }
 
 export function RequestTable(props) {
@@ -525,102 +547,50 @@ export function RequestTable(props) {
   const req = request;
   const donor = operators.find(d => d.id === parseInt(req.donor_id, 10));
   const recipient = operators.find(d => d.id === parseInt(req.recipient_id, 10));
+  const rangeFlags = getRangeFlags(actions, req.ranges);
+  const rangeNbCols = 1 + rangeFlags.length;
 
-  const canAccept = actions === "";
-  const canNotif = actions.find(a => a.description.toLowerCase() === "plan port") !== undefined;
-  const canActivate = actions == "";
-  const canCancel = actions === "";
-  const canAcceptAddrChange = actions === "";
   return (
       <Panel>
         <Panel.Body>
           <Table condensed>
             <tbody>
-              <tr><th><FormattedMessage id="id" defaultMessage="ID" /></th><td colSpan={9}>{req.id}</td></tr>
-              <tr><th><FormattedMessage id="kind" defaultMessage="Kind" /></th><td colSpan={9}>{req.kind}</td></tr>
-              <tr><th><FormattedMessage id="status" defaultMessage="Status" /></th><td colSpan={9}>{req.status}</td></tr>
-              <tr><th><FormattedMessage id="port-id" defaultMessage="Port ID" /></th><td colSpan={9}>{req.crdc_id}</td></tr>
+              <tr><th><FormattedMessage id="id" defaultMessage="ID" /></th><td colSpan={rangeNbCols}>{req.id}</td></tr>
+              <tr><th><FormattedMessage id="kind" defaultMessage="Kind" /></th><td colSpan={rangeNbCols}>{req.kind}</td></tr>
+              <tr><th><FormattedMessage id="status" defaultMessage="Status" /></th><td colSpan={rangeNbCols}>{req.status}</td></tr>
+              <tr><th><FormattedMessage id="port-id" defaultMessage="Port ID" /></th><td colSpan={rangeNbCols}>{req.crdc_id}</td></tr>
               <tr>
                 <th><FormattedMessage id="ChgInstallAddrTransID" defaultMessage="Change installation addr. port ID" /></th>
-                <td colSpan={9}>{req.change_addr_installation_porting_id}</td>
+                <td colSpan={rangeNbCols}>{req.change_addr_installation_porting_id}</td>
               </tr>
               <tr><th><FormattedMessage id="ranges" defaultMessage="Ranges" /></th>
-                <td/>
-                <td>Acc.</td>
-                <td>Notif. ordered</td>
-                <td>Act.</td>
-                <td>Not cancelled</td>
-                <td>Rev.</td>
-                <td>Rev. accepted</td>
-                <td>Rev. activated</td>
-                <td>Change add. accepted</td>
+                {
+                  rangeFlags.map(rf => <td key={rf.header}>{rf.header}</td>)
+                }
               </tr>
               {
                 req.ranges.map((r, i) => (
                   <tr key={i}>
-                    <td colSpan={2}>{r.range_from} {' - '} {r.range_to}</td>
-                    <td>
-                      {
-                        canAccept ?
-                          <Checkbox checked={r.accepted} onChange={e => onChangeRange()} /> :
-                          r.accepted === null ? "-" : r.accepted ? "t": "f"
-                      }
-                    </td>
-                    <td>
-                      {
-                        canNotif ?
-                          <Checkbox checked={r.notif_ordered} onChange={e => onChangeRange(r.id, {notif_ordered: e.target.checked})} /> :
-                          r.notif_ordered === null ? "-" : r.notif_ordered ? "t": "f"
-                      }
-                    </td>
-                    <td>
-                      {
-                        canActivate ?
-                          <Checkbox checked={r.activated} onChange={e => onChangeRange()} /> :
-                          r.activated === null ? "-" : r.activated ? "t": "f"
-                      }
-                    </td>
-                    <td>
-                      {
-                        canCancel ?
-                          <Checkbox checked={r.cancel_not_cancelled} onChange={e => onChangeRange()} /> :
-                          r.cancel_not_cancelled === null ? "-" : r.cancel_not_cancelled ? "t": "f"
-                      }
-                    </td>
-                    <td>
-                      {
-                        r.reversed === null ? "-" : r.reversed ? "t": "f"
-                      }
-                    </td>
-                    <td>
-                      {
-                        r.reversal_accepted === null ? "-" : r.reversal_accepted ? "t": "f"
-                      }
-                    </td>
-                    <td>
-                      {
-                        r.reversal_activated === null ? "-" : r.reversal_activated ? "t": "f"
-                      }
-                    </td>
-                    <td>
-                      {
-                        canAcceptAddrChange ?
-                          <Checkbox checked={r.change_addr_accepted} onChange={e => onChangeRange()} /> :
-                          r.change_addr_accepted === null ? "-" : r.change_addr_accepted ? "t": "f"
-                      }
-                    </td>
+                    <td>{r.range_from} {' - '} {r.range_to}</td>
+                    {
+                      rangeFlags.map(rf =>
+                        <td>
+                        <Checkbox style={{push: "left"}} key={`${i}-${rf.flag}`} checked={r[rf.flag]} onChange={e => onChangeRange(r.id, {[rf.flag]: e.target.checked})} disabled={rf.disabled} />
+                        </td>
+                      )
+                    }
                   </tr>
                 ))
               }
-              <tr><th><FormattedMessage id="donor" defaultMessage="Donor" /></th><td colSpan={9}>{ donor !== undefined ? donor.name : '-' }</td></tr>
-              <tr><th><FormattedMessage id="recipient" defaultMessage="Recipient" /></th><td colSpan={9}>{recipient !== undefined ? recipient.name : '-'}</td></tr>
-              <tr><th><FormattedMessage id="service-type" defaultMessage="Service type" /></th><td colSpan={9}>{req.service_type}</td></tr>
-              <tr><th><FormattedMessage id="routing-info" defaultMessage="Routing info" /></th><td colSpan={9}>{req.routing_info}</td></tr>
-              <tr><th><FormattedMessage id="port-req-form-id" defaultMessage="Port request form ID" /></th><td colSpan={9}>{req.port_req_form_id}</td></tr>
+              <tr><th><FormattedMessage id="donor" defaultMessage="Donor" /></th><td colSpan={rangeNbCols}>{ donor !== undefined ? donor.name : '-' }</td></tr>
+              <tr><th><FormattedMessage id="recipient" defaultMessage="Recipient" /></th><td colSpan={rangeNbCols}>{recipient !== undefined ? recipient.name : '-'}</td></tr>
+              <tr><th><FormattedMessage id="service-type" defaultMessage="Service type" /></th><td colSpan={rangeNbCols}>{req.service_type}</td></tr>
+              <tr><th><FormattedMessage id="routing-info" defaultMessage="Routing info" /></th><td colSpan={rangeNbCols}>{req.routing_info}</td></tr>
+              <tr><th><FormattedMessage id="port-req-form-id" defaultMessage="Port request form ID" /></th><td colSpan={rangeNbCols}>{req.port_req_form_id}</td></tr>
               <tr>
                 <th><FormattedMessage id="port-date-time" defaultMessage="Port date time" /></th>
-                <td colSpan={9}>
-                  { canNotif ?
+                <td colSpan={rangeNbCols}>
+                  { rangeFlags.find(rf => rf.flag === "notif_ordered" && !rf.disabled) ?
                     <DatePicker
                       className="form-control"
                       selected={req.due_date ? new Date(req.due_date) : null}
@@ -634,10 +604,10 @@ export function RequestTable(props) {
                     : req.due_date}
                 </td>
               </tr>
-              <tr><th><FormattedMessage id="created" defaultMessage="Created" /></th><td colSpan={9}>{req.created_on}</td></tr>
+              <tr><th><FormattedMessage id="created" defaultMessage="Created" /></th><td colSpan={rangeNbCols}>{req.created_on}</td></tr>
               <tr>
                 <th><FormattedMessage id="subscriber-data" defaultMessage="Subscriber data" /></th>
-                <td colSpan={9}>
+                <td colSpan={rangeNbCols}>
                   <pre>{JSON.stringify(req.subscriber_data, undefined, 4)}</pre>
                 </td>
               </tr>
