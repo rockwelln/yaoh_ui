@@ -76,6 +76,7 @@ import {NPDisconnectRequest} from "./np/disconnect-request";
 import {NPRequests, NPTransaction} from "./np/np-requests";
 import {NPPortInRequest} from "./np/portin-request";
 import {NPUpdateRequest} from "./np/update-request";
+import {NPChangeInstallationAddressRequest} from "./np/change-install-addr-request";
 import {MobileEventsManagement} from "./np/mobile_events";
 import OperatorManagement from "./np/data/operator_mgm";
 import {PublicHolidays} from "./np/data/holidays_mgm";
@@ -268,6 +269,11 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
                   <LinkContainer to={"/transactions/new_disconnect"}>
                       <MenuItem>
                           <FormattedMessage id="new-disconnect" defaultMessage="New Disconnect"/>
+                      </MenuItem>
+                  </LinkContainer>
+                  <LinkContainer to={"/transactions/new_install_address"}>
+                      <MenuItem>
+                          <FormattedMessage id="new-addess" defaultMessage="New Address Change"/>
                       </MenuItem>
                   </LinkContainer>
                   
@@ -1081,6 +1087,16 @@ class App extends Component {
                                component={props => (
                                    isAllowed(ui_profile, pages.requests_nprequests) ?
                                        <NPDisconnectRequest
+                                           auth_token={auth_token}
+                                           notifications={this._notificationSystem}
+                                           {...props} /> :
+                                       <NotAllowed/>
+                               )}
+                               exact />
+                        <Route path="/transactions/new_install_address"
+                               component={props => (
+                                   isAllowed(ui_profile, pages.requests_nprequests) ?
+                                       <NPChangeInstallationAddressRequest
                                            auth_token={auth_token}
                                            notifications={this._notificationSystem}
                                            {...props} /> :
