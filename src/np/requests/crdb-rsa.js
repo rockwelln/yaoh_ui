@@ -17,6 +17,10 @@ import Checkbox from "react-bootstrap/lib/Checkbox";
 import Panel from "react-bootstrap/lib/Panel";
 import Table from "react-bootstrap/lib/Table";
 import DatePicker from 'react-datepicker';
+import Modal from "react-bootstrap/lib/Modal";
+import Glyphicon from "react-bootstrap/lib/Glyphicon";
+import OverlayTrigger from "react-bootstrap/lib/OverlayTrigger";
+import Popover from "react-bootstrap/lib/Popover";
 
 export const DEFAULT_RECIPIENT = "MTNBSGNP";
 export const rejection_codes = [];
@@ -66,14 +70,14 @@ function validateRanges(ranges) {
 const emptyRequest = {
   ranges: [{ from: '', to: '' }],
   donor: '',
-  accountNumber: '',
   change_addr_installation_porting_id: '',
   isB2B: false,
   service_type: 'GEOGRAPHIC',
   routing_info: '',
   subscriber_data: {
     AccountType: "GNPAccount",
-    ProcessType: "Managed",
+    AccountNum: "",
+    ProcessType: "Individual",
   },
 }
 
@@ -98,14 +102,28 @@ export function NPPortInRequest(props) {
 
   const validRanges = request.ranges.length === 1 && request.ranges[0].from === '' && request.ranges[0].to === '' ? null : validateRanges(request.ranges).length === 0 && rangeError === undefined ? "success" : "error";
   const validRecipient = request.recipient !== null && request.recipient !== undefined && request.recipient !== "" ? "success" : null;
-  const validAccountNum = request.subscriber_data.AccountPayType === "PostPaid" && (request.subscriber_data.AccountNum === undefined || request.subscriber_data.AccountNum.length === 0) ? "error" : null;
+  const validAccountNum = request.subscriber_data.AccountPayType === "PostPaid" && (request.subscriber_data.AccountNum === undefined || request.subscriber_data.AccountNum.length === 0 || request.subscriber_data.AccountNum.length > 20) ? "error" : null;
+  const validManagedPerson = request.subscriber_data.ProcessType === "Individual" || (request.subscriber_data.ProcessType === "Managed" && request.subscriber_data.ManagedContactPerson !== undefined && request.subscriber_data.ManagedContactPerson.length !== 0) ? "success" : "error";
+  const validManagedPhone = request.subscriber_data.ProcessType === "Individual" || (request.subscriber_data.ProcessType === "Managed" && request.subscriber_data.ManagedContactPhone !== undefined && request.subscriber_data.ManagedContactPhone.length !== 0) ? "success" : "error";
 
-  const validForm = validateRanges(request.ranges).length === 0 && validRecipient === "success";
+  const validForm = (
+    validateRanges(request.ranges).length === 0 &&
+    validRecipient === "success" &&
+    request.routing_info != "" &&
+    request.subscriber_data.AccountNum.length !== 0 &&
+    validManagedPerson !== "error" &&
+    validManagedPhone !== "error" &&
+    (
+      (request.subscriber_data.AccountID !== undefined && request.subscriber_data.AccountID.length !== 0) ||
+      (request.subscriber_data.RegNum !== undefined && request.subscriber_data.RegNum.length !== 0)
+    )
+  );
+  console.log("subs", request);
   return (
     <Form horizontal>
       <FormGroup>
         <Col componentClass={ControlLabel} sm={2}>
-          <FormattedMessage id="service-type" defaultMessage="Service type" />
+          <FormattedMessage id="service-type" defaultMessage="Service type" />{"*"}
         </Col>
 
         <Col sm={9}>
@@ -146,7 +164,7 @@ export function NPPortInRequest(props) {
 
       <FormGroup validationState={validRanges}>
         <Col componentClass={ControlLabel} sm={2}>
-          <FormattedMessage id="ranges" defaultMessage="Ranges" />
+          <FormattedMessage id="ranges" defaultMessage="Ranges" />{"*"}
         </Col>
 
         <Col sm={9}>
@@ -160,7 +178,7 @@ export function NPPortInRequest(props) {
 
       <FormGroup validationState={validRecipient}>
         <Col componentClass={ControlLabel} sm={2}>
-          <FormattedMessage id="recipient" defaultMessage="Recipient" />
+          <FormattedMessage id="recipient" defaultMessage="Recipient" />{"*"}
         </Col>
 
         <Col sm={9}>
@@ -178,7 +196,7 @@ export function NPPortInRequest(props) {
 
       <FormGroup>
         <Col componentClass={ControlLabel} sm={2}>
-          <FormattedMessage id="route" defaultMessage="Route" />
+          <FormattedMessage id="route" defaultMessage="Route" />{"*"}
         </Col>
 
         <Col sm={9}>
@@ -230,6 +248,7 @@ export function NPPortInRequest(props) {
       <FormGroup validationState={validAccountNum}>
         <Col componentClass={ControlLabel} sm={2}>
           <FormattedMessage id="account-number" defaultMessage="Account number" />
+          {"*"}
         </Col>
 
         <Col sm={9}>
@@ -352,7 +371,7 @@ export function NPPortInRequest(props) {
           {
             request.subscriber_data.ProcessType === "Managed" &&
             <>
-              <FormGroup>
+              <FormGroup validationState={validManagedPerson}>
                 <Col componentClass={ControlLabel} sm={2}>
                   <FormattedMessage id="managed-contact-person" defaultMessage="Managed contact person" />
                 </Col>
@@ -373,7 +392,7 @@ export function NPPortInRequest(props) {
                   />
                 </Col>
               </FormGroup>
-              <FormGroup>
+              <FormGroup validationState={validManagedPhone}>
                 <Col componentClass={ControlLabel} sm={2}>
                   <FormattedMessage id="managed-contact-phone" defaultMessage="Managed contact phone" />
                 </Col>
@@ -499,6 +518,229 @@ export function NPPortInRequest(props) {
 }
 
 
+function cancelPort(instanceId, ranges, reasonCode, onSuccess) {
+  fetch_post(
+      `/api/v01/transactions/${instanceId}/events`,
+      {
+        key: 'API.cancel',
+        value: JSON.stringify({reason_code: reasonCode, ranges: ranges}),
+      }
+    )
+      .then(() => onSuccess && onSuccess())
+      .catch(error => NotificationsManager.error("Failed to cancel request", error.message));
+}
+
+
+function abortPort(instanceId, ranges, reasonCode, onSuccess) {
+  fetch_post(
+      `/api/v01/transactions/${instanceId}/events`,
+      {
+        key: 'API.abort',
+        value: JSON.stringify({reason_code: reasonCode, ranges: ranges}),
+      }
+    )
+      .then(() => onSuccess && onSuccess())
+      .catch(error => NotificationsManager.error("Failed to abort request", error.message));
+}
+
+
+const cancelReasonCodes = [
+  {"id": "SP001", "summary": "The MSISDN or DN/DN Range is not valid on the donor operator network."},
+  {"id": "SP002", "summary": "The MSISDN or DN/DN Range is excluded from number portability."},
+  {"id": "SP004", "summary": "The classification of the account does not match."},
+  {"id": "SP005", "summary": "Subscriber in suspension of outgoing or incoming calls due to failure to pay a bill"},
+  {"id": "SP006", "summary": "MSISDN or DN/DN Range not valid on SP."},
+  {"id": "SP008", "summary": "Port Request is for an inter-SP port; for this NO, inter-SP ports are handled outside the CRDB."},
+  {"id": "SP009", "summary": "Other reasons."},
+];
+
+const abortReasonCodes = [
+  {"id": "SP009", "summary": "Other reasons."},
+  {"id": "SP010", "summary": "Porting back."},
+  {"id": "SP011", "summary": "Malicious."},
+  {"id": "SP012", "summary": "Fraudulent."},
+  {"id": "SP013", "summary": "Ported in error."},
+];
+
+const rejectionReasonCodes = [
+  ...cancelReasonCodes,
+  {"id": "SP027", "summary": "DN Range is not exclusively used by the operator requesting the port."},
+  {"id": "SP028", "summary": "DN(s) or DN Range are excluded from porting under Regulation 3."},
+  {"id": "SP029", "summary": "Account Number is not the account number used by the donor operator for the DN(s) or DN Range for which porting is requested."},
+];
+
+export function CancelPortRequest(props) {
+  const {show, onHide, instanceId, ranges} = props;
+  const [reasonCode, setReasonCode] = useState("");
+  const [cancelledRanges, setCancelledRanges] = useState([]);
+
+  return (
+    <Modal show={show} onHide={onHide} backdrop={false}>
+      <Modal.Header closeButton>
+        <Modal.Title><FormattedMessage id="cancel" defaultMessage="Cancel" /></Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <p>
+          Select the ranges for which the porting process needs to be cancelled.
+        </p>
+        <Form horizontal>
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="ranges-to-cancel" defaultMessage="Ranges to cancel" />
+            </Col>
+
+            <Col sm={9}>
+              <Table condensed>
+                <thead>
+                  <tr>
+                    <th>Range</th>
+                    <th><Checkbox checked={cancelledRanges.length === ranges.length} onChange={e => {
+                      if(e.target.checked) {
+                        setCancelledRanges(ranges.map(r => r.range_from));
+                      } else {
+                        setCancelledRanges([]);
+                      }
+                    }} >all/none</Checkbox></th>
+                  </tr>
+                </thead>
+                <tbody>
+                {
+                  ranges.map((r, i) => (
+                    <tr key={`${i}-${r.range_from}`}>
+                      <td>{r.range_from} {' - '} {r.range_to}</td>
+                      <td>
+                        <Checkbox checked={cancelledRanges.includes(r.range_from)} onChange={e => {
+                          if(e.target.checked) {
+                            setCancelledRanges(update(cancelledRanges, {$push: [r.range_from]}));
+                          } else {
+                            setCancelledRanges(update(cancelledRanges, {$splice: [[cancelledRanges.findIndex(e => e === r.range_from), 1]]}));
+                          }
+                        }}/>
+                      </td>
+                    </tr>
+                  ))
+                }
+                </tbody>
+              </Table>
+            </Col>
+          </FormGroup>
+
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="reason" defaultMessage="Reason" />
+            </Col>
+
+            <Col sm={9}>
+              <FormControl
+                componentClass="select"
+                value={reasonCode}
+                onChange={e => setReasonCode(e.target.value)} >
+                <option value={null} />
+                {
+                  cancelReasonCodes.map(r => <option key={r.id} value={r.id}>{r.id} - {r.summary}</option>)
+                }
+              </FormControl>
+            </Col>
+          </FormGroup>
+        </Form>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button onClick={() => cancelPort(instanceId, cancelledRanges, reasonCode, () => onHide(true))} bsStyle="primary" disabled={cancelledRanges.length === 0 || reasonCode.length === 0}>
+          <FormattedMessage id="trigger" defaultMessage="Trigger" />
+        </Button>
+        <Button onClick={() => onHide(false)}><FormattedMessage id="cancel" defaultMessage="Cancel" /></Button>
+      </Modal.Footer>
+    </Modal>
+  )
+}
+
+
+export function AbortPortRequest(props) {
+  const {show, onHide, instanceId, ranges} = props;
+  const [reasonCode, setReasonCode] = useState("");
+  const [abortRanges, setAbortRanges] = useState([]);
+
+  return (
+    <Modal show={show} onHide={onHide} backdrop={false}>
+      <Modal.Header closeButton>
+        <Modal.Title><FormattedMessage id="abort" defaultMessage="Abort" /></Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <p>
+          Select the ranges for which the porting process needs to be aborted (reverted).
+        </p>
+        <Form horizontal>
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="ranges-to-abort" defaultMessage="Ranges to abort" />
+            </Col>
+
+            <Col sm={9}>
+              <Table condensed>
+                <thead>
+                  <tr>
+                    <th>Range</th>
+                    <th><Checkbox checked={abortRanges.length === ranges.length} onChange={e => {
+                      if(e.target.checked) {
+                        setAbortRanges(ranges.map(r => r.range_from));
+                      } else {
+                        setAbortRanges([]);
+                      }
+                    }} >all/none</Checkbox></th>
+                  </tr>
+                </thead>
+                <tbody>
+                {
+                  ranges.map((r, i) => (
+                    <tr key={`${i}-${r.range_from}`}>
+                      <td>{r.range_from} {' - '} {r.range_to}</td>
+                      <td>
+                        <Checkbox checked={abortRanges.includes(r.range_from)} onChange={e => {
+                          if(e.target.checked) {
+                            setAbortRanges(update(abortRanges, {$push: [r.range_from]}));
+                          } else {
+                            setAbortRanges(update(abortRanges, {$splice: [[abortRanges.findIndex(e => e === r.range_from), 1]]}));
+                          }
+                        }}/>
+                      </td>
+                    </tr>
+                  ))
+                }
+                </tbody>
+              </Table>
+            </Col>
+          </FormGroup>
+
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="reason" defaultMessage="Reason" />
+            </Col>
+
+            <Col sm={9}>
+              <FormControl
+                componentClass="select"
+                value={reasonCode}
+                onChange={e => setReasonCode(e.target.value)} >
+                <option value={null} />
+                {
+                  abortReasonCodes.map(r => <option key={r.id} value={r.id}>{r.id} - {r.summary}</option>)
+                }
+              </FormControl>
+            </Col>
+          </FormGroup>
+        </Form>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button onClick={() => abortPort(instanceId, abortRanges, reasonCode, () => onHide(true))} bsStyle="primary" disabled={abortRanges.length === 0 || reasonCode.length === 0}>
+          <FormattedMessage id="trigger" defaultMessage="Trigger" />
+        </Button>
+        <Button onClick={() => onHide(false)}><FormattedMessage id="cancel" defaultMessage="Cancel" /></Button>
+      </Modal.Footer>
+    </Modal>
+  )
+}
+
+
 export function disabledAction(action, output, request) {
   if(!request) {
     return true;
@@ -513,28 +755,34 @@ export function disabledAction(action, output, request) {
 function getRangeFlags(actions, ranges) {
   const canAccept = actions.find(a => a.output === null && a.description.toLowerCase() === "port-out approval") !== undefined;
   const canNotif = actions.find(a => a.output === null && a.description.toLowerCase() === "plan port") !== undefined;
-  const canActivate = false; // tobe checked but it seems the flag cannot be changed anyway;
+  const canActivate = actions.find(a => a.output === null && a.description.toLowerCase() === "activate numbers") !== undefined;
   const canCancel = false;
-  /* ???
-  reversed
-  reversal_accepted
-  reversal_activated
-   */
   const canAcceptAddrChange = false;
 
   let cols = []
-  if (canAccept || ranges.find(r => r.accepted !== null)) cols.push({header: "Acc.", disabled: !canAccept, flag: "accepted"});
+  if (canAccept || ranges.find(r => r.accepted !== null)){
+    let col = {header: "Acc.", disabled: !canAccept, flag: "accepted"};
+    if(canAccept) {
+      col["rejectCodes"] = rejectionReasonCodes;
+    }
+    cols.push(col);
+  }
   if (canNotif || ranges.find(r => r.notif_ordered !== null)) cols.push({header: "Notif. ordered", disabled: !canNotif, flag: "notif_ordered"});
   if (canActivate || ranges.find(r => r.activated !== null)) cols.push({header: "Act.", disabled: !canActivate, flag: "activated"});
-  if (canCancel || ranges.find(r => r.cancel_not_cancelled !== null)) cols.push({header: "Can.", disabled: !canCancel, flag: "cancel_not_cancelled"});
+  if (canCancel || ranges.find(r => r.cancelled !== null)) cols.push({header: "Can.", disabled: !canCancel, flag: "cancelled"});
   if (canAcceptAddrChange || ranges.find(r => r.change_addr_accepted !== null)) cols.push({header: "Change add. accepted", disabled: !canAcceptAddrChange, flag: "change_addr_accepted"});
+
+  if ( ranges.find(r => r.reversed !== null)) cols.push({header: "Rev.", disabled: true, flag: "reversed"});
+  if ( ranges.find(r => r.reversal_accepted !== null)) cols.push({header: "Rev. accepted", disabled: true, flag: "reversal_accepted"});
+  if ( ranges.find(r => r.reversal_activated !== null)) cols.push({header: "Rev. activated", disabled: true, flag: "reversal_activated"});
 
   return cols;
 }
 
 export function RequestTable(props) {
-  const {onChangeRequest, onChangeRange, actions, request} = props;
+  const {onChangeRequest, onChangeRange, actions, request, events} = props;
   const [operators, setOperators] = useState([]);
+  const [diffSubscriberData, setDiffSubscriberData] = useState({});
 
   useEffect(() => {
     fetchOperators(null, setOperators);
@@ -548,7 +796,10 @@ export function RequestTable(props) {
   const donor = operators.find(d => d.id === parseInt(req.donor_id, 10));
   const recipient = operators.find(d => d.id === parseInt(req.recipient_id, 10));
   const rangeFlags = getRangeFlags(actions, req.ranges);
-  const rangeNbCols = 1 + rangeFlags.length;
+  const activeFlag = rangeFlags.find(rf => !rf.disabled && rf.rejectCodes);
+  // const activeRejectCodes = rangeFlags.find(rf => !rf.disabled && rf.rejectCodes) && rangeFlags.find(rf => !rf.disabled && rf.rejectCodes).rejectCodes;
+  const rangeNbCols = 2 + rangeFlags.length;
+  const subscriberData = update(request.subscriber_data, {$merge: diffSubscriberData});
 
   return (
       <Panel>
@@ -565,13 +816,36 @@ export function RequestTable(props) {
               </tr>
               <tr><th><FormattedMessage id="ranges" defaultMessage="Ranges" /></th>
                 {
-                  rangeFlags.map(rf => <td key={rf.header}>{rf.header}</td>)
+                  rangeFlags.map(rf => <th key={rf.header}>{rf.header}</th>)
                 }
+                {
+                  (req.ranges.find(r => r.reject_code) || rangeFlags.find(rf => rf.rejectCodes)) && <th>Reject Code</th>
+                }
+                <td>
+                  <OverlayTrigger
+                    trigger="click"
+                    placement="right"
+                    overlay={
+                      <Popover id="popover-trigger-click" title="Range flags">
+                        <ul>
+                          <li>Acc. - Port accepted</li>
+                          <li>Notif. ordered - Port notification ordered</li>
+                          <li>Can. - Range cancelled</li>
+                          <li>Act. - Port activated</li>
+                          <li>Rev. - Port reversal requested</li>
+                          <li>Rev. accepted - Port reversal accepted</li>
+                          <li>Rev. activated - Port reversal activated</li>
+                          <li>Change add. accepted - change address of installation accepted</li>
+                        </ul>
+                      </Popover>
+                    }>
+                    <Glyphicon glyph="question-sign"/>
+                  </OverlayTrigger>
+                </td>
               </tr>
               {
-                req.ranges.map((r, i) => (
-                  <tr key={i}>
-                    <td>{r.range_from} {' - '} {r.range_to}</td>
+                req.ranges.sort((a, b) => a.id - b.id).map((r, i) => (
+                  <tr key={i}><td>{r.range_from} {' - '} {r.range_to}</td>
                     {
                       rangeFlags.map(rf =>
                         <td>
@@ -579,6 +853,26 @@ export function RequestTable(props) {
                         </td>
                       )
                     }
+                    {
+                      activeFlag !== undefined && activeFlag.rejectCodes !== undefined ?
+                        <td>
+                          <select
+                            value={r.reject_code || ""}
+                            style={{maxWidth: 100}}
+                            onChange={e => {
+                              onChangeRange(r.id, {reject_code: e.target.value, [activeFlag.flag]: e.target.value.length === 0})
+                            }}
+                          >
+                            <option value={""}></option>
+                            {
+                              activeFlag.rejectCodes.map(rc => <option value={rc.id}>{rc.id} - {rc.summary}</option>)
+                            }
+                          </select>
+                        </td>
+                      :
+                        r.reject_code ? <td style={{ color: "red" }}>{r.reject_code}</td> : <td/>
+                    }
+                    <td/>
                   </tr>
                 ))
               }
@@ -587,6 +881,9 @@ export function RequestTable(props) {
               <tr><th><FormattedMessage id="service-type" defaultMessage="Service type" /></th><td colSpan={rangeNbCols}>{req.service_type}</td></tr>
               <tr><th><FormattedMessage id="routing-info" defaultMessage="Routing info" /></th><td colSpan={rangeNbCols}>{req.routing_info}</td></tr>
               <tr><th><FormattedMessage id="port-req-form-id" defaultMessage="Port request form ID" /></th><td colSpan={rangeNbCols}>{req.port_req_form_id}</td></tr>
+              {
+                req.street && <tr><th><FormattedMessage id="address" defaultMessage="Address" /></th><td colSpan={rangeNbCols}>{req.street}</td></tr>
+              }
               <tr>
                 <th><FormattedMessage id="port-date-time" defaultMessage="Port date time" /></th>
                 <td colSpan={rangeNbCols}>
@@ -605,12 +902,74 @@ export function RequestTable(props) {
                 </td>
               </tr>
               <tr><th><FormattedMessage id="created" defaultMessage="Created" /></th><td colSpan={rangeNbCols}>{req.created_on}</td></tr>
-              <tr>
-                <th><FormattedMessage id="subscriber-data" defaultMessage="Subscriber data" /></th>
-                <td colSpan={rangeNbCols}>
-                  <pre>{JSON.stringify(req.subscriber_data, undefined, 4)}</pre>
-                </td>
-              </tr>
+              {
+                req.subscriber_data && Object.keys(req.subscriber_data).map(d => {
+                  if(d === "ProcessType" && rangeFlags.find(rf => rf.flag === "accepted" && !rf.disabled)) {
+                    return (
+                      <tr key={d}>
+                        <th>{d}</th>
+                        <td colSpan={rangeNbCols}>
+                          <select
+                            value={req.subscriber_data[d]}
+                            onChange={e => {
+                              e.target.value === "Managed" ?
+                                onChangeRequest({
+                                  subscriber_data: update(
+                                    request.subscriber_data,
+                                    {$merge: {
+                                      ProcessType: e.target.value,
+                                      ManagedContactPerson: request.subscriber_data.ManagedContactPerson || "",
+                                      ManagedContactPhone: request.subscriber_data.ManagedContactPhone || ""
+                                    }}
+                                  )
+                                }):
+                                onChangeRequest({
+                                  subscriber_data: update(request.subscriber_data,
+                                    {$merge: {ProcessType: e.target.value}}
+                                  )
+                                });
+                            }}
+                          >
+                            <option value="Managed">Managed</option>
+                            <option value="Individual">Individual</option>
+                          </select>
+                          { events.find(e => e.key === "crdb.PortRequest" && !e.content.includes(req.subscriber_data[d])) &&
+                            <HelpBlock>This value has been updated</HelpBlock>
+                          }
+                        </td>
+                      </tr>
+                    );
+                  }
+                  if(
+                    (d === "ManagedContactPerson" || d === "ManagedContactPhone") && req.subscriber_data.ProcessType === "Managed" &&
+                    rangeFlags.find(rf => rf.flag === "accepted" && !rf.disabled) &&
+                    events.find(e => e.key === "crdb.PortRequest" && e.content.includes("Individual"))
+                  ) {
+                    return (
+                      <tr key={d}>
+                        <th>{d}</th>
+                        <td colSpan={rangeNbCols}>
+                          <input
+                            value={subscriberData[d]}
+                            onChange={e => setDiffSubscriberData(update(diffSubscriberData, {$merge: {[d]: e.target.value}}))}
+                            onBlur={e => onChangeRequest({
+                              subscriber_data: update(request.subscriber_data,
+                                {$merge: diffSubscriberData}
+                              )
+                            })}
+                          />
+                        </td>
+                      </tr>
+                    );
+                  }
+                  return (
+                    <tr key={d}>
+                      <th>{d}</th>
+                      <td colSpan={rangeNbCols}>{req.subscriber_data[d]}</td>
+                    </tr>
+                  );
+                })
+              }
             </tbody>
           </Table>
         </Panel.Body>

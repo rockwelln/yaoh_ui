@@ -18,9 +18,9 @@ import FormControl from "react-bootstrap/lib/FormControl";
 function newChangeInstallAddressRequest(entry, onSuccess) {
   fetch_post(
     '/api/v01/voo/np_requests/change_addr',
-    entry
+    {...entry, service_type: "GEOGRAPHIC"}
   ).then(r => r.json())
-    .then(r => onSuccess(r.id))
+    .then(r => r.id && onSuccess(r.id))
     .catch(error => NotificationsManager.error("Failed to create a new change installation address request", error.message))
 }
 
@@ -87,7 +87,7 @@ export function NPChangeInstallationAddressRequest(props) {
 
           <FormGroup>
             <Col smOffset={2} sm={10}>
-              <Button type="submit" onClick={() => newChangeInstallAddressRequest({}, setRedirect)} disabled={!validForm}>
+              <Button onClick={() => newChangeInstallAddressRequest({ranges:ranges, address: address}, setRedirect)} disabled={!validForm}>
                 <FormattedMessage id="submit" defaultMessage="Submit" />
               </Button>
             </Col>

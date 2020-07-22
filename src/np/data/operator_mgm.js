@@ -14,11 +14,12 @@ import Breadcrumb from 'react-bootstrap/lib/Breadcrumb';
 
 import { FormattedMessage } from 'react-intl';
 
-import { fetch_delete, fetch_post, fetch_put, fetch_get } from "../../utils";
+import {fetch_delete, fetch_post, fetch_put, fetch_get, NotificationsManager} from "../../utils";
 import { ApioDatatable } from "../../utils/datatable";
 import { access_levels, isAllowed, pages } from "../../utils/user";
 import { Search } from "../../utils/common";
 import update from "immutability-helper/index";
+import Checkbox from "react-bootstrap/lib/Checkbox";
 
 
 export function fetchOperators(token, onSuccess, onError) {
@@ -57,21 +58,17 @@ class Operator extends Component {
         'name': operator.name,
         'short_name': operator.short_name,
         'contact_email': operator.contact_email,
-      },
-      this.props.auth_token
+        'default': operator.default,
+      }
     )
       .then(() => {
         this.onClose();
-        this.props.notifications.addNotification({
-          message: <FormattedMessage id="operator-updated" defaultMessage="Operator saved!" />,
-          level: 'success'
-        });
+        NotificationsManager.success(<FormattedMessage id="operator-updated" defaultMessage="Operator saved!" />);
       })
-      .catch(error => this.props.notifications.addNotification({
-        title: <FormattedMessage id="operator-update-failed" defaultMessage="Failed to save" />,
-        message: error.message,
-        level: 'error'
-      }));
+      .catch(error => NotificationsManager.error(
+        <FormattedMessage id="operator-update-failed" defaultMessage="Failed to save" />,
+        error.message
+      ));
   }
 
   onClose() {
@@ -125,6 +122,15 @@ class Operator extends Component {
                 </Col>
               </FormGroup>
               <FormGroup>
+                <Col componentClass={ControlLabel} sm={2}>
+                  <FormattedMessage id="default" defaultMessage="Default" />
+                </Col>
+
+                <Col sm={9}>
+                  <Checkbox checked={operator.default} onChange={e => this.setState({ operator: update(operator, { '$merge': { default: e.target.checked } }) })} />
+                </Col>
+              </FormGroup>
+              <FormGroup>
                 <Col smOffset={2} sm={10}>
                   <Button bsStyle="primary" onClick={this.onSave}>
                     <FormattedMessage id="save" defaultMessage="Save" />
@@ -152,21 +158,18 @@ class NewOperator extends Operator {
     e.preventDefault();
     fetch_post(
       '/api/v01/voo/operators',
-      this.state.operator,
-      this.props.auth_token
+      this.state.operator
     )
       .then(() => {
         this.onClose();
-        this.props.notifications.addNotification({
-          message: <FormattedMessage id="operator-saved" defaultMessage="New operator saved!" />,
-          level: 'success'
-        })
+        NotificationsManager.success(
+          <FormattedMessage id="operator-saved" defaultMessage="New operator saved!" />
+        )
       })
-      .catch(error => this.props.notifications.addNotification({
-        title: <FormattedMessage id="operator-failed" defaultMessage="Failed to save" />,
-        message: error.message,
-        level: 'error'
-      }));
+      .catch(error => NotificationsManager.error(
+        <FormattedMessage id="operator-failed" defaultMessage="Failed to save" />,
+        error.message
+      ));
   }
 }
 
@@ -214,19 +217,17 @@ export default class SearchOperators extends Search {
 
   onDelete(e, opId) {
     e.preventDefault();
-    fetch_delete(`/api/v01/voo/operators/${opId}`, this.props.auth_token)
+    fetch_delete(`/api/v01/voo/operators/${opId}`)
       .then(() => {
-        this.props.notifications.addNotification({
-          message: <FormattedMessage id="operator-deleted" defaultMessage="Operator deleted!" />,
-          level: 'success'
-        });
+        NotificationsManager.success(
+          <FormattedMessage id="operator-deleted" defaultMessage="Operator deleted!" />
+        );
         this._refresh()
       })
-      .catch(error => this.props.notifications.addNotification({
-        title: <FormattedMessage id="operator-delete-failed" defaultMessage="Failed to delete" />,
-        message: error.message,
-        level: 'error'
-      }));
+      .catch(error => NotificationsManager.error(
+        <FormattedMessage id="operator-delete-failed" defaultMessage="Failed to delete" />,
+        error.message
+      ));
   }
 
   render() {
@@ -245,6 +246,9 @@ export default class SearchOperators extends Search {
             <ApioDatatable
               sorting_spec={sorting_spec}
               headers={[
+                {
+                  title: <FormattedMessage id="default" defaultMessage="Default" />, field: 'default', sortable: true, render: n => <Checkbox checked={n.default} disabled/>, style: { width: '100px' }
+                },
                 { title: <FormattedMessage id="short-name" defaultMessage="Short name" />, field: 'short_name', sortable: true },
                 { title: <FormattedMessage id="name" defaultMessage="Name" />, field: 'name', sortable: true },
                 { title: <FormattedMessage id="email" defaultMessage="Email" />, field: 'contact_email', sortable: true },

@@ -888,7 +888,7 @@ export const Errors = ({errors, user_info}) => (
 );
 
 
-class Events extends Component {
+export class Events extends Component {
     constructor(props) {
         super(props);
         this.cancelLoad = false;
@@ -1018,10 +1018,18 @@ function timer(ms) {
  return new Promise(res => setTimeout(res, ms));
 }
 
-const ReplayingSubInstancesModal = ({show}) => (
+export const ReplayingSubInstancesModal = ({show}) => (
     <Modal show={show} backdrop={false}>
         <Modal.Header>
             <Modal.Title><FormattedMessage id="replay in progress" defaultMessage="Replay in progress..."/></Modal.Title>
+        </Modal.Header>
+    </Modal>
+);
+
+export const SavingModal = ({show}) => (
+    <Modal show={show} backdrop={false}>
+        <Modal.Header>
+            <Modal.Title><FormattedMessage id="saving in progress" defaultMessage="Saving in progress..."/></Modal.Title>
         </Modal.Header>
     </Modal>
 );
@@ -1043,16 +1051,10 @@ export const TasksTable = ({tasks, definition, onReplay, onRollback, user_can_re
         </thead>
         <tbody>
             {
-                tasks.sort(
-                    (a, b) => {
-                        if(a.id < b.id) return -1;
-                        if(a.id > b.id) return 1;
-                        return 0;
-                    }
-                ).map(t => {
+                tasks.sort( (a, b) => a.id - b.id).map(t => {
                     const replayable = onReplay && user_can_replay;
                     const can_replay = (replayable || t.cell_id === 'end') && t.status === 'ERROR' &&
-                        t.id === Math.max(tasks.filter(ot => ot.cell_id === t.cell_id).map(oot => oot.id));
+                        t.id === Math.max(...tasks.filter(ot => ot.cell_id === t.cell_id).map(oot => oot.id));
                     const support_rollback = definition.cells && definition.cells[t.cell_id] && definition.cells[t.cell_id].outputs.includes("rollback");
                     const support_force = FORCEABLE_TASKS.includes(t.cell_id);
                     const support_skip = definition.cells && definition.cells[t.cell_id] && definition.cells[t.cell_id].outputs.includes("skip");
@@ -2162,6 +2164,12 @@ export const activeCriteria = {
     status: {model: 'instances', value: 'ACTIVE', op: 'eq'}
 };
 
+
+export const needActionCriteria = {
+    action_status: {model: 'tasks', value: 'WAIT', op: 'eq'}
+};
+
+
 const AutoRefreshTime = 10;
 
 export class Requests extends Component{
@@ -2215,6 +2223,7 @@ export class Requests extends Component{
             proxy_gateway_host: { model: 'requests', value: '', op: 'eq' },
             role_id: { model: 'manual_actions', value: '', op: 'eq' },
             task_status: undefined,
+            action_status: undefined,
             end_task_status: undefined,
         }
     }
@@ -2317,6 +2326,7 @@ export class Requests extends Component{
                         };
                     case 'proxied_status':
                     case 'task_status':
+                    case 'action_status':
                     case 'request_status':
                         return {
                             model: filter_criteria[f].model,

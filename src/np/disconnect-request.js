@@ -16,7 +16,7 @@ import { StaticControl } from "../utils/common";
 import { DEFAULT_RECIPIENT } from "./np-requests";
 
 const MIN_NUMBER_LENGTH_LOOKUP = 6;
-const MAX_NUMBER_LENGTH_LOOKUP = 11;
+const MAX_NUMBER_LENGTH_LOOKUP = 15;
 
 
 export class NPDisconnectRequest extends Component {

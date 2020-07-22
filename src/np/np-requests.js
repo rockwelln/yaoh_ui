@@ -34,11 +34,30 @@ import { fetchOperators } from "./data/operator_mgm";
 import { ApioDatatable } from "../utils/datatable";
 
 import 'react-datepicker/dist/react-datepicker.css';
-import { TransactionFlow, Comments, Errors, ContextTable, TxTable, TasksTable, triggerManualAction } from "../requests/requests";
+import {
+  TransactionFlow,
+  Comments,
+  Errors,
+  ContextTable,
+  TxTable,
+  TasksTable,
+  triggerManualAction,
+  Events,
+  SavingModal,
+  ReplayingSubInstancesModal, needActionCriteria,
+} from "../requests/requests";
 import update from 'immutability-helper';
 import { StaticControl } from "../utils/common";
 import { access_levels, is_admin, isAllowed, pages } from "../utils/user";
-import { DEFAULT_RECIPIENT as citcRecipient, rejection_codes, RequestTable, disabledAction } from "./requests/crdb-rsa";
+// todo check that all those deps are used in Request class, if yes, move Request in specifics to minimize the dependencies
+import {
+  DEFAULT_RECIPIENT as citcRecipient,
+  rejection_codes,
+  RequestTable,
+  disabledAction,
+  CancelPortRequest,
+  AbortPortRequest,
+} from "./requests/crdb-rsa";
 
 export const DATE_FORMAT = 'DD/MM/YYYY HH:mm:ss';
 export const DEFAULT_RECIPIENT = citcRecipient;
@@ -98,7 +117,7 @@ class Error extends Component {
 }
 
 
-class Events extends Component {
+class Events_ extends Component {
   constructor(props) {
     super(props);
     this.cancelLoad = false;
@@ -401,6 +420,7 @@ class RejectionReason extends Component {
   }
 }
 
+
 function updateRequest(requestId, diffEntry, onSuccess) {
   fetch_put(`/api/v01/voo/np_requests/${requestId}`, diffEntry)
     .then(data => onSuccess())
@@ -424,6 +444,10 @@ export class NPTransaction extends Component {
       sending: false,
       activeTab: 1,
       manualActions: [],
+      logs: [],
+      events: [],
+      showCancel: false,
+      showAbort: false,
     };
     this.cancelLoad = false;
 
@@ -439,13 +463,15 @@ export class NPTransaction extends Component {
     this.caseUpdateFailure = this.caseUpdateFailure.bind(this);
   }
 
-  fetchTxDetails(reload) {
+  fetchTxDetails(reload, onSuccess, onError) {
     this.setState({ error: undefined });
     const txId = this.props.match.params.txId;
     fetch_get(`/api/v01/transactions/${this.props.match.params.txId}`, this.props.auth_token)
       .then(data => {
-        if (this.cancelLoad)
+        if (this.cancelLoad) {
+          onSuccess && onSuccess();
           return;
+        }
 
         this.setState({ tx: data });
 
@@ -457,9 +483,21 @@ export class NPTransaction extends Component {
           .then(data => !this.cancelLoad && this.setState({manualActions: data.manual_actions}))
           .catch(console.error);
 
+        fetch_get(`/api/v01/transactions/${txId}/events`)
+          .then(data => !this.cancelLoad && this.setState({events: data.events}))
+          .catch(error => !this.cancelLoad && this.setState({error: error}));
+
+        fetch_get(`/api/v01/transactions/${txId}/logs`)
+          .then(data => !this.cancelLoad && this.setState({
+              logs: data.logs.map(l => {l.type='log'; l.source_entity=l.source; l.content=l.message; return l;})
+          }))
+          .catch(error => !this.cancelLoad && this.setState({error: error}));
+
         reload && setTimeout(() => this.fetchTxDetails(true), RELOAD_TX);
+        onSuccess && onSuccess();
       })
       .catch(error => {
+        onError && onError();
         if (this.cancelLoad)
           return;
         let error_msg = undefined;
@@ -473,7 +511,7 @@ export class NPTransaction extends Component {
           case 401: error_msg = <FormattedMessage id="not-allowed-transaction" defaultMessage="You are not allowed to see this transaction." />; break;
           default: error_msg = <FormattedMessage id="unknown-error" defaultMessage="Unknown error: {status}" values={{ status: error.response.status }} />;
         }
-        this.setState({ error: new Error(error_msg) })
+        this.setState({ error: new Error(error_msg) });
       });
   }
 
@@ -594,14 +632,6 @@ export class NPTransaction extends Component {
       });
   }
 
-  onCancel() {
-    this.sendEvent('', 'API.cancel');
-  }
-
-  onAbort() {
-    this.sendEvent('', 'API.abort');
-  }
-
   onEdit() {
     this.setState({ edit_request: true })
   }
@@ -614,6 +644,8 @@ export class NPTransaction extends Component {
     const is_portin = request && request.kind === 'PortIn';
     // const is_portout = request && request.kind === 'PortOut';
     const fnp_exec_sent = is_portin && tx.tasks && tx.tasks.findIndex(t => t.cell_id === 'Set accepted' && t.status === 'OK') !== -1;
+    const port_notification = is_portin && tx.tasks && tx.tasks.findIndex(t => t.cell_id === 'Port Notification' && t.status === 'OK') !== -1;
+    const port_activated = is_portin && tx.tasks && tx.tasks.findIndex(t => t.cell_id === 'Port activated' && t.status === 'OK') !== -1;
 
     let can_edit = false; // is_active && !is_portout;
     if (can_edit && is_portin) {
@@ -624,22 +656,23 @@ export class NPTransaction extends Component {
     }
     const can_close = is_active;
     const can_reopen = !is_active;
-    const can_cancel = is_active && is_portin && !fnp_exec_sent;
-    const can_abort = is_active && is_portin && fnp_exec_sent;
+    // condition for voo: const can_cancel = is_active && is_portin && !fnp_exec_sent;
+    const can_cancel = is_active && is_portin && port_notification && !port_activated;
+    const can_abort = is_portin && port_activated;
 
     return (
       <ButtonGroup vertical block>
         {can_edit && <Button onClick={() => this.onEdit()} disabled={edited}><FormattedMessage id="edit" defaultMessage="Edit" /></Button>}
         {can_close && <Button onClick={() => this.onForceClose()}><FormattedMessage id="force-close" defaultMessage="Force close" /></Button>}
         {can_reopen && <Button onClick={() => this.onReopen()}><FormattedMessage id="reopen" defaultMessage="Reopen" /></Button>}
-        {can_cancel && <Button onClick={() => this.onCancel()}><FormattedMessage id="trigger-cancel" defaultMessage="Trigger cancel" /></Button>}
-        {can_abort && <Button onClick={() => this.onAbort()}><FormattedMessage id="trigger-abort" defaultMessage="Trigger abort" /></Button>}
+        {can_cancel && <Button onClick={() => this.setState({showCancel: true})}><FormattedMessage id="trigger-cancel" defaultMessage="Trigger cancel" /></Button>}
+        {can_abort && <Button onClick={() => this.setState({showAbort: true})}><FormattedMessage id="trigger-abort" defaultMessage="Trigger abort" /></Button>}
       </ButtonGroup>
     )
   }
 
   render() {
-    const { sending, error, tx, request, activeTab, manualActions } = this.state;
+    const { sending, error, tx, request, activeTab, manualActions, events, logs, replaying } = this.state;
     const {user_info} = this.props;
     let alerts = [];
     error && alerts.push(
@@ -668,6 +701,7 @@ export class NPTransaction extends Component {
                           triggerManualAction(tx.id, a.id, o, () => this.fetchTxDetails(false));
                         }}
                         disabled={disabledAction(a, o, request)}
+                        key={`action-output-${o}`}
                       >
                         {o}
                       </Button>
@@ -725,8 +759,10 @@ export class NPTransaction extends Component {
               <RequestTable
                 request={request}
                 actions={manualActions}
+                events={events}
                 onChangeRequest={r => {
-                  updateRequest(request.id, r, () => this.fetchTxDetails(false));
+                  this.setState({sending: true})
+                  updateRequest(request.id, r, () => this.fetchTxDetails(false, () => this.setState({sending: false}), () => this.setState({sending: false})));
                 }}
                 onChangeRange={(range_id, r) => {
                   updateRequestRange(request.id, range_id, r, () => this.fetchTxDetails(false));
@@ -792,25 +828,54 @@ export class NPTransaction extends Component {
               </Panel.Body>
             </Panel>
 
-            <Panel bsStyle="danger">
-              <Panel.Heading>
-                <Panel.Title><FormattedMessage id="errors" defaultMessage="Errors" /></Panel.Title>
-              </Panel.Heading>
-              <Panel.Body>
-                <Errors errors={tx.errors} user_info={this.props.user_info} />
-              </Panel.Body>
-            </Panel>
+            {tx.errors && tx.errors.length !== 0 &&
+              <Panel bsStyle="danger">
+                <Panel.Heading>
+                  <Panel.Title><FormattedMessage id="errors" defaultMessage="Errors"/></Panel.Title>
+                </Panel.Heading>
+                <Panel.Body>
+                  <Errors errors={tx.errors} user_info={this.props.user_info}/>
+                </Panel.Body>
+              </Panel>
+            }
 
-            <Panel>
-              <Panel.Heading>
-                <Panel.Title><FormattedMessage id="events" defaultMessage="Events" /></Panel.Title>
-              </Panel.Heading>
-              <Panel.Body>
-                <Events tx_id={tx.id} {...this.props} />
-              </Panel.Body>
-            </Panel>
+            {
+              (events.length !== 0 || logs.length !== 0) && (
+                <Panel defaultExpanded={false}>
+                  <Panel.Heading>
+                    <Panel.Title toggle><FormattedMessage id="events" defaultMessage="Events" /></Panel.Title>
+                  </Panel.Heading>
+                  <Panel.Body collapsible>
+                    <Events events={events} logs={logs} />
+                  </Panel.Body>
+                </Panel>
+              )
+            }
+
           </Tab>
         </Tabs>
+
+        <CancelPortRequest
+          show={this.state.showCancel}
+          ranges={(request && request.ranges) || []}
+          instanceId={tx && tx.id}
+          onHide={r => {
+            this.setState({showCancel: false});
+            r && this.fetchTxDetails(false);
+          }} />
+
+        <AbortPortRequest
+          show={this.state.showAbort}
+          ranges={(request && request.ranges) || []}
+          instanceId={tx && tx.id}
+          onHide={r => {
+            this.setState({showAbort: false});
+            r && this.fetchTxDetails(false);
+          }} />
+
+        <ReplayingSubInstancesModal show={replaying}/>
+        <SavingModal show={sending}/>
+
       </div>)
   }
 }
@@ -867,6 +932,7 @@ export const getIcon = (k) => {
     case "Disconnect": return <Glyphicon glyph="scissors" title="Disconnect" />;
     case "Update": return <Glyphicon glyph="save" title="Update" />;
     case "Broadcast": return <Glyphicon glyph="save" title="Broadcast" />;
+    case "ChangeOfInstallationAddress": return <Glyphicon glyph="envelope" title="ChangeOfInstallationAddress" />;
     default: return "";
   }
 };
@@ -911,6 +977,7 @@ export class NPRequests extends Component {
       due_date: { model: 'NPRequest', value: '', op: 'ge' },
       b2b: { model: 'NPRequest', value: '', op: 'eq' },
       task_status: is_admin(ui_profile) ? undefined : errorCriteria.task_status,
+      action_status: undefined,
     }
   }
 
@@ -993,6 +1060,7 @@ export class NPRequests extends Component {
               ]
             };
           case 'task_status':
+          case 'action_status':
           case 'request_status':
             return {
               model: filter_criteria[f].model,
@@ -1504,39 +1572,22 @@ export class NPRequests extends Component {
                   </Checkbox>
 
                   <Checkbox
-                    checked={filter_criteria.approval !== undefined}
+                    checked={filter_criteria.action_status !== undefined}
                     onChange={e => (
                       e.target.checked ?
                         this.setState({
                           filter_criteria: update(this.state.filter_criteria,
-                            { $merge: needApprovalCriteria })
+                            { $merge: needActionCriteria })
                         }) :
                         this.setState({
                           filter_criteria: update(this.state.filter_criteria,
-                            { $unset: ['approval'] })
+                            { $unset: ['action_status'] })
                         })
                     )}
                   >
-                    <FormattedMessage id="need-approval" defaultMessage="Need approval" />
-                    <HelpBlock><FormattedMessage id="port-out requiring approval or port-in with manual rfs to activate" /></HelpBlock>
+                    <FormattedMessage id="need-action" defaultMessage="Need a manual action" />
                   </Checkbox>
 
-                  <Checkbox
-                    checked={filter_criteria.wait_ivr !== undefined}
-                    onChange={e => (
-                      e.target.checked ?
-                        this.setState({
-                          filter_criteria: update(this.state.filter_criteria,
-                            { $merge: waitForIVR })
-                        }) :
-                        this.setState({
-                          filter_criteria: update(this.state.filter_criteria,
-                            { $unset: ['wait_ivr'] })
-                        })
-                    )}
-                  >
-                    <FormattedMessage id="wait-for-ivr" defaultMessage="Wait for IVR" />
-                  </Checkbox>
                 </Col>
               </FormGroup>
 

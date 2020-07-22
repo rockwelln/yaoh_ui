@@ -65,6 +65,7 @@ class UpdateNumberPortingModal extends Component {
         recipient_id: case_.recipient_id,
         donor_id: case_.donor_id,
         coded_id: case_.coded_id,
+        installation_address: case_.installation_address,
         broadcasted_on: case_.broadcasted_on,
         due_date: case_.due_date,
         service_type: case_.service_type,
@@ -206,6 +207,22 @@ class UpdateNumberPortingModal extends Component {
               </Col>
             </FormGroup>
 
+            <FormGroup controlId="installationAddress">
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="installation-address" defaultMessage="Installation address" />
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="input"
+                  value={case_.installation_address}
+                  onChange={e => this.setState({
+                    diff_case: update(this.state.diff_case, { '$merge': { installation_address: e.target.value } })
+                  })}
+                />
+              </Col>
+            </FormGroup>
+
             <FormGroup controlId="codedId">
               <Col componentClass={ControlLabel} sm={2}>
                 <FormattedMessage id="coded-id" defaultMessage="Coded Id" />
@@ -331,6 +348,7 @@ class NewNumberPorting extends Component {
       recipient_id: null,
       donor_id: null,
       coded_id: '',
+      installation_address: '',
       broadcasted_on: null,
       due_date: null,
       service_type: null,
@@ -478,6 +496,22 @@ class NewNumberPorting extends Component {
                   value={case_.sub_type}
                   onChange={e => this.setState({
                     case_: update(case_, { '$merge': { sub_type: e.target.value } })
+                  })}
+                />
+              </Col>
+            </FormGroup>
+
+            <FormGroup controlId="installationAddress">
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="installation-address" defaultMessage="Installation address" />
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="input"
+                  value={case_.installation_address}
+                  onChange={e => this.setState({
+                    case_: update(case_, { '$merge': { installation_address: e.target.value } })
                   })}
                 />
               </Col>

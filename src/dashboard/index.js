@@ -10,7 +10,7 @@ import TransactionsOverTime from './tx-over-time';
 import ActiveTransactionsPerWorkflow from './tx-active-per-workflow';
 import ProxyRequestsOverTime from "./tx-per-proxy-over-time";
 import {EmptyTile, GatewaysStatusTile, ErrorCasesTile} from './dashboard-tiles';
-import ManualActionsBox from "./manualActions";
+import ManualActionsBox, {ManualActionsTile} from "./manualActions";
 import {TransactionsNeedApprovalTile} from "../np/dashboard_tiles";
 
 import './dashboard.css';
@@ -52,6 +52,7 @@ function _buildPadding(nbTiles) {
 export default function Dashboard(props) {
     const [stats, setStats] = useState({active_requests: {}});
     const [gateways, setGateways] = useState({});
+    const isManual = props.user_info.modules.includes(modules.manualActions);
     const isNpact = props.user_info.modules.includes(modules.npact);
 
     useEffect(() => {
@@ -73,7 +74,7 @@ export default function Dashboard(props) {
         statsPanels.push(<ProxyRequestsOverTime {...props} />);
     }
     statsPanels.push(<ActiveTransactionsPerWorkflow {...props} />);
-    if(props.user_info.modules.includes(modules.manualActions)) {
+    if(isManual) {
         statsPanels.push(<ManualActionsBox {...props} />);
     }
 
@@ -85,7 +86,7 @@ export default function Dashboard(props) {
                 }
                 <ErrorCasesTile count={stats.active_requests.with_errors} total={stats.active_requests.total}/>
                 {
-                    isNpact && <TransactionsNeedApprovalTile count={stats.active_requests.need_approval} />
+                    isManual && <ManualActionsTile />
                 }
                 {
                     Object.keys(gateways).slice(0, 5).map(k => <GatewaysStatusTile key={k} label={k} status={gateways[k]} />)
