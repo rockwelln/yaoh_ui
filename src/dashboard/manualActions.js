@@ -7,6 +7,9 @@ import {fetch_get, NotificationsManager} from "../utils";
 import Modal from "react-bootstrap/lib/Modal";
 import Button from "react-bootstrap/lib/Button";
 import {Link} from "react-router-dom";
+import queryString from "query-string";
+import {needActionCriteria} from "../requests/requests";
+import {Tile, TileHeader} from "./dashboard-tiles";
 
 
 function fetchManualActions(onSuccess) {
@@ -101,5 +104,32 @@ export default function ManualActionsBox(props) {
                 show={showRole !== undefined}
                 onHide={() => setShowRole(undefined)} />
         </DashboardPanel>
+    )
+}
+
+export function ManualActionsTile(props) {
+    const [actions, setActions] = useState({});
+
+    useEffect(() => {
+        fetchManualActions(setActions);
+        const interval = setInterval(() => fetchManualActions(setActions), 5 * 1000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const count = Object.keys(actions).reduce((r, o) => r + actions[o].length, 0);
+
+    return (
+      <Link to={{
+        pathname: "/transactions/list", search: queryString.stringify({
+          filter: JSON.stringify(needActionCriteria)
+        })
+      }}>
+        <Tile className="warning">
+          <TileHeader>
+            <div className="count">{count}</div>
+            <div className="title"><FormattedMessage id="cases-need-actions" defaultMessage="Case(s) need actions" /></div>
+          </TileHeader>
+        </Tile>
+      </Link>
     )
 }

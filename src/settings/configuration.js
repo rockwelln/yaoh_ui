@@ -21,6 +21,7 @@ import FormGroup from "react-bootstrap/lib/FormGroup";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 import HelpBlock from "react-bootstrap/lib/HelpBlock";
 import Modal from "react-bootstrap/lib/Modal";
+import {modules} from "../utils/user";
 
 
 function fetchConfiguration(onSuccess) {
@@ -473,7 +474,10 @@ function GatewaysPanel(props) {
 
 
 function GuiForm(props) {
-  const {gui, onChange} = props;
+  const { gui, onChange } = props;
+  if (gui.modules === undefined) {
+    gui.modules = [];
+  }
 
   return (
     <>
@@ -502,7 +506,7 @@ function GuiForm(props) {
 
               <Col sm={9}>
                 {
-                  ["orange", "orchestration", "bulk", "provisioning", "telenet", "proxy", "manualActions"].map(m =>
+                  Object.keys(modules).map(m =>
                     <Checkbox
                       key={`modules-${m}`}
                       checked={gui.modules.includes(m)}
@@ -842,8 +846,11 @@ function NewProvisioningGatewayModal(props) {
 }
 
 function ProvisioningPanels(props) {
-  const {prov, onChange} = props;
+  const { prov, onChange } = props;
   const [showNew, setShowNew] = useState(false);
+  if (prov.gateways === undefined) {
+    prov.gateways = [];
+  }
 
   return (
     <>

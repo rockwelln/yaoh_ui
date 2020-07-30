@@ -56,7 +56,7 @@ import {
 } from "./utils";
 import Databases from "./system/databases_mgm";
 import {AuditLogs} from "./system/audit";
-import {getHomePage, isAllowed, modules, pages} from "./utils/user";
+import {getHomePage, isAllowed, modules, pages, supportedModule} from "./utils/user";
 import {NotAllowed} from "./utils/common";
 import {AuthCallback, AuthSilentCallback} from "./sso/login";
 import {RESET_PASSWORD_PREFIX, ResetPasswordPage} from "./reset_password";
@@ -72,6 +72,19 @@ import LogsManagement from "./system/logs";
 import UserProfiles from "./system/user_profiles";
 import Templates from "./system/templates";
 import {UserRoles} from "./system/user_roles";
+// specifics for NP
+// import {NPDisconnectRequest} from "./np/disconnect-request";
+import {NPRequests} from "./np/np-requests";
+import {NPTransaction, NPPortInRequest, NPDisconnectRequest} from "./np/requests";
+import {NPUpdateRequest} from "./np/update-request";
+import {NPChangeInstallationAddressRequest} from "./np/change-install-addr-request";
+import {MobileEventsManagement} from "./np/mobile_events";
+import OperatorManagement from "./np/data/operator_mgm";
+import {PublicHolidays} from "./np/data/holidays_mgm";
+import RangesManagement from "./np/data/range_mgm";
+import RoutingInfoManagement from "./np/data/routing_info_mgm";
+import SearchPortingCases from "./np/number_porting";
+import SearchMVNO from "./np/mvno_mgm";
 
 const ListItemLink = ({to, children}) => (
     <Route path={to} children={({match}) => (
@@ -236,7 +249,59 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
               <FormattedMessage id="dashboard" defaultMessage="Dashboard" />
           </ListItemLink>
 
-          {isAllowed(user_info.ui_profile, pages.requests_nprequests) &&
+          { user_info.modules && supportedModule(modules.npact, user_info.modules) && isAllowed(user_info.ui_profile, pages.requests_nprequests) &&
+              <NavDropdown title={
+                    <span>
+                        <Glyphicon glyph="send"/> {' '}
+                        <FormattedMessage id="requests" defaultMessage="Requests"/>
+                    </span>
+                } id="nav-requests">
+
+                  <LinkContainer to={"/transactions/new_portin"}>
+                      <MenuItem>
+                          <FormattedMessage id="new-port-in" defaultMessage="New Port-in"/>
+                      </MenuItem>
+                  </LinkContainer>
+                  { supportedModule(modules.npact_crdc, user_info.modules) &&
+                      <LinkContainer to={"/transactions/new_update"}>
+                          <MenuItem>
+                              <FormattedMessage id="new-update" defaultMessage="New Update"/>
+                          </MenuItem>
+                      </LinkContainer>
+                  }
+                  <LinkContainer to={"/transactions/new_disconnect"}>
+                      <MenuItem>
+                          <FormattedMessage id="new-disconnect" defaultMessage="New Disconnect"/>
+                      </MenuItem>
+                  </LinkContainer>
+                  { supportedModule(modules.npact_crdb, user_info.modules) &&
+                      <LinkContainer to={"/transactions/new_install_address"}>
+                          <MenuItem>
+                              <FormattedMessage id="new-addess" defaultMessage="New Address Change"/>
+                          </MenuItem>
+                      </LinkContainer>
+                  }
+                  
+                  <MenuItem divider/>
+
+                  { supportedModule(modules.npact_crdc, user_info.modules) &&
+                      <LinkContainer to={"/transactions/mobile_events"}>
+                          <MenuItem>
+                              <FormattedMessage id="mobile-events" defaultMessage="Mobile Events"/>
+                          </MenuItem>
+                      </LinkContainer>
+                  }
+                  
+                  <LinkContainer to={"/transactions/list"}>
+                      <MenuItem>
+                          <FormattedMessage id="porting-requests" defaultMessage="Porting Requests"/>
+                      </MenuItem>
+                  </LinkContainer>
+
+              </NavDropdown>
+          }
+
+          {(!user_info.modules || !supportedModule(modules.npact, user_info.modules)) && isAllowed(user_info.ui_profile, pages.requests_nprequests) &&
           <NavDropdown title={
               <span>
                   <Glyphicon glyph="send"/> {' '}
@@ -322,6 +387,62 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
                       )
                   }
               </NavDropdown>
+          }
+
+          { (!user_info.modules || supportedModule(modules.npact, user_info.modules)) && isAllowed(user_info.ui_profile, pages.data) &&
+            <NavDropdown eventKey={4} title={
+                <span>
+                    <Glyphicon glyph="hdd"/> {' '}
+                    <FormattedMessage id="data" defaultMessage="Data"/>
+                </span>
+            } id="nav-system-data">
+                { isAllowed(user_info.ui_profile, pages.npact_operators) &&
+                    <LinkContainer to={"/system/operators"}>
+                        <MenuItem>
+                            <FormattedMessage id="operators" defaultMessage="Operators"/>
+                        </MenuItem>
+                    </LinkContainer>
+                }
+                { isAllowed(user_info.ui_profile, pages.npact_ranges) &&
+                    <LinkContainer to={"/system/ranges"}>
+                        <MenuItem>
+                            <FormattedMessage id="ranges" defaultMessage="Ranges"/>
+                        </MenuItem>
+                    </LinkContainer>
+                }
+                { isAllowed(user_info.ui_profile, pages.npact_routing_info) &&
+                    <LinkContainer to={"/system/routing_info"}>
+                        <MenuItem>
+                            <FormattedMessage id="routing-info" defaultMessage="Routing info"/>
+                        </MenuItem>
+                    </LinkContainer>
+                }
+                <MenuItem divider/>
+                { isAllowed(user_info.ui_profile, pages.npact_porting_cases) &&
+                    <LinkContainer to={"/system/porting_cases"}>
+                        <MenuItem>
+                            <FormattedMessage id="porting-cases" defaultMessage="Porting cases"/>
+                        </MenuItem>
+                    </LinkContainer>
+                }
+                { user_info.modules.includes(modules.npact_crdc) && isAllowed(user_info.ui_profile, pages.npact_mvno_numbers) &&
+                    <LinkContainer to={"/system/mvno_numbers"}>
+                        <MenuItem>
+                            <FormattedMessage id="mvno-numbers" defaultMessage="MVNO Numbers"/>
+                        </MenuItem>
+                    </LinkContainer>
+                }
+                { user_info.modules.includes(modules.npact_crdc) && isAllowed(user_info.ui_profile, pages.npact_holidays) &&
+                    <>
+                        <MenuItem divider/>
+                        <LinkContainer to={"/system/public_holidays"}>
+                            <MenuItem>
+                                <FormattedMessage id="public-holidays" defaultMessage="Public holidays"/>
+                            </MenuItem>
+                        </LinkContainer>
+                    </>
+                }
+            </NavDropdown>
           }
 
           { isAllowed(user_info.ui_profile, pages.system) &&
@@ -710,7 +831,12 @@ class App extends Component {
                         <Route path="/transactions/list"
                                component={props => (
                                    isAllowed(ui_profile, pages.requests_nprequests) ?
-                                   <Requests
+                                   (!user_info.modules || supportedModule(modules.npact, user_info.modules)) ?
+                                    <NPRequests
+                                        auth_token={auth_token}
+                                        user_info={user_info}
+                                        {...props} /> :
+                                    <Requests
                                        auth_token={auth_token}
                                        user_info={user_info}
                                        {...props} /> :
@@ -777,16 +903,6 @@ class App extends Component {
                                        <NotAllowed/>
                                )}
                                exact />
-                        <Route path="/transactions/:txId"
-                               component={props => (
-                                   isAllowed(ui_profile, pages.requests_nprequests) ?
-                                       <Transaction
-                                           auth_token={auth_token}
-                                           user_info={user_info}
-                                           notifications={this._notificationSystem.current}
-                                           {...props} /> :
-                                       <NotAllowed/>
-                               )} />
                         <Route path="/requests/ndg"
                                component={props => (
                                    isAllowed(ui_profile, pages.requests_ndg)?
@@ -925,6 +1041,130 @@ class App extends Component {
                                        <NotAllowed />
                                )}
                                exact />
+                        <Route path="/system/public_holidays"
+                               component={props => (
+                                   isAllowed(ui_profile, pages.npact_holidays)?
+                                       <PublicHolidays
+                                           auth_token={auth_token}
+                                           notifications={this._notificationSystem.current}
+                                           {...props} />:
+                                       <NotAllowed />
+                               )}
+                               exact />
+                        <Route path="/system/mvno_numbers"
+                               component={props => (
+                                   isAllowed(ui_profile, pages.npact_mvno_numbers) ?
+                                       <SearchMVNO
+                                           auth_token={auth_token}
+                                           user_info={user_info}
+                                           notifications={this._notificationSystem.current}
+                                           {...props} />:
+                                       <NotAllowed />
+                               )}
+                               exact />
+                        <Route path="/system/porting_cases"
+                               component={props => (
+                                   isAllowed(ui_profile, pages.npact_porting_cases) ?
+                                       <SearchPortingCases
+                                           auth_token={auth_token}
+                                           user_info={user_info}
+                                           notifications={this._notificationSystem.current}
+                                           {...props} />:
+                                       <NotAllowed />
+                               )}
+                               exact />
+                        <Route path="/system/operators"
+                               component={props => (
+                                   isAllowed(ui_profile, pages.npact_operators) ?
+                                       <OperatorManagement
+                                           auth_token={auth_token}
+                                           user_info={user_info}
+                                           notifications={this._notificationSystem.current}
+                                           {...props} />:
+                                       <NotAllowed />
+                               )}
+                               exact />
+                        <Route path="/system/ranges"
+                               component={props => (
+                                   isAllowed(ui_profile, pages.npact_ranges) ?
+                                       <RangesManagement
+                                           auth_token={auth_token}
+                                           user_info={user_info}
+                                           notifications={this._notificationSystem.current}
+                                           {...props} />:
+                                       <NotAllowed />
+                               )}
+                               exact />
+                        <Route path="/system/routing_info"
+                               component={props => (
+                                   isAllowed(ui_profile, pages.npact_routing_info) ?
+                                       <RoutingInfoManagement
+                                           auth_token={auth_token}
+                                           user_info={user_info}
+                                           notifications={this._notificationSystem.current}
+                                           {...props} />:
+                                       <NotAllowed />
+                               )}
+                               exact />
+                        <Route path="/transactions/mobile_events"
+                               component={props => (
+                                   isAllowed(ui_profile, pages.requests_nprequests) ?
+                                       <MobileEventsManagement auth_token={auth_token} {...props} /> :
+                                       <NotAllowed/>
+                               )} exact />
+                        <Route path="/transactions/new_portin"
+                               component={props => (
+                                   isAllowed(ui_profile, pages.requests_nprequests) ?
+                                       <NPPortInRequest
+                                           auth_token={auth_token}
+                                           notifications={this._notificationSystem}
+                                           user_info={user_info}
+                                           {...props} /> :
+                                       <NotAllowed/>
+                               )}
+                               exact />
+                        <Route path="/transactions/new_update"
+                               component={props => (
+                                   isAllowed(ui_profile, pages.requests_nprequests) ?
+                                       <NPUpdateRequest auth_token={auth_token} {...props} /> :
+                                       <NotAllowed/>
+                               )}
+                               exact />
+                        <Route path="/transactions/new_disconnect"
+                               component={props => (
+                                   isAllowed(ui_profile, pages.requests_nprequests) ?
+                                       <NPDisconnectRequest
+                                           auth_token={auth_token}
+                                           notifications={this._notificationSystem}
+                                           user_info={user_info}
+                                           {...props} /> :
+                                       <NotAllowed/>
+                               )}
+                               exact />
+                        <Route path="/transactions/new_install_address"
+                               component={props => (
+                                   isAllowed(ui_profile, pages.requests_nprequests) ?
+                                       <NPChangeInstallationAddressRequest
+                                           {...props} /> :
+                                       <NotAllowed/>
+                               )}
+                               exact />
+                        <Route path="/transactions/:txId"
+                               component={props => (
+                                   isAllowed(ui_profile, pages.requests_nprequests) ?
+                                   (!user_info.modules || supportedModule(modules.npact, user_info.modules)) ?
+                                       <NPTransaction
+                                           auth_token={auth_token}
+                                           user_info={user_info}
+                                           notifications={this._notificationSystem}
+                                           {...props} /> :
+                                       <Transaction
+                                           auth_token={auth_token}
+                                           user_info={user_info}
+                                           notifications={this._notificationSystem.current}
+                                           {...props} /> :
+                                       <NotAllowed/>
+                               )} />
                         <Route path="/auth-silent-callback" component={AuthSilentCallback} exact/>
                         <Route path="/" exact>
                             <Redirect to={getHomePage(ui_profile)} />

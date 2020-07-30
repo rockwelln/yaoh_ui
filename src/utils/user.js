@@ -46,7 +46,13 @@ export const pages = Object.freeze({
     edit_group_iad_transportMode: 125,
     common_page_access: 200,
     add_access: 201,
-    delete_access: 202
+    delete_access: 202,
+    npact_operators: 300,
+    npact_ranges: 301,
+    npact_routing_info: 302,
+    npact_porting_cases: 303,
+    npact_mvno_numbers: 304,
+    npact_holidays: 305,
 });
 
 export const modules = Object.freeze({
@@ -57,7 +63,15 @@ export const modules = Object.freeze({
     orchestration: 'orchestration',
     telenet: 'telenet',
     manualActions: 'manualActions',
+    npact: 'npact',
+    npact_crdb: 'npact_crdb',
+    npact_citc: 'npact_citc',
+    npact_crdc: 'npact_crdc',
 });
+
+export function supportedModule(mod, modules) {
+    return modules.find(m => m === mod || m.includes(mod)) !== undefined;
+}
 
 export const privileges = Object.freeze({
 
