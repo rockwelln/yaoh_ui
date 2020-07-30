@@ -7,6 +7,7 @@ import {FormattedMessage} from 'react-intl';
 import {fetch_get, NotificationsManager} from "../utils";
 
 import TransactionsOverTime from './tx-over-time';
+import SuccessRateOverTime from './tx-success-rate-over-time';
 import ActiveTransactionsPerWorkflow from './tx-active-per-workflow';
 import ProxyRequestsOverTime from "./tx-per-proxy-over-time";
 import {EmptyTile, GatewaysStatusTile, ErrorCasesTile} from './dashboard-tiles';
@@ -20,7 +21,10 @@ const REFRESH_CYCLE = 30;
 function fetch_gateways(onSuccess) {
     fetch_get('/api/v01/gateways')
         .then(data => onSuccess(data.gateways))
-        .catch(console.error);
+        .catch(error => NotificationsManager.error(
+            <FormattedMessage id="gw-stats-fect-failed" defaultMessage="Failed to fetch gateways"/>,
+            error.message
+        ));
 }
 
 
@@ -38,10 +42,10 @@ function _buildPadding(nbTiles) {
     const tilesPerRow = 6;
 
     let padding = [];
-    if((tilesPerRow - nbTiles) % 2) {
+    if(nbTiles < tilesPerRow && (tilesPerRow - nbTiles) % 2) {
         padding.push(<EmptyTile className='col-md-1-5'/>)
     }
-    let i = Math.floor((tilesPerRow - nbTiles) / 2);
+    let i = Math.max(Math.floor((tilesPerRow - nbTiles) / 2), 0);
     while(i--) {
         padding.push(<EmptyTile />);
     }

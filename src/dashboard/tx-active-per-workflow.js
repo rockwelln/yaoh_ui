@@ -36,7 +36,7 @@ export default class ActiveTransactionsPerWorkflow extends Component {
     refresh() {
         if(this.cancelLoad) return;
 
-        fetch_get('/api/v01/system/stats_active_per_wf', this.props.auth_token)
+        fetch_get('/api/v01/system/stats_active_per_wf')
         .then(data => !this.cancelLoad && this.setState({data: data.requests}))
         .catch(console.error);
     }
@@ -44,7 +44,7 @@ export default class ActiveTransactionsPerWorkflow extends Component {
     loadActivityNames() {
         if(this.cancelLoad) return;
 
-        fetch_get('/api/v01/activities', this.props.auth_token)
+        fetch_get('/api/v01/activities')
         .then(data => !this.cancelLoad && this.setState({
             names: data.activities.reduce((rv, a) => {rv[a.id] = a.name; return rv;}, {})
         }))
