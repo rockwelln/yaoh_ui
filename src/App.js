@@ -52,7 +52,8 @@ import {
     NotificationsManager,
     parseJSON,
     ProvProxiesManager,
-    removeCookie
+    removeCookie,
+    testAppFlavour,
 } from "./utils";
 import Databases from "./system/databases_mgm";
 import {AuditLogs} from "./system/audit";
@@ -600,7 +601,7 @@ const NotFound = () => (
     </div>
 );
 
-const LoginPage = ({updateToken, error_msg, standby_alert}) => (
+const LoginPage = ({updateToken, error_msg, standby_alert, logo}) => (
     <div>
         <Row style={{height: "20px", display: "block"}}/>
         <Row style={{height: "100%", display: "block"}}>
@@ -610,15 +611,17 @@ const LoginPage = ({updateToken, error_msg, standby_alert}) => (
                 }
                 <Panel >
                     <Panel.Body>
-                        <Row>
-                            <Col xsOffset={3} xs={6} mdOffset={3} md={7}>
-                                <img src={apio_logo}
-                                     width={"100%"}
-                                     height={"100%"}
-                                     style={{padding: 0}}
-                                     alt="apio" />
-                            </Col>
-                        </Row>
+                        {logo &&
+                            <Row>
+                                <Col xsOffset={3} xs={6} mdOffset={3} md={7}>
+                                    <img src={logo}
+                                         width={"100%"}
+                                         height={"100%"}
+                                         style={{padding: 0}}
+                                         alt="apio"/>
+                                </Col>
+                            </Row>
+                        }
                         <Row>
                             <Col xsOffset={1} xs={10} mdOffset={0} md={12}>
                                 {
@@ -647,6 +650,7 @@ class App extends Component {
             // auth_token: this.props.cookies.get("auth_token"),
             user_info: undefined,
             error_msg: undefined,
+            flavour: undefined,
         };
         this._notificationSystem = React.createRef();
         NotificationsManager.setRef(this._notificationSystem);
@@ -693,6 +697,10 @@ class App extends Component {
     }
 
     componentDidMount() {
+        testAppFlavour(f => {
+            this.setState({flavour: f});
+            document.title = f.toUpperCase();
+        });
         this.getDatabaseStatus();
         // this.props.cookies.get('auth_sso') === '1' && !sso_auth_service.isLoggedIn() && sso_auth_service.signinSilent();
         getCookie('auth_sso') === '1' && !sso_auth_service.isLoggedIn() && sso_auth_service.signinSilent();
@@ -781,7 +789,11 @@ class App extends Component {
                             <Redirect to="/dashboard" />
                         </Route>
                         <Route component={() => (
-                            <LoginPage updateToken={this.updateToken} error_msg={error_msg} standby_alert={standby_alert}/>
+                            <LoginPage
+                                updateToken={this.updateToken}
+                                error_msg={error_msg}
+                                logo={this.state.flavour === "apio" ? apio_logo : null}
+                                standby_alert={standby_alert} />
                         )} />
                     </Switch>
                 </Router>

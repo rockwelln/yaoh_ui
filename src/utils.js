@@ -161,9 +161,17 @@ export function parseJSON(response) {
   return response.json()
 }
 
+export function testAppFlavour(onSuccess) {
+    fetch(API_URL_PREFIX + "/api/v01/voo/operators", {method: "GET"})
+        .then(r => {
+            r.status === 404 ? onSuccess("apio") : onSuccess("npact");
+            console.log(r.status)
+        });
+}
+
 export function fetch_get(url, token) {
     const token_ = AuthServiceManager.getToken();
-    const full_url = url.href?url:url.startsWith('http')?url:API_URL_PREFIX + url;
+    const full_url = url.href || url.startsWith('http') ?url:API_URL_PREFIX + url;
     return fetch(full_url, {
         method: 'GET',
         headers: {
