@@ -13,7 +13,6 @@ import FormControl from 'react-bootstrap/lib/FormControl';
 import { FormattedMessage } from 'react-intl';
 import { Redirect } from 'react-router-dom';
 import ControlLabel from "react-bootstrap/lib/ControlLabel";
-import { DEFAULT_RECIPIENT } from "./np-requests";
 
 
 export class NPUpdateRequest extends Component {
@@ -49,7 +48,7 @@ export class NPUpdateRequest extends Component {
       '/api/v01/voo/np_requests/update',
       {
         donor_id: parseInt(this.state.donor, 10),
-        recipient_id: this.state.operators.filter(o => o.short_name === DEFAULT_RECIPIENT)[0].id,
+        recipient_id: null, // this.state.operators.filter(o => o.short_name === DEFAULT_RECIPIENT)[0].id,
         ranges: this.state.ranges,
         routing_info: this.state.routingInfo,
       },

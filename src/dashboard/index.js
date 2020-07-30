@@ -14,7 +14,7 @@ import ManualActionsBox, {ManualActionsTile} from "./manualActions";
 import {TransactionsNeedApprovalTile} from "../np/dashboard_tiles";
 
 import './dashboard.css';
-import {modules} from "../utils/user";
+import {modules, supportedModule} from "../utils/user";
 const REFRESH_CYCLE = 30;
 
 
@@ -53,7 +53,7 @@ export default function Dashboard(props) {
     const [stats, setStats] = useState({active_requests: {}});
     const [gateways, setGateways] = useState({});
     const isManual = props.user_info.modules.includes(modules.manualActions);
-    const isNpact = props.user_info.modules.includes(modules.npact);
+    const isNpact = supportedModule(modules.npact, props.user_info.modules);
 
     useEffect(() => {
         fetch_gateways(setGateways);

@@ -64,7 +64,14 @@ export const modules = Object.freeze({
     telenet: 'telenet',
     manualActions: 'manualActions',
     npact: 'npact',
+    npact_crdb: 'npact_crdb',
+    npact_citc: 'npact_citc',
+    npact_crdc: 'npact_crdc',
 });
+
+export function supportedModule(mod, modules) {
+    return modules.find(m => m === mod || m.includes(mod)) !== undefined;
+}
 
 export const privileges = Object.freeze({
 

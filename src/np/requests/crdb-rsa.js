@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from "react";
+import React, {useState, useEffect, Component} from "react";
 import Button from 'react-bootstrap/lib/Button';
 import Col from 'react-bootstrap/lib/Col';
 import ControlLabel from 'react-bootstrap/lib/ControlLabel';
@@ -12,7 +12,7 @@ import update from 'immutability-helper';
 import { fetchOperators } from "../data/operator_mgm";
 import { fetchRoutes } from "../data/routing_info_mgm";
 import { RangeInput } from "../utils";
-import {NotificationsManager, fetch_get, fetch_post, parseJSON} from "../../utils";
+import {NotificationsManager, fetch_get, fetch_post, parseJSON, fetch_put, API_URL_PREFIX} from "../../utils";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 import Panel from "react-bootstrap/lib/Panel";
 import Table from "react-bootstrap/lib/Table";
@@ -21,6 +21,23 @@ import Modal from "react-bootstrap/lib/Modal";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import OverlayTrigger from "react-bootstrap/lib/OverlayTrigger";
 import Popover from "react-bootstrap/lib/Popover";
+import ButtonGroup from "react-bootstrap/lib/ButtonGroup";
+import Alert from "react-bootstrap/lib/Alert";
+import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
+import {
+  Comments,
+  ContextTable, Errors, Events, ReplayingSubInstancesModal, SavingModal,
+  TasksTable,
+  TransactionFlow,
+  triggerManualAction,
+  TxTable
+} from "../../requests/requests";
+import {access_levels, isAllowed, pages} from "../../utils/user";
+import Row from "react-bootstrap/lib/Row";
+import Tabs from "react-bootstrap/lib/Tabs";
+import Tab from "react-bootstrap/lib/Tab";
+import Badge from "react-bootstrap/lib/Badge";
+import {StaticControl} from "../../utils/common";
 
 export const DEFAULT_RECIPIENT = "MTNBSGNP";
 export const rejection_codes = [];
@@ -28,6 +45,19 @@ const RECIPIENTS = [
   DEFAULT_RECIPIENT,
 ];
 
+
+
+function updateRequest(requestId, diffEntry, onSuccess) {
+  fetch_put(`/api/v01/voo/np_requests/${requestId}`, diffEntry)
+    .then(data => onSuccess())
+    .catch(error => NotificationsManager.error("Failed to update request", error.message));
+}
+
+function updateRequestRange(requestId, rangeId, diffEntry, onSuccess) {
+  fetch_put(`/api/v01/voo/np_requests/${requestId}/ranges/${rangeId}`, diffEntry)
+    .then(data => onSuccess())
+    .catch(error => NotificationsManager.error("Failed to update range", error.message));
+}
 
 function newRequest(request, onSuccess, onError) {
   fetch_post(
@@ -569,7 +599,7 @@ const rejectionReasonCodes = [
   {"id": "SP029", "summary": "Account Number is not the account number used by the donor operator for the DN(s) or DN Range for which porting is requested."},
 ];
 
-export function CancelPortRequest(props) {
+function CancelPortRequest(props) {
   const {show, onHide, instanceId, ranges} = props;
   const [reasonCode, setReasonCode] = useState("");
   const [cancelledRanges, setCancelledRanges] = useState([]);
@@ -655,7 +685,7 @@ export function CancelPortRequest(props) {
 }
 
 
-export function AbortPortRequest(props) {
+function AbortPortRequest(props) {
   const {show, onHide, instanceId, ranges} = props;
   const [reasonCode, setReasonCode] = useState("");
   const [abortRanges, setAbortRanges] = useState([]);
@@ -741,7 +771,7 @@ export function AbortPortRequest(props) {
 }
 
 
-export function disabledAction(action, output, request) {
+function disabledAction(action, output, request) {
   if(!request) {
     return true;
   }
@@ -779,7 +809,7 @@ function getRangeFlags(actions, ranges) {
   return cols;
 }
 
-export function RequestTable(props) {
+function RequestTable(props) {
   const {onChangeRequest, onChangeRange, actions, request, events} = props;
   const [operators, setOperators] = useState([]);
   const [diffSubscriberData, setDiffSubscriberData] = useState({});
@@ -975,4 +1005,656 @@ export function RequestTable(props) {
         </Panel.Body>
       </Panel>
   )
+}
+
+
+class RejectionReason extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {};
+    this.onClose = this.onClose.bind(this);
+    this.onSave = this.onSave.bind(this);
+  }
+
+  onSave() {
+    this.props.onSubmit('donor_approval', 'API.reject', { reason: this.state.rej });
+    this.onClose();
+  }
+
+  onClose() {
+    this.setState({});
+    this.props.onHide && this.props.onHide();
+  }
+
+  render() {
+    const { rej } = this.state;
+
+    return (
+      <Modal show={this.props.show} onHide={this.onClose} backdrop={false}>
+        <Modal.Header closeButton>
+          <Modal.Title><FormattedMessage id="reject-title" defaultMessage="Reject" /></Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form horizontal>
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="reason" defaultMessage="Reason" />
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="select"
+                  value={rej && rej.id}
+                  onChange={e => this.setState({ rej: rejection_codes.find(r => r.id === e.target.value) })} >
+                  <option value={null} />
+                  {
+                    rejection_codes.map(r => <option key={r.id} value={r.id}>{r.id} - {r.summary}</option>)
+                  }
+                </FormControl>
+                <HelpBlock>
+                  {rej && rej.help}
+                </HelpBlock>
+              </Col>
+            </FormGroup>
+
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button onClick={this.onSave} disabled={!rej} bsStyle="primary">
+            <FormattedMessage id="save" defaultMessage="Save" />
+          </Button>
+          <Button onClick={this.onClose}><FormattedMessage id="cancel" defaultMessage="Cancel" /></Button>
+        </Modal.Footer>
+      </Modal>
+    );
+  }
+}
+
+
+const MIN_NUMBER_LENGTH_LOOKUP = 6;
+const MAX_NUMBER_LENGTH_LOOKUP = 15;
+
+
+export class NPDisconnectRequest extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      redirect: undefined, operators: [],
+
+      ranges: [{ from: '', to: '', codedId: '' }], donor: '',
+    };
+
+    this.cancelLoad = false;
+    this.onSubmit = this.onSubmit.bind(this);
+  }
+
+  componentDidMount() {
+    fetchOperators(this.props.auth_token,
+      data => !this.cancelLoad && this.setState({ operators: data }),
+      error => !this.cancelLoad && NotificationsManager.error(
+        <FormattedMessage id="fetch-operators-failed" defaultMessage="Failed to fetch operators" />,
+        error.message
+      )
+    );
+  }
+
+  componentWillUnmount() {
+    this.cancelLoad = true;
+  }
+
+  onSubmit(e) {
+    e.preventDefault();
+    const { donor, ranges, operators } = this.state;
+    fetch_post(
+      '/api/v01/voo/np_requests/disconnect',
+      {
+        donor_id: parseInt(donor.id, 10),
+        recipient_id: operators.filter(o => o.short_name === DEFAULT_RECIPIENT)[0].id,
+        ranges: ranges,
+      },
+      this.props.auth_token
+    )
+      .then(parseJSON)
+      .then(data => {
+        this.setState({ redirect: data.id });
+        NotificationsManager.success(
+          <FormattedMessage id="voo-disc-created" defaultMessage="disconnect request created!" />,
+        )
+      })
+      .catch(error => NotificationsManager.error(
+        <FormattedMessage id="voo-disc-failed" defaultMessage="Failed to create disconnect request" />,
+        error.message
+      ))
+  }
+
+  getInvalidRanges() {
+    return this.state.ranges.map((r, index) => {
+      if (r.from.length === 0) return index;
+      if (isNaN(parseInt(r.from, 10) || (r.to.length !== 0 && isNaN(parseInt(r.to, 10))))) return index;
+      if (r.to.length !== 0 && parseInt(r.from, 10) > parseInt(r.to, 10)) return index;
+      return null;
+    }).filter(e => e !== null);
+  }
+
+  resolveDonor(number) {
+    let url = new URL(API_URL_PREFIX + '/api/v01/voo/number_porting/search');
+    let filter_spec = {
+      field: 'number',
+      op: 'eq',
+      value: number.trim()
+    };
+    url.searchParams.append('filter', JSON.stringify(filter_spec));
+    this.setState({ donor: undefined, donor_error: undefined });
+    if (number.length < MIN_NUMBER_LENGTH_LOOKUP || number.length >= MAX_NUMBER_LENGTH_LOOKUP) return;
+
+    fetch_get(url, this.props.auth_token)
+      .then(data => {
+        if (data.numbers.length === 0) {
+          throw new Error('No case found');
+        }
+        this.setState({ donor: this.state.operators.find(o => o.id === data.numbers[0].donor_id) })
+      })
+      .catch(error => this.setState({ donor_error: error }))
+  }
+
+  render() {
+    const { ranges, redirect, donor, donor_error } = this.state;
+    let alerts = [];
+
+    const validRanges = ranges.length === 1 && ranges[0].from === '' && ranges[0].to === '' ? null : this.getInvalidRanges().length === 0 ? "success" : "error";
+    const validForm = this.getInvalidRanges().length === 0 && donor && !donor_error;
+
+    return (
+      <Panel>
+        <Panel.Heading>
+          <Panel.Title><FormattedMessage id="disconnect-request" defaultMessage="Disconnect request" /></Panel.Title>
+        </Panel.Heading>
+        <Panel.Body>
+          <Form horizontal>
+            {alerts.map((a, i) => <div key={i}>{a}</div>)}
+
+            <FormGroup validationState={validRanges}>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="ranges" defaultMessage="Ranges" />
+              </Col>
+
+              <Col sm={9}>
+                <RangeInput
+                  onChange={ranges => {
+                    this.setState({ ranges: ranges });
+                    this.resolveDonor(ranges[0].from);
+                  }}
+                  ranges={ranges}
+                  multipleRanges={false} />
+              </Col>
+            </FormGroup>
+
+            <StaticControl
+              label={<FormattedMessage id='donor' defaultMessage='Donor' />}
+              value={(donor_error && donor_error.message) || (donor && donor.name) || null}
+              validationState={donor_error ? "error" : null} />
+
+            <FormGroup>
+              <Col smOffset={2} sm={10}>
+                <Button type="submit" onClick={this.onSubmit} disabled={!validForm}>
+                  <FormattedMessage id="submit" defaultMessage="Submit" />
+                </Button>
+              </Col>
+            </FormGroup>
+
+          </Form>
+          {
+            redirect && <Redirect to={`/transactions/${redirect}`} />
+          }
+        </Panel.Body>
+      </Panel>
+    )
+  }
+}
+
+
+const RELOAD_TX = 10 * 1000;
+
+export class NPTransaction extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      error: undefined,
+      sending: false,
+      activeTab: 1,
+      manualActions: [],
+      logs: [],
+      events: [],
+      showCancel: false,
+      showAbort: false,
+    };
+    this.cancelLoad = false;
+
+    this.onReplay = this.onReplay.bind(this);
+    this.onForceClose = this.onForceClose.bind(this);
+    this.fetchTxDetails = this.fetchTxDetails.bind(this);
+    this.actionList = this.actionList.bind(this);
+    this.changeTxStatus = this.changeTxStatus.bind(this);
+    this.onReopen = this.onReopen.bind(this);
+    this.sendEvent = this.sendEvent.bind(this);
+    this.onEdit = this.onEdit.bind(this);
+    this.caseUpdated = this.caseUpdated.bind(this);
+    this.caseUpdateFailure = this.caseUpdateFailure.bind(this);
+  }
+
+  fetchTxDetails(reload, onSuccess, onError) {
+    this.setState({ error: undefined });
+    const txId = this.props.match.params.txId;
+    fetch_get(`/api/v01/transactions/${this.props.match.params.txId}`, this.props.auth_token)
+      .then(data => {
+        if (this.cancelLoad) {
+          onSuccess && onSuccess();
+          return;
+        }
+
+        this.setState({ tx: data });
+
+        fetch_get(`/api/v01/voo/np_requests/${data.original_request_id}`, this.props.auth_token)
+          .then(data => !this.cancelLoad && this.setState({ request: data }))
+          .catch(error => !this.cancelLoad && this.setState({ error: error }));
+
+        fetch_get(`/api/v01/transactions/${txId}/manual_actions`)
+          .then(data => !this.cancelLoad && this.setState({manualActions: data.manual_actions}))
+          .catch(console.error);
+
+        fetch_get(`/api/v01/transactions/${txId}/events`)
+          .then(data => !this.cancelLoad && this.setState({events: data.events}))
+          .catch(error => !this.cancelLoad && this.setState({error: error}));
+
+        fetch_get(`/api/v01/transactions/${txId}/logs`)
+          .then(data => !this.cancelLoad && this.setState({
+              logs: data.logs.map(l => {l.type='log'; l.source_entity=l.source; l.content=l.message; return l;})
+          }))
+          .catch(error => !this.cancelLoad && this.setState({error: error}));
+
+        reload && setTimeout(() => this.fetchTxDetails(true), RELOAD_TX);
+        onSuccess && onSuccess();
+      })
+      .catch(error => {
+        onError && onError();
+        if (this.cancelLoad)
+          return;
+        let error_msg = undefined;
+        reload && setTimeout(() => this.fetchTxDetails(true), RELOAD_TX / 2);
+        if (error.response === undefined) {
+          this.setState({ error: error });
+          return
+        }
+        switch (error.response.status) {
+          case 404: error_msg = <FormattedMessage id="unknown-transaction" defaultMessage="Unknown transaction." />; break;
+          case 401: error_msg = <FormattedMessage id="not-allowed-transaction" defaultMessage="You are not allowed to see this transaction." />; break;
+          default: error_msg = <FormattedMessage id="unknown-error" defaultMessage="Unknown error: {status}" values={{ status: error.response.status }} />;
+        }
+        this.setState({ error: new Error(error_msg) });
+      });
+  }
+
+  componentDidMount() {
+    this.fetchTxDetails(true);
+  }
+
+  componentWillUnmount() {
+    this.cancelLoad = true;
+  }
+
+  componentWillReceiveProps() {
+    this.setState({ activeTab: 1 });
+    this.fetchTxDetails(false);
+  }
+
+  onReplay(activity_id, task_id) {
+    fetch_put(`/api/v01/transactions/${activity_id}/tasks/${task_id}`, {}, this.props.auth_token)
+      .then(() => NotificationsManager.success(
+        <FormattedMessage id="task-replayed" defaultMessage="Task replayed!" />,
+      ))
+      .catch(error => NotificationsManager.error(
+        <FormattedMessage id="task-replay-failed" defaultMessage="Task replay failed!" />,
+        error.message
+      ))
+  }
+
+  changeTxStatus(new_status) {
+    fetch_put(`/api/v01/transactions/${this.state.tx.id}`, { status: new_status }, this.props.auth_token)
+      .then(() => {
+        this.fetchTxDetails(false);
+        NotificationsManager.success(
+          <FormattedMessage id="task-status-changed" defaultMessage="Task status updated!" />,
+        );
+      })
+      .catch(error => NotificationsManager.error(
+        <FormattedMessage id="task-update-failed" defaultMessage="Task status update failed!" />,
+        error.message
+      ))
+  }
+
+  caseUpdated() {
+    NotificationsManager.success(
+      <FormattedMessage id="case-updated" defaultMessage="Case updated!" />,
+    );
+    this.fetchTxDetails(false);
+  }
+
+  caseUpdateFailure(error) {
+    NotificationsManager.error(
+      <FormattedMessage id="case-update-failure" defaultMessage="Case update failure!" />,
+      error.message
+    );
+  }
+
+  onForceClose() {
+    this.changeTxStatus("CLOSED_IN_ERROR")
+  }
+
+  onReopen() {
+    this.changeTxStatus("ACTIVE")
+  }
+
+  sendEvent(value, trigger_type, extra) {
+    this.setState({ sending: true });
+    fetch_post(
+      `/api/v01/transactions/${this.state.tx.id}/events`,
+      {
+        key: trigger_type,
+        value: value,
+        ...extra,
+      },
+      this.props.auth_token
+    )
+      .then(() => {
+        this.caseUpdated();
+        setTimeout(() => this.setState({ sending: false }), RELOAD_TX);
+      })
+      .catch(error => {
+        this.caseUpdateFailure(error);
+        this.setState({ sending: false });
+      });
+  }
+
+  updateContext(key, value) {
+    this.setState({ sending: true });
+    fetch_put(
+      `/api/v01/transactions/${this.state.tx.id}/context`,
+      {
+        key: key,
+        value: value,
+      },
+      this.props.auth_token
+    )
+      .then(() => {
+        this.caseUpdated();
+        setTimeout(() => this.setState({ sending: false }), RELOAD_TX);
+      })
+      .catch(error => {
+        this.caseUpdateFailure(error);
+        this.setState({ sending: false });
+      });
+  }
+
+  onApproveHold(proposed_due_date) {
+    this.setState({ sending: true });
+    fetch_put(
+      `/api/v01/voo/np_requests/${this.state.tx.original_request_id}`,
+      {
+        due_date: proposed_due_date
+      },
+      this.props.auth_token
+    )
+      .then(() => this.updateContext("hold", "approved"))
+      .catch(error => {
+        this.caseUpdateFailure(error);
+        this.setState({ sending: false });
+      });
+  }
+
+  onEdit() {
+    this.setState({ edit_request: true })
+  }
+
+  actionList() {
+    const { tx, request } = this.state;
+
+    const is_active = tx.status === 'ACTIVE';
+    const edited = this.state.edit_request === true;
+    const is_portin = request && request.kind === 'PortIn';
+    // const is_portout = request && request.kind === 'PortOut';
+    const fnp_exec_sent = is_portin && tx.tasks && tx.tasks.findIndex(t => t.cell_id === 'Set accepted' && t.status === 'OK') !== -1;
+    const port_notification = is_portin && tx.tasks && tx.tasks.findIndex(t => t.cell_id === 'Port Notification' && t.status === 'OK') !== -1;
+    const port_activated = is_portin && tx.tasks && tx.tasks.findIndex(t => t.cell_id === 'Port activated' && t.status === 'OK') !== -1;
+
+    let can_edit = false; // is_active && !is_portout;
+    if (can_edit && is_portin) {
+      const fnp_request_sent = tx.tasks && tx.tasks.findIndex(t => t.cell_id === 'Send FNPRequest' && t.status === 'OK') !== -1;
+      const fnp_accept_recv = tx.tasks && tx.tasks.findIndex(t => t.cell_id === 'Send InDueDate' || t.cell_id === 'Set accepted') !== -1;
+
+      can_edit = !fnp_exec_sent && (!fnp_request_sent || fnp_accept_recv);
+    }
+    const can_close = is_active;
+    const can_reopen = !is_active;
+    // condition for voo: const can_cancel = is_active && is_portin && !fnp_exec_sent;
+    const can_cancel = is_active && is_portin && port_notification && !port_activated;
+    const can_abort = is_portin && port_activated;
+
+    return (
+      <ButtonGroup vertical block>
+        {can_edit && <Button onClick={() => this.onEdit()} disabled={edited}><FormattedMessage id="edit" defaultMessage="Edit" /></Button>}
+        {can_close && <Button onClick={() => this.onForceClose()}><FormattedMessage id="force-close" defaultMessage="Force close" /></Button>}
+        {can_reopen && <Button onClick={() => this.onReopen()}><FormattedMessage id="reopen" defaultMessage="Reopen" /></Button>}
+        {can_cancel && <Button onClick={() => this.setState({showCancel: true})}><FormattedMessage id="trigger-cancel" defaultMessage="Trigger cancel" /></Button>}
+        {can_abort && <Button onClick={() => this.setState({showAbort: true})}><FormattedMessage id="trigger-abort" defaultMessage="Trigger abort" /></Button>}
+      </ButtonGroup>
+    )
+  }
+
+  render() {
+    const { sending, error, tx, request, activeTab, manualActions, events, logs, replaying } = this.state;
+    const {user_info} = this.props;
+    let alerts = [];
+    error && alerts.push(
+      <Alert bsStyle="danger" key='fail-fetch-tx'>
+        <p>{error.message}</p>
+      </Alert>
+    );
+    if (!tx && error) {
+      return <div>{alerts.map(e => e)}</div>
+    } else if (!tx) {
+      return <div><FormattedMessage id='loading' defaultMessage='Loading...' /></div>
+    }
+
+    if (tx && tx.status === 'ACTIVE' && manualActions.length !== 0) {
+      manualActions
+          .filter(a => !a.output && user_info.roles.find(ur => ur.id === a.role_id))
+          .map(a => alerts.push(
+              <Alert bsStyle="warning" key={`request-action-${a.id}`}>
+                Action required for {user_info.roles.find(ur => ur.id === a.role_id).name}<br/>
+                {a.description} <br/>
+                <ButtonToolbar>
+                  {
+                    a.possible_outputs.split(",").map(o => (
+                      <Button
+                        onClick={() => {
+                          triggerManualAction(tx.id, a.id, o, () => this.fetchTxDetails(false));
+                        }}
+                        disabled={disabledAction(a, o, request)}
+                        key={`action-output-${o}`}
+                      >
+                        {o}
+                      </Button>
+                    ))
+                  }
+                </ButtonToolbar>
+              </Alert>
+          ))
+    }
+
+    let actions_required = [];
+    // add a user profile check to see if the user *can* approve/reject/hold
+    const can_act = isAllowed(this.props.user_info.ui_profile, pages.requests_nprequests, access_levels.modify);
+
+    if (tx.context.find(c => c.key === "donor_approval" && c.value === "waiting") !== undefined) {
+      actions_required.push(<Alert bsStyle="warning">
+        <FormattedMessage id="request-need-approval" defaultMessage="This request need your approval" />
+        {can_act &&
+          <ButtonToolbar>
+            <Button bsSize="xsmall" onClick={() => this.sendEvent('donor_approval', 'API.accept')} disabled={sending}>
+              <FormattedMessage id="approve" defaultMessage="approve" />
+            </Button>
+            <Button bsSize="xsmall" onClick={() => this.setState({ showRejectReason: true })} disabled={sending}>
+              <FormattedMessage id="reject" defaultMessage="reject" />
+            </Button>
+          </ButtonToolbar>
+        }
+        <RejectionReason
+          show={this.state.showRejectReason}
+          onHide={() => this.setState({ showRejectReason: undefined })}
+          onSubmit={this.sendEvent}
+          tx={tx}
+          {...this.props} />
+      </Alert>);
+    }
+    if (tx.context.find(c => c.key === "manual_rfs" && (c.value === "waiting" || c.value === "nonrfs")) !== undefined) {
+      actions_required.push(
+        <Alert bsStyle="warning">
+          <FormattedMessage id="manual-rfs" defaultMessage="Manual RFS" />
+          <ButtonToolbar>
+            <Button bsSize="xsmall" onClick={() => this.sendEvent('', 'API.recipient.rfs')} disabled={!can_act || sending}><FormattedMessage id="rfs" defaultMessage="RFS" /></Button>
+          </ButtonToolbar>
+        </Alert>);
+    }
+
+    return (
+      <div>
+        {alerts}
+        <Row>
+          {can_act && tx.status === 'ACTIVE' && actions_required.map((a, i) => <div key={i}>{a}</div>)}
+        </Row>
+        <Tabs defaultActiveKey={1} activeKey={activeTab} onSelect={e => this.setState({ activeTab: e })} id="np-request-tabs">
+          <Tab eventKey={1} title={<FormattedMessage id="request" defaultMessage="Request" />}>
+            <Col xs={12} sm={6} md={8} lg={8}>
+              <RequestTable
+                request={request}
+                actions={manualActions}
+                events={events}
+                onChangeRequest={r => {
+                  this.setState({sending: true})
+                  updateRequest(request.id, r, () => this.fetchTxDetails(false, () => this.setState({sending: false}), () => this.setState({sending: false})));
+                }}
+                onChangeRange={(range_id, r) => {
+                  updateRequestRange(request.id, range_id, r, () => this.fetchTxDetails(false));
+                }}
+              />
+
+            </Col>
+            <Col xs={12} sm={6} md={4} lg={4}>
+              {can_act &&
+                <Panel>
+                  <Panel.Heading>
+                    <Panel.Title><FormattedMessage id="actions" defaultMessage="Actions" /></Panel.Title>
+                  </Panel.Heading>
+                  <Panel.Body>
+                    {this.actionList()}
+                  </Panel.Body>
+                </Panel>
+              }
+              <Panel header="Context">
+                <ContextTable context={tx.context} />
+              </Panel>
+            </Col>
+            <Col xs={12} sm={12} md={12} lg={12}>
+              <Panel>
+                <Panel.Heading>
+                  <Panel.Title><FormattedMessage id="comments" defaultMessage="Comments" /></Panel.Title>
+                </Panel.Heading>
+                <Panel.Body>
+                  <Comments req_id={tx.id} {...this.props} />
+                </Panel.Body>
+              </Panel>
+            </Col>
+          </Tab>
+          <Tab
+            eventKey={2}
+            title={
+              <div>
+                <FormattedMessage id="workflow" defaultMessage="Workflow" /> <Badge>{tx.errors.length}</Badge>
+              </div>
+            }>
+            <Panel>
+              <Panel.Heading>
+                <Panel.Title><FormattedMessage id="summary" defaultMessage="Summary" /></Panel.Title>
+              </Panel.Heading>
+              <Panel.Body>
+                <TxTable tx={tx} request={request} />
+              </Panel.Body>
+            </Panel>
+
+            <Panel>
+              <Panel.Heading>
+                <Panel.Title><FormattedMessage id="tasks" defaultMessage="Tasks" /></Panel.Title>
+              </Panel.Heading>
+              <Panel.Body>
+                <TransactionFlow definition={tx.definition} states={tx.tasks} activityId={tx.activity_id} />
+                <TasksTable
+                  tasks={tx.tasks}
+                  definition={tx.definition}
+                  onReplay={this.onReplay}
+                  user_can_replay={can_act && tx.status === 'ACTIVE'}
+                  tx_id={tx.id}
+                />
+              </Panel.Body>
+            </Panel>
+
+            {tx.errors && tx.errors.length !== 0 &&
+              <Panel bsStyle="danger">
+                <Panel.Heading>
+                  <Panel.Title><FormattedMessage id="errors" defaultMessage="Errors"/></Panel.Title>
+                </Panel.Heading>
+                <Panel.Body>
+                  <Errors errors={tx.errors} user_info={this.props.user_info}/>
+                </Panel.Body>
+              </Panel>
+            }
+
+            {
+              (events.length !== 0 || logs.length !== 0) && (
+                <Panel defaultExpanded={false}>
+                  <Panel.Heading>
+                    <Panel.Title toggle><FormattedMessage id="events" defaultMessage="Events" /></Panel.Title>
+                  </Panel.Heading>
+                  <Panel.Body collapsible>
+                    <Events events={events} logs={logs} />
+                  </Panel.Body>
+                </Panel>
+              )
+            }
+
+          </Tab>
+        </Tabs>
+
+        <CancelPortRequest
+          show={this.state.showCancel}
+          ranges={(request && request.ranges) || []}
+          instanceId={tx && tx.id}
+          onHide={r => {
+            this.setState({showCancel: false});
+            r && this.fetchTxDetails(false);
+          }} />
+
+        <AbortPortRequest
+          show={this.state.showAbort}
+          ranges={(request && request.ranges) || []}
+          instanceId={tx && tx.id}
+          onHide={r => {
+            this.setState({showAbort: false});
+            r && this.fetchTxDetails(false);
+          }} />
+
+        <ReplayingSubInstancesModal show={replaying}/>
+        <SavingModal show={sending}/>
+
+      </div>)
+  }
 }

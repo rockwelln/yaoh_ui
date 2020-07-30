@@ -56,7 +56,7 @@ import {
 } from "./utils";
 import Databases from "./system/databases_mgm";
 import {AuditLogs} from "./system/audit";
-import {getHomePage, isAllowed, modules, pages} from "./utils/user";
+import {getHomePage, isAllowed, modules, pages, supportedModule} from "./utils/user";
 import {NotAllowed} from "./utils/common";
 import {AuthCallback, AuthSilentCallback} from "./sso/login";
 import {RESET_PASSWORD_PREFIX, ResetPasswordPage} from "./reset_password";
@@ -72,9 +72,9 @@ import UserProfiles from "./system/user_profiles";
 import Templates from "./system/templates";
 import {UserRoles} from "./system/user_roles";
 // specifics for NP
-import {NPDisconnectRequest} from "./np/disconnect-request";
-import {NPRequests, NPTransaction} from "./np/np-requests";
-import {NPPortInRequest} from "./np/portin-request";
+// import {NPDisconnectRequest} from "./np/disconnect-request";
+import {NPRequests} from "./np/np-requests";
+import {NPTransaction, NPPortInRequest, NPDisconnectRequest} from "./np/requests";
 import {NPUpdateRequest} from "./np/update-request";
 import {NPChangeInstallationAddressRequest} from "./np/change-install-addr-request";
 import {MobileEventsManagement} from "./np/mobile_events";
@@ -248,7 +248,7 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
               <FormattedMessage id="dashboard" defaultMessage="Dashboard" />
           </ListItemLink>
 
-          { (!user_info.modules || user_info.modules.includes(modules.npact)) && isAllowed(user_info.ui_profile, pages.requests_nprequests) &&
+          { (!user_info.modules || supportedModule(modules.npact, user_info.modules)) && isAllowed(user_info.ui_profile, pages.requests_nprequests) &&
               <NavDropdown title={
                     <span>
                         <Glyphicon glyph="send"/> {' '}
@@ -261,29 +261,35 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
                           <FormattedMessage id="new-port-in" defaultMessage="New Port-in"/>
                       </MenuItem>
                   </LinkContainer>
-                  <LinkContainer to={"/transactions/new_update"}>
-                      <MenuItem>
-                          <FormattedMessage id="new-update" defaultMessage="New Update"/>
-                      </MenuItem>
-                  </LinkContainer>
+                  { supportedModule(modules.npact_crdc, user_info.modules) &&
+                      <LinkContainer to={"/transactions/new_update"}>
+                          <MenuItem>
+                              <FormattedMessage id="new-update" defaultMessage="New Update"/>
+                          </MenuItem>
+                      </LinkContainer>
+                  }
                   <LinkContainer to={"/transactions/new_disconnect"}>
                       <MenuItem>
                           <FormattedMessage id="new-disconnect" defaultMessage="New Disconnect"/>
                       </MenuItem>
                   </LinkContainer>
-                  <LinkContainer to={"/transactions/new_install_address"}>
-                      <MenuItem>
-                          <FormattedMessage id="new-addess" defaultMessage="New Address Change"/>
-                      </MenuItem>
-                  </LinkContainer>
+                  { supportedModule(modules.npact_crdb, user_info.modules) &&
+                      <LinkContainer to={"/transactions/new_install_address"}>
+                          <MenuItem>
+                              <FormattedMessage id="new-addess" defaultMessage="New Address Change"/>
+                          </MenuItem>
+                      </LinkContainer>
+                  }
                   
                   <MenuItem divider/>
 
-                  <LinkContainer to={"/transactions/mobile_events"}>
-                      <MenuItem>
-                          <FormattedMessage id="mobile-events" defaultMessage="Mobile Events"/>
-                      </MenuItem>
-                  </LinkContainer>
+                  { supportedModule(modules.npact_crdc, user_info.modules) &&
+                      <LinkContainer to={"/transactions/mobile_events"}>
+                          <MenuItem>
+                              <FormattedMessage id="mobile-events" defaultMessage="Mobile Events"/>
+                          </MenuItem>
+                      </LinkContainer>
+                  }
                   
                   <LinkContainer to={"/transactions/list"}>
                       <MenuItem>
@@ -342,7 +348,7 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
               </NavDropdown>
           }
 
-          { (!user_info.modules || user_info.modules.includes(modules.npact)) && isAllowed(user_info.ui_profile, pages.data) &&
+          { (!user_info.modules || supportedModule(modules.npact, user_info.modules)) && isAllowed(user_info.ui_profile, pages.data) &&
             <NavDropdown eventKey={4} title={
                 <span>
                     <Glyphicon glyph="hdd"/> {' '}
@@ -378,14 +384,14 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
                         </MenuItem>
                     </LinkContainer>
                 }
-                { isAllowed(user_info.ui_profile, pages.npact_mvno_numbers) &&
+                { user_info.modules.includes(modules.npact_crdc) && isAllowed(user_info.ui_profile, pages.npact_mvno_numbers) &&
                     <LinkContainer to={"/system/mvno_numbers"}>
                         <MenuItem>
                             <FormattedMessage id="mvno-numbers" defaultMessage="MVNO Numbers"/>
                         </MenuItem>
                     </LinkContainer>
                 }
-                { isAllowed(user_info.ui_profile, pages.npact_holidays) &&
+                { user_info.modules.includes(modules.npact_crdc) && isAllowed(user_info.ui_profile, pages.npact_holidays) &&
                     <>
                         <MenuItem divider/>
                         <LinkContainer to={"/system/public_holidays"}>
@@ -784,7 +790,7 @@ class App extends Component {
                         <Route path="/transactions/list"
                                component={props => (
                                    isAllowed(ui_profile, pages.requests_nprequests) ?
-                                   (!user_info.modules || user_info.modules.includes(modules.npact)) ?
+                                   (!user_info.modules || supportedModule(modules.npact, user_info.modules)) ?
                                     <NPRequests
                                         auth_token={auth_token}
                                         user_info={user_info}
@@ -1072,6 +1078,7 @@ class App extends Component {
                                        <NPPortInRequest
                                            auth_token={auth_token}
                                            notifications={this._notificationSystem}
+                                           user_info={user_info}
                                            {...props} /> :
                                        <NotAllowed/>
                                )}
@@ -1089,6 +1096,7 @@ class App extends Component {
                                        <NPDisconnectRequest
                                            auth_token={auth_token}
                                            notifications={this._notificationSystem}
+                                           user_info={user_info}
                                            {...props} /> :
                                        <NotAllowed/>
                                )}
@@ -1097,8 +1105,6 @@ class App extends Component {
                                component={props => (
                                    isAllowed(ui_profile, pages.requests_nprequests) ?
                                        <NPChangeInstallationAddressRequest
-                                           auth_token={auth_token}
-                                           notifications={this._notificationSystem}
                                            {...props} /> :
                                        <NotAllowed/>
                                )}
@@ -1106,7 +1112,7 @@ class App extends Component {
                         <Route path="/transactions/:txId"
                                component={props => (
                                    isAllowed(ui_profile, pages.requests_nprequests) ?
-                                   (!user_info.modules || user_info.modules.includes(modules.npact)) ?
+                                   (!user_info.modules || supportedModule(modules.npact, user_info.modules)) ?
                                        <NPTransaction
                                            auth_token={auth_token}
                                            user_info={user_info}

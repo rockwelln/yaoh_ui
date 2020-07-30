@@ -21,6 +21,7 @@ import FormGroup from "react-bootstrap/lib/FormGroup";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 import HelpBlock from "react-bootstrap/lib/HelpBlock";
 import Modal from "react-bootstrap/lib/Modal";
+import {modules} from "../utils/user";
 
 
 function fetchConfiguration(onSuccess) {
@@ -505,7 +506,7 @@ function GuiForm(props) {
 
               <Col sm={9}>
                 {
-                  ["orange", "orchestration", "bulk", "provisioning", "telenet", "proxy", "manualActions", "npact"].map(m =>
+                  Object.keys(modules).map(m =>
                     <Checkbox
                       key={`modules-${m}`}
                       checked={gui.modules.includes(m)}

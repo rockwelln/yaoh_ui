@@ -20,17 +20,18 @@ import { FormattedMessage } from 'react-intl';
 import moment from 'moment';
 import DatePicker from 'react-datepicker';
 
-import { DATE_FORMAT, DEFAULT_RECIPIENT } from './np-requests';
+import { DATE_FORMAT /*, DEFAULT_RECIPIENT*/ } from './np-requests';
 import { parseJSON, fetch_delete, fetch_post, fetch_put } from "../utils";
 import { ApioDatatable } from '../utils/datatable';
 import { Search, StaticControl } from "../utils/common";
 import { access_levels, pages, isAllowed } from "../utils/user";
 import { fetchOperators } from './data/operator_mgm';
 
-
+/*
 function ownedCase(c) {
   return c._recipient && c._recipient.short_name === DEFAULT_RECIPIENT;
 }
+*/
 
 class UpdateNumberPortingModal extends Component {
   constructor(props) {
@@ -241,11 +242,11 @@ class UpdateNumberPortingModal extends Component {
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          {ownedCase(this.props.case) &&
+          {/*ownedCase(this.props.case) &&
             <Button onClick={this.onSaveUpdate.bind(this)} bsStyle="primary">
               <FormattedMessage id="Save @ Clear house" />
             </Button>
-          }
+          */}
           <Button bsStyle="info" onClick={this.onLocalSaveUpdate.bind(this)} disabled={
             validBroadcast === "error" || validDueDate === "error"}>
             <FormattedMessage id="save" defaultMessage="Save" />
@@ -318,11 +319,11 @@ class DisconnectNumberPortingModal extends Component {
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          {ownedCase(this.props.case) &&
+          {/*ownedCase(this.props.case) &&
             <Button onClick={this.onDisconnect.bind(this)} bsStyle="danger">
               <FormattedMessage id="disconnect-clear-house" defaultMessage="Disconnect @ Clear house" />
             </Button>
-          }
+          */}
           <Button onClick={this.onLocalDisconnect.bind(this)} bsStyle="warning">
             <FormattedMessage id="local-disconnect" defaultMessage="Local Disconnect" />
           </Button>
