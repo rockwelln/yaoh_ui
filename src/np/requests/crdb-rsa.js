@@ -829,7 +829,7 @@ function RequestTable(props) {
   const activeFlag = rangeFlags.find(rf => !rf.disabled && rf.rejectCodes);
   // const activeRejectCodes = rangeFlags.find(rf => !rf.disabled && rf.rejectCodes) && rangeFlags.find(rf => !rf.disabled && rf.rejectCodes).rejectCodes;
   const rangeNbCols = 2 + rangeFlags.length;
-  const subscriberData = update(request.subscriber_data, {$merge: diffSubscriberData});
+  const subscriberData = request.subscriber_data? update(request.subscriber_data, {$merge: diffSubscriberData}): {};
 
   return (
       <Panel>
