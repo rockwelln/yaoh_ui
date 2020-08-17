@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import {Redirect} from "react-router";
-import draw_editor from "./editor";
+import draw_editor, {getDefinition} from "./editor";
 import {fetch_post, fetch_get, fetch_delete, fetch_put, NotificationsManager} from "../utils";
 
 import Col from 'react-bootstrap/lib/Col';
@@ -28,6 +28,7 @@ import {DeleteConfirmButton} from "../utils/deleteConfirm";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStethoscope, faChartBar } from "@fortawesome/free-solid-svg-icons";
 import {Link} from "react-router-dom";
+import {SimulatorPanel} from "./simulator";
 
 
 const NEW_ACTIVITY = {
@@ -346,6 +347,7 @@ export function ActivityEditor(props) {
     const [currentActivity, setCurrentActivity] = useState(null);
     const [newActivity, setNewActivity] = useState(true);
     const [showStats, setShowStats] = useState(false);
+    const [editor, setEditor] = useState(null);
 
     useEffect(() => {
         fetchConfiguration(setConfiguration);
@@ -353,14 +355,14 @@ export function ActivityEditor(props) {
         fetchEntities((setEntities));
     }, []);
 
-    const editor = useRef(null);
-    const toolbar = useRef(null);
-    const title = useRef(null);
+    const editorRef = useRef(null);
+    const toolbarRef = useRef(null);
+    const titleRef = useRef(null);
 
     useEffect(() => {
         // (container, handlers, placeholders, props)
-        draw_editor(
-            ReactDOM.findDOMNode(editor.current),
+        const e = draw_editor(
+            ReactDOM.findDOMNode(editorRef.current),
             newActivity?NEW_ACTIVITY:currentActivity,
             {
                 get: fetchActivity,
@@ -376,16 +378,17 @@ export function ActivityEditor(props) {
                 // onDelete: () => deleteActivity(currentActivity.id, () => setNewActivity(true)),
             },
             {
-                toolbar: ReactDOM.findDOMNode(toolbar.current),
-                title: ReactDOM.findDOMNode(title.current),
+                toolbar: ReactDOM.findDOMNode(toolbarRef.current),
+                title: ReactDOM.findDOMNode(titleRef.current),
             },
             {
                 configuration: configuration,
                 cells: cells,
                 entities: entities,
             }
-        )
-    }, [editor, toolbar, title, currentActivity, newActivity, cells, entities]);
+        );
+        setEditor(e);
+    }, [editorRef, toolbarRef, titleRef, currentActivity, newActivity, cells, entities]);
 
     useEffect(() => {
         if(props.match.params.activityId) {
@@ -410,20 +413,29 @@ export function ActivityEditor(props) {
             </Breadcrumb>
             <Row>
                 <Col sm={2}>
-                    <FormControl componentClass="input" placeholder="Name" ref={title}/>
+                    <FormControl componentClass="input" placeholder="Name" ref={titleRef}/>
                 </Col>
-                <Col sm={8}>
-                    <div ref={toolbar} />
+                <Col sm={7}>
+                    <div ref={toolbarRef} />
                 </Col>
                 <Col sm={2}>
-                    <Button disabled><FontAwesomeIcon icon={faStethoscope} /></Button>
                     <Button onClick={() => setShowStats(true)}><FontAwesomeIcon icon={faChartBar} /></Button>
                 </Col>
             </Row>
             <hr />
             <Row>
                 <Col>
-                    <div ref={editor} style={{overflow: 'hidden', backgroundImage: `url(${GridPic})`}} />
+                    <div ref={editorRef} style={{overflow: 'hidden', backgroundImage: `url(${GridPic})`}} />
+                </Col>
+            </Row>
+            <hr />
+            <Row>
+                <Col>
+                    <SimulatorPanel activity={() => {
+                        let a = getDefinition(editor, ReactDOM.findDOMNode(titleRef.current).value).activity;
+                        Object.keys(a.definition.cells).map(c => delete a.definition.cells[c].name);
+                        return a;
+                    }} />
                 </Col>
             </Row>
             <ActivityStatsModal
