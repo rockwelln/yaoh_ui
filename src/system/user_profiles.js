@@ -51,7 +51,7 @@ function deleteProfile(profile_id, onSuccess) {
 
 function updateProfile(profile_id, data, onSuccess) {
     const data_ = Object.keys(data).reduce((a, b) => {
-            if(["name", "available"].includes(b)) {
+            if(["name", "available", "see_own_instances", "see_others_instances"].includes(b)) {
                 a[b] = data[b];
             }
             return a;
@@ -147,7 +147,7 @@ function UploadFileModal(props) {
 
 
 function NewProfile(props) {
-    const new_profile = {name: "", available: true, api_rules: []};
+    const new_profile = {name: "", available: true, see_own_instances:true, see_others_instances: false, api_rules: []};
     const [show, setShow] = useState(false);
     const [profile, setProfile] = useState(new_profile);
 
@@ -184,6 +184,28 @@ function NewProfile(props) {
                                 <Checkbox
                                     checked={profile.available}
                                     onChange={e => setProfile(update(profile, {$merge: {available: e.target.checked}}))} />
+                            </Col>
+                        </FormGroup>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="see-own-requests" defaultMessage="See own instances / requests" />
+                            </Col>
+
+                            <Col sm={9}>
+                                <Checkbox
+                                    checked={profile.see_own_instances}
+                                    onChange={e => setProfile(update(profile, {$merge: {see_own_instances: e.target.checked}}))} />
+                            </Col>
+                        </FormGroup>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="see_others_instances" defaultMessage="See others instances / requests" />
+                            </Col>
+
+                            <Col sm={9}>
+                                <Checkbox
+                                    checked={profile.see_others_instances}
+                                    onChange={e => setProfile(update(profile, {$merge: {see_others_instances: e.target.checked}}))} />
                             </Col>
                         </FormGroup>
                         <FormGroup>
@@ -293,6 +315,28 @@ function UpdateProfile(props) {
                     </FormGroup>
                     <FormGroup>
                         <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="see-own-requests" defaultMessage="See own instances / requests" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <Checkbox
+                                checked={profile.see_own_instances}
+                                onChange={e => setProfile(update(profile, {$merge: {see_own_instances: e.target.checked}}))} />
+                        </Col>
+                    </FormGroup>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="see_others_instances" defaultMessage="See others instances / requests" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <Checkbox
+                                checked={profile.see_others_instances}
+                                onChange={e => setProfile(update(profile, {$merge: {see_others_instances: e.target.checked}}))} />
+                        </Col>
+                    </FormGroup>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
                             <FormattedMessage id="publicly-available" defaultMessage="Publicly available" />
                         </Col>
 
@@ -398,7 +442,7 @@ function UpdateProfile(props) {
 
 export default function UserProfiles() {
     const [profiles, setProfiles] = useState([]);
-    const refresh = () => fetchProfiles(setProfiles);
+    const refresh = () => { fetchProfiles(setProfiles); };
     useEffect(refresh, []);
 
     return (
