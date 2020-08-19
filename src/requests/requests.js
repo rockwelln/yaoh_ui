@@ -2050,7 +2050,7 @@ export class Request extends Component {
             }, {}
         );
         const response_ = raw_event.response;
-        const username = raw_event.user;
+        const username = raw_event.user || request.owner;
 
         return (
             <>
