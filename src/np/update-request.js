@@ -45,7 +45,7 @@ export class NPUpdateRequest extends Component {
   onSubmit(e) {
     e.preventDefault();
     fetch_post(
-      '/api/v01/voo/np_requests/update',
+      '/api/v01/npact/np_requests/update',
       {
         donor_id: parseInt(this.state.donor, 10),
         recipient_id: null, // this.state.operators.filter(o => o.short_name === DEFAULT_RECIPIENT)[0].id,

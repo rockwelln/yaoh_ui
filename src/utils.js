@@ -162,7 +162,7 @@ export function parseJSON(response) {
 }
 
 export function testAppFlavour(onSuccess) {
-    fetch(API_URL_PREFIX + "/api/v01/voo/operators", {method: "GET"})
+    fetch(API_URL_PREFIX + "/api/v01/npact/operators", {method: "GET"})
         .then(r => {
             r.status === 404 ? onSuccess("apio") : onSuccess("npact");
             console.log(r.status)

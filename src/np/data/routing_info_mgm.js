@@ -23,7 +23,7 @@ import { fetchOperators } from './operator_mgm';
 
 
 export function fetchRoutes(onSuccess) {
-  fetch_get("/api/v01/voo/routing_info/search")
+  fetch_get("/api/v01/npact/routing_info/search")
     .then(data => onSuccess(data.routing_info))
     .catch(error => NotificationsManager.error("Failed to fetch routes", error.message))
 }
@@ -50,7 +50,7 @@ class NewRoutingInfo extends Component {
 
   onSave() {
     const { routing_info } = this.state;
-    fetch_post('/api/v01/voo/routing_info', routing_info, this.props.auth_token)
+    fetch_post('/api/v01/npact/routing_info', routing_info, this.props.auth_token)
       .then(() => {
         this.props.notifications.addNotification({
           message: <FormattedMessage id="new-routing-saved" defaultMessage="New routing info saved!" />,
@@ -159,7 +159,7 @@ class RoutingInfoActions extends Component {
   onSave() {
     const { _pendingChanges } = this.state;
     const { entry, auth_token } = this.props;
-    fetch_put(`/api/v01/voo/routing_info/${entry.id}`, _pendingChanges, auth_token)
+    fetch_put(`/api/v01/npact/routing_info/${entry.id}`, _pendingChanges, auth_token)
       .then(() => {
         this.props.notifications.addNotification({
           message: <FormattedMessage id="routing-updated" defaultMessage="Routing info updated!" />,
@@ -175,7 +175,7 @@ class RoutingInfoActions extends Component {
   }
 
   onDelete() {
-    fetch_delete(`/api/v01/voo/routing_info/${this.props.entry.id}`, this.props.auth_token)
+    fetch_delete(`/api/v01/npact/routing_info/${this.props.entry.id}`, this.props.auth_token)
       .then(() => {
         this.props.notifications.addNotification({
           message: <FormattedMessage id="routing-deleted" defaultMessage="Routing info deleted!" />,
@@ -297,7 +297,7 @@ class RoutingInfoActions extends Component {
 export default class SearchRoutingInfo extends Search {
   static defaultProps = update(Search.defaultProps, {
     '$merge': {
-      searchUrl: '/api/v01/voo/routing_info/search',
+      searchUrl: '/api/v01/npact/routing_info/search',
       collectionName: 'routing_info',
       defaultCriteria: {
         routing_info: { value: '', op: 'eq' },

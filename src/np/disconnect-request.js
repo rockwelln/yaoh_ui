@@ -50,7 +50,7 @@ export class NPDisconnectRequest extends Component {
     e.preventDefault();
     const { donor, ranges, operators } = this.state;
     fetch_post(
-      '/api/v01/voo/np_requests/disconnect',
+      '/api/v01/npact/np_requests/disconnect',
       {
         donor_id: parseInt(donor.id, 10),
         recipient_id: operators.filter(o => o.short_name === DEFAULT_RECIPIENT)[0].id,
@@ -81,7 +81,7 @@ export class NPDisconnectRequest extends Component {
   }
 
   resolveDonor(number) {
-    let url = new URL(API_URL_PREFIX + '/api/v01/voo/number_porting/search');
+    let url = new URL(API_URL_PREFIX + '/api/v01/npact/number_porting/search');
     let filter_spec = {
       field: 'number',
       op: 'eq',

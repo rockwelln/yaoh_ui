@@ -69,7 +69,7 @@ class MobileEventsActions extends Component {
 export class MobileEventsManagement extends Search {
   static defaultProps = update(Search.defaultProps, {
     '$merge': {
-      searchUrl: '/api/v01/voo/mobile_events/search',
+      searchUrl: '/api/v01/npact/mobile_events/search',
       collectionName: 'events',
       defaultCriteria: {
         number: { value: '', op: 'eq' },

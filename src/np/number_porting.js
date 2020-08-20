@@ -44,7 +44,7 @@ class UpdateNumberPortingModal extends Component {
   onSaveUpdate() {
     // post a new PORTING CASE (type: update)
     fetch_post(
-      '/api/v01/voo/np_requests/update',
+      '/api/v01/npact/np_requests/update',
       update(this.props.case, { $merge: this.state.diff_case }),
       this.props.auth_token
     )
@@ -60,7 +60,7 @@ class UpdateNumberPortingModal extends Component {
   onLocalSaveUpdate() {
     const case_ = update(this.props.case, { $merge: this.state.diff_case });
     fetch_put(
-      `/api/v01/voo/number_porting/${this.props.case.id}`,
+      `/api/v01/npact/number_porting/${this.props.case.id}`,
       {
         routing_info: case_.routing_info,
         recipient_id: case_.recipient_id,
@@ -268,7 +268,7 @@ class DisconnectNumberPortingModal extends Component {
   onDisconnect() {
     this.setState({ error: undefined, new_np_request: undefined });
     // post a new PORTING CASE (type: disconnect as donor)
-    fetch_post('/api/v01/voo/np_requests/disconnect', this.props.case, this.props.auth_token)
+    fetch_post('/api/v01/npact/np_requests/disconnect', this.props.case, this.props.auth_token)
       .then(parseJSON)
       .then(data => this.setState({ new_np_request: data.id }))
       .catch(error => this.props.notifications.addNotification({
@@ -280,7 +280,7 @@ class DisconnectNumberPortingModal extends Component {
 
   onLocalDisconnect() {
     this.setState({ error: undefined });
-    fetch_delete(`/api/v01/voo/number_porting/${this.props.case.id}`, this.props.auth_token)
+    fetch_delete(`/api/v01/npact/number_porting/${this.props.case.id}`, this.props.auth_token)
       .then(() => {
         this.props.notifications.addNotification({
           message: <FormattedMessage id="porting-case-deleted" defaultMessage="Porting case deleted" />,
@@ -365,7 +365,7 @@ class NewNumberPorting extends Component {
   onLocalCreate() {
     const { case_ } = this.state;
     this.setState({ error: undefined });
-    fetch_post('/api/v01/voo/number_porting', case_, this.props.auth_token)
+    fetch_post('/api/v01/npact/number_porting', case_, this.props.auth_token)
       .then(() => {
         this.props.notifications.addNotification({
           message: <FormattedMessage id="new-local-porting-case" defaultMessage="New porting case created locally" />,
@@ -597,7 +597,7 @@ class PortingCaseActions extends Component {
 export default class SearchPortingCases extends Search {
   static defaultProps = update(Search.defaultProps, {
     '$merge': {
-      searchUrl: '/api/v01/voo/number_porting/search',
+      searchUrl: '/api/v01/npact/number_porting/search',
       collectionName: 'numbers',
       defaultCriteria: {
         number: { value: '', op: 'eq' },

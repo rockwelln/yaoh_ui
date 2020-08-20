@@ -45,7 +45,7 @@ class NewRange extends Component {
 
   onSave() {
     const { range } = this.state;
-    fetch_post('/api/v01/voo/ranges', range, this.props.auth_token)
+    fetch_post('/api/v01/npact/ranges', range, this.props.auth_token)
       .then(() => {
         this.props.notifications.addNotification({
           message: <FormattedMessage id="new-range-saved" defaultMessage="New range saved!" />,
@@ -168,7 +168,7 @@ class RangeActions extends Component {
   onSave() {
     const { entry } = this.props;
     const { _pendingChanges } = this.state;
-    fetch_put(`/api/v01/voo/ranges/${entry.id}`, _pendingChanges, this.props.auth_token)
+    fetch_put(`/api/v01/npact/ranges/${entry.id}`, _pendingChanges, this.props.auth_token)
       .then(() => {
         this.props.notifications.addNotification({
           message: <FormattedMessage id="saved" defaultMessage="Saved!" />,
@@ -184,7 +184,7 @@ class RangeActions extends Component {
   }
 
   onDelete() {
-    fetch_delete(`/api/v01/voo/ranges/${this.props.entry.id}`, this.props.auth_token)
+    fetch_delete(`/api/v01/npact/ranges/${this.props.entry.id}`, this.props.auth_token)
       .then(() => {
         this.props.notifications.addNotification({
           message: <FormattedMessage id="range-deleted" defaultMessage="Range deleted!" />,
@@ -310,7 +310,7 @@ class RangeActions extends Component {
 export default class SearchRange extends Search {
   static defaultProps = update(Search.defaultProps, {
     '$merge': {
-      searchUrl: '/api/v01/voo/ranges/search',
+      searchUrl: '/api/v01/npact/ranges/search',
       collectionName: 'ranges',
       defaultCriteria: {
         number_from: { value: '', op: 'eq' },

@@ -36,7 +36,7 @@ class MVNONumberActions extends Component {
   onSave() {
     const { _pendingChanges } = this.state;
     const { MVNOEntry, auth_token, notifications } = this.props;
-    fetch_put(`/api/v01/voo/mvno_numbers/${MVNOEntry.id}`, _pendingChanges, auth_token)
+    fetch_put(`/api/v01/npact/mvno_numbers/${MVNOEntry.id}`, _pendingChanges, auth_token)
       .then(() => {
         notifications.addNotification({
           message: <FormattedMessage id="update-mvno-saved" defaultMessage="MVNO entry saved!" />,
@@ -52,7 +52,7 @@ class MVNONumberActions extends Component {
   }
 
   onDelete() {
-    fetch_delete(`/api/v01/voo/mvno_numbers/${this.props.MVNOEntry.id}`, this.props.auth_token)
+    fetch_delete(`/api/v01/npact/mvno_numbers/${this.props.MVNOEntry.id}`, this.props.auth_token)
       .then(() => {
         this.setState({ showUpdate: false, showDelete: false });
         this.props.onDelete && this.props.onDelete();
@@ -161,7 +161,7 @@ class MVNONumberActions extends Component {
 export default class SearchMVNO extends Search {
   static defaultProps = update(Search.defaultProps, {
     '$merge': {
-      searchUrl: '/api/v01/voo/mvno_numbers/search',
+      searchUrl: '/api/v01/npact/mvno_numbers/search',
       collectionName: 'MVNONumbers',
       defaultCriteria: {
         number: { value: '', op: 'eq' },

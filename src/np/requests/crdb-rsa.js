@@ -48,20 +48,20 @@ const RECIPIENTS = [
 
 
 function updateRequest(requestId, diffEntry, onSuccess) {
-  fetch_put(`/api/v01/voo/np_requests/${requestId}`, diffEntry)
+  fetch_put(`/api/v01/npact/np_requests/${requestId}`, diffEntry)
     .then(data => onSuccess())
     .catch(error => NotificationsManager.error("Failed to update request", error.message));
 }
 
 function updateRequestRange(requestId, rangeId, diffEntry, onSuccess) {
-  fetch_put(`/api/v01/voo/np_requests/${requestId}/ranges/${rangeId}`, diffEntry)
+  fetch_put(`/api/v01/npact/np_requests/${requestId}/ranges/${rangeId}`, diffEntry)
     .then(data => onSuccess())
     .catch(error => NotificationsManager.error("Failed to update range", error.message));
 }
 
 function newRequest(request, onSuccess, onError) {
   fetch_post(
-    '/api/v01/voo/np_requests/port_in',
+    '/api/v01/npact/np_requests/port_in',
     {
       ranges: request.ranges,
       recipient_id: request.recipient,
@@ -1106,7 +1106,7 @@ export class NPDisconnectRequest extends Component {
     e.preventDefault();
     const { donor, ranges, operators } = this.state;
     fetch_post(
-      '/api/v01/voo/np_requests/disconnect',
+      '/api/v01/npact/np_requests/disconnect',
       {
         donor_id: parseInt(donor.id, 10),
         recipient_id: operators.filter(o => o.short_name === DEFAULT_RECIPIENT)[0].id,
@@ -1137,7 +1137,7 @@ export class NPDisconnectRequest extends Component {
   }
 
   resolveDonor(number) {
-    let url = new URL(API_URL_PREFIX + '/api/v01/voo/number_porting/search');
+    let url = new URL(API_URL_PREFIX + '/api/v01/npact/number_porting/search');
     let filter_spec = {
       field: 'number',
       op: 'eq',
@@ -1254,7 +1254,7 @@ export class NPTransaction extends Component {
 
         this.setState({ tx: data });
 
-        fetch_get(`/api/v01/voo/np_requests/${data.original_request_id}`, this.props.auth_token)
+        fetch_get(`/api/v01/npact/np_requests/${data.original_request_id}`, this.props.auth_token)
           .then(data => !this.cancelLoad && this.setState({ request: data }))
           .catch(error => !this.cancelLoad && this.setState({ error: error }));
 
@@ -1398,7 +1398,7 @@ export class NPTransaction extends Component {
   onApproveHold(proposed_due_date) {
     this.setState({ sending: true });
     fetch_put(
-      `/api/v01/voo/np_requests/${this.state.tx.original_request_id}`,
+      `/api/v01/npact/np_requests/${this.state.tx.original_request_id}`,
       {
         due_date: proposed_due_date
       },

@@ -181,7 +181,7 @@ export class NPRequests extends Component {
   }
 
   _prepare_url(paging_spec, sorting_spec, format) {
-    let url = new URL(API_URL_PREFIX + '/api/v01/voo/np_requests/search');
+    let url = new URL(API_URL_PREFIX + '/api/v01/npact/np_requests/search');
     // filter
     const { filter_criteria } = this.state;
     let filter_spec = Object.keys(filter_criteria)

@@ -24,7 +24,7 @@ function addBusinessDays(m, days) {
 
 export class DueDateService {
   static getRules(auth_token) {
-    return fetch_get('/api/v01/voo/np_requests/due_date_rules', auth_token)
+    return fetch_get('/api/v01/npact/np_requests/due_date_rules', auth_token)
   }
 }
 
@@ -44,7 +44,7 @@ export class DueDatePicker extends Component {
   }
 
   componentDidMount() {
-    DueDateService.getRules('/api/v01/voo/np_requests/due_date_rules', this.props.auth_token)
+    DueDateService.getRules('/api/v01/npact/np_requests/due_date_rules', this.props.auth_token)
       .then(data => !this.cancelLoad && this.setState({ rules: data }))
       .catch(error => console.log(error.message))
   }

@@ -30,7 +30,7 @@ function fetch_gateways(onSuccess) {
 
 
 function fetch_stats(isNpact, onSuccess) {
-    fetch_get(`/api/v01/${isNpact?"voo":"apio"}/stats`)
+    fetch_get(`/api/v01/${isNpact?"npact":"apio"}/stats`)
         .then(data => onSuccess(data))
         .catch(error => NotificationsManager.error(
                 <FormattedMessage id="core-stats-fect-failed" defaultMessage="Failed to fetch statistics"/>,

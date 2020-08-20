@@ -26,7 +26,7 @@ import update from 'immutability-helper';
 
 function createHoliday(entry, onSuccess, onError) {
   fetch_post(
-    '/api/v01/voo/public_holidays',
+    '/api/v01/npact/public_holidays',
     {
       when: moment(entry.when, 'DD/MM/YYYY').format(),
       description: entry.description
@@ -38,7 +38,7 @@ function createHoliday(entry, onSuccess, onError) {
 
 
 function deleteHoliday(hId, onSuccess) {
-  fetch_delete(`/api/v01/voo/public_holidays/${hId}`)
+  fetch_delete(`/api/v01/npact/public_holidays/${hId}`)
     .then(() => {
       NotificationsManager.success(
         <FormattedMessage id="holiday-deleted" defaultMessage="Holiday deleted!" />,
@@ -134,7 +134,7 @@ function NewPublicHolidayModal(props) {
 export class PublicHolidays extends Search {
   static defaultProps = update(Search.defaultProps, {
     '$merge': {
-      searchUrl: '/api/v01/voo/public_holidays',
+      searchUrl: '/api/v01/npact/public_holidays',
       collectionName: 'holidays',
       defaultSortingSpec: [{ field: 'when', direction: 'desc' }],
     }

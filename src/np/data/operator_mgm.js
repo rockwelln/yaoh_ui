@@ -23,7 +23,7 @@ import Checkbox from "react-bootstrap/lib/Checkbox";
 
 
 export function fetchOperators(token, onSuccess, onError) {
-  fetch_get('/api/v01/voo/operators', token)
+  fetch_get('/api/v01/npact/operators', token)
     .then(data => (
       onSuccess && onSuccess(data.operators.sort((a, b) => (a.name < b.name) ? -1 : 1))
     ))
@@ -53,7 +53,7 @@ class Operator extends Component {
     e.preventDefault();
     const { operator } = this.state;
     fetch_put(
-      `/api/v01/voo/operators/${this.props.operator.id}`,
+      `/api/v01/npact/operators/${this.props.operator.id}`,
       {
         'name': operator.name,
         'short_name': operator.short_name,
@@ -157,7 +157,7 @@ class NewOperator extends Operator {
   onSave(e) {
     e.preventDefault();
     fetch_post(
-      '/api/v01/voo/operators',
+      '/api/v01/npact/operators',
       this.state.operator
     )
       .then(() => {
@@ -176,7 +176,7 @@ class NewOperator extends Operator {
 export default class SearchOperators extends Search {
   static defaultProps = update(Search.defaultProps, {
     '$merge': {
-      searchUrl: '/api/v01/voo/operators',
+      searchUrl: '/api/v01/npact/operators',
       collectionName: 'operators',
     }
   });
@@ -217,7 +217,7 @@ export default class SearchOperators extends Search {
 
   onDelete(e, opId) {
     e.preventDefault();
-    fetch_delete(`/api/v01/voo/operators/${opId}`)
+    fetch_delete(`/api/v01/npact/operators/${opId}`)
       .then(() => {
         NotificationsManager.success(
           <FormattedMessage id="operator-deleted" defaultMessage="Operator deleted!" />

@@ -17,7 +17,7 @@ import FormControl from "react-bootstrap/lib/FormControl";
 
 function newChangeInstallAddressRequest(entry, onSuccess) {
   fetch_post(
-    '/api/v01/voo/np_requests/change_addr',
+    '/api/v01/npact/np_requests/change_addr',
     {...entry, service_type: "GEOGRAPHIC"}
   ).then(r => r.json())
     .then(r => r.id && onSuccess(r.id))
