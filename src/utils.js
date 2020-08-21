@@ -23,7 +23,7 @@ export function createCookie(name,value,days,path) {
 	if (!path) {
 	    path = "/";
     }
-	document.cookie = name+"="+value+expires+"; path="+path;
+	document.cookie = name+"="+value+expires+"; path="+path+"; samesite=strict; secure";
 }
 
 export function removeCookie(name) {
@@ -45,7 +45,7 @@ class AuthService {
     }
 
     getToken() {
-        return this.token;
+        return getCookie("auth_token") || null;
         // return localStorage.jwt;
     }
 
@@ -57,7 +57,7 @@ class AuthService {
 
     isAuthenticated() {
         const token = this.getToken();
-        return token !== null && typeof token === "string" && token.length > 0;
+        return token !== null && token !== "undefined" && typeof token === "string" && token.length > 0;
     }
 }
 
