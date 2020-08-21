@@ -234,7 +234,7 @@ const emptyRequest = {
   accountNumber: '',
   isB2B: false,
   sub_type: 'GEOGRAPHIC',
-  service_type: 'MOBILE',
+  service_type: 'FIXED',
   port_req_form_id: 'form-123',
   subscriber_data: {
     NationalIDNumber: "",
