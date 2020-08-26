@@ -6,20 +6,12 @@ import "isomorphic-fetch";
 import React, {Component} from 'react';
 
 import Alert from 'react-bootstrap/lib/Alert';
-import Button from 'react-bootstrap/lib/Button';
 import Col from 'react-bootstrap/lib/Col';
-import ControlLabel from 'react-bootstrap/lib/ControlLabel';
-import Form from 'react-bootstrap/lib/Form';
-import FormControl from 'react-bootstrap/lib/FormControl';
-import FormGroup from 'react-bootstrap/lib/FormGroup';
-import Panel from 'react-bootstrap/lib/Panel';
 import Glyphicon from 'react-bootstrap/lib/Glyphicon';
-import Row from 'react-bootstrap/lib/Row';
 import Nav from 'react-bootstrap/lib/Nav';
 import Navbar from 'react-bootstrap/lib/Navbar';
 import NavDropdown from 'react-bootstrap/lib/NavDropdown';
 import MenuItem from 'react-bootstrap/lib/MenuItem';
-import ButtonToolbar from 'react-bootstrap/lib/ButtonToolbar';
 
 import {BrowserRouter as Router, Link, Redirect, Route, Switch} from 'react-router-dom';
 import {LinkContainer} from 'react-router-bootstrap';
@@ -60,7 +52,6 @@ import {AuditLogs} from "./system/audit";
 import {getHomePage, isAllowed, modules, pages, supportedModule} from "./utils/user";
 import {NotAllowed} from "./utils/common";
 import {AuthCallback, AuthSilentCallback} from "./sso/login";
-import {RESET_PASSWORD_PREFIX, ResetPasswordPage} from "./reset_password";
 
 import './App.css';
 import apio_brand from "./images/apio.png";
@@ -74,7 +65,6 @@ import UserProfiles from "./system/user_profiles";
 import Templates from "./system/templates";
 import {UserRoles} from "./system/user_roles";
 // specifics for NP
-// import {NPDisconnectRequest} from "./np/disconnect-request";
 import {NPRequests} from "./np/np-requests";
 import {NPTransaction, NPPortInRequest, NPDisconnectRequest} from "./np/requests";
 import {NPUpdateRequest} from "./np/update-request";
@@ -86,6 +76,8 @@ import RangesManagement from "./np/data/range_mgm";
 import RoutingInfoManagement from "./np/data/routing_info_mgm";
 import SearchPortingCases from "./np/number_porting";
 import SearchMVNO from "./np/mvno_mgm";
+import {LoginPage, LoginForm} from "./login";
+import {RESET_PASSWORD_PREFIX, ResetPasswordRequestForm, ResetPasswordForm} from "./reset_password";
 
 const ListItemLink = ({to, children}) => (
     <Route path={to} children={({match}) => (
@@ -107,128 +99,6 @@ const Loading = () => (
         </div>
     </div>
 );
-
-
-class LoginForm extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            username: '', password: '',
-        };
-        this.onSubmit = this.onSubmit.bind(this);
-        this.onResetPassword = this.onResetPassword.bind(this);
-    }
-
-    onSubmit(e) {
-        e.preventDefault();
-        fetch(API_URL_PREFIX + '/api/v01/auth/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                username: this.state.username,
-                password: this.state.password,
-            }),
-        }).then(checkStatus)
-            .then(parseJSON)
-            .then(data => this.props.updateToken(data.token))
-            .catch(() => {
-                this.setState({
-                    error: {
-                        message: (
-                            <div>
-                                <h4>
-                                    <FormattedMessage id="Oh snap! You failed to login!" />
-                                </h4>
-                                <p>
-                                    <FormattedMessage id="Invalid username or password." />
-                                </p>
-                            </div>
-                        )
-                    }
-                });
-                setTimeout(() => this.setState({error: undefined}), 3000);
-            })
-    }
-
-    onResetPassword(e) {
-        fetch(API_URL_PREFIX + '/api/v01/auth/reset-password', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                username: this.state.username,
-            }),
-        }).then(checkStatus)
-        .then(() => {
-            this.setState({reset_sent: true});
-            setTimeout(() => this.setState({reset_sent: undefined}), 3000);
-        })
-        .catch(error => {
-            this.setState({error: error});
-            setTimeout(() => this.setState({error: undefined}), 3000);
-        })
-    }
-
-    render() {
-        return (
-            <Form horizontal>
-                {
-                    this.state.error &&
-                        <Alert bsStyle="danger">
-                            {this.state.error.message}
-                        </Alert>
-                }
-                {
-                    this.state.reset_sent &&
-                        <Alert bsStyle="success">
-                            <FormattedMessage id="password-reset-mail-sent" defaultMessage="A mail to reset your password has been sent to your mailbox." />
-                        </Alert>
-                }
-                <FormGroup validationState={this.state.errors === undefined?null:"error"}>
-                    <Col componentClass={ControlLabel} sm={3}>
-                        <FormattedMessage id="username" defaultMessage="Username" />
-                    </Col>
-
-                    <Col sm={8}>
-                        <FormControl
-                            type="text"
-                            value={this.state.username}
-                            onChange={(e) => this.setState({username: e.target.value, errors: undefined})}
-                        />
-                    </Col>
-                </FormGroup>
-                <FormGroup validationState={this.state.errors === undefined?null:"error"}>
-                    <Col componentClass={ControlLabel} sm={3}>
-                        <FormattedMessage id="password" defaultMessage="Password" />
-                    </Col>
-
-                    <Col sm={8}>
-                        <FormControl
-                            type="password"
-                            value={this.state.password}
-                            onChange={(e) => this.setState({password: e.target.value, errors: undefined})}
-                        />
-                    </Col>
-                </FormGroup>
-                <FormGroup>
-                    <Col smOffset={3} sm={10}>
-                        <ButtonToolbar>
-                            <Button type="submit" onClick={this.onSubmit}>
-                                <FormattedMessage id="sign-in" defaultMessage="Sign in" />
-                            </Button>
-                            <Button onClick={this.onResetPassword} bsStyle="link">
-                                <FormattedMessage id="reset-password" defaultMessage="Reset password"/>
-                            </Button>
-                        </ButtonToolbar>
-                    </Col>
-                </FormGroup>
-            </Form>
-        )
-    }
-}
 
 const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => (
   <Navbar staticTop collapseOnSelect inverse>
@@ -601,60 +471,17 @@ const NotFound = () => (
     </div>
 );
 
-const LoginPage = ({updateToken, error_msg, standby_alert, logo}) => (
-    <div>
-        <Row style={{height: "20px", display: "block"}}/>
-        <Row style={{height: "100%", display: "block"}}>
-            <Col xsOffset={1} xs={10} mdOffset={4} md={4}>
-                {
-                    standby_alert
-                }
-                <Panel >
-                    <Panel.Body>
-                        {logo &&
-                            <Row>
-                                <Col xsOffset={3} xs={6} mdOffset={3} md={7}>
-                                    <img src={logo}
-                                         width={"100%"}
-                                         height={"100%"}
-                                         style={{padding: 0}}
-                                         alt="apio"/>
-                                </Col>
-                            </Row>
-                        }
-                        <Row>
-                            <Col xsOffset={1} xs={10} mdOffset={0} md={12}>
-                                {
-                                    error_msg && (
-                                        <Alert bsStyle="danger">
-                                            <p>{error_msg}</p>
-                                        </Alert>
-                                    )
-                                }
-                                { /* <LoginOpenIdConnect /> */ }
-                                <hr/>
-                                <LoginForm updateToken={updateToken}/>
-                            </Col>
-                        </Row>
-                    </Panel.Body>
-                </Panel>
-            </Col>
-        </Row>
-    </div>
-);
 
 class App extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            // auth_token: this.props.cookies.get("auth_token"),
             user_info: undefined,
             error_msg: undefined,
             flavour: undefined,
         };
         this._notificationSystem = React.createRef();
         NotificationsManager.setRef(this._notificationSystem);
-        AuthServiceManager.loadTokenFromCookie("auth_token");
 
         this.getUserInfo = this.getUserInfo.bind(this);
         this.updateToken = this.updateToken.bind(this);
@@ -702,27 +529,27 @@ class App extends Component {
             document.title = f.toUpperCase();
         });
         this.getDatabaseStatus();
-        // this.props.cookies.get('auth_sso') === '1' && !sso_auth_service.isLoggedIn() && sso_auth_service.signinSilent();
         getCookie('auth_sso') === '1' && !sso_auth_service.isLoggedIn() && sso_auth_service.signinSilent();
     }
 
     updateToken(token, sso_auth) {
-        AuthServiceManager.loadToken(token);
+        AuthServiceManager.loadApiToken(token);
         ProvProxiesManager.fetchConfiguration().then(() => this.setState({proxy_fetch: true})).catch(console.log);
-        // this.props.cookies.set('auth_sso', sso_auth?'1':'0', {path: '/'});  // maxAge = 24hours
         createCookie("auth_sso", sso_auth?'1':'0', 1, '/');  // maxAge = 24hours
         this.setState({user_info: this.state.user_info});
     }
 
+    updateTokens(accessToken, refreshToken) {
+        AuthServiceManager.loadJwtTokens(accessToken, refreshToken);
+        ProvProxiesManager.fetchConfiguration().then(() => this.setState({proxy_fetch: true})).catch(console.log);
+        this.setState({user_info: this.state.user_info});
+    }
+
     logout() {
-        // this.setState({auth_token: undefined, user_info: undefined});
         this.setState({user_info: undefined});
         console.log('logout');
         AuthServiceManager.logout();
         localStorage.removeItem("userProfile");
-        // this.props.cookies.remove("auth_token", { path: '/' });
-        // this.props.cookies.remove("auth_sso", { path: '/' });
-        // this.props.cookies.remove("user_language", { path: '/' });
         removeCookie("auth_sso");
         removeCookie("user_language");
         sso_auth_service.removeUser().then(() => this.props.onLanguageUpdate(undefined));
@@ -773,7 +600,13 @@ class App extends Component {
 
         // reset password
         if(is_reset_password) {
-            return <ResetPasswordPage standby_alert={standby_alert}/>
+            return (
+                <LoginPage
+                    logo={this.state.flavour === "apio" ? apio_logo : null}
+                    standby_alert={standby_alert}>
+                    <ResetPasswordForm />
+                </LoginPage>
+            )
         }
 
         const authenticated = this.isAuthenticated();
@@ -788,13 +621,30 @@ class App extends Component {
                         <Route path="/" exact>
                             <Redirect to="/dashboard" />
                         </Route>
-                        <Route component={() => (
-                            <LoginPage
-                                updateToken={this.updateToken}
-                                error_msg={error_msg}
-                                logo={this.state.flavour === "apio" ? apio_logo : null}
-                                standby_alert={standby_alert} />
-                        )} />
+                        <Route
+                            path="/reset-password"
+                            component={() => (
+                                <LoginPage
+                                    error_msg={error_msg}
+                                    logo={this.state.flavour === "apio" ? apio_logo : null}
+                                    standby_alert={standby_alert} >
+                                    <ResetPasswordRequestForm />
+                                </LoginPage>
+                            )}
+                            exact/>
+                        <Route
+                            component={() => (
+                                <LoginPage
+                                    error_msg={error_msg}
+                                    logo={this.state.flavour === "apio" ? apio_logo : null}
+                                    standby_alert={standby_alert} >
+                                    <LoginForm onLogin={r => {
+                                        if(r.access_token) {
+                                            this.updateTokens(r.access_token, r.refresh_token);
+                                        }
+                                    }}/>
+                                </LoginPage>
+                            )} />
                     </Switch>
                 </Router>
             )

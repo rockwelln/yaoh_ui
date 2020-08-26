@@ -1,3 +1,5 @@
+import { Base64 } from 'js-base64';
+
 export const API_WS_URL = (window.location.protocol === 'https:'?'wss':'ws') + '://' + (process.env.NODE_ENV === 'production'?window.location.host:'127.0.0.1:5000');
 export const API_URL_PREFIX = process.env.NODE_ENV === 'production'?window.location.origin:'http://127.0.0.1:5000';
 export const STATIC_URL_PREFIX = process.env.NODE_ENV === 'production'?window.location.origin:'http://127.0.0.1:3000';
@@ -31,27 +33,54 @@ export function removeCookie(name) {
 }
 
 class AuthService {
-    static token = null;
-
-    loadToken(token) {
-        this.token = token;
-
+    loadApiToken(token) {
         createCookie("auth_token", token, 1, "/");
-        console.log("token updated!");
+        console.log("API token updated!");
     }
 
-    loadTokenFromCookie(cookie_name) {
-        this.loadToken(getCookie(cookie_name));
+    loadJwtTokens(accessToken, refreshToken) {
+        createCookie("auth_token", accessToken, 1, "/");
+        if(refreshToken) {
+            localStorage.setItem("refreshToken", refreshToken);
+        }
+        console.log("jwt token updated!");
+    }
+
+    fetchNewAccessToken() {
+        return fetch(API_URL_PREFIX + "/api/v01/auth/access_token", {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem("refreshToken")}`
+            }
+        }).then(checkStatus)
+            .then(parseJSON)
+            .then(r => {
+                createCookie("auth_token", r.access_token, 1, "/");
+                return r.access_token;
+            })
+    }
+
+    getValidToken() {
+        const SAFE_GUARD_DELAY = 5; // seconds of safe guards
+        const refreshToken = localStorage.getItem("refreshToken");
+        const token = getCookie("auth_token");
+        if(refreshToken) {
+            const payload_str = token.split(".")[1];
+            const payload = JSON.parse(Base64.decode(payload_str));
+            if(payload["exp"] < Math.floor((Date.now() / 1000) + SAFE_GUARD_DELAY)) {
+                return this.fetchNewAccessToken()
+            }
+        }
+        return Promise.resolve(token);
     }
 
     getToken() {
-        return getCookie("auth_token") || null;
-        // return localStorage.jwt;
+        return getCookie("auth_token");
     }
 
     logout() {
-        this.token = null;
-
+        localStorage.removeItem("refreshToken");
         removeCookie("auth_token");
     }
 
@@ -164,36 +193,43 @@ export function parseJSON(response) {
 export function testAppFlavour(onSuccess) {
     fetch(API_URL_PREFIX + "/api/v01/npact/operators", {method: "GET"})
         .then(r => {
-            r.status === 404 ? onSuccess("apio") : onSuccess("npact");
+            r.status === 404 || r.status === 401 ? onSuccess("apio") : onSuccess("npact");
             console.log(r.status)
         });
 }
 
 export function fetch_get(url, token) {
-    const token_ = AuthServiceManager.getToken();
+    // const token_ = AuthServiceManager.getToken();
     const full_url = url.href || url.startsWith('http') ?url:API_URL_PREFIX + url;
-    return fetch(full_url, {
-        method: 'GET',
-        headers: {
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${token_}`
-        }
-    }).then(checkStatus)
-    .then(parseJSON)
+    return AuthServiceManager.getValidToken()
+        .then(
+            token_ => fetch(full_url, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${token_}`
+                }
+            })
+        )
+        .then(checkStatus)
+        .then(parseJSON)
 }
 
 export function fetch_put(url, body, token) {
-    const token_ = AuthServiceManager.getToken();
+    // const token_ = AuthServiceManager.getToken();
     const full_url = url.href?url:url.startsWith('http')?url:API_URL_PREFIX + url;
-    return fetch(full_url, {
-        method: 'PUT',
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token_}`
-        },
-        body: JSON.stringify(body)
-    }).then(checkStatus)
+    return AuthServiceManager.getValidToken()
+        .then(
+            token_ => fetch(full_url, {
+                method: 'PUT',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token_}`
+                },
+                body: JSON.stringify(body)
+            })
+        ).then(checkStatus)
 }
 
 export function fetch_post(url, body, token) {
@@ -201,29 +237,33 @@ export function fetch_post(url, body, token) {
 }
 
 export function fetch_post_raw(url, raw_body, token, content_type) {
-    const token_ = AuthServiceManager.getToken();
+    // const token_ = AuthServiceManager.getToken();
     const full_url = url.href?url:url.startsWith('http')?url:API_URL_PREFIX + url;
-    let headers = {
-        'Authorization': `Bearer ${token_}`,
-    };
+    let headers = {};
     if(content_type) {
         headers['content-type'] = content_type
     }
-    return fetch(full_url, {
-        method: 'POST',
-        headers: headers,
-        body: raw_body
-    }).then(checkStatus)
+    return AuthServiceManager.getValidToken()
+        .then(
+            token_ => fetch(full_url, {
+                method: 'POST',
+                headers: {...headers, 'Authorization': `Bearer ${token_}`},
+                body: raw_body
+            })
+        ).then(checkStatus)
 }
 
 export function fetch_delete(url, body) {
-    const token_ = AuthServiceManager.getToken();
+    // const token_ = AuthServiceManager.getToken();
     const full_url = url.href?url:url.startsWith('http')?url:API_URL_PREFIX + url;
-    return fetch(full_url, {
-        method: 'DELETE',
-        headers: {
-            'Authorization': `Bearer ${token_}`
-        },
-        body: JSON.stringify(body)
-    }).then(checkStatus)
+    return AuthServiceManager.getValidToken()
+        .then(
+            token_ => fetch(full_url, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token_}`
+                },
+                body: JSON.stringify(body)
+            })
+        ).then(checkStatus)
 }

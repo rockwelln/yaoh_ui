@@ -1,4 +1,4 @@
-import React, {Component} from "react";
+import React, {Component, useEffect, useState} from "react";
 import Row from "react-bootstrap/lib/Row";
 import Form from "react-bootstrap/lib/Form";
 import FormGroup from "react-bootstrap/lib/FormGroup";
@@ -6,18 +6,31 @@ import FormControl from "react-bootstrap/lib/FormControl";
 import HelpBlock from "react-bootstrap/lib/HelpBlock";
 import Button from "react-bootstrap/lib/Button";
 import Col from "react-bootstrap/lib/Col";
-import Panel from "react-bootstrap/lib/Panel";
 import Alert from "react-bootstrap/lib/Alert";
 import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import {FormattedMessage} from "react-intl";
 import {API_URL_PREFIX, checkStatus} from "./utils";
-import apio_logo from "./images/logo.png";
+import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 
 const RESET_PASSWORD_TOKEN_LENGTH = 64;
 export const RESET_PASSWORD_PREFIX = '/reset-password/';
 
 
-class ResetPasswordForm extends Component {
+function triggerResetPassword(username, onSuccess, onError) {
+    fetch(API_URL_PREFIX + '/api/v01/auth/reset-password', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            username: username,
+        }),
+    }).then(checkStatus)
+    .then(() => onSuccess())
+    .catch(onError);
+}
+
+export class ResetPasswordForm extends Component {
     constructor(props) {
         super(props);
         this.state = {password: '', confirm: '', error: undefined, success: false}
@@ -102,35 +115,62 @@ class ResetPasswordForm extends Component {
     }
 }
 
+export function ResetPasswordRequestForm(props) {
+    const [username, setUsername] = useState("");
+    const [error, setError] = useState(undefined);
+    const [loading, setLoading] = useState(false);
+    const [sent, setSent] = useState(false);
 
-export const ResetPasswordPage = ({standby_alert}) => (
-    <div>
-        <Row style={{height: "20px", display: "block"}}/>
-        <Row style={{height: "100%", display: "block"}}>
-            <Col xsOffset={1} xs={10} mdOffset={4} md={4}>
-                {
-                    standby_alert || null
-                }
-                <Panel>
-                    <Panel.Body>
-                        <Row>
-                            <Col xsOffset={3} xs={6} mdOffset={3} md={7}>
-                                <img src={apio_logo}
-                                     width={"100%"}
-                                     height={"100%"}
-                                     style={{padding: 0}}
-                                     alt="apio" />
-                            </Col>
-                        </Row>
-                        <Row>
-                            <Col xsOffset={1} xs={10} mdOffset={0} md={12}>
-                                <hr/>
-                                <ResetPasswordForm />
-                            </Col>
-                        </Row>
-                    </Panel.Body>
-                </Panel>
-            </Col>
-        </Row>
-    </div>
-);
+    const {onReset} = props;
+
+    useEffect(() => {setError(undefined);}, [username]);
+
+    return (
+        <Form horizontal>
+            {
+                error &&
+                    <Alert bsStyle="danger">
+                        {error.message}
+                    </Alert>
+            }
+            {
+                sent &&
+                    <Alert bsStyle="success">
+                        <FormattedMessage id="reset-password-sent" defaultMessage="Reset password request sent!" />
+                    </Alert>
+            }
+            <FormGroup validationState={error === undefined?null:"error"}>
+                <Col componentClass={ControlLabel} sm={3}>
+                    <FormattedMessage id="username" defaultMessage="Username" />
+                </Col>
+
+                <Col sm={8}>
+                    <FormControl
+                        type="text"
+                        value={username}
+                        onChange={e => setUsername(e.target.value)}
+                    />
+                </Col>
+            </FormGroup>
+
+            <FormGroup>
+                <Col smOffset={3} sm={10}>
+                    <ButtonToolbar>
+                        <Button type="submit" onClick={e => {
+                            e.preventDefault();
+                            setLoading(true);
+                            setError(undefined);
+                            triggerResetPassword(
+                                username,
+                                r => {setLoading(false); setSent(true); onReset && onReset(r);},
+                                e => {setLoading(false); setError(e);}
+                            );
+                        }} disabled={username.length === 0 || loading || sent}>
+                            <FormattedMessage id="reset" defaultMessage="Reset" />
+                        </Button>
+                    </ButtonToolbar>
+                </Col>
+            </FormGroup>
+        </Form>
+    )
+}
