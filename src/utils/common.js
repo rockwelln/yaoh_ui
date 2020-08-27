@@ -135,7 +135,11 @@ export class Search extends React.Component {
                 if(value instanceof Date) {
                     value = moment(value).local().format();
                 }
-                return {field: f, op: filter_criteria[f].op, value: value}
+                const op = filter_criteria[f].op;
+                if(op === "like" && !value.includes("%")) {
+                    value += "%";
+                }
+                return {field: f, op: op, value: value}
             });
     }
 

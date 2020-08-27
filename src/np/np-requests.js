@@ -193,22 +193,27 @@ export class NPRequests extends Component {
         )
       )
       .map(f => {
+        let {model, op, value} = filter_criteria[f];
+        if(op === "like" && !value.includes("%")) {
+          value = value.trim() + "%";
+        }
+
         switch (f) {
           case 'number':
             // special handling to look into the ranges of the requests
             return {
               'or': [
                 {
-                  model: filter_criteria[f].model,
+                  model: model,
                   field: 'range_from',
-                  op: filter_criteria[f].op,
-                  value: filter_criteria[f].value.trim()
+                  op: op,
+                  value: value.trim()
                 },
                 {
-                  model: filter_criteria[f].model,
+                  model: model,
                   field: 'range_to',
-                  op: filter_criteria[f].op,
-                  value: filter_criteria[f].value.trim()
+                  op: op,
+                  value: value.trim()
                 }
               ]
             };
@@ -216,29 +221,29 @@ export class NPRequests extends Component {
           case 'action_status':
           case 'request_status':
             return {
-              model: filter_criteria[f].model,
+              model: model,
               field: 'status',
-              op: filter_criteria[f].op,
-              value: filter_criteria[f].value
+              op: op,
+              value: value
             };
           case 'approval':
           case 'wait_ivr':
             return filter_criteria[f];
           case 'b2b':
             return {
-              model: filter_criteria[f].model, // needed in multi-model query
+              model: model, // needed in multi-model query
               field: f,
-              op: filter_criteria[f].op,
-              value: filter_criteria[f].value
+              op: op,
+              value: value
             };
           default:
             return {
-              model: filter_criteria[f].model, // needed in multi-model query
+              model: model, // needed in multi-model query
               field: f,
-              op: filter_criteria[f].op,
+              op: op,
               value: f === 'created_on' || f === 'due_date' ?
-                moment(filter_criteria[f].value, 'DD/MM/YYYY HH:mm').format() :
-                typeof filter_criteria[f].value === "string" ? filter_criteria[f].value.trim() : filter_criteria[f].value
+                moment(value, 'DD/MM/YYYY HH:mm').format() :
+                typeof value === "string" ? value.trim() : value
             }
         }
       });
