@@ -69,7 +69,12 @@ class AuthService {
           let payload = null;
           if(token) {
               const payload_str = token.split(".")[1];
-              payload = JSON.parse(Base64.decode(payload_str));
+              try {
+                payload = JSON.parse(Base64.decode(payload_str));
+              } catch(e) {
+                console.error(e);
+                console.log("let's fetch a new token")
+              }
             }
             if(!payload || payload["exp"] < Math.floor((Date.now() / 1000) + SAFE_GUARD_DELAY)) {
                 return this.fetchNewAccessToken()
