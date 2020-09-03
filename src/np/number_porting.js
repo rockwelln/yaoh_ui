@@ -91,12 +91,10 @@ class UpdateNumberPortingModal extends Component {
         donor_id: case_.donor_id,
         coded_id: case_.coded_id,
         installation_address: case_.installation_address,
-        broadcasted_on: case_.broadcasted_on,
-        due_date: case_.due_date,
+        broadcasted_on: case_.broadcasted_on?moment.parseZone(case_.broadcasted_on).utc().format():null,
         service_type: case_.service_type,
         sub_type: case_.sub_type,
-      },
-      this.props.auth_token
+      }
     )
       .then(() => {
         this.props.notifications.addNotification({
@@ -118,8 +116,8 @@ class UpdateNumberPortingModal extends Component {
       this.props.onClose && this.props.onClose(false);
     };
     const case_ = update(this.props.case, { $merge: this.state.diff_case });
-    const validBroadcast = case_.broadcasted_on === null || moment(case_.broadcasted_on, "DD/MM/YYYY HH:mm").isValid() ? null : "error";
-    const validDueDate = case_.due_date === null || moment(case_.due_date, "DD/MM/YYYY HH:mm").isValid() ? null : "error";
+    const validBroadcast = case_.broadcasted_on === null || moment(case_.broadcasted_on).isValid() ? null : "error";
+    // const validDueDate = case_.due_date === null || moment(case_.due_date).isValid() ? null : "error";
     return (
       <Modal show={this.props.show} onHide={onClose} backdrop={false}>
         <Modal.Header closeButton>
@@ -175,12 +173,16 @@ class UpdateNumberPortingModal extends Component {
               </Col>
 
               <Col sm={9}>
-                <FormControl
-                  componentClass="input"
-                  value={case_.broadcasted_on}
-                  onChange={e => this.setState({
-                    diff_case: update(this.state.diff_case, { '$merge': { broadcasted_on: e.target.value } })
-                  })} />
+                <DatePicker
+                  className="form-control"
+                  selected={case_.broadcasted_on && case_.broadcasted_on.length !== 0 ? userLocalizeUtcDate(moment.utc(case_.broadcasted_on), this.props.userInfo).toDate() : null}
+                  onChange={d => this.setState({
+                    diff_case: update(this.state.diff_case, { '$merge': { broadcasted_on: d||"" } })
+                  })}
+                  dateFormat="dd/MM/yyy HH:mm"
+                  showTimeSelect
+                  timeFormat="HH:mm"
+                  timeIntervals={60} />
               </Col>
             </FormGroup>
 
@@ -272,7 +274,7 @@ class UpdateNumberPortingModal extends Component {
             </Button>
           */}
           <Button bsStyle="info" onClick={this.onLocalSaveUpdate.bind(this)} disabled={
-            validBroadcast === "error" || validDueDate === "error"}>
+            validBroadcast === "error" /*|| validDueDate === "error"*/}>
             <FormattedMessage id="save" defaultMessage="Save" />
           </Button>
           <Button onClick={onClose}><FormattedMessage id="cancel" defaultMessage="Cancel" /></Button>
@@ -528,8 +530,7 @@ class PortingCaseActions extends Component {
           case={this.props.entry}
           operators={this.props.operators}
           onClose={onClose}
-          auth_token={this.props.auth_token}
-          notifications={this.props.notifications}
+          userInfo={this.props.user_info}
         />
       </div>
     )
@@ -555,13 +556,13 @@ export default class SearchPortingCases extends Search {
     this._refresh();
     fetchOperators(undefined, operators => this.setState({ operators: operators }));
   }
-
+/*
   _normalizeResource(r) {
     r.broadcasted_on = r.broadcasted_on && moment.utc(r.broadcasted_on).local().format(DATE_FORMAT);
     r.due_date = r.due_date && moment.utc(r.due_date).local().format(DATE_FORMAT);
     return r;
   }
-
+*/
   _filterCriteriaAsSpec(filter_criteria) {
     return Object.keys(filter_criteria)
       .filter(f => this._usableCriteria(filter_criteria[f]))

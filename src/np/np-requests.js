@@ -621,7 +621,7 @@ export class NPRequests extends Component {
                 <Col sm={8}>
                   <DatePicker
                     className="form-control"
-                    selected={filter_criteria.due_date.value.length !== 0 ? moment.utc(filter_criteria.due_date.value).local().toDate() : null}
+                    selected={filter_criteria.due_date.value.length !== 0 ? userLocalizeUtcDate(moment.utc(filter_criteria.due_date.value), this.props.user_info).toDate() : null}
                     onChange={d => {
                       this.setState({
                         filter_criteria: update(
@@ -630,7 +630,6 @@ export class NPRequests extends Component {
                       });
                     }}
                     dateFormat="dd/MM/yyy HH:mm"
-                    locale="fr-fr"
                     showTimeSelect
                     timeFormat="HH:mm"
                     timeIntervals={60} />
@@ -660,7 +659,7 @@ export class NPRequests extends Component {
                 <Col sm={8}>
                   <DatePicker
                     className="form-control"
-                    selected={filter_criteria.created_on.value.length !== 0?moment.utc(filter_criteria.created_on.value).local().toDate():null}
+                    selected={filter_criteria.created_on.value.length !== 0?userLocalizeUtcDate(moment.utc(filter_criteria.created_on.value), this.props.user_info).toDate():null}
                     onChange={d => {
                         this.setState({
                             filter_criteria: update(
@@ -787,7 +786,7 @@ export class NPRequests extends Component {
                 },
                 {
                   title: <FormattedMessage id="due-date" defaultMessage="Due date" />, field: 'due_date', model: 'NPRequest',
-                  render: n => userLocalizeUtcDate(moment.utc(n.nprequest.due_date), this.props.user_info).format(),
+                  render: n => n.nprequest.due_date?userLocalizeUtcDate(moment.utc(n.nprequest.due_date), this.props.user_info).format():"-",
                   sortable: true,
                   className: 'visible-md visible-lg',
                 },

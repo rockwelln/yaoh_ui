@@ -2096,7 +2096,7 @@ export class Request extends Component {
                             <Table condensed>
                                 <tbody>
                                     <tr>
-                                        <th><FormattedMessage id="requset-id" defaultMessage="Request ID" /></th>
+                                        <th><FormattedMessage id="request-id" defaultMessage="Request ID" /></th>
                                         <td>
                                             { request.request_id }
                                             <Button
@@ -2110,7 +2110,7 @@ export class Request extends Component {
                                     <tr><th><FormattedMessage id="request-status" defaultMessage="Request status" /></th><td>{ request.status }</td></tr>
                                     <tr><th><FormattedMessage id="username" defaultMessage="Username" /></th><td>{ username }</td></tr>
                                     <tr><th><FormattedMessage id="target-type" defaultMessage="Target type" /></th><td>{ request_entity.entity_type }</td></tr>
-                                    <tr><th><FormattedMessage id="creation-date" defaultMessage="Creation date" /></th><td>{ request.created_on }</td></tr>
+                                    <tr><th><FormattedMessage id="creation-date" defaultMessage="Creation date" /></th><td>{ userLocalizeUtcDate(moment.utc(request.created_on), user_info).format() }</td></tr>
                                 </tbody>
                             </Table>
                         </Panel.Body>
@@ -2364,7 +2364,7 @@ export class Requests extends Component{
                             model: filter_criteria[f].model,
                             field: f,
                             op: filter_criteria[f].op,
-                            value: moment(filter_criteria[f].value).local().format()
+                            value: moment.parseZone(filter_criteria[f].value).utc().format()
                         };
                     case 'role_id':
                         return { "and": [
@@ -2454,11 +2454,7 @@ export class Requests extends Component{
                 }
 
                 this.setState({
-                     requests: data.requests.map(c => {
-                        c.created_on = c.created_on?moment(c.created_on).format(DATE_FORMAT):null;
-                        c.updated_on = c.updated_on?moment(c.updated_on).format(DATE_FORMAT):null;
-                        return c;
-                     }),
+                     requests: data.requests,
                      pagination: {
                          page_number: data.pagination[0], // page_number, page_size, num_pages, total_results
                          page_size: data.pagination[1],
@@ -3000,7 +2996,7 @@ export class Requests extends Component{
                                 <Col sm={8}>
                                     <DatePicker
                                         className="form-control"
-                                        selected={filter_criteria.created_on.value.length !== 0?moment(filter_criteria.created_on.value).toDate():null}
+                                        selected={filter_criteria.created_on.value.length !== 0?userLocalizeUtcDate(moment(filter_criteria.created_on.value), user_info).toDate():null}
                                         onChange={d => {
                                             this.setState({
                                                 filter_criteria: update(
@@ -3009,7 +3005,6 @@ export class Requests extends Component{
                                             })
                                         }}
                                         dateFormat="dd/MM/yyyy HH:mm"
-                                        locale="fr-fr"
                                         showTimeSelect
                                         timeFormat="HH:mm"
                                         timeIntervals={60}/>
@@ -3137,10 +3132,12 @@ export class Requests extends Component{
                                 },
                                 {
                                     title: <FormattedMessage id="created-on" defaultMessage="Created on" />,
+                                    render: n => userLocalizeUtcDate(moment.utc(n.created_on), user_info).format(),
                                     field: 'created_on', model: 'requests', sortable: true, style: {width: '200px'}
                                 },
                                 {
                                     title: <FormattedMessage id="updated-on" defaultMessage="Updated on" />,
+                                    render: n => userLocalizeUtcDate(moment.utc(n.updated_on), user_info).format(),
                                     field: 'updated_on', model: 'requests', sortable: true, style: {width: '200px'}
                                 },
                             ]}
@@ -3315,7 +3312,7 @@ export class CustomRequests extends Component{
                             model: criteria.model,
                             field: f,
                             op: criteria.op,
-                            value: moment(criteria.value).local().format()
+                            value: moment.parseZone(criteria.value).utc().format()
                         };
                     case 'role_id':
                         return { "and": [
@@ -3403,11 +3400,7 @@ export class CustomRequests extends Component{
                 }
 
                 this.setState({
-                     requests: data.instances.map(c => {
-                        c.created_on = c.created_on?moment(c.created_on).format(DATE_FORMAT):null;
-                        c.updated_on = c.updated_on?moment(c.updated_on).format(DATE_FORMAT):null;
-                        return c;
-                     }),
+                     requests: data.instances,
                      pagination: {
                          page_number: data.pagination[0], // page_number, page_size, num_pages, total_results
                          page_size: data.pagination[1],
@@ -3424,7 +3417,7 @@ export class CustomRequests extends Component{
     render() {
         const {filter_criteria, requests, activities, export_url, auto_refresh, roles} = this.state;
         const { user_info } = this.props;
-        const invalid_created_on = filter_criteria.created_on.value.length !== 0 && !moment(filter_criteria.created_on.value, "DD/MM/YYYY HH:mm").isValid();
+        const invalid_created_on = filter_criteria.created_on.value.length !== 0 && !moment(filter_criteria.created_on.value).isValid();
         const manualActions =  user_info.modules && user_info.modules.includes(modules.manualActions);
 
         return (
@@ -3627,14 +3620,13 @@ export class CustomRequests extends Component{
                                 <Col sm={8}>
                                     <DatePicker
                                         className="form-control"
-                                        selected={filter_criteria.created_on.value.length !== 0?moment(filter_criteria.created_on.value).toDate():null}
+                                        selected={filter_criteria.created_on.value.length !== 0?userLocalizeUtcDate(moment.utc(filter_criteria.created_on.value), user_info).toDate():null}
                                         onChange={d => this.setState({
                                             filter_criteria: update(
                                                 this.state.filter_criteria,
                                                 {created_on: {$merge: {value: d || ""}}})
                                         })}
                                         dateFormat="dd/MM/yyyy HH:mm"
-                                        locale="fr-fr"
                                         showTimeSelect
                                         timeFormat="HH:mm"
                                         timeIntervals={60}/>
@@ -3718,10 +3710,12 @@ export class CustomRequests extends Component{
                                 },
                                 {
                                     title: <FormattedMessage id="created-on" defaultMessage="Created on" />,
+                                    render: n => userLocalizeUtcDate(moment.utc(n.created_on), user_info).format(),
                                     field: 'created_on', model: 'instances', sortable: true, style: {width: '200px'}
                                 },
                                 {
                                     title: <FormattedMessage id="updated-on" defaultMessage="Updated on" />,
+                                    render: n => userLocalizeUtcDate(moment.utc(n.updated_on), user_info).format(),
                                     field: 'updated_on', model: 'instances', sortable: true, style: {width: '200px'}
                                 },
                             ]}
