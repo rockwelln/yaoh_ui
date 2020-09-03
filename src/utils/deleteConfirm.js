@@ -6,30 +6,37 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 
 
-export function DeleteConfirmButton(props) {
-  const { onConfirm, resourceName, ...props_ } = props;
+export function ConfirmButton(props) {
+  const { onConfirm, title, action, button, ...props_ } = props;
   const [show, setShow] = useState(false)
 
   return (
     <>
       <Button
-        bsStyle="danger"
         onClick={() => setShow(true)}
         {...props_}>
-        <FontAwesomeIcon icon={faTimes} />
+        {button || action}
       </Button>
       <Modal show={show} onHide={() => setShow(false)} >
         <Modal.Header closeButton>
-          Confirm deletation {resourceName ? `of ${resourceName}` : ""}
+          {title}
         </Modal.Header>
         <Modal.Body>
           <Form>
             <Button bsStyle="danger" onClick={e => { onConfirm(); setShow(false); }}>
-              Delete
+              {action}
             </Button>
           </Form>
         </Modal.Body>
       </Modal>
     </>
   )
+}
+
+
+export function DeleteConfirmButton(props) {
+  const { onConfirm, resourceName, title, ...props_ } = props;
+  const title_ = title || "Confirm delete " + (resourceName ? `of ${resourceName}` : "");
+
+  return <ConfirmButton title={title_} action="Delete" button={<FontAwesomeIcon icon={faTimes} />} bsStyle="danger" {...props} />
 }

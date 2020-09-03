@@ -46,6 +46,9 @@ import {
   TxTable
 } from "../../requests/requests";
 import moment from 'moment';
+import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
+import Glyphicon from "react-bootstrap/lib/Glyphicon";
+import {ConfirmButton} from "../../utils/deleteConfirm";
 
 export const DEFAULT_RECIPIENT = "ITC";
 export const rejection_codes = [
@@ -745,7 +748,6 @@ export class NPDisconnectRequest extends Component {
   }
 
   onSubmit(e) {
-    e.preventDefault();
     const { donor, ranges, operators } = this.state;
     fetch_post(
       '/api/v01/npact/np_requests/disconnect',
@@ -760,11 +762,11 @@ export class NPDisconnectRequest extends Component {
       .then(data => {
         this.setState({ redirect: data.id });
         NotificationsManager.success(
-          <FormattedMessage id="voo-disc-created" defaultMessage="disconnect request created!" />,
+          <FormattedMessage id="disc-created" defaultMessage="disconnect request created!" />,
         )
       })
       .catch(error => NotificationsManager.error(
-        <FormattedMessage id="voo-disc-failed" defaultMessage="Failed to create disconnect request" />,
+        <FormattedMessage id="disc-failed" defaultMessage="Failed to create disconnect request" />,
         error.message
       ))
   }
@@ -807,49 +809,62 @@ export class NPDisconnectRequest extends Component {
     const validForm = this.getInvalidRanges().length === 0 && donor && !donor_error;
 
     return (
-      <Panel>
-        <Panel.Heading>
-          <Panel.Title><FormattedMessage id="disconnect-request" defaultMessage="Disconnect request" /></Panel.Title>
-        </Panel.Heading>
-        <Panel.Body>
-          <Form horizontal>
-            {alerts.map((a, i) => <div key={i}>{a}</div>)}
+      <div>
+        <Breadcrumb>
+          <Breadcrumb.Item active><FormattedMessage id="requests" defaultMessage="Requests" /></Breadcrumb.Item>
+          <Breadcrumb.Item active><FormattedMessage id="new-disconnect-request" defaultMessage="New disconnect request" /></Breadcrumb.Item>
+        </Breadcrumb>
+        <Panel>
+          <Panel.Heading>
+            <Panel.Title><FormattedMessage id="disconnect-request" defaultMessage="Disconnect request" /></Panel.Title>
+          </Panel.Heading>
+          <Panel.Body>
 
-            <FormGroup validationState={validRanges}>
-              <Col componentClass={ControlLabel} sm={2}>
-                <FormattedMessage id="ranges" defaultMessage="Ranges" />
-              </Col>
+            <Form horizontal>
+              {alerts.map((a, i) => <div key={i}>{a}</div>)}
 
-              <Col sm={9}>
-                <RangeInput
-                  onChange={ranges => {
-                    this.setState({ ranges: ranges });
-                    this.resolveDonor(ranges[0].from);
-                  }}
-                  ranges={ranges}
-                  multipleRanges={false} />
-              </Col>
-            </FormGroup>
+              <FormGroup validationState={validRanges}>
+                <Col componentClass={ControlLabel} sm={2}>
+                  <FormattedMessage id="ranges" defaultMessage="Ranges" />
+                </Col>
 
-            <StaticControl
-              label={<FormattedMessage id='donor' defaultMessage='Donor' />}
-              value={(donor_error && donor_error.message) || (donor && donor.name) || null}
-              validationState={donor_error ? "error" : null} />
+                <Col sm={9}>
+                  <RangeInput
+                    onChange={ranges => {
+                      this.setState({ ranges: ranges });
+                      this.resolveDonor(ranges[0].from);
+                    }}
+                    ranges={ranges}
+                    multipleRanges={false} />
+                </Col>
+              </FormGroup>
 
-            <FormGroup>
-              <Col smOffset={2} sm={10}>
-                <Button type="submit" onClick={this.onSubmit} disabled={!validForm}>
-                  <FormattedMessage id="submit" defaultMessage="Submit" />
-                </Button>
-              </Col>
-            </FormGroup>
+              <StaticControl
+                label={<FormattedMessage id='donor' defaultMessage='Donor' />}
+                value={(donor_error && donor_error.message) || (donor && donor.name) || null}
+                validationState={donor_error ? "error" : null} />
 
-          </Form>
-          {
-            redirect && <Redirect to={`/transactions/${redirect}`} />
-          }
-        </Panel.Body>
-      </Panel>
+              <FormGroup>
+                <Col smOffset={2} sm={10}>
+                  <ConfirmButton
+                    onConfirm={this.onSubmit}
+                    title={"Are you sure you want to disconnect?"}
+                    button="Submit"
+                    action="Disconnect"
+                    disabled={!validForm} />
+                </Col>
+              </FormGroup>
+
+            </Form>
+            {
+              redirect && <Redirect to={`/transactions/${redirect}`} />
+            }
+          </Panel.Body>
+        </Panel>
+        <HelpBlock>
+          <Glyphicon glyph="question-sign"/>Disconnect requests signals NP clear house the number(s) return to their native range. If the process is properly executed, the number is removed from the NP database.
+        </HelpBlock>
+      </div>
     )
   }
 }

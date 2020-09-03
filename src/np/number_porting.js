@@ -8,7 +8,6 @@ import Col from 'react-bootstrap/lib/Col';
 import FormGroup from 'react-bootstrap/lib/FormGroup';
 import FormControl from 'react-bootstrap/lib/FormControl';
 import ControlLabel from 'react-bootstrap/lib/ControlLabel';
-import HelpBlock from 'react-bootstrap/lib/HelpBlock';
 import Glyphicon from 'react-bootstrap/lib/Glyphicon';
 import Modal from 'react-bootstrap/lib/Modal';
 import Alert from 'react-bootstrap/lib/Alert';
@@ -20,18 +19,43 @@ import { FormattedMessage } from 'react-intl';
 import moment from 'moment';
 import DatePicker from 'react-datepicker';
 
-import { DATE_FORMAT /*, DEFAULT_RECIPIENT*/ } from './np-requests';
-import {parseJSON, fetch_delete, fetch_post, fetch_put, userLocalizeUtcDate, userLocaleDateToUtc} from "../utils";
+import { DATE_FORMAT } from './np-requests';
+import {
+  parseJSON,
+  fetch_delete,
+  fetch_post,
+  fetch_put,
+  userLocalizeUtcDate,
+  NotificationsManager
+} from "../utils";
 import { ApioDatatable } from '../utils/datatable';
 import { Search, StaticControl } from "../utils/common";
 import { access_levels, pages, isAllowed } from "../utils/user";
 import { fetchOperators } from './data/operator_mgm';
+import {DeleteConfirmButton} from "../utils/deleteConfirm";
 
 /*
 function ownedCase(c) {
   return c._recipient && c._recipient.short_name === DEFAULT_RECIPIENT;
 }
 */
+
+function deleteLocalNumberPorting(npId, onSuccess, onError) {
+  fetch_delete(`/api/v01/npact/number_porting/${npId}`)
+      .then(() => {
+        NotificationsManager.success(
+          <FormattedMessage id="porting-case-deleted" defaultMessage="Porting case deleted" />
+        );
+        onSuccess && onSuccess();
+      })
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage id="create-local-disconnect-request-failed" defaultMessage="Failed to create local disconnect request" />,
+          error.message,
+        );
+        onError && onError(error);
+      });
+}
 
 class UpdateNumberPortingModal extends Component {
   constructor(props) {
@@ -259,81 +283,6 @@ class UpdateNumberPortingModal extends Component {
 }
 
 
-class DisconnectNumberPortingModal extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {};
-  }
-
-  onDisconnect() {
-    this.setState({ error: undefined, new_np_request: undefined });
-    // post a new PORTING CASE (type: disconnect as donor)
-    fetch_post('/api/v01/npact/np_requests/disconnect', this.props.case, this.props.auth_token)
-      .then(parseJSON)
-      .then(data => this.setState({ new_np_request: data.id }))
-      .catch(error => this.props.notifications.addNotification({
-        title: <FormattedMessage id="create-disconnect-request-failed" defaultMessage="Failed to create disconnect request" />,
-        message: error.message,
-        level: 'error'
-      }));
-  }
-
-  onLocalDisconnect() {
-    this.setState({ error: undefined });
-    fetch_delete(`/api/v01/npact/number_porting/${this.props.case.id}`, this.props.auth_token)
-      .then(() => {
-        this.props.notifications.addNotification({
-          message: <FormattedMessage id="porting-case-deleted" defaultMessage="Porting case deleted" />,
-          level: 'success'
-        });
-        this.props.onClose(true);
-      })
-      .catch(error => this.props.notifications.addNotification({
-        title: <FormattedMessage id="create-local-disconnect-request-failed" defaultMessage="Failed to create local disconnect request" />,
-        message: error.message,
-        level: 'error'
-      }));
-  }
-
-  render() {
-    const onClose = () => {
-      this.setState({ error: undefined, new_np_request: undefined });
-      this.props.onClose && this.props.onClose(false);
-    };
-    return (
-      <Modal show={this.props.show} onHide={onClose} backdrop={false}>
-        <Modal.Header closeButton>
-          <Modal.Title><FormattedMessage id="disconnect-number" defaultMessage="Disconnect a Number" /></Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {
-            this.state.new_np_request && (
-              <Alert bsStyle="success">
-                <FormattedMessage id="new-request-started" defaultMessage="New request started" /><br />
-                <i><Link to={"/transactions/" + this.state.success}><FormattedMessage id="see" defaultMessage="See" /> {this.state.new_np_request}</Link></i>
-              </Alert>
-            )
-          }
-          <Form horizontal>
-            <StaticControl label={<FormattedMessage id='number' defaultMessage='Number' />} value={this.props.case.number} />
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          {/*ownedCase(this.props.case) &&
-            <Button onClick={this.onDisconnect.bind(this)} bsStyle="danger">
-              <FormattedMessage id="disconnect-clear-house" defaultMessage="Disconnect @ Clear house" />
-            </Button>
-          */}
-          <Button onClick={this.onLocalDisconnect.bind(this)} bsStyle="warning">
-            <FormattedMessage id="local-disconnect" defaultMessage="Local Disconnect" />
-          </Button>
-          <Button onClick={onClose}><FormattedMessage id="cancel" defaultMessage="Cancel" /></Button>
-        </Modal.Footer>
-      </Modal>
-    )
-  }
-}
-
 class NewNumberPorting extends Component {
   constructor(props) {
     super(props);
@@ -551,7 +500,7 @@ class PortingCaseActions extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      showUpdate: false, showDelete: false,
+      showUpdate: false
     }
   }
 
@@ -559,7 +508,6 @@ class PortingCaseActions extends Component {
     const onClose = (force_refresh) => {
       this.setState({
         showUpdate: false,
-        showDelete: false,
       });
       this.props.onClose && this.props.onClose(force_refresh);
     };
@@ -570,21 +518,15 @@ class PortingCaseActions extends Component {
           <Button onClick={() => this.setState({ showUpdate: true })} bsStyle="primary">
             <Glyphicon glyph="pencil" />
           </Button>
-          <Button onClick={() => this.setState({ showDelete: true })} bsStyle="danger">
-            <Glyphicon glyph="remove-sign" />
-          </Button>
+          <DeleteConfirmButton
+            resourceName={this.props.entry.number}
+            style={{width: '40px'}}
+            onConfirm={() => deleteLocalNumberPorting(this.props.entry.id, () => onClose(true))} />
         </ButtonToolbar>
         <UpdateNumberPortingModal
           show={this.state.showUpdate}
           case={this.props.entry}
           operators={this.props.operators}
-          onClose={onClose}
-          auth_token={this.props.auth_token}
-          notifications={this.props.notifications}
-        />
-        <DisconnectNumberPortingModal
-          show={this.state.showDelete}
-          case={this.props.entry}
           onClose={onClose}
           auth_token={this.props.auth_token}
           notifications={this.props.notifications}
