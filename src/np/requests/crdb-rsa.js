@@ -1570,7 +1570,7 @@ export class NPTransaction extends Component {
                   <Panel.Title><FormattedMessage id="comments" defaultMessage="Comments" /></Panel.Title>
                 </Panel.Heading>
                 <Panel.Body>
-                  <Comments req_id={tx.id} {...this.props} />
+                  <Comments req_id={tx.id} userInfo={user_info} />
                 </Panel.Body>
               </Panel>
             </Col>
@@ -1587,7 +1587,7 @@ export class NPTransaction extends Component {
                 <Panel.Title><FormattedMessage id="summary" defaultMessage="Summary" /></Panel.Title>
               </Panel.Heading>
               <Panel.Body>
-                <TxTable tx={tx} request={request} />
+                <TxTable tx={tx} request={request} userInfo={user_info}/>
               </Panel.Body>
             </Panel>
 
@@ -1603,6 +1603,7 @@ export class NPTransaction extends Component {
                   onReplay={this.onReplay}
                   user_can_replay={can_act && tx.status === 'ACTIVE'}
                   tx_id={tx.id}
+                  userInfo={user_info}
                 />
               </Panel.Body>
             </Panel>
@@ -1625,7 +1626,7 @@ export class NPTransaction extends Component {
                     <Panel.Title toggle><FormattedMessage id="events" defaultMessage="Events" /></Panel.Title>
                   </Panel.Heading>
                   <Panel.Body collapsible>
-                    <Events events={events} logs={logs} />
+                    <Events events={events} logs={logs} userInfo={user_info} />
                   </Panel.Body>
                 </Panel>
               )

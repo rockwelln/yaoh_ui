@@ -5,7 +5,7 @@ import FormControl from "react-bootstrap/lib/FormControl";
 import Col from "react-bootstrap/lib/Col";
 
 import {FormattedMessage} from 'react-intl';
-import {API_URL_PREFIX, fetch_get} from "../utils";
+import {API_URL_PREFIX, fetch_get, userLocalizeUtcDate} from "../utils";
 import queryString from "query-string";
 import update from "immutability-helper/index";
 import PropTypes from 'prop-types';
@@ -133,7 +133,7 @@ export class Search extends React.Component {
             .map(f => {
                 let value = filter_criteria[f].value;
                 if(value instanceof Date) {
-                    value = moment(value).local().format();
+                    value = userLocalizeUtcDate(moment.utc(value), this.props.user_info).format();
                 }
                 const op = filter_criteria[f].op;
                 if(op === "like" && !value.includes("%")) {

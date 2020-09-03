@@ -275,3 +275,11 @@ export function fetch_delete(url, body) {
             })
         ).then(checkStatus)
 }
+
+export function userLocalizeUtcDate(d, userInfo) {
+  if(userInfo && userInfo.timezone && userInfo.timezone.length) {
+    return d.utcOffset(userInfo.timezone);
+  } else {
+    return d.local();
+  }
+}

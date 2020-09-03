@@ -20,18 +20,32 @@ import { Redirect } from 'react-router-dom';
 import { FormattedMessage } from 'react-intl';
 import update from 'immutability-helper';
 import { fetchOperators } from "../data/operator_mgm";
-import {NotificationsManager, fetch_get, fetch_post, fetch_put, parseJSON, API_URL_PREFIX} from "../../utils";
+import {
+  NotificationsManager,
+  fetch_get,
+  fetch_post,
+  fetch_put,
+  parseJSON,
+  API_URL_PREFIX,
+  userLocalizeUtcDate
+} from "../../utils";
 import Panel from "react-bootstrap/lib/Panel";
 import {access_levels, isAllowed, pages} from "../../utils/user";
 import {StaticControl} from "../../utils/common";
 import {
   Comments,
-  ContextTable, Errors, Events, ReplayingSubInstancesModal, SavingModal,
+  ContextTable,
+  Errors,
+  Events,
+  ReplayingSubInstancesModal,
+  SavingModal,
+  MessagesTable,
   TasksTable,
   TransactionFlow,
   triggerManualAction,
   TxTable
 } from "../../requests/requests";
+import moment from 'moment';
 
 export const DEFAULT_RECIPIENT = "ITC";
 export const rejection_codes = [
@@ -966,7 +980,7 @@ class RequestTable extends Component {
             <tr><th><FormattedMessage id="service-type" defaultMessage="Service type" /></th><td>{req.service_type}</td></tr>
             <tr><th><FormattedMessage id="sub-type" defaultMessage="Sub type" /></th><td>{req.sub_type}</td></tr>
             <tr><th><FormattedMessage id="port-req-form-id" defaultMessage="Port request form ID" /></th><td>{req.port_req_form_id}</td></tr>
-            <tr><th><FormattedMessage id="created" defaultMessage="Created" /></th><td>{req.created_on}</td></tr>
+            <tr><th><FormattedMessage id="created" defaultMessage="Created" /></th><td>{req.created_on?userLocalizeUtcDate(moment.utc(req.created_on)).format():""}</td></tr>
             <tr>
               <th><FormattedMessage id="subscriber-data" defaultMessage="Subscriber data" /></th>
               <td>
@@ -1066,6 +1080,7 @@ export class NPTransaction extends Component {
       manualActions: [],
       logs: [],
       events: [],
+      messages: [],
     };
     this.cancelLoad = false;
 
@@ -1079,6 +1094,7 @@ export class NPTransaction extends Component {
     this.onEdit = this.onEdit.bind(this);
     this.caseUpdated = this.caseUpdated.bind(this);
     this.caseUpdateFailure = this.caseUpdateFailure.bind(this);
+    this.refreshMessages = this.refreshMessages.bind(this);
   }
 
   fetchTxDetails(reload) {
@@ -1109,6 +1125,9 @@ export class NPTransaction extends Component {
           }))
           .catch(error => !this.cancelLoad && this.setState({error: error}));
 
+        if(this.state.messageShown) {
+          this.refreshMessages();
+        }
         reload && setTimeout(() => this.fetchTxDetails(true), RELOAD_TX);
       })
       .catch(error => {
@@ -1299,8 +1318,30 @@ export class NPTransaction extends Component {
     )
   }
 
+  refreshMessages() {
+    this.state.tx.tasks.map(t => {
+      const task_name = t.cell_id;
+      fetch_get(`/api/v01/apio/transactions/${this.state.tx.id}/tasks/${t.id}/traces?details=1`)
+        .then(data => {
+          const missing_messages = data.traces.filter(
+            t => this.state.messages.findIndex(m => m.processing_trace_id === t.processing_trace_id) === -1
+          ).map(m => update(m, {'task_name' : {'$set' : task_name}}));
+
+          !this.cancelLoad && this.setState({
+            messages: update(
+              this.state.messages, {
+                '$push': missing_messages,
+              })
+          });
+        })
+        .catch(error => console.error(error));
+      return t;
+    });
+  }
+
   render() {
-    const { sending, error, tx, request, activeTab, manualActions, events, logs, replaying } = this.state;
+    const { sending, error, tx, request, activeTab, manualActions, events, logs, replaying, messages, messageShown } = this.state;
+    const { user_info } = this.props;
     let alerts = [];
     error && alerts.push(
       <Alert bsStyle="danger" key='fail-fetch-tx'>
@@ -1351,6 +1392,7 @@ export class NPTransaction extends Component {
     return (
       <div>
         {alerts}
+        <ReplayingSubInstancesModal show={replaying}/>
         <Row>
           {can_act && tx.status === 'ACTIVE' && actions_required.map((a, i) => <div key={i}>{a}</div>)}
         </Row>
@@ -1387,7 +1429,7 @@ export class NPTransaction extends Component {
                   <Panel.Title><FormattedMessage id="comments" defaultMessage="Comments" /></Panel.Title>
                 </Panel.Heading>
                 <Panel.Body>
-                  <Comments req_id={tx.id} {...this.props} />
+                  <Comments req_id={tx.id} userInfo={user_info} />
                 </Panel.Body>
               </Panel>
             </Col>
@@ -1404,7 +1446,7 @@ export class NPTransaction extends Component {
                 <Panel.Title><FormattedMessage id="summary" defaultMessage="Summary" /></Panel.Title>
               </Panel.Heading>
               <Panel.Body>
-                <TxTable tx={tx} />
+                <TxTable tx={tx} userInfo={user_info}/>
               </Panel.Body>
             </Panel>
 
@@ -1420,9 +1462,35 @@ export class NPTransaction extends Component {
                   onReplay={this.onReplay}
                   user_can_replay={can_act && tx.status === 'ACTIVE'}
                   tx_id={tx.id}
+                  userInfo={user_info}
                 />
               </Panel.Body>
             </Panel>
+
+            {
+              messages.length !== 0 && (
+                <Panel
+                  expanded={messageShown}
+                  onToggle={e => {
+                    this.setState({messageShown: e});
+                    e && this.refreshMessages();
+                  }}
+                >
+                  <Panel.Heading>
+                    <Panel.Title toggle>
+                      <FormattedMessage id="messages" defaultMessage="Messages"/>
+                    </Panel.Title>
+                  </Panel.Heading>
+                  <Panel.Body collapsible>
+                    <MessagesTable
+                      messages={messages}
+                      tasks={tx.tasks}
+                      userInfo={user_info}
+                    />
+                  </Panel.Body>
+                </Panel>
+              )
+            }
 
             <Panel bsStyle="danger">
               <Panel.Heading>
@@ -1438,7 +1506,7 @@ export class NPTransaction extends Component {
                 <Panel.Title><FormattedMessage id="events" defaultMessage="Events" /></Panel.Title>
               </Panel.Heading>
               <Panel.Body>
-                <Events events={events} logs={logs} />
+                <Events events={events} logs={logs} userInfo={user_info}/>
               </Panel.Body>
             </Panel>
           </Tab>
