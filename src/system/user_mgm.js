@@ -35,7 +35,7 @@ import {get_ui_profiles} from "../utils/user";
 // helper functions
 
 function updateLocalUser(data, onSuccess) {
-    const updatable_field = k => ['language', 'password'].includes(k);
+    const updatable_field = k => ['language', 'password', 'timezone'].includes(k);
     fetch_put(
         '/api/v01/system/users/local',
         Object.keys(data).filter(updatable_field).reduce(
@@ -124,6 +124,7 @@ export function LocalUserProfile(props) {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [profileName, setProfileName] = useState('');
     const [language, setLanguage] = useState(user_info.language);
+    const [timezone, setTimezone] = useState(user_info.timezone);
 
     const delta = {};
     if(newPassword.length !== 0) {
@@ -131,6 +132,9 @@ export function LocalUserProfile(props) {
     }
     if(language !== user_info.language) {
         delta.language = language;
+    }
+    if(timezone !== user_info.timezone) {
+        delta.timezone = timezone;
     }
     useEffect(() => {
         user_info.profile_id && fetch_get("/api/v01/system/user_profiles")
@@ -179,6 +183,23 @@ export function LocalUserProfile(props) {
                                     <option value="fr">fr</option>
                                     <option value="nl">nl</option>
                                     <option value="en">en</option>
+                                </FormControl>
+                            </Col>
+                        </FormGroup>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="timezone" defaultMessage="Timezone" />
+                            </Col>
+
+                            <Col sm={2}>
+                                <FormControl
+                                    componentClass="select"
+                                    value={timezone}
+                                    onChange={(e) => setTimezone(e.target.value)}>
+                                    <option value="">* local *</option>
+                                    {
+                                        ["+01:00", "+02:00", "+03:00"].map(t => <option value={t}>{t}</option>)
+                                    }
                                 </FormControl>
                             </Col>
                         </FormGroup>
@@ -434,6 +455,23 @@ function UpdateUser(props) {
                         </FormGroup>
                         <FormGroup>
                             <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="timezone" defaultMessage="Timezone" />
+                            </Col>
+
+                            <Col sm={2}>
+                                <FormControl
+                                    componentClass="select"
+                                    value={localUser.timezone}
+                                    onChange={(e) => setDiffUser(update(diffUser, {$merge: {timezone: e.target.value}}))}>
+                                    <option value="">* local *</option>
+                                    {
+                                        ["+01:00", "+02:00", "+03:00"].map(t => <option value={t}>{t}</option>)
+                                    }
+                                </FormControl>
+                            </Col>
+                        </FormGroup>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
                                 <FormattedMessage id="properties" defaultMessage="Properties" />
                             </Col>
 
@@ -610,6 +648,7 @@ function NewUser(props) {
         profile_id: null,
         ui_profile: 'user',
         language: 'en',
+        timezone: null,
         groups: [],
         password: '',
         token_expiry: true,
@@ -730,6 +769,23 @@ function NewUser(props) {
                                 <option value="fr">fr</option>
                                 <option value="nl">nl</option>
                                 <option value="en">en</option>
+                            </FormControl>
+                        </Col>
+                    </FormGroup>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="timezone" defaultMessage="Timezone" />
+                        </Col>
+
+                        <Col sm={2}>
+                            <FormControl
+                                componentClass="select"
+                                value={user.timezone}
+                                onChange={(e) => setUser(update(user, {$merge: {timezone: e.target.value}}))}>
+                                <option value="">* local *</option>
+                                {
+                                    ["+01:00", "+02:00", "+03:00"].map(t => <option value={t}>{t}</option>)
+                                }
                             </FormControl>
                         </Col>
                     </FormGroup>
