@@ -21,7 +21,7 @@ import moment from 'moment';
 import DatePicker from 'react-datepicker';
 
 import { DATE_FORMAT /*, DEFAULT_RECIPIENT*/ } from './np-requests';
-import { parseJSON, fetch_delete, fetch_post, fetch_put } from "../utils";
+import {parseJSON, fetch_delete, fetch_post, fetch_put, userLocalizeUtcDate, userLocaleDateToUtc} from "../utils";
 import { ApioDatatable } from '../utils/datatable';
 import { Search, StaticControl } from "../utils/common";
 import { access_levels, pages, isAllowed } from "../utils/user";
@@ -615,10 +615,33 @@ export default class SearchPortingCases extends Search {
   }
 
   _normalizeResource(r) {
-    r.created_on = r.created_on && moment(r.created_on).format(DATE_FORMAT);
-    r.broadcasted_on = r.broadcasted_on && moment(r.broadcasted_on).format(DATE_FORMAT);
-    r.due_date = r.due_date && moment(r.due_date).format(DATE_FORMAT);
+    r.broadcasted_on = r.broadcasted_on && moment.utc(r.broadcasted_on).local().format(DATE_FORMAT);
+    r.due_date = r.due_date && moment.utc(r.due_date).local().format(DATE_FORMAT);
     return r;
+  }
+
+  _filterCriteriaAsSpec(filter_criteria) {
+    return Object.keys(filter_criteria)
+      .filter(f => this._usableCriteria(filter_criteria[f]))
+      .map(f => {
+        let value = filter_criteria[f].value;
+        const op = filter_criteria[f].op;
+
+        switch(f) {
+          case 'created_on':
+          case 'due_date':
+            return {
+              field: f,
+              op: op,
+              value: moment.parseZone(value).utc().format()
+            };
+        }
+
+        if(op === "like" && !value.includes("%")) {
+          value += "%";
+        }
+        return {field: f, op: op, value: value}
+      });
   }
 
   render() {
@@ -627,7 +650,7 @@ export default class SearchPortingCases extends Search {
       r._donor = operators.find(o => o.id === r.donor_id);
       r._recipient = operators.find(o => o.id === r.recipient_id);
     });
-    const invalid_created_on = filter_criteria.created_on.value.length !== 0 && !moment(filter_criteria.created_on.value).isValid();
+    const invalid_created_on = filter_criteria.created_on.value.length !== 0 && !moment.utc(filter_criteria.created_on.value).isValid();
 
     return (
       <div>
@@ -789,26 +812,18 @@ export default class SearchPortingCases extends Search {
                 <Col sm={8}>
                   <DatePicker
                     className="form-control"
-                    selected={filter_criteria.created_on.value.length !== 0 ? moment(filter_criteria.created_on.value) : null}
-                    onChangeRaw={d => {
-                      this.setState({
-                        filter_criteria: update(
-                          this.state.filter_criteria,
-                          { created_on: { $merge: { value: d.target.value } } })
-                      });
-                      d.target.value.length === 0 && d.preventDefault();
+                    selected={filter_criteria.created_on.value.length !== 0?moment.utc(filter_criteria.created_on.value).local().toDate():null}
+                    onChange={d => {
+                        this.setState({
+                            filter_criteria: update(
+                                this.state.filter_criteria,
+                                {created_on: {$merge: {value: d || ""}}})
+                        })
                     }}
-                    onChange={d => this.setState({
-                      filter_criteria: update(
-                        this.state.filter_criteria,
-                        { created_on: { $merge: { value: d.format() } } })
-                    })}
-                    dateFormat="DD/MM/YYYY HH:mm"
-                    locale="fr-fr"
+                    dateFormat="dd/MM/yyyy HH:mm"
                     showTimeSelect
                     timeFormat="HH:mm"
-                    timeIntervals={60} />
-                  <HelpBlock><FormattedMessage id="datepicker-note" defaultMessage="The date has to be formatted as DD/MM/YYYY HH:mm" /></HelpBlock>
+                    timeIntervals={60}/>
                 </Col>
               </FormGroup>
               <FormGroup>
@@ -831,7 +846,11 @@ export default class SearchPortingCases extends Search {
                 { title: <FormattedMessage id="routing-info" defaultMessage="Routing info" />, field: 'routing_info', sortable: true },
                 { title: <FormattedMessage id="donor" defaultMessage="Donor" />, field: '_donor', render: c => c._donor ? c._donor.name : 'n/a' },
                 { title: <FormattedMessage id="recipient" defaultMessage="Recipient" />, field: '_recipient', render: c => c._recipient ? c._recipient.name : 'n/a' },
-                { title: <FormattedMessage id="created-on" defaultMessage="Created on" />, field: 'created_on', sortable: true },
+                {
+                  title: <FormattedMessage id="created-on" defaultMessage="Created on" />, field: 'created_on',
+                  render: c => userLocalizeUtcDate(moment.utc(c.created_on), this.props.user_info).format(),
+                  sortable: true,
+                },
                 {
                   title: '', render: n => (
                     isAllowed(this.props.user_info.ui_profile, pages.npact_porting_cases, access_levels.modify) &&

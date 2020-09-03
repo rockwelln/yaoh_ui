@@ -8,7 +8,7 @@ import Tab from "react-bootstrap/lib/Tab";
 
 import {FormattedMessage} from 'react-intl';
 
-import {fetch_get, fetch_put, NotificationsManager} from "../utils";
+import {fetch_get, fetch_put, NotificationsManager, userLocalizeUtcDate} from "../utils";
 import update from 'immutability-helper';
 //import Ajv from 'ajv';
 import {Panel} from "react-bootstrap";
@@ -22,6 +22,8 @@ import Checkbox from "react-bootstrap/lib/Checkbox";
 import HelpBlock from "react-bootstrap/lib/HelpBlock";
 import Modal from "react-bootstrap/lib/Modal";
 import {modules} from "../utils/user";
+
+import moment from 'moment';
 
 
 function fetchConfiguration(onSuccess) {
@@ -1104,6 +1106,7 @@ function ProvisioningPanels(props) {
 export default function Configuration(props) {
   const [activeKey, setActiveKey] = useState(1);
   const [config, setConfig] = useState({});
+  const {userInfo} = props;
 
   useEffect(() => fetchConfiguration(setConfig), []);
   const editConfig = e => setConfig(update(config, {$merge: {content: e.updated_src}}));
@@ -1178,7 +1181,7 @@ export default function Configuration(props) {
       </Button>
       <br/>
       <FormattedMessage id='id' defaultMessage='ID'/>{`: ${config.config_id}`}<br/>
-      <FormattedMessage id='last-edit' defaultMessage='Last edit'/>{`: ${config.created_on}`}
+      <FormattedMessage id='last-edit' defaultMessage='Last edit'/>{`: ${userLocalizeUtcDate(moment.utc(config.created_on), userInfo).format()}`}
     </>
   );
 }

@@ -18,7 +18,7 @@ import { FormattedMessage } from 'react-intl';
 import queryString from 'query-string';
 
 import {
-  API_URL_PREFIX, fetch_get
+  API_URL_PREFIX, fetch_get, userLocalizeUtcDate
 } from "../utils";
 import { fetchOperators } from "./data/operator_mgm";
 import { ApioDatatable } from "../utils/datatable";
@@ -226,6 +226,14 @@ export class NPRequests extends Component {
               op: op,
               value: value
             };
+          case 'created_on':
+          case 'due_date':
+            return {
+                model: filter_criteria[f].model,
+                field: f,
+                op: filter_criteria[f].op,
+                value: moment.parseZone(filter_criteria[f].value).utc().format()
+            };
           case 'approval':
           case 'wait_ivr':
             return filter_criteria[f];
@@ -241,9 +249,7 @@ export class NPRequests extends Component {
               model: model, // needed in multi-model query
               field: f,
               op: op,
-              value: f === 'created_on' || f === 'due_date' ?
-                moment(value, 'DD/MM/YYYY HH:mm').format() :
-                typeof value === "string" ? value.trim() : value
+              value: typeof value === "string" ? value.trim() : value
             }
         }
       });
@@ -295,8 +301,10 @@ export class NPRequests extends Component {
             (filter_criteria[f].value && filter_criteria[f].op) ||
             filter_criteria[f].or ||
             filter_criteria[f].and ||
-            filter_criteria[f].op === 'is_null')
-          ).reduce((obj, key) => {
+            filter_criteria[f].in ||
+            filter_criteria[f].op === 'is_null' ||
+            filter_criteria[f].op === 'is_not_null'
+          )).reduce((obj, key) => {
             obj[key] = filter_criteria[key];
             return obj;
           }, {});
@@ -313,10 +321,7 @@ export class NPRequests extends Component {
         }
 
         this.setState({
-          requests: data.requests.map(c => {
-            c.created_on = c.created_on ? moment(c.created_on).format(DATE_FORMAT) : null;
-            return c;
-          }),
+          requests: data.requests,
           pagination: {
             page_number: data.pagination[0], // page_number, page_size, num_pages, total_results
             page_size: data.pagination[1],
@@ -338,8 +343,8 @@ export class NPRequests extends Component {
       r.donor_name = donor ? donor.name : 'n/a';
       r.recipient_name = recipient ? recipient.name : 'n/a';
     });
-    const invalid_created_on = filter_criteria.created_on.value.length !== 0 && !moment(filter_criteria.created_on.value, "DD/MM/YYYY HH:mm").isValid();
-    const invalid_due_date = filter_criteria.due_date.value.length !== 0 && !moment(filter_criteria.due_date.value, "DD/MM/YYYY HH:mm").isValid();
+    const invalid_created_on = filter_criteria.created_on.value.length !== 0 && !moment.utc(filter_criteria.created_on.value).isValid();
+    const invalid_due_date = filter_criteria.due_date.value.length !== 0 && !moment.utc(filter_criteria.due_date.value).isValid();
 
     return (
       <div>
@@ -616,21 +621,15 @@ export class NPRequests extends Component {
                 <Col sm={8}>
                   <DatePicker
                     className="form-control"
-                    selected={filter_criteria.due_date.value.length !== 0 ? moment(filter_criteria.due_date.value, "DD/MM/YYYY HH:mm") : null}
-                    onChangeRaw={d => {
+                    selected={filter_criteria.due_date.value.length !== 0 ? moment.utc(filter_criteria.due_date.value).local().toDate() : null}
+                    onChange={d => {
                       this.setState({
                         filter_criteria: update(
                           this.state.filter_criteria,
-                          { due_date: { $merge: { value: d.target.value } } })
+                          { due_date: { $merge: { value: d || "" } } })
                       });
-                      d.target.value.length === 0 && d.preventDefault();
                     }}
-                    onChange={d => this.setState({
-                      filter_criteria: update(
-                        this.state.filter_criteria,
-                        { due_date: { $merge: { value: d.format("DD/MM/YYYY HH:mm") } } })
-                    })}
-                    dateFormat="DD/MM/YYYY HH:mm"
+                    dateFormat="dd/MM/yyy HH:mm"
                     locale="fr-fr"
                     showTimeSelect
                     timeFormat="HH:mm"
@@ -661,25 +660,18 @@ export class NPRequests extends Component {
                 <Col sm={8}>
                   <DatePicker
                     className="form-control"
-                    selected={filter_criteria.created_on.value.length !== 0 ? moment(filter_criteria.created_on.value, "DD/MM/YYYY HH:mm") : null}
-                    onChangeRaw={d => {
-                      this.setState({
-                        filter_criteria: update(
-                          this.state.filter_criteria,
-                          { created_on: { $merge: { value: d.target.value } } })
-                      });
-                      d.target.value.length === 0 && d.preventDefault();
+                    selected={filter_criteria.created_on.value.length !== 0?moment.utc(filter_criteria.created_on.value).local().toDate():null}
+                    onChange={d => {
+                        this.setState({
+                            filter_criteria: update(
+                                this.state.filter_criteria,
+                                {created_on: {$merge: {value: d || ""}}})
+                        })
                     }}
-                    onChange={d => this.setState({
-                      filter_criteria: update(
-                        this.state.filter_criteria,
-                        { created_on: { $merge: { value: d.format("DD/MM/YYYY HH:mm") } } })
-                    })}
-                    dateFormat="DD/MM/YYYY HH:mm"
-                    locale="fr-fr"
+                    dateFormat="dd/MM/yyyy HH:mm"
                     showTimeSelect
                     timeFormat="HH:mm"
-                    timeIntervals={60} />
+                    timeIntervals={60}/>
                 </Col>
               </FormGroup>
 
@@ -795,11 +787,15 @@ export class NPRequests extends Component {
                 },
                 {
                   title: <FormattedMessage id="due-date" defaultMessage="Due date" />, field: 'due_date', model: 'NPRequest',
-                  render: n => n.nprequest.due_date,
+                  render: n => userLocalizeUtcDate(moment.utc(n.nprequest.due_date), this.props.user_info).format(),
                   sortable: true,
                   className: 'visible-md visible-lg',
                 },
-                { title: <FormattedMessage id="created-on" defaultMessage="Created on" />, field: 'created_on', model: 'NPRequest', sortable: true },
+                {
+                  title: <FormattedMessage id="created-on" defaultMessage="Created on" />, field: 'created_on', model: 'NPRequest',
+                  render: n => userLocalizeUtcDate(moment.utc(n.created_on), this.props.user_info).format(),
+                  sortable: true,
+                },
               ]}
               pagination={this.state.pagination}
               data={requests}

@@ -23,13 +23,13 @@ import {
     fetch_delete,
     fetch_get,
     fetch_post_raw,
-    NotificationsManager
+    NotificationsManager, userLocalizeUtcDate
 } from "../utils";
 import update from "immutability-helper";
 import queryString from "query-string";
 import {Link} from "react-router-dom";
 import {Pagination} from "../utils/datatable";
-import {faSpinner} from "@fortawesome/free-solid-svg-icons";
+import moment from 'moment';
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 
 
@@ -493,7 +493,7 @@ class BulkEntry extends Component {
 
     render() {
         const {expanded, results, loading} = this.state;
-        const {bulk, onDelete} = this.props;
+        const {bulk, onDelete, userInfo} = this.props;
         const expIco = expanded?<Glyphicon glyph="chevron-down"/>:<Glyphicon glyph="chevron-right"/>;
         const resultsLink = `/api/v01/bulks/${bulk.bulk_id}/results?as=log&auth_token=${AuthServiceManager.getToken()}`;
 
@@ -505,7 +505,7 @@ class BulkEntry extends Component {
                 <td>{bulk.status}</td>
                 <td>{this.completionStatus()}</td>
                 <td>{bulk.action}</td>
-                <td>{bulk.created_on}</td>
+                <td>{userLocalizeUtcDate(moment.utc(bulk.created_on), userInfo).format()}</td>
                 <td>
                     <DeleteBulk bulk={bulk} onClose={onDelete} />
                 </td>
@@ -549,7 +549,7 @@ class BulkEntry extends Component {
 }
 
 
-const BulkHistory = ({bulks, onDelete, pagination, onPagination}) => (
+const BulkHistory = ({bulks, onDelete, pagination, onPagination, userInfo}) => (
     <Panel defaultExpanded={false}>
         <Panel.Heading>
             <Panel.Title toggle><FormattedMessage id="history" defaultMessage="History" /> <Glyphicon glyph="cog" /></Panel.Title>
@@ -570,7 +570,7 @@ const BulkHistory = ({bulks, onDelete, pagination, onPagination}) => (
                 </thead>
                 <tbody>
                 {
-                    bulks && bulks.map(b => <BulkEntry bulk={b} onDelete={onDelete} key={`bulk_${b.bulk_id}`}/>)
+                    bulks && bulks.map(b => <BulkEntry bulk={b} onDelete={onDelete} key={`bulk_${b.bulk_id}`} userInfo={userInfo}/>)
                 }
                 </tbody>
             </Table>
@@ -657,6 +657,7 @@ export function Bulks(props) {
                 onDelete={() => fetchHistory(pagination, setBulksWithPage)}
                 pagination={pagination}
                 onPagination={e => setPagination(update(pagination, {$merge: e}))}
+                userInfo={props.userInfo}
             />
         </div>
     )

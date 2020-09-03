@@ -31,7 +31,15 @@ import queryString from 'query-string';
 import ReactJson from 'react-json-view';
 
 import {
-    API_URL_PREFIX, API_URL_PROXY_PREFIX, fetch_get, parseJSON, fetch_post, fetch_put, API_WS_URL, NotificationsManager
+  API_URL_PREFIX,
+  API_URL_PROXY_PREFIX,
+  fetch_get,
+  parseJSON,
+  fetch_post,
+  fetch_put,
+  API_WS_URL,
+  NotificationsManager,
+  userLocalizeUtcDate
 } from "../utils";
 import {ApioDatatable, Pagination} from "../utils/datatable";
 
@@ -474,7 +482,7 @@ function Message(props) {
         }
     }, [expanded]);
 
-    const {entry, p} = props;
+    const {entry, p, userInfo} = props;
     const statusColor = entry.status < 400 ? '#a4d1a2' : '#ca6f7b';
     const expIco = expanded?<Glyphicon glyph="chevron-down"/>:<Glyphicon glyph="chevron-right"/>;
     const syncDetails = entry.gateway_details || respSyncDetails;
@@ -488,7 +496,7 @@ function Message(props) {
             <td style={{width: '2%'}}><Glyphicon style={{color: statusColor}} glyph={entry.status < 400?"ok":"remove"}/></td>
             <td style={{width: '16%'}}>{entry.label}</td>
             <td style={{width: '5%'}}>{entry.status}</td>
-            <td style={{width: '60%'}}>{moment(entry.created_on).format(DATE_FORMAT)}</td>
+            <td style={{width: '60%'}}>{userLocalizeUtcDate(moment.utc(entry.created_on), userInfo).format()}</td>
             <td style={{width: '15%'}}><Badge>{entry.task_name}</Badge></td>
         </tr>
     ];
@@ -549,7 +557,7 @@ function Message(props) {
 }
 
 
-const MessagesTable = ({messages, auth_token})  => (
+export const MessagesTable = ({messages, userInfo})  => (
     <Table condensed>
         <tbody>
         {
@@ -562,7 +570,7 @@ const MessagesTable = ({messages, auth_token})  => (
                     return 0;
                 }
             ).map(
-                (e, i) => <Message key={`message_${i}`} entry={e} p={i} auth_token={auth_token}/>
+                (e, i) => <Message key={`message_${i}`} entry={e} p={i} userInfo={userInfo}/>
             )
         }
         </tbody>
@@ -756,8 +764,9 @@ export function Comments(props) {
     const [comments, setComments] = useState([]);
     const [comment, setComment] = useState("");
     const [showAddModal, setShowAddModal] = useState(false);
+    const {userInfo, req_id} = props;
 
-    useEffect(() => {fetchComments(props.req_id, setComments)}, []);
+    useEffect(() => { fetchComments(req_id, setComments) }, []);
 
     const closeModal = () => {
         setShowAddModal(false);
@@ -769,7 +778,7 @@ export function Comments(props) {
             <tbody>
                 {comments && comments.map(c => (
                     <tr key={c.id}>
-                        <th style={{width: '15%'}}>{c.user.username}<br/>{moment(c.created_on).format(DATE_FORMAT)}</th>
+                        <th style={{width: '15%'}}>{c.user.username}<br/>{userLocalizeUtcDate(moment.utc(c.created_on), userInfo).format()}</th>
                         <td>{c.content.split('\n').map((e, i) => <div key={i}>{e}</div>)}</td>
                     </tr>
                     ))
@@ -800,9 +809,9 @@ export function Comments(props) {
             </Modal.Body>
             <Modal.Footer>
                 <Button
-                    onClick={() => saveComment(props.req_id, comment, () => {
+                    onClick={() => saveComment(req_id, comment, () => {
                         closeModal();
-                        fetchComments(props.req_id, setComments);
+                        fetchComments(req_id, setComments);
                     })}
                     bsStyle="primary"
                     disabled={comment.length === 0}>
@@ -817,7 +826,7 @@ export function Comments(props) {
 function ErrorEntry(props){
     const [showDetails, setShowDetails] = useState(false);
 
-    const {entry} = props;
+    const {entry, userInfo} = props;
     const summary = entry.output?entry.output:<FormattedMessage id="see-description" defaultMessage="See description" />;
     return (
         <tr key={entry.id}>
@@ -827,7 +836,7 @@ function ErrorEntry(props){
                 <br/>
                 <Button bsStyle="link" onClick={() => setShowDetails(true)}>...</Button>
             </td>
-            <td>{moment(entry.created_on).format(DATE_FORMAT)}</td>
+            <td>{userLocalizeUtcDate(moment.utc(entry.created_on), userInfo).format()}</td>
             <Modal show={showDetails} onHide={() => setShowDetails(false)}>
                 <Modal.Header closeButton>
                     <Modal.Title><FormattedMessage id="error-details" defaultMessage="Error details" /></Modal.Title>
@@ -835,7 +844,7 @@ function ErrorEntry(props){
                 <Modal.Body>
                     <Form horizontal>
                         <StaticControl label={<FormattedMessage id='source' defaultMessage='Source'/>} value={entry.cell_id}/>
-                        <StaticControl label={<FormattedMessage id='when' defaultMessage='When'/>} value={moment(entry.created_on).format(DATE_FORMAT)}/>
+                        <StaticControl label={<FormattedMessage id='when' defaultMessage='When'/>} value={userLocalizeUtcDate(moment.utc(entry.created_on), userInfo).format()}/>
 
                         <FormGroup>
                             <Col componentClass={ControlLabel} sm={2}>
@@ -880,7 +889,7 @@ export const Errors = ({errors, user_info}) => (
                     return 0;
                 }
             ).map(
-                e => (!e.advanced || user_info.ui_profile === "admin") && <ErrorEntry key={e.id} entry={e} />
+                e => (!e.advanced || user_info.ui_profile === "admin") && <ErrorEntry key={e.id} entry={e} userInfo={user_info} />
             )
         }
         </tbody>
@@ -888,125 +897,122 @@ export const Errors = ({errors, user_info}) => (
 );
 
 
-export class Events extends Component {
-    constructor(props) {
-        super(props);
-        this.cancelLoad = false;
-        this.state = {show_details: false, selected_evt: {}};
-    }
+export function Events(props) {
+    const [showDetails, setShowDetails] = useState(false);
+    const [selectedEvent, setSelectedEvent] = useState({});
 
-    render() {
-        const {selected_evt, show_details} = this.state;
-        const {events, logs} = this.props;
+    const {events, logs, userInfo} = props;
 
-        const closeModal = () => this.setState({show_details: false, selected_evt: {}});
-        const event_content = pp_as_json(selected_evt.content);
-        const extra = pp_as_json(selected_evt.extra);
-        return (<div>
-            <Table condensed>
-                <thead>
-                    <tr><th colSpan={2}>{"# "}<FormattedMessage id="external" defaultMessage="External"/></th></tr>
-                </thead>
-                <tbody>
-                {
-                    events.sort((a, b) => {
-                        if(b.event_id && a.event_id) {
-                            if(b.event_id > a.event_id) return -1;
-                            if(b.event_id < a.event_id) return 1;
-                            return 0
-                        } else {
-                            return moment(b.created_on) - moment(a.created_on)
-                        }
-                    }).map(
-                        (e, n) => (
-                            <tr key={n}>
-                                <th style={{width: "20%"}}>
-                                    {e.source_entity + (e.username?' (' + e.username + ')':'')}
-                                    <br/>
-                                    {moment(e.created_on).format(DATE_FORMAT)}
-                                </th>
-                                <td>
-                                    {e.content ? e.content.substr(0, 50): ""}
-                                    <br/>
-                                    <Button bsStyle="link" onClick={() => this.setState({show_details: true, selected_evt: e})}>...</Button>
-                                </td>
-                            </tr>
-                        )
+    const closeModal = () => {
+        setShowDetails(false);
+        setSelectedEvent({});
+    };
+    const event_content = pp_as_json(selectedEvent.content);
+    const extra = pp_as_json(selectedEvent.extra);
+    return (<div>
+        <Table condensed>
+            <thead>
+                <tr><th colSpan={2}>{"# "}<FormattedMessage id="external" defaultMessage="External"/></th></tr>
+            </thead>
+            <tbody>
+            {
+                events.sort((a, b) => {
+                    if(b.event_id && a.event_id) {
+                        if(b.event_id > a.event_id) return -1;
+                        if(b.event_id < a.event_id) return 1;
+                        return 0
+                    } else {
+                        return moment(b.created_on) - moment(a.created_on)
+                    }
+                }).map(
+                    (e, n) => (
+                        <tr key={n}>
+                            <th style={{width: "20%"}}>
+                                {e.source_entity + (e.username?' (' + e.username + ')':'')}
+                                <br/>
+                                {userLocalizeUtcDate(moment.utc(e.created_on), userInfo).format()}
+                            </th>
+                            <td>
+                                {e.content ? e.content.substr(0, 50): ""}
+                                <br/>
+                                <Button bsStyle="link" onClick={() => { setShowDetails(true); setSelectedEvent(e); }}>...</Button>
+                            </td>
+                        </tr>
                     )
-                }
-                </tbody>
-            </Table>
-            <Table condensed>
-                <thead>
-                    <tr><th colSpan={2}>{"# "}<FormattedMessage id="logs" defaultMessage="Log"/></th></tr>
-                </thead>
-                <tbody>
-                {
-                    logs.sort((a, b) => {
-                        if(b.event_id && a.event_id) {
-                            if(b.event_id > a.event_id) return -1;
-                            if(b.event_id < a.event_id) return 1;
-                            return 0
-                        } else {
-                            return moment(b.created_on) - moment(a.created_on)
-                        }
-                    }).map(
-                        (e, n) => (
-                            <tr key={n}>
-                                <th style={{width: "20%"}}>
-                                    {e.source_entity + (e.username?' (' + e.username + ')':'')}
-                                    <br/>
-                                    {moment(e.created_on).format(DATE_FORMAT)}
-                                </th>
-                                <td>
-                                    {e.content.substr(0, 50)}
-                                    <br/>
-                                    <Button bsStyle="link" onClick={() => this.setState({show_details: true, selected_evt: e})}>...</Button>
-                                </td>
-                            </tr>
-                        )
+                )
+            }
+            </tbody>
+        </Table>
+        <Table condensed>
+            <thead>
+                <tr><th colSpan={2}>{"# "}<FormattedMessage id="logs" defaultMessage="Log"/></th></tr>
+            </thead>
+            <tbody>
+            {
+                logs.sort((a, b) => {
+                    if(b.event_id && a.event_id) {
+                        if(b.event_id > a.event_id) return -1;
+                        if(b.event_id < a.event_id) return 1;
+                        return 0
+                    } else {
+                        return moment(b.created_on) - moment(a.created_on)
+                    }
+                }).map(
+                    (e, n) => (
+                        <tr key={n}>
+                            <th style={{width: "20%"}}>
+                                {e.source_entity + (e.username?' (' + e.username + ')':'')}
+                                <br/>
+                                {userLocalizeUtcDate(moment.utc(e.created_on), userInfo).format()}
+                            </th>
+                            <td>
+                                {e.content.substr(0, 50)}
+                                <br/>
+                                <Button bsStyle="link" onClick={() => { setShowDetails(true); setSelectedEvent(e); }}>...</Button>
+                            </td>
+                        </tr>
                     )
-                }
-                </tbody>
-            </Table>
-            <Modal show={show_details} onHide={closeModal}>
-                <Modal.Header closeButton>
-                    <Modal.Title><FormattedMessage id="event-details" defaultMessage="Event details" /></Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Form horizontal>
-                        <StaticControl label={<FormattedMessage id='source' defaultMessage='Source'/>} value={selected_evt.source_entity}/>
-                        <StaticControl label={<FormattedMessage id='username' defaultMessage='Username'/>} value={selected_evt.username}/>
-                        <StaticControl label={<FormattedMessage id='when' defaultMessage='When'/>} value={moment(selected_evt.created_on).format(DATE_FORMAT)}/>
-                        <FormGroup>
-                            <Col componentClass={ControlLabel} sm={2}>
-                                <FormattedMessage id="content" defaultMessage="Content" />
-                            </Col>
+                )
+            }
+            </tbody>
+        </Table>
+        <Modal show={showDetails} onHide={closeModal}>
+            <Modal.Header closeButton>
+                <Modal.Title><FormattedMessage id="event-details" defaultMessage="Event details" /></Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <Form horizontal>
+                    <StaticControl label={<FormattedMessage id='source' defaultMessage='Source'/>} value={selectedEvent.source_entity}/>
+                    <StaticControl label={<FormattedMessage id='username' defaultMessage='Username'/>} value={selectedEvent.username}/>
+                    <StaticControl label={<FormattedMessage id='when' defaultMessage='When'/>} value={userLocalizeUtcDate(moment.utc(selectedEvent.created_on), userInfo).format()}/>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="content" defaultMessage="Content" />
+                        </Col>
 
-                            <Col sm={9}>
-                                <pre style={{wordWrap: 'break-word', whiteSpace: 'pre-wrap', maxHeight: '250px'}}>{event_content}</pre>
-                            </Col>
-                        </FormGroup>
-                        {
-                            extra &&
-                                <FormGroup>
-                                    <Col componentClass={ControlLabel} sm={2}>
-                                        <FormattedMessage id="extra" defaultMessage="Extra..." />
-                                    </Col>
+                        <Col sm={9}>
+                            <pre style={{wordWrap: 'break-word', whiteSpace: 'pre-wrap', maxHeight: '250px'}}>{event_content}</pre>
+                        </Col>
+                    </FormGroup>
+                    {
+                        extra &&
+                            <FormGroup>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="extra" defaultMessage="Extra..." />
+                                </Col>
 
-                                    <Col sm={9}>
-                                        <pre style={{wordWrap: 'break-word', whiteSpace: 'pre-wrap', maxHeight: '250px'}}>{extra}</pre>
-                                    </Col>
-                                </FormGroup>
-                        }
-                    </Form>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button onClick={closeModal}><FormattedMessage id="cancel" defaultMessage="Cancel" /></Button>
-                </Modal.Footer>
-            </Modal>
-            </div>)
-    }
+                                <Col sm={9}>
+                                    <pre style={{wordWrap: 'break-word', whiteSpace: 'pre-wrap', maxHeight: '250px'}}>{extra}</pre>
+                                </Col>
+                            </FormGroup>
+                    }
+                </Form>
+            </Modal.Body>
+            <Modal.Footer>
+                <Button onClick={closeModal}><FormattedMessage id="cancel" defaultMessage="Cancel" /></Button>
+            </Modal.Footer>
+        </Modal>
+        </div>)
 }
 
 
@@ -1036,7 +1042,7 @@ export const SavingModal = ({show}) => (
 
 const titleCase = s => s[0].toUpperCase() + s.substr(1);
 
-export const TasksTable = ({tasks, definition, onReplay, onRollback, user_can_replay, tx_id}) => (
+export const TasksTable = ({tasks, definition, onReplay, onRollback, user_can_replay, tx_id, userInfo}) => (
     <Table condensed>
         <thead>
         <tr>
@@ -1064,8 +1070,8 @@ export const TasksTable = ({tasks, definition, onReplay, onRollback, user_can_re
                             <th>{t.cell_id}</th>
                             <td>{t.status}</td>
                             <td>{t.output}</td>
-                            <td>{moment(t.created_on).format(DATE_FORMAT)}</td>
-                            <td>{t.updated_on?moment(t.updated_on).format(DATE_FORMAT):'-'}</td>
+                            <td>{userLocalizeUtcDate(moment.utc(t.created_on), userInfo).format()}</td>
+                            <td>{t.updated_on?userLocalizeUtcDate(moment.utc(t.updated_on), userInfo).format():'-'}</td>
                             <td>{t.runtime?`${t.runtime.toFixed(3)} sec(s)`:'-'}</td>
                             <td>
                                 <ButtonToolbar>
@@ -1110,14 +1116,14 @@ export const TasksTable = ({tasks, definition, onReplay, onRollback, user_can_re
 );
 
 
-export const TxTable = ({tx, request}) => (
+export const TxTable = ({tx, request, userInfo}) => (
     <Table condensed>
         <tbody>
             <tr><th><FormattedMessage id="id" defaultMessage="ID" /></th><td>{tx.id}</td></tr>
             <tr><th><FormattedMessage id="request-status" defaultMessage="Request status" /></th><td>{request && request.status}</td></tr>
             <tr><th><FormattedMessage id="workflow-status" defaultMessage="Workflow status" /></th><td>{tx.status}</td></tr>
-            <tr><th><FormattedMessage id="creation-date" defaultMessage="Creation date" /></th><td>{moment(tx.created_on).format(DATE_FORMAT)}</td></tr>
-            <tr><th><FormattedMessage id="last-update" defaultMessage="Last update" /></th><td>{moment(tx.updated_on).format(DATE_FORMAT)}</td></tr>
+            <tr><th><FormattedMessage id="creation-date" defaultMessage="Creation date" /></th><td>{userLocalizeUtcDate(moment.utc(tx.created_on), userInfo).format()}</td></tr>
+            <tr><th><FormattedMessage id="last-update" defaultMessage="Last update" /></th><td>{userLocalizeUtcDate(moment.utc(tx.updated_on), userInfo).format()}</td></tr>
             <tr><th><FormattedMessage id="errors" defaultMessage="Errors" /></th><td>{tx.errors.length}</td></tr>
         </tbody>
     </Table>
@@ -1810,7 +1816,7 @@ export class Transaction extends Component {
                                     <Panel.Title><FormattedMessage id="comments" defaultMessage="Comments" /></Panel.Title>
                                 </Panel.Heading>
                                 <Panel.Body>
-                                    <Comments req_id={tx.id} {...this.props} />
+                                    <Comments req_id={tx.id} userInfo={user_info} />
                                 </Panel.Body>
                             </Panel>
                         </Col>
@@ -1827,7 +1833,7 @@ export class Transaction extends Component {
                                 <Panel.Title><FormattedMessage id="summary" defaultMessage="Summary" /></Panel.Title>
                             </Panel.Heading>
                             <Panel.Body>
-                                <TxTable tx={tx} request={request}/>
+                                <TxTable tx={tx} request={request} userInfo={user_info}/>
                             </Panel.Body>
                         </Panel>
 
@@ -1844,6 +1850,7 @@ export class Transaction extends Component {
                                     onRollback={this.onRollback}
                                     user_can_replay={can_act && tx.status === 'ACTIVE' && !replaying}
                                     tx_id={tx.id}
+                                    userInfo={user_info}
                                 />
                             </Panel.Body>
                         </Panel>
@@ -1866,7 +1873,7 @@ export class Transaction extends Component {
                                         <MessagesTable
                                             messages={messages}
                                             tasks={tx.tasks}
-                                            {...this.props}
+                                            userInfo={user_info}
                                         />
                                     </Panel.Body>
                                 </Panel>
@@ -1964,7 +1971,7 @@ export class Transaction extends Component {
                                         <Panel.Title toggle><FormattedMessage id="events" defaultMessage="Events" /></Panel.Title>
                                     </Panel.Heading>
                                     <Panel.Body collapsible>
-                                        <Events events={events} logs={logs} />
+                                        <Events events={events} logs={logs} userInfo={user_info}/>
                                     </Panel.Body>
                                 </Panel>
                             )
@@ -2033,7 +2040,7 @@ export class Request extends Component {
 
     render() {
         const {request, messages} = this.state;
-        const {auth_token} = this.props;
+        const {auth_token, user_info} = this.props;
 
         if (!request) {
             return <div><FormattedMessage id='loading' defaultMessage='Loading...'/></div>
@@ -2122,7 +2129,7 @@ export class Request extends Component {
                                 <Panel.Body>
                                     <MessagesTable
                                         messages={messages}
-                                        {...this.props}
+                                        userInfo={user_info}
                                     />
                                 </Panel.Body>
                             </Panel>

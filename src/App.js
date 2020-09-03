@@ -725,7 +725,7 @@ class App extends Component {
                         <Route path="/transactions/bulk"
                                component={props => (
                                    isAllowed(ui_profile, pages.requests_nprequests) ?
-                                   <Bulks /> :
+                                   <Bulks userInfo={user_info}/> :
                                    <NotAllowed/>
                                )}
                                exact />
@@ -888,7 +888,7 @@ class App extends Component {
                         <Route path="/system/config"
                                component={props => (
                                    isAllowed(ui_profile, pages.system_config) ?
-                                       <Configuration />:
+                                       <Configuration userInfo={user_info} />:
                                        <NotAllowed />
                                )}
                                exact />
