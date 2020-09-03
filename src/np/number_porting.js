@@ -633,7 +633,7 @@ export default class SearchPortingCases extends Search {
       <div>
         <Breadcrumb>
           <Breadcrumb.Item active><FormattedMessage id="data" defaultMessage="Data" /></Breadcrumb.Item>
-          <Breadcrumb.Item active><FormattedMessage id="porting-cases" defaultMessage="Porting cases" /></Breadcrumb.Item>
+          <Breadcrumb.Item active><FormattedMessage id="np-database" defaultMessage="NP database" /></Breadcrumb.Item>
         </Breadcrumb>
         <Panel defaultExpanded={false} >
           <Panel.Heading>
@@ -856,7 +856,7 @@ export default class SearchPortingCases extends Search {
           <Panel>
             <Panel.Body>
               <Button bsStyle="primary" onClick={() => this.setState({ showAdd: true })}>
-                <FormattedMessage id="add-porting-case" defaultMessage="Add porting case" />
+                <FormattedMessage id="add" defaultMessage="Add" />
               </Button>
               <NewNumberPorting
                 show={this.state.showAdd}

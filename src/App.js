@@ -292,7 +292,7 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
                 { isAllowed(user_info.ui_profile, pages.npact_porting_cases) &&
                     <LinkContainer to={"/system/porting_cases"}>
                         <MenuItem>
-                            <FormattedMessage id="porting-cases" defaultMessage="Porting cases"/>
+                            <FormattedMessage id="np-database" defaultMessage="NP database"/>
                         </MenuItem>
                     </LinkContainer>
                 }
