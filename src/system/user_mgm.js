@@ -30,6 +30,7 @@ import {INTERNAL_HELP_LINKS} from "../async-apio-help";
 import {Search, StaticControl} from "../utils/common";
 import {CallbackHandler} from "./callbacks";
 import {get_ui_profiles} from "../utils/user";
+import {TrustedLocationsTable} from "./user_trusted_locs";
 
 
 // helper functions
@@ -296,11 +297,18 @@ export function LocalUserProfile(props) {
                             </Col>
                         </FormGroup>
                     </Form>
-                 </Tab>
-                 <Tab eventKey={2} title={<FormattedMessage id="callbacks" defaultMessage="Callbacks" />}>
+                </Tab>
+                <Tab eventKey={2} title={<FormattedMessage id="callbacks" defaultMessage="Callbacks" />}>
                      <CallbackHandler userId={user_info.id} />
-                 </Tab>
-             </Tabs>
+                </Tab>
+                <Tab eventKey={"trusted-locs"} title={<FormattedMessage id="trusted-loc" defaultMessage="Trusted Loc." />}>
+                     <TrustedLocationsTable
+                       userId={user_info.id}
+                       locations={user_info.trusted_locs}
+                       userInfo={user_info}
+                       onChange={props.onUserInfoChanged} />
+                </Tab>
+            </Tabs>
             </Panel.Body>
         </Panel>
     )
@@ -315,10 +323,12 @@ function UpdateUser(props) {
     const [profiles, setProfiles] = useState([]);
     const [roles, setRoles] = useState([]);
     const [newProp, setNewProp] = useState({key: "", value: ""});
+
+    const loadFullUser = userId => fetch_get(`/api/v01/system/users/${userId}`)
+        .then(user => setFullUser(user))
+        .catch(console.error)
     useEffect(() => {
-        show ? fetch_get(`/api/v01/system/users/${user.id}`)
-            .then(user => setFullUser(user))
-            .catch(console.error) : setFullUser({})
+        show ? loadFullUser(user.id) : setFullUser({})
     }, [user.id, show]);
 
     useEffect(() => {
@@ -632,6 +642,13 @@ function UpdateUser(props) {
                                 </Col>
                             </FormGroup>
                         </Form>
+                    </Tab>
+                    <Tab eventKey={"trusted-locs"} title={<FormattedMessage id="trusted-loc" defaultMessage="Trusted Loc." />}>
+                        <TrustedLocationsTable
+                          userId={user.id}
+                          locations={fullUser.trusted_locs}
+                          userInfo={fullUser}
+                          onChange={() => loadFullUser(user.id)} />
                     </Tab>
                 </Tabs>
             </Modal.Body>

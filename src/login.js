@@ -139,7 +139,6 @@ function TwoFaModal(props) {
                         <Col sm={8} smOffset={3}>
                             <Checkbox
                               checked={trust}
-                              disabled
                               onChange={e => setTrust(e.target.checked)}>
                                 Trust this machine.
                             </Checkbox>
