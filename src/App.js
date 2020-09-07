@@ -45,7 +45,7 @@ import {
     parseJSON,
     ProvProxiesManager,
     removeCookie,
-    testAppFlavour,
+    UiFlavourService,
 } from "./utils";
 import Databases from "./system/databases_mgm";
 import {AuditLogs} from "./system/audit";
@@ -478,7 +478,6 @@ class App extends Component {
         this.state = {
             user_info: undefined,
             error_msg: undefined,
-            flavour: undefined,
         };
         this._notificationSystem = React.createRef();
         NotificationsManager.setRef(this._notificationSystem);
@@ -509,10 +508,14 @@ class App extends Component {
 
     getDatabaseStatus() {
         fetch_get('/api/v01/system/database/status')
-            .then(data =>
-                (!this.state.database_status || data.is_master !== this.state.database_status.is_master) &&
-                this.setState({database_status: data})
-            )
+            .then(data => {
+                if (!this.state.database_status || data.is_master !== this.state.database_status.is_master) {
+                   this.setState({database_status: data})
+                }
+                if (data.modules) {
+                    UiFlavourService.updateFlavourFromModules(data.modules);
+                }
+            })
             .catch(console.error);
     }
 
@@ -524,10 +527,6 @@ class App extends Component {
     }
 
     componentDidMount() {
-        testAppFlavour(f => {
-            this.setState({flavour: f});
-            document.title = f.toUpperCase();
-        });
         this.getDatabaseStatus();
         getCookie('auth_sso') === '1' && !sso_auth_service.isLoggedIn() && sso_auth_service.signinSilent();
     }
@@ -602,7 +601,7 @@ class App extends Component {
         if(is_reset_password) {
             return (
                 <LoginPage
-                    logo={this.state.flavour === "apio" ? apio_logo : null}
+                    logo={UiFlavourService.isApio() ? apio_logo : null}
                     standby_alert={standby_alert}>
                     <ResetPasswordForm />
                 </LoginPage>
@@ -626,7 +625,7 @@ class App extends Component {
                             component={() => (
                                 <LoginPage
                                     error_msg={error_msg}
-                                    logo={this.state.flavour === "apio" ? apio_logo : null}
+                                    logo={UiFlavourService.isApio() ? apio_logo : null}
                                     standby_alert={standby_alert} >
                                     <ResetPasswordRequestForm />
                                 </LoginPage>
@@ -636,7 +635,7 @@ class App extends Component {
                             component={() => (
                                 <LoginPage
                                     error_msg={error_msg}
-                                    logo={this.state.flavour === "apio" ? apio_logo : null}
+                                    logo={UiFlavourService.isApio() ? apio_logo : null}
                                     standby_alert={standby_alert} >
                                     <LoginForm onLogin={r => {
                                         if(r.access_token) {

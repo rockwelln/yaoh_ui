@@ -101,6 +101,34 @@ class AuthService {
 export const AuthServiceManager = new AuthService();
 
 
+class UiFlavour {
+    updateFlavour(f) {
+        localStorage.setItem("ui-flavour", f);
+    }
+
+    updateFlavourFromModules(m) {
+        if(m) {
+            if(m.includes("npact")) this.updateFlavour("npact");
+            else this.updateFlavour("apio");
+        }
+    }
+
+    getFlavour() {
+        return localStorage.getItem("ui-flavour");
+    }
+
+    isApio() {
+        return this.getFlavour() === "apio";
+    }
+
+    isNpact() {
+        return this.getFlavour() === "npact";
+    }
+}
+
+export const UiFlavourService = new UiFlavour();
+
+
 class ProvisioningProxies {
     static proxies = [];
 
@@ -196,14 +224,6 @@ export function checkStatus(response) {
 
 export function parseJSON(response) {
   return response.json()
-}
-
-export function testAppFlavour(onSuccess) {
-    fetch(API_URL_PREFIX + "/api/v01/npact/operators", {method: "GET"})
-        .then(r => {
-            r.status === 404 || r.status === 401 ? onSuccess("apio") : onSuccess("npact");
-            console.log(r.status)
-        });
 }
 
 export function fetch_get(url, token) {
