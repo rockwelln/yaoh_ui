@@ -266,7 +266,8 @@ export function LocalUserProfile(props) {
                                     componentClass="input"
                                     placeholder="Password"
                                     type="password"
-                                    autocomplete="off"
+                                    autoComplete="off"
+                                    name="new-password"
                                     value={newPassword}
                                     onChange={e => setNewPassword(e.target.value)} />
                             </Col>
@@ -281,7 +282,8 @@ export function LocalUserProfile(props) {
                                     componentClass="input"
                                     placeholder="Repeat password"
                                     type="password"
-                                    autocomplete="off"
+                                    autoComplete="off"
+                                    name="confirm-new-password"
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)} />
                             </Col>
@@ -389,7 +391,8 @@ function UpdateUser(props) {
                                 <FormControl
                                     componentClass="input"
                                     value={localUser.email}
-                                    autocomplete="off"
+                                    autoComplete="off"
+                                    name="new-email"
                                     onChange={e => setDiffUser(update(diffUser, {$merge: {email: e.target.value}}))}/>
                             </Col>
                         </FormGroup>
@@ -549,7 +552,8 @@ function UpdateUser(props) {
                                     componentClass="input"
                                     placeholder="Password"
                                     type="password"
-                                    autocomplete="off"
+                                    autoComplete="off"
+                                    name="new-password"
                                     value={localUser.newPassword || ''}
                                     onChange={e => setDiffUser(update(diffUser, {$merge: {newPassword: e.target.value}}))}/>
                             </Col>
@@ -564,7 +568,8 @@ function UpdateUser(props) {
                                     componentClass="input"
                                     placeholder="Confirm password"
                                     type="password"
-                                    autocomplete="off"
+                                    autoComplete="off"
+                                    name="confirm-new-password"
                                     value={localUser.confirmPassword || ''}
                                     onChange={e => setDiffUser(update(diffUser, {$merge: {confirmPassword: e.target.value}}))}/>
                             </Col>
@@ -714,7 +719,8 @@ function NewUser(props) {
                         <Col sm={9}>
                             <FormControl
                                 componentClass="input"
-                                autocomplete="off"
+                                autoComplete="off"
+                                name="new-email"
                                 value={user.email}
                                 onChange={e => setUser(update(user, {$merge: {email: e.target.value}}))}/>
                         </Col>
@@ -866,7 +872,8 @@ function NewUser(props) {
                                 componentClass="input"
                                 placeholder="Password"
                                 type="password"
-                                autocomplete="off"
+                                autoComplete="off"
+                                name="new-password"
                                 value={user.password}
                                 onChange={e => setUser(update(user, {$merge: {password: e.target.value}}))}/>
                         </Col>
@@ -881,7 +888,8 @@ function NewUser(props) {
                                 componentClass="input"
                                 placeholder="Confirm password"
                                 type="password"
-                                autocomplete="off"
+                                autoComplete="off"
+                                name="confirm-new-password"
                                 value={confirmPassword}
                                 onChange={e => setConfirmPassword(e.target.value)}/>
                         </Col>
