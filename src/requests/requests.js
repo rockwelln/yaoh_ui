@@ -233,9 +233,10 @@ const XSLT_PP = "<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1
     "</xsl:stylesheet>";
 
 
-const pp_output = (protocol, content) => {
+export const pp_output = (protocol, content) => {
     switch(protocol) {
         case "BS-OCI":
+        case "SOAP":
         case "ROM":
             return transformXML(content, XSLT_PP);
         default:

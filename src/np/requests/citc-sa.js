@@ -1,8 +1,9 @@
-import React, {useState, useEffect, Component} from "react";
+import React, {useState, useEffect, Component, useRef} from "react";
+import ReactDOM from "react-dom";
 import Button from 'react-bootstrap/lib/Button';
 import ButtonToolbar from 'react-bootstrap/lib/ButtonToolbar';
 import ButtonGroup from 'react-bootstrap/lib/ButtonGroup';
-import Table from 'react-bootstrap/lib/Table';
+import Table, {tbody, th, tr} from 'react-bootstrap/lib/Table';
 import Tabs from 'react-bootstrap/lib/Tabs';
 import Tab from 'react-bootstrap/lib/Tab';
 import Alert from 'react-bootstrap/lib/Alert';
@@ -43,7 +44,8 @@ import {
   TasksTable,
   TransactionFlow,
   triggerManualAction,
-  TxTable
+  TxTable,
+  pp_output,
 } from "../../requests/requests";
 import moment from 'moment';
 import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
@@ -907,26 +909,22 @@ class RequestTable extends Component {
       .then(data => {
         this.setState({ request_crdc: data.event_sent, saving: false });
         if (data.request_crdc) {
-          this.props.notifications.addNotification({
-            message: <FormattedMessage id="request-updated-with-crdc" defaultMessage="Update request sent to CRDC!" />,
-            level: 'success'
-          })
+          NotificationsManager.success(
+            <FormattedMessage id="request-updated-with-crdc" defaultMessage="Update request sent to CRDC!" />,
+          )
         } else {
-          this.props.notifications.addNotification({
-            message: <FormattedMessage id="request-updated" defaultMessage="Request updated!" />,
-            level: 'success'
-          })
+          NotificationsManager.success(
+            <FormattedMessage id="request-updated" defaultMessage="Request updated!" />,
+          )
         }
-        //this._fetch();  // devnote: refresh the data
         this.onClose();
       })
       .catch(error => {
           this.setState({ saving: false });
-          this.props.notifications.addNotification({
-            title: <FormattedMessage id="request-update-failed" defaultMessage="Request update failed!" />,
-            message: error.message,
-            level: 'error'
-          });
+          NotificationsManager.error(
+            <FormattedMessage id="request-update-failed" defaultMessage="Request update failed!" />,
+            error.message,
+          );
         }
       );
   }
@@ -1083,6 +1081,211 @@ class RejectionReason extends Component {
 }
 
 
+function SyncMessagesFlow(props) {
+  const vSpacing = 30;
+  const {data, getEndpoint, userInfo} = props;
+  const [boundingRect, setBoundingRect] = useState(
+    {
+        height: 250,
+        width: 800,
+    }
+  );
+  const chartRef = useRef(null);
+
+  useEffect(
+    () => {
+      const boundingRect_ = chartRef.current?ReactDOM.findDOMNode(chartRef.current).getBoundingClientRect():null;
+
+      if(boundingRect_ && boundingRect_.width !== boundingRect.width) {
+          setBoundingRect(boundingRect_);
+      }
+    });
+
+  const endpoints = ["APIO", ...new Set(data.map(getEndpoint).filter(n => n !== "APIO"))]
+  const flowWidth = boundingRect.width - 240;
+  const endpointsHSpacing = flowWidth / (endpoints.length - 1);
+  const messageWidth = m => Math.max(endpoints.indexOf(getEndpoint(m)), 1) * endpointsHSpacing;
+  const vLineHeight = (data.length + 2) * vSpacing;
+
+  return (
+    <svg className="flow" width="100%" height={vLineHeight+75} ref={chartRef}>
+      <marker id="end" viewBox="0 -5 10 10" refX="10" refY="0" markerWidth="8" markerHeight="8" orient="auto">
+        <path d="M0,-5L10,0L0,5"/>
+      </marker>
+      <g transform="translate(200,10)">
+
+        <g transform="translate(0,30)">
+          {
+            data.map(
+              (d, i) =>
+                <line
+                  key={`message_line_${i}`}
+                  x1={d.type === "request"?0:messageWidth(d)}
+                  x2={d.type === "request"?messageWidth(d):0}
+                  y1={vSpacing * (i+1)}
+                  y2={vSpacing * (i+1)}
+                  stroke={
+                    d.type === "request"?"blue":
+                      d.type === "event"?"orange":
+                        d.status >= 400 && d.type === "response" ? "red":
+                          "green"
+                  }
+                  markerEnd={`url(#end)`}
+                  className="path"
+                />
+            )
+          }
+        </g>
+        <g transform="translate(0,30)">
+          {
+            data.map(
+              (d, i) => (
+                <text
+                  textAnchor="middle"
+                  x={messageWidth(d) / 2}
+                  y={(vSpacing * (i+1)) - 10}
+                  fill="#1f77b4"
+                  fillOpacity={1}
+                  className="message-label">
+                  {d.summary}
+                </text>
+              )
+            )
+          }
+        </g>
+        <g transform="translate(0,30)">
+          {
+            data.map(
+              (d, i) =>
+                <text
+                  key={`timeline_${i}`}
+                  textAnchor="end"
+                  x="-10"
+                  y={vSpacing * (i+1)}
+                  fillOpacity={1}
+                  className="timestamp">
+                  {userLocalizeUtcDate(moment.utc(d.created_on), userInfo).format()}
+                </text>
+            )
+          }
+          {
+            data.map(
+              (d, i) =>
+                <line
+                  key={`message_o_line_${i}`}
+                  x1={0}
+                  x2={flowWidth}
+                  y1={vSpacing * (i+1)}
+                  y2={vSpacing * (i+1)}
+                  stroke="black"
+                  strokeOpacity="0.05"
+                />
+            )
+          }
+        </g>
+        <g>
+          {
+            endpoints.map(
+              (e, i) =>
+                <line
+                  key={`endpoint_line_${i}`}
+                  x1={endpointsHSpacing * i}
+                  x2={endpointsHSpacing * i}
+                  y1={15}
+                  y2={vLineHeight}
+                  stroke="black"
+                />
+            )
+          }
+
+          {
+            endpoints.map(
+              (e, i) =>
+                <text
+                  key={`endpoint_text_${i}`}
+                  textAnchor="middle"
+                  x={endpointsHSpacing * i}
+                  y={10}
+                  fill="black"
+                  fillOpacity={1}
+                >{e}</text>
+            )
+          }
+        </g>
+      </g>
+    </svg>
+  )
+}
+
+function SyncMessagesDetails(props) {
+  const {data, userInfo} = props;
+
+  return (
+    <Table>
+      <thead>
+      <tr>
+        <th><FormattedMessage id="time" defaultMessage="Time" /></th>
+        <th><FormattedMessage id="protocol" defaultMessage="Protocol" /></th>
+        <th><FormattedMessage id="type" defaultMessage="Type" /></th>
+        <th><FormattedMessage id="id" defaultMessage="Id" /></th>
+        <th><FormattedMessage id="content" defaultMessage="Content" /></th>
+      </tr>
+      </thead>
+      <tbody>
+      {
+        data.map(
+          (d, i) =>
+            <tr key={`sync_msg_${i}`}>
+              <td>{userLocalizeUtcDate(moment.utc(d.created_on), userInfo).format()}</td>
+              <td>{d.protocol}</td>
+              <td>{d.type}</td>
+              <td>{d.id}</td>
+              <td>
+                <pre style={{wordWrap: 'break-word', whiteSpace: 'pre-wrap'}}>
+                    {d.raw && pp_output(d.protocol, d.raw)}
+                </pre>
+              </td>
+            </tr>
+        )
+      }
+      </tbody>
+    </Table>
+  )
+}
+
+
+function CitcMessages(props) {
+  const {messages, userInfo} = props;
+  let listOfMessages = messages
+    .reduce((l, m) => {
+      const o = JSON.parse(m.output);
+      const i = m.input ? JSON.parse(m.input) : null;
+      const match = /MessageCode\>([A-Za-z ]+)\<\/.*$/gm.exec(o.request);
+
+      o.request && l.push({id: m.processing_trace_id, endpoint: "CITC", summary: match?match[1]:"-", type:"request", created_on: m.created_on, raw: o.request});
+      o.response && l.push({id: m.processing_trace_id, endpoint: "APIO", summary: o.status, type: "response", created_on: m.created_on, status: m.status === 200 ? o.status : m.status, ...o.response});
+      i && i.event && l.push({id: m.processing_trace_id, endpoint: "APIO", type: "event", created_on: m.created_on, ...i.event});
+      return l;
+    }, [])
+    .sort((a, b) => a.id - b.id);
+
+  return (
+    <Tabs defaultActiveKey={1} id="syn-messages-flow">
+      <Tab eventKey={1} title={<FormattedMessage id="flows" defaultMessage="Flows" />}>
+        <SyncMessagesFlow
+          data={listOfMessages}
+          getEndpoint={m => m.endpoint}
+          userInfo={userInfo}
+        />
+      </Tab>
+      <Tab eventKey={2} title={<FormattedMessage id="messages" defaultMessage="Messages" />}>
+        <SyncMessagesDetails data={listOfMessages} userInfo={userInfo} />
+      </Tab>
+    </Tabs>
+  )
+}
+
+
 const RELOAD_TX = 10 * 1000;
 
 export class NPTransaction extends Component {
@@ -1096,6 +1299,7 @@ export class NPTransaction extends Component {
       logs: [],
       events: [],
       messages: [],
+      messageShown: true,
     };
     this.cancelLoad = false;
 
@@ -1140,9 +1344,7 @@ export class NPTransaction extends Component {
           }))
           .catch(error => !this.cancelLoad && this.setState({error: error}));
 
-        if(this.state.messageShown) {
-          this.refreshMessages();
-        }
+        this.refreshMessages();
         reload && setTimeout(() => this.fetchTxDetails(true), RELOAD_TX);
       })
       .catch(error => {
@@ -1178,50 +1380,42 @@ export class NPTransaction extends Component {
 
   onReplay(activity_id, task_id) {
     fetch_put(`/api/v01/transactions/${activity_id}/tasks/${task_id}`, {}, this.props.auth_token)
-      .then(() => this.props.notifications.addNotification({
-          message: <FormattedMessage id="task-replayed" defaultMessage="Task replayed!" />,
-          level: 'success'
-        })
+      .then(() => NotificationsManager.success(
+        <FormattedMessage id="task-replayed" defaultMessage="Task replayed!" />,
+        )
       )
-      .catch(error => this.props.notifications.addNotification({
-          title: <FormattedMessage id="task-replay-failed" defaultMessage="Task replay failed!" />,
-          message: error.message,
-          level: 'error'
-        })
-      )
+      .catch(error => NotificationsManager.error(
+        <FormattedMessage id="task-replay-failed" defaultMessage="Task replay failed!" />,
+        error.message,
+      ))
   }
 
   changeTxStatus(new_status) {
     fetch_put(`/api/v01/transactions/${this.state.tx.id}`, { status: new_status }, this.props.auth_token)
       .then(() => {
         this.fetchTxDetails(false);
-        this.props.notifications.addNotification({
-          message: <FormattedMessage id="task-status-changed" defaultMessage="Task status updated!" />,
-          level: 'success'
-        });
+        NotificationsManager.success(
+          <FormattedMessage id="task-status-changed" defaultMessage="Task status updated!" />,
+        );
       })
-      .catch(error => this.props.notifications.addNotification({
-          title: <FormattedMessage id="task-update-failed" defaultMessage="Task status update failed!" />,
-          message: error.message,
-          level: 'error'
-        })
-      )
+      .catch(error => NotificationsManager.error(
+        <FormattedMessage id="task-update-failed" defaultMessage="Task status update failed!" />,
+        error.message,
+      ))
   }
 
   caseUpdated() {
-    this.props.notifications.addNotification({
-      message: <FormattedMessage id="case-updated" defaultMessage="Case updated!" />,
-      level: 'success'
-    });
+    NotificationsManager.success(
+      <FormattedMessage id="case-updated" defaultMessage="Case updated!" />,
+    );
     this.fetchTxDetails(false);
   }
 
   caseUpdateFailure(error) {
-    this.props.notifications.addNotification({
-      title: <FormattedMessage id="case-update-failure" defaultMessage="Case update failure!" />,
-      message: error.message,
-      level: 'error'
-    });
+    NotificationsManager.error(
+      <FormattedMessage id="case-update-failure" defaultMessage="Case update failure!" />,
+      error.message,
+    );
   }
 
   onForceClose() {
@@ -1334,24 +1528,20 @@ export class NPTransaction extends Component {
   }
 
   refreshMessages() {
-    this.state.tx.tasks.map(t => {
-      const task_name = t.cell_id;
-      fetch_get(`/api/v01/apio/transactions/${this.state.tx.id}/tasks/${t.id}/traces?details=1`)
-        .then(data => {
-          const missing_messages = data.traces.filter(
-            t => this.state.messages.findIndex(m => m.processing_trace_id === t.processing_trace_id) === -1
-          ).map(m => update(m, {'task_name' : {'$set' : task_name}}));
+    fetch_get(`/api/v01/transactions/${this.state.tx.id}/traces?details=1`)
+      .then(data => {
+        const missing_messages = data.traces.filter(
+          t => this.state.messages.findIndex(m => m.processing_trace_id === t.processing_trace_id) === -1
+        );
 
-          !this.cancelLoad && this.setState({
-            messages: update(
-              this.state.messages, {
-                '$push': missing_messages,
-              })
-          });
-        })
-        .catch(error => console.error(error));
-      return t;
-    });
+        !this.cancelLoad && this.setState({
+          messages: update(
+            this.state.messages, {
+              '$push': missing_messages,
+            })
+        });
+      })
+      .catch(error => console.error(error));
   }
 
   render() {
@@ -1497,9 +1687,8 @@ export class NPTransaction extends Component {
                     </Panel.Title>
                   </Panel.Heading>
                   <Panel.Body collapsible>
-                    <MessagesTable
+                    <CitcMessages
                       messages={messages}
-                      tasks={tx.tasks}
                       userInfo={user_info}
                     />
                   </Panel.Body>
@@ -1507,14 +1696,16 @@ export class NPTransaction extends Component {
               )
             }
 
+            {tx.errors && tx.errors.length !== 0 &&
             <Panel bsStyle="danger">
               <Panel.Heading>
-                <Panel.Title><FormattedMessage id="errors" defaultMessage="Errors" /></Panel.Title>
+                <Panel.Title><FormattedMessage id="errors" defaultMessage="Errors"/></Panel.Title>
               </Panel.Heading>
               <Panel.Body>
-                <Errors errors={tx.errors} user_info={this.props.user_info} />
+                <Errors errors={tx.errors} user_info={this.props.user_info}/>
               </Panel.Body>
             </Panel>
+            }
 
             <Panel>
               <Panel.Heading>
