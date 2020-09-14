@@ -128,6 +128,57 @@ export function getDefinition(editor, title) {
 }
 
 
+export function addNode(editor, def, name, paramsFields, isEntity) {
+    const cls = isEntity?"entity":"cell";
+    const c = def;
+    const value = def.original_name;
+    let graph = editor.graph;
+    let parent = graph.getDefaultParent();
+    graph.getModel().beginUpdate();
+    try{
+        let node = document.createElement('cell');
+        node.setAttribute('label', name);
+        node.setAttribute('original_name', value);
+        node.setAttribute('outputs', c.outputs);
+        node.setAttribute('attrList', (c.params && c.params.map(p => p.name || p).join(',')) || '');
+        c.params && c.params.map(p => {
+            const param_name = p.name || p;
+            node.setAttribute(param_name, paramsFields[param_name] || '');
+            return null;
+        });
+        let v = undefined;
+        let v10 = undefined;
+        let baseY = BASE_Y;
+        switch(node.getAttribute('original_name')) {
+            case 'end':
+                v = graph.insertVertex(parent, null, node, c.x, c.y, c.height || 100, 25, 'end');
+                v.setConnectable(false);
+
+                v10 = graph.insertVertex(v, null, document.createElement('Target'), 0, 0, 10, 10, 'port;target;spacingLeft=18', true);
+                v10.geometry.offset = new mxPoint(-5, 9);
+                break;
+            default:
+                v = graph.insertVertex(parent, null, node, 0, 0, min_cell_height(c, name), baseY + (20 * c.outputs.length) + 15, cls);
+                v.setConnectable(false);
+
+                v10 = graph.insertVertex(v, null, document.createElement('Target'), 0, 0, 10, 10, 'port;target;spacingLeft=18', true);
+                v10.geometry.offset = new mxPoint(-5, 15);
+                break
+        }
+
+        for(let i=0; i < c.outputs.length; i++) {
+            let o = c.outputs[i];
+            let p = graph.insertVertex(v, null, document.createElement('Source'), 1, 0, 10, 10, 'port;source;align=right;spacingRight=18', true);
+
+            p.value = o;
+            p.geometry.offset = new mxPoint(-5, baseY + (i * 20))
+        }
+    }finally {
+        graph.getModel().endUpdate();
+    }
+}
+
+
 function saveActivity(editor, title, saveHandler) {
     if(title.length === 0) {
         alert("The workflow need a name");

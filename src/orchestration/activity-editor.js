@@ -32,6 +32,7 @@ import {Link} from "react-router-dom";
 import {SimulatorPanel} from "./simulator";
 import {fetchRoles} from "../system/user_roles";
 import {fetchProfiles} from "../system/user_profiles";
+import Checkbox from "react-bootstrap/lib/Checkbox";
 
 
 const NEW_ACTIVITY = {
@@ -373,7 +374,7 @@ function SessionHolderInput(props) {
     >
       <option value={""}/>
       {
-        holders.map(h => <option value={h}>{h}</option>)
+        holders.map(h => <option value={h} key={h}>{h}</option>)
       }
     </FormControl>
   )
@@ -393,7 +394,7 @@ function TaskInput(props) {
       {
         Object.keys(cells)
           .sort((a, b) => a.localeCompare(b))
-          .map(t => <option value={t}>{t}</option>)
+          .map(t => <option value={t} key={t}>{t}</option>)
       }
     </FormControl>
   )
@@ -417,7 +418,7 @@ function ActivityInput(props) {
       <option value={""}/>
       {
         activities
-          .map(a => <option value={a}>{a}</option>)
+          .map(a => <option value={a} key={a}>{a}</option>)
       }
     </FormControl>
   )
@@ -441,7 +442,7 @@ function UserRoleInput(props) {
       <option value={""}/>
       {
         roles
-          .map(a => <option value={a}>{a}</option>)
+          .map(a => <option value={a} key={a}>{a}</option>)
       }
     </FormControl>
   )
@@ -465,7 +466,7 @@ function UserProfileInput(props) {
       <option value={""}/>
       {
         profiles
-          .map(p => <option value={p}>{p}</option>)
+          .map(p => <option value={p} key={p}>{p}</option>)
       }
     </FormControl>
   )
@@ -483,10 +484,162 @@ function ListInput(props) {
         <option value={""}/>
         {
           options
-            .map(p => <option value={p}>{p}</option>)
+            .map(p => <option value={p} key={p}>{p}</option>)
         }
       </FormControl>
     )
+}
+
+
+function TextareaInput(props) {
+  // todo can become a "list" of key (string) + value (jinja code)
+  const {rows, value, onChange} = props;
+  return (
+    <FormControl
+        componentClass="textarea"
+        rows={rows}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+    />
+  )
+}
+
+
+const TIMER = 2;
+function TimerInput(props) {
+  const {cells, cellsDef, value, onChange} = props;
+  const allTimers = cellsDef.filter(c => c.type === TIMER).map(c => c.name);
+
+  return (
+    <FormControl
+        componentClass="select"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+    >
+      <option value={""}/>
+      {
+        Object.keys(cells)
+          .filter(allTimers.includes)
+          .sort((a, b) => a.localeCompare(b))
+          .map(t => <option value={t} key={t}>{t}</option>)
+      }
+    </FormControl>
+  )
+}
+
+
+function BoolInput(props) {
+  const {value, onChange} = props;
+  return (
+    <Checkbox
+      checked={value === "true"}
+      onChange={e => onChange(e.target.checked?"true":"false")} />
+  )
+}
+
+
+function HttpOutputs(props) {
+  const {value, onChange} = props;
+  const [newOutput, setNewOutput] = useState("");
+  const outputs = value ? value.split(",") : [];
+  const invalidOutput = newOutput.length > 3 || (!newOutput.match(/[0-9]{3}/) && !newOutput.match(/[0-9]{0,2}\*/));
+
+  return (
+    <Table>
+      <tbody>
+      {
+        outputs.map(o =>
+          <tr key={o}>
+            <td>{o}</td>
+            <td><Button onClick={() => {
+              onChange(outputs.filter(output => output !== o).join(","), outputs.filter(output => output !== o))
+            }}>{"-"}</Button></td>
+          </tr>)
+      }
+      {
+        <tr>
+          <td style={{width: "100px"}}>
+            <FormControl
+              style={{color: invalidOutput?"red":"black"}}
+              value={newOutput}
+              onChange={e => setNewOutput(e.target.value)} />
+            {" "}
+          </td>
+          <td>
+            <Button
+              onClick={() => {
+                onChange([...outputs, newOutput].join(","), [...outputs, newOutput])
+                setNewOutput("");
+              }}
+              disabled={invalidOutput}
+            >{"+"}</Button>
+          </td>
+        </tr>
+      }
+      </tbody>
+    </Table>
+  )
+}
+
+
+function SwitchOutputs(props) {
+  const {value, onChange} = props;
+  const [newExpression, setNewExpression] = useState(["", ""]);
+  let expressions = [];
+  try {
+    expressions = JSON.parse(value);
+  } catch(e) {
+    // console.log(e);
+  }
+
+  return (
+    <Table>
+      <tbody>
+      {
+        expressions.map((exp, i) =>
+          <tr key={i}>
+            <td>{"case "}</td>
+            <td style={{width: "50%"}}>{exp[0]}</td>
+            <td>{" : "}</td>
+            <td style={{width: "80px"}}>{exp[1]}</td>
+            <td><Button onClick={() => {
+              const es = expressions.filter(e => e[0] !== exp[0] && e[1] !== exp[1]);
+              onChange(
+                JSON.stringify(es),
+                es.map(e => e[1]),
+              )
+            }}>{"-"}</Button></td>
+          </tr>)
+      }
+      {
+        <tr>
+          <td>{"case "}</td>
+          <td style={{width: "50%"}}>
+            <FormControl
+              value={newExpression[0]}
+              onChange={e => setNewExpression(update(newExpression, {$merge: {[0]: e.target.value}}))} />
+          </td>
+          <td>{" : "}</td>
+          <td style={{width: "80px"}}>
+            <FormControl
+              value={newExpression[1]}
+              onChange={e => setNewExpression(update(newExpression, {$merge: {[1]: e.target.value}}))} />
+          </td>
+          <td>
+            <Button
+              onClick={() => {
+                const es = [...expressions, newExpression];
+                onChange(JSON.stringify(es), es.map(e => e[1]))
+                setNewExpression(["", ""]);
+              }}
+              disabled={!newExpression[0] || !newExpression[1]}
+            >{"+"}</Button>
+          </td>
+        </tr>
+      }
+      </tbody>
+    </Table>
+  )
 }
 
 
@@ -495,6 +648,7 @@ function NewCellModal(props)  {
     const [name, setName] = useState("");
     const [definition, setDefinition] = useState({});
     const [staticParams, setStaticParams] = useState({});
+    const [customOutputs, setCustomOutputs] = useState([]);
 
     useEffect(() => {
       if(!show) {
@@ -527,21 +681,39 @@ function NewCellModal(props)  {
             i = <UserProfileInput value={staticParams[n]} onChange={e => setStaticParams(update(staticParams, {$merge: {[n]: e}}))} />
             break;
           case 'user_properties':
+            i = <TextareaInput rows={4} value={staticParams[n]} onChange={e => setStaticParams(update(staticParams, {$merge: {[n]: e}}))} />
             break;
           case 'timer':
+            i = <TimerInput cells={activity.definition.cells} cellsDef={cells} value={staticParams[n]} onChange={e => setStaticParams(update(staticParams, {$merge: {[n]: e}}))} />
             break;
           case 'list':
             i = <ListInput options={param.values} value={staticParams[n]} onChange={e => setStaticParams(update(staticParams, {$merge: {[n]: e}}))} />
-            break
+            break;
           case 'jinja':
+            i = <TextareaInput rows={4} value={staticParams[n]} onChange={e => setStaticParams(update(staticParams, {$merge: {[n]: e}}))} />
+            break;
           case 'python':
           case 'json':
+            i = <TextareaInput rows={10} value={staticParams[n]} onChange={e => setStaticParams(update(staticParams, {$merge: {[n]: e}}))} />
             break;
           case 'bool':
+            i = <BoolInput value={staticParams[n]} onChange={e => setStaticParams(update(staticParams, {$merge: {[n]: e}}))} />
             break;
           case 'python_switch':
+            i = <SwitchOutputs
+              value={staticParams[n]}
+              onChange={(e, outputs) => {
+                setStaticParams(update(staticParams, {$merge: {[n]: e}}));
+                setCustomOutputs(outputs);
+              }} />
             break;
           case 'outputs':
+            i = <HttpOutputs
+              value={staticParams[n]}
+              onChange={(e, outputs) => {
+                setStaticParams(update(staticParams, {$merge: {[n]: e}}));
+                setCustomOutputs(outputs);
+              }} />
             break;
           default:
             i = <BasicInput value={staticParams[n]} onChange={e => setStaticParams(update(staticParams, {$merge: {[n]: e.target.value}}))} />
@@ -627,7 +799,7 @@ function NewCellModal(props)  {
                       <Col smOffset={2} sm={10}>
                           <Button
                             onClick={() => {
-                              onHide({def:definition, name:name, params:staticParams, isEntity:false});
+                              onHide({def:definition, name:name, params:staticParams, isEntity:false, customOutputs: customOutputs});
                             }}
                             disabled={!name || name.length === 0}
                           >
@@ -755,7 +927,16 @@ export function ActivityEditor(props) {
 
             <NewCellModal
                 show={newCell}
-                onHide={c => {showNewCell(false); c && addNode(editor, c.def, c.name, c.params, c.isEntity); }}
+                onHide={c => {
+                  showNewCell(false);
+                  if(c) {
+                    // merge the output(s) if needed
+                    if(c.customOutputs) {
+                      c.def.outputs = c.def.outputs.concat(c.customOutputs).reduce((u, i) => u.includes(i) ? u : [...u, i], []);
+                    }
+                    addNode(editor, c.def, c.name, c.params, c.isEntity);
+                  }
+                }}
                 cells={cells}
                 entities={entities}
                 activity={editor && getDefinition(editor).activity}
