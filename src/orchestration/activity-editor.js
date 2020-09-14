@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import {Redirect} from "react-router";
-import draw_editor, {getDefinition} from "./editor";
+import draw_editor, {addNode, getDefinition} from "./editor";
 import {fetch_post, fetch_get, fetch_delete, fetch_put, NotificationsManager} from "../utils";
 
 import Col from 'react-bootstrap/lib/Col';
@@ -9,6 +9,7 @@ import Row from 'react-bootstrap/lib/Row';
 import Table from 'react-bootstrap/lib/Table';
 import Button from 'react-bootstrap/lib/Button';
 import FormControl from 'react-bootstrap/lib/FormControl';
+import HelpBlock from 'react-bootstrap/lib/HelpBlock';
 
 import GridPic from "./grid.gif";
 import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
@@ -29,6 +30,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStethoscope, faChartBar } from "@fortawesome/free-solid-svg-icons";
 import {Link} from "react-router-dom";
 import {SimulatorPanel} from "./simulator";
+import {fetchRoles} from "../system/user_roles";
+import {fetchProfiles} from "../system/user_profiles";
 
 
 const NEW_ACTIVITY = {
@@ -340,6 +343,305 @@ function ActivityStatsModal(props) {
     )
 }
 
+function BasicInput(props) {
+  return (
+    <FormControl
+        componentClass="input"
+        {...props} />
+  )
+}
+
+
+function SessionHolderInput(props) {
+  const {value, onChange} = props;
+  const [holders, setHolders] = useState([]);
+  useEffect(() => {
+    fetchConfiguration(
+      c => c.gateways &&
+        setHolders(Object.entries(c.gateways)
+          .map(([name, params]) => params.session_holder)
+          .filter(s => s !== undefined)
+          .sort((a, b) => a.localeCompare(b))
+        )
+    )
+  }, []);
+  return (
+    <FormControl
+        componentClass="select"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+    >
+      <option value={""}/>
+      {
+        holders.map(h => <option value={h}>{h}</option>)
+      }
+    </FormControl>
+  )
+}
+
+
+function TaskInput(props) {
+  const {cells, value, onChange} = props;
+
+  return (
+    <FormControl
+        componentClass="select"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+    >
+      <option value={""}/>
+      {
+        Object.keys(cells)
+          .sort((a, b) => a.localeCompare(b))
+          .map(t => <option value={t}>{t}</option>)
+      }
+    </FormControl>
+  )
+}
+
+
+function ActivityInput(props) {
+  const {value, onChange} = props;
+  const [activities, setActivities] = useState([]);
+
+  useEffect(() => {
+    fetchActivities(activities => setActivities(activities.map(a => a.name).sort((a, b) => a.localeCompare(b))))
+  }, []);
+
+  return (
+    <FormControl
+        componentClass="select"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+    >
+      <option value={""}/>
+      {
+        activities
+          .map(a => <option value={a}>{a}</option>)
+      }
+    </FormControl>
+  )
+}
+
+
+function UserRoleInput(props) {
+  const {value, onChange} = props;
+  const [roles, setRoles] = useState([]);
+
+  useEffect(() => {
+    fetchRoles(roles => setRoles(roles.map(a => a.name).sort((a, b) => a.localeCompare(b))))
+  }, []);
+
+  return (
+    <FormControl
+        componentClass="select"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+    >
+      <option value={""}/>
+      {
+        roles
+          .map(a => <option value={a}>{a}</option>)
+      }
+    </FormControl>
+  )
+}
+
+
+function UserProfileInput(props) {
+  const {value, onChange} = props;
+  const [profiles, setProfiles] = useState([]);
+
+  useEffect(() => {
+    fetchProfiles(p => setProfiles(p.map(a => a.name).sort((a, b) => a.localeCompare(b))))
+  }, []);
+
+  return (
+    <FormControl
+        componentClass="select"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+    >
+      <option value={""}/>
+      {
+        profiles
+          .map(p => <option value={p}>{p}</option>)
+      }
+    </FormControl>
+  )
+}
+
+
+function ListInput(props) {
+    const {options, value, onChange} = props;
+    return (
+      <FormControl
+          componentClass="select"
+          value={value}
+          onChange={e => onChange(e.target.value)}
+      >
+        <option value={""}/>
+        {
+          options
+            .map(p => <option value={p}>{p}</option>)
+        }
+      </FormControl>
+    )
+}
+
+
+function NewCellModal(props)  {
+    const {show, onHide, cells, entities, activity} = props;
+    const [name, setName] = useState("");
+    const [definition, setDefinition] = useState({});
+    const [staticParams, setStaticParams] = useState({});
+
+    useEffect(() => {
+      if(!show) {
+        setName("");
+        setDefinition({});
+        setStaticParams({});
+      }
+    }, [show]);
+
+    const params = definition && definition.params && definition
+      .params
+      .map(param => {
+        let i = null;
+
+        const n = param.name || param;
+        switch(param.nature) {
+          case 'session_holder':
+            i = <SessionHolderInput value={staticParams[n]} onChange={e => setStaticParams(update(staticParams, {$merge: {[n]: e}}))} />
+            break;
+          case 'task':
+            i = <TaskInput cells={activity.definition.cells} value={staticParams[n]} onChange={e => setStaticParams(update(staticParams, {$merge: {[n]: e}}))} />
+            break;
+          case 'activity':
+            i = <ActivityInput value={staticParams[n]} onChange={e => setStaticParams(update(staticParams, {$merge: {[n]: e}}))} />
+            break;
+          case 'user_role':
+            i = <UserRoleInput value={staticParams[n]} onChange={e => setStaticParams(update(staticParams, {$merge: {[n]: e}}))} />
+            break;
+          case 'user_profile':
+            i = <UserProfileInput value={staticParams[n]} onChange={e => setStaticParams(update(staticParams, {$merge: {[n]: e}}))} />
+            break;
+          case 'user_properties':
+            break;
+          case 'timer':
+            break;
+          case 'list':
+            i = <ListInput options={param.values} value={staticParams[n]} onChange={e => setStaticParams(update(staticParams, {$merge: {[n]: e}}))} />
+            break
+          case 'jinja':
+          case 'python':
+          case 'json':
+            break;
+          case 'bool':
+            break;
+          case 'python_switch':
+            break;
+          case 'outputs':
+            break;
+          default:
+            i = <BasicInput value={staticParams[n]} onChange={e => setStaticParams(update(staticParams, {$merge: {[n]: e.target.value}}))} />
+            break;
+        }
+
+        return (
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2} key={n}>{n}</Col>
+            <Col sm={9}>{i}</Col>
+          </FormGroup>
+        )
+    });
+
+    return (
+        <Modal show={show} onHide={() => onHide(null)} bsSize={"large"}>
+            <Modal.Header closeButton>
+                <Modal.Title>New cell</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <Form horizontal>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="name" defaultMessage="Name" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="input"
+                                value={name}
+                                onChange={e => setName(e.target.value)}/>
+                        </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="implementation" defaultMessage="Implementation" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="select"
+                                value={definition.original_name}
+                                onChange={e => setDefinition(cells.find(c => c.original_name === e.target.value))}>
+                                <option value=""/>
+                              {
+                                entities && entities.length !== 0 &&
+                                  <optgroup label="Entities">
+                                    {
+                                      entities.map(e => <option value={e.name}>{e.name}</option>)
+                                    }
+                                  </optgroup>
+                              }
+                              {
+                                Object.entries(cells
+                                  .sort((a, b) => a.category.localeCompare(b.category))
+                                  .reduce((o, item) => {
+                                    const key = item["category"] || "direct processing";
+                                    if (!o.hasOwnProperty(key)) {
+                                      o[key] = [];
+                                    }
+                                    o[key].push(item);
+                                    return o
+                                  }, {}))
+                                  .map(([category, cells])=> (
+                                    <optgroup label={category}>
+                                      { cells.map(c => <option value={c.original_name}>{c.original_name}</option>)}
+                                    </optgroup>
+                                    ))
+                                  })
+                              }
+
+                            </FormControl>
+                            {
+                                definition && definition.doc && <HelpBlock>{definition.doc}</HelpBlock>
+                            }
+                        </Col>
+                    </FormGroup>
+
+                    { params }
+
+                    <FormGroup>
+                      <Col smOffset={2} sm={10}>
+                          <Button
+                            onClick={() => {
+                              onHide({def:definition, name:name, params:staticParams, isEntity:false});
+                            }}
+                            disabled={!name || name.length === 0}
+                          >
+                              Save
+                          </Button>
+                      </Col>
+                    </FormGroup>
+                </Form>
+            </Modal.Body>
+        </Modal>
+    )
+}
+
+
 export function ActivityEditor(props) {
     const [entities, setEntities] = useState([]);
     const [cells, setCells] = useState([]);
@@ -348,6 +650,7 @@ export function ActivityEditor(props) {
     const [newActivity, setNewActivity] = useState(true);
     const [showStats, setShowStats] = useState(false);
     const [editor, setEditor] = useState(null);
+    const [newCell, showNewCell] = useState(false);
 
     useEffect(() => {
         fetchConfiguration(setConfiguration);
@@ -389,6 +692,12 @@ export function ActivityEditor(props) {
         );
         setEditor(e);
     }, [editorRef, toolbarRef, titleRef, currentActivity, newActivity, cells, entities]);
+
+    useEffect(() => {
+        editor && editor.addAction('add_process', () =>
+            showNewCell(true)
+        );
+    }, [editor]);
 
     useEffect(() => {
         if(props.match.params.activityId) {
@@ -438,10 +747,19 @@ export function ActivityEditor(props) {
                     }} />
                 </Col>
             </Row>
+
             <ActivityStatsModal
                 show={showStats}
                 onHide={() => setShowStats(false)}
                 id={props.match.params.activityId} />
+
+            <NewCellModal
+                show={newCell}
+                onHide={c => {showNewCell(false); c && addNode(editor, c.def, c.name, c.params, c.isEntity); }}
+                cells={cells}
+                entities={entities}
+                activity={editor && getDefinition(editor).activity}
+            />
         </>
     );
 }
