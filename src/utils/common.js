@@ -137,7 +137,7 @@ export class Search extends React.Component {
                 }
                 const op = filter_criteria[f].op;
                 if(op === "like" && !value.includes("%")) {
-                    value += "%";
+                    value = "%" + value % "%";
                 }
                 return {field: f, op: op, value: value}
             });

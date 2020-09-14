@@ -581,7 +581,7 @@ export default class SearchPortingCases extends Search {
         }
 
         if(op === "like" && !value.includes("%")) {
-          value += "%";
+          value = "%" + value + "%";
         }
         return {field: f, op: op, value: value}
       });

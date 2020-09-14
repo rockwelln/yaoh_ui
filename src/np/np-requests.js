@@ -195,7 +195,7 @@ export class NPRequests extends Component {
       .map(f => {
         let {model, op, value} = filter_criteria[f];
         if(op === "like" && !value.includes("%")) {
-          value = value.trim() + "%";
+          value = "%" + value.trim() + "%";
         }
 
         switch (f) {
