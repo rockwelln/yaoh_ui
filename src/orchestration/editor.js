@@ -283,11 +283,9 @@ function new_editor() {
 
 export function updateGraphModel(editor, activity, options) {
     // Adds activity (cells) to the model.
-    /*
-    if(title !== undefined) {
-        title.value = activity.name;
+    if(options.title !== undefined) {
+        options.title.value = activity.name;
     }
-    */
 
     let data = activity.definition;
     // ensure the definition is an object
@@ -505,11 +503,13 @@ function setup_toolbar(editor, container, spacer, handlers, props) {
 }
 
 
-function setup_actions(editor, title, spacer, handlers, modal, props, updateModel) {
+function setup_actions(editor, title, spacer, handlers, modal, props) {
     editor.addAction('export', (editor, cell) => saveActivity(editor, title.value, handlers.onSave));
+    /*
     editor.addAction('add_process', (editor, cell) => {
         newCell(props.cells, editor.graph.getModel().cells, modal, editor, spacer, props.entities, props);
     });
+     */
     editor.addAction('download_definition', editor => downloadDefinition(editor, title.value));
     editor.addAction('upload_definition', (editor, cell) => {
         if (typeof window.FileReader !== 'function') {
@@ -519,14 +519,14 @@ function setup_actions(editor, title, spacer, handlers, modal, props, updateMode
         uploadDefinition(modal, spacer, (newDef, filename) => {
             const activity = getDefinition(editor, title.value || filename).activity;
             activity.definition = newDef;
-            updateModel(activity, {clear: true});
+            updateGraphModel(editor, activity, {clear: true, title: title});
         });
     });
     editor.addAction("showDefinition", (editor, cell) => {
         showDefinition(modal, spacer, getDefinition(editor).activity.definition, newDef => {
             const activity = getDefinition(editor, title.value).activity;
             activity.definition = newDef;
-            updateModel(activity, {clear: true});
+            updateGraphModel(editor, activity, {clear: true, title: title});
         });
     });
 }
@@ -626,8 +626,7 @@ export default function draw_editor(container, activity, handlers, placeholders,
                 } else {
                   editCellProperty(cell, modal, spacer, this.isEnabled(), props.cells.concat(props.entities), this.getModel().cells,
                     () => {
-                      const r = getDefinition(editor, title.value);
-                      updateModel(r.activity, {clear: true, nofit: true});
+                      updateGraphModel(editor, getDefinition(editor, title.value).activity, {clear: true, nofit: true, title: title});
                     },
                     this.getModel().getOutgoingEdges(cell).map(e => {
                       const sourcePortId = e.style.split(';')
@@ -650,13 +649,13 @@ export default function draw_editor(container, activity, handlers, placeholders,
     };
 
     // Defines actions
-    setup_actions(editor, title, spacer, handlers, modal, props, updateModel);
+    setup_actions(editor, title, spacer, handlers, modal, props);
 
     // setup toolbar
     if(toolbar !== undefined) {
         setup_toolbar(editor, toolbar, spacer, handlers, props);
     }
-
+/*
     let xmlDocument = mxUtils.createXmlDocument();
     let sourceNode = xmlDocument.createElement('Source');
     let targetNode = xmlDocument.createElement('Target');
@@ -665,6 +664,8 @@ export default function draw_editor(container, activity, handlers, placeholders,
     // is normally the first child of the root (ie. layer 0).
     let parent = graph.getDefaultParent();
 
+ */
+/*
     function updateModel(activity, options) {
         // Adds activity (cells) to the model.
         if(title !== undefined) {
@@ -816,14 +817,15 @@ export default function draw_editor(container, activity, handlers, placeholders,
         graph.view.scaleAndTranslate(s,
           (margin + cw - w * s) / (2 * s) - bounds.x / graph.view.scale,
           (margin + ch - h * s) / (4 * s) - bounds.y / graph.view.scale
-          /*originally: (margin + ch - h * s) / (2 * s) - bounds.y / graph.view.scale*/);
+          /*originally: (margin + ch - h * s) / (2 * s) - bounds.y / graph.view.scale*//*);
     }
+    */
     if(activity.id) {
         console.log('getting data');
-        handlers.get(activity.id, updateModel);
+        handlers.get(activity.id, a => updateGraphModel(editor, activity, {title: title}));
     } else {
         console.log('new activity');
-        updateModel(activity);
+        updateGraphModel(editor, activity, {title: title});
     }
     return editor;
 }
@@ -1368,7 +1370,7 @@ function createInput(param, value, cells, cells_defs, config) {
     }
     return input;
 }
-
+/*
 function newCell(defs, cells, modal, editor, spacer, entities_defs, props) {
     let modalEntities = prepareModal(modal);
     let modalHeader = modalEntities[0];
@@ -1612,6 +1614,7 @@ function newCell(defs, cells, modal, editor, spacer, entities_defs, props) {
     modal.style.display = "block";
     modal.style.overflowY = "scroll";
 }
+ */
 
 function editCellProperty(cell, modal, spacer, editable, cells_defs, cells, refresh_cb, transitions, props) {
     const modalEntities = prepareModal(modal);

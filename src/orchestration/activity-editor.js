@@ -430,8 +430,8 @@ function NewCellModal(props)  {
                                     return o
                                   }, {}))
                                   .map(([category, cells])=> (
-                                    <optgroup label={category}>
-                                      { cells.map(c => <option value={c.original_name}>{c.original_name}</option>)}
+                                    <optgroup label={category} key={category}>
+                                      { cells.map(c => <option value={c.original_name} key={c.original_name}>{c.original_name}</option>)}
                                     </optgroup>
                                     ))
                                   })
@@ -588,6 +588,7 @@ function EditCellModal(props) {
     useEffect(() => {
       if(!show) {
         setStaticParams({});
+        setOutputs([]);
       }
     }, [show]);
     useEffect(() => {
@@ -599,6 +600,10 @@ function EditCellModal(props) {
           }, {}))
         }
         if(cell.value.getAttribute("outputs")) {
+          /*
+          merge visible outputs and outputs from the definition
+          and filter out duplicates (if any).
+           */
           setOutputs(
             cell.value.getAttribute("outputs")
               .split(",")
@@ -661,7 +666,7 @@ function EditCellModal(props) {
       })
 
     return (
-      <Modal show={show} onHide={() => onHide(null)}>
+      <Modal show={show} onHide={() => onHide(null)} bsSize="large">
         <Modal.Header closeButton>
           <Modal.Title>Update cell '{cell.value.getAttribute("label")}'</Modal.Title>
         </Modal.Header>
@@ -684,18 +689,20 @@ function EditCellModal(props) {
             { params }
 
             <hr/>
-            <FormGroup>
+            {outputs && outputs.length !== 0 &&
+              <FormGroup>
                 <Col componentClass={ControlLabel} sm={2}>
-                    <FormattedMessage id="outputs" defaultMessage="Outputs" />
+                  <FormattedMessage id="outputs" defaultMessage="Outputs"/>
                 </Col>
 
                 <Col sm={9}>
-                    <OutputsTable
-                      rows={outputs} /* visible + invisible */
-                      usedRows={usedRows} /* used are checked and disabled */
-                      onDragEnd={setOutputs} />
+                  <OutputsTable
+                    rows={outputs} /* visible + invisible */
+                    usedRows={usedRows} /* used are checked and disabled */
+                    onDragEnd={setOutputs}/>
                 </Col>
-            </FormGroup>
+              </FormGroup>
+            }
 
             <FormGroup>
               <Col smOffset={2} sm={10}>

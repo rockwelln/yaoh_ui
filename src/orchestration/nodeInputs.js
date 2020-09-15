@@ -5,6 +5,7 @@ import {fetchProfiles} from "../system/user_profiles";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 import Table from "react-bootstrap/lib/Table";
 import Button from "react-bootstrap/lib/Button";
+import Form from "react-bootstrap/lib/Form";
 import update from "immutability-helper";
 import {fetchActivities} from "./activity-editor";
 import {fetch_get} from "../utils";
@@ -265,6 +266,12 @@ function SwitchOutputs(props) {
     // console.log(e);
   }
 
+  const addNewEntry = () => {
+    const es = [...expressions, newExpression];
+    onChange(JSON.stringify(es), es.map(e => e[1]))
+    setNewExpression(["", ""]);
+  }
+
   return (
     <Table>
       <tbody>
@@ -296,15 +303,12 @@ function SwitchOutputs(props) {
           <td style={{width: "80px"}}>
             <FormControl
               value={newExpression[1]}
-              onChange={e => setNewExpression(update(newExpression, {$merge: {[1]: e.target.value}}))} />
+              onChange={e => setNewExpression(update(newExpression, {$merge: {[1]: e.target.value}}))}
+              onKeyDown={e => (e.keyCode === 13 && newExpression[0] && newExpression[1]) ? addNewEntry() : null} />
           </td>
           <td>
             <Button
-              onClick={() => {
-                const es = [...expressions, newExpression];
-                onChange(JSON.stringify(es), es.map(e => e[1]))
-                setNewExpression(["", ""]);
-              }}
+              onClick={() => addNewEntry()}
               disabled={!newExpression[0] || !newExpression[1]}
             >{"+"}</Button>
           </td>
