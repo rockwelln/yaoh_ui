@@ -814,29 +814,171 @@ function NewCellModal(props)  {
 }
 
 
+const defaultDragState = {
+  column: -1,
+  row: -1,
+  startPoint: null,
+  direction: "",
+  dropIndex: -1 // drag target
+};
+
+
+function offsetIndex(from, to, arr = []) {
+  if (from < to) {
+    let start = arr.slice(0, from),
+      between = arr.slice(from + 1, to + 1),
+      end = arr.slice(to + 1);
+    return [...start, ...between, arr[from], ...end];
+  }
+  if (from > to) {
+    let start = arr.slice(0, to),
+      between = arr.slice(to, from),
+      end = arr.slice(from + 1);
+    return [...start, arr[from], ...between, ...end];
+  }
+  return arr;
+}
+
+
+function OutputsTable(props) {
+  let {rows, usedRows, onDragEnd} = props;
+  const [dragState, setDragState] = useState({...defaultDragState});
+  const preview = useRef(null);
+
+  if (dragState.direction === "row") {
+    rows = offsetIndex(dragState.row, dragState.dropIndex, rows);
+  }
+  return (
+    <>
+      <Table>
+        <tbody>
+        {
+          rows.map((output, i) => {
+            return (
+              <tr
+                key={i}
+                draggable
+                style={{
+                  cursor: dragState.direction ? "move" : "grab",
+                  opacity: dragState.dropIndex === i ? 0.5 : 1
+                }}
+                onDragStart={e => {
+                  e.dataTransfer.setDragImage(preview.current, 0, 0);
+                  setDragState({
+                    ...dragState,
+                    row: i,
+                    startPoint: {
+                      x: e.pageX,
+                      y: e.pageY
+                    }
+                  });
+                }}
+                onDragEnd={() => {
+                  onDragEnd(rows);
+                  setDragState({ ...defaultDragState });
+                }}
+                onDragEnter={e => {
+                  if (!dragState.direction) {
+                    setDragState({
+                      ...dragState,
+                      direction: "row",
+                      dropIndex: i
+                    });
+                    return;
+                  }
+
+                  if (i !== dragState.dropIndex) {
+                    setDragState({
+                      ...dragState,
+                      dropIndex: i
+                    });
+                  }
+                }}
+              >
+                <td style={{width: 20}}><Glyphicon glyph={"menu-hamburger"}/></td>
+                <td style={{width: 20}}>
+                  <Checkbox
+                    checked={output.visible}
+                    onChange={e => onDragEnd(update(rows, {[i]: {$merge: {visible: e.target.checked}}}))}
+                    disabled={usedRows.includes(output.value) || output.custom} />
+                </td>
+                <td>{output.value}</td>
+              </tr>
+            )
+          })
+        }
+        </tbody>
+      </Table>
+      <div
+        ref={preview}
+        style={{
+          position: "absolute",
+          width: 0,
+          height: 0,
+          overflow: "hidden"
+        }}
+      />
+    </>
+  )
+}
+
+
 function EditCellModal(props) {
     const {show, cell, cells, activity, onHide} = props;
     const [staticParams, setStaticParams] = useState({});
-    const [customOutputs, setCustomOutputs] = useState([]);
+    const [outputs, setOutputs] = useState([]);
 
-    console.log("cell", cell);
+    const originalName = cell && cell.value.getAttribute('original_name');
+    const name = cell && cell.value.getAttribute('label');
+    const attrsStr = cell && cell.value.getAttribute('attrList');
+
+    const cellDef = cells && cells.find(c => c.name === originalName);
+
     useEffect(() => {
       if(!show) {
         setStaticParams({});
       }
     }, [show]);
     useEffect(() => {
-      if(cell && cell.value.getAttribute('attrList')) {
-        setStaticParams(cell.value.getAttribute('attrList').split(",").reduce((o, a) => {o[a] = cell.value.getAttribute(a); return o;}, {}))
+      if(cell) {
+        if(cell.value.getAttribute("attrList")) {
+          setStaticParams(cell.value.getAttribute('attrList').split(",").reduce((o, a) => {
+            o[a] = cell.value.getAttribute(a);
+            return o;
+          }, {}))
+        }
+        if(cell.value.getAttribute("outputs")) {
+          setOutputs(
+            cell.value.getAttribute("outputs")
+              .split(",")
+              .concat(cellDef.outputs || [])
+              .reduce((o, e) => {
+                if(!o.includes(e)) o.push(e);
+                return o;
+              }, [])
+              .reduce((o, e) => {
+                o.push({
+                  value: e,
+                  custom: cellDef.outputs?!cellDef.outputs.includes(e):true,
+                  visible: cell.value.getAttribute("outputs").split(",").includes(e)
+                })
+                return o;
+              }, [])
+          );
+        }
       }
-    }, [cell]);
+    }, [cell, activity]);
 
     if(!cell) return <div/>
 
-    const originalName = cell.value.getAttribute('original_name');
-    const attrsStr = cell.value.getAttribute('attrList');
+    const usedRows = activity && activity.definition.transitions.map(t => t[0]).reduce((o, e) => {
+      const [task, output] = e.split(".");
+      if(task === name) {
+        o.push(output);
+      }
+      return o;
+    }, []);
 
-    const cellDef = cells.find(c => c.name === originalName);
     const defAttrList = cellDef && cellDef.params?cellDef.params.map(p => p.name || p):[];
     const attrList = attrsStr ? attrsStr.split(',') : [];
     const paramsList = defAttrList.concat(attrList.filter(e => !defAttrList.includes(e)));
@@ -899,7 +1041,7 @@ function EditCellModal(props) {
               value={staticParams[n]}
               onChange={(e, outputs) => {
                 setStaticParams(update(staticParams, {$merge: {[n]: e}}));
-                setCustomOutputs(outputs);
+                setOutputs(outs => outs.filter(o => !o.custom || outputs.includes(o.value)).concat(outputs.filter(o => !outs.map(t => t.value).includes(o)).map(o => { return {value: o, custom: true, visible: true} })));
               }}/>
             break;
           case 'outputs':
@@ -907,12 +1049,13 @@ function EditCellModal(props) {
               value={staticParams[n]}
               onChange={(e, outputs) => {
                 setStaticParams(update(staticParams, {$merge: {[n]: e}}));
-                setCustomOutputs(outputs);
+                setOutputs(outs => outs.filter(o => !o.custom || outputs.includes(o.value)).concat(outputs.filter(o => !outs.map(t => t.value).includes(o)).map(o => { return {value: o, custom: true, visible: true} })));
               }}/>
             break;
           default:
-            i = <BasicInput value={staticParams[n]}
-                            onChange={e => setStaticParams(update(staticParams, {$merge: {[n]: e.target.value}}))}/>
+            i = <BasicInput
+              value={staticParams[n]}
+              onChange={e => setStaticParams(update(staticParams, {$merge: {[n]: e.target.value}}))}/>
             break;
         }
         return (
@@ -946,11 +1089,31 @@ function EditCellModal(props) {
 
             { params }
 
+            <hr/>
+            <FormGroup>
+                <Col componentClass={ControlLabel} sm={2}>
+                    <FormattedMessage id="outputs" defaultMessage="Outputs" />
+                </Col>
+
+                <Col sm={9}>
+                    <OutputsTable
+                      rows={outputs} /* visible + invisible */
+                      usedRows={usedRows} /* used are checked and disabled */
+                      onDragEnd={setOutputs} />
+                </Col>
+            </FormGroup>
+
             <FormGroup>
               <Col smOffset={2} sm={10}>
                   <Button
                     onClick={() => {
-                      onHide({params:staticParams, isEntity:false, customOutputs: customOutputs});
+                      onHide({
+                        name: cell.value.getAttribute("label"),
+                        originalName: originalName,
+                        params:staticParams,
+                        isEntity:false,
+                        outputs: outputs.filter(o => o.visible).map(o => o.value),
+                      });
                     }}
                   >
                       Save
@@ -1103,12 +1266,10 @@ export function ActivityEditor(props) {
                   setEditedCell(undefined);
                   if(c === null) return;
 
-                  console.error("to be implemented...", c);
-
                   const activity = editor && getDefinition(editor).activity;
-                  activity.cells[c.name]["params"] = c.params;
+                  activity.definition.cells[c.name]["params"] = c.params;
                   if(c.outputs !== undefined) {
-                    activity.cells[c.name]["outputs"] = c.outputs;
+                    activity.definition.cells[c.name]["outputs"] = c.outputs;
                   }
                   updateGraphModel(editor, activity, {clear: true, nofit: true});
                 }} />
