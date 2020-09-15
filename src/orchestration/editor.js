@@ -281,6 +281,170 @@ function new_editor() {
 }
 
 
+export function updateGraphModel(editor, activity, options) {
+    // Adds activity (cells) to the model.
+    /*
+    if(title !== undefined) {
+        title.value = activity.name;
+    }
+    */
+
+    let data = activity.definition;
+    // ensure the definition is an object
+    if(typeof data === "string") {
+        data = JSON.parse(data);
+    }
+
+    const graph = editor.graph;
+    const parent = graph.getDefaultParent();
+    let xmlDocument = mxUtils.createXmlDocument();
+    let sourceNode = xmlDocument.createElement('Source');
+    let targetNode = xmlDocument.createElement('Target');
+    let cellNode = xmlDocument.createElement('cell');
+
+    // clean the cells if needed
+    if(options && options.clear) {
+        graph.removeCells(graph.getChildVertices(graph.getDefaultParent()));
+    }
+
+    graph.getModel().beginUpdate();
+    try
+    {
+        let endpoints = [];
+        parent.originalActivity = activity;
+        data.cells && Object.keys(data.cells).map(name => {
+            const c = data.cells[name];
+            let node = cellNode.cloneNode(true);
+            node.setAttribute('label', name);
+            node.setAttribute('original_name', c.original_name);
+            node.setAttribute('outputs', c.outputs);
+            if(c.params !== undefined && Object.keys(c.params).length !== 0) {
+                node.setAttribute('attrList', Object.keys(c.params).map(param_name => {
+                    const value = c.params[param_name];
+                    node.setAttribute(param_name, value);
+                    return param_name;
+                }))
+            }
+            let v = undefined;
+            let v10 = undefined;
+            let baseY = BASE_Y;
+            switch(c.original_name) {
+                case 'start':
+                    v = graph.insertVertex(parent, null, node, c.x, c.y, c.height || 100, 25, 'start');
+                    v.setConnectable(false);
+                    baseY = 7;
+                    break;
+                case 'end':
+                    v = graph.insertVertex(parent, null, node, c.x, c.y, c.height || 100, 25, 'end');
+                    v.setConnectable(false);
+
+                    v10 = graph.insertVertex(v, null, targetNode.cloneNode(true), 0, 0, 10, 10, 'port;target;spacingLeft=18', true);
+                    v10.geometry.offset = new mxPoint(-5, 9);
+                    endpoints.push([name, v10]);
+                    break;
+                default:
+                    v = graph.insertVertex(parent, null, node, c.x, c.y, min_cell_height(c, name), baseY + (20 * c.outputs.length) + 15);
+                    v.setConnectable(false);
+
+                    v10 = graph.insertVertex(v, null, targetNode.cloneNode(true), 0, 0, 10, 10, 'port;target;spacingLeft=18', true);
+                    v10.geometry.offset = new mxPoint(-5, 15);
+                    endpoints.push([name, v10]);
+                    break;
+            }
+
+            for(let i=0; i < c.outputs.length; i++) {
+                let o = c.outputs[i];
+                let p = graph.insertVertex(v, null, sourceNode.cloneNode(true), 1, 0, 10, 10, 'port;source;align=right;spacingRight=18', true);
+
+                p.value = o;
+                p.geometry.offset = new mxPoint(-5, baseY + (i * 20));
+                endpoints.push([name + '.' + o, p]);
+            }
+
+            graph.removeCellOverlays(v);
+            switch(c.state) {
+                case 'RUN': graph.addCellOverlay(v, createOverlay(new mxImage(runPic, 32, 32), c.state)); break;
+                case 'ERROR': graph.addCellOverlay(v, createOverlay(new mxImage(errPic, 32, 32), c.state)); break;
+                case 'OK': graph.addCellOverlay(v, createOverlay(new mxImage(okPic, 32, 32), c.state)); break;
+                default: break;
+            }
+            return null;
+        });
+
+        data.entities && data.entities.map((e) => {
+            let node = cellNode.cloneNode(true);
+            node.setAttribute('label', e.name);
+            node.setAttribute('original_name', e.original_name);
+            node.setAttribute('outputs', e.outputs);
+
+            let v = graph.insertVertex(parent, null, node, e.x, e.y, e.height || BASIC_CELL_HEIGHT, BASE_Y + (20 * e.outputs.length) + 15, 'entity');
+            v.setConnectable(false);
+
+            let v10 = graph.insertVertex(v, null, targetNode.cloneNode(true), 0, 0, 10, 10, 'port;target;spacingLeft=18', true);
+            v10.geometry.offset = new mxPoint(-5, 15);
+            endpoints.push([e.name, v10]);
+
+            for(let i=0; i < e.outputs.length; i++) {
+                let o = e.outputs[i];
+                let p = graph.insertVertex(v, null, sourceNode.cloneNode(true), 1, 0, 10, 10, 'port;source;align=right;spacingRight=18', true);
+
+                p.value = o;
+                p.geometry.offset = new mxPoint(-5, BASE_Y + (i * 20));
+                endpoints.push([e.name + '.' + o, p]);
+            }
+            return null;
+        });
+
+        // add transitions to the model.
+        data.transitions.map((t) => {
+            const s = t[0]; // source
+            const d = t[1]; // destination
+            const extra = t[2]; // some extra information
+
+            const a = endpoints.find(e => s === e[0]);
+            const b = endpoints.find(e => d === e[0]);
+            if(a === undefined || b === undefined) {
+                console.error('endpoints a or b is not found in reference list:', s, d, endpoints);
+                return null;
+            }
+
+            let style = undefined;
+            if(extra && extra.status !== undefined && (extra.status === 'OK' || extra.status === 'ERROR')) {
+                const color = extra.status === 'OK'?(s.indexOf('.rollback') !== -1?'#ffbd53':'#32cd32'):'#ff0000';
+                style = `strokeColor=${color};fillColor=${color};`
+            }
+            graph.insertEdge(parent, null, '',  a[1], b[1], style);
+            return null;
+        })
+    }
+    finally
+    {
+        // Updates the display
+        graph.getModel().endUpdate();
+    }
+
+    if(options && options.nofit) return;
+    // fit and center the graph (see: https://jgraph.github.io/mxgraph/docs/js-api/files/view/mxGraph-js.html#mxGraph.fit)
+    var margin = 2;
+    var max = 1;
+
+    // reset the graph start to adjust correctly the view afterwards
+    graph.view.setTranslate(0, 0);
+
+    var bounds = graph.getGraphBounds();
+    var cw = graph.container.clientWidth - margin;
+    var ch = graph.container.clientHeight - margin;
+    var w = bounds.width / graph.view.scale;
+    var h = bounds.height / graph.view.scale;
+    var s = Math.min(max, Math.min(cw / w, ch / h));
+
+    graph.view.scaleAndTranslate(s,
+      (margin + cw - w * s) / (2 * s) - bounds.x / graph.view.scale,
+      (margin + ch - h * s) / (4 * s) - bounds.y / graph.view.scale
+      /*originally: (margin + ch - h * s) / (2 * s) - bounds.y / graph.view.scale*/);
+}
+
+
 function setup_toolbar(editor, container, spacer, handlers, props) {
     const {cells, activityId} = props;
     const {onSave, onDelete} = handlers;
@@ -457,22 +621,27 @@ export default function draw_editor(container, activity, handlers, placeholders,
             this.isCellEditable(cell) && !this.model.isEdge(cell))
         {
             if(props.cells) {
-                editCellProperty(cell, modal, spacer, this.isEnabled(), props.cells.concat(props.entities), this.getModel().cells,
+                if(handlers.onEdit) {
+                    handlers.onEdit(cell);
+                } else {
+                  editCellProperty(cell, modal, spacer, this.isEnabled(), props.cells.concat(props.entities), this.getModel().cells,
                     () => {
-                        const r = getDefinition(editor, title.value);
-                        updateModel(r.activity, {clear: true, nofit: true});
+                      const r = getDefinition(editor, title.value);
+                      updateModel(r.activity, {clear: true, nofit: true});
                     },
                     this.getModel().getOutgoingEdges(cell).map(e => {
-                        const sourcePortId = e.style.split(';')
-                            .map(s => s.split('='))
-                            .filter(s => s[0] === 'sourcePort')[0][1];
+                      const sourcePortId = e.style.split(';')
+                        .map(s => s.split('='))
+                        .filter(s => s[0] === 'sourcePort')[0][1];
 
-                        return [
-                            e.source.children.find(c => c.id === sourcePortId).value,
-                            e.target.getAttribute('label')
-                        ]
+                      return [
+                        e.source.children.find(c => c.id === sourcePortId).value,
+                        e.target.getAttribute('label')
+                      ]
                     }), props)
+                }
             } else {
+                // show cell read-only
                 editCellProperty(cell, modal, spacer, this.isEnabled(), [], this.getModel().cells, undefined, undefined, props)
             }
         }

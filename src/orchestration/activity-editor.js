@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import {Redirect} from "react-router";
-import draw_editor, {addNode, getDefinition} from "./editor";
+import draw_editor, {addNode, getDefinition, updateGraphModel} from "./editor";
 import {fetch_post, fetch_get, fetch_delete, fetch_put, NotificationsManager} from "../utils";
 
 import Col from 'react-bootstrap/lib/Col';
@@ -721,8 +721,8 @@ function NewCellModal(props)  {
         }
 
         return (
-          <FormGroup>
-            <Col componentClass={ControlLabel} sm={2} key={n}>{n}</Col>
+          <FormGroup key={n}>
+            <Col componentClass={ControlLabel} sm={2}>{n}</Col>
             <Col sm={9}>{i}</Col>
           </FormGroup>
         )
@@ -814,6 +814,156 @@ function NewCellModal(props)  {
 }
 
 
+function EditCellModal(props) {
+    const {show, cell, cells, activity, onHide} = props;
+    const [staticParams, setStaticParams] = useState({});
+    const [customOutputs, setCustomOutputs] = useState([]);
+
+    console.log("cell", cell);
+    useEffect(() => {
+      if(!show) {
+        setStaticParams({});
+      }
+    }, [show]);
+    useEffect(() => {
+      if(cell && cell.value.getAttribute('attrList')) {
+        setStaticParams(cell.value.getAttribute('attrList').split(",").reduce((o, a) => {o[a] = cell.value.getAttribute(a); return o;}, {}))
+      }
+    }, [cell]);
+
+    if(!cell) return <div/>
+
+    const originalName = cell.value.getAttribute('original_name');
+    const attrsStr = cell.value.getAttribute('attrList');
+
+    const cellDef = cells.find(c => c.name === originalName);
+    const defAttrList = cellDef && cellDef.params?cellDef.params.map(p => p.name || p):[];
+    const attrList = attrsStr ? attrsStr.split(',') : [];
+    const paramsList = defAttrList.concat(attrList.filter(e => !defAttrList.includes(e)));
+
+    const params = paramsList
+      // get the param definition (if possible)
+      .map(p => (cellDef && cellDef.params.find(param => (param.name || param) === p)) || p)
+      .map(param => {
+        let i = null;
+
+        const n = param.name || param;
+        switch (param.nature) {
+          case 'session_holder':
+            i = <SessionHolderInput value={staticParams[n]}
+                                    onChange={e => setStaticParams(update(staticParams, {$merge: {[n]: e}}))}/>
+            break;
+          case 'task':
+            i = <TaskInput cells={activity.definition.cells} value={staticParams[n]}
+                           onChange={e => setStaticParams(update(staticParams, {$merge: {[n]: e}}))}/>
+            break;
+          case 'activity':
+            i = <ActivityInput value={staticParams[n]}
+                               onChange={e => setStaticParams(update(staticParams, {$merge: {[n]: e}}))}/>
+            break;
+          case 'user_role':
+            i = <UserRoleInput value={staticParams[n]}
+                               onChange={e => setStaticParams(update(staticParams, {$merge: {[n]: e}}))}/>
+            break;
+          case 'user_profile':
+            i = <UserProfileInput value={staticParams[n]}
+                                  onChange={e => setStaticParams(update(staticParams, {$merge: {[n]: e}}))}/>
+            break;
+          case 'user_properties':
+            i = <TextareaInput rows={4} value={staticParams[n]}
+                               onChange={e => setStaticParams(update(staticParams, {$merge: {[n]: e}}))}/>
+            break;
+          case 'timer':
+            i = <TimerInput cells={activity.definition.cells} cellsDef={cells} value={staticParams[n]}
+                            onChange={e => setStaticParams(update(staticParams, {$merge: {[n]: e}}))}/>
+            break;
+          case 'list':
+            i = <ListInput options={param.values} value={staticParams[n]}
+                           onChange={e => setStaticParams(update(staticParams, {$merge: {[n]: e}}))}/>
+            break;
+          case 'jinja':
+            i = <TextareaInput rows={4} value={staticParams[n]}
+                               onChange={e => setStaticParams(update(staticParams, {$merge: {[n]: e}}))}/>
+            break;
+          case 'python':
+          case 'json':
+            i = <TextareaInput rows={10} value={staticParams[n]}
+                               onChange={e => setStaticParams(update(staticParams, {$merge: {[n]: e}}))}/>
+            break;
+          case 'bool':
+            i = <BoolInput value={staticParams[n]}
+                           onChange={e => setStaticParams(update(staticParams, {$merge: {[n]: e}}))}/>
+            break;
+          case 'python_switch':
+            i = <SwitchOutputs
+              value={staticParams[n]}
+              onChange={(e, outputs) => {
+                setStaticParams(update(staticParams, {$merge: {[n]: e}}));
+                setCustomOutputs(outputs);
+              }}/>
+            break;
+          case 'outputs':
+            i = <HttpOutputs
+              value={staticParams[n]}
+              onChange={(e, outputs) => {
+                setStaticParams(update(staticParams, {$merge: {[n]: e}}));
+                setCustomOutputs(outputs);
+              }}/>
+            break;
+          default:
+            i = <BasicInput value={staticParams[n]}
+                            onChange={e => setStaticParams(update(staticParams, {$merge: {[n]: e.target.value}}))}/>
+            break;
+        }
+        return (
+          <FormGroup key={n}>
+            <Col componentClass={ControlLabel} sm={2}>{n}</Col>
+            <Col sm={9}>{i}</Col>
+          </FormGroup>
+        )
+      })
+
+    return (
+      <Modal show={show} onHide={() => onHide(null)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Update cell '{cell.value.getAttribute("label")}'</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form horizontal>
+            <FormGroup>
+                <Col componentClass={ControlLabel} sm={2}>
+                    <FormattedMessage id="implementation" defaultMessage="Implementation" />
+                </Col>
+
+                <Col sm={9}>
+                    <FormControl
+                        componentClass="input"
+                        value={originalName}
+                        readOnly />
+                </Col>
+            </FormGroup>
+            <p><i>{ cellDef && cellDef.doc }</i></p>
+
+            { params }
+
+            <FormGroup>
+              <Col smOffset={2} sm={10}>
+                  <Button
+                    onClick={() => {
+                      onHide({params:staticParams, isEntity:false, customOutputs: customOutputs});
+                    }}
+                  >
+                      Save
+                  </Button>
+              </Col>
+            </FormGroup>
+          </Form>
+        </Modal.Body>
+      </Modal>
+    )
+}
+
+
 export function ActivityEditor(props) {
     const [entities, setEntities] = useState([]);
     const [cells, setCells] = useState([]);
@@ -823,6 +973,7 @@ export function ActivityEditor(props) {
     const [showStats, setShowStats] = useState(false);
     const [editor, setEditor] = useState(null);
     const [newCell, showNewCell] = useState(false);
+    const [editedCell, setEditedCell] = useState(undefined);
 
     useEffect(() => {
         fetchConfiguration(setConfiguration);
@@ -850,6 +1001,7 @@ export function ActivityEditor(props) {
                         setNewActivity(false);
                     }
                 ),
+                onEdit: cell => setEditedCell(cell),
                 // onDelete: () => deleteActivity(currentActivity.id, () => setNewActivity(true)),
             },
             {
@@ -941,6 +1093,25 @@ export function ActivityEditor(props) {
                 entities={entities}
                 activity={editor && getDefinition(editor).activity}
             />
+
+            <EditCellModal
+                show={editedCell !== undefined}
+                cell={editedCell}
+                cells={cells}
+                activity={editor && getDefinition(editor).activity}
+                onHide={c => {
+                  setEditedCell(undefined);
+                  if(c === null) return;
+
+                  console.error("to be implemented...", c);
+
+                  const activity = editor && getDefinition(editor).activity;
+                  activity.cells[c.name]["params"] = c.params;
+                  if(c.outputs !== undefined) {
+                    activity.cells[c.name]["outputs"] = c.outputs;
+                  }
+                  updateGraphModel(editor, activity, {clear: true, nofit: true});
+                }} />
         </>
     );
 }
