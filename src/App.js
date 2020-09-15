@@ -514,6 +514,7 @@ class App extends Component {
                 }
                 if (data.modules) {
                     UiFlavourService.updateFlavourFromModules(data.modules);
+                    document.title = UiFlavourService.getWindowTitle();
                 }
             })
             .catch(console.error);

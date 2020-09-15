@@ -24,7 +24,7 @@ export function createCookie(name,value,days,path) {
 	}
 	if (!path) {
 	    path = "/";
-    }
+  }
 	document.cookie = name+"="+value+expires+"; path="+path+"; samesite=strict; secure";
 }
 
@@ -123,6 +123,10 @@ class UiFlavour {
 
     isNpact() {
         return this.getFlavour() === "npact";
+    }
+
+    getWindowTitle() {
+        return this.getFlavour().toUpperCase();
     }
 }
 
