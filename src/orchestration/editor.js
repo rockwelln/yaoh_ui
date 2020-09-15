@@ -84,7 +84,7 @@ function min_cell_height(cell, name) {
 
 export function getDefinition(editor, title) {
     let model = editor.graph.getModel();
-    console.log(model.cells);
+    // console.log(model.cells);
     let activity = Object.assign({}, editor.graph.getDefaultParent().originalActivity);
     activity.name = title;
     activity.definition = {};
