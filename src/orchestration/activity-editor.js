@@ -351,6 +351,7 @@ function NewCellModal(props)  {
         setName("");
         setDefinition({});
         setStaticParams({});
+        setCustomOutputs([]);
       }
     }, [show]);
 
