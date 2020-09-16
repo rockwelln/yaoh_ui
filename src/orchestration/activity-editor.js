@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import {Redirect} from "react-router";
-import draw_editor, {getDefinition} from "./editor";
+import draw_editor, {addNode, getDefinition, isValid, updateGraphModel} from "./editor";
 import {fetch_post, fetch_get, fetch_delete, fetch_put, NotificationsManager} from "../utils";
 
 import Col from 'react-bootstrap/lib/Col';
@@ -9,6 +9,7 @@ import Row from 'react-bootstrap/lib/Row';
 import Table from 'react-bootstrap/lib/Table';
 import Button from 'react-bootstrap/lib/Button';
 import FormControl from 'react-bootstrap/lib/FormControl';
+import HelpBlock from 'react-bootstrap/lib/HelpBlock';
 
 import GridPic from "./grid.gif";
 import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
@@ -26,9 +27,11 @@ import InputGroup from "react-bootstrap/lib/InputGroup";
 import InputGroupButton from "react-bootstrap/lib/InputGroupButton";
 import {DeleteConfirmButton} from "../utils/deleteConfirm";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faStethoscope, faChartBar } from "@fortawesome/free-solid-svg-icons";
+import { faChartBar } from "@fortawesome/free-solid-svg-icons";
 import {Link} from "react-router-dom";
 import {SimulatorPanel} from "./simulator";
+import Checkbox from "react-bootstrap/lib/Checkbox";
+import {fetchConfiguration, Param2Input} from "./nodeInputs";
 
 
 const NEW_ACTIVITY = {
@@ -97,11 +100,6 @@ function saveActivity(activity, cb) {
     });
 }
 
-function fetchConfiguration(onSuccess) {
-    fetch_get('/api/v01/system/configuration')
-        .then(data => onSuccess(data.content))
-        .catch(console.error);
-}
 
 function fetchActivityStats(id, onSuccess) {
     fetch_get(`/api/v01/activities/${id}/stats`)
@@ -340,6 +338,429 @@ function ActivityStatsModal(props) {
     )
 }
 
+
+function NewCellModal(props)  {
+    const {show, onHide, cells, entities, activity} = props;
+    const [name, setName] = useState("");
+    const [definition, setDefinition] = useState({});
+    const [staticParams, setStaticParams] = useState({});
+    const [customOutputs, setCustomOutputs] = useState([]);
+
+    useEffect(() => {
+      if(!show) {
+        setName("");
+        setDefinition({});
+        setStaticParams({});
+        setCustomOutputs([]);
+      }
+    }, [show]);
+
+    const params = definition && definition.params && definition
+      .params
+      .map(param => {
+        const n = param.name || param;
+        const error = isValid(param, staticParams[n] || "");
+
+        return (
+          <FormGroup key={n} validationState={error === null?null:"error"}>
+            <Col componentClass={ControlLabel} sm={2}>{n}</Col>
+            <Col sm={9}>
+              <Param2Input
+                param={param}
+                cells={cells}
+                activity={activity}
+                value={staticParams[n]}
+                onChange={(e, outputs) => {
+                  setStaticParams(update(staticParams, {$merge: {[n]: e}}));
+                  if(outputs !== undefined) {
+                    setCustomOutputs(outputs);
+                  }
+                }} />
+              {
+                param.help && <HelpBlock>{param.help}</HelpBlock>
+              }
+              {
+                error && <HelpBlock>{error}</HelpBlock>
+              }
+            </Col>
+          </FormGroup>
+        )
+    });
+
+    const duplicateName = activity && Object.keys(activity.definition.cells).includes(name);
+    const validName = name && name.length !== 0 && (!activity || !duplicateName);
+    const invalidParams = definition && definition.params && definition
+      .params
+      .filter(p => isValid(p, staticParams[p.name || p] || "") !== null) || [];
+
+    return (
+        <Modal show={show} onHide={() => onHide(null)} bsSize={"large"}>
+            <Modal.Header closeButton>
+                <Modal.Title>New cell</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <Form horizontal>
+                    <FormGroup validationState={duplicateName?"error":null}>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="name" defaultMessage="Name" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="input"
+                                value={name}
+                                onChange={e => setName(e.target.value)}/>
+                          { duplicateName &&
+                            <HelpBlock>Duplicate name in the workflow</HelpBlock>
+                          }
+                        </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="implementation" defaultMessage="Implementation" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="select"
+                                value={definition.original_name}
+                                onChange={e => setDefinition(cells.find(c => c.original_name === e.target.value))}>
+                                <option value=""/>
+                              {
+                                entities && entities.length !== 0 &&
+                                  <optgroup label="Entities">
+                                    {
+                                      entities.map(e => <option value={e.name}>{e.name}</option>)
+                                    }
+                                  </optgroup>
+                              }
+                              {
+                                Object.entries(cells
+                                  .sort((a, b) => a.category.localeCompare(b.category))
+                                  .reduce((o, item) => {
+                                    const key = item["category"] || "direct processing";
+                                    if (!o.hasOwnProperty(key)) {
+                                      o[key] = [];
+                                    }
+                                    o[key].push(item);
+                                    return o
+                                  }, {}))
+                                  .map(([category, cells])=> (
+                                    <optgroup label={category} key={category}>
+                                      { cells.map(c => <option value={c.original_name} key={c.original_name}>{c.original_name}</option>)}
+                                    </optgroup>
+                                    ))
+                                  })
+                              }
+
+                            </FormControl>
+                            {
+                                definition && definition.doc && <HelpBlock>{definition.doc}</HelpBlock>
+                            }
+                        </Col>
+                    </FormGroup>
+
+                    { params }
+
+                    <FormGroup>
+                      <Col smOffset={2} sm={10}>
+                          <Button
+                            onClick={() => {
+                              onHide({def:definition, name:name, params:staticParams, isEntity:false, customOutputs: customOutputs});
+                            }}
+                            disabled={!validName || invalidParams.length !== 0}
+                          >
+                              Save
+                          </Button>
+                      </Col>
+                    </FormGroup>
+                </Form>
+            </Modal.Body>
+        </Modal>
+    )
+}
+
+
+const defaultDragState = {
+  column: -1,
+  row: -1,
+  startPoint: null,
+  direction: "",
+  dropIndex: -1 // drag target
+};
+
+
+function offsetIndex(from, to, arr = []) {
+  if (from < to) {
+    let start = arr.slice(0, from),
+      between = arr.slice(from + 1, to + 1),
+      end = arr.slice(to + 1);
+    return [...start, ...between, arr[from], ...end];
+  }
+  if (from > to) {
+    let start = arr.slice(0, to),
+      between = arr.slice(to, from),
+      end = arr.slice(from + 1);
+    return [...start, arr[from], ...between, ...end];
+  }
+  return arr;
+}
+
+
+function OutputsTable(props) {
+  let {rows, usedRows, onDragEnd} = props;
+  const [dragState, setDragState] = useState({...defaultDragState});
+  const preview = useRef(null);
+
+  if (dragState.direction === "row") {
+    rows = offsetIndex(dragState.row, dragState.dropIndex, rows);
+  }
+  return (
+    <>
+      <Table>
+        <tbody>
+        {
+          rows.map((output, i) => {
+            return (
+              <tr
+                key={i}
+                draggable
+                style={{
+                  cursor: dragState.direction ? "move" : "grab",
+                  opacity: dragState.dropIndex === i ? 0.5 : 1
+                }}
+                onDragStart={e => {
+                  e.dataTransfer.setDragImage(preview.current, 0, 0);
+                  setDragState({
+                    ...dragState,
+                    row: i,
+                    startPoint: {
+                      x: e.pageX,
+                      y: e.pageY
+                    }
+                  });
+                }}
+                onDragEnd={() => {
+                  onDragEnd(rows);
+                  setDragState({ ...defaultDragState });
+                }}
+                onDragEnter={e => {
+                  if (!dragState.direction) {
+                    setDragState({
+                      ...dragState,
+                      direction: "row",
+                      dropIndex: i
+                    });
+                    return;
+                  }
+
+                  if (i !== dragState.dropIndex) {
+                    setDragState({
+                      ...dragState,
+                      dropIndex: i
+                    });
+                  }
+                }}
+              >
+                <td style={{width: 20}}><Glyphicon glyph={"menu-hamburger"}/></td>
+                <td style={{width: 20}}>
+                  <Checkbox
+                    checked={output.visible}
+                    onChange={e => onDragEnd(update(rows, {[i]: {$merge: {visible: e.target.checked}}}))}
+                    disabled={usedRows.includes(output.value) || output.custom} />
+                </td>
+                <td>{output.value}</td>
+              </tr>
+            )
+          })
+        }
+        </tbody>
+      </Table>
+      <div
+        ref={preview}
+        style={{
+          position: "absolute",
+          width: 0,
+          height: 0,
+          overflow: "hidden"
+        }}
+      />
+    </>
+  )
+}
+
+
+export function EditCellModal(props) {
+    const {show, cell, cells, activity, onHide, readOnly = false} = props;
+    const [staticParams, setStaticParams] = useState({});
+    const [outputs, setOutputs] = useState([]);
+
+    const originalName = cell && cell.value.getAttribute('original_name');
+    const name = cell && cell.value.getAttribute('label');
+    const attrsStr = cell && cell.value.getAttribute('attrList');
+
+    const cellDef = cells && cells.find(c => c.name === originalName);
+
+    useEffect(() => {
+      if(!show) {
+        setStaticParams({});
+        setOutputs([]);
+      }
+    }, [show]);
+    useEffect(() => {
+      if(cell) {
+        if(cell.value.getAttribute("attrList")) {
+          setStaticParams(cell.value.getAttribute('attrList').split(",").reduce((o, a) => {
+            o[a] = cell.value.getAttribute(a);
+            return o;
+          }, {}))
+        }
+        if(cell.value.getAttribute("outputs") && cellDef) {
+          /*
+          merge visible outputs and outputs from the definition
+          and filter out duplicates (if any).
+           */
+          setOutputs(
+            cell.value.getAttribute("outputs")
+              .split(",")
+              .concat(cellDef.outputs || [])
+              .reduce((o, e) => {
+                if(!o.includes(e)) o.push(e);
+                return o;
+              }, [])
+              .reduce((o, e) => {
+                o.push({
+                  value: e,
+                  custom: cellDef.outputs?!cellDef.outputs.includes(e):true,
+                  visible: cell.value.getAttribute("outputs").split(",").includes(e)
+                })
+                return o;
+              }, [])
+          );
+        }
+      }
+    }, [cell, activity]);
+
+    if(!cell) return <div/>
+
+    const usedRows = activity && activity.definition.transitions.map(t => t[0]).reduce((o, e) => {
+      const [task, output] = e.split(".");
+      if(task === name) {
+        o.push(output);
+      }
+      return o;
+    }, []);
+
+    const defAttrList = cellDef && cellDef.params?cellDef.params.map(p => p.name || p):[];
+    const attrList = attrsStr ? attrsStr.split(',') : [];
+    const paramsList = defAttrList.concat(attrList.filter(e => !defAttrList.includes(e)));
+
+    const params = paramsList
+      // get the param definition (if possible)
+      .map(p => (cellDef && cellDef.params.find(param => (param.name || param) === p)) || p)
+      .map(param => {
+        const n = param.name || param;
+        const error = isValid(param, staticParams[n] || "");
+
+        return (
+          <FormGroup key={n} validationState={error === null?null:"error"}>
+            <Col componentClass={ControlLabel} sm={2}>{n}</Col>
+            <Col sm={9}>
+              <Param2Input
+                param={param}
+                cells={cells}
+                activity={activity}
+                value={staticParams[n]}
+                onChange={(e, outputs) => {
+                  if(readOnly) return;
+
+                  setStaticParams(update(staticParams, {$merge: {[n]: e}}));
+                  if(outputs !== undefined) {
+                    setOutputs(outs => outs.filter(o => !o.custom || outputs.includes(o.value)).concat(outputs.filter(o => !outs.map(t => t.value).includes(o)).map(o => { return {value: o, custom: true, visible: true} })));
+                  }
+                }} />
+              {
+                param.help && <HelpBlock>{param.help}</HelpBlock>
+              }
+              {
+                error && <HelpBlock>{error}</HelpBlock>
+              }
+            </Col>
+          </FormGroup>
+        )
+      })
+
+    const invalidParams = cellDef && cellDef.params && cellDef
+      .params
+      .filter(p => isValid(p, staticParams[p.name || p] || "") !== null) || [];
+
+    return (
+      <Modal show={show} onHide={() => onHide(null)} bsSize="large">
+        <Modal.Header closeButton>
+          <Modal.Title>{cell.value.getAttribute("label")}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form horizontal>
+            <FormGroup>
+                <Col componentClass={ControlLabel} sm={2}>
+                    <FormattedMessage id="implementation" defaultMessage="Implementation" />
+                </Col>
+
+                <Col sm={9}>
+                    <FormControl
+                        componentClass="input"
+                        value={originalName}
+                        readOnly />
+                </Col>
+            </FormGroup>
+            <p><i>{ cellDef && cellDef.doc }</i></p>
+
+            { params }
+
+            <hr/>
+            {outputs && outputs.length !== 0 &&
+              <FormGroup>
+                <Col componentClass={ControlLabel} sm={2}>
+                  <FormattedMessage id="outputs" defaultMessage="Outputs"/>
+                </Col>
+
+                <Col sm={9}>
+                  <OutputsTable
+                    rows={outputs} /* visible + invisible */
+                    usedRows={usedRows} /* used are checked and disabled */
+                    onDragEnd={setOutputs}/>
+                </Col>
+              </FormGroup>
+            }
+
+            {!readOnly &&
+              <FormGroup>
+                <Col smOffset={2} sm={10}>
+                  <Button
+                    disabled={invalidParams.length !== 0}
+                    onClick={() => {
+                      onHide({
+                        name: cell.value.getAttribute("label"),
+                        originalName: originalName,
+                        params: staticParams,
+                        isEntity: false,
+                        outputs: outputs.filter(o => o.visible).map(o => o.value),
+                      });
+                    }}
+                  >
+                    Save
+                  </Button>
+                </Col>
+              </FormGroup>
+            }
+          </Form>
+        </Modal.Body>
+      </Modal>
+    )
+}
+
+
 export function ActivityEditor(props) {
     const [entities, setEntities] = useState([]);
     const [cells, setCells] = useState([]);
@@ -348,6 +769,8 @@ export function ActivityEditor(props) {
     const [newActivity, setNewActivity] = useState(true);
     const [showStats, setShowStats] = useState(false);
     const [editor, setEditor] = useState(null);
+    const [newCell, showNewCell] = useState(false);
+    const [editedCell, setEditedCell] = useState(undefined);
 
     useEffect(() => {
         fetchConfiguration(setConfiguration);
@@ -375,6 +798,7 @@ export function ActivityEditor(props) {
                         setNewActivity(false);
                     }
                 ),
+                onEdit: cell => setEditedCell(cell),
                 // onDelete: () => deleteActivity(currentActivity.id, () => setNewActivity(true)),
             },
             {
@@ -389,6 +813,12 @@ export function ActivityEditor(props) {
         );
         setEditor(e);
     }, [editorRef, toolbarRef, titleRef, currentActivity, newActivity, cells, entities]);
+
+    useEffect(() => {
+        editor && editor.addAction('add_process', () =>
+            showNewCell(true)
+        );
+    }, [editor]);
 
     useEffect(() => {
         if(props.match.params.activityId) {
@@ -438,10 +868,45 @@ export function ActivityEditor(props) {
                     }} />
                 </Col>
             </Row>
+
             <ActivityStatsModal
                 show={showStats}
                 onHide={() => setShowStats(false)}
                 id={props.match.params.activityId} />
+
+            <NewCellModal
+                show={newCell}
+                cells={cells}
+                entities={entities}
+                activity={editor && getDefinition(editor).activity}
+                onHide={c => {
+                  showNewCell(false);
+                  if(c) {
+                    // merge the output(s) if needed
+                    if(c.customOutputs) {
+                      c.def.outputs = c.def.outputs.concat(c.customOutputs).reduce((u, i) => u.includes(i) ? u : [...u, i], []);
+                    }
+                    addNode(editor, c.def, c.name, c.params, c.isEntity);
+                  }
+                }}
+            />
+
+            <EditCellModal
+                show={editedCell !== undefined}
+                cell={editedCell}
+                cells={cells}
+                activity={editor && getDefinition(editor).activity}
+                onHide={c => {
+                  setEditedCell(undefined);
+                  if(c === null) return;
+
+                  const activity = editor && getDefinition(editor).activity;
+                  activity.definition.cells[c.name]["params"] = c.params;
+                  if(c.outputs !== undefined) {
+                    activity.definition.cells[c.name]["outputs"] = c.outputs;
+                  }
+                  updateGraphModel(editor, activity, {clear: true, nofit: true});
+                }} />
         </>
     );
 }
