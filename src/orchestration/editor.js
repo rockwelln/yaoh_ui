@@ -289,7 +289,7 @@ export function updateGraphModel(editor, activity, options) {
             node.setAttribute('original_name', c.original_name);
             node.setAttribute('outputs', c.outputs);
             if(c.params !== undefined && Object.keys(c.params).length !== 0) {
-                node.setAttribute('attrList', Object.keys(c.params).map(param_name => {
+                node.setAttribute('attrList', Object.keys(c.params).filter(p => p).map(param_name => {
                     const value = c.params[param_name];
                     node.setAttribute(param_name, value);
                     return param_name;
