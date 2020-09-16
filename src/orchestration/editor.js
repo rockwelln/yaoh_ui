@@ -128,7 +128,7 @@ export function getDefinition(editor, title) {
 export function addNode(editor, def, name, paramsFields, isEntity) {
     const cls = isEntity?"entity":"cell";
     const c = def;
-    const value = def.original_name;
+    const value = def.original_name || def.name;
     let graph = editor.graph;
     let parent = graph.getDefaultParent();
     graph.getModel().beginUpdate();

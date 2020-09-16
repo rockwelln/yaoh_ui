@@ -424,8 +424,11 @@ function NewCellModal(props)  {
                         <Col sm={9}>
                             <FormControl
                                 componentClass="select"
-                                value={definition.original_name}
-                                onChange={e => setDefinition(cells.find(c => c.original_name === e.target.value))}>
+                                value={definition.original_name || definition.name}
+                                onChange={e => {
+                                  const cellDef = cells.find(c => c.original_name === e.target.value);
+                                  setDefinition(cellDef?cellDef:entities.find(ent => ent.name === e.target.value))
+                                }}>
                                 <option value=""/>
                               {
                                 entities && entities.length !== 0 &&
@@ -467,7 +470,7 @@ function NewCellModal(props)  {
                       <Col smOffset={2} sm={10}>
                           <Button
                             onClick={() => {
-                              onHide({def:definition, name:name, params:staticParams, isEntity:false, customOutputs: customOutputs});
+                              onHide({def:definition, name:name, params:staticParams, isEntity:definition.original_name === undefined, customOutputs: customOutputs});
                             }}
                             disabled={!validName || invalidParams.length !== 0}
                           >
@@ -592,7 +595,7 @@ function OutputsTable(props) {
 
 
 export function EditCellModal(props) {
-    const {show, cell, cells, activity, onHide, readOnly = false} = props;
+    const {show, cell, cells, entities, activity, onHide, readOnly = false} = props;
     const [staticParams, setStaticParams] = useState({});
     const [outputs, setOutputs] = useState([]);
 
@@ -600,7 +603,10 @@ export function EditCellModal(props) {
     const name = cell && cell.value.getAttribute('label');
     const attrsStr = cell && cell.value.getAttribute('attrList');
 
-    const cellDef = cells && cells.find(c => c.name === originalName);
+    let cellDef = cells && cells.find(c => c.name === originalName);
+    if(!cellDef) {
+      cellDef = entities && entities.find(c => c.name === originalName);
+    }
 
     useEffect(() => {
       if(!show) {
@@ -616,7 +622,7 @@ export function EditCellModal(props) {
             return o;
           }, {}))
         }
-        if(cell.value.getAttribute("outputs") && cellDef) {
+        if(cell.value.getAttribute("outputs") !== undefined && cellDef) {
           /*
           merge visible outputs and outputs from the definition
           and filter out duplicates (if any).
@@ -626,7 +632,7 @@ export function EditCellModal(props) {
               .split(",")
               .concat(cellDef.outputs || [])
               .reduce((o, e) => {
-                if(!o.includes(e)) o.push(e);
+                if(!o.includes(e) && e) o.push(e);
                 return o;
               }, [])
               .reduce((o, e) => {
@@ -744,7 +750,7 @@ export function EditCellModal(props) {
                         name: cell.value.getAttribute("label"),
                         originalName: originalName,
                         params: staticParams,
-                        isEntity: false,
+                        isEntity: entities && entities.find(c => c.name === originalName) !== undefined,
                         outputs: outputs.filter(o => o.visible).map(o => o.value),
                       });
                     }}
@@ -892,18 +898,26 @@ export function ActivityEditor(props) {
             />
 
             <EditCellModal
-                show={editedCell !== undefined}
                 cell={editedCell}
+                show={editedCell !== undefined}
                 cells={cells}
+                entities={entities}
                 activity={editor && getDefinition(editor).activity}
                 onHide={c => {
                   setEditedCell(undefined);
                   if(c === null) return;
 
                   const activity = editor && getDefinition(editor).activity;
-                  activity.definition.cells[c.name]["params"] = c.params;
+                  if(!c.isEntity) {
+                    activity.definition.cells[c.name]["params"] = c.params;
+                  }
                   if(c.outputs !== undefined) {
-                    activity.definition.cells[c.name]["outputs"] = c.outputs;
+                    if(!c.isEntity) {
+                      activity.definition.cells[c.name]["outputs"] = c.outputs;
+                    } else {
+                      const i = activity.definition.entities.findIndex(e => e.name === c.name);
+                      activity.definition.entities[i]["outputs"] = c.outputs;
+                    }
                   }
                   updateGraphModel(editor, activity, {clear: true, nofit: true});
                 }} />
