@@ -52,6 +52,7 @@ import {access_levels, isAllowed, modules, pages} from "../utils/user";
 import {TimerActions} from "./timers";
 import {fetchRoles} from "../system/user_roles";
 import {LinkContainer} from "react-router-bootstrap";
+import {EditCellModal} from "../orchestration/activity-editor";
 
 export const DATE_FORMAT = 'DD/MM/YYYY HH:mm:ss';
 const SUB_REQUESTS_PAGE_SIZE = 25;
@@ -101,7 +102,9 @@ const pp_as_json = (s) => {
 export class TransactionFlow extends Component {
     constructor(props, context) {
         super(props, context);
-        this.state = {};
+        this.state = {
+          editedCell: undefined,
+        };
         this.flowGraphRef = React.createRef();
         this.toolbarRef = React.createRef();
         this._renderGrid = this._renderGrid.bind(this);
@@ -113,7 +116,9 @@ export class TransactionFlow extends Component {
         draw_editor(
             ReactDOM.findDOMNode(this.flowGraphRef.current),
             {definition: workableDefinition(JSON.parse(definition), states)},
-            {},
+            {
+              onEdit: cell => this.setState({editedCell: cell}),
+            },
             {
                 toolbar: ReactDOM.findDOMNode(this.toolbarRef.current),
             },
@@ -149,13 +154,13 @@ export class TransactionFlow extends Component {
         if(!this.props.states || this.props.states.length !== nextProps.states.length){
             return true;
         }
-        // if a task status changed
+        // if a task status changed or the edited cell
         return (
             this.props.states.filter(
                 s => nextProps.states.find(
                     ns => ns.cell_id === s.cell_id && s.status !== ns.status
                 ) !== undefined
-            ).length !== 0
+            ).length !== 0 || nextState.editedCell !== this.state.editedCell
         );
     }
 
@@ -168,6 +173,11 @@ export class TransactionFlow extends Component {
             <div>
                 <div ref={this.toolbarRef} style={{position: 'absolute', zIndex: '100'}} />
                 <div ref={this.flowGraphRef} style={{overflow: 'hidden', backgroundImage: `url(${GridPic})`}} />
+                <EditCellModal
+                  show={this.state.editedCell !== undefined}
+                  cell={this.state.editedCell}
+                  onHide={() => this.setState({editedCell: undefined})}
+                  readOnly />
             </div>
         );
     }

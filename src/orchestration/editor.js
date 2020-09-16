@@ -586,12 +586,9 @@ export default function draw_editor(container, activity, handlers, placeholders,
             cell !== null && cell !== undefined &&
             this.isCellEditable(cell) && !this.model.isEdge(cell))
         {
-            if(props.cells) {
-                if(handlers.onEdit) {
-                    handlers.onEdit(cell);
-                }
+            if(handlers.onEdit) {
+                handlers.onEdit(cell);
             }
-
         }
         // Disables any default behaviour for the double click
         mxEvent.consume(evt);

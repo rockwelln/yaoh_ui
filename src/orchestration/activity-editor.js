@@ -591,8 +591,8 @@ function OutputsTable(props) {
 }
 
 
-function EditCellModal(props) {
-    const {show, cell, cells, activity, onHide} = props;
+export function EditCellModal(props) {
+    const {show, cell, cells, activity, onHide, readOnly = false} = props;
     const [staticParams, setStaticParams] = useState({});
     const [outputs, setOutputs] = useState([]);
 
@@ -616,7 +616,7 @@ function EditCellModal(props) {
             return o;
           }, {}))
         }
-        if(cell.value.getAttribute("outputs")) {
+        if(cell.value.getAttribute("outputs") && cellDef) {
           /*
           merge visible outputs and outputs from the definition
           and filter out duplicates (if any).
@@ -673,6 +673,8 @@ function EditCellModal(props) {
                 activity={activity}
                 value={staticParams[n]}
                 onChange={(e, outputs) => {
+                  if(readOnly) return;
+
                   setStaticParams(update(staticParams, {$merge: {[n]: e}}));
                   if(outputs !== undefined) {
                     setOutputs(outs => outs.filter(o => !o.custom || outputs.includes(o.value)).concat(outputs.filter(o => !outs.map(t => t.value).includes(o)).map(o => { return {value: o, custom: true, visible: true} })));
@@ -696,7 +698,7 @@ function EditCellModal(props) {
     return (
       <Modal show={show} onHide={() => onHide(null)} bsSize="large">
         <Modal.Header closeButton>
-          <Modal.Title>Update cell '{cell.value.getAttribute("label")}'</Modal.Title>
+          <Modal.Title>{cell.value.getAttribute("label")}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form horizontal>
@@ -732,24 +734,26 @@ function EditCellModal(props) {
               </FormGroup>
             }
 
-            <FormGroup>
-              <Col smOffset={2} sm={10}>
+            {!readOnly &&
+              <FormGroup>
+                <Col smOffset={2} sm={10}>
                   <Button
                     disabled={invalidParams.length !== 0}
                     onClick={() => {
                       onHide({
                         name: cell.value.getAttribute("label"),
                         originalName: originalName,
-                        params:staticParams,
-                        isEntity:false,
+                        params: staticParams,
+                        isEntity: false,
                         outputs: outputs.filter(o => o.visible).map(o => o.value),
                       });
                     }}
                   >
-                      Save
+                    Save
                   </Button>
-              </Col>
-            </FormGroup>
+                </Col>
+              </FormGroup>
+            }
           </Form>
         </Modal.Body>
       </Modal>
