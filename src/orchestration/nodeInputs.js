@@ -5,7 +5,6 @@ import {fetchProfiles} from "../system/user_profiles";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 import Table from "react-bootstrap/lib/Table";
 import Button from "react-bootstrap/lib/Button";
-import Form from "react-bootstrap/lib/Form";
 import update from "immutability-helper";
 import {fetchActivities} from "./activity-editor";
 import {fetch_get} from "../utils";
@@ -372,7 +371,7 @@ export function Param2Input({param, activity, cells, value, onChange}) {
         }} />
       break;
     default:
-      i = <BasicInput value={value} onChange={e => onChange(e)} />
+      i = <BasicInput value={value} onChange={e => onChange(e.target.value)} />
       break;
   }
   return i;

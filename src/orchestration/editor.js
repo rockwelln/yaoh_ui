@@ -623,7 +623,8 @@ export default function draw_editor(container, activity, handlers, placeholders,
             if(props.cells) {
                 if(handlers.onEdit) {
                     handlers.onEdit(cell);
-                } else {
+                }
+                /* else {
                   editCellProperty(cell, modal, spacer, this.isEnabled(), props.cells.concat(props.entities), this.getModel().cells,
                     () => {
                       updateGraphModel(editor, getDefinition(editor, title.value).activity, {clear: true, nofit: true, title: title});
@@ -642,11 +643,14 @@ export default function draw_editor(container, activity, handlers, placeholders,
             } else {
                 // show cell read-only
                 editCellProperty(cell, modal, spacer, this.isEnabled(), [], this.getModel().cells, undefined, undefined, props)
+
+           */
             }
+
         }
         // Disables any default behaviour for the double click
         mxEvent.consume(evt);
-    };
+    }
 
     // Defines actions
     setup_actions(editor, title, spacer, handlers, modal, props);
@@ -1068,28 +1072,24 @@ function uploadDefinition(modal, spacer, onSuccess) {
     modal.style.overflowY = "scroll";
 }
 
-function isValid(p, v) {
+export function isValid(p, v) {
     if(p.mandatory && v.length === 0) {
-        alert(`The element ${p.name || p} is mandatory`);
-        return false;
+        return `The element ${p.name || p} is mandatory`;
     }
     switch (p.validation) {
         case 'int':
             if(!/\d+/.test(v)) {
                 alert(`Invalid number: ${v}`);
-                return false;
             }
             break;
         case 'timeout':
             if(!/\d+ (business|)\s*(hours|days)/.test(v)) {
-                alert(`Invalid timeout: ${v} - should be "(number) (business|) (hours|days)"`);
-                return false;
+                return `Invalid timeout: ${v} - should be "(number) (business|) (hours|days)"`;
             }
             break;
         case 'email':
             if(!/.+@.+\.[a-z]+/.test(v)) {
-                alert(`Invalid email: ${v}`);
-                return false;
+                return `Invalid email: ${v}`;
             }
             break;
         default:
@@ -1100,13 +1100,13 @@ function isValid(p, v) {
         const ajv = Ajv();
         const v_ = ajv.validate(p.schema, p.nature === "outputs"?v.split(","):v);
         if(!v_) {
-            alert(`Invalid ${p.name}: ${ajv.errors.map(e => e.message).join(", ")}`);
+            return `Invalid ${p.name}: ${ajv.errors.map(e => e.message).join(", ")}`;
         }
-        return v_;
+        return null;
     }
-    return true;
+    return null;
 }
-
+/*
 function getHelpbox(nature, helpText) {
     let span = document.createElement("span");
     span.style = "color: grey";
@@ -1370,7 +1370,7 @@ function createInput(param, value, cells, cells_defs, config) {
     }
     return input;
 }
-/*
+
 function newCell(defs, cells, modal, editor, spacer, entities_defs, props) {
     let modalEntities = prepareModal(modal);
     let modalHeader = modalEntities[0];
@@ -1614,7 +1614,6 @@ function newCell(defs, cells, modal, editor, spacer, entities_defs, props) {
     modal.style.display = "block";
     modal.style.overflowY = "scroll";
 }
- */
 
 function editCellProperty(cell, modal, spacer, editable, cells_defs, cells, refresh_cb, transitions, props) {
     const modalEntities = prepareModal(modal);
@@ -1801,6 +1800,7 @@ function editCellProperty(cell, modal, spacer, editable, cells_defs, cells, refr
     modal.style.display = "block";
     modal.style.overflowY = "scroll";
 }
+ */
 
 function configureStylesheet(graph)
 {

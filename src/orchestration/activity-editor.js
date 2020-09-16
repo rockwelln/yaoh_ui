@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import {Redirect} from "react-router";
-import draw_editor, {addNode, getDefinition, updateGraphModel} from "./editor";
+import draw_editor, {addNode, getDefinition, isValid, updateGraphModel} from "./editor";
 import {fetch_post, fetch_get, fetch_delete, fetch_put, NotificationsManager} from "../utils";
 
 import Col from 'react-bootstrap/lib/Col';
@@ -358,9 +358,10 @@ function NewCellModal(props)  {
       .params
       .map(param => {
         const n = param.name || param;
+        const error = isValid(param, staticParams[n] || "");
 
         return (
-          <FormGroup key={n}>
+          <FormGroup key={n} validationState={error === null?null:"error"}>
             <Col componentClass={ControlLabel} sm={2}>{n}</Col>
             <Col sm={9}>
               <Param2Input
@@ -374,10 +375,22 @@ function NewCellModal(props)  {
                     setCustomOutputs(outputs);
                   }
                 }} />
+              {
+                param.help && <HelpBlock>{param.help}</HelpBlock>
+              }
+              {
+                error && <HelpBlock>{error}</HelpBlock>
+              }
             </Col>
           </FormGroup>
         )
     });
+
+    const duplicateName = activity && Object.keys(activity.definition.cells).includes(name);
+    const validName = name && name.length !== 0 && (!activity || !duplicateName);
+    const invalidParams = definition && definition.params && definition
+      .params
+      .filter(p => isValid(p, staticParams[p.name || p] || "") !== null) || [];
 
     return (
         <Modal show={show} onHide={() => onHide(null)} bsSize={"large"}>
@@ -386,7 +399,7 @@ function NewCellModal(props)  {
             </Modal.Header>
             <Modal.Body>
                 <Form horizontal>
-                    <FormGroup>
+                    <FormGroup validationState={duplicateName?"error":null}>
                         <Col componentClass={ControlLabel} sm={2}>
                             <FormattedMessage id="name" defaultMessage="Name" />
                         </Col>
@@ -396,6 +409,9 @@ function NewCellModal(props)  {
                                 componentClass="input"
                                 value={name}
                                 onChange={e => setName(e.target.value)}/>
+                          { duplicateName &&
+                            <HelpBlock>Duplicate name in the workflow</HelpBlock>
+                          }
                         </Col>
                     </FormGroup>
 
@@ -452,7 +468,7 @@ function NewCellModal(props)  {
                             onClick={() => {
                               onHide({def:definition, name:name, params:staticParams, isEntity:false, customOutputs: customOutputs});
                             }}
-                            disabled={!name || name.length === 0}
+                            disabled={!validName || invalidParams.length !== 0}
                           >
                               Save
                           </Button>
@@ -644,9 +660,10 @@ function EditCellModal(props) {
       .map(p => (cellDef && cellDef.params.find(param => (param.name || param) === p)) || p)
       .map(param => {
         const n = param.name || param;
+        const error = isValid(param, staticParams[n] || "");
 
         return (
-          <FormGroup key={n}>
+          <FormGroup key={n} validationState={error === null?null:"error"}>
             <Col componentClass={ControlLabel} sm={2}>{n}</Col>
             <Col sm={9}>
               <Param2Input
@@ -660,10 +677,20 @@ function EditCellModal(props) {
                     setOutputs(outs => outs.filter(o => !o.custom || outputs.includes(o.value)).concat(outputs.filter(o => !outs.map(t => t.value).includes(o)).map(o => { return {value: o, custom: true, visible: true} })));
                   }
                 }} />
+              {
+                param.help && <HelpBlock>{param.help}</HelpBlock>
+              }
+              {
+                error && <HelpBlock>{error}</HelpBlock>
+              }
             </Col>
           </FormGroup>
         )
       })
+
+    const invalidParams = cellDef && cellDef.params && cellDef
+      .params
+      .filter(p => isValid(p, staticParams[p.name || p] || "") !== null) || [];
 
     return (
       <Modal show={show} onHide={() => onHide(null)} bsSize="large">
@@ -707,6 +734,7 @@ function EditCellModal(props) {
             <FormGroup>
               <Col smOffset={2} sm={10}>
                   <Button
+                    disabled={invalidParams.length !== 0}
                     onClick={() => {
                       onHide({
                         name: cell.value.getAttribute("label"),
@@ -843,6 +871,9 @@ export function ActivityEditor(props) {
 
             <NewCellModal
                 show={newCell}
+                cells={cells}
+                entities={entities}
+                activity={editor && getDefinition(editor).activity}
                 onHide={c => {
                   showNewCell(false);
                   if(c) {
@@ -853,9 +884,6 @@ export function ActivityEditor(props) {
                     addNode(editor, c.def, c.name, c.params, c.isEntity);
                   }
                 }}
-                cells={cells}
-                entities={entities}
-                activity={editor && getDefinition(editor).activity}
             />
 
             <EditCellModal
