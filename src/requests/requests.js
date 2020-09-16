@@ -1762,8 +1762,8 @@ export class Transaction extends Component {
             <>
                 <Breadcrumb>
                     <Breadcrumb.Item active><FormattedMessage id="requests" defaultMessage="Requests"/></Breadcrumb.Item>
-                    <LinkContainer to={`/custom-transactions/list`}>
-                        <Breadcrumb.Item><FormattedMessage id="custom-requests" defaultMessage="Custom requests"/></Breadcrumb.Item>
+                    <LinkContainer to={`/transactions/list`}>
+                        <Breadcrumb.Item><FormattedMessage id="apio-requests" defaultMessage="APIO Requests"/></Breadcrumb.Item>
                     </LinkContainer>
                     {
                         tx.super_instance_chain && tx.super_instance_chain.map(sup_i => (
