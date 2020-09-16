@@ -1,11 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import Panel from 'react-bootstrap/lib/Panel';
 import Table from 'react-bootstrap/lib/Table';
 import Button from 'react-bootstrap/lib/Button';
 import ButtonToolbar from 'react-bootstrap/lib/ButtonToolbar';
 import Modal from 'react-bootstrap/lib/Modal';
 import {FormattedMessage} from 'react-intl';
-import {fetch_delete, fetch_get, fetch_post, fetch_put, NotificationsManager} from "../utils";
+import {
+  API_URL_PREFIX,
+  AuthServiceManager,
+  fetch_delete,
+  fetch_get,
+  fetch_post,
+  fetch_put,
+  NotificationsManager
+} from "../utils";
 import FormGroup from "react-bootstrap/lib/FormGroup";
 import Col from "react-bootstrap/lib/Col";
 import Form from "react-bootstrap/lib/Form";
@@ -19,6 +27,7 @@ import Alert from "react-bootstrap/lib/Alert";
 import {StaticControl} from "../utils/common";
 import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
 import {DeleteConfirmButton} from "../utils/deleteConfirm";
+import {useDropzone} from "react-dropzone";
 
 const CUSTOM_ROUTE_PREFIX = "https://<target>/api/v01/custom";
 const JSON_SCHEMA_SAMPLE = (
@@ -61,6 +70,12 @@ function fetchCustomRoutes(onSuccess) {
             <FormattedMessage id="fetch-routes-failed" defaultMessage="Failed to fetch custom routes"/>,
             error.message
         ));
+}
+
+
+function importCustomRoute(data, onSuccess) {
+    return fetch_post(`/api/v01/custom_routes/import`, data)
+        .then(r => onSuccess(r));
 }
 
 
@@ -462,6 +477,110 @@ function UpdateCustomRouteModal(props) {
     )
 }
 
+function readFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsText(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = error => reject(error);
+  })
+}
+
+function ImportCustomRouteModal(props) {
+  const {show, onHide} = props;
+  const [errors, setErrors] = useState([]);
+  const [loaded, setLoaded] = useState([]);
+  const {
+    acceptedFiles,
+    fileRejections,
+    getRootProps,
+    getInputProps,
+  } = useDropzone({accept: 'application/json'});
+
+  useEffect(() => {
+    if(!show) {
+      setErrors([]);
+      setLoaded([]);
+    }
+  }, [show])
+
+  const acceptedFileItems = acceptedFiles.map((file, i) => (
+    <li key={file.path}>
+      {file.path} - {file.size} bytes
+      <ul style={{color: "green"}}>
+      {
+        loaded.includes(i) && <li>Loaded</li>
+      }
+      </ul>
+      <ul style={{color: "red"}}>
+      {
+        errors.filter(e => e.id === i).map(e => <li color={"red"}>{e.error}</li>)
+      }
+      </ul>
+    </li>
+  ));
+
+  const fileRejectionItems = fileRejections.map(({ file, errors }) => (
+    <li key={file.path}>
+      {file.path} - {file.size} bytes
+      <ul>
+        {errors.map(e => (
+          <li key={e.code}>{e.message}</li>
+        ))}
+      </ul>
+    </li>
+  ));
+
+  return (
+    <Modal show={show} onHide={() => onHide(true)} backdrop={false} bsSize="large">
+      <Modal.Header closeButton>
+          <Modal.Title>
+              <FormattedMessage id="import" defaultMessage="Import"/>
+          </Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Form horizontal>
+          <section className="dropcontainer" >
+            <div {...getRootProps({className: 'dropzone'})} >
+              <input {...getInputProps()} />
+              <p>Drag 'n' drop some files here, or click to select files</p>
+            </div>
+            <aside>
+              <h5>Rejected</h5>
+              <ul style={{color: "red"}}>{fileRejectionItems}</ul>
+              <h5>Accepted</h5>
+              <ul>{acceptedFileItems}</ul>
+            </aside>
+          </section>
+
+          <FormGroup>
+            <Col smOffset={2} sm={10}>
+              <ButtonToolbar>
+                <Button
+                  type="submit"
+                  bsStyle="primary"
+                  onClick={e => {
+                    e.preventDefault();
+                    setErrors([]);
+                    setLoaded([]);
+                    acceptedFiles.map((f, i) => {
+                      readFile(f)
+                      .then(r => JSON.parse(r))
+                      .then(c => importCustomRoute(c, () => setLoaded(l => update(l, {$push: [i]}))))
+                      .catch(e => setErrors(es => update(es, {$push: [{id: i, error: e.message}]})));
+                    })
+                  }} >
+                  Save
+                </Button>
+              </ButtonToolbar>
+            </Col>
+          </FormGroup>
+        </Form>
+      </Modal.Body>
+    </Modal>
+  )
+}
+
 function UpdateSyncConfirmCheckbox(props) {
   const { checked, onConfirm, resourceName, ...props_ } = props;
   const [show, setShow] = useState(false);
@@ -512,6 +631,8 @@ function CustomRoutes(props) {
     const [customRoutes, setCustomRoutes] = useState([]);
     const [showUpdateModal, setShowUpdateModal] = useState(undefined);
     const [showNew, setShowNew] = useState(false);
+    const [showImport, setShowImport] = useState(false);
+    const [key, setKey] = useState(0);
 
     useEffect(() => {
         fetchActivities(setActivities);
@@ -584,6 +705,12 @@ function CustomRoutes(props) {
                                                 resourceName={`${route.method} ${route.route}`}
                                                 style={{marginLeft: '5px', marginRight: '5px'}}
                                                 onConfirm={() => deleteCustomRoute(route.route_id, () => fetchCustomRoutes(setCustomRoutes))} />
+                                            <Button
+                                                bsStyle="primary"
+                                                href={`${API_URL_PREFIX}/api/v01/custom_routes/${route.route_id}/export?auth_token=${AuthServiceManager.getToken()}`}
+                                                style={{marginLeft: '5px', marginRight: '5px'}} >
+                                                <Glyphicon glyph="save"/>
+                                            </Button>
                                         </ButtonToolbar>
                                     </td>
                                 </tr>
@@ -592,8 +719,11 @@ function CustomRoutes(props) {
                     </tbody>
                 </Table>
                 <ButtonToolbar>
-                    <Button onClick={() => setShowNew(true)}>
+                    <Button bsStyle="primary" onClick={() => setShowNew(true)}>
                         <FormattedMessage id="new-route" defaultMessage="New route" />
+                    </Button>
+                    <Button bsStyle="primary" onClick={() => setShowImport(true)}>
+                        <FormattedMessage id="import" defaultMessage="Import" />
                     </Button>
                 </ButtonToolbar>
 
@@ -610,6 +740,18 @@ function CustomRoutes(props) {
                     onHide={c => {
                         setShowUpdateModal(undefined);
                         c && fetchCustomRoutes(setCustomRoutes);
+                    }} />
+
+                <ImportCustomRouteModal
+                    show={showImport}
+                    key={key}
+                    onHide={c => {
+                        setKey(k => k+1);
+                        setShowImport(false);
+                        if(c) {
+                          fetchActivities(setActivities);
+                          fetchCustomRoutes(setCustomRoutes);
+                        }
                     }} />
 
             </Panel.Body>
