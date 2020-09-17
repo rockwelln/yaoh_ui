@@ -135,16 +135,17 @@ class TransactionFlow extends Component {
             return true;
         }
         // if there is a new task
-        if(!this.props.states || this.props.states.length !== nextProps.states.length){
+        if(!this.props.states){
             return true;
         }
         // if a task status changed
+        const nextStates = nextProps.states
+          .reduce((states, s) => {states.add(`${s.cell_id}/${s.status}`); return states;}, new Set());
+        const statesChanges = this.props.states.filter(
+            s => !nextStates.has(`${s.cell_id}/${s.status}`)
+        )
         return (
-            this.props.states.filter(
-                s => nextProps.states.find(
-                    ns => ns.cell_id === s.cell_id && s.status !== ns.status
-                ) !== undefined
-            ).length !== 0
+            statesChanges.length !== 0
         );
     }
 
@@ -1319,7 +1320,7 @@ export class Transaction extends Component {
     }
 
     componentDidUpdate(prevProps, prevState, snapshot) {
-        if(prevProps.match.params.txId !== this.props.match.params.txId) {
+        if(prevState.tx !== undefined && prevProps.match.params.txId !== this.props.match.params.txId) {
             this.setState({
                 activeTab: 1,
                 tx: undefined,
