@@ -211,11 +211,11 @@ function BoolInput(props) {
 }
 
 
-function HttpOutputs(props) {
-  const {value, onChange} = props;
+function DynamicOutputs(props) {
+  const {value, onChange, regexp} = props;
   const [newOutput, setNewOutput] = useState("");
   const outputs = value ? value.split(",") : [];
-  const invalidOutput = newOutput.length > 3 || (!newOutput.match(/[0-9]{3}/) && !newOutput.match(/[0-9]{0,2}\*/));
+  const invalidOutput = regexp && !newOutput.match(regexp);
 
   return (
     <Table>
@@ -364,8 +364,9 @@ export function Param2Input({param, activity, cells, value, onChange}) {
         }} />
       break;
     case 'outputs':
-      i = <HttpOutputs
+      i = <DynamicOutputs
         value={value}
+        regexp={param.regexp || param.schema.items.pattern}
         onChange={(e, outputs) => {
           onChange(e, outputs);
         }} />
