@@ -1081,7 +1081,7 @@ class RejectionReason extends Component {
 }
 
 
-function SyncMessagesFlow(props) {
+export function SyncMessagesFlow(props) {
   const vSpacing = 30;
   const {data, getEndpoint, userInfo} = props;
   const [boundingRect, setBoundingRect] = useState(
@@ -1217,7 +1217,7 @@ function SyncMessagesFlow(props) {
   )
 }
 
-function SyncMessagesDetails(props) {
+export function SyncMessagesDetails(props) {
   const {data, userInfo} = props;
 
   return (

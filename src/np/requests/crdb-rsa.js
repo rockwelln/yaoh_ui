@@ -38,6 +38,7 @@ import Tabs from "react-bootstrap/lib/Tabs";
 import Tab from "react-bootstrap/lib/Tab";
 import Badge from "react-bootstrap/lib/Badge";
 import {StaticControl} from "../../utils/common";
+import {SyncMessagesDetails, SyncMessagesFlow} from "./citc-sa";
 
 export const DEFAULT_RECIPIENT = "MTNBSGNP";
 export const rejection_codes = [];
@@ -1213,6 +1214,38 @@ export class NPDisconnectRequest extends Component {
 }
 
 
+function CrdbMessages(props) {
+  const {messages, userInfo} = props;
+  let listOfMessages = messages
+    .reduce((l, m) => {
+      const o = JSON.parse(m.output);
+      const i = m.input ? JSON.parse(m.input) : null;
+      const match = /<NPCMessages>\s*<([^>]*)>/gm.exec(o.request);
+
+      o.request && l.push({id: m.processing_trace_id, endpoint: "CRDB", summary: match?match[1]:"-", type:"request", created_on: m.created_on, raw: o.request});
+      o.response && l.push({id: m.processing_trace_id, endpoint: "APIO", summary: o.status, type: "response", created_on: m.created_on, status: m.status === 200 ? o.status : m.status, ...o.response});
+      i && i.event && l.push({id: m.processing_trace_id, endpoint: "APIO", type: "event", created_on: m.created_on, ...i.event});
+      return l;
+    }, [])
+    .sort((a, b) => a.id - b.id);
+
+  return (
+    <Tabs defaultActiveKey={1} id="syn-messages-flow">
+      <Tab eventKey={1} title={<FormattedMessage id="flows" defaultMessage="Flows" />}>
+        <SyncMessagesFlow
+          data={listOfMessages}
+          getEndpoint={m => m.endpoint}
+          userInfo={userInfo}
+        />
+      </Tab>
+      <Tab eventKey={2} title={<FormattedMessage id="messages" defaultMessage="Messages" />}>
+        <SyncMessagesDetails data={listOfMessages} userInfo={userInfo} />
+      </Tab>
+    </Tabs>
+  )
+}
+
+
 const RELOAD_TX = 10 * 1000;
 
 export class NPTransaction extends Component {
@@ -1225,8 +1258,10 @@ export class NPTransaction extends Component {
       manualActions: [],
       logs: [],
       events: [],
+      messages: [],
       showCancel: false,
       showAbort: false,
+      messageShown: true,
     };
     this.cancelLoad = false;
 
@@ -1240,6 +1275,7 @@ export class NPTransaction extends Component {
     this.onEdit = this.onEdit.bind(this);
     this.caseUpdated = this.caseUpdated.bind(this);
     this.caseUpdateFailure = this.caseUpdateFailure.bind(this);
+    this.refreshMessages = this.refreshMessages.bind(this);
   }
 
   fetchTxDetails(reload, onSuccess, onError) {
@@ -1271,6 +1307,8 @@ export class NPTransaction extends Component {
               logs: data.logs.map(l => {l.type='log'; l.source_entity=l.source; l.content=l.message; return l;})
           }))
           .catch(error => !this.cancelLoad && this.setState({error: error}));
+
+        this.refreshMessages();
 
         reload && setTimeout(() => this.fetchTxDetails(true), RELOAD_TX);
         onSuccess && onSuccess();
@@ -1415,6 +1453,23 @@ export class NPTransaction extends Component {
     this.setState({ edit_request: true })
   }
 
+  refreshMessages() {
+    fetch_get(`/api/v01/transactions/${this.state.tx.id}/traces?details=1`)
+      .then(data => {
+        const missing_messages = data.traces.filter(
+          t => this.state.messages.findIndex(m => m.processing_trace_id === t.processing_trace_id) === -1
+        );
+
+        !this.cancelLoad && this.setState({
+          messages: update(
+            this.state.messages, {
+              '$push': missing_messages,
+            })
+        });
+      })
+      .catch(error => console.error(error));
+  }
+
   actionList() {
     const { tx, request } = this.state;
 
@@ -1451,7 +1506,7 @@ export class NPTransaction extends Component {
   }
 
   render() {
-    const { sending, error, tx, request, activeTab, manualActions, events, logs, replaying } = this.state;
+    const { sending, error, tx, request, activeTab, manualActions, events, logs, replaying, messages, messageShown } = this.state;
     const {user_info} = this.props;
     let alerts = [];
     error && alerts.push(
@@ -1607,6 +1662,30 @@ export class NPTransaction extends Component {
                 />
               </Panel.Body>
             </Panel>
+
+            {
+              messages.length !== 0 && (
+                <Panel
+                  expanded={messageShown}
+                  onToggle={e => {
+                    this.setState({messageShown: e});
+                    e && this.refreshMessages();
+                  }}
+                >
+                  <Panel.Heading>
+                    <Panel.Title toggle>
+                      <FormattedMessage id="messages" defaultMessage="Messages"/>
+                    </Panel.Title>
+                  </Panel.Heading>
+                  <Panel.Body collapsible>
+                    <CrdbMessages
+                      messages={messages}
+                      userInfo={user_info}
+                    />
+                  </Panel.Body>
+                </Panel>
+              )
+            }
 
             {tx.errors && tx.errors.length !== 0 &&
               <Panel bsStyle="danger">
