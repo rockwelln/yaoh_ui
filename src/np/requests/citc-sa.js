@@ -1083,7 +1083,7 @@ class RejectionReason extends Component {
 
 export function SyncMessagesFlow(props) {
   const vSpacing = 30;
-  const {data, getEndpoint, userInfo} = props;
+  const {data, getEndpoint, getSource, userInfo} = props;
   const [boundingRect, setBoundingRect] = useState(
     {
         height: 250,
@@ -1104,7 +1104,8 @@ export function SyncMessagesFlow(props) {
   const endpoints = ["APIO", ...new Set(data.map(getEndpoint).filter(n => n !== "APIO"))]
   const flowWidth = boundingRect.width - 240;
   const endpointsHSpacing = flowWidth / (endpoints.length - 1);
-  const messageWidth = m => Math.max(endpoints.indexOf(getEndpoint(m)), 1) * endpointsHSpacing;
+  const messageWidth = m => Math.max(endpoints.indexOf(getEndpoint(m)), 0) * endpointsHSpacing;
+  const sourceX = m => Math.max(endpoints.indexOf(getSource ? getSource(m) : ""), 0) * endpointsHSpacing;
   const vLineHeight = (data.length + 2) * vSpacing;
 
   return (
@@ -1120,8 +1121,8 @@ export function SyncMessagesFlow(props) {
               (d, i) =>
                 <line
                   key={`message_line_${i}`}
-                  x1={d.type === "request"?0:messageWidth(d)}
-                  x2={d.type === "request"?messageWidth(d):0}
+                  x1={sourceX(d)}
+                  x2={messageWidth(d)}
                   y1={vSpacing * (i+1)}
                   y2={vSpacing * (i+1)}
                   stroke={
@@ -1142,7 +1143,7 @@ export function SyncMessagesFlow(props) {
               (d, i) => (
                 <text
                   textAnchor="middle"
-                  x={messageWidth(d) / 2}
+                  x={Math.abs(messageWidth(d) - sourceX(d)) / 2}
                   y={(vSpacing * (i+1)) - 10}
                   fill="#1f77b4"
                   fillOpacity={1}

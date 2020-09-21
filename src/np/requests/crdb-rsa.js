@@ -1224,7 +1224,7 @@ function CrdbMessages(props) {
 
       o.request && l.push({id: m.processing_trace_id, endpoint: "CRDB", summary: match?match[1]:"-", type:"request", created_on: m.created_on, raw: o.request});
       o.response && l.push({id: m.processing_trace_id, endpoint: "APIO", summary: o.status, type: "response", created_on: m.created_on, status: m.status === 200 ? o.status : m.status, ...o.response});
-      i && i.event && l.push({id: m.processing_trace_id, endpoint: "APIO", type: "event", created_on: m.created_on, ...i.event});
+      i && i.event && l.push({id: m.processing_trace_id, endpoint: "APIO", source: i.event.peer, type: "event", created_on: m.created_on, ...i.event});
       return l;
     }, [])
     .sort((a, b) => a.id - b.id);
@@ -1235,6 +1235,7 @@ function CrdbMessages(props) {
         <SyncMessagesFlow
           data={listOfMessages}
           getEndpoint={m => m.endpoint}
+          getSource={m => m.source ? m.source : m.endpoint === "APIO" ? "CRDB" : "APIO"}
           userInfo={userInfo}
         />
       </Tab>
