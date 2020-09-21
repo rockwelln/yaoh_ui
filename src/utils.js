@@ -196,6 +196,24 @@ class NotificationsHandler {
 export const NotificationsManager = new NotificationsHandler();
 
 
+class ApiError extends Error {
+  constructor(message = 'bar', body) {
+    // Pass remaining arguments (including vendor specific ones) to parent constructor
+    super(message)
+
+    // Maintains proper stack trace for where our error was thrown (only available on V8)
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, ApiError)
+    }
+
+    this.name = 'ApiError'
+    // Custom debugging information
+    this.body = body || {}
+    this.date = new Date()
+  }
+}
+
+
 export function checkStatus(response) {
     if (response.status >= 200 && response.status < 300) {
         return response
@@ -212,7 +230,7 @@ export function checkStatus(response) {
               (json.errors && json.errors[0] && json.errors[0].message) ?
                   `${json.errors[0].message}. Status Code: ${response.status}` :
                   (json.error || response.statusText);
-          let error = new Error(message);
+          let error = new ApiError(message, json);
           error.response = response;
           if(json.errors) {
               error.errors = json.errors;
@@ -221,7 +239,7 @@ export function checkStatus(response) {
         });
     }
 
-    let error = new Error(response.statusText);
+    let error = new ApiError(response.statusText);
     error.response = response;
     throw error;
 }

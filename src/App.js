@@ -78,6 +78,7 @@ import SearchPortingCases from "./np/number_porting";
 import SearchMVNO from "./np/mvno_mgm";
 import {LoginPage, LoginForm} from "./login";
 import {RESET_PASSWORD_PREFIX, ResetPasswordRequestForm, ResetPasswordForm} from "./reset_password";
+import {NPEmergencyNotificationRequest} from "./np/emergency-notification";
 
 const ListItemLink = ({to, children}) => (
     <Route path={to} children={({match}) => (
@@ -149,6 +150,13 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
                       <LinkContainer to={"/transactions/new_install_address"}>
                           <MenuItem>
                               <FormattedMessage id="new-addess" defaultMessage="New Address Change"/>
+                          </MenuItem>
+                      </LinkContainer>
+                  }
+                  { supportedModule(modules.npact_crdb, user_info.modules) &&
+                      <LinkContainer to={"/transactions/emergency_notification"}>
+                          <MenuItem>
+                              <FormattedMessage id="emergency-notification" defaultMessage="New Emergency Notification"/>
                           </MenuItem>
                       </LinkContainer>
                   }
@@ -1009,6 +1017,13 @@ class App extends Component {
                                        <NPChangeInstallationAddressRequest
                                            {...props} /> :
                                        <NotAllowed/>
+                               )}
+                               exact />
+                        <Route path="/transactions/emergency_notification"
+                               component={() => (
+                                    isAllowed(ui_profile, pages.requests_nprequests) ?
+                                        <NPEmergencyNotificationRequest /> :
+                                        <NotAllowed/>
                                )}
                                exact />
                         <Route path="/transactions/:txId"

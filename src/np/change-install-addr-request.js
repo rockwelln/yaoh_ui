@@ -38,13 +38,6 @@ export function NPChangeInstallationAddressRequest(props) {
   const [ranges, setRanges] = useState([]);
   const [address, setAddress] = useState("");
   const [redirect, setRedirect] = useState(undefined);
-  /*
-  useEffect(() => {
-    fetchOperators(null, setOperators);
-  }, []);
-  */
-
-  let alerts = [];
 
   const validRanges = ranges.length === 0 ? null : getInvalidRanges(ranges).length === 0 ? "success" : "error";
   const validForm = validRanges === "success" && address.length > 5;
@@ -56,8 +49,6 @@ export function NPChangeInstallationAddressRequest(props) {
       </Panel.Heading>
       <Panel.Body>
         <Form horizontal>
-          {alerts.map((a, i) => <div key={i}>{a}</div>)}
-
           <FormGroup validationState={validRanges}>
             <Col componentClass={ControlLabel} sm={2}>
               <FormattedMessage id="ranges" defaultMessage="Ranges" />
