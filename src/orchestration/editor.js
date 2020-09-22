@@ -7,6 +7,10 @@ const runPic = require("../images/run.png");
 const BASIC_CELL_HEIGHT = 120;
 const CHAR_HEIGHT_APPROX = 7.5;
 const BASE_Y = 35;
+const mxnspace = require("mxgraph")({
+    mxImageBasePath: "mxgraph/javascript/src/images",
+    mxBasePath: "mxgraph/javascript/src"
+});
 
 const {
     mxUtils,
@@ -22,7 +26,8 @@ const {
     mxPoint,
     mxImage,
     mxCellOverlay
-} = window;
+} = mxnspace;
+
 
 const SCHEMA_DEFINITION = {
   "type": "object",
@@ -848,41 +853,6 @@ function uploadDefinition(modal, spacer, onSuccess) {
 
     modal.style.display = "block";
     modal.style.overflowY = "scroll";
-}
-
-export function isValid(p, v) {
-    if(p.mandatory && v.length === 0) {
-        return `The element ${p.name || p} is mandatory`;
-    }
-    switch (p.validation) {
-        case 'int':
-            if(!/\d+/.test(v)) {
-                alert(`Invalid number: ${v}`);
-            }
-            break;
-        case 'timeout':
-            if(!/\d+ (business|)\s*(hours|days)/.test(v)) {
-                return `Invalid timeout: ${v} - should be "(number) (business|) (hours|days)"`;
-            }
-            break;
-        case 'email':
-            if(!/.+@.+\.[a-z]+/.test(v)) {
-                return `Invalid email: ${v}`;
-            }
-            break;
-        default:
-            break;
-    }
-    if(p.schema && v) {
-        console.log(v);
-        const ajv = Ajv();
-        const v_ = ajv.validate(p.schema, p.nature === "outputs"?v.split(","):v);
-        if(!v_) {
-            return `Invalid ${p.name}: ${ajv.errors.map(e => e.message).join(", ")}`;
-        }
-        return null;
-    }
-    return null;
 }
 
 

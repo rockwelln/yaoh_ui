@@ -45,7 +45,7 @@ import {ApioDatatable, Pagination} from "../utils/datatable";
 
 import 'react-datepicker/dist/react-datepicker.css';
 import GridPic from "../orchestration/grid.gif";
-import draw_editor from "../orchestration/editor";
+// import draw_editor from "../orchestration/editor";
 import update from 'immutability-helper';
 import {StaticControl} from "../utils/common";
 import {access_levels, isAllowed, modules, pages} from "../utils/user";
@@ -113,21 +113,23 @@ export class TransactionFlow extends Component {
 
     _renderGrid() {
         const {definition, states, activityId} = this.props;
-        draw_editor(
-            ReactDOM.findDOMNode(this.flowGraphRef.current),
-            {definition: workableDefinition(JSON.parse(definition), states)},
-            {
-              onEdit: cell => this.setState({editedCell: cell}),
-            },
-            {
-                toolbar: ReactDOM.findDOMNode(this.toolbarRef.current),
-            },
-            {
-                readOnly: true,
-                height: 300,
-                activityId: activityId,
-            }
-        );
+        import ("../orchestration/editor").then(editor => {
+            editor.default(
+                ReactDOM.findDOMNode(this.flowGraphRef.current),
+                {definition: workableDefinition(JSON.parse(definition), states)},
+                {
+                  onEdit: cell => this.setState({editedCell: cell}),
+                },
+                {
+                    toolbar: ReactDOM.findDOMNode(this.toolbarRef.current),
+                },
+                {
+                    readOnly: true,
+                    height: 300,
+                    activityId: activityId,
+                }
+            )
+        })
     }
 
     _refreshGrid(force) {

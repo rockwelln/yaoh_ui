@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import {Redirect} from "react-router";
-import draw_editor, {addNode, getDefinition, isValid, updateGraphModel} from "./editor";
+// import draw_editor, {addNode, getDefinition, updateGraphModel} from "./editor";
 import {fetch_post, fetch_get, fetch_delete, fetch_put, NotificationsManager} from "../utils";
 
 import Col from 'react-bootstrap/lib/Col';
@@ -32,6 +32,7 @@ import {Link} from "react-router-dom";
 import {SimulatorPanel} from "./simulator";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 import {fetchConfiguration, Param2Input} from "./nodeInputs";
+import Ajv from "ajv";
 
 
 const NEW_ACTIVITY = {
@@ -43,6 +44,41 @@ const NEW_ACTIVITY = {
         transitions: [],
     },
 };
+
+function isValid(p, v) {
+    if(p.mandatory && v.length === 0) {
+        return `The element ${p.name || p} is mandatory`;
+    }
+    switch (p.validation) {
+        case 'int':
+            if(!/\d+/.test(v)) {
+                alert(`Invalid number: ${v}`);
+            }
+            break;
+        case 'timeout':
+            if(!/\d+ (business|)\s*(hours|days)/.test(v)) {
+                return `Invalid timeout: ${v} - should be "(number) (business|) (hours|days)"`;
+            }
+            break;
+        case 'email':
+            if(!/.+@.+\.[a-z]+/.test(v)) {
+                return `Invalid email: ${v}`;
+            }
+            break;
+        default:
+            break;
+    }
+    if(p.schema && v) {
+        console.log(v);
+        const ajv = Ajv();
+        const v_ = ajv.validate(p.schema, p.nature === "outputs"?v.split(","):v);
+        if(!v_) {
+            return `Invalid ${p.name}: ${ajv.errors.map(e => e.message).join(", ")}`;
+        }
+        return null;
+    }
+    return null;
+}
 
 function fetchCells(onSuccess) {
     fetch_get('/api/v01/cells')
@@ -790,34 +826,37 @@ export function ActivityEditor(props) {
 
     useEffect(() => {
         // (container, handlers, placeholders, props)
-        const e = draw_editor(
+        import("./editor").then(editor => {
+          const e = editor.default(
             ReactDOM.findDOMNode(editorRef.current),
-            newActivity?NEW_ACTIVITY:currentActivity,
+            newActivity ? NEW_ACTIVITY : currentActivity,
             {
-                get: fetchActivity,
-                onSave: (activity, onSuccess) => saveActivity(
-                    activity,
-                    p => {
-                        onSuccess(p);
-                        activity.id=p.id;
-                        setCurrentActivity(activity);
-                        setNewActivity(false);
-                    }
-                ),
-                onEdit: cell => setEditedCell(cell),
-                // onDelete: () => deleteActivity(currentActivity.id, () => setNewActivity(true)),
+              get: fetchActivity,
+              onSave: (activity, onSuccess) => saveActivity(
+                activity,
+                p => {
+                  onSuccess(p);
+                  activity.id = p.id;
+                  setCurrentActivity(activity);
+                  setNewActivity(false);
+                }
+              ),
+              onEdit: cell => setEditedCell(cell),
+              // onDelete: () => deleteActivity(currentActivity.id, () => setNewActivity(true)),
             },
             {
-                toolbar: ReactDOM.findDOMNode(toolbarRef.current),
-                title: ReactDOM.findDOMNode(titleRef.current),
+              toolbar: ReactDOM.findDOMNode(toolbarRef.current),
+              title: ReactDOM.findDOMNode(titleRef.current),
             },
             {
-                configuration: configuration,
-                cells: cells,
-                entities: entities,
+              configuration: configuration,
+              cells: cells,
+              entities: entities,
             }
-        );
-        setEditor(e);
+          );
+          e.getDefinition = function(titleNode) { return editor.getDefinition(this, titleNode); }
+          setEditor(e);
+        })
     }, [editorRef, toolbarRef, titleRef, currentActivity, newActivity, cells, entities]);
 
     useEffect(() => {
@@ -868,7 +907,7 @@ export function ActivityEditor(props) {
             <Row>
                 <Col>
                     <SimulatorPanel activity={() => {
-                        let a = getDefinition(editor, ReactDOM.findDOMNode(titleRef.current).value).activity;
+                        let a = editor.getDefinition(ReactDOM.findDOMNode(titleRef.current).value).activity;
                         Object.keys(a.definition.cells).map(c => delete a.definition.cells[c].name);
                         return a;
                     }} />
@@ -884,7 +923,7 @@ export function ActivityEditor(props) {
                 show={newCell}
                 cells={cells}
                 entities={entities}
-                activity={editor && getDefinition(editor).activity}
+                activity={editor && editor.getDefinition().activity}
                 onHide={c => {
                   showNewCell(false);
                   if(c) {
@@ -892,7 +931,7 @@ export function ActivityEditor(props) {
                     if(c.customOutputs) {
                       c.def.outputs = c.def.outputs.concat(c.customOutputs).reduce((u, i) => u.includes(i) ? u : [...u, i], []);
                     }
-                    addNode(editor, c.def, c.name, c.params, c.isEntity);
+                    import("./editor").then(editor => editor.addNode(editor, c.def, c.name, c.params, c.isEntity));
                   }
                 }}
             />
@@ -902,12 +941,12 @@ export function ActivityEditor(props) {
                 show={editedCell !== undefined}
                 cells={cells}
                 entities={entities}
-                activity={editor && getDefinition(editor).activity}
+                activity={editor && editor.getDefinition().activity}
                 onHide={c => {
                   setEditedCell(undefined);
                   if(c === null) return;
 
-                  const activity = editor && getDefinition(editor).activity;
+                  const activity = editor && editor.getDefinition().activity;
                   if(!c.isEntity) {
                     activity.definition.cells[c.name]["params"] = c.params;
                   }
@@ -919,7 +958,7 @@ export function ActivityEditor(props) {
                       activity.definition.entities[i]["outputs"] = c.outputs;
                     }
                   }
-                  updateGraphModel(editor, activity, {clear: true, nofit: true});
+                  import("./editor").then(editor => editor.updateGraphModel(editor, activity, {clear: true, nofit: true}));
                 }} />
         </>
     );

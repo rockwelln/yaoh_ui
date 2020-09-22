@@ -15,6 +15,7 @@
     "immutability-helper": "2.9.0",
     "isomorphic-fetch": "^2.2.1",
     "js-base64": "^3.4.5",
+    "mxgraph": "^4.2.0",
     "oidc-client": "^1.10.1",
     "papaparse": "^5.2.0",
     "query-string": "6.2.0",
@@ -39,6 +40,7 @@
     "url-polyfill": "^1.1.10"
   },
   "scripts": {
+    "analyze": "source-map-explorer 'build/static/js/*.js'",
     "start": "react-scripts start",
     "build": "sed -i.bkp '/\\/\\/ pra/,/\\/\\/ end/d' src/provisioning/index.js; react-scripts build; mv src/provisioning/index.js.bkp src/provisioning/index.js",
     "build-pra": "sed -i.bkp '/\\/\\/ default/,/\\/\\/ end/d' src/provisioning/index.js; react-scripts build; mv src/provisioning/index.js.bkp src/provisioning/index.js",
@@ -61,6 +63,7 @@
     "babel-preset-react": "^6.24.1",
     "babel-preset-stage-0": "^6.24.1",
     "markdown-folder-to-html": "^2.4.0",
-    "react-intl-po": "^2.2.2"
+    "react-intl-po": "^2.2.2",
+    "source-map-explorer": "^2.5.0"
   }
 }

@@ -1,15 +1,11 @@
 import React, {Component} from 'react';
 import ReactDOM from 'react-dom';
 import {IntlProvider} from 'react-intl';
-import { createStore, applyMiddleware, compose } from "redux";
-import { Provider } from "react-redux";
-import thunk from "redux-thunk";
 
 import App from './App';
 // import registerServiceWorker from './registerServiceWorker';
 import register from './registerServiceWorker';
 
-import { mainReducer } from "./provisioning";
 
 import fr_FR from './translations/fr.json';
 import {createCookie, getCookie, removeCookie} from "./utils";
@@ -76,17 +72,7 @@ class AppWithIntl extends Component {
     }
 }
 
-const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
-
-const store = createStore(
-  mainReducer,
-  composeEnhancers(applyMiddleware(thunk))
-);
-
-
 ReactDOM.render(
-    <Provider store={store}>
-        <AppWithIntl/>
-    </Provider>, document.getElementById('root')
+  <AppWithIntl/>, document.getElementById('root')
 );
 register();
