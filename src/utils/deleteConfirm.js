@@ -38,5 +38,5 @@ export function DeleteConfirmButton(props) {
   const { onConfirm, resourceName, title, ...props_ } = props;
   const title_ = title || "Confirm delete " + (resourceName ? `of ${resourceName}` : "");
 
-  return <ConfirmButton title={title_} action="Delete" button={<FontAwesomeIcon icon={faTimes} />} bsStyle="danger" {...props} />
+  return <ConfirmButton title={title_} action="Delete" button={<FontAwesomeIcon icon={faTimes} />} bsStyle="danger" {...props_} />
 }
