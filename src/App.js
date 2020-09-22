@@ -3,7 +3,7 @@ import "regenerator-runtime/runtime";
 
 import "url-polyfill";
 import "isomorphic-fetch";
-import React, {Component} from 'react';
+import React, {Component, Suspense} from 'react';
 
 import Alert from 'react-bootstrap/lib/Alert';
 import Col from 'react-bootstrap/lib/Col';
@@ -59,7 +59,7 @@ import apio_logo from "./images/logo.png";
 import loading from './loading.gif';
 import {sso_auth_service} from "./sso/auth_service";
 import {Webhooks} from "./system/webhooks";
-import {ListProvisioningGateways, provisioningRoutes} from "./provisioning";
+// import {ListProvisioningGateways, provisioningRoutes} from "./provisioning";
 import LogsManagement from "./system/logs";
 import UserProfiles from "./system/user_profiles";
 import Templates from "./system/templates";
@@ -486,6 +486,7 @@ class App extends Component {
         this.state = {
             user_info: undefined,
             error_msg: undefined,
+            provisioningRoutes: [],
         };
         this._notificationSystem = React.createRef();
         NotificationsManager.setRef(this._notificationSystem);
@@ -493,9 +494,6 @@ class App extends Component {
         this.getUserInfo = this.getUserInfo.bind(this);
         this.updateToken = this.updateToken.bind(this);
         this.logout = this.logout.bind(this);
-
-        sso_auth_service.manager.events.addUserSignedOut(() => this.logout());
-        sso_auth_service.manager.events.addUserLoaded(this.ssoTokenToLocalToken.bind(this));
     }
 
     getUserInfo() {
@@ -504,6 +502,13 @@ class App extends Component {
                 this.setState({user_info: data});
                 this.props.onLanguageUpdate(data.language);
                 localStorage.setItem("userProfile", data.ui_profile);
+
+                if(data.modules && supportedModule(modules.provisioning, data.modules)) {
+                    import("./provisioning").then(prov => {
+                      this.setState({provisioningRoutes: prov.provisioningRoutes(data.ui_profile)})
+                    });
+                    ProvProxiesManager.fetchConfiguration().then(() => this.setState({proxy_fetch: true})).catch(console.log);
+                }
             })
             .catch(error => {
                 if(error.response !== undefined && error.response.status === 401) {  // unauthorized
@@ -531,7 +536,6 @@ class App extends Component {
     componentWillUpdate() {
         if(this.isAuthenticated() && !this.state.user_info && AuthServiceManager.isAuthenticated()) {
             this.getUserInfo();
-            ProvProxiesManager.fetchConfiguration().then(() => this.setState({proxy_fetch: true})).catch(console.log);
         }
     }
 
@@ -541,8 +545,9 @@ class App extends Component {
     }
 
     updateToken(token, sso_auth) {
+      const {user_info} = this.state;
         AuthServiceManager.loadApiToken(token);
-        ProvProxiesManager.fetchConfiguration().then(() => this.setState({proxy_fetch: true})).catch(console.log);
+        user_info.modules && supportedModule(modules.provisioning, user_info.modules) && ProvProxiesManager.fetchConfiguration().then(() => this.setState({proxy_fetch: true})).catch(console.log);
         createCookie("auth_sso", sso_auth?'1':'0', 1, '/');  // maxAge = 24hours
         this.setState({user_info: this.state.user_info});
     }
@@ -591,6 +596,11 @@ class App extends Component {
 
     isAuthenticated() {
         const local_auth = AuthServiceManager.isAuthenticated();
+        if(localStorage.getItem("auth_sso")) {
+          sso_auth_service.enableOidc();
+          sso_auth_service.manager.events.addUserSignedOut(() => this.logout());
+          sso_auth_service.manager.events.addUserLoaded(this.ssoTokenToLocalToken.bind(this));
+        }
         const sso_auth = sso_auth_service.isLoggedIn();
 
         console.log(`local_auth status: ${local_auth}, sso_auth status: ${sso_auth}`);
@@ -598,7 +608,7 @@ class App extends Component {
     }
 
     render() {
-        const {database_status, error_msg, user_info} = this.state;
+        const {database_status, error_msg, user_info, provisioningRoutes} = this.state;
         const is_reset_password = window.location.pathname.substr(0, RESET_PASSWORD_PREFIX.length) === RESET_PASSWORD_PREFIX;
         const standby_alert = database_status && !database_status.is_master && (
             <Alert bsStyle="danger">
@@ -683,6 +693,7 @@ class App extends Component {
                     </div>
                 }
                 <Col mdOffset={1} md={10}>
+                  <Suspense fallback={<div>Loading...</div>}>
                     <Switch>
                         <Route path="/help"
                                component={props => (
@@ -737,11 +748,6 @@ class App extends Component {
                                    <NotAllowed/>
                                )}
                                exact />
-
-                        {/*================ Provisioning UI routes ==============*/
-                            provisioningRoutes(ui_profile)
-                        }
-                        <Route path="/provisioning/list" component={ListProvisioningGateways} exact />
 
                         <Route path="/transactions/config/startup_events"
                                component={props => (
@@ -1046,8 +1052,17 @@ class App extends Component {
                         <Route path="/" exact>
                             <Redirect to={getHomePage(ui_profile)} />
                         </Route>
+                        <Route path="/provisioning/list"
+                               component={
+                                 React.lazy(() => import("./provisioning/ListProvisioningGateways"))
+                               } exact/>
+                        {/*================ Provisioning UI routes ==============*/
+                            provisioningRoutes
+                        }
+
                         <Route component={NotFound} />
                     </Switch>
+                  </Suspense>
                 </Col>
             </div>
           </Router>

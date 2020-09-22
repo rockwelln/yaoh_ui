@@ -141,11 +141,14 @@ class ProvisioningProxies {
 
     fetchConfiguration() {
       return fetch_get("/api/v01/apio/provisioning/gateways")
-          .then(data => ProvisioningProxies.proxies = data.gateways.map(g => {
+          .then(data => {
+            ProvisioningProxies.proxies = data.gateways.map(g => {
               g.id = g.name.toLowerCase().replace(/[. ]/g, "");
               console.log(g);
               return g;
-          }))
+            })
+            return ProvisioningProxies.proxies;
+          })
     }
 
     getCurrentUrlPrefix() {

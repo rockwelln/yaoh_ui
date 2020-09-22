@@ -1,5 +1,5 @@
 import React from "react";
-import {Redirect, Route} from "react-router";
+import {Redirect, Route, Switch} from "react-router";
 import {isAllowed, pages} from "../utils/user";
 import {NotAllowed} from "../utils/common";
 
@@ -9,6 +9,9 @@ import Panel from "react-bootstrap/lib/Panel";
 import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
 import {FormattedMessage} from "react-intl";
 import Table, {tr} from "react-bootstrap/lib/Table";
+import {Provider} from "react-redux";
+import {applyMiddleware, compose, createStore} from "redux";
+import thunk from "redux-thunk";
 // default
 import SearchPage from "./default/components/SearchPage";
 import LocalUsers from "./default/components/LocalUsers";
@@ -54,10 +57,29 @@ import MassIADReboot from "./pra/components/MassIADReboot";
 import AnomaliesPage from "./pra/components/AnomaliesPage";
 // end
 
+export let mainReducer = null;
+export let provisioningRoutes = null;
+const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
+
+// pra
+provisioningRoutes = provisioningPraRoutes;
+mainReducer = mainPraProvisioningReducer;
+// end
+
+// default
+provisioningRoutes = provisioningDefaultRoutes;
+mainReducer = mainDefaultProvisioningReducer;
+// end
 
 // default
 function provisioningDefaultRoutes(ui_profile) {
-    return [
+  const store = createStore(
+      mainReducer,
+      composeEnhancers(applyMiddleware(thunk))
+    );
+    return (
+      <Provider store={store}>
+      <Switch>
         <Route
             path="/provisioning/:gwName/search"
             component={props =>
@@ -68,7 +90,7 @@ function provisioningDefaultRoutes(ui_profile) {
                 )
             }
             exact
-        />,
+        />
         <Route
             path="/provisioning/:gwName/localusers"
             component={props =>
@@ -79,7 +101,7 @@ function provisioningDefaultRoutes(ui_profile) {
                 )
             }
             exact
-        />,
+        />
         <Route
             path="/provisioning/:gwName/localusers/user/:localUserName"
             component={props =>
@@ -90,7 +112,7 @@ function provisioningDefaultRoutes(ui_profile) {
                 )
             }
             exact
-        />,
+        />
         <Route
             path="/provisioning/:gwName/localusers/adduser"
             component={props =>
@@ -101,7 +123,7 @@ function provisioningDefaultRoutes(ui_profile) {
                 )
             }
             exact
-        />,
+        />
         <Route
             path="/provisioning/:gwName/configs"
             component={props =>
@@ -112,7 +134,7 @@ function provisioningDefaultRoutes(ui_profile) {
                 )
             }
             exact
-        />,
+        />
         <Route
             path="/provisioning/:gwName/templates/:categoryName"
             component={props =>
@@ -122,7 +144,7 @@ function provisioningDefaultRoutes(ui_profile) {
                     <NotAllowed/>
                 )
             }
-            exact/>,
+            exact/>
         <Route
             path="/provisioning/:gwName/templates/:categoryName/template/:templateName"
             component={props =>
@@ -132,7 +154,7 @@ function provisioningDefaultRoutes(ui_profile) {
                     <NotAllowed/>
                 )
             }
-            exact/>,
+            exact/>
         <Route
             path="/provisioning/:gwName/tenants"
             component={props =>
@@ -142,7 +164,7 @@ function provisioningDefaultRoutes(ui_profile) {
                     <NotAllowed/>
                 )
             }
-            exact/>,
+            exact/>
         <Route
             path="/provisioning/:gwName/tenants/:tenantId/addphone"
             component={props =>
@@ -152,7 +174,7 @@ function provisioningDefaultRoutes(ui_profile) {
                     <NotAllowed/>
                 )
             }
-            exact/>,
+            exact/>
         <Route
             path="/provisioning/:gwName/tenants/add"
             component={props =>
@@ -160,7 +182,7 @@ function provisioningDefaultRoutes(ui_profile) {
                     : <NotAllowed/>
             }
             exact
-        />,
+        />
         <Route
             path="/provisioning/:gwName/tenants/:tenantId/addgroup"
             component={props =>
@@ -168,7 +190,7 @@ function provisioningDefaultRoutes(ui_profile) {
                     : <NotAllowed/>
             }
             exact
-        />,
+        />
         <Route
             path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/addtrunk"
             component={props =>
@@ -179,7 +201,7 @@ function provisioningDefaultRoutes(ui_profile) {
                 )
             }
             exact
-        />,
+        />
         <Route
             path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/adduser"
             component={props =>
@@ -190,7 +212,7 @@ function provisioningDefaultRoutes(ui_profile) {
                 )
             }
             exact
-        />,
+        />
         <Route
             path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/addphone"
             component={props =>
@@ -201,7 +223,7 @@ function provisioningDefaultRoutes(ui_profile) {
                 )
             }
             exact
-        />,
+        />
         <Route
             path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/trunkgroup/:trunkGroupName"
             component={props =>
@@ -212,7 +234,7 @@ function provisioningDefaultRoutes(ui_profile) {
                 )
             }
             exact
-        />,
+        />
         <Route
             path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/trunkgroup/:trunkGroupName/users/:userName"
             component={props =>
@@ -234,7 +256,7 @@ function provisioningDefaultRoutes(ui_profile) {
                 )
             }
             exact
-        />,
+        />
         <Route
             path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/trunkgroup/:trunkGroupName/adduser"
             component={props =>
@@ -245,7 +267,7 @@ function provisioningDefaultRoutes(ui_profile) {
                 )
             }
             exact
-        />,
+        />
         <Route
             path="/provisioning/:gwName/tenants/:tenantId"
             component={props =>
@@ -256,7 +278,7 @@ function provisioningDefaultRoutes(ui_profile) {
                 )
             }
             exact
-        />,
+        />
         <Route
             path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId"
             component={props =>
@@ -267,7 +289,7 @@ function provisioningDefaultRoutes(ui_profile) {
                 )
             }
             exact
-        />,
+        />
         <Route
             path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/users/:userName"
             component={props =>
@@ -278,7 +300,7 @@ function provisioningDefaultRoutes(ui_profile) {
                 )
             }
             exact
-        />,
+        />
         <Route
             path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/addadmin"
             component={props =>
@@ -289,7 +311,7 @@ function provisioningDefaultRoutes(ui_profile) {
                 )
             }
             exact
-        />,
+        />
         <Route
             path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/admins/:adminId"
             component={props =>
@@ -300,7 +322,7 @@ function provisioningDefaultRoutes(ui_profile) {
                 )
             }
             exact
-        />,
+        />
         <Route
             path="/provisioning/:gwName/tenants/:tenantId/addadmin"
             component={props =>
@@ -311,7 +333,7 @@ function provisioningDefaultRoutes(ui_profile) {
                 )
             }
             exact
-        />,
+        />
         <Route
             path="/provisioning/:gwName/tenants/:tenantId/admins/:adminId"
             component={props =>
@@ -323,13 +345,21 @@ function provisioningDefaultRoutes(ui_profile) {
             }
             exact
         />
-    ]
+      </Switch>
+    </Provider>
+    )
 }
 // end
 
 // pra
 function provisioningPraRoutes(ui_profile) {
-    return [
+    const store = createStore(
+      mainReducer,
+      composeEnhancers(applyMiddleware(thunk))
+    );
+    return (
+      <Provider store={store}>
+      <Switch>
         <Route
             path="/provisioning/:gwName/tenants"
             component={props =>
@@ -340,7 +370,7 @@ function provisioningPraRoutes(ui_profile) {
                 )
             }
             exact
-        />,
+        />
         <Route
             path="/provisioning/:gwName/configs"
             component={props =>
@@ -351,7 +381,7 @@ function provisioningPraRoutes(ui_profile) {
                 )
             }
             exact
-        />,
+        />
         <Route
             path="/provisioning/:gwName/reconciliations"
             component={props =>
@@ -362,7 +392,7 @@ function provisioningPraRoutes(ui_profile) {
                 )
             }
             exact
-        />,
+        />
         <Route
             path="/provisioning/:gwName/iadreboot"
             component={props =>
@@ -373,7 +403,7 @@ function provisioningPraRoutes(ui_profile) {
                 )
             }
             exact
-        />,
+        />
         <Route
             path="/provisioning/:gwName/reconciliations/:anomalyHash"
             component={props =>
@@ -384,7 +414,7 @@ function provisioningPraRoutes(ui_profile) {
                 )
             }
             exact
-        />,
+        />
         <Route
             path="/provisioning/:gwName/configs/addteam"
             component={props =>
@@ -395,7 +425,7 @@ function provisioningPraRoutes(ui_profile) {
                 )
             }
             exact
-        />,
+        />
         <Route
             path="/provisioning/:gwName/configs/reconciliationteam/:teamName"
             component={props =>
@@ -406,7 +436,7 @@ function provisioningPraRoutes(ui_profile) {
                 )
             }
             exact
-        />,
+        />
         <Route
             path="/provisioning/:gwName/tenants/add"
             component={props =>
@@ -417,7 +447,7 @@ function provisioningPraRoutes(ui_profile) {
                 )
             }
             exact
-        />,
+        />
         <Route
             path="/provisioning/:gwName/tenants/:tenantId"
             component={props =>
@@ -428,7 +458,7 @@ function provisioningPraRoutes(ui_profile) {
                 )
             }
             exact
-        />,
+        />
         <Route
             path="/provisioning/:gwName/tenants/:tenantId/addgroup"
             component={props =>
@@ -439,7 +469,7 @@ function provisioningPraRoutes(ui_profile) {
                 )
             }
             exact
-        />,
+        />
         <Route
             path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId"
             component={props =>
@@ -450,7 +480,7 @@ function provisioningPraRoutes(ui_profile) {
                 )
             }
             exact
-        />,
+        />
         <Route
             path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/addiad"
             component={props =>
@@ -461,7 +491,7 @@ function provisioningPraRoutes(ui_profile) {
                 )
             }
             exact
-        />,
+        />
         <Route
             path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/addphone"
             component={props =>
@@ -472,7 +502,7 @@ function provisioningPraRoutes(ui_profile) {
                 )
             }
             exact
-        />,
+        />
         <Route
             path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/iad/:iadId"
             component={props =>
@@ -483,7 +513,7 @@ function provisioningPraRoutes(ui_profile) {
                 )
             }
             exact
-        />,
+        />
         <Route
             path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/enterprisetrunk/:entTrunkId"
             component={props =>
@@ -495,60 +525,8 @@ function provisioningPraRoutes(ui_profile) {
             }
             exact
         />
-    ]
+      </Switch>
+      </Provider>
+    )
 }
 // end
-
-export let provisioningRoutes = null;
-export let mainReducer = null;
-
-// pra
-provisioningRoutes = provisioningPraRoutes;
-mainReducer = mainPraProvisioningReducer;
-// end
-
-// default
-provisioningRoutes = provisioningDefaultRoutes;
-mainReducer = mainDefaultProvisioningReducer;
-// end
-
-export class ListProvisioningGateways extends React.Component {
-    render() {
-        const proxies = ProvProxiesManager.listProxies();
-        if(proxies.length === 1) {
-            return <Redirect to={"/provisioning/" + proxies[0].id + "/tenants"}/>
-        }
-        return (
-            <div>
-                <Breadcrumb>
-                    <Breadcrumb.Item active><FormattedMessage id="provisioning" defaultMessage="Provisioning"/></Breadcrumb.Item>
-                </Breadcrumb>
-
-                <Panel>
-                    <Panel.Body>
-                        <Table>
-                            {
-                                proxies.map((p, i) =>
-                                    <tr>
-                                        <td>
-                                            <Link to={"/provisioning/" + p.id + "/tenants"} key={i}>
-                                                {p.name}
-                                            </Link>
-                                        </td>
-                                    </tr>
-                                )
-                            }
-                            {
-                                proxies.length === 0 && (
-                                    <tr>
-                                        <td><FormattedMessage id="none" defaultMessage="None" /></td>
-                                    </tr>
-                                )
-                            }
-                        </Table>
-                    </Panel.Body>
-                </Panel>
-            </div>
-        )
-    }
-}
