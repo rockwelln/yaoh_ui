@@ -25,7 +25,7 @@ export function createCookie(name,value,days,path) {
 	if (!path) {
 	    path = "/";
   }
-	document.cookie = name+"="+value+expires+"; path="+path+"; samesite=strict; secure";
+	document.cookie = name+"="+value+expires+"; path="+path+"; SameSite=Strict; Secure";
 }
 
 export function removeCookie(name) {
@@ -34,12 +34,14 @@ export function removeCookie(name) {
 
 class AuthService {
     loadApiToken(token) {
-        createCookie("auth_token", token, 1, "/");
+        // createCookie("auth_token", token, 1, "/");
+        localStorage.setItem("auth_token", token);
         console.log("API token updated!");
     }
 
     loadJwtTokens(accessToken, refreshToken) {
-        createCookie("auth_token", accessToken, 1, "/");
+        // createCookie("auth_token", accessToken, 1, "/");
+        localStorage.setItem("auth_token", accessToken);
         if(refreshToken) {
             localStorage.setItem("refreshToken", refreshToken);
         }
@@ -56,7 +58,7 @@ class AuthService {
         }).then(checkStatus)
             .then(parseJSON)
             .then(r => {
-                createCookie("auth_token", r.access_token, 1, "/");
+                this.loadJwtTokens(r.access_token);
                 return r.access_token;
             })
     }
@@ -64,7 +66,7 @@ class AuthService {
     getValidToken() {
         const SAFE_GUARD_DELAY = 5; // seconds of safe guards
         const refreshToken = localStorage.getItem("refreshToken");
-        const token = getCookie("auth_token");
+        const token = this.getToken();
         if(refreshToken) {
           let payload = null;
           if(token) {
@@ -84,16 +86,17 @@ class AuthService {
     }
 
     getToken() {
-        return getCookie("auth_token");
+        return localStorage.getItem("auth_token");
     }
 
     logout() {
         localStorage.removeItem("refreshToken");
-        removeCookie("auth_token");
+        localStorage.removeItem("auth_token");
     }
 
     isAuthenticated() {
         const token = this.getToken();
+        // test the token is not expired!
         return token !== null && token !== "undefined" && typeof token === "string" && token.length > 0;
     }
 }
