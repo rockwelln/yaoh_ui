@@ -17,7 +17,7 @@ import Admins from "./Tabs/Admins";
 import TrunksGroup from "./Tabs/TrunksGroup";
 
 import { get } from "../get";
-import { getCookie } from "../../../../utils";
+import {AuthServiceManager} from "../../../../utils";
 
 import {
   fetchGetTenantById,
@@ -108,7 +108,7 @@ class TenantPage extends Component {
                     window.open(
                       `${
                         this.props.selfcareUrl.selfcare.url
-                      }/sso?token=${getCookie("auth_token")}&tenant=${
+                      }/sso?token=${AuthServiceManager.getToken()}&tenant=${
                         this.props.match.params.tenantId
                       }&group=${this.props.match.params.groupId}`
                     )
