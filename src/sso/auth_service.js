@@ -1,7 +1,3 @@
-// import React from 'react';
-import { UserManager } from 'oidc-client';
-
-
 const getClientSettings = () => {
   return {
     authority: 'http://localhost:7777/auth/realms/master',
@@ -18,16 +14,19 @@ const getClientSettings = () => {
 };
 
 class AuthService {
-  manager = new UserManager(getClientSettings());
+  manager = null;
   user = null;
 
-  constructor() {
-    this.manager.getUser().then(user => {
-      this.user = user;
-    });
+  enableOidc() {
+    import("oidc-client").then(c => {
+      this.manager = new c.UserManager(getClientSettings());
+      this.manager.getUser().then(user => {
+        this.user = user;
+      });
 
-    this.manager.events.addAccessTokenExpired(this.signinSilent.bind(this));
-    this.manager.events.addAccessTokenExpiring(() => console.log("token expiring"));
+      this.manager.events.addAccessTokenExpired(this.signinSilent.bind(this));
+      this.manager.events.addAccessTokenExpiring(() => console.log("token expiring"));
+    })
   }
 
   isLoggedIn() {
@@ -43,12 +42,15 @@ class AuthService {
   }
 
   startAuthentication() {
+    if(!this.manager) {
+      return
+    }
     return this.manager.signinRedirect();
   }
 
   removeUser() {
       return (
-          this.manager.clearStaleState()
+          this.manager && this.manager.clearStaleState()
               .then(() => this.manager.removeUser())
               .then(() => this.user = null)
       )

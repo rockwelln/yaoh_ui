@@ -494,9 +494,6 @@ class App extends Component {
         this.getUserInfo = this.getUserInfo.bind(this);
         this.updateToken = this.updateToken.bind(this);
         this.logout = this.logout.bind(this);
-
-        sso_auth_service.manager.events.addUserSignedOut(() => this.logout());
-        sso_auth_service.manager.events.addUserLoaded(this.ssoTokenToLocalToken.bind(this));
     }
 
     getUserInfo() {
@@ -599,6 +596,11 @@ class App extends Component {
 
     isAuthenticated() {
         const local_auth = AuthServiceManager.isAuthenticated();
+        if(localStorage.getItem("auth_sso")) {
+          sso_auth_service.enableOidc();
+          sso_auth_service.manager.events.addUserSignedOut(() => this.logout());
+          sso_auth_service.manager.events.addUserLoaded(this.ssoTokenToLocalToken.bind(this));
+        }
         const sso_auth = sso_auth_service.isLoggedIn();
 
         console.log(`local_auth status: ${local_auth}, sso_auth status: ${sso_auth}`);
