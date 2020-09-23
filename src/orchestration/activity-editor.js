@@ -931,7 +931,7 @@ export function ActivityEditor(props) {
                     if(c.customOutputs) {
                       c.def.outputs = c.def.outputs.concat(c.customOutputs).reduce((u, i) => u.includes(i) ? u : [...u, i], []);
                     }
-                    import("./editor").then(editor => editor.addNode(editor, c.def, c.name, c.params, c.isEntity));
+                    import("./editor").then(e => e.addNode(editor, c.def, c.name, c.params, c.isEntity));
                   }
                 }}
             />
@@ -958,7 +958,7 @@ export function ActivityEditor(props) {
                       activity.definition.entities[i]["outputs"] = c.outputs;
                     }
                   }
-                  import("./editor").then(editor => editor.updateGraphModel(editor, activity, {clear: true, nofit: true}));
+                  import("./editor").then(e => e.updateGraphModel(editor, activity, {clear: true, nofit: true}));
                 }} />
         </>
     );
