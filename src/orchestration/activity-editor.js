@@ -47,12 +47,14 @@ const NEW_ACTIVITY = {
 
 function isValid(p, v) {
     if(p.mandatory && v.length === 0) {
-        return `The element ${p.name || p} is mandatory`;
+      return `The element ${p.name || p} is mandatory`;
+    } else if(v.length === 0) {
+      return null;
     }
     switch (p.validation) {
         case 'int':
             if(!/\d+/.test(v)) {
-                alert(`Invalid number: ${v}`);
+                return `Invalid number: ${v}`;
             }
             break;
         case 'timeout':
