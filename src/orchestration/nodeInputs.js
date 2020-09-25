@@ -178,6 +178,65 @@ function TextareaInput(props) {
 }
 
 
+function HttpHeaders(props) {
+  const {value, onChange} = props;
+  const [newHeader, setNewHeader] = useState(["", ""])
+
+  let headers = [];
+  try {
+    headers = JSON.parse(value);
+  } catch(e) {
+    // console.log(e);
+  }
+  const addNewEntry = () => {
+    const hs = [...headers, newHeader];
+    onChange(JSON.stringify(hs));
+    setNewHeader(["", ""]);
+  }
+
+  return (
+    <Table>
+      <tbody>
+      {
+        headers.map((head, i) =>
+          <tr key={i}>
+            <td style={{width: "20%"}}>{head[0]}</td>
+            <td>{" : "}</td>
+            <td style={{width: "70%"}}>{head[1]}</td>
+            <td><Button onClick={() => {
+              const hs = headers.filter(h => h[0] !== head[0] && h[1] !== head[1]);
+              onChange(JSON.stringify(hs))
+            }}>{"-"}</Button></td>
+          </tr>)
+      }
+      {
+        <tr>
+          <td style={{width: "20%"}}>
+            <FormControl
+              value={newHeader[0]}
+              onChange={e => setNewHeader(update(newHeader, {$merge: {[0]: e.target.value}}))} />
+          </td>
+          <td>{" : "}</td>
+          <td style={{width: "70%"}}>
+            <FormControl
+              value={newHeader[1]}
+              onChange={e => setNewHeader(update(newHeader, {$merge: {[1]: e.target.value}}))}
+              onKeyDown={e => (e.keyCode === 13 && newHeader[0] && newHeader[1]) ? addNewEntry() : null} />
+          </td>
+          <td>
+            <Button
+              onClick={() => addNewEntry()}
+              disabled={!newHeader[0] || !newHeader[1]}
+            >{"+"}</Button>
+          </td>
+        </tr>
+      }
+      </tbody>
+    </Table>
+  )
+}
+
+
 const TIMER = 2;
 function TimerInput(props) {
   const {cells, cellsDef, value, onChange} = props;
@@ -370,6 +429,9 @@ export function Param2Input({param, activity, cells, value, onChange}) {
         onChange={(e, outputs) => {
           onChange(e, outputs);
         }} />
+      break;
+    case 'http_headers':
+      i = <HttpHeaders value={value} onChange={e => onChange(e)} />
       break;
     default:
       i = <BasicInput value={value} onChange={e => onChange(e.target.value)} />

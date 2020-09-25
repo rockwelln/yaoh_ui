@@ -829,6 +829,7 @@ export function ActivityEditor(props) {
     useEffect(() => {
         // (container, handlers, placeholders, props)
         import("./editor").then(editor => {
+          if(editorRef.current === null) return;
           const e = editor.default(
             ReactDOM.findDOMNode(editorRef.current),
             newActivity ? NEW_ACTIVITY : currentActivity,
