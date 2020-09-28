@@ -98,6 +98,14 @@ export default function Dashboard(props) {
             </Row>
             <Row>
                 {
+                    props.user_info.modules.includes(modules.proxy) &&
+                      <Col xs={12}>
+                        <SuccessRateOverTime {...props} />
+                      </Col>
+                }
+            </Row>
+            <Row>
+                {
                     statsPanels.map(e => <Col sm={6} md={6} xs={12}>{e}</Col>)
                 }
             </Row>
