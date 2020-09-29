@@ -1,4 +1,4 @@
-# External actions
+# External (manual) actions
 
 Some workflows involve manual actions.
 

@@ -12,6 +12,8 @@ This documentation is intended for users who need help with the editor, its func
 
 * [Quick start](quick_start.md)
 * [Basics](./basics.html)
+* [Manual actions](./manual_actions.html)
+* [Asynchronous external call](./async_call.html)
 * [Entities](./entities.html)
 
 ## Cells
@@ -46,6 +48,7 @@ This documentation is intended for users who need help with the editor, its func
 * [rest_call](./cells/http_json_call.html#rest_call)
 * [proxy_call](./cells/http_json_call.html#proxy_call)
 * [proxy_session_call](./cells/http_json_call.html#proxy_session_call)
+* [async_json_call](./cells/http_json_call.html#async_json_call)
 
 ### Misc. tools
 * generate_ott

@@ -37,3 +37,21 @@ This will make an HTTP / REST call using the session of the user who triggered t
 
 typical use case: a user is logged against a proxied backend (e.g Broadworks)
 and the workflow want to make some call(s) on behalf of the user (inheriting its session - including user level, capabilities, etc...)
+
+
+## async_json_call
+(since core: 2.15.3)
+
+This node make a basic JSON call as describe above but if the HTTP status code is < 400, the task considered successful is put in pending state (status: WAIT).  
+
+The callback id is extracted from the response body with the JmesPath expression (see https://jmespath.org/) set in the parameter `register_async_external_id`.  
+
+When the external callback endpoint is triggered with the callback id, the task is completed and the process moves further with the output "on_callback".  
+
+![async json call](./images/new_async_call.png "async json call")
+
+| variable                   | type            | description                                                                                   |
+|----------------------------|-----------------|-----------------------------------------------------------------------------------------------|
+| output_context_key         | string          | The key to be used to store the response of the "synchronous" call.                           |
+| register_async_external_id | string          | a JmesPath query executed against the "synchronous" response body to extract the external id. |
+| async_output_context_key   | string          | The key to be used to store the "asynchronous" response                                       |
