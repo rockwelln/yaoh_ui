@@ -30,7 +30,7 @@ function messages2instance(messages) {
     if(m) {
         o.final_report = Object.assign({}, m.instance);
     }
-    o.tasks = messages.filter(m => m.event.startsWith("tasks:") && m.instance_id === o.id).reduce(
+    o.tasks = messages.filter(m => m.event && m.event.startsWith("tasks:") && m.instance_id === o.id).reduce(
         (tasks, m) => {
             if(m.event === "tasks:started") {
                 tasks.push({
