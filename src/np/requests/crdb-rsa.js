@@ -1218,8 +1218,19 @@ function CrdbMessages(props) {
   const {messages, userInfo} = props;
   let listOfMessages = messages
     .reduce((l, m) => {
-      const o = JSON.parse(m.output);
-      const i = m.input ? JSON.parse(m.input) : null;
+      var o, i;
+      try {
+        o = JSON.parse(m.output || "{}");
+      } catch (e) {
+        console.error("failed to parse m.output: ", e, m.output);
+        o = {};
+      }
+      try {
+        i = m.input ? JSON.parse(m.input) : null;
+      } catch (e) {
+        console.error("failed to parse m.input: ", e, m.input);
+        i = null;
+      }
       const match = /<NPCMessages>\s*<([^>]*)>/gm.exec(o.request);
 
       o.request && l.push({id: m.processing_trace_id, endpoint: "CRDB", summary: match?match[1]:"-", type:"request", created_on: m.created_on, raw: o.request});
