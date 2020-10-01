@@ -74,11 +74,10 @@ class UpdateNumberPortingModal extends Component {
     )
       .then(parseJSON)
       .then(data => this.setState({ new_np_request: data.id }))
-      .catch(error => this.props.notifications.addNotification({
-        title: <FormattedMessage id="create-update-request-failed" defaultMessage="Failed to create update request" />,
-        message: error.message,
-        level: 'error'
-      }));
+      .catch(error => NotificationsManager.error(
+        <FormattedMessage id="create-update-request-failed" defaultMessage="Failed to create update request" />,
+        error.message,
+      ));
   }
 
   onLocalSaveUpdate() {
@@ -97,17 +96,15 @@ class UpdateNumberPortingModal extends Component {
       }
     )
       .then(() => {
-        this.props.notifications.addNotification({
-          message: <FormattedMessage id="porting-case-saved" defaultMessage="Porting case saved!" />,
-          level: 'success'
-        });
+        NotificationsManager.success(
+          <FormattedMessage id="porting-case-saved" defaultMessage="Porting case saved!" />
+        );
         this.props.onClose && this.props.onClose(true);
       })
-      .catch(error => this.props.notifications.addNotification({
-        title: <FormattedMessage id="update-case-failed" defaultMessage="Failed to update porting case" />,
-        message: error.message,
-        level: 'error'
-      }));
+      .catch(error => NotificationsManager.error(
+        <FormattedMessage id="update-case-failed" defaultMessage="Failed to update porting case" />,
+        error.message,
+      ));
   }
 
   render() {
@@ -318,17 +315,15 @@ class NewNumberPorting extends Component {
     this.setState({ error: undefined });
     fetch_post('/api/v01/npact/number_porting', case_, this.props.auth_token)
       .then(() => {
-        this.props.notifications.addNotification({
-          message: <FormattedMessage id="new-local-porting-case" defaultMessage="New porting case created locally" />,
-          level: 'success'
-        });
+        NotificationsManager.success(
+          <FormattedMessage id="new-local-porting-case" defaultMessage="New porting case created locally" />,
+        );
         this.onClose(true);
       })
-      .catch(error => this.props.notifications.addNotification({
-        title: <FormattedMessage id="create-porting-case-failed" defaultMessage="Failed to create porting case" />,
-        message: error.message,
-        level: 'error'
-      }));
+      .catch(error => NotificationsManager.error(
+        <FormattedMessage id="create-porting-case-failed" defaultMessage="Failed to create porting case" />,
+        error.message,
+      ));
   }
 
   render() {
