@@ -12,7 +12,15 @@ import update from 'immutability-helper';
 import { fetchOperators } from "../data/operator_mgm";
 import { fetchRoutes } from "../data/routing_info_mgm";
 import { RangeInput } from "../utils";
-import {NotificationsManager, fetch_get, fetch_post, parseJSON, fetch_put, API_URL_PREFIX} from "../../utils";
+import {
+  NotificationsManager,
+  fetch_get,
+  fetch_post,
+  parseJSON,
+  fetch_put,
+  API_URL_PREFIX,
+  userLocalizeUtcDate
+} from "../../utils";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 import Panel from "react-bootstrap/lib/Panel";
 import Table from "react-bootstrap/lib/Table";
@@ -39,6 +47,7 @@ import Tab from "react-bootstrap/lib/Tab";
 import Badge from "react-bootstrap/lib/Badge";
 import {StaticControl} from "../../utils/common";
 import {SyncMessagesDetails, SyncMessagesFlow} from "./citc-sa";
+import moment from "moment";
 
 export const DEFAULT_RECIPIENT = "MTNBSGNP";
 export const rejection_codes = [];
@@ -811,7 +820,7 @@ function getRangeFlags(actions, ranges) {
 }
 
 function RequestTable(props) {
-  const {onChangeRequest, onChangeRange, actions, request, events} = props;
+  const {onChangeRequest, onChangeRange, actions, request, events, userInfo} = props;
   const [operators, setOperators] = useState([]);
   const [diffSubscriberData, setDiffSubscriberData] = useState({});
 
@@ -921,7 +930,7 @@ function RequestTable(props) {
                   { rangeFlags.find(rf => rf.flag === "notif_ordered" && !rf.disabled) ?
                     <DatePicker
                       className="form-control"
-                      selected={req.due_date ? new Date(req.due_date) : null}
+                      selected={req.due_date ? userLocalizeUtcDate(moment.utc(req.due_date), userInfo).toDate() : null}
                       onChange={d => {
                         onChangeRequest({ due_date: d.toISOString() });
                       }}
@@ -932,7 +941,7 @@ function RequestTable(props) {
                     : req.due_date}
                 </td>
               </tr>
-              <tr><th><FormattedMessage id="created" defaultMessage="Created" /></th><td colSpan={rangeNbCols}>{req.created_on}</td></tr>
+              <tr><th><FormattedMessage id="created" defaultMessage="Created" /></th><td colSpan={rangeNbCols}>{userLocalizeUtcDate(moment.utc(req.created_on), userInfo).format()}</td></tr>
               {
                 req.subscriber_data && Object.keys(req.subscriber_data).map(d => {
                   if(d === "ProcessType" && rangeFlags.find(rf => rf.flag === "accepted" && !rf.disabled)) {
@@ -1613,6 +1622,7 @@ export class NPTransaction extends Component {
                 onChangeRange={(range_id, r) => {
                   updateRequestRange(request.id, range_id, r, () => this.fetchTxDetails(false));
                 }}
+                userInfo={user_info}
               />
 
             </Col>
