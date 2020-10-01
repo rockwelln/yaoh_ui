@@ -22,6 +22,12 @@ function newEmergencyNotification(entry, onSuccess, onError) {
       .catch(error => onError && onError(error))
 }
 
+const crdbEmergencyCodes = {
+    "SP021": "Participant has routing problem.",
+    "SP022": "Participant has authorisation problem.",
+    "SP023": "Participant has transmission problem.",
+};
+
 
 export function NPEmergencyNotificationRequest(props) {
     const [reasonCode, setReasonCode] = useState("");
@@ -55,9 +61,14 @@ export function NPEmergencyNotificationRequest(props) {
 
             <Col sm={9}>
               <FormControl
-                type="text"
+                componentClass="select"
                 value={reasonCode}
-                onChange={e => setReasonCode(e.target.value)} />
+                onChange={e => setReasonCode(e.target.value)} >
+                <option value={""}/>
+                {
+                  Object.entries(crdbEmergencyCodes).map((code, desc) => <option key={code}>{code} ({desc})</option>)
+                }
+              </FormControl>
             </Col>
           </FormGroup>
 
