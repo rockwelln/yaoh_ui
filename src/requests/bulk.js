@@ -31,6 +31,8 @@ import {Link} from "react-router-dom";
 import {Pagination} from "../utils/datatable";
 import moment from 'moment';
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import Tab from "react-bootstrap/lib/Tab";
+import Tabs from "react-bootstrap/lib/Tabs";
 
 
 class NewBulk extends Component {
@@ -255,103 +257,6 @@ class NewBulk extends Component {
     }
 }
 
-class InstanceDetails extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            request: {},
-        };
-        this.cancelLoad = false;
-        this.computeLabel = this.computeLabel.bind(this);
-        this.refreshRequest = this.refreshRequest.bind(this);
-    }
-
-    componentDidMount() {
-        this.refreshRequest();
-    }
-
-    componentWillUnmount() {
-        this.cancelLoad = true;
-    }
-
-    refreshRequest() {
-        const {instance, auth_token} = this.props;
-
-        fetch_get(`/api/v01/apio/requests/${instance.original_request_id}`, auth_token)
-            .then(data => {
-                if(this.cancelLoad) return;
-                setTimeout(this.refreshRequest, 30 * 1000);
-                this.setState({request: data.request});
-            })
-            .catch(error => {
-                if(this.cancelLoad) return;
-                setTimeout(this.refreshRequest, 30 * 1000);
-                this.setState({error: error});
-            });
-    }
-
-    computeLabel() {
-        const {instance} = this.props;
-        const {request} = this.state;
-        const entity = request.entities && request.entities[0];
-
-        if(!entity) {
-            return instance.id;
-        }
-
-        let label = entity.tenant_id;
-        if (entity.site_id) {
-            label += ' - ' + entity.site_id;
-        }
-        if (entity.numbers) {
-            label += ' - ' + entity.numbers;
-        }
-        return label;
-    }
-
-    render() {
-        const {instance, tasks, colOffset} = this.props;
-        const {request} = this.state;
-        let statusColor = '';
-        let statusGlyph = '';
-        switch(request.status) {
-            case "ERROR":
-                statusColor = '#ca6f7b';
-                statusGlyph = 'remove';
-                break;
-            case "SUCCESS":
-                statusColor = '#a4d1a2';
-                statusGlyph = 'ok';
-                break;
-            default:
-                statusColor = '#a4d1a2';
-                statusGlyph = 'play';
-        }
-        const callback_task = tasks && tasks.find(t => t.id === instance.callback_task_id);
-
-        return (
-            <tr key={`message_sub_flow_sync_${instance.id}`}>
-                {
-                    colOffset && <td colSpan={colOffset}/>
-                }
-                <td style={{width: '2%'}}><Glyphicon style={{color: statusColor}} glyph={statusGlyph}/></td>
-                <td>
-                    <a href={`/transactions/${instance.id}`} target="_blank" rel="noopener noreferrer">{this.computeLabel()}</a>{' '}
-                    {
-                        instance.errors !== 0 && <Badge style={{backgroundColor: '#ff0808'}}>{instance.errors}{' '}<FormattedMessage id="errors" defaultMessage="error(s)"/></Badge>
-                    }
-                </td>
-                <td style={{width: '30%'}} />
-                <td style={{width: '15%'}}>
-                    {
-                        callback_task && <Badge>{callback_task.cell_id}</Badge>
-                    }
-                </td>
-            </tr>
-        )
-    }
-}
-
 
 const BulkResult = ({result, colOffset}) => {
     let statusColor = '';
@@ -444,9 +349,65 @@ const DeleteBulk = ({bulk, onClose}) => {
 };
 
 
+function fetchStats(bulkId, onSuccess) {
+  fetch_get(`/api/v01/bulks/${bulkId}/stats`)
+    .then(r => onSuccess(r.stats))
+    .catch(error => NotificationsManager.error(
+      <FormattedMessage id="bulk-stats-failed" defaultMessage="Fetch bulk stats failed!" />,
+      error.message
+    ));
+}
+
+
+function BulkStats(props) {
+  const {show, bulkId} = props;
+  const [stats, setStats] = useState([]);
+
+  useEffect(() => {
+    if(show) {
+      fetchStats(bulkId, setStats);
+      const i = setInterval(() => fetchStats(bulkId, setStats), 10000);
+      return () => clearInterval(i);
+    }
+  }, [show]);
+
+  const statuses = stats.reduce((o, c) => { !o.includes(c.status) && o.push(c.status); return o;}, []);
+  const stats_ = stats.reduce((o, c) => {
+    if(o[c.cell_id] === undefined) o[c.cell_id] = {};
+    o[c.cell_id][c.status] = c.count_1;
+    return o;
+  }, {});
+
+  return (
+    <Table>
+      <thead>
+        <tr>
+          <th>Tasks</th>
+          {
+            statuses.map(s => <th key={`status-${s}`}># of {s}</th>)
+          }
+        </tr>
+      </thead>
+      <tbody>
+      {
+        Object.entries(stats_).map(([cellId, s], i) =>
+          <tr key={`stat-${i}`}>
+            <td>{cellId}</td>
+            {
+              statuses.map(status => <td>{s[status] || "0"}</td>)
+            }
+          </tr>
+        )
+      }
+      </tbody>
+    </Table>
+  )
+}
+
 class BulkEntry extends Component {
     state = {
         expanded: false,
+        truncated: null,
         results: []
     };
 
@@ -460,9 +421,12 @@ class BulkEntry extends Component {
                     return;
                 }
                 if(data.results.length > 250) {
+                    const originalLen = data.results.length;
                     data.results.length = 250;
+                    this.setState({results: data.results, loading: false, truncated: originalLen})
+                } else {
+                    this.setState({results: data.results, loading: false, truncated: null})
                 }
-                this.setState({results: data.results, loading: false})
             })
             .catch(error => {
                 NotificationsManager.error(
@@ -484,15 +448,15 @@ class BulkEntry extends Component {
     }
 
     completionStatus() {
-        const {results} = this.state;
+        const {results, truncated} = this.state;
         if(!results.length) return null;
 
         const completed = results.filter(r => r.status !== "active" || (r.instance && r.instance.status !== "ACTIVE")).length;
-        return `${completed} / ${results.length}`;
+        return `${truncated?"...":completed} / ${truncated?truncated:results.length}`;
     }
 
     render() {
-        const {expanded, results, loading} = this.state;
+        const {expanded, results, loading, truncated} = this.state;
         const {bulk, onDelete, userInfo} = this.props;
         const expIco = expanded?<Glyphicon glyph="chevron-down"/>:<Glyphicon glyph="chevron-right"/>;
         const resultsLink = `/api/v01/bulks/${bulk.bulk_id}/results?as=log&auth_token=${AuthServiceManager.getToken()}`;
@@ -523,16 +487,38 @@ class BulkEntry extends Component {
                 </tr>
             )
         } else if (expanded) {
-            results.map(r => rows.push(
-                <BulkResult key={`res_${r.bulk_result_id}`} result={r} colOffset={1}/>
-            ));
+            rows.push(
+              <tr>
+                <td/>
+                <td colSpan={6}>
+                  <Tabs defaultActiveKey={"list"} id="bulk-details">
+                    <Tab eventKey="list" title="List">
+                      <Table>
+                        <tbody>
+                        {
+                        results.map(r =>
+                          <BulkResult key={`res_${r.bulk_result_id}`} result={r} />
+                        )
+                        }
+                        </tbody>
+                      </Table>
+                    </Tab>
+                    <Tab eventKey="stats" title="Stats">
+                      <BulkStats show={expanded} bulkId={bulk.bulk_id}/>
+                    </Tab>
+                  </Tabs>
+                </td>
+              </tr>
+            );
             rows.push(
                 <tr>
                     <td colSpan={7}>
+                        { truncated &&
                         <p>
-                            The result list is limited to 250 results. Click here to have the full results:
-                            <Button bsStyle="link" href={resultsLink}>here</Button>
+                          The result list is limited to 250 results. Click here to have the full results:
+                          <Button bsStyle="link" href={resultsLink}>here</Button>
                         </p>
+                        }
                         {
                             results.length && results[0].instance && <p>
                                 See generated <Link to={{pathname: "/transactions/list", search: queryString.stringify({
@@ -570,7 +556,7 @@ const BulkHistory = ({bulks, onDelete, pagination, onPagination, userInfo}) => (
                 </thead>
                 <tbody>
                 {
-                    bulks && bulks.map(b => <BulkEntry bulk={b} onDelete={onDelete} key={`bulk_${b.bulk_id}`} userInfo={userInfo}/>)
+                    bulks && bulks.map(b => <BulkEntry bulk={b} onDelete={onDelete} key={`bulkEntry_${b.bulk_id}`} userInfo={userInfo}/>)
                 }
                 </tbody>
             </Table>
