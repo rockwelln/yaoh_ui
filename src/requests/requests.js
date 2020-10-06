@@ -1752,9 +1752,9 @@ export class Transaction extends Component {
                                                 onChange={e => this.onGlobalActionSubInstances(e.target.value)}
                                             >
                                                 <option value="">*global action*</option>
-                                                <option value="replay"><FormattedMessage id="replay" defaultMessage="replay"/></option>
-                                                <option value="skip"><FormattedMessage id="skip" defaultMessage="skip"/></option>
-                                                <option value="force-close"><FormattedMessage id="force-close" defaultMessage="force close"/></option>
+                                                <option value="replay">replay</option>
+                                                <option value="skip">skip</option>
+                                                <option value="force-close">force close</option>
                                             </select>
                                         </Panel.Title>
                                     </Panel.Heading>
