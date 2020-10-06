@@ -366,7 +366,7 @@ function BulkStats(props) {
   useEffect(() => {
     if(show) {
       fetchStats(bulkId, setStats);
-      const i = setInterval(() => fetchStats(bulkId, setStats), 1000);
+      const i = setInterval(() => fetchStats(bulkId, setStats), 10000);
       return () => clearInterval(i);
     }
   }, [show]);
@@ -384,7 +384,7 @@ function BulkStats(props) {
         <tr>
           <th>Tasks</th>
           {
-            statuses.map(s => <th key={`status-${s}`}>{s}</th>)
+            statuses.map(s => <th key={`status-${s}`}># of {s}</th>)
           }
         </tr>
       </thead>
