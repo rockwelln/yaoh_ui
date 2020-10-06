@@ -1458,7 +1458,7 @@ export class Transaction extends Component {
                     if(r.instance.status !== "ACTIVE") continue;
                     fetch_put(`/api/v01/transactions/${r.instance.id}`, {status: "CLOSE_IN_ERROR"});
                 } else {
-                    const errorTask = r.tasks.find(t => t.status === "ERROR");
+                    const errorTask = r.instance.tasks.find(t => t.status === "ERROR");
                     if (!errorTask) continue;
                     fetch_put(`/api/v01/transactions/${r.instance.id}/tasks/${errorTask.task_id}?${meta}`);
                 }
