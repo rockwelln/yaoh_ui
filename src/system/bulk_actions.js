@@ -34,7 +34,7 @@ const JSON_SCHEMA_SAMPLE = (
 }`
 );
 
-const JSON_TRANS_OPTIONS_SAMPLE = (
+export const JSON_TRANS_OPTIONS_SAMPLE = (
 `{
     "abc": {"infer_type": true},
     "ghi": {"infer_type": true}

@@ -28,6 +28,7 @@ import {StaticControl} from "../utils/common";
 import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
 import {DeleteConfirmButton} from "../utils/deleteConfirm";
 import {useDropzone} from "react-dropzone";
+import {JSON_TRANS_OPTIONS_SAMPLE} from "../system/bulk_actions";
 
 const CUSTOM_ROUTE_PREFIX = "https://<target>/api/v01/custom";
 const JSON_SCHEMA_SAMPLE = (
@@ -161,7 +162,7 @@ function DedicatedEvents(props) {
 }
 
 const isObject = value => value && typeof value === 'object' && value.constructor === Object;
-const newRoute = {method: "get", sync: false, enabled:true, route: "", schema: null};
+const newRoute = {method: "get", sync: false, enabled:true, route: "", schema: null, support_bulk: false, bulk_options: null};
 
 
 function updateCustomRoute(routeId, entry, onSuccess) {
@@ -237,7 +238,16 @@ function NewCustomRoute(props) {
             validSchema = "error";
         }
     }
-    const validNewRouteForm = validRoute === "success" && validSchema !== "error";
+    let validOptions = null;
+    if(route.bulk_options) {
+        try {
+            JSON.parse(route.bulk_options);
+            validOptions = "success";
+        } catch {
+            validOptions = "error";
+        }
+    }
+    const validNewRouteForm = validRoute === "success" && validSchema !== "error" && validOptions !== "error";
 
     return (
         <Modal show={show} onHide={() => onHide(false)} backdrop={false}>
@@ -344,6 +354,56 @@ function NewCustomRoute(props) {
                      </FormGroup>
 
                     <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="support-bulk" defaultMessage="Support bulk" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <Checkbox
+                               checked={route.support_bulk}
+                               onChange={e => setRoute(update(route, {$merge: {support_bulk: e.target.checked}}))}/>
+
+                            <HelpBlock>
+                               <FormattedMessage id="custom-route-support-bulk" defaultMessage="When set, the API will serve additionally a route with '/bulk' append to the custom URL. This endpoint support form-data body with a 'label' and a file content 'input_file' with a CSV structure (1 line per requests to be created)"/>
+                            </HelpBlock>
+                        </Col>
+                   </FormGroup>
+
+                    <FormGroup validationState={validOptions}>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="bulk-options" defaultMessage="Bulk options (optional)" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <Button
+                                bsSize="small"
+                                style={{
+                                    position: "absolute",
+                                    right: "20px",
+                                    top: "5px",
+                                }}
+                                onClick={() => setRoute(update(route, {$merge: {bulk_options: JSON_TRANS_OPTIONS_SAMPLE}}))}>
+                                <FormattedMessage id="sample" defaultMessage="Sample"/>
+                            </Button>
+                            <FormControl
+                                componentClass="textarea"
+                                value={route.bulk_options || ""}
+                                rows={5}
+                                placeholder={"ex: " + JSON_TRANS_OPTIONS_SAMPLE}
+                                onChange={e =>
+                                    setRoute(update(route, {$merge: {bulk_options: e.target.value}}))
+                                } />
+                            <HelpBlock>
+                                <FormattedMessage
+                                    id="bulk-action-options"
+                                    defaultMessage="This is used to configure the transformation of the CSV record into JSON. (See {ref_link} for more information)"
+                                    values={{ref_link: <a href="https://github.com/rockwelln/csv2json" target="_blank" rel="noopener noreferrer">csv2json</a>}}
+                                />
+                            </HelpBlock>
+                        </Col>
+                    </FormGroup>
+
+                    <FormGroup>
                         <Col smOffset={2} sm={10}>
                             <ButtonToolbar>
                                 <Button onClick={() => createCustomRoute(route, () => onHide(true))} bsStyle="primary" disabled={!validNewRouteForm}>
@@ -380,7 +440,16 @@ function UpdateCustomRouteModal(props) {
             validUpdateSchema = "error";
         }
     }
-    const validUpdateRouteForm = validUpdateSchema !== "error";
+    let validOptions = null;
+    if(diffEntry.bulk_options) {
+        try {
+            JSON.parse(diffEntry.bulk_options);
+            validOptions = "success";
+        } catch {
+            validOptions = "error";
+        }
+    }
+    const validUpdateRouteForm = validUpdateSchema !== "error" && validOptions !== "error";
 
     return (
         <Modal show={show} onHide={() => onHide(false)} backdrop={false}>
@@ -443,21 +512,71 @@ function UpdateCustomRouteModal(props) {
                          </Col>
                      </FormGroup>
 
-                     <FormGroup>
-                         <Col componentClass={ControlLabel} sm={2}>
-                             <FormattedMessage id="sync" defaultMessage="Sync" />
-                         </Col>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="sync" defaultMessage="Sync" />
+                        </Col>
 
-                         <Col sm={9}>
-                             <Checkbox
-                                 checked={localEntry.sync}
-                                 onChange={e => setDiffEntry(update(diffEntry, {$merge: {sync: e.target.checked}}))}/>
+                        <Col sm={9}>
+                            <Checkbox
+                                checked={localEntry.sync}
+                                onChange={e => setDiffEntry(update(diffEntry, {$merge: {sync: e.target.checked}}))}/>
 
-                             <HelpBlock>
-                                 <FormattedMessage id="custom-route-sync" defaultMessage="When set, the call to this API is synchronous and the response is returned directly. Otherwise, only an instance id is returned and the associated job is spawned asynchronously."/>
-                             </HelpBlock>
-                         </Col>
-                     </FormGroup>
+                            <HelpBlock>
+                                <FormattedMessage id="custom-route-sync" defaultMessage="When set, the call to this API is synchronous and the response is returned directly. Otherwise, only an instance id is returned and the associated job is spawned asynchronously."/>
+                            </HelpBlock>
+                        </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="support-bulk" defaultMessage="Support bulk" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <Checkbox
+                               checked={localEntry.support_bulk}
+                               onChange={e => setDiffEntry(update(diffEntry, {$merge: {support_bulk: e.target.checked}}))}/>
+
+                            <HelpBlock>
+                               <FormattedMessage id="custom-route-support-bulk" defaultMessage="When set, the API will serve additionally a route with '/bulk' append to the custom URL. This endpoint support form-data body with a 'label' and a file content 'input_file' with a CSV structure (1 line per requests to be created)"/>
+                            </HelpBlock>
+                        </Col>
+                   </FormGroup>
+
+                    <FormGroup validationState={validOptions}>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="bulk-options" defaultMessage="Bulk options (optional)" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <Button
+                                bsSize="small"
+                                style={{
+                                    position: "absolute",
+                                    right: "20px",
+                                    top: "5px",
+                                }}
+                                onClick={() => setDiffEntry(update(diffEntry, {$merge: {bulk_options: JSON_TRANS_OPTIONS_SAMPLE}}))}>
+                                <FormattedMessage id="sample" defaultMessage="Sample"/>
+                            </Button>
+                            <FormControl
+                                componentClass="textarea"
+                                value={localEntry.bulk_options || ""}
+                                rows={5}
+                                placeholder={"ex: " + JSON_TRANS_OPTIONS_SAMPLE}
+                                onChange={e =>
+                                    setDiffEntry(update(diffEntry, {$merge: {bulk_options: e.target.value}}))
+                                } />
+                            <HelpBlock>
+                                <FormattedMessage
+                                    id="bulk-action-options"
+                                    defaultMessage="This is used to configure the transformation of the CSV record into JSON. (See {ref_link} for more information)"
+                                    values={{ref_link: <a href="https://github.com/rockwelln/csv2json" target="_blank" rel="noopener noreferrer">csv2json</a>}}
+                                />
+                            </HelpBlock>
+                        </Col>
+                    </FormGroup>
 
                     <FormGroup>
                         <Col smOffset={2} sm={10}>
