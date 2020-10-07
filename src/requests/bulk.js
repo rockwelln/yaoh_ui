@@ -459,7 +459,6 @@ class BulkEntry extends Component {
         const {expanded, results, loading, truncated} = this.state;
         const {bulk, onDelete, userInfo} = this.props;
         const expIco = expanded?<Glyphicon glyph="chevron-down"/>:<Glyphicon glyph="chevron-right"/>;
-        const resultsLink = `/api/v01/bulks/${bulk.bulk_id}/results?as=log&auth_token=${AuthServiceManager.getToken()}`;
 
         let rows = [
             <tr key={`bulk_head_${bulk.bulk_id}`} >
@@ -516,7 +515,14 @@ class BulkEntry extends Component {
                         { truncated &&
                         <p>
                           The result list is limited to 250 results. Click here to have the full results:
-                          <Button bsStyle="link" href={resultsLink}>here</Button>
+                          <Button
+                            bsStyle="link"
+                            onClick={() => {
+                              AuthServiceManager.getValidToken().then(token => {
+                                  window.location=`${API_URL_PREFIX}/api/v01/bulks/${bulk.bulk_id}/results?as=log&auth_token=${token}`
+                                })
+                            }}
+                          >here</Button>
                         </p>
                         }
                         {

@@ -18,7 +18,7 @@ import { FormattedMessage } from 'react-intl';
 import queryString from 'query-string';
 
 import {
-  API_URL_PREFIX, fetch_get, userLocalizeUtcDate
+  API_URL_PREFIX, AuthServiceManager, fetch_get, userLocalizeUtcDate
 } from "../utils";
 import { fetchOperators } from "./data/operator_mgm";
 import { ApioDatatable } from "../utils/datatable";
@@ -287,7 +287,7 @@ export class NPRequests extends Component {
     // get the export URL
     const url = this._prepare_url(paging_info, sorting_spec);
     let export_url = this._prepare_url(undefined, sorting_spec, 'csv');
-    export_url.searchParams.append('auth_token', this.props.auth_token);
+    // export_url.searchParams.append('auth_token', this.props.auth_token);
 
     //reset collection
     this.setState({ requests: undefined });
@@ -807,7 +807,11 @@ export class NPRequests extends Component {
           <Panel.Body>
             <Button
               bsStyle="primary"
-              href={export_url}
+              onClick={() => {
+                export_url && AuthServiceManager.getValidToken().then(token => {
+                  window.location=`${export_url}&auth_token=${token}`
+                })
+              }}
               disabled={export_url === undefined}
             >
               <FormattedMessage id="export-as-csv" defaultMessage="Export as CSV" />

@@ -108,15 +108,17 @@ class TenantPage extends Component {
                 <Button
                   className="btn-primary"
                   onClick={() =>
-                    window.open(
-                      `${
-                        this.props.selfcareUrl.selfcare.url
-                      }/sso?token=${AuthServiceManager.getToken()}&tenant=${
-                        this.props.match.params.tenantId
-                      }&group=${this.props.match.params.groupId}&user=${
-                        this.props.match.params.userName
-                      }`
-                    )
+                    AuthServiceManager.getValidToken().then(token => {
+                      window.open(
+                        `${
+                          this.props.selfcareUrl.selfcare.url
+                        }/sso?token=${token}&tenant=${
+                          this.props.match.params.tenantId
+                        }&group=${this.props.match.params.groupId}&user=${
+                          this.props.match.params.userName
+                        }`
+                      )
+                    })
                   }
                 >
                   Switch to selfcare portal

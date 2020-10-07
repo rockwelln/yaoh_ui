@@ -403,7 +403,13 @@ function UpdateProfile(props) {
                                 loadErrors.map((e, i) => <Alert key={i} bsStyle="danger">{e.message} {e.row && `on row ${e.row}`}</Alert>)
                             }
                             <ButtonToolbar>
-                                <Button href={`${API_URL_PREFIX}/api/v01/system/user_profiles/${profile.id}?as=csv&auth_token=${AuthServiceManager.getToken()}`}><Glyphicon glyph="save"/></Button>
+                                <Button
+                                  onClick={() => {
+                                    AuthServiceManager.getValidToken().then(token => {
+                                        window.location=`${API_URL_PREFIX}/api/v01/system/user_profiles/${profile.id}?as=csv&auth_token=${token}`
+                                      })
+                                  }}
+                                ><Glyphicon glyph="save"/></Button>
                                 <Button onClick={() => setShowUploadRulesDialog(true)}>
                                     <Glyphicon glyph="open"/>
                                 </Button>

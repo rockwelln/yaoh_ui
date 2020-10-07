@@ -826,7 +826,11 @@ function CustomRoutes(props) {
                                                 onConfirm={() => deleteCustomRoute(route.route_id, () => fetchCustomRoutes(setCustomRoutes))} />
                                             <Button
                                                 bsStyle="primary"
-                                                href={`${API_URL_PREFIX}/api/v01/custom_routes/${route.route_id}/export?auth_token=${AuthServiceManager.getToken()}`}
+                                                onClick={() => {
+                                                  AuthServiceManager.getValidToken().then(token => {
+                                                      window.location=`${API_URL_PREFIX}/api/v01/custom_routes/${route.route_id}/export?auth_token=${token}`
+                                                    })
+                                                }}
                                                 style={{marginLeft: '5px', marginRight: '5px'}} >
                                                 <Glyphicon glyph="save"/>
                                             </Button>

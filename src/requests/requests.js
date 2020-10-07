@@ -39,7 +39,7 @@ import {
   fetch_put,
   API_WS_URL,
   NotificationsManager,
-  userLocalizeUtcDate
+  userLocalizeUtcDate, AuthServiceManager
 } from "../utils";
 import {ApioDatatable, Pagination} from "../utils/datatable";
 
@@ -1806,11 +1806,14 @@ export class Transaction extends Component {
                                     {
                                         request &&
                                             <Button
-                                                href={
-                                                    request.details ?
-                                                        `/api/v01/apio/requests/${tx.original_request_id}?as=csv&auth_token=${auth_token}` :
-                                                        `/api/v01/transactions/${this.props.match.params.txId}/events/${original_event_id}?as=csv&auth_token=${auth_token}`
-                                                }
+                                                onClick={() => {
+                                                    const target = request.details ?
+                                                        `/api/v01/apio/requests/${tx.original_request_id}?as=csv` :
+                                                        `/api/v01/transactions/${this.props.match.params.txId}/events/${original_event_id}?as=csv`
+                                                    AuthServiceManager.getValidToken().then(token => {
+                                                        window.location=`${target}&auth_token=${token}`
+                                                    })
+                                                }}
                                             >
                                                 <FormattedMessage id="request-as-csv" defaultMessage="Request as CSV"/>
                                             </Button>
@@ -2115,7 +2118,11 @@ export class Request extends Component {
                                             { request.request_id }
                                             <Button
                                                 bsStyle="link"
-                                                href={`/api/v01/apio/requests/${request.request_id}?as=csv&auth_token=${auth_token}`}
+                                                onClick={() => {
+                                                  AuthServiceManager.getValidToken().then(token => {
+                                                    window.location=`${API_URL_PREFIX}/api/v01/apio/requests/${request.request_id}?as=csv&auth_token=${token}`
+                                                  })
+                                                }}
                                             >
                                                 csv
                                             </Button>
@@ -2432,7 +2439,7 @@ export class Requests extends Component{
         // get the export URL
         const url = this._prepare_url(paging_info, sorting_spec);
         let export_url = this._prepare_url(undefined, sorting_spec, 'csv');
-        export_url.searchParams.append('auth_token', this.props.auth_token);
+        // export_url.searchParams.append('auth_token', this.props.auth_token);
         // get the force close URL
         const close_instances_url = this._prepare_url(undefined, undefined, undefined, "close");
 
@@ -3169,7 +3176,11 @@ export class Requests extends Component{
                         <ButtonToolbar>
                             <Button
                                 bsStyle="primary"
-                                href={export_url}
+                                onClick={() => {
+                                  export_url && AuthServiceManager.getValidToken().then(token => {
+                                    window.location=`${export_url}&auth_token=${token}`
+                                  })
+                                }}
                                 disabled={export_url === undefined}
                             >
                                 <FormattedMessage id="export-as-csv" defaultMessage="Export as CSV"/>
@@ -3380,7 +3391,7 @@ export class CustomRequests extends Component{
         // get the export URL
         const url = this._prepare_url(paging_info, sorting_spec);
         let export_url = this._prepare_url(undefined, sorting_spec, 'csv');
-        export_url.searchParams.append('auth_token', this.props.auth_token);
+        // export_url.searchParams.append('auth_token', this.props.auth_token);
 
         //reset collection
         this.setState({requests: undefined});
@@ -3745,7 +3756,11 @@ export class CustomRequests extends Component{
                     <Panel.Body>
                         <Button
                             bsStyle="primary"
-                            href={export_url}
+                            onClick={() => {
+                              export_url && AuthServiceManager.getValidToken().then(token => {
+                                window.location=`${export_url}&auth_token=${token}`
+                              })
+                            }}
                             disabled={export_url === undefined}
                         >
                             <FormattedMessage id="export-as-csv" defaultMessage="Export as CSV"/>

@@ -36,7 +36,11 @@ const Relatives = ({log}) => (
                         <td>
                             <Button
                                 bsStyle="primary"
-                                href={`${API_URL_PREFIX}/api/v01/logs/${log.log_id}/${r.filename}?auth_token=${AuthServiceManager.getToken()}`}
+                                onClick={() => {
+                                  AuthServiceManager.getValidToken().then(token => {
+                                      window.location=`${API_URL_PREFIX}/api/v01/logs/${log.log_id}/${r.filename}?auth_token=${token}`
+                                    })
+                                }}
                             >
                                 <Glyphicon glyph="download"/>
                             </Button>
