@@ -286,6 +286,15 @@ const BulkResult = ({result, colOffset}) => {
                 statusGlyph = 'ok';
 
             }
+            if (result.response && result.response.status) {
+                if(result.response.status < 400) {
+                    statusColor = '#a4d1a2';
+                    statusGlyph = 'ok';
+                } else if (result.response.status >= 400) {
+                    statusColor = '#ca6f7b';
+                    statusGlyph = 'remove';
+                }
+            }
             break;
         default:
             statusColor = '#a4d1a2';
@@ -314,7 +323,12 @@ const BulkResult = ({result, colOffset}) => {
                 }<br/>
                 {result.trace && <pre style={{wordWrap: 'break-word', whiteSpace: 'pre-wrap'}}>{trace}</pre>}
             </td>
-            <td style={{width: '15%'}} />
+            <td style={{width: '15%'}} >
+              {
+                result.response && result.response.message &&
+                  <p style={{wordWrap: 'break-word', whiteSpace: 'pre-wrap', color: statusColor}}>{result.response.message}</p>
+              }
+            </td>
             <td style={{width: '15%'}} >
             {
                 result.instance && result.instance.errors !== 0 &&
