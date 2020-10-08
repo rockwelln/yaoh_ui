@@ -130,3 +130,9 @@ ul.tree > li:last-child {
   outline: none;
   transition: border .24s ease-in-out;
 }
+
+.textarea-no-wrap {
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: scroll;
+}

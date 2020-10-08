@@ -189,13 +189,21 @@ class NewBulk extends Component {
                                     onChange={e => this.setState({bulk: update(bulk, {$merge: {action: e.target.value ? parseInt(e.target.value) : null}})})}>
                                     <option value="" />
                                     {
-                                        actions.sort((a, b) => {
-                                            if(a.name > b.name) return 1;
-                                            if(a.name < b.name) return -1;
-                                            return 0;
-                                        }).map(a => <option value={a.id} key={a.id}>{a.name}</option>)
+                                        actions
+                                          .sort((a, b) => a.name.localeCompare(b.name))
+                                          .map(a => <option value={a.id} key={a.id}>{a.name}</option>)
                                     }
                                 </FormControl>
+
+                                { action_obj && action_obj.sample_input && (
+                                    <HelpBlock style={{color: 'grey'}}>
+                                        <FormattedMessage
+                                            id="new-bulk-sample-input"
+                                            defaultMessage="Sample input:"/>
+                                        {' '}
+                                        <a download={`${action_obj.name}_sample.csv`} href={`data:text/plain,${encodeURIComponent(action_obj.sample_input)}`}>download</a>
+                                    </HelpBlock>
+                                )}
 
                                 { action_obj && action_obj.validation_schema && (
                                     <HelpBlock style={{color: 'grey'}}>

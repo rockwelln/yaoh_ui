@@ -113,6 +113,7 @@ class NewAction extends React.Component {
             type: "",
             options: null,
             validation_schema: null,
+            sample_input: null,
         }
     }
 
@@ -226,7 +227,7 @@ class NewAction extends React.Component {
                 <Button bsStyle="primary" onClick={() => this.setState({show: true})}>
                     <FormattedMessage id="action-new" defaultMessage="New action"/>
                 </Button>
-                <Modal show={show} onHide={onClose} backdrop={false}>
+                <Modal show={show} onHide={onClose} backdrop={false} bsSize={"large"}>
                     <Modal.Header closeButton>
                         <Modal.Title><FormattedMessage id="new-action" defaultMessage="Create a new action" /></Modal.Title>
                     </Modal.Header>
@@ -331,6 +332,27 @@ class NewAction extends React.Component {
                                             </Button>
                                         </Col>
                                 }
+                            </FormGroup>
+
+                            <FormGroup>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="input-sample" defaultMessage="Input sample" />
+                                </Col>
+
+                                <Col sm={9}>
+                                    <FormControl
+                                        componentClass="textarea"
+                                        className={"textarea-no-wrap"}
+                                        value={action.sample_input || ""}
+                                        rows={5}
+                                        placeholder={"ex: a; b; c\n1; 2; 3\n"}
+                                        onChange={e =>
+                                            this.setState({action: update(action, {$merge: {sample_input: e.target.value}})})
+                                        } />
+                                    <HelpBlock>
+                                        <FormattedMessage id="bulk-input-sample" defaultMessage="Sample input available for future users of this bulk action."/>
+                                    </HelpBlock>
+                                </Col>
                             </FormGroup>
 
                             <FormGroup>
@@ -698,6 +720,27 @@ class Action extends React.Component {
                                         </Button>
                                     </Col>
                             }
+                        </FormGroup>
+
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="input-sample" defaultMessage="Input sample" />
+                            </Col>
+
+                            <Col sm={9}>
+                                <FormControl
+                                    componentClass="textarea"
+                                    className={"textarea-no-wrap"}
+                                    value={localAction.sample_input || ""}
+                                    rows={5}
+                                    placeholder={"ex: a; b; c\n1; 2; 3\n"}
+                                    onChange={e =>
+                                        this.setState({diffAction: update(diffAction, {$merge: {sample_input: e.target.value}})})
+                                    } />
+                                <HelpBlock>
+                                    <FormattedMessage id="bulk-input-sample" defaultMessage="Sample input available for future users of this bulk action."/>
+                                </HelpBlock>
+                            </Col>
                         </FormGroup>
 
                         { action.activity_id &&
