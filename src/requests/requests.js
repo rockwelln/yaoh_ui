@@ -53,6 +53,7 @@ import {TimerActions} from "./timers";
 import {fetchRoles} from "../system/user_roles";
 import {LinkContainer} from "react-router-bootstrap";
 import {EditCellModal} from "../orchestration/activity-editor";
+import {SavedFiltersFormGroup} from "../utils/searchFilters";
 
 export const DATE_FORMAT = 'DD/MM/YYYY HH:mm:ss';
 const SUB_REQUESTS_PAGE_SIZE = 25;
@@ -2595,6 +2596,21 @@ export class Requests extends Component{
                     <Panel.Body collapsible>
                         <Form horizontal>
 
+                            <SavedFiltersFormGroup
+                                onChange={filter => {
+                                    let newState = {selectedFilter: filter};
+                                    if(filter && filter.value.filter) {
+                                      newState["filter_criteria"] = update(
+                                          Requests.default_criteria(),
+                                          {$merge: filter.value.filter}
+                                      )
+                                    }
+                                    this.setState(newState);
+                                }}
+                                currentFilter={() => filter_criteria}
+                                entity={"request"}
+                                />
+
                             <FormGroup>
                                 <Col componentClass={ControlLabel} sm={2}>
                                     <FormattedMessage id="bulk-label" defaultMessage="Bulk label" />
@@ -2894,7 +2910,7 @@ export class Requests extends Component{
                                             })} >
                                             <option value="" />
                                             {
-                                                proxy_hosts.map(h => <option value={h.url}>{h.name}</option>)
+                                                proxy_hosts.map((h, i) => <option key={`phost-${i}-${h.url}`} value={h.url}>{h.name}</option>)
                                             }
                                         </FormControl>
                                     </Col>
