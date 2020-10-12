@@ -1442,17 +1442,23 @@ export class Transaction extends Component {
             .catch(error => console.error(error));
     }
 
-    onGlobalActionSubInstances(action) {
+    onGlobalActionSubInstances(action, subRequests) {
         const {subrequestsFilter, tx} = this.state;
         const meta = action === "skip" ? "meta=" + JSON.stringify({replay_behaviour: "skip"}) : null;
-        const url = new URL(API_URL_PREFIX + `/api/v01/apio/transactions/${tx.id}/sub_requests`);
-        // filtering (but no paging -> get all sub-instances)
-        url.searchParams.append('filter', subrequestsFilter);
+        let p = null;
+        if(subRequests) {
+          p = Promise.resolve({requests: subRequests});
+        } else {
+          const url = new URL(API_URL_PREFIX + `/api/v01/apio/transactions/${tx.id}/sub_requests`);
+          // filtering (but no paging -> get all sub-instances)
+          url.searchParams.append('filter', subrequestsFilter);
+          p = fetch_get(url);
+        }
         this.setState({replaying: true});
-        fetch_get(url).then(async data => {
+        p.then(async data => {
             if(this.cancelLoad) return;
 
-            for(var i=0;i < data.requests.length;i++) {
+            for(let i=0;i < data.requests.length;i++) {
                 const r = data.requests[i];
                 if(action === "force-close") {
                     if(r.instance.status !== "ACTIVE") continue;
@@ -1748,8 +1754,8 @@ export class Transaction extends Component {
                                             </select>
                                             <select
                                                 className="pull-right"
-                                                defaultValue=""
-                                                onChange={e => this.onGlobalActionSubInstances(e.target.value)}
+                                                value=""
+                                                onChange={e => this.onGlobalActionSubInstances(e.target.value, subrequests)}
                                             >
                                                 <option value="">*global action*</option>
                                                 <option value="replay">replay</option>
