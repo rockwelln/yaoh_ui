@@ -10,6 +10,12 @@ import {Link} from "react-router-dom";
 import queryString from "query-string";
 import {needActionCriteria} from "../requests/requests";
 import {Tile, TileHeader} from "./dashboard-tiles";
+import FormGroup from "react-bootstrap/lib/FormGroup";
+import Col from "react-bootstrap/lib/Col";
+import ControlLabel from "react-bootstrap/lib/ControlLabel";
+import Form from "react-bootstrap/lib/Form";
+import update from "immutability-helper";
+import FormControl from "react-bootstrap/lib/FormControl";
 
 
 function fetchManualActions(onSuccess) {
@@ -60,6 +66,61 @@ function ManualActionsModal(props) {
                     }
                     </tbody>
                 </Table>
+            </Modal.Body>
+        </Modal>
+    )
+}
+
+
+export function ManualActionInputForm(props) {
+    const {onTrigger, show, action, output, onHide} = props;
+    const [values, setValues] = useState({});
+
+    let input_form;
+    try{
+      input_form = JSON.parse(action.input_form)
+    } catch(e) {}
+
+    return (
+        <Modal show={show} onHide={onHide} dialogClassName='large-modal'>
+            <Modal.Header closeButton>
+                <Modal.Title>
+                    {`Pending manual action: ${action.description}`}
+                </Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <p>Some inputs are possible/required for this action.</p>
+                <Form horizontal>
+                    {
+                        input_form && input_form.properties && Object.entries(input_form.properties).map(([key, v]) => {
+                            return (
+                                <FormGroup>
+                                    <Col componentClass={ControlLabel} sm={2}>
+                                        {key}{ v.required && v.required.includes(key) && " *" }
+                                    </Col>
+
+                                    <Col sm={9}>
+                                        {
+                                            <FormControl
+                                                componentClass="input"
+                                                value={values[key]}
+                                                onChange={e => setValues(
+                                                    update(values,{$merge: {[key] : e.target.value}})
+                                                )} />
+                                        }
+                                    </Col>
+                                </FormGroup>
+                            )
+                        })
+                    }
+                    <FormGroup>
+                        <Col smOffset={2} sm={9}>
+                            <Button onClick={() => onTrigger(action, output, values)}>
+                              {output}
+                            </Button>
+                        </Col>
+                    </FormGroup>
+                </Form>
             </Modal.Body>
         </Modal>
     )

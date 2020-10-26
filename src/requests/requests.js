@@ -54,6 +54,7 @@ import {fetchRoles} from "../system/user_roles";
 import {LinkContainer} from "react-router-bootstrap";
 import {EditCellModal} from "../orchestration/activity-editor";
 import {SavedFiltersFormGroup} from "../utils/searchFilters";
+import ManualActionsBox, {ManualActionInputForm} from "../dashboard/manualActions";
 
 export const DATE_FORMAT = 'DD/MM/YYYY HH:mm:ss';
 const SUB_REQUESTS_PAGE_SIZE = 25;
@@ -607,8 +608,8 @@ function ExternalCallback(props) {
     )
 }
 
-export function triggerManualAction(transactionId, actionId, output, onSuccess) {
-    fetch_post(`/api/v01/transactions/${transactionId}/manual_actions/${actionId}`, {"output": output})
+export function triggerManualAction(transactionId, actionId, output, formValues, onSuccess) {
+    fetch_post(`/api/v01/transactions/${transactionId}/manual_actions/${actionId}`, {"output": output, "form": formValues})
         .then(() => onSuccess())
         .catch(error => NotificationsManager.error("Failed to trigger the action", error.message))
 }
@@ -1678,6 +1679,7 @@ export class Transaction extends Component {
             manualActions,
             timers,
             subrequestsFilter,
+            showActionForm,
         } = this.state;
         const {user_info, auth_token} = this.props;
 
@@ -1703,12 +1705,29 @@ export class Transaction extends Component {
                             {
                             a.possible_outputs.split(",").map(o => (
                                 <Button
-                                    onClick={() => triggerManualAction(tx.id, a.id, o, () => this.fetchTxDetails(false))}>
+                                    onClick={
+                                        () => {
+                                            !a.input_form ?
+                                              triggerManualAction(tx.id, a.id, o, undefined, () => this.fetchTxDetails(false)) :
+                                              this.setState({showActionForm: [a, o]})
+                                        }}>
                                     {o}
                                 </Button>
                             ))
                             }
                         </ButtonToolbar>
+                        <ManualActionInputForm
+                            show={showActionForm !== undefined}
+                            action={showActionForm ? showActionForm[0]: {}}
+                            output={showActionForm && showActionForm[1]}
+                            onHide={() => this.setState({showActionForm: undefined})}
+                            onTrigger={(a, output, values) => {
+                                triggerManualAction(tx.id, a.id, output, values, () => {
+                                    this.setState({showActionForm: undefined});
+                                    this.fetchTxDetails(false);
+                                })
+                            }}
+                            />
                     </Alert>
                 ))
         }
