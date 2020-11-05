@@ -1027,7 +1027,7 @@ class RejectionReason extends Component {
   }
 
   onSave() {
-    this.props.onSubmit('donor_approval', 'API.reject', { reason: this.state.rej });
+    this.props.onSubmit(JSON.stringify({ reason: this.state.rej }), 'API.reject');
     this.onClose();
   }
 
