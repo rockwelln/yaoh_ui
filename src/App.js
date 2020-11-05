@@ -490,6 +490,7 @@ class App extends Component {
         };
         this._notificationSystem = React.createRef();
         NotificationsManager.setRef(this._notificationSystem);
+        AuthServiceManager.loadJwtTokensFromLocation()
 
         this.getUserInfo = this.getUserInfo.bind(this);
         this.updateToken = this.updateToken.bind(this);
@@ -528,6 +529,8 @@ class App extends Component {
                 if (data.modules) {
                     UiFlavourService.updateFlavourFromModules(data.modules);
                     document.title = UiFlavourService.getWindowTitle();
+                    this.setState({supportSaml: data.modules.includes("saml")});
+                    this.setState({supportOidc: data.modules.includes("oidc")});
                 }
             })
             .catch(console.error);
@@ -539,7 +542,7 @@ class App extends Component {
         }
     }
 
-    componentDidMount() {
+  componentDidMount() {
         this.getDatabaseStatus();
         getCookie('auth_sso') === '1' && !sso_auth_service.isLoggedIn() && sso_auth_service.signinSilent();
     }
@@ -656,10 +659,13 @@ class App extends Component {
                                     error_msg={error_msg}
                                     logo={UiFlavourService.isApio() ? apio_logo : null}
                                     standby_alert={standby_alert} >
-                                    <LoginForm onLogin={r => {
-                                        if(r.access_token) {
-                                            this.updateTokens(r.access_token, r.refresh_token);
-                                        }
+                                    <LoginForm
+                                        supportSaml={this.state.supportSaml}
+                                        supportOidc={this.state.supportOidc}
+                                        onLogin={r => {
+                                            if(r.access_token) {
+                                                this.updateTokens(r.access_token, r.refresh_token);
+                                            }
                                     }}/>
                                 </LoginPage>
                             )} />

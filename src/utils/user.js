@@ -63,6 +63,7 @@ export const modules = Object.freeze({
     orchestration: 'orchestration',
     telenet: 'telenet',
     manualActions: 'manualActions',
+    saml: 'saml',
     npact: 'npact',
     npact_crdb: 'npact_crdb',
     npact_citc: 'npact_citc',

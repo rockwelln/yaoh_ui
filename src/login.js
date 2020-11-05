@@ -9,11 +9,12 @@ import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 import Button from "react-bootstrap/lib/Button";
 import Form from "react-bootstrap/lib/Form";
 import {LinkContainer} from "react-router-bootstrap";
-import {API_URL_PREFIX, parseJSON} from "./utils";
+import {API_URL_PREFIX, checkStatus, fetch_get, parseJSON} from "./utils";
 import Row from "react-bootstrap/lib/Row";
 import Panel from "react-bootstrap/lib/Panel";
 import Modal from "react-bootstrap/lib/Modal";
 import Checkbox from "react-bootstrap/lib/Checkbox";
+import ButtonGroup from "react-bootstrap/lib/ButtonGroup";
 
 
 function signIn(username, password, onSuccess, onError) {
@@ -181,82 +182,99 @@ export function LoginForm(props) {
     const [loading, setLoading] = useState(false);
     const [loginResp, setLoginResp] = useState(null);
 
-    const {onLogin} = props;
+    const {onLogin, supportSaml, supportOidc} = props;
 
     useEffect(() => {setError(undefined);}, [username, password]);
 
     return (
-        <Form horizontal>
-            {
-                error &&
-                    <Alert bsStyle="danger">
-                        {error.message}
-                    </Alert>
+        <>
+          { supportSaml && <Col smOffset={1} sm={10}>
+              <ButtonGroup vertical block>
+                <Button
+                  onClick={() => {
+                    setError(undefined);
+                    // 1. fetch the login request signed (relayState => window.location.href, to return to the same page)
+                    fetch_get(`/api/v01/auth/saml/loginRequest?loc=${window.location.href}`, {method: "get"})
+                      .then(r => { window.location = r.url })
+                      .catch(e => setError(e))
+                  }}
+                  bsStyle="primary">Login with my company account</Button>
+              </ButtonGroup>
+              <hr/>
+            </Col>
             }
-            <FormGroup validationState={error === undefined?null:"error"}>
-                <Col componentClass={ControlLabel} sm={3}>
-                    <FormattedMessage id="username" defaultMessage="Username" />
-                </Col>
+          <Form horizontal>
+              {
+                  error &&
+                      <Alert bsStyle="danger">
+                          {error.message}
+                      </Alert>
+              }
+              <FormGroup validationState={error === undefined?null:"error"}>
+                  <Col componentClass={ControlLabel} sm={3}>
+                      <FormattedMessage id="username" defaultMessage="Username" />
+                  </Col>
 
-                <Col sm={8}>
-                    <FormControl
-                        type="text"
-                        value={username}
-                        onChange={e => setUsername(e.target.value)}
-                    />
-                </Col>
-            </FormGroup>
-            <FormGroup validationState={error === undefined?null:"error"}>
-                <Col componentClass={ControlLabel} sm={3}>
-                    <FormattedMessage id="password" defaultMessage="Password" />
-                </Col>
+                  <Col sm={8}>
+                      <FormControl
+                          type="text"
+                          value={username}
+                          onChange={e => setUsername(e.target.value)}
+                      />
+                  </Col>
+              </FormGroup>
+              <FormGroup validationState={error === undefined?null:"error"}>
+                  <Col componentClass={ControlLabel} sm={3}>
+                      <FormattedMessage id="password" defaultMessage="Password" />
+                  </Col>
 
-                <Col sm={8}>
-                    <FormControl
-                        type="password"
-                        value={password}
-                        onChange={e => setPassword(e.target.value)}
-                    />
-                </Col>
-            </FormGroup>
-            <FormGroup>
-                <Col smOffset={3} sm={10}>
-                    <ButtonToolbar>
-                        <Button type="submit" onClick={e => {
-                            e.preventDefault();
-                            setLoading(true);
-                            setError(undefined);
-                            setLoginResp(null);
-                            signIn(
-                                username,
-                                password,
-                                r => {
-                                    setLoading(false);
-                                    if (r["2fa_payload"] !== undefined) {
-                                        setLoginResp(r);
-                                    } else {
-                                        onLogin(r);
-                                    }
-                                },
-                                e => {setLoading(false); setError(e);}
-                            );
-                        }} disabled={username.length === 0 || password.length === 0 || loading}>
-                            <FormattedMessage id="sign-in" defaultMessage="Sign in" />
-                        </Button>
-                        <LinkContainer to={`/reset-password`}>
-                            <Button bsStyle="link">
-                                <FormattedMessage id="reset-password" defaultMessage="Reset password"/>
-                            </Button>
-                        </LinkContainer>
-                    </ButtonToolbar>
-                </Col>
-            </FormGroup>
-            <TwoFaModal
-                show={loginResp !== null && loginResp["2fa_payload"]}
-                loginResp={loginResp}
-                onSuccess={r => onLogin(r)}
-                onError={error => setError(error)} />
-        </Form>
+                  <Col sm={8}>
+                      <FormControl
+                          type="password"
+                          value={password}
+                          onChange={e => setPassword(e.target.value)}
+                      />
+                  </Col>
+              </FormGroup>
+              <FormGroup>
+                  <Col smOffset={3} sm={10}>
+                      <ButtonToolbar>
+                          <Button type="submit" onClick={e => {
+                              e.preventDefault();
+                              setLoading(true);
+                              setError(undefined);
+                              setLoginResp(null);
+                              signIn(
+                                  username,
+                                  password,
+                                  r => {
+                                      setLoading(false);
+                                      if (r["2fa_payload"] !== undefined) {
+                                          setLoginResp(r);
+                                      } else {
+                                          onLogin(r);
+                                      }
+                                  },
+                                  e => {setLoading(false); setError(e);}
+                              );
+                          }} disabled={username.length === 0 || password.length === 0 || loading}>
+                              <FormattedMessage id="sign-in" defaultMessage="Sign in" />
+                          </Button>
+                          <LinkContainer to={`/reset-password`}>
+                              <Button bsStyle="link">
+                                  <FormattedMessage id="reset-password" defaultMessage="Reset password"/>
+                              </Button>
+                          </LinkContainer>
+                      </ButtonToolbar>
+                  </Col>
+              </FormGroup>
+              <TwoFaModal
+                  show={loginResp !== null && loginResp["2fa_payload"]}
+                  loginResp={loginResp}
+                  onSuccess={r => onLogin(r)}
+                  onError={error => setError(error)} />
+          </Form>
+        </>
     )
 }
 

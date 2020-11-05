@@ -720,6 +720,670 @@ function GuiForm(props) {
 }
 
 
+function mergeDeep(...objects) {
+  const isObject = obj => obj && typeof obj === 'object';
+
+  return objects.reduce((prev, obj) => {
+    Object.keys(obj).forEach(key => {
+      const pVal = prev[key];
+      const oVal = obj[key];
+
+      if (isObject(pVal) && isObject(oVal)) {
+        prev[key] = mergeDeep(pVal, oVal);
+      }
+      else {
+        prev[key] = oVal;
+      }
+    });
+
+    return prev;
+  }, {});
+}
+
+const default_sso = {
+  protocol: "",
+  saml: {
+    strict: true,
+    idp: {
+      'entityId': '',
+      'singleSignOnService': {
+        'url': '',
+        'binding': 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect'
+      },
+      'singleLogoutService': {
+        'url': '',
+        'binding': 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect'
+      },
+      'x509cert': '',
+      'certFingerprint': '',
+      'certFingerprintAlgorithm': 'sha1'
+      },
+    sp: {
+      'assertionConsumerService': {
+          'url': 'http://localhost:5000/api/v01/auth/login_saml',
+          'binding': 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST'
+      },
+      'singleLogoutService': {
+          'url': 'http://localhost:5000/api/v01/auth/saml?sls',
+          'binding': 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST'
+      },
+      'NameIDFormat': 'urn:oasis:names:tc:SAML:2.0:nameid-format:unspecified',
+      'entityId': 'http://localhost:5000',
+      'x509cert': '',
+      'privateKey': ''
+    },
+    security: {
+      'authnRequestsSigned': true,
+      'wantAssertionsSigned': false,
+      'nameIdEncrypted': false,
+      'metadataValidUntil': null,
+      'metadataCacheDuration': null,
+      'logoutRequestSigned': true,
+      'logoutResponseSigned': false,
+      'signMetadata': false,
+      'wantMessagesSigned': false,
+      'wantNameId': true,
+      'wantAssertionsEncrypted': false,
+      'wantNameIdEncrypted': false,
+      'signatureAlgorithm': 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha512',
+      'digestAlgorithm': 'http://www.w3.org/2001/04/xmlenc#sha512',
+      'wantAttributeStatement': true,
+      'requestedAuthnContext': true,
+      'requestedAuthnContextComparison': 'exact',
+      'failOnAuthnContextMismatch': false
+    },
+    default_email_host: "",
+    default_user_profile: "",
+    default_user_ui_profile: "user",
+    default_user_is_system: false,
+    contactPerson: {
+      "support": {
+          "givenName": "support",
+          "emailAddress": "support@netaxis.be"
+      }
+    },
+    organization: {
+      "en-US": {
+        "name": "Netaxis SA",
+        "displayname": "Netaxis (APIO)",
+        "url": "https://www.netaxis.be"
+      }
+    }
+  },
+  oidc: {
+    claim_url: "",
+  }
+}
+
+function SSOPanel(props) {
+  const {sso, onChange} = props;
+  const [idpRemoteMetadataUrl, setIdpRemoteMetadataUrl] = useState("");
+  const [loadError, setLoadError] = useState("");
+
+  const sso_ = mergeDeep(default_sso, sso);
+
+  return (
+    <>
+      <Panel>
+        <Panel.Body>
+          <Form horizontal>
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="protocol" defaultMessage="Protocol"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="select"
+                  value={sso_.protocol}
+                  onChange={e => onChange(update(sso_, {$merge: {protocol: e.target.value}}))}>
+                  <option value=""/>
+                  <option value="oidc">Open IDConnection</option>
+                  <option value="saml">SAML</option>
+                </FormControl>
+              </Col>
+            </FormGroup>
+          </Form>
+        </Panel.Body>
+      </Panel>
+      <Panel>
+        <Panel.Heading>
+          <Panel.Title>OIDC</Panel.Title>
+        </Panel.Heading>
+        <Panel.Body>
+        </Panel.Body>
+      </Panel>
+      <Panel>
+        <Panel.Heading>
+          <Panel.Title>SAML</Panel.Title>
+        </Panel.Heading>
+        <Panel.Body>
+          <Form horizontal>
+            <h4>IDP</h4>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="entity-id" defaultMessage="Entity ID"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="input"
+                  value={sso_.saml.idp.entityId}
+                  onChange={e => onChange(update(sso_, {saml: {idp: {$merge: {entityId: e.target.value}}}}))}/>
+                <HelpBlock>
+                  Must be a URI
+                </HelpBlock>
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="sso-url" defaultMessage="SSO Url"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="input"
+                  value={sso_.saml.idp.singleSignOnService.url}
+                  onChange={e => onChange(update(sso_, {saml: {idp: {singleSignOnService: {$merge: {url: e.target.value}}}}}))}/>
+                <HelpBlock>
+                  Must be a URI
+                </HelpBlock>
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="sso-binding" defaultMessage="SSO Binding"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="select"
+                  value={sso_.saml.idp.singleSignOnService.binding}
+                  onChange={e => onChange(update(sso_, {saml: {idp: {singleSignOnService: {$merge: {binding: e.target.value}}}}}))}>
+                  <option value="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect">HTTP redirect</option>
+                  <option value="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST">POST</option>
+                </FormControl>
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="sls-url" defaultMessage="SLS Url"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="input"
+                  value={sso_.saml.idp.singleLogoutService.url}
+                  onChange={e => onChange(update(sso_, {saml: {idp: {singleLogoutService: {$merge: {url: e.target.value}}}}}))}/>
+                <HelpBlock>
+                  Must be a URI
+                </HelpBlock>
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="SLS-binding" defaultMessage="SLS Binding"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="select"
+                  value={sso_.saml.idp.singleLogoutService.binding}
+                  onChange={e => onChange(update(sso_, {saml: {idp: {singleLogoutService: {$merge: {binding: e.target.value}}}}}))}>
+                  <option value="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect">HTTP redirect</option>
+                  <option value="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST">POST</option>
+                </FormControl>
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="x509-certificate" defaultMessage="x509 certificate"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="textarea"
+                  value={sso_.saml.idp.x509cert}
+                  onChange={e => onChange(update(sso_, {saml: {idp: {$merge: {x509cert: e.target.value}}}}))} />
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="import-metadata" defaultMessage="Load remote metadata"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="input"
+                  value={idpRemoteMetadataUrl}
+                  onChange={e => setIdpRemoteMetadataUrl(e.target.value)} />
+                <Button bsStyle="primary" onClick={() => {
+                  setLoadError("");
+                  fetch_get(`/api/v01/auth/saml/metadata_2_json?url=${idpRemoteMetadataUrl}`)
+                    .then(r => onChange(update(sso_, {saml: {$set: mergeDeep(sso_.saml, r)}})))
+                    .catch(e => setLoadError(e.message))
+                }}>
+                  Fetch
+                </Button>
+                {loadError && <p style={{color: "red"}}>{loadError}</p>}
+              </Col>
+            </FormGroup>
+
+            <h4>SP</h4>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="entity-id" defaultMessage="Entity ID"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="input"
+                  value={sso_.saml.sp.entityId}
+                  onChange={e => onChange(update(sso_, {saml: {sp: {$merge: {entityId: e.target.value}}}}))}/>
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="NameIDFormat" defaultMessage="NameID Format"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="input"
+                  disabled
+                  value={sso_.saml.sp.NameIDFormat}
+                  onChange={e => onChange(update(sso_, {saml: {sp: {$merge: {NameIDFormat: e.target.value}}}}))}/>
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="acs-url" defaultMessage="Assertion Consumer Service Url"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="input"
+                  value={sso_.saml.sp.assertionConsumerService.url}
+                  onChange={e => onChange(update(sso_, {saml: {sp: {assertionConsumerService: {$merge: {url: e.target.value}}}}}))}/>
+                <HelpBlock>
+                  Only the base URI should be changed
+                </HelpBlock>
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="acs-binding" defaultMessage="Assertion Consumer Service Binding"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="select"
+                  disabled
+                  value={sso_.saml.sp.assertionConsumerService.binding}
+                  onChange={e => onChange(update(sso_, {saml: {sp: {assertionConsumerService: {$merge: {binding: e.target.value}}}}}))}>
+                  <option value="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect">HTTP redirect</option>
+                  <option value="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST">POST</option>
+                </FormControl>
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="sls-url" defaultMessage="SLS Url"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="input"
+                  value={sso_.saml.sp.singleLogoutService.url}
+                  onChange={e => onChange(update(sso_, {saml: {sp: {singleLogoutService: {$merge: {url: e.target.value}}}}}))}/>
+                <HelpBlock>
+                  Must be a URI
+                </HelpBlock>
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="SLS-binding" defaultMessage="SLS Binding"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="select"
+                  disabled
+                  value={sso_.saml.sp.singleLogoutService.binding}
+                  onChange={e => onChange(update(sso_, {saml: {sp: {singleLogoutService: {$merge: {binding: e.target.value}}}}}))}>
+                  <option value="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect">HTTP redirect</option>
+                  <option value="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST">POST</option>
+                </FormControl>
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="x509-certificate" defaultMessage="x509 certificate"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="textarea"
+                  value={sso_.saml.sp.x509cert}
+                  onChange={e => onChange(update(sso_, {saml: {sp: {$merge: {x509cert: e.target.value}}}}))} />
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="x509-private-key" defaultMessage="x509 private key"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="textarea"
+                  value={sso_.saml.sp.privateKey}
+                  onChange={e => onChange(update(sso_, {saml: {sp: {$merge: {privateKey: e.target.value}}}}))} />
+              </Col>
+            </FormGroup>
+
+            <h4>Security</h4>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="authnRequestsSigned" defaultMessage="AuthnRequests Signed"/>
+              </Col>
+
+              <Col sm={9}>
+                <Checkbox
+                  disabled
+                  checked={sso_.saml.security.authnRequestsSigned}
+                  onChange={e => onChange(update(sso_, {saml: {security: {$merge: {authnRequestsSigned: e.target.checked}}}}))} />
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="wantAssertionsSigned" defaultMessage="Want Assertions Signed"/>
+              </Col>
+
+              <Col sm={9}>
+                <Checkbox
+                  disabled
+                  checked={sso_.saml.security.wantAssertionsSigned}
+                  onChange={e => onChange(update(sso_, {saml: {security: {$merge: {wantAssertionsSigned: e.target.checked}}}}))} />
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="nameIdEncrypted" defaultMessage="nameId Encrypted"/>
+              </Col>
+
+              <Col sm={9}>
+                <Checkbox
+                  disabled
+                  checked={sso_.saml.security.nameIdEncrypted}
+                  onChange={e => onChange(update(sso_, {saml: {security: {$merge: {nameIdEncrypted: e.target.checked}}}}))} />
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="logoutRequestSigned" defaultMessage="logoutRequest Signed"/>
+              </Col>
+
+              <Col sm={9}>
+                <Checkbox
+                  disabled
+                  checked={sso_.saml.security.logoutRequestSigned}
+                  onChange={e => onChange(update(sso_, {saml: {security: {$merge: {logoutRequestSigned: e.target.checked}}}}))} />
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="logoutResponseSigned" defaultMessage="logoutResponse Signed"/>
+              </Col>
+
+              <Col sm={9}>
+                <Checkbox
+                  disabled
+                  checked={sso_.saml.security.logoutResponseSigned}
+                  onChange={e => onChange(update(sso_, {saml: {security: {$merge: {logoutResponseSigned: e.target.checked}}}}))} />
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="signMetadata" defaultMessage="Sign Metadata"/>
+              </Col>
+
+              <Col sm={9}>
+                <Checkbox
+                  disabled
+                  checked={sso_.saml.security.signMetadata}
+                  onChange={e => onChange(update(sso_, {saml: {security: {$merge: {signMetadata: e.target.checked}}}}))} />
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="wantMessagesSigned" defaultMessage="Want Messages Signed"/>
+              </Col>
+
+              <Col sm={9}>
+                <Checkbox
+                  disabled
+                  checked={sso_.saml.security.wantMessagesSigned}
+                  onChange={e => onChange(update(sso_, {saml: {security: {$merge: {wantMessagesSigned: e.target.checked}}}}))} />
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="wantNameId" defaultMessage="Want Name Id"/>
+              </Col>
+
+              <Col sm={9}>
+                <Checkbox
+                  disabled
+                  checked={sso_.saml.security.wantNameId}
+                  onChange={e => onChange(update(sso_, {saml: {security: {$merge: {wantNameId: e.target.checked}}}}))} />
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="wantAssertionsEncrypted" defaultMessage="Want Assertions Encrypted"/>
+              </Col>
+
+              <Col sm={9}>
+                <Checkbox
+                  disabled
+                  checked={sso_.saml.security.wantAssertionsEncrypted}
+                  onChange={e => onChange(update(sso_, {saml: {security: {$merge: {wantAssertionsEncrypted: e.target.checked}}}}))} />
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="wantNameIdEncrypted" defaultMessage="Want Name Id Encrypted"/>
+              </Col>
+
+              <Col sm={9}>
+                <Checkbox
+                  disabled
+                  checked={sso_.saml.security.wantNameIdEncrypted}
+                  onChange={e => onChange(update(sso_, {saml: {security: {$merge: {wantNameIdEncrypted: e.target.checked}}}}))} />
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="wantAttributeStatement" defaultMessage="Want Attribute Statement"/>
+              </Col>
+
+              <Col sm={9}>
+                <Checkbox
+                  disabled
+                  checked={sso_.saml.security.wantAttributeStatement}
+                  onChange={e => onChange(update(sso_, {saml: {security: {$merge: {wantAttributeStatement: e.target.checked}}}}))} />
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="requestedAuthnContext" defaultMessage="Requested AuthnContext"/>
+              </Col>
+
+              <Col sm={9}>
+                <Checkbox
+                  disabled
+                  checked={sso_.saml.security.requestedAuthnContext}
+                  onChange={e => onChange(update(sso_, {saml: {security: {$merge: {requestedAuthnContext: e.target.checked}}}}))} />
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="requestedAuthnContextComparison" defaultMessage="Requested AuthnContext Comparison"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="input"
+                  disabled
+                  value={sso_.saml.security.requestedAuthnContextComparison}
+                  onChange={e => onChange(update(sso_, {saml: {security: {$merge: {requestedAuthnContextComparison: e.target.value}}}}))} />
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="failOnAuthnContextMismatch" defaultMessage="Fail On AuthnContext Mismatch"/>
+              </Col>
+
+              <Col sm={9}>
+                <Checkbox
+                  disabled
+                  checked={sso_.saml.security.failOnAuthnContextMismatch}
+                  onChange={e => onChange(update(sso_, {saml: {security: {$merge: {failOnAuthnContextMismatch: e.target.checked}}}}))} />
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="signatureAlgorithm" defaultMessage="Signature Algorithm"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="select"
+                  disabled
+                  value={sso_.saml.security.signatureAlgorithm}
+                  onChange={e => onChange(update(sso_, {saml: {security: {$merge: {signatureAlgorithm: e.target.value}}}}))} >
+                  <option value="http://www.w3.org/2001/04/xmldsig-more#rsa-sha512">RSA-SHA512</option>
+                </FormControl>
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="digestAlgorithm" defaultMessage="Digest Algorithm"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="select"
+                  disabled
+                  value={sso_.saml.security.digestAlgorithm}
+                  onChange={e => onChange(update(sso_, {saml: {security: {$merge: {digestAlgorithm: e.target.value}}}}))} >
+                  <option value="http://www.w3.org/2001/04/xmlenc#sha512">SHA512</option>
+                </FormControl>
+              </Col>
+            </FormGroup>
+
+            <h4>Misc</h4>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="default_email_host" defaultMessage="Default email hostname"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="input"
+                  value={sso_.saml.default_email_host}
+                  onChange={e => onChange(update(sso_, {saml: {$merge: {default_email_host: e.target.value}}}))} />
+                <HelpBlock>
+                  In case the email is not provided by the IdP, the email field will be composed as (email)@(default email host).
+                </HelpBlock>
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="default_user_profile" defaultMessage="Default user profile"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="input"
+                  value={sso_.saml.default_user_profile}
+                  onChange={e => onChange(update(sso_, {saml: {$merge: {default_user_profile: e.target.value}}}))} />
+                <HelpBlock>
+                  When a new user is logged in, it's created with this user profile (must be defined in the user profiles).
+                </HelpBlock>
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="default_user_ui_profile" defaultMessage="Default user UI profile"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="input"
+                  value={sso_.saml.default_user_ui_profile}
+                  onChange={e => onChange(update(sso_, {saml: {$merge: {default_user_ui_profile: e.target.value}}}))} />
+                <HelpBlock>
+                  When a new user is logged in, it's created with this user UI profile (e.g user, admin, etc...).
+                </HelpBlock>
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="default_user_is_system" defaultMessage="Default user is system flag"/>
+              </Col>
+
+              <Col sm={9}>
+                <Checkbox
+                  checked={sso_.saml.security.default_user_is_system}
+                  onChange={e => onChange(update(sso_, {saml: {security: {$merge: {default_user_is_system: e.target.checked}}}}))} />
+              </Col>
+            </FormGroup>
+
+          </Form>
+        </Panel.Body>
+      </Panel>
+      </>
+  )
+}
+
+
 function PasswordPanel(props) {
     const {password, onChange} = props;
 
@@ -1270,9 +1934,15 @@ export default function Configuration(props) {
             onChange={v => setConfig(update(config, {content: {password: {$set: v}}}))}
           />
         </Tab>
-        <Tab eventKey={8} title="Raw">
+        <Tab eventKey={8} title="SSO">
+          <SSOPanel
+            sso={config.content.SSO || {}}
+            onChange={v => setConfig(update(config, {content: {SSO: {$set: v}}}))}
+          />
+        </Tab>
+        <Tab eventKey={9} title="Raw">
           {
-            activeKey === 8 && config.content &&
+            activeKey === 9 && config.content &&
             <ReactJson
               src={config.content}
               onEdit={editConfig}

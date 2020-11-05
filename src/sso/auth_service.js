@@ -50,9 +50,11 @@ class AuthService {
 
   removeUser() {
       return (
-          this.manager && this.manager.clearStaleState()
+          this.manager ?
+            this.manager.clearStaleState()
               .then(() => this.manager.removeUser())
-              .then(() => this.user = null)
+              .then(() => this.user = null) :
+            Promise.resolve(null)
       )
   }
 

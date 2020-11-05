@@ -48,6 +48,21 @@ class AuthService {
         console.log("jwt token updated!");
     }
 
+    loadJwtTokensFromLocation() {
+        const frag = window.location.hash.substring(1);
+        if(frag) {
+            const tokens = frag.split(",");
+            this.loadJwtTokens(tokens[0], tokens[1]);
+
+            window.location.replace("#");
+            if (typeof window.history.replaceState === 'function') {
+                window.history.replaceState({}, '', window.location.href.slice(0, -1));
+            }
+            return true;
+        }
+        return false;
+    }
+
     fetchNewAccessToken() {
         return fetch(API_URL_PREFIX + "/api/v01/auth/access_token", {
             method: 'GET',
