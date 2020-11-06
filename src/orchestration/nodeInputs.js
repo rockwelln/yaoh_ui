@@ -378,6 +378,76 @@ function SwitchOutputs(props) {
 }
 
 
+function JsonSchemaFormFields(props) {
+  const {value, onChange} = props;
+
+  const [newField, setNewField] = useState(["", "string"]);
+  let fields = {
+    "$schema": "http://json-schema.org/schema#",
+    type: "object",
+    properties: {},
+    additionalProperties: false,
+  };
+  try {
+    fields = JSON.parse(value);
+  } catch(e) {
+    // console.log(e);
+  }
+
+  const addNewField = () => {
+    onChange(JSON.stringify(update(fields, {properties: {$merge: {[newField[0]]: {type: newField[1]}}}})))
+    setNewField(["", "string"]);
+  }
+
+  return (
+    <Table>
+      <tbody>
+      {
+        Object.entries(fields.properties).map(([name, props]) =>
+          <tr key={name}>
+            <td style={{width: "50%"}}>{name}</td>
+            <td style={{width: "40%"}}>
+              <FormControl
+                componentClass="select"
+                value={props.type}
+                onChange={e => onChange(JSON.stringify(update(fields, {properties: {[name]: {$merge: {type: e.target.value}}}})))}>
+                   <option value="string">string</option>
+              </FormControl>
+            </td>
+            <td><Button onClick={() => {
+              onChange(JSON.stringify(update(fields, {properties: {$unset: [name]}})))
+            }}>{"-"}</Button></td>
+          </tr>)
+      }
+      {
+        <tr>
+          <td style={{width: "50%"}}>
+            <FormControl
+              value={newField[0]}
+              onChange={e => setNewField(update(newField, {$merge: {[0]: e.target.value}}))} />
+          </td>
+          <td style={{width: "40%"}}>
+            <FormControl
+              componentClass="select"
+              value={newField[1]}
+              onChange={e => setNewField(update(newField, {$merge: {[1]: e.target.value}}))} >
+                <option value="string">string</option>
+            </FormControl>
+          </td>
+          <td>
+            <Button
+              onClick={() => addNewField()}
+              disabled={!newField[0] || !newField[1]}
+            >{"+"}</Button>
+          </td>
+        </tr>
+      }
+      </tbody>
+    </Table>
+  )
+}
+
+
 export function Param2Input({param, activity, cells, value, onChange}) {
   let i;
   switch(param.nature) {
@@ -411,6 +481,9 @@ export function Param2Input({param, activity, cells, value, onChange}) {
     case 'python':
     case 'json':
       i = <TextareaInput rows={10} value={value} onChange={e => onChange(e)} />
+      break;
+    case 'jsonschema_form_fields':
+      i = <JsonSchemaFormFields value={value} onChange={e => onChange(e)} />
       break;
     case 'bool':
       i = <BoolInput value={value} onChange={e => onChange(e)} />
