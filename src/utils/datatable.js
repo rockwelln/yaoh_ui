@@ -79,7 +79,7 @@ export const Pagination = ({num_pages, page_number, onChange, total_results}) =>
 };
 
 export const SearchBar = ({filter, onChange, onSearch, size}) => (
-    <Form onSubmit={(e) => {e.preventDefault(); onSearch(filter);}}>
+    <Form onSubmit={(e) => {e.preventDefault(); onSearch && onSearch(filter);}}>
         <Col smOffset={12 - (size || 4)} sm={size || 4}>
             <InputGroup>
                 <FormControl

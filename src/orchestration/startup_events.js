@@ -29,6 +29,8 @@ import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
 import {DeleteConfirmButton} from "../utils/deleteConfirm";
 import {useDropzone} from "react-dropzone";
 import {JSON_TRANS_OPTIONS_SAMPLE} from "../system/bulk_actions";
+import Select from "react-select";
+import {SearchBar} from "../utils/datatable";
 
 const CUSTOM_ROUTE_PREFIX = "https://<target>/api/v01/custom";
 const JSON_SCHEMA_SAMPLE = (
@@ -752,11 +754,14 @@ function CustomRoutes(props) {
     const [showNew, setShowNew] = useState(false);
     const [showImport, setShowImport] = useState(false);
     const [key, setKey] = useState(0);
+    const [filter, setFilter] = useState("");
 
     useEffect(() => {
         fetchActivities(setActivities);
         fetchCustomRoutes(setCustomRoutes);
     }, []);
+
+    const activitiesOptions = activities.sort((a, b) => a.name.localeCompare(b.name)).map(a => ({value: a.id, label: a.name}));
 
     return (
         <Panel>
@@ -764,6 +769,7 @@ function CustomRoutes(props) {
                 <Panel.Title><FormattedMessage id="custom-routes" defaultMessage="Custom routes" /></Panel.Title>
             </Panel.Heading>
             <Panel.Body>
+                <SearchBar filter={filter} onChange={setFilter} />
                 <Table>
                     <thead>
                     <tr>
@@ -780,22 +786,26 @@ function CustomRoutes(props) {
                     {
                         customRoutes
                             .sort((a, b) => a.route_id - b.route_id)
+                            .filter(r => !filter || r.route.includes(filter) || ((activities.find(a => a.id === r.activity_id) || {}).name || "").includes(filter))
                             .map((route, i) => (
                                 <tr key={i}>
                                     <td>{ route.route_id }</td>
                                     <td>{ route.method }</td>
                                     <td>{ route.route }</td>
                                     <td>
-                                        <select onChange={e => updateCustomRouteActivity(route.route_id, e.target.value, () => fetchCustomRoutes(setCustomRoutes))} value={route.activity_id || ''}>
-                                            <FormattedMessage id="none" defaultMessage="*none*">
-                                                {message => <option value={""}>{message}</option>}
-                                            </FormattedMessage>
-                                            {
-                                                activities
-                                                .sort((a,b) => a.name.localeCompare(b.name))
-                                                .map(a => <option value={a.id} key={a.id}>{a.name}</option>)
-                                            }
-                                        </select>
+                                        <Select
+                                            className="basic-single"
+                                            classNamePrefix="select"
+                                            value={route.activity_id && activitiesOptions.find(a => a.value === route.activity_id)}
+                                            isClearable={true}
+                                            isSearchable={true}
+                                            name="activity"
+                                            onChange={(value, action) => {
+                                                if(["select-option", "clear"].includes(action.action)) {
+                                                  updateCustomRouteActivity(route.route_id, value && value.value, () => fetchCustomRoutes(setCustomRoutes));
+                                                }
+                                            }}
+                                            options={activitiesOptions} />
                                     </td>
                                     <td>
                                         <Checkbox
