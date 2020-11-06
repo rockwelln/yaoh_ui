@@ -764,7 +764,7 @@ function CustomRoutes(props) {
     const activitiesOptions = activities.sort((a, b) => a.name.localeCompare(b.name)).map(a => ({value: a.id, label: a.name}));
 
     return (
-        <Panel>
+        <Panel style={{ minWidth: "min-content" }}>
             <Panel.Heading>
                 <Panel.Title><FormattedMessage id="custom-routes" defaultMessage="Custom routes" /></Panel.Title>
             </Panel.Heading>
@@ -774,12 +774,12 @@ function CustomRoutes(props) {
                     <thead>
                     <tr>
                         <th>#</th>
-                        <th><FormattedMessage id="method" defaultMessage="Method" /></th>
+                        <th style={{ width: "5em" }}><FormattedMessage id="method" defaultMessage="Method" /></th>
                         <th><FormattedMessage id="route" defaultMessage="Route (prefix: {prefix})" values={{prefix: CUSTOM_ROUTE_PREFIX}} /></th>
-                        <th><FormattedMessage id="activity" defaultMessage="Activity" /></th>
-                        <th><FormattedMessage id="enabled" defaultMessage="Enabled" /></th>
-                        <th><FormattedMessage id="sync" defaultMessage="Sync" /></th>
-                        <th/>
+                        <th style={{ minWidth: "22em" }}><FormattedMessage id="activity" defaultMessage="Activity" /></th>
+                        <th style={{ width: "2em" }}><FormattedMessage id="enabled" defaultMessage="Enabled" /></th>
+                        <th style={{ width: "2em" }}><FormattedMessage id="sync" defaultMessage="Sync" /></th>
+                        <th style={{ minWidth: "15em" }}/>
                     </tr>
                     </thead>
                     <tbody>
