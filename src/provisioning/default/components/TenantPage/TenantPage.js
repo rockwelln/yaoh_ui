@@ -15,9 +15,9 @@ import Details from "./Tabs/Details";
 import DeleteModal from "./DeleteModal";
 import Licenses from "./Tabs/Licenses";
 import Trunking from "./Tabs/Trunking";
+import MobileNumbersTab from "./Tabs/MobileNumbers";
 
 import { get } from "../get";
-import {AuthServiceManager} from "../../../../utils";
 
 import {
   fetchGetTenantById,
@@ -32,7 +32,9 @@ class TenantPage extends Component {
   state = {
     isLoading: true,
     isLoadingSCURL: true,
-    showDelete: false
+    showDelete: false,
+    activeKey: 0,
+    refreshTab: ""
   };
 
   componentDidMount() {
@@ -75,15 +77,15 @@ class TenantPage extends Component {
               <Button
                 className="btn-primary"
                 onClick={() =>
-                  AuthServiceManager.getValidToken().then(token => {
-                    window.open(
-                      `${
-                        this.props.selfcareUrl.selfcare.url
-                      }/sso?token=${token}&tenant=${
-                        this.props.match.params.tenantId
-                      }`
-                    )
-                  })
+                  window.open(
+                    `${
+                      this.props.selfcareUrl.selfcare.url
+                    }/sso?token=${localStorage.getItem(
+                      "auth_token"
+                    )}&refreshToken=${localStorage.getItem(
+                      "refreshToken"
+                    )}&tenant=${this.props.match.params.tenantId}`
+                  )
                 }
               >
                 Switch to selfcare portal
@@ -92,31 +94,51 @@ class TenantPage extends Component {
           </div>
         </div>
         <div className={"panel-body"}>
-          <Tabs defaultActiveKey={0} id="tenant_tabs">
+          <Tabs
+            activeKey={this.state.activeKey}
+            id="tenant_tabs"
+            onSelect={this.changeTab}
+          >
             <Tab eventKey={0} title="LICENSES">
-              <Licenses />
+              <Licenses refreshTab={this.state.refreshTab === "Licenses"} />
             </Tab>
             <Tab eventKey={1} title="GROUPS">
-              <GroupsTab tenantId={this.props.match.params.tenantId} />
+              <GroupsTab
+                tenantId={this.props.match.params.tenantId}
+                refreshTab={this.state.refreshTab === "GroupsTab"}
+              />
             </Tab>
             {/* <Tab eventKey={2} title="ENTERPRISE TRUNKS">
               ENTERPRISE TRUNKS Tab
             </Tab> */}
             <Tab eventKey={3} title="PHONE NUMBERS">
-              <PhoneNumbersTab tenantId={this.props.match.params.tenantId} />
+              <PhoneNumbersTab
+                tenantId={this.props.match.params.tenantId}
+                refreshTab={this.state.refreshTab === "PhoneNumbersTab"}
+              />
+            </Tab>
+            <Tab eventKey={7} title="MOBILE NUMBERS">
+              <MobileNumbersTab
+                tenantId={this.props.match.params.tenantId}
+                refreshTab={this.state.refreshTab === "MobileNumbersTab"}
+              />
             </Tab>
             <Tab eventKey={4} title="ADMINISTRATORS">
-              <Admins tenantId={this.props.match.params.tenantId} />
+              <Admins
+                tenantId={this.props.match.params.tenantId}
+                refreshTab={this.state.refreshTab === "Admins"}
+              />
             </Tab>
             <Tab eventKey={5} title="DETAILS">
               <Details
                 tenantId={this.props.match.params.tenantId}
                 isLoading={isLoading}
+                refreshTab={this.state.refreshTab === "Details"}
               />
             </Tab>
             {this.props.isAuthorisedTrunkTenant && (
               <Tab eventKey={6} title="TRUNKING">
-                <Trunking />
+                <Trunking refreshTab={this.state.refreshTab === "Trunking"} />
               </Tab>
             )}
           </Tabs>
@@ -124,6 +146,36 @@ class TenantPage extends Component {
       </React.Fragment>
     );
   }
+
+  changeTab = key => {
+    let refreshTab = "";
+    switch (key) {
+      case 0:
+        refreshTab = "Licenses";
+        break;
+      case 1:
+        refreshTab = "GroupsTab";
+        break;
+      case 3:
+        refreshTab = "PhoneNumbersTab";
+        break;
+      case 4:
+        refreshTab = "Admins";
+        break;
+      case 5:
+        refreshTab = "Details";
+        break;
+      case 6:
+        refreshTab = "Trunking";
+        break;
+      case 7:
+        refreshTab = "MobileNumbersTab";
+        break;
+      default:
+        refreshTab = "";
+    }
+    this.setState({ activeKey: key, refreshTab });
+  };
 }
 
 const mapDispatchToProps = {

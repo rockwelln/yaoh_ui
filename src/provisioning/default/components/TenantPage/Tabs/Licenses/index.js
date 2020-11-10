@@ -41,35 +41,46 @@ export class Licenses extends Component {
     editTrunkLicenses: false,
     editMaxBursting: false,
     editServicePacks: false,
-    editGroupServices: false,
     indexOfService: 0,
     showMore: true
   };
 
   fetchData() {
-    this.props
-      .fetchGetTenantLicenses(this.props.match.params.tenantId)
-      .then(() =>
-        this.setState(
-          {
-            isLoading: false,
-            groupServices: this.props.tenantLicenses.groups,
-            servicePacks: this.props.tenantServicePacks
-          },
-          () => this.props.showHideAdditionalServicesTenant(this.state.showMore)
-        )
-      );
-    this.props
-      .fetchGetTrunkByTenantID(this.props.match.params.tenantId)
-      .then(() => {
-        this.setState({
-          trunkGroups: this.props.tenantTrunkGroups,
-          isLoadingTrunk: false
+    this.setState({ isLoading: true, isLoadingTrunk: true }, () => {
+      this.props
+        .fetchGetTenantLicenses(this.props.match.params.tenantId)
+        .then(() =>
+          this.setState(
+            {
+              isLoading: false,
+              groupServices: this.props.tenantLicenses.groups,
+              servicePacks: this.props.tenantServicePacks
+            },
+            () =>
+              this.props.showHideAdditionalServicesTenant(this.state.showMore)
+          )
+        );
+      this.props
+        .fetchGetTrunkByTenantID(this.props.match.params.tenantId)
+        .then(() => {
+          this.setState({
+            trunkGroups: this.props.tenantTrunkGroups,
+            isLoadingTrunk: false
+          });
         });
-      });
+    });
   }
   componentDidMount() {
     this.fetchData();
+  }
+
+  componentDidUpdate(prevProps) {
+    if (
+      this.props.refreshTab !== prevProps.refreshTab &&
+      this.props.refreshTab
+    ) {
+      this.fetchData();
+    }
   }
   render() {
     const {
@@ -326,8 +337,8 @@ export class Licenses extends Component {
                 />
               ) : (
                 <FormattedMessage
-                  id="No_service_packs"
-                  defaultMessage="No service packs were found"
+                  id="No_services_found"
+                  defaultMessage="No services were found"
                 />
               )}
               {editGroupServices && (

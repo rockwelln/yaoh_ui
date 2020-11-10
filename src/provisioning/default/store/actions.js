@@ -250,6 +250,31 @@ export const getSelfcareURL = data => ({
   data
 });
 
+export const getTimezones = data => ({
+  type: actionType.GET_TIMEZONES,
+  data
+});
+
+export const getGlobalSearchNumbers = data => ({
+  type: actionType.GET_GLOBAL_SEARCH_NUMBERS,
+  data
+});
+
+export const getBWKSLicenses = data => ({
+  type: actionType.GET_BWKS_LICENSES,
+  data
+});
+
+export const getMobileNumbersForTenant = data => ({
+  type: actionType.GET_MOBILE_NUMBERS_FOR_TENANT,
+  data
+});
+
+export const getMobileNumbersForGroup = data => ({
+  type: actionType.GET_MOBILE_NUMBERS_FOR_GROUP,
+  data
+});
+
 export const postCreateGroupAdmin = data => ({
   type: actionType.POST_CREATE_GROUP_ADMIN,
   data
@@ -325,6 +350,24 @@ export const postCreateTrunkGroup = data => ({
 
 export const postCreateDeviceInGroup = () => ({
   type: actionType.POST_CREATE_DEVICE_IN_GROUP
+});
+
+export const postCreateTrunkGroupUser = () => ({
+  type: actionType.POST_CREATE_TRUNK_GROUP_USER
+});
+
+export const postAddMobileNumberToTenant = data => ({
+  type: actionType.POST_ADD_MOBILE_NUMBER_TO_TENANT,
+  data
+});
+
+export const postAddMobileNumberToGroup = data => ({
+  type: actionType.POST_ADD_MOBILE_NUMBER_TO_GROUP,
+  data
+});
+
+export const postCreateTemplate = () => ({
+  type: actionType.POST_CREATE_TEMPLATE
 });
 
 export const putUpdateUser = data => ({
@@ -411,6 +454,11 @@ export const putUpdateTenantServicePacks = () => ({
   type: actionType.PUT_UPDATE_TENANT_SERVICE_PACKS
 });
 
+export const putUpdateTemplate = data => ({
+  type: actionType.PUT_UPDATE_TEMPLATE,
+  data
+});
+
 export const deleteTenant = data => ({
   type: actionType.DELETE_TENANT,
   data
@@ -473,6 +521,18 @@ export const deleteTrunkGroupFromTenant = () => ({
   type: actionType.DELETE_TRUNK_GROUP_FROM_TENANT
 });
 
+export const deleteMobileNumberFromTenant = () => ({
+  type: actionType.DELETE_MOBILE_NUMBER_FROM_TENANT
+});
+
+export const deleteMobileNumberFromGroup = () => ({
+  type: actionType.DELETE_MOBILE_NUMBER_FROM_GROUP
+});
+
+export const deleteTemplate = () => ({
+  type: actionType.DELETE_TEMPLATE
+});
+
 export const clearErrorMassage = () => ({
   type: actionType.CLEAR_ERROR_MASSAGE
 });
@@ -532,6 +592,11 @@ export const refuseCreateGroup = () => ({
 
 export const changeIdOfGroup = data => ({
   type: actionType.CHANGE_ID_OF_GROUP,
+  data
+});
+
+export const changeTimeZoneOfGroup = data => ({
+  type: actionType.CHANGE_TIME_ZONE_OF_GROUP,
   data
 });
 
@@ -610,6 +675,10 @@ export const showHideAdditionalServiceGroup = data => ({
 
 export const trunkNotAuthorisedGroup = () => ({
   type: actionType.TRUNK_NOT_AUTHORISED_GROUP
+});
+
+export const clearSearchNumber = () => ({
+  type: actionType.CLEAR_SEARCH_NUMBER
 });
 
 export function fetchGetTenants(cancelLoad) {
@@ -724,15 +793,16 @@ export function fetchGetUsersByGroupId(tenantId, groupId) {
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/users`
     )
       .then(data => dispatch(getUsersByGroupId(data)))
-      .catch(error =>
+      .catch(error => {
+        dispatch(getUsersByGroupId({ users: [] }));
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-users-failed"
             defaultMessage="Failed to fetch users!"
           />,
           error.message
-        )
-      );
+        );
+      });
   };
 }
 
@@ -1462,13 +1532,96 @@ export function fetchGetSelfcareURL() {
       .then(data => dispatch(getSelfcareURL(data)))
       .catch(error => {
         console.error(error.message);
-        // NotificationsManager.error(
-        //   <FormattedMessage
-        //     id="fetch-trunk-group-template-failed"
-        //     defaultMessage="Failed to fetch trunk group template!"
-        //   />,
-        //   error.message
-        // );
+      });
+  };
+}
+
+export function fetchGetTimezones() {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/system/timezones`
+    )
+      .then(data => dispatch(getTimezones(data)))
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-timezones-failed"
+            defaultMessage="Failed to fetch timezones!"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchGetGlobalSearchNumbers(number) {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/search/numbers/usages/${number}`
+    )
+      .then(data => dispatch(getGlobalSearchNumbers(data)))
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-number-failed"
+            defaultMessage="Failed to search number!"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchGetBWKSLicenses() {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/system/licensing/`
+    )
+      .then(data => dispatch(getBWKSLicenses(data)))
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-bwks-licenses-failed"
+            defaultMessage="Failed to fetch bwks licenses!"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchGetMobileNumbersForTenant(tenantId) {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/mobile_numbers?available=true&assignement=true`
+    )
+      .then(data => dispatch(getMobileNumbersForTenant(data)))
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-numbers-failed"
+            defaultMessage="Failed to fetch numbers!"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchGetMobileNumbersForGroup(tenantId, groupId) {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/mobile_numbers?available=true&assignement=true`
+    )
+      .then(data => dispatch(getMobileNumbersForGroup(data)))
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-numbers-failed"
+            defaultMessage="Failed to fetch numbers!"
+          />,
+          error.message
+        );
       });
   };
 }
@@ -1614,6 +1767,46 @@ export function fetchPostAddPhoneNumbersToTenant(tenantId, data) {
     )
       .then(res => res.json())
       .then(data => dispatch(postAddPhoneNumbersToTenant(data)))
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-add-phone-numbers"
+            defaultMessage="Failed to add phone numbers!"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchPostAddMobileNumbersToTenant(tenantId, data) {
+  return function(dispatch) {
+    return fetch_post(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/mobile_numbers/`,
+      data
+    )
+      .then(res => res.json())
+      .then(data => dispatch(postAddMobileNumberToTenant(data)))
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-add-phone-numbers"
+            defaultMessage="Failed to add phone numbers!"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchPostAddMobileNumbersToGroup(tenantId, groupId, data) {
+  return function(dispatch) {
+    return fetch_post(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/mobile_numbers/`,
+      data
+    )
+      .then(res => res.json())
+      .then(data => dispatch(postAddMobileNumberToGroup(data)))
       .catch(error => {
         NotificationsManager.error(
           <FormattedMessage
@@ -1778,6 +1971,71 @@ export function fetchPostDeviceInGroup(tenantId, groupId, data) {
   };
 }
 
+export function fetchPostCreateTrunkGroupUser(
+  tenantId,
+  groupId,
+  trunkGroupId,
+  data
+) {
+  return function(dispatch) {
+    return fetch_post(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/services/trunk_groups/${trunkGroupId}/numbers/`,
+      data
+    )
+      .then(res => res.json())
+      .then(() => {
+        dispatch(postCreateTrunkGroupUser());
+        NotificationsManager.success(
+          <FormattedMessage
+            id="trunk-group-user-successfully-created"
+            defaultMessage="Trunk group user successfully created"
+          />,
+          "Created"
+        );
+        return "success";
+      })
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-create-trunk-group-user"
+            defaultMessage="Failed to create trunk group user!"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchPostCreateTemplate(category, data) {
+  return function(dispatch) {
+    return fetch_post(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/templates/categories/${category}/templates/`,
+      data
+    )
+      .then(res => res.json())
+      .then(() => {
+        dispatch(postCreateTemplate());
+        NotificationsManager.success(
+          <FormattedMessage
+            id="template-successfully-created"
+            defaultMessage="Template successfully created"
+          />,
+          "Created"
+        );
+        return "success";
+      })
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-create-template"
+            defaultMessage="Failed to create template!"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
 export function fetchPutUpdateUser(tenantId, groupId, userName, data) {
   return function(dispatch) {
     return fetch_put(
@@ -1785,7 +2043,16 @@ export function fetchPutUpdateUser(tenantId, groupId, userName, data) {
       data
     )
       .then(res => res.json())
-      .then(data => dispatch(putUpdateUser(data)))
+      .then(data => {
+        dispatch(putUpdateUser(data));
+        NotificationsManager.success(
+          <FormattedMessage
+            id="user-successfully-updated"
+            defaultMessage="User successfully updated"
+          />,
+          "Updated"
+        );
+      })
       .catch(error =>
         NotificationsManager.error(
           <FormattedMessage
@@ -1805,7 +2072,16 @@ export function fetchPutUpdateGroupDetails(tenantId, groupId, data) {
       data
     )
       .then(res => res.json())
-      .then(data => dispatch(putUpdateGroupDetails(data)))
+      .then(data => {
+        dispatch(putUpdateGroupDetails(data));
+        NotificationsManager.success(
+          <FormattedMessage
+            id="group-successfully-updated"
+            defaultMessage="Group successfully updated"
+          />,
+          "Updated"
+        );
+      })
       .catch(error =>
         NotificationsManager.error(
           <FormattedMessage
@@ -1825,7 +2101,16 @@ export function fetchPutUpdateGroupAdmin(tenantId, groupId, adminId, data) {
       data
     )
       .then(res => res.json())
-      .then(data => dispatch(putUpdateGroupAdmin(data)))
+      .then(data => {
+        dispatch(putUpdateGroupAdmin(data));
+        NotificationsManager.success(
+          <FormattedMessage
+            id="group-admin-successfully-updated"
+            defaultMessage="Group admin successfully updated"
+          />,
+          "Updated"
+        );
+      })
       .catch(error =>
         NotificationsManager.error(
           <FormattedMessage
@@ -1845,7 +2130,16 @@ export function fetchPutUpdateTenantAdmin(tenantId, adminId, data) {
       data
     )
       .then(res => res.json())
-      .then(data => dispatch(putUpdateTenantAdmin(data)))
+      .then(data => {
+        dispatch(putUpdateTenantAdmin(data));
+        NotificationsManager.success(
+          <FormattedMessage
+            id="tenant-admin-successfully-updated"
+            defaultMessage="Tenant admin successfully updated"
+          />,
+          "Updated"
+        );
+      })
       .catch(error =>
         NotificationsManager.error(
           <FormattedMessage
@@ -1865,7 +2159,16 @@ export function fetchPutUpdateTrunkByGroupId(tenantId, groupId, data) {
       data
     )
       .then(resp => resp.json())
-      .then(data => dispatch(putUpdateTrunkByGroupId(data)))
+      .then(data => {
+        dispatch(putUpdateTrunkByGroupId(data));
+        NotificationsManager.success(
+          <FormattedMessage
+            id="trunk-group-successfully-updated"
+            defaultMessage="Trunk group successfully updated"
+          />,
+          "Updated"
+        );
+      })
       .catch(error => {
         if (error.response && error.response.status === 400) {
           NotificationsManager.error(
@@ -1897,6 +2200,13 @@ export function fetchPutUpdateServicePacksByGroupId(tenantId, groupId, data) {
       .then(res => res.json())
       .then(data => {
         dispatch(putUpdateServicePacksByGroupId(data));
+        NotificationsManager.success(
+          <FormattedMessage
+            id="service-packs-successfully-updated"
+            defaultMessage="Service packs successfully updated"
+          />,
+          "Updated"
+        );
         return "updated";
       })
       .catch(error =>
@@ -1918,7 +2228,16 @@ export function fetchPutUpdateGroupServicesByGroupId(tenantId, groupId, data) {
       data
     )
       .then(res => res.json())
-      .then(data => dispatch(putUpdateGroupServicesByGroupId(data)))
+      .then(data => {
+        dispatch(putUpdateGroupServicesByGroupId(data));
+        NotificationsManager.success(
+          <FormattedMessage
+            id="group-services-successfully-updated"
+            defaultMessage="Group services successfully updated"
+          />,
+          "Updated"
+        );
+      })
       .catch(error =>
         NotificationsManager.error(
           <FormattedMessage
@@ -1934,11 +2253,20 @@ export function fetchPutUpdateGroupServicesByGroupId(tenantId, groupId, data) {
 export function fetchPutUpdateTenantDetails(tenantId, data) {
   return function(dispatch) {
     return fetch_put(
-      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}`,
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/`,
       data
     )
       .then(res => res.json())
-      .then(data => dispatch(putUpdateTenantDetails(data)))
+      .then(data => {
+        dispatch(putUpdateTenantDetails(data));
+        NotificationsManager.success(
+          <FormattedMessage
+            id="update-tenant-details-success"
+            defaultMessage="Tenant successfully updated"
+          />,
+          "Updated"
+        );
+      })
       .catch(error =>
         NotificationsManager.error(
           <FormattedMessage
@@ -1958,7 +2286,16 @@ export function fetchPutUpdateKey(appName, keyName, data) {
       data
     )
       .then(res => res.json())
-      .then(data => dispatch(putUpdateKey(data)))
+      .then(data => {
+        dispatch(putUpdateKey(data));
+        NotificationsManager.success(
+          <FormattedMessage
+            id="config-successfully-updated"
+            defaultMessage="Config successfully updated"
+          />,
+          "Updated"
+        );
+      })
       .catch(error =>
         NotificationsManager.error(
           <FormattedMessage
@@ -2012,7 +2349,16 @@ export function fetchPutUpdateLocalUser(username, data) {
       data
     )
       .then(res => res.json())
-      .then(data => dispatch(putUpdateLocalUser(data)))
+      .then(data => {
+        dispatch(putUpdateLocalUser(data));
+        NotificationsManager.success(
+          <FormattedMessage
+            id="local-user-successfully-updated"
+            defaultMessage="Local user successfully updated"
+          />,
+          "Updated"
+        );
+      })
       .catch(error =>
         NotificationsManager.error(
           <FormattedMessage
@@ -2066,7 +2412,16 @@ export function fetchPutUpdateTrunkByTenantId(tenantId, data) {
       data
     )
       .then(res => res.json())
-      .then(data => dispatch(putUpdateTrunkByTenantId(data)))
+      .then(data => {
+        dispatch(putUpdateTrunkByTenantId(data));
+        NotificationsManager.success(
+          <FormattedMessage
+            id="trunk-successfully-updated"
+            defaultMessage="Trunk successfully updated"
+          />,
+          "Updated"
+        );
+      })
       .catch(error =>
         NotificationsManager.error(
           <FormattedMessage
@@ -2088,6 +2443,13 @@ export function fetchPutUpdateGroupServicesByTenantId(tenantId, data) {
       .then(res => res.json())
       .then(data => {
         dispatch(putUpdateGroupServicesByTenantId(data));
+        NotificationsManager.success(
+          <FormattedMessage
+            id="group-services-successfully-updated"
+            defaultMessage="Group services successfully updated"
+          />,
+          "Updated"
+        );
         return "updated";
       })
       .catch(error =>
@@ -2139,12 +2501,50 @@ export function fetchPutUpdateTenantServicePacks(tenantId, servicePack, data) {
       data
     )
       .then(res => res.json())
-      .then(() => dispatch(putUpdateTenantServicePacks()))
+      .then(() => {
+        dispatch(putUpdateTenantServicePacks());
+        NotificationsManager.success(
+          <FormattedMessage
+            id="service-packs-successfully-updated"
+            defaultMessage="Service packs successfully updated"
+          />,
+          "Updated"
+        );
+      })
       .catch(error =>
         NotificationsManager.error(
           <FormattedMessage
             id="update-service-packs-failed"
             defaultMessage="Failed to update service packs!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchPutUpdateTemplate(instanceName, templateName, data) {
+  return function(dispatch) {
+    return fetch_put(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/templates/categories/${instanceName}/templates/${templateName}/`,
+      data
+    )
+      .then(res => res.json())
+      .then(data => {
+        dispatch(putUpdateTemplate(data));
+        NotificationsManager.success(
+          <FormattedMessage
+            id="template-successfully-updated"
+            defaultMessage="Template successfully updated"
+          />,
+          "Updated"
+        );
+      })
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="update-template-failed"
+            defaultMessage="Failed to update template!"
           />,
           error.message
         )
@@ -2457,6 +2857,71 @@ export function fetchDeleteTrunkGroupFromTenant(tenantId, trunkName) {
           <FormattedMessage
             id="failed-to-delete-trunk-group"
             defaultMessage="Failed to delete trunk group!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchDeleteMobileNumberFromTenant(tenantId, data) {
+  return function(dispatch) {
+    return fetch_delete(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/mobile_numbers/`,
+      data
+    )
+      .then(res => res.json())
+      .then(() => {
+        dispatch(deleteMobileNumberFromTenant());
+      })
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-delete-mobile-number"
+            defaultMessage="Failed to delete mobile number!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchDeleteMobileNumberFromGroup(tenantId, groupId, data) {
+  return function(dispatch) {
+    return fetch_delete(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/mobile_numbers/`,
+      data
+    )
+      .then(res => res.json())
+      .then(() => {
+        dispatch(deleteMobileNumberFromGroup());
+      })
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-delete-mobile-number"
+            defaultMessage="Failed to delete mobile number!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchDeleteTemplate(category, templateName) {
+  return function(dispatch) {
+    return fetch_delete(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/templates/categories/${category}/templates/${templateName}/`
+    )
+      .then(res => res.json())
+      .then(() => {
+        dispatch(deleteTemplate());
+      })
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-delete-template"
+            defaultMessage="Failed to delete template!"
           />,
           error.message
         )

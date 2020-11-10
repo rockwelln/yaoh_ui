@@ -9,8 +9,8 @@ import InputGroup from "react-bootstrap/lib/InputGroup";
 import Row from "react-bootstrap/lib/Row";
 import Col from "react-bootstrap/lib/Col";
 import Pagination from "react-bootstrap/lib/Pagination";
-import Modal from "react-bootstrap/lib/Modal";
-import Button from "react-bootstrap/lib/Button";
+//import Modal from "react-bootstrap/lib/Modal";
+//import Button from "react-bootstrap/lib/Button";
 
 import TrunkGroup from "./TrunkGroup";
 
@@ -56,6 +56,15 @@ const Trunking = props => {
     setTrunkGroups(searchArray);
     setPage(0);
   }, [searchValue]);
+
+  useEffect(() => {
+    if (props.refreshTab) {
+      setIsLoading(true);
+      dispatch(fetchGetTrunkGroupByTenant(props.match.params.tenantId)).then(
+        () => setIsLoading(false)
+      );
+    }
+  }, [props.refreshTab]);
 
   const pagination = () => {
     const calculatedCountPages = Math.ceil(trunkGroups.length / countPerPage);
@@ -141,7 +150,7 @@ const Trunking = props => {
     <React.Fragment>
       <Row className={"margin-top-2"}>
         <Col mdOffset={1} md={10}>
-          <InputGroup className={"margin-left-negative-4"}>
+          <InputGroup>
             <InputGroup.Addon>
               <Glyphicon glyph="lyphicon glyphicon-search" />
             </InputGroup.Addon>

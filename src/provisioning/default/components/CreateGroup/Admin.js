@@ -29,14 +29,16 @@ export class Admin extends Component {
       firstName: "",
       lastName: "",
       language: "English",
-      password: ""
+      password: "",
+      emailAddress: ""
     },
     passwordConfirmation: "",
     passwordNotMatch: null,
     userIdError: null,
     passwordLenthError: null,
     emptyFieldError: "",
-    creating: false
+    creating: false,
+    requiredEmail: null
   };
 
   render() {
@@ -103,6 +105,36 @@ export class Admin extends Component {
                   <HelpBlock>
                     Must be greater than 6 and less than 80 characters
                   </HelpBlock>
+                )}
+              </Col>
+            </FormGroup>
+          </Row>
+
+          <Row className={"margin-1"}>
+            <FormGroup
+              controlId="email"
+              validationState={this.state.requiredEmail}
+            >
+              <Col componentClass={ControlLabel} md={2} className={"text-left"}>
+                Email*
+              </Col>
+              <Col md={10}>
+                <FormControl
+                  type="email"
+                  placeholder="Email"
+                  defaultValue={this.state.createAdminData.emailAddress}
+                  onChange={e => {
+                    this.setState({
+                      createAdminData: {
+                        ...this.state.createAdminData,
+                        emailAddress: e.target.value
+                      },
+                      requiredEmail: null
+                    });
+                  }}
+                />
+                {this.state.requiredEmail && (
+                  <HelpBlock>Please fill in the field</HelpBlock>
                 )}
               </Col>
             </FormGroup>
@@ -214,50 +246,23 @@ export class Admin extends Component {
           <Row>
             <Col md={12}>
               <div className="button-row">
-                <div className="pull-left">
-                  {/* BACK BUTTON */}
-
-                  <Button
-                    className={"btn-success"}
-                    onClick={() => this.props.changeStepOfCreateGroup("Limits")}
-                  >
-                    <Glyphicon glyph="glyphicon glyphicon-backward" />
-                    &nbsp; Back
-                  </Button>
-                </div>
-
                 <div className="pull-right">
                   {/* CREATE & FINISH */}
-                  <Link
-                    to={`/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}/groups/${this.props.createdGroup.groupId}`}
+                  <Button
+                    onClick={() => this.createAdmin()}
+                    className={"btn-primary"}
                   >
-                    <Button
-                      onClick={() => this.createAdmin()}
-                      className={"btn-primary"}
-                    >
-                      <Glyphicon glyph="glyphicon glyphicon-ok" />
-                      {this.state.creating ? "Creating..." : "Create"}
-                    </Button>
-                  </Link>
+                    <Glyphicon glyph="glyphicon glyphicon-ok" />
+                    {this.state.creating ? "Creating..." : "Create"}
+                  </Button>
                 </div>
-              </div>
-            </Col>
-          </Row>
-          <Row>
-            <Col md={12}>
-              <div className="button-row">
-                <div className="pull-right">
+                <div className="pull-right link-button">
                   <Link
-                    to={`/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}/groups/${this.props.createdGroup.groupId}`}
+                    to={`/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}`}
                   >
-                    {/* SKIP & FINISH */}
-                    <Button
-                      onClick={() => this.props.refuseCreateGroup()}
-                      className={"btn-warning"}
-                    >
-                      <Glyphicon glyph="glyphicon glyphicon-stop" />
-                      &nbsp; Skip
-                    </Button>
+                    <div onClick={() => this.props.refuseCreateGroup()}>
+                      Quit wizard
+                    </div>
                   </Link>
                 </div>
               </div>
@@ -283,6 +288,10 @@ export class Admin extends Component {
       this.setState({ userIdError: "error" });
       return;
     }
+    if (!createAdminData.emailAddress) {
+      this.setState({ requiredEmail: "error" });
+      return;
+    }
     if (createAdminData.password.length < 6) {
       this.setState({ passwordLenthError: "error" });
       return;
@@ -305,7 +314,7 @@ export class Admin extends Component {
         )
         .then(() => {
           this.props.history.push(
-            `/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}`
+            `/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}/groups/${this.props.createdGroup.groupId}`
           );
           this.props.refuseCreateGroup();
         })

@@ -32,22 +32,24 @@ export class Admins extends Component {
   };
 
   fetchAdmins = () => {
-    this.props
-      .fetchGetAdminsByGroupId(this.props.tenantId, this.props.groupId)
-      .then(() =>
-        this.setState(
-          {
-            admins: this.props.admins.sort((a, b) => {
-              if (a.userId < b.userId) return -1;
-              if (a.userId > b.userId) return 1;
-              return 0;
-            }),
-            isLoading: false,
-            sortedBy: "userId"
-          },
-          () => this.pagination()
+    this.setState({ isLoading: true }, () =>
+      this.props
+        .fetchGetAdminsByGroupId(this.props.tenantId, this.props.groupId)
+        .then(() =>
+          this.setState(
+            {
+              admins: this.props.admins.sort((a, b) => {
+                if (a.userId < b.userId) return -1;
+                if (a.userId > b.userId) return 1;
+                return 0;
+              }),
+              isLoading: false,
+              sortedBy: "userId"
+            },
+            () => this.pagination()
+          )
         )
-      );
+    );
   };
 
   componentDidMount() {
@@ -55,27 +57,24 @@ export class Admins extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.admins.length !== this.props.admins.length) {
+    if (
+      prevProps.admins.length !== this.props.admins.length ||
+      (this.props.refreshTab !== prevProps.refreshTab && this.props.refreshTab)
+    ) {
       this.fetchAdmins();
     }
   }
 
   render() {
-    const {
-      isLoading,
-      countPerPage,
-      pagination,
-      paginationAdmins,
-      page
-    } = this.state;
-    if (isLoading && pagination) {
+    const { isLoading, countPerPage, paginationAdmins, page } = this.state;
+    if (isLoading) {
       return <Loading />;
     }
     return (
       <React.Fragment>
         <Row className={"margin-top-2"}>
           <Col mdOffset={1} md={10}>
-            <InputGroup className={"margin-left-negative-4"}>
+            <InputGroup>
               <InputGroup.Addon>
                 <Glyphicon glyph="lyphicon glyphicon-search" />
               </InputGroup.Addon>
@@ -104,9 +103,7 @@ export class Admins extends Component {
           </Col>
           <Col md={1}>
             <Link
-              to={`/provisioning/${this.props.match.params.gwName}/tenants/${
-                this.props.tenantId
-              }/groups/${this.props.groupId}/addadmin`}
+              to={`/provisioning/${this.props.match.params.gwName}/tenants/${this.props.tenantId}/groups/${this.props.groupId}/addadmin`}
             >
               <Glyphicon
                 className={"x-large"}

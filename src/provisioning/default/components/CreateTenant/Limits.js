@@ -2,6 +2,8 @@ import React, { Component } from "react";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 
+import { Link } from "react-router-dom";
+
 import {
   fetchGetTenantLicenses,
   fetchGetTrunkByTenantID,
@@ -9,7 +11,8 @@ import {
   fetchPutUpdateGroupServicesByTenantId,
   fetchPutUpdateTenantServicePacks,
   showHideAdditionalServicesTenant,
-  changeStepOfCreateTenant
+  changeStepOfCreateTenant,
+  refuseCreateTenant
 } from "../../store/actions";
 
 import Panel from "react-bootstrap/lib/Panel";
@@ -42,7 +45,6 @@ export class Limits extends Component {
     editTrunkLicenses: false,
     editMaxBursting: false,
     editServicePacks: false,
-    editGroupServices: false,
     indexOfService: 0,
     showMore: true
   };
@@ -375,8 +377,8 @@ export class Limits extends Component {
                           />
                         ) : (
                           <FormattedMessage
-                            id="No_service_packs"
-                            defaultMessage="No service packs were found"
+                            id="No_service_found"
+                            defaultMessage="No services were found"
                           />
                         )}
                         {editGroupServices && (
@@ -423,23 +425,23 @@ export class Limits extends Component {
           </Row>
           <Row>
             <div class="button-row">
-              <div class="pull-left">
-                <Button
-                  className={"btn-success"}
-                  onClick={() => this.props.changeStepOfCreateTenant("Admin")}
-                >
-                  <Glyphicon glyph="glyphicon glyphicon-ok" />
-                  &nbsp; Finish
-                </Button>
-              </div>
               <div class="pull-right">
                 <Button
                   onClick={() => this.props.changeStepOfCreateTenant("Admin")}
                   className={"btn-primary"}
                 >
                   <Glyphicon glyph="glyphicon glyphicon-forward" />
-                  &nbsp; Assign licenses
+                  &nbsp; Next
                 </Button>
+              </div>
+              <div className="pull-right link-button">
+                <Link
+                  to={`/provisioning/${this.props.match.params.gwName}/tenants`}
+                >
+                  <div onClick={() => this.props.refuseCreateTenant()}>
+                    Quit wizard
+                  </div>
+                </Link>
               </div>
             </div>
           </Row>
@@ -608,20 +610,14 @@ export class Limits extends Component {
       .then(() => this.setState({ editGroupServices: false }));
   };
 
-  updateServicePacks = () => {
-    const packs = [...this.state.servicePacks];
-    const arrayOfPromise = [];
-    packs.forEach(pack => {
-      const clearPack = removeEmpty(pack);
-      arrayOfPromise.push(
-        this.props.fetchPutUpdateTenantServicePacks(
-          this.props.createdTenant.tenantId,
-          clearPack.name,
-          clearPack
-        )
-      );
-    });
-    Promise.all(arrayOfPromise)
+  updateServicePacks = name => {
+    const pack = this.state.servicePacks.find(el => el.name === name);
+    this.props
+      .fetchPutUpdateTenantServicePacks(
+        this.props.createdTenant.tenantId,
+        pack.name,
+        pack
+      )
       .then(() => this.fetchData())
       .then(() => this.setState({ editServicePacks: false }));
   };
@@ -643,7 +639,8 @@ const mapDispatchToProps = {
   fetchPutUpdateGroupServicesByTenantId,
   fetchPutUpdateTenantServicePacks,
   showHideAdditionalServicesTenant,
-  changeStepOfCreateTenant
+  changeStepOfCreateTenant,
+  refuseCreateTenant
 };
 
 export default withRouter(

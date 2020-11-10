@@ -41,21 +41,23 @@ class Tenants extends Component {
   }
 
   fetchRequsts = () => {
-    this.props.fetchGetTenants(this.cancelLoad).then(() => {
-      const sortedTenants = [...this.props.tenants];
-      this.setState(
-        {
-          tenants: sortedTenants.sort((a, b) => {
-            if (a.tenantId < b.tenantId) return -1;
-            if (a.tenantId > b.tenantId) return 1;
-            return 0;
-          }),
-          sortedBy: "id",
-          isLoading: false
-        },
-        () => this.pagination()
-      );
-    });
+    this.setState({ isLoading: true }, () =>
+      this.props.fetchGetTenants(this.cancelLoad).then(() => {
+        const sortedTenants = [...this.props.tenants];
+        this.setState(
+          {
+            tenants: sortedTenants.sort((a, b) => {
+              if (a.tenantId < b.tenantId) return -1;
+              if (a.tenantId > b.tenantId) return 1;
+              return 0;
+            }),
+            sortedBy: "id",
+            isLoading: false
+          },
+          () => this.pagination()
+        );
+      })
+    );
     this.props.refuseCreateTenant();
   };
 
@@ -64,24 +66,32 @@ class Tenants extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (
-      prevProps.tenants.length !== this.props.tenants.length ||
-      prevProps.match.params.gwName !== this.props.match.params.gwName
-    ) {
+    if (prevProps.match.params.gwName !== this.props.match.params.gwName) {
       this.fetchRequsts();
+    }
+    if (prevProps.tenants.length !== this.props.tenants.length) {
+      const sortedTenants = [...this.props.tenants];
+      this.setState({ isLoading: true }, () =>
+        this.setState(
+          {
+            tenants: sortedTenants.sort((a, b) => {
+              if (a.tenantId < b.tenantId) return -1;
+              if (a.tenantId > b.tenantId) return 1;
+              return 0;
+            }),
+            sortedBy: "id",
+            isLoading: false
+          },
+          () => this.pagination()
+        )
+      );
     }
   }
 
   render() {
-    const {
-      isLoading,
-      countPerPage,
-      pagination,
-      paginationTenants,
-      page
-    } = this.state;
+    const { countPerPage, paginationTenants, page } = this.state;
 
-    if (isLoading && pagination) {
+    if (this.state.isLoading) {
       return <Loading />;
     }
 
@@ -93,7 +103,7 @@ class Tenants extends Component {
         <div className={"panel-body"}>
           <Row>
             <Col mdOffset={1} md={10}>
-              <InputGroup className={"margin-left-negative-4"}>
+              <InputGroup>
                 <InputGroup.Addon>
                   <Glyphicon glyph="lyphicon glyphicon-search" />
                 </InputGroup.Addon>
@@ -181,13 +191,6 @@ class Tenants extends Component {
                             onClick={this.sortByType}
                           />
                         </th>
-                        <th style={{ width: "24%" }}>
-                          <FormattedMessage
-                            id="reseller"
-                            defaultMessage="Reseller"
-                          />
-                          <Glyphicon glyph="glyphicon glyphicon-sort" />
-                        </th>
                         <th style={{ width: "4%" }} />
                       </tr>
                     </thead>
@@ -196,7 +199,7 @@ class Tenants extends Component {
                         <Tenant
                           key={t.tenantId}
                           t={t}
-                          onReload={this.props.fetchGetTenants}
+                          onReload={this.fetchRequsts}
                           {...this.props}
                         />
                       ))}

@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 
+import Select from "react-select";
 import FormGroup from "react-bootstrap/lib/FormGroup";
 import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import FormControl from "react-bootstrap/lib/FormControl";
@@ -27,22 +28,39 @@ class Details extends Component {
     updateMassage: ""
   };
 
+  fetchReq = () => {
+    this.setState({ isLoading: true }, () =>
+      this.props
+        .fetchGetGroupById(
+          this.props.match.params.tenantId,
+          this.props.match.params.groupId
+        )
+        .then(() =>
+          this.setState({
+            group: this.props.group,
+            isLoading: false,
+            cliNumber: {
+              value: this.props.group.cliPhoneNumber,
+              label: this.props.group.cliPhoneNumber
+                ? this.props.group.cliPhoneNumber
+                : "No number"
+            }
+          })
+        )
+    );
+  };
+
   componentDidMount() {
-    this.props
-      .fetchGetGroupById(
-        this.props.match.params.tenantId,
-        this.props.match.params.groupId
-      )
-      .then(() =>
-        this.setState({
-          group: this.props.group,
-          isLoading: false
-        })
-      );
+    this.fetchReq();
   }
 
-  componentWillUnmount() {
-    clearTimeout(this.timer);
+  componentDidUpdate(prevProps) {
+    if (
+      this.props.refreshTab !== prevProps.refreshTab &&
+      this.props.refreshTab
+    ) {
+      this.fetchReq();
+    }
   }
 
   render() {
@@ -207,7 +225,12 @@ class Details extends Component {
                 Calling Line Number
               </Col>
               <Col md={9}>
-                <FormControl
+                <Select
+                  value={this.state.cliNumber}
+                  onChange={selected => this.setState({ cliNumber: selected })}
+                  options={this.props.fullListGroupNumber}
+                />
+                {/* <FormControl
                   type="text"
                   placeholder="Calling Line Id Name"
                   defaultValue={
@@ -221,7 +244,7 @@ class Details extends Component {
                       }
                     });
                   }}
-                />
+                /> */}
               </Col>
             </FormGroup>
             <FormGroup controlId="cliName">
@@ -271,27 +294,15 @@ class Details extends Component {
   }
 
   updateGroupDetails = () => {
-    const { group } = this.state;
+    const { group, cliNumber } = this.state;
     const data = {
-      ...group
+      ...group,
+      cliPhoneNumber: cliNumber.value
     };
-    this.setState({ updateMassage: "Loading..." }, () =>
-      this.props
-        .fetchPutUpdateGroupDetails(
-          this.props.match.params.tenantId,
-          this.props.match.params.groupId,
-          data
-        )
-        .then(() =>
-          this.setState(
-            { updateMassage: "Group details is updated" },
-            () =>
-              (this.timer = setTimeout(
-                () => this.setState({ updateMassage: "" }),
-                3000
-              ))
-          )
-        )
+    this.props.fetchPutUpdateGroupDetails(
+      this.props.match.params.tenantId,
+      this.props.match.params.groupId,
+      data
     );
   };
 }
@@ -302,7 +313,8 @@ const mapDispatchToProps = {
 };
 
 const mapStateToProps = state => ({
-  group: state.group
+  group: state.group,
+  fullListGroupNumber: state.fullListGroupNumber
 });
 
 export default withRouter(

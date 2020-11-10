@@ -11,7 +11,6 @@ import Button from "react-bootstrap/lib/Button";
 import FormControl from "react-bootstrap/lib/FormControl";
 import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import InputGroup from "react-bootstrap/lib/InputGroup";
-import Checkbox from "react-bootstrap/lib/Checkbox";
 import FormGroup from "react-bootstrap/lib/FormGroup";
 import HelpBlock from "react-bootstrap/lib/HelpBlock";
 
@@ -30,13 +29,15 @@ export class Admin extends Component {
       firstName: "",
       lastName: "",
       language: "English",
-      password: ""
+      password: "",
+      emailAddress: ""
     },
     passwordConfirmation: "",
     passwordNotMatch: null,
     userIdError: null,
     passwordLenthError: null,
-    emptyFieldError: ""
+    emptyFieldError: "",
+    requiredEmail: null
   };
 
   render() {
@@ -103,6 +104,35 @@ export class Admin extends Component {
                   <HelpBlock>
                     Must be greater than 6 and less than 80 characters
                   </HelpBlock>
+                )}
+              </Col>
+            </FormGroup>
+          </Row>
+          <Row className={"margin-1"}>
+            <FormGroup
+              controlId="email"
+              validationState={this.state.requiredEmail}
+            >
+              <Col componentClass={ControlLabel} md={2} className={"text-left"}>
+                Email*
+              </Col>
+              <Col md={10}>
+                <FormControl
+                  type="email"
+                  placeholder="Email"
+                  defaultValue={this.state.createAdminData.emailAddress}
+                  onChange={e => {
+                    this.setState({
+                      createAdminData: {
+                        ...this.state.createAdminData,
+                        emailAddress: e.target.value
+                      },
+                      requiredEmail: null
+                    });
+                  }}
+                />
+                {this.state.requiredEmail && (
+                  <HelpBlock>Please fill in the field</HelpBlock>
                 )}
               </Col>
             </FormGroup>
@@ -214,19 +244,6 @@ export class Admin extends Component {
           <Row>
             <Col md={12}>
               <div class="button-row">
-                <div class="pull-left">
-                  {/* BACK BUTTON */}
-                  <Button
-                    className={"btn-success"}
-                    onClick={() =>
-                      this.props.changeStepOfCreateTenant("Limits")
-                    }
-                  >
-                    <Glyphicon glyph="glyphicon glyphicon-backward" />
-                    &nbsp; Back
-                  </Button>
-                </div>
-
                 <div class="pull-right">
                   {/* CREATE & FINISH */}
                   <Button
@@ -237,21 +254,13 @@ export class Admin extends Component {
                     &nbsp; Create
                   </Button>
                 </div>
-              </div>
-            </Col>
-          </Row>
-          <Row>
-            <Col md={12}>
-              <div class="button-row">
-                <div class="pull-right">
+                <div className="pull-right link-button">
                   <Link
-                    to={`/provisioning/${this.props.match.params.gwName}/tenants/${this.props.createdTenant.tenantId}`}
+                    to={`/provisioning/${this.props.match.params.gwName}/tenants`}
                   >
-                    {/* SKIP & FINISH */}
-                    <Button className={"btn-warning"}>
-                      <Glyphicon glyph="glyphicon glyphicon-stop" />
-                      &nbsp; Skip
-                    </Button>
+                    <div onClick={() => this.props.refuseCreateTenant()}>
+                      Quit wizard
+                    </div>
                   </Link>
                 </div>
               </div>
@@ -275,6 +284,10 @@ export class Admin extends Component {
     const { createAdminData, passwordConfirmation } = this.state;
     if (createAdminData.userId < 6 || createAdminData.userId > 80) {
       this.setState({ userIdError: "error" });
+      return;
+    }
+    if (!createAdminData.emailAddress) {
+      this.setState({ requiredEmail: "error" });
       return;
     }
     if (createAdminData.password.length < 6) {

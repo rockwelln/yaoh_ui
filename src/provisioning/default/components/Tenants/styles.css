@@ -54,6 +54,10 @@
   margin-right: 20px !important;
 }
 
+.margin-bottom-1 {
+  margin-bottom: 10px !important;
+}
+
 .indent-top-bottom-1 {
   margin-top: 10px !important;
   margin-bottom: 10px !important;
@@ -219,6 +223,10 @@ textarea {
   flex-basis: 66.66%;
 }
 
+.height-10 {
+  height: 100px !important;
+}
+
 .height-30 {
   height: 300px !important;
 }
@@ -281,4 +289,30 @@ textarea {
 }
 .nav-tabs > li {
   float: none;
+}
+
+.fake-link {
+  cursor: pointer;
+  color: #337ab7;
+  text-decoration: none;
+}
+
+.fake-link:hover {
+  text-decoration: underline;
+}
+
+.link-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 34px;
+  margin-right: 10px;
+}
+
+.template-text-area {
+  width: 100%;
+  height: 100%;
+  height: -moz-available;
+  height: -webkit-fill-available;
+  height: stretch;
 }

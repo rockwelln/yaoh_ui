@@ -32,29 +32,34 @@ export class Devices extends Component {
   };
 
   fetchDevices = () => {
-    this.props
-      .fetchGetDevicesByGroupId(this.props.tenantId, this.props.groupId)
-      .then(() =>
-        this.setState(
-          {
-            devices: this.props.devices.sort((a, b) => {
-              if (a.deviceName < b.deviceName) return -1;
-              if (a.deviceName > b.deviceName) return 1;
-              return 0;
-            }),
-            isLoading: false,
-            sortedBy: "deviceName"
-          },
-          () => this.pagination()
+    this.setState({ isLoading: true }, () =>
+      this.props
+        .fetchGetDevicesByGroupId(this.props.tenantId, this.props.groupId)
+        .then(() =>
+          this.setState(
+            {
+              devices: this.props.devices.sort((a, b) => {
+                if (a.deviceName < b.deviceName) return -1;
+                if (a.deviceName > b.deviceName) return 1;
+                return 0;
+              }),
+              isLoading: false,
+              sortedBy: "deviceName"
+            },
+            () => this.pagination()
+          )
         )
-      );
+    );
   };
 
   componentDidMount() {
     this.fetchDevices();
   }
   componentDidUpdate(prevProps) {
-    if (prevProps.devices.length !== this.props.devices.length) {
+    if (
+      prevProps.devices.length !== this.props.devices.length ||
+      (this.props.refreshTab !== prevProps.refreshTab && this.props.refreshTab)
+    ) {
       this.fetchDevices();
     }
   }
@@ -63,13 +68,12 @@ export class Devices extends Component {
     const {
       devices,
       isLoading,
-      pagination,
       paginationDevices,
       countPerPage,
       page
     } = this.state;
 
-    if ((isLoading, pagination)) {
+    if (isLoading) {
       return <Loading />;
     }
 
@@ -77,7 +81,7 @@ export class Devices extends Component {
       <React.Fragment>
         <Row className={"margin-top-2"}>
           <Col mdOffset={1} md={10}>
-            <InputGroup className={"margin-left-negative-4"}>
+            <InputGroup>
               <InputGroup.Addon>
                 <Glyphicon glyph="lyphicon glyphicon-search" />
               </InputGroup.Addon>

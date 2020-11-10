@@ -30,7 +30,8 @@ const SingleEdit = props => {
     isEditUserLimit,
     tenantId,
     apiRequest,
-    pack
+    pack,
+    trunkLicensesMax
   } = props;
 
   const [groupServiceMax, setGroupServiceMax] = useState();
@@ -61,7 +62,7 @@ const SingleEdit = props => {
       </Modal.Header>
       <Modal.Body>
         <Table>
-          {!isEditTunkLicenses && (
+          {!isEditTunkLicenses ? (
             <thead>
               <tr>
                 <th width="50%" className={"licenses-th"} />
@@ -85,6 +86,11 @@ const SingleEdit = props => {
                     <FormattedMessage id="limited" defaultMessage="limited" />
                   )}
                 </th>
+                {isEditGroup && !isEditUserLimit && (
+                  <th className={"licenses-th"}>
+                    <FormattedMessage id="max" defaultMessage="max" />
+                  </th>
+                )}
                 {!isEditTunkLicenses && !isEditUserLimit && (
                   <th className={"text-center licenses-th"}>
                     {String.fromCharCode(INFINITY)}
@@ -92,13 +98,25 @@ const SingleEdit = props => {
                 )}
               </tr>
             </thead>
+          ) : (
+            <thead>
+              <tr>
+                <th className={"licenses-th"} />
+                <th className={"licenses-th"} />
+                <th className={"licenses-th"}>
+                  <FormattedMessage id="max" defaultMessage="max" />
+                </th>
+              </tr>
+            </thead>
           )}
           <tbody>
             <tr>
               <td className={"vertical-middle"}>{licenseTitle}</td>
-              <td className={"text-right vertical-middle"}>
-                {(isEditPacks || isEditUserLimit) && allocated}
-              </td>
+              {!isEditTunkLicenses && (
+                <td className={"text-right vertical-middle"}>
+                  {(isEditPacks || isEditUserLimit) && allocated}
+                </td>
+              )}
               <td className={`${isEditPacks ? "text-center" : "text-right"}`}>
                 <FormControl
                   type="number"
@@ -114,6 +132,12 @@ const SingleEdit = props => {
                   }}
                 />
               </td>
+              {isEditTunkLicenses && (
+                <td className={"vertical-middle"}>{trunkLicensesMax}</td>
+              )}
+              {isEditGroup && !isEditUserLimit && (
+                <td className={"vertical-middle"}>{groupServiceMax}</td>
+              )}
               {!isEditTunkLicenses && !isEditUserLimit && (
                 <td className={"text-center"}>
                   <FormControl
@@ -136,7 +160,10 @@ const SingleEdit = props => {
         >
           <FormattedMessage id="cancel" defaultMessage="Cancel" />
         </Button>
-        <Button className={"width-8 btn-success"} onClick={() => onSave()}>
+        <Button
+          className={"width-8 btn-success"}
+          onClick={() => onSave(licenseTitle)}
+        >
           <FormattedMessage id="save" defaultMessage="Save" />
         </Button>
       </Modal.Footer>

@@ -28,8 +28,7 @@ const initialState = {
   userServices: [],
   userServicePacks: [],
   groupTrunkErrorMassage: "",
-  createTenantStep: "Limits",
-  //createTenantStep: "Basic",
+  createTenantStep: "Basic",
   createTenant: {
     tenantId: "",
     type: "",
@@ -70,7 +69,7 @@ const initialState = {
       phoneNumber: "",
       emailAddress: ""
     },
-    addressInformation: {
+    address: {
       addressLine1: "",
       addressLine2: "",
       city: "",
@@ -120,7 +119,14 @@ const initialState = {
   trunkGroupsTemplates: [],
   trunkGroupNotAuthorisedGroup: true,
   trunkGroupTemplate: {},
-  selfcareUrl: {}
+  selfcareUrl: {},
+  timeZones: [],
+  globalSearchNumber: undefined,
+  bwksLicenses: undefined,
+  tenantMobileNumbers: [],
+  groupMobileNumbers: [],
+  availableMobileNumbers: [],
+  fullListGroupNumber: []
 };
 
 function mainReducer(state = initialState, action) {
@@ -200,9 +206,31 @@ function mainReducer(state = initialState, action) {
           : "",
         phoneChecked: false
       }));
+      const fullListGroupNumber = [{ value: "", label: "No number" }];
+      phoneNumbers.forEach(el => {
+        if (el.rangeEnd) {
+          const length = Number(el.rangeEnd) - Number(el.rangeStart);
+          for (let i = 0; i <= length; i++) {
+            fullListGroupNumber.push({
+              value: `${el.rangeStart[0] === "+" ? "+" : ""}${Number(
+                el.rangeStart
+              ) + i}`,
+              label: `${el.rangeStart[0] === "+" ? "+" : ""}${Number(
+                el.rangeStart
+              ) + i}`
+            });
+          }
+        } else {
+          fullListGroupNumber.push({
+            value: el.rangeStart,
+            label: el.rangeStart
+          });
+        }
+      });
       return {
         ...state,
-        phoneNumbersByGroup: phoneNumbers
+        phoneNumbersByGroup: phoneNumbers,
+        fullListGroupNumber
       };
     }
     case actionType.GET_LICENSES_BY_GROUP_ID: {
@@ -594,6 +622,63 @@ function mainReducer(state = initialState, action) {
         selfcareUrl
       };
     }
+    case actionType.GET_TIMEZONES: {
+      return {
+        ...state,
+        timeZones: action.data.timeZones
+      };
+    }
+    case actionType.GET_GLOBAL_SEARCH_NUMBERS: {
+      return {
+        ...state,
+        globalSearchNumber: action.data
+      };
+    }
+    case actionType.GET_BWKS_LICENSES: {
+      return {
+        ...state,
+        bwksLicenses: action.data
+      };
+    }
+    case actionType.GET_MOBILE_NUMBERS_FOR_TENANT: {
+      const tenantMobileNumbers = [
+        ...action.data.assigned_numbers.map(num => ({
+          ...num,
+          phoneChecked: false
+        })),
+        ...action.data.available_numbers.map(num => ({
+          phoneNumber: num,
+          assignedToGroup: "",
+          canBeDeleted: true,
+          phoneChecked: false
+        }))
+      ];
+      return {
+        ...state,
+        tenantMobileNumbers,
+        availableMobileNumbers: action.data.available_numbers
+      };
+    }
+    case actionType.GET_MOBILE_NUMBERS_FOR_GROUP: {
+      const groupMobileNumbers = [
+        ...action.data.assigned_numbers.map(num => ({
+          ...num,
+          phoneChecked: false
+        })),
+        ...action.data.available_numbers.map(num => ({
+          phoneNumber: num,
+          firstName: "",
+          lastName: "",
+          userId: "",
+          extension: "",
+          phoneChecked: false
+        }))
+      ];
+      return {
+        ...state,
+        groupMobileNumbers
+      };
+    }
     case actionType.POST_CREATE_GROUP_ADMIN: {
       return {
         ...state,
@@ -659,6 +744,40 @@ function mainReducer(state = initialState, action) {
         }
       };
     }
+    case actionType.POST_ADD_MOBILE_NUMBER_TO_TENANT: {
+      const warning = action.data.warning;
+      const added = action.data.result.filter(
+        number => number.status === "added"
+      );
+      const rejected = action.data.result.filter(
+        number => number.status === "rejected"
+      );
+      return {
+        ...state,
+        addedNumbersToTenant: {
+          warning,
+          added,
+          rejected
+        }
+      };
+    }
+    case actionType.POST_ADD_MOBILE_NUMBER_TO_GROUP: {
+      const warning = action.data.warning;
+      const added = action.data.result.filter(
+        number => number.status === "added"
+      );
+      const rejected = action.data.result.filter(
+        number => number.status === "rejected"
+      );
+      return {
+        ...state,
+        addedNumbersToGroup: {
+          warning,
+          added,
+          rejected
+        }
+      };
+    }
     case actionType.POST_CREATE_USER_TO_GROUP: {
       return {
         ...state,
@@ -704,6 +823,16 @@ function mainReducer(state = initialState, action) {
       };
     }
     case actionType.POST_CREATE_DEVICE_IN_GROUP: {
+      return {
+        ...state
+      };
+    }
+    case actionType.POST_CREATE_TRUNK_GROUP_USER: {
+      return {
+        ...state
+      };
+    }
+    case actionType.POST_CREATE_TEMPLATE: {
       return {
         ...state
       };
@@ -802,6 +931,12 @@ function mainReducer(state = initialState, action) {
         device: action.data
       };
     }
+    case actionType.PUT_UPDATE_TEMPLATE: {
+      return {
+        ...state,
+        templateDetails: action.data
+      };
+    }
     case actionType.DELETE_TENANT: {
       return {
         ...state
@@ -870,6 +1005,23 @@ function mainReducer(state = initialState, action) {
       };
     }
     case actionType.DELETE_TRUNK_GROUP_FROM_TENANT: {
+      return {
+        ...state
+      };
+    }
+    case actionType.DELETE_MOBILE_NUMBER_FROM_TENANT: {
+      return {
+        ...state,
+        phoneDeleted: !state.phoneDeleted
+      };
+    }
+    case actionType.DELETE_MOBILE_NUMBER_FROM_GROUP: {
+      return {
+        ...state,
+        phoneDeleted: !state.phoneDeleted
+      };
+    }
+    case actionType.DELETE_TEMPLATE: {
       return {
         ...state
       };
@@ -1036,6 +1188,15 @@ function mainReducer(state = initialState, action) {
         }
       };
     }
+    case actionType.CHANGE_TIME_ZONE_OF_GROUP: {
+      return {
+        ...state,
+        createGroup: {
+          ...state.createGroup,
+          timeZone: action.data
+        }
+      };
+    }
     case actionType.CHANGE_NAME_OF_GROUP: {
       return {
         ...state,
@@ -1150,7 +1311,8 @@ function mainReducer(state = initialState, action) {
     case actionType.TRUNK_NOT_AUTHORISED_TENANT: {
       return {
         ...state,
-        tenantLicenses: false
+        tenantLicenses: false,
+        tenantTrunkGroups: {}
       };
     }
     case actionType.SHOW_HIDE_ADDITIONAL_SERVICES_TENANT: {
@@ -1187,6 +1349,12 @@ function mainReducer(state = initialState, action) {
       return {
         ...state,
         trunkGroupNotAuthorisedGroup: false
+      };
+    }
+    case actionType.CLEAR_SEARCH_NUMBER: {
+      return {
+        ...state,
+        globalSearchNumber: undefined
       };
     }
     default:

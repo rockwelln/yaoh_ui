@@ -83,7 +83,7 @@ export class CategoryPage extends Component {
         <div className={"panel-body"}>
           <Row className={"margin-top-2"}>
             <Col mdOffset={1} md={10}>
-              <InputGroup className={"margin-left-negative-4"}>
+              <InputGroup>
                 <InputGroup.Addon>
                   <Glyphicon glyph="lyphicon glyphicon-search" />
                 </InputGroup.Addon>
@@ -110,6 +110,11 @@ export class CategoryPage extends Component {
               <Glyphicon
                 className={"x-large"}
                 glyph="glyphicon glyphicon-plus-sign"
+                onClick={() =>
+                  this.props.history.push(
+                    `/provisioning/${this.props.match.params.gwName}/templates/${this.props.match.params.categoryName}/addtemplate`
+                  )
+                }
               />
             </Col>
           </Row>

@@ -32,18 +32,20 @@ export class GroupsTab extends Component {
   };
 
   fetchReq() {
-    this.props.fetchGetGroupsByTenantId(this.props.tenantId).then(() =>
-      this.setState(
-        {
-          groups: this.props.groups.sort((a, b) => {
-            if (a.groupId < b.groupId) return -1;
-            if (a.groupId > b.groupId) return 1;
-            return 0;
-          }),
-          isLoading: false,
-          sortedBy: "id"
-        },
-        () => this.pagination()
+    this.setState({ isLoading: true }, () =>
+      this.props.fetchGetGroupsByTenantId(this.props.tenantId).then(() =>
+        this.setState(
+          {
+            groups: this.props.groups.sort((a, b) => {
+              if (a.groupId < b.groupId) return -1;
+              if (a.groupId > b.groupId) return 1;
+              return 0;
+            }),
+            isLoading: false,
+            sortedBy: "id"
+          },
+          () => this.pagination()
+        )
       )
     );
   }
@@ -53,21 +55,18 @@ export class GroupsTab extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.groups.length !== this.props.groups.length) {
+    if (
+      prevProps.groups.length !== this.props.groups.length ||
+      (this.props.refreshTab !== prevProps.refreshTab && this.props.refreshTab)
+    ) {
       this.fetchReq();
     }
   }
 
   render() {
-    const {
-      isLoading,
-      countPerPage,
-      pagination,
-      paginationGroups,
-      page
-    } = this.state;
+    const { isLoading, countPerPage, paginationGroups, page } = this.state;
 
-    if (isLoading && pagination) {
+    if (isLoading) {
       return <Loading />;
     }
 
@@ -75,7 +74,7 @@ export class GroupsTab extends Component {
       <React.Fragment>
         <Row className={"margin-top-2"}>
           <Col mdOffset={1} md={10}>
-            <InputGroup className={"margin-left-negative-4"}>
+            <InputGroup>
               <InputGroup.Addon>
                 <Glyphicon glyph="lyphicon glyphicon-search" />
               </InputGroup.Addon>
@@ -103,9 +102,7 @@ export class GroupsTab extends Component {
           </Col>
           <Col md={1}>
             <Link
-              to={`/provisioning/${this.props.match.params.gwName}/tenants/${
-                this.props.match.params.tenantId
-              }/addgroup`}
+              to={`/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}/addgroup`}
             >
               <Glyphicon
                 className={"x-large"}
@@ -141,21 +138,21 @@ export class GroupsTab extends Component {
                 <Table hover>
                   <thead>
                     <tr>
-                      <th style={{ width: "24%" }}>
+                      <th style={{ width: "32%" }}>
                         <FormattedMessage id="tenant-id" defaultMessage="ID" />
                         <Glyphicon
                           glyph="glyphicon glyphicon-sort"
                           onClick={this.sortByID}
                         />
                       </th>
-                      <th style={{ width: "24%" }}>
+                      <th style={{ width: "32%" }}>
                         <FormattedMessage id="name" defaultMessage="Name" />
                         <Glyphicon
                           glyph="glyphicon glyphicon-sort"
                           onClick={this.sortByName}
                         />
                       </th>
-                      <th style={{ width: "24%" }}>
+                      <th style={{ width: "32%" }}>
                         <FormattedMessage
                           id="type"
                           defaultMessage="User limit"
@@ -164,13 +161,6 @@ export class GroupsTab extends Component {
                           glyph="glyphicon glyphicon-sort"
                           onClick={this.sortByUserLimit}
                         />
-                      </th>
-                      <th style={{ width: "24%" }}>
-                        <FormattedMessage
-                          id="reseller"
-                          defaultMessage="Reseller"
-                        />
-                        <Glyphicon glyph="glyphicon glyphicon-sort" />
                       </th>
                       <th style={{ width: "4%" }} />
                     </tr>

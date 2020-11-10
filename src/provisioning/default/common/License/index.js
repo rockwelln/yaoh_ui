@@ -4,8 +4,6 @@ import Table from "react-bootstrap/lib/Table";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import Button from "react-bootstrap/lib/Button";
 
-import SingleEdit from "./SingleEdit";
-
 import { FormattedMessage } from "react-intl";
 
 const INFINITY = 8734;
@@ -51,7 +49,11 @@ const Licenses = props => {
                   ) : (
                     <React.Fragment>
                       <td className={"text-right licenses-td vertical-middle"}>
-                        {el.currentlyAllocated ? el.currentlyAllocated : 0}
+                        {el.currentlyAllocated
+                          ? el.currentlyAllocated
+                          : el.inUse
+                          ? el.inUse
+                          : 0}
                       </td>
                       <td className={"text-right licenses-td vertical-middle"}>
                         {el.allocated.unlimited

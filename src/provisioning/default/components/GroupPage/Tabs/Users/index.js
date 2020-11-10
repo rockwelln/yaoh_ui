@@ -9,13 +9,13 @@ import FormControl from "react-bootstrap/lib/FormControl";
 import InputGroup from "react-bootstrap/lib/InputGroup";
 import Row from "react-bootstrap/lib/Row";
 import Col from "react-bootstrap/lib/Col";
-import Checkbox from "react-bootstrap/lib/Checkbox";
+//import Checkbox from "react-bootstrap/lib/Checkbox";
 import Pagination from "react-bootstrap/lib/Pagination";
 import { FormattedMessage } from "react-intl";
 
 import Loading from "../../../../common/Loading";
 import User from "./User";
-import DeleteModal from "./DeleteModal";
+//import DeleteModal from "./DeleteModal";
 
 import { fetchGetUsersByGroupId } from "../../../../store/actions";
 
@@ -60,29 +60,24 @@ export class Users extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.users.length !== this.props.users.length) {
+    if (
+      prevProps.users.length !== this.props.users.length ||
+      (this.props.refreshTab !== prevProps.refreshTab && this.props.refreshTab)
+    ) {
       this.setState({ isLoading: true }, () => this.fetchReq());
     }
   }
 
   render() {
-    const {
-      isLoading,
-      page,
-      pagination,
-      countPerPage,
-      paginationUsers,
-      usersForDelete,
-      showDelete
-    } = this.state;
-    if ((isLoading, pagination)) {
+    const { isLoading, page, countPerPage, paginationUsers } = this.state;
+    if (isLoading) {
       return <Loading />;
     }
     return (
       <React.Fragment>
         <Row className={"margin-top-2"}>
           <Col mdOffset={1} md={10}>
-            <InputGroup className={"margin-left-negative-4"}>
+            <InputGroup>
               <InputGroup.Addon>
                 <Glyphicon glyph="lyphicon glyphicon-search" />
               </InputGroup.Addon>

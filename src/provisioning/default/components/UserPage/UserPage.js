@@ -17,7 +17,6 @@ import deepEqual from "../deepEqual";
 import DeleteModal from "./DeleteModal";
 
 import { get } from "../get";
-import {AuthServiceManager} from "../../../../utils";
 
 import {
   fetchGetTenantById,
@@ -32,7 +31,9 @@ class TenantPage extends Component {
     isLoadingGroup: true,
     isLoadingUser: true,
     showDelete: false,
-    isLoadingSCURL: true
+    isLoadingSCURL: true,
+    activeKey: 0,
+    refreshTab: ""
   };
 
   fetchRequsts = () => {
@@ -108,17 +109,17 @@ class TenantPage extends Component {
                 <Button
                   className="btn-primary"
                   onClick={() =>
-                    AuthServiceManager.getValidToken().then(token => {
-                      window.open(
-                        `${
-                          this.props.selfcareUrl.selfcare.url
-                        }/sso?token=${token}&tenant=${
-                          this.props.match.params.tenantId
-                        }&group=${this.props.match.params.groupId}&user=${
-                          this.props.match.params.userName
-                        }`
-                      )
-                    })
+                    window.open(
+                      `${
+                        this.props.selfcareUrl.selfcare.url
+                      }/sso?token=${localStorage.getItem(
+                        "auth_token"
+                      )}&refreshToken=${localStorage.getItem(
+                        "refreshToken"
+                      )}&tenant=${this.props.match.params.tenantId}&group=${
+                        this.props.match.params.groupId
+                      }&user=${this.props.match.params.userName}`
+                    )
                   }
                 >
                   Switch to selfcare portal
@@ -128,24 +129,53 @@ class TenantPage extends Component {
           </div>
         </div>
         <div className={"panel-body"}>
-          <Tabs defaultActiveKey={0} id="tenant_tabs">
+          <Tabs
+            activeKey={this.state.activeKey}
+            id="tenant_tabs"
+            onSelect={this.changeTab}
+          >
             <Tab eventKey={0} title="DETAILS">
-              <Details />
+              <Details refreshTab={this.state.refreshTab === "Details"} />
             </Tab>
             <Tab eventKey={1} title="PHONE NUMBERS">
-              <PhoneNumber />
+              <PhoneNumber
+                refreshTab={this.state.refreshTab === "PhoneNumber"}
+              />
             </Tab>
             <Tab eventKey={2} title="SERVICES">
-              <Services />
+              <Services refreshTab={this.state.refreshTab === "Services"} />
             </Tab>
             <Tab eventKey={3} title="SERVICE PACKS">
-              <ServicesPacks />
+              <ServicesPacks
+                refreshTab={this.state.refreshTab === "ServicesPacks"}
+              />
             </Tab>
           </Tabs>
         </div>
       </React.Fragment>
     );
   }
+
+  changeTab = key => {
+    let refreshTab = "";
+    switch (key) {
+      case 0:
+        refreshTab = "Details";
+        break;
+      case 1:
+        refreshTab = "PhoneNumber";
+        break;
+      case 2:
+        refreshTab = "Services";
+        break;
+      case 3:
+        refreshTab = "ServicesPacks";
+        break;
+      default:
+        refreshTab = "";
+    }
+    this.setState({ activeKey: key, refreshTab });
+  };
 }
 
 const mapDispatchToProps = {

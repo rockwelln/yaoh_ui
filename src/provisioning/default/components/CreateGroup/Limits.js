@@ -29,7 +29,8 @@ import {
   fetchPostAddGroupServicesToGroup,
   fetchGetTenantServicePack,
   showHideAdditionalServiceGroup,
-  fetchGetTenantGroupService
+  fetchGetTenantGroupService,
+  refuseCreateGroup
 } from "../../store/actions";
 
 const INFINITY = 8734;
@@ -47,7 +48,6 @@ export class Licenses extends Component {
     editTrunkLicenses: false,
     editMaxBursting: false,
     editServicePacks: false,
-    editGroupServices: false,
     indexOfService: 0,
     showMore: true,
     editUserLimit: false
@@ -111,19 +111,7 @@ export class Licenses extends Component {
         <div className={"panel-heading"}>
           <Row>
             <Col md={12}>
-              <div className={"header"}>
-                ADD GROUP: usage limits{" "}
-                <Link
-                  to={`/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}`}
-                >
-                  <Button
-                    className={"margin-left-1 btn-danger"}
-                    onClick={() => this.props.refuseCreateTenant()}
-                  >
-                    Cancel
-                  </Button>
-                </Link>
-              </div>
+              <div className={"header"}>ADD GROUP: usage limits</div>
             </Col>
           </Row>
         </div>
@@ -232,6 +220,13 @@ export class Licenses extends Component {
                               this.setState({ editTrunkLicenses: false }, () =>
                                 this.fetchData()
                               )
+                            }
+                            trunkLicensesMax={
+                              this.props.trunkGroups.maxAvailableActiveCalls
+                                .unlimited
+                                ? String.fromCharCode(INFINITY)
+                                : this.props.trunkGroups.maxAvailableActiveCalls
+                                    .maximum
                             }
                             value={this.state.trunkGroups.maxActiveCalls}
                             onChange={this.changeTrunkingLicenses}
@@ -494,8 +489,8 @@ export class Licenses extends Component {
                     />
                   ) : (
                     <FormattedMessage
-                      id="No_service_packs"
-                      defaultMessage="No service packs were found"
+                      id="No_service_found"
+                      defaultMessage="No services were found"
                     />
                   )}
                   {editGroupServices && (
@@ -545,6 +540,15 @@ export class Licenses extends Component {
                   <Glyphicon glyph="glyphicon glyphicon-ok" />
                   &nbsp; Next
                 </Button>
+              </div>
+              <div className="pull-right link-button">
+                <Link
+                  to={`/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}`}
+                >
+                  <div onClick={() => this.props.refuseCreateGroup()}>
+                    Quit wizard
+                  </div>
+                </Link>
               </div>
             </div>
           </Row>
@@ -785,7 +789,8 @@ const mapDispatchToProps = {
   fetchPostAddGroupServicesToGroup,
   fetchGetTenantServicePack,
   showHideAdditionalServiceGroup,
-  fetchGetTenantGroupService
+  fetchGetTenantGroupService,
+  refuseCreateGroup
 };
 
 export default withRouter(

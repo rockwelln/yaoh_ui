@@ -38,59 +38,68 @@ class Details extends Component {
     firstNameError: null,
     lastNameError: null,
     updateMassage: "",
-    isLoadingLanguages: true
+    isLoadingLanguages: true,
+    password: "",
+    confirmPassword: ""
   };
 
-  fetchRequst = () => {
-    this.props.fetchGetLanguages().then(() =>
-      this.setState({
-        isLoadingLanguages: false
-      })
-    );
-    this.props
-      .fetchGetUserByName(
-        this.props.match.params.tenantId,
-        this.props.match.params.groupId,
-        this.props.match.params.userName
-      )
-      .then(() => {
-        this.props.user.accessDeviceEndpoint
-          ? this.props
-              .fetchGetAccessDeviceByName(
-                this.props.match.params.tenantId,
-                this.props.match.params.groupId,
-                this.props.user.accessDeviceEndpoint.accessDevice.name
-              )
-              .then(() =>
-                this.setState({
-                  emailAddress: this.props.user.emailAddress,
-                  firstName: this.props.user.firstName,
-                  lastName: this.props.user.lastName,
-                  cliFirstName: this.props.user.cliFirstName,
-                  cliLastName: this.props.user.cliLastName,
-                  accessDevice: this.props.accessDevice,
-                  language: this.props.user.language,
-                  isLoading: false
-                })
-              )
-          : this.setState({
-              emailAddress: this.props.user.emailAddress,
-              firstName: this.props.user.firstName,
-              lastName: this.props.user.lastName,
-              cliFirstName: this.props.user.cliFirstName,
-              cliLastName: this.props.user.cliLastName,
-              language: this.props.user.language,
-              isLoading: false
-            });
-      });
+  fetchRequest = () => {
+    this.setState({ isLoadingLanguages: true, isLoading: true }, () => {
+      this.props.fetchGetLanguages().then(() =>
+        this.setState({
+          isLoadingLanguages: false
+        })
+      );
+      this.props
+        .fetchGetUserByName(
+          this.props.match.params.tenantId,
+          this.props.match.params.groupId,
+          this.props.match.params.userName
+        )
+        .then(() => {
+          this.props.user.accessDeviceEndpoint
+            ? this.props
+                .fetchGetAccessDeviceByName(
+                  this.props.match.params.tenantId,
+                  this.props.match.params.groupId,
+                  this.props.user.accessDeviceEndpoint.accessDevice.name
+                )
+                .then(() =>
+                  this.setState({
+                    emailAddress: this.props.user.emailAddress,
+                    firstName: this.props.user.firstName,
+                    lastName: this.props.user.lastName,
+                    cliFirstName: this.props.user.cliFirstName,
+                    cliLastName: this.props.user.cliLastName,
+                    accessDevice: this.props.accessDevice,
+                    language: this.props.user.language,
+                    isLoading: false
+                  })
+                )
+            : this.setState({
+                emailAddress: this.props.user.emailAddress,
+                firstName: this.props.user.firstName,
+                lastName: this.props.user.lastName,
+                cliFirstName: this.props.user.cliFirstName,
+                cliLastName: this.props.user.cliLastName,
+                language: this.props.user.language,
+                isLoading: false
+              });
+        });
+    });
   };
 
   componentDidMount() {
-    this.fetchRequst();
+    this.fetchRequest();
   }
 
-  componentWillUnmount() {
-    clearTimeout(this.timer);
+  componentDidUpdate(prevProps) {
+    if (
+      this.props.refreshTab !== prevProps.refreshTab &&
+      this.props.refreshTab
+    ) {
+      this.fetchRequest();
+    }
   }
 
   render() {
@@ -106,7 +115,10 @@ class Details extends Component {
       firstNameError,
       lastNameError,
       updateMassage,
-      isLoadingLanguages
+      isLoadingLanguages,
+      password,
+      confirmPassword,
+      passwordsNotMatch
     } = this.state;
 
     if (isLoading || isLoadingLanguages) {
@@ -255,6 +267,51 @@ class Details extends Component {
                     </option>
                   ))}
                 </FormControl>
+              </Col>
+            </FormGroup>
+            <FormGroup controlId="password" validationState={passwordsNotMatch}>
+              <Col componentClass={ControlLabel} md={3} className={"text-left"}>
+                Password
+              </Col>
+              <Col md={9}>
+                <FormControl
+                  type="password"
+                  placeholder="Password"
+                  defaultValue={password}
+                  onChange={e =>
+                    this.setState({
+                      password: e.target.value,
+                      passwordsNotMatch: null
+                    })
+                  }
+                />
+                {passwordsNotMatch && (
+                  <HelpBlock>Passwords do not match</HelpBlock>
+                )}
+              </Col>
+            </FormGroup>
+            <FormGroup
+              controlId="confirmPassword"
+              validationState={passwordsNotMatch}
+            >
+              <Col componentClass={ControlLabel} md={3} className={"text-left"}>
+                Confirm password
+              </Col>
+              <Col md={9}>
+                <FormControl
+                  type="password"
+                  placeholder="Confirm password"
+                  defaultValue={confirmPassword}
+                  onChange={e =>
+                    this.setState({
+                      confirmPassword: e.target.value,
+                      passwordsNotMatch: null
+                    })
+                  }
+                />
+                {passwordsNotMatch && (
+                  <HelpBlock>Passwords do not match</HelpBlock>
+                )}
               </Col>
             </FormGroup>
             {this.props.user.trunkEndpoint && (
@@ -539,7 +596,9 @@ class Details extends Component {
       lastName,
       cliFirstName,
       cliLastName,
-      language
+      language,
+      password,
+      confirmPassword
     } = this.state;
 
     if (emailAddress) {
@@ -556,6 +615,10 @@ class Details extends Component {
       this.setState({ lastNameError: "error" });
       return;
     }
+    if (password !== confirmPassword) {
+      this.setState({ passwordsNotMatch: "error" });
+      return;
+    }
 
     const data = {
       emailAddress,
@@ -563,27 +626,15 @@ class Details extends Component {
       lastName,
       cliFirstName: useSameName ? firstName : cliFirstName,
       cliLastName: useSameName ? lastName : cliLastName,
-      language
+      language,
+      password
     };
 
-    this.setState({ updateMassage: "Loading..." }, () =>
-      this.props
-        .fetchPutUpdateUser(
-          this.props.match.params.tenantId,
-          this.props.match.params.groupId,
-          this.props.match.params.userName,
-          data
-        )
-        .then(() =>
-          this.setState(
-            { updateMassage: "User is updated" },
-            () =>
-              (this.timer = setTimeout(
-                () => this.setState({ updateMassage: "" }),
-                3000
-              ))
-          )
-        )
+    this.props.fetchPutUpdateUser(
+      this.props.match.params.tenantId,
+      this.props.match.params.groupId,
+      this.props.match.params.userName,
+      data
     );
   };
 }

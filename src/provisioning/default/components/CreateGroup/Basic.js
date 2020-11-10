@@ -11,8 +11,6 @@ import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import Button from "react-bootstrap/lib/Button";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 
-import { FormattedMessage } from "react-intl";
-
 import {
   refuseCreateGroup,
   changeIdOfGroup,
@@ -23,8 +21,11 @@ import {
   changeZIPOfGroup,
   changeCityOfGroup,
   changeStepOfCreateGroup,
-  fetchGetTenantById
+  fetchGetTenantById,
+  fetchGetTimezones,
+  changeTimeZoneOfGroup
 } from "../../store/actions";
+import Loading from "../../common/Loading";
 
 export class Basic extends Component {
   state = {
@@ -33,44 +34,33 @@ export class Basic extends Component {
     domainError: "",
     userUnlimited: false,
     groupId: "",
-    overwriteId: false
+    overwriteId: false,
+    isLoading: false,
+    defaultTimeZone: true,
+    timeZone: ""
   };
 
   componentDidMount() {
     this.props
       .fetchGetTenantById(this.props.match.params.tenantId)
       .then(() => this.props.changeDomainOfGroup(this.props.defaultDomain));
-    let first = Math.floor(Math.random() * 10);
-    let second = Math.floor(Math.random() * 10);
-    let third = Math.floor(Math.random() * 10);
-    let four = Math.floor(Math.random() * 10);
-    // this.setState(
-    //   {
-    //     groupId: `${this.props.match.params.tenantId}_grp${first}${second}${third}${four}`
-    //   },
-    //   () => this.props.changeIdOfGroup(this.state.groupId)
-    // );
+    this.setState({ isLoading: true }, () =>
+      this.props
+        .fetchGetTimezones()
+        .then(() => this.setState({ isLoading: false }))
+    );
   }
 
   render() {
+    if (this.state.isLoading) {
+      return <Loading />;
+    }
     return (
       <React.Fragment>
         <div className={"panel-heading"}>
           <Row>
             <Col md={12}>
-              <div className={"header"}>
-                ADD GROUP
-                <Link
-                  to={`/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}`}
-                >
-                  <Button
-                    className={"margin-left-1 btn-danger"}
-                    onClick={() => this.props.refuseCreateGroup()}
-                  >
-                    Cancel
-                  </Button>
-                </Link>
-              </div>
+              <div className={"header"}>ADD GROUP</div>
             </Col>
           </Row>
         </div>
@@ -141,6 +131,50 @@ export class Basic extends Component {
             </Col>
           </Row>
           <Row className={"margin-1"}>
+            <Col md={12}>
+              <Checkbox
+                checked={this.state.defaultTimeZone}
+                onChange={e => {
+                  if (e.target.checked) {
+                    this.setState({ defaultTimeZone: e.target.checked });
+                    this.props.changeTimeZoneOfGroup("");
+                  } else {
+                    this.setState({ defaultTimeZone: e.target.checked });
+                    this.props.changeTimeZoneOfGroup(
+                      this.props.timeZones[0].name
+                    );
+                  }
+                }}
+              >
+                Default time zone
+              </Checkbox>
+            </Col>
+          </Row>
+          {!this.state.defaultTimeZone && (
+            <Row className={"margin-1"}>
+              <Col componentClass={ControlLabel} md={3}>
+                Time zone*
+              </Col>
+              <Col md={9}>
+                <FormControl
+                  type="text"
+                  componentClass="select"
+                  placeholder="Time zone"
+                  value={this.props.createGroup.timeZone}
+                  onChange={e => {
+                    this.props.changeTimeZoneOfGroup(e.target.value);
+                  }}
+                >
+                  {this.props.timeZones.map(timeZone => (
+                    <option key={`${timeZone.name}`} value={timeZone.name}>
+                      {timeZone.description}
+                    </option>
+                  ))}
+                </FormControl>
+              </Col>
+            </Row>
+          )}
+          <Row className={"margin-1"}>
             <Col mdOffset={10} md={2}>
               {!this.state.showHideMore ? (
                 <div>
@@ -148,7 +182,7 @@ export class Basic extends Component {
                     glyph="glyphicon glyphicon-collapse-up"
                     onClick={this.showHideMore}
                   />
-                  Add adress
+                  Add address
                 </div>
               ) : (
                 <div>
@@ -165,7 +199,7 @@ export class Basic extends Component {
             <React.Fragment>
               <Row className={"margin-1"}>
                 <Col componentClass={ControlLabel} md={3}>
-                  Addess
+                  Address
                 </Col>
                 <Col md={9}>
                   <FormControl
@@ -213,6 +247,15 @@ export class Basic extends Component {
                   &nbsp; Next
                 </Button>
               </div>
+              <div className="pull-right link-button">
+                <Link
+                  to={`/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}`}
+                >
+                  <div onClick={() => this.props.refuseCreateGroup()}>
+                    Quit wizard
+                  </div>
+                </Link>
+              </div>
             </div>
           </Row>
         </div>
@@ -221,13 +264,17 @@ export class Basic extends Component {
   }
 
   nextStep = () => {
-    const { groupId, groupName } = this.props.createGroup;
-    if (groupName) {
-      this.props.changeStepOfCreateGroup("Template");
-    } else {
+    const { groupName, timeZone } = this.props.createGroup;
+    if (!groupName) {
       this.setState({
         errorMessage: "Name are required"
       });
+    } else if (!this.state.defaultTimeZone && !timeZone) {
+      this.setState({
+        errorMessage: "Need to select time zone"
+      });
+    } else {
+      this.props.changeStepOfCreateGroup("Template");
     }
   };
 
@@ -239,7 +286,8 @@ export class Basic extends Component {
 const mapStateToProps = state => ({
   createTenant: state.createTenant,
   createGroup: state.createGroup,
-  defaultDomain: state.tenant.defaultDomain
+  defaultDomain: state.tenant.defaultDomain,
+  timeZones: state.timeZones
 });
 
 const mapDispatchToProps = {
@@ -252,7 +300,9 @@ const mapDispatchToProps = {
   changeZIPOfGroup,
   changeCityOfGroup,
   changeStepOfCreateGroup,
-  fetchGetTenantById
+  fetchGetTenantById,
+  fetchGetTimezones,
+  changeTimeZoneOfGroup
 };
 
 export default withRouter(

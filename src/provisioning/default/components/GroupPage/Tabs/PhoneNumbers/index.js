@@ -40,22 +40,24 @@ export class PhoneNumbersTab extends Component {
   };
 
   fetchNumbers() {
-    this.props
-      .fetchGetPhoneNumbersByGroupId(this.props.tenantId, this.props.groupId)
-      .then(() =>
-        this.setState(
-          {
-            phoneNumbers: this.props.phoneNumbers.sort((a, b) => {
-              if (a.rangeStart < b.rangeStart) return -1;
-              if (a.rangeStart > b.rangeStart) return 1;
-              return 0;
-            }),
-            isLoading: false,
-            sortedBy: "rangeStart"
-          },
-          () => this.pagination()
+    this.setState({ isLoading: true }, () =>
+      this.props
+        .fetchGetPhoneNumbersByGroupId(this.props.tenantId, this.props.groupId)
+        .then(() =>
+          this.setState(
+            {
+              phoneNumbers: this.props.phoneNumbers.sort((a, b) => {
+                if (a.rangeStart < b.rangeStart) return -1;
+                if (a.rangeStart > b.rangeStart) return 1;
+                return 0;
+              }),
+              isLoading: false,
+              sortedBy: "rangeStart"
+            },
+            () => this.pagination()
+          )
         )
-      );
+    );
   }
 
   componentDidMount() {
@@ -63,7 +65,10 @@ export class PhoneNumbersTab extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.phoneDeleted !== this.props.phoneDeleted) {
+    if (
+      prevProps.phoneDeleted !== this.props.phoneDeleted ||
+      (this.props.refreshTab !== prevProps.refreshTab && this.props.refreshTab)
+    ) {
       this.fetchNumbers();
     }
   }
@@ -71,24 +76,20 @@ export class PhoneNumbersTab extends Component {
   render() {
     const {
       isLoading,
-      showDelete,
       numbersForDelete,
       countPerPage,
-      pagination,
       paginationPhoneNumbers,
       page
     } = this.state;
 
-    const { onReload } = this.props;
-
-    if (isLoading && pagination) {
+    if (isLoading) {
       return <Loading />;
     }
     return (
       <React.Fragment>
         <Row className={"margin-top-2"}>
           <Col mdOffset={1} md={10}>
-            <InputGroup className={"margin-left-negative-4"}>
+            <InputGroup>
               <InputGroup.Addon>
                 <Glyphicon glyph="lyphicon glyphicon-search" />
               </InputGroup.Addon>
