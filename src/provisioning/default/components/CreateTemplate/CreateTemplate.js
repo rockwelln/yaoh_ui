@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import { withRouter } from "react-router";
 import { connect } from "react-redux";
 import { FormattedMessage } from "react-intl";
-import { NotificationsManager } from "../../utils";
+import { NotificationsManager } from "../../../../utils";
 
 import { fetchPostCreateTemplate } from "../../store/actions";
 
