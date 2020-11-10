@@ -36,6 +36,8 @@ import CreateAdmin from "./default/components/CreateAdmin";
 import UpdateAdmin from "./default/components/UpdateAdmin";
 import mainDefaultProvisioningReducer from "./default/store/reducers";
 import AddTrunkGroupUser from "./default/components/AddUserToTrunkGroup";
+import BWKSLicenses from "./default/components/BWKSLicenses";
+import CreateTemplatePage from "./default/components/CreateTemplate";
 // end
 
 // pra
@@ -92,6 +94,17 @@ function provisioningDefaultRoutes(ui_profile) {
             exact
         />
         <Route
+            path="/provisioning/:gwName/bwks-licenses"
+            component={props =>
+                isAllowed(ui_profile, pages.data_tenants) ? (
+                    <BWKSLicenses />
+                ) : (
+                    <NotAllowed />
+                )
+            }
+            exact
+        />
+        <Route
             path="/provisioning/:gwName/localusers"
             component={props =>
                 isAllowed(ui_profile, pages.data_tenants) ? (
@@ -131,6 +144,17 @@ function provisioningDefaultRoutes(ui_profile) {
                     <ConfigPage/>
                 ) : (
                     <NotAllowed/>
+                )
+            }
+            exact
+        />
+        <Route
+            path="/provisioning/:gwName/templates/:categoryName/addtemplate"
+            component={props =>
+                isAllowed(ui_profile, pages.data_tenants) ? (
+                    <CreateTemplatePage />
+                ) : (
+                    <NotAllowed />
                 )
             }
             exact
@@ -225,6 +249,17 @@ function provisioningDefaultRoutes(ui_profile) {
             exact
         />
         <Route
+            path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/add-mobile-phone"
+            component={props =>
+                isAllowed(ui_profile, pages.data_tenants) ? (
+                    <AddPhoneNumberGroup />
+                ) : (
+                    <NotAllowed />
+                )
+            }
+            exact
+        />
+        <Route
             path="/provisioning/:gwName/tenants/:tenantId/groups/:groupId/trunkgroup/:trunkGroupName"
             component={props =>
                 isAllowed(ui_profile, pages.data_tenants) ? (
@@ -275,6 +310,17 @@ function provisioningDefaultRoutes(ui_profile) {
                     <TenantPage  />
                 ) : (
                     <NotAllowed/>
+                )
+            }
+            exact
+        />
+        <Route
+            path="/provisioning/:gwName/tenants/:tenantId/add-mobile-phone"
+            component={props =>
+                isAllowed(ui_profile, pages.data_tenants) ? (
+                    <AddPhoneNumberTenant />
+                ) : (
+                    <NotAllowed />
                 )
             }
             exact
