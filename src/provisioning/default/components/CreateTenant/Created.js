@@ -41,7 +41,7 @@ export class Created extends Component {
               <div class="pull-right">
                 <Button onClick={this.goToLicenses} className={"btn-primary"}>
                   <Glyphicon glyph="glyphicon glyphicon-forward"></Glyphicon>
-                  &nbsp; Assign licenses
+                  &nbsp; Next
                 </Button>
               </div>
               <div className="pull-right link-button">
@@ -61,7 +61,7 @@ export class Created extends Component {
   }
 
   goToLicenses = () => {
-    this.props.changeStepOfCreateTenant("Limits");
+    this.props.changeStepOfCreateTenant("Parameters");
   };
 }
 

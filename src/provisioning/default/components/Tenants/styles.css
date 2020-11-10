@@ -46,6 +46,10 @@
   margin-left: 10px !important;
 }
 
+.margin-right-0 {
+  margin-right: 0 !important;
+}
+
 .margin-right-1 {
   margin-right: 10px !important;
 }
@@ -207,6 +211,10 @@ textarea {
   width: 100%;
 }
 
+.width-50p {
+  width: 50%;
+}
+
 .width-auto {
   width: auto;
 }
@@ -315,4 +323,24 @@ textarea {
   height: -moz-available;
   height: -webkit-fill-available;
   height: stretch;
+}
+
+.sync-group {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  border: solid 1px;
+  border-radius: 5px;
+  background-color: #eee;
+}
+
+.sync-group-item {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 5px;
+  border-right: solid 1px gray;
+  width: 100%;
+  overflow-wrap: anywhere;
 }

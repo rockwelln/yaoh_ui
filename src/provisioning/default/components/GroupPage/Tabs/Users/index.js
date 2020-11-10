@@ -103,16 +103,20 @@ export class Users extends Component {
               </FormattedMessage>
             </InputGroup>
           </Col>
-          <Col className={"text-right"} md={1}>
-            <Link
-              to={`/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}/groups/${this.props.match.params.groupId}/adduser`}
-            >
-              <Glyphicon
-                className={"x-large"}
-                glyph="glyphicon glyphicon-plus-sign"
-              />
-            </Link>
-          </Col>
+          {this.props.group.sync ? (
+            <Col className={"text-right"} md={1}></Col>
+          ) : (
+            <Col className={"text-right"} md={1}>
+              <Link
+                to={`/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}/groups/${this.props.match.params.groupId}/adduser`}
+              >
+                <Glyphicon
+                  className={"x-large"}
+                  glyph="glyphicon glyphicon-plus-sign"
+                />
+              </Link>
+            </Col>
+          )}
         </Row>
         {paginationUsers.length ? (
           <React.Fragment>
@@ -236,6 +240,7 @@ export class Users extends Component {
                   <tbody>
                     {paginationUsers[page].map((user, i) => (
                       <User
+                        group={this.props.group}
                         index={i}
                         tenantId={this.props.tenantId}
                         groupId={this.props.groupId}
@@ -474,7 +479,8 @@ export class Users extends Component {
 }
 
 const mapStateToProps = state => ({
-  users: state.users
+  users: state.users,
+  group: state.group
 });
 
 const mapDispatchToProps = {
