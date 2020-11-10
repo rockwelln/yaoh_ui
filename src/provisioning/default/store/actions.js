@@ -275,6 +275,31 @@ export const getMobileNumbersForGroup = data => ({
   data
 });
 
+export const getExistingBackends = data => ({
+  type: actionType.GET_EXISTING_BACKENDS,
+  data
+});
+
+export const getTenantOU = data => ({
+  type: actionType.GET_TENANT_OU,
+  data
+});
+
+export const getListOfRoutingProfiles = data => ({
+  type: actionType.GET_LIST_OF_ROUTING_PROFILES,
+  data
+});
+
+export const getTenantRoutingProfile = data => ({
+  type: actionType.GET_TENANT_ROUTING_PROFILE,
+  data
+});
+
+export const getTenantVoiceMessaging = data => ({
+  type: actionType.GET_TENANT_VOICE_MESSAGING,
+  data
+});
+
 export const postCreateGroupAdmin = data => ({
   type: actionType.POST_CREATE_GROUP_ADMIN,
   data
@@ -459,6 +484,16 @@ export const putUpdateTemplate = data => ({
   data
 });
 
+export const putUpdateTenantRoutingProfile = data => ({
+  type: actionType.PUT_UPDATE_TENANT_ROUTING_PROFILE,
+  data
+});
+
+export const putUpdateTenantVoiceMessaging = data => ({
+  type: actionType.PUT_UPDATE_TENANT_VOICE_MESSAGING,
+  data
+});
+
 export const deleteTenant = data => ({
   type: actionType.DELETE_TENANT,
   data
@@ -583,6 +618,16 @@ export const refuseCreateTenant = () => ({
 
 export const changeDomainOfTenant = data => ({
   type: actionType.CHANGE_DOMAIN_OF_TENANT,
+  data
+});
+
+export const changeBackendOfTenant = data => ({
+  type: actionType.CHANGE_BACKEND_OF_TENANT,
+  data
+});
+
+export const changeDetailsOfTenant = data => ({
+  type: actionType.CHANGE_DETAILS_OF_TENANT,
   data
 });
 
@@ -1626,6 +1671,94 @@ export function fetchGetMobileNumbersForGroup(tenantId, groupId) {
   };
 }
 
+export function fetchGetExistingBackends() {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/ldap/backends/`
+    )
+      .then(data => dispatch(getExistingBackends(data)))
+      .catch(error => {
+        console.error(error);
+      });
+  };
+}
+
+export function fetchGetTenantOU(backend) {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/ldap/${backend}/tenants?custom_filter=not_in_bwks`
+    )
+      .then(data => dispatch(getTenantOU(data)))
+      .catch(error => {
+        const data = {
+          tenants: []
+        };
+        dispatch(getTenantOU(data));
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-tenant-ou-failed"
+            defaultMessage="Failed to fetch tenant OU!"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchGetListOfRoutingProfiles() {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/system/routing_profiles/`
+    )
+      .then(data => dispatch(getListOfRoutingProfiles(data)))
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-routing-profiles-failed"
+            defaultMessage="Failed to fetch routing profiles"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchGetTenantRoutingProfile(tenantId) {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/routing_profile/`
+    )
+      .then(data => dispatch(getTenantRoutingProfile(data)))
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-routing-profile-failed"
+            defaultMessage="Failed to fetch routing profile"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchGetTenantVoiceMessaging(tenantId) {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/services/voice_messaging/`
+    )
+      .then(data => dispatch(getTenantVoiceMessaging(data)))
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-voice-messaging-failed"
+            defaultMessage="Failed to fetch voice-messaging"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
 export function fetchPostCreateGroupAdmin(tenantId, groupId, data) {
   return function(dispatch) {
     return fetch_post(
@@ -1828,6 +1961,7 @@ export function fetchPostCreateUserToGroup(tenantId, groupId, data) {
       .then(res => res.json())
       .then(data => {
         dispatch(postCreateUserToGroup(data));
+        console.log(121);
         return "success";
       })
       .catch(error => {
@@ -2545,6 +2679,64 @@ export function fetchPutUpdateTemplate(instanceName, templateName, data) {
           <FormattedMessage
             id="update-template-failed"
             defaultMessage="Failed to update template!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchPutUpdateTenantRoutingProfile(tenantId, data) {
+  return function(dispatch) {
+    return fetch_put(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/routing_profile/`,
+      data
+    )
+      .then(res => res.json())
+      .then(data => {
+        dispatch(putUpdateTenantRoutingProfile(data));
+        NotificationsManager.success(
+          <FormattedMessage
+            id="routing-profile-successfully-updated"
+            defaultMessage="Routing profile successfully updated"
+          />,
+          "Updated"
+        );
+      })
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="update-routing-profile-failed"
+            defaultMessage="Failed to update routing profile!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchPutUpdateTenantVoiceMessaging(tenantId, data) {
+  return function(dispatch) {
+    return fetch_put(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/services/voice_messaging/`,
+      data
+    )
+      .then(res => res.json())
+      .then(data => {
+        dispatch(putUpdateTenantVoiceMessaging(data));
+        NotificationsManager.success(
+          <FormattedMessage
+            id="voice-messaging-successfully-updated"
+            defaultMessage="Voice messaging successfully updated"
+          />,
+          "Updated"
+        );
+      })
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="voice-messaging-profile-failed"
+            defaultMessage="Failed to update voice messaging!"
           />,
           error.message
         )
