@@ -1,12 +1,11 @@
 ![](http://buildbot.bxl.netaxis.be/badges/builder-orange_apio_ui.svg)
-# Orange APIO UI
+# APIO Yaoh UI
 
-This project hold the development for the APIO UI running at Orange.
-In the future it should become the product UI.
+This project hold the development for the APIO orchestration UI.
+This include the provisioning UI and a bunch of custom to also serve the NP UI.
 
-
-N.B it also include the provisioning-UI
-
+The version in this repo is *not* representative. Projects using this UI embed it in the their own repo using sub-modules.
+That's why it's important to *never* squash or delete commits as soon as they are pushed.
 
 -----
 
