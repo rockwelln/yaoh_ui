@@ -1276,6 +1276,7 @@ function CitcMessages(props) {
         <SyncMessagesFlow
           data={listOfMessages}
           getEndpoint={m => m.endpoint}
+          getSource={m => m.source ? m.source : m.endpoint === "APIO" ? "CITC" : "APIO"}
           userInfo={userInfo}
         />
       </Tab>
@@ -1652,7 +1653,7 @@ export class NPTransaction extends Component {
                 <Panel.Title><FormattedMessage id="summary" defaultMessage="Summary" /></Panel.Title>
               </Panel.Heading>
               <Panel.Body>
-                <TxTable tx={tx} userInfo={user_info}/>
+                <TxTable tx={tx} request={request} userInfo={user_info}/>
               </Panel.Body>
             </Panel>
 
