@@ -1,8 +1,9 @@
 import { Base64 } from 'js-base64';
 
-export const API_WS_URL = (window.location.protocol === 'https:'?'wss':'ws') + '://' + (process.env.NODE_ENV === 'production'?window.location.host:'127.0.0.1:5000');
-export const API_URL_PREFIX = process.env.NODE_ENV === 'production'?window.location.origin:'http://127.0.0.1:5000';
-export const STATIC_URL_PREFIX = process.env.NODE_ENV === 'production'?window.location.origin:'http://127.0.0.1:3000';
+const BASE_LOC = process.env.REACT_APP_BASE_URL ? new URL(process.env.REACT_APP_BASE_URL): window.location;
+export const API_WS_URL = (BASE_LOC.protocol === 'https:'?'wss':'ws') + '://' + BASE_LOC.host;
+export const API_URL_PREFIX = BASE_LOC.origin;
+export const STATIC_URL_PREFIX = BASE_LOC.origin;
 export const API_URL_PROXY_PREFIX = '/api/v01/apio/sync';
 
 export function getCookie(name) {
