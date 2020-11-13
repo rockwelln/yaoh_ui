@@ -479,6 +479,49 @@ const NotFound = () => (
     </div>
 );
 
+const DemoWatermark = () => (
+    <>
+      <div
+        style={{
+           position:"fixed",
+           bottom:"5px",
+           right:"5px",
+           opacity:0.5,
+           zIndex:99,
+           color:"black",
+        }}>This version is not fully activated (only for DEMO)! Contact support@netaxis.be for full activation.</div>
+      <div
+        style={{
+           position:"fixed",
+           top:"50px",
+           right:"5px",
+           opacity:0.5,
+           zIndex:99,
+           color:"black",
+        }}>This version is not fully activated (only for DEMO)! Contact support@netaxis.be for full activation.</div>
+    </>
+);
+
+const InvalidLicense = ({validUntil}) => {
+  if(validUntil < new Date().addDays(30) && validUntil >= new Date()) {
+    return (
+      <Alert bsStyle="warning">This instance run a license which will expire soon ({ validUntil.toLocaleString() }) - Take contact with support@netaxis.be before it's too late.
+      </Alert>
+    )
+  } else if(validUntil < new Date()) {
+    return (
+      <Alert bsStyle="danger">This instance run an invalid license - Take contact with support@netaxis.be to activate your
+        instance.
+      </Alert>
+    )
+  } else {
+    return <div/>
+  }
+};
+
+function fetchBackendHealth(onSuccess) {
+    return fetch_get("/api/v01/health").then(onSuccess);
+}
 
 class App extends Component {
     constructor(props) {
@@ -487,6 +530,7 @@ class App extends Component {
             user_info: undefined,
             error_msg: undefined,
             provisioningRoutes: [],
+            health: {},
         };
         this._notificationSystem = React.createRef();
         NotificationsManager.setRef(this._notificationSystem);
@@ -542,12 +586,20 @@ class App extends Component {
         }
     }
 
-  componentDidMount() {
+    componentDidMount() {
         this.getDatabaseStatus();
+        fetchBackendHealth(r => this.setState({health: r}));
+        this.healthInterval = setInterval(() => { fetchBackendHealth(r => this.setState({health: r})) }, 120_000);
         getCookie('auth_sso') === '1' && !sso_auth_service.isLoggedIn() && sso_auth_service.signinSilent();
     }
 
-    updateToken(token, sso_auth) {
+    componentWillUnmount() {
+        if(this.healthInterval) {
+            clearInterval(this.healthInterval);
+        }
+    }
+
+  updateToken(token, sso_auth) {
       const {user_info} = this.state;
         AuthServiceManager.loadApiToken(token);
         user_info.modules && supportedModule(modules.provisioning, user_info.modules) && ProvProxiesManager.fetchConfiguration().then(() => this.setState({proxy_fetch: true})).catch(console.log);
@@ -611,7 +663,7 @@ class App extends Component {
     }
 
     render() {
-        const {database_status, error_msg, user_info, provisioningRoutes} = this.state;
+        const {database_status, error_msg, user_info, provisioningRoutes, health} = this.state;
         const is_reset_password = window.location.pathname.substr(0, RESET_PASSWORD_PREFIX.length) === RESET_PASSWORD_PREFIX;
         const standby_alert = database_status && !database_status.is_master && (
             <Alert bsStyle="danger">
@@ -688,6 +740,7 @@ class App extends Component {
                 {
                     standby_alert
                 }
+                { health.valid_until && <InvalidLicense validUntil={new Date(health.valid_until)}/> }
                 {
                     ui_profile !== "provisioning" &&
                     <div className="App-header">
@@ -697,6 +750,9 @@ class App extends Component {
                             logoutUser={this.logout}
                             auth_token={auth_token}/>
                     </div>
+                }
+                {
+                    health.demo && <DemoWatermark/>
                 }
                 <Col mdOffset={1} md={10}>
                   <Suspense fallback={<div>Loading...</div>}>

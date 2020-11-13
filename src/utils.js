@@ -6,6 +6,13 @@ export const API_URL_PREFIX = BASE_LOC.origin;
 export const STATIC_URL_PREFIX = BASE_LOC.origin;
 export const API_URL_PROXY_PREFIX = '/api/v01/apio/sync';
 
+
+Date.prototype.addDays = function(days) {
+    var date = new Date(this.valueOf());
+    date.setDate(date.getDate() + days);
+    return date;
+}
+
 export function getCookie(name) {
   var value = "; " + document.cookie;
   var parts = value.split("; " + name + "=");

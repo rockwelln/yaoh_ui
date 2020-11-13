@@ -8,7 +8,7 @@ import Tab from "react-bootstrap/lib/Tab";
 
 import {FormattedMessage} from 'react-intl';
 
-import {fetch_get, fetch_put, NotificationsManager, userLocalizeUtcDate} from "../utils";
+import {fetch_get, fetch_post, fetch_put, NotificationsManager, userLocalizeUtcDate} from "../utils";
 import update from 'immutability-helper';
 //import Ajv from 'ajv';
 import {Panel} from "react-bootstrap";
@@ -24,6 +24,7 @@ import Modal from "react-bootstrap/lib/Modal";
 import {modules} from "../utils/user";
 
 import moment from 'moment';
+import {StaticControl} from "../utils/common";
 
 
 function fetchConfiguration(onSuccess) {
@@ -1384,6 +1385,67 @@ function SSOPanel(props) {
 }
 
 
+function fetchLicenseDetails(onSuccess) {
+    return fetch_get("/api/v01/system/configuration/license")
+      .then(onSuccess)
+}
+
+function loadLicense(value, onSuccess) {
+    return fetch_put("/api/v01/system/configuration/license", {"license": value})
+      .then(onSuccess)
+}
+
+function LicensePanel(props) {
+    const [newLicense, setNewLicense] = useState("");
+    const [newDetails, setNewDetails] = useState(null);
+    const [current, setCurrent] = useState({});
+
+    useEffect(() => {
+      fetchLicenseDetails(setCurrent);
+    }, []);
+
+    return (
+    <Panel>
+      <Panel.Body>
+        <Form horizontal>
+          <StaticControl label="Valid until" value={current.valid_until}/>
+          <StaticControl label="Assigned to" value={current.customer_name}/>
+          <StaticControl label="Demo" value={current.demo ? "yes": "no"}/>
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="new_license" defaultMessage="New license"/>
+            </Col>
+            <Col sm={9}>
+              <FormControl
+                componentClass="textarea"
+                rows={10}
+                value={newLicense}
+                onChange={e => setNewLicense(e.target.value)}/>
+              {newDetails &&
+                <HelpBlock>
+                {`new license valid until ${newDetails.valid_until} for ${newDetails.customer_name} (don't forget to save and refresh your page to actually see the license beeing taken into account)`}
+                </HelpBlock>
+              }
+              <Button
+                onClick={() => {
+                  setNewDetails(null);
+                  loadLicense(newLicense, details => {
+                    // onChange(update(license, {$set: newLicense}));
+                    setNewDetails(details);
+                    window.location = window.location; // refresh the page to cleanup possible alerts
+                  }).catch(e => NotificationsManager.error("Failed to load a new license", e.message))
+                }}
+                bsStyle="primary" >
+                Load
+              </Button>
+            </Col>
+          </FormGroup>
+        </Form>
+      </Panel.Body>
+    </Panel>
+    );
+}
+
 function PasswordPanel(props) {
     const {password, onChange} = props;
 
@@ -1940,9 +2002,12 @@ export default function Configuration(props) {
             onChange={v => setConfig(update(config, {content: {SSO: {$set: v}}}))}
           />
         </Tab>
-        <Tab eventKey={9} title="Raw">
+        <Tab eventKey={9} title="License">
+          <LicensePanel />
+        </Tab>
+        <Tab eventKey={10} title="Raw">
           {
-            activeKey === 9 && config.content &&
+            activeKey === 10 && config.content &&
             <ReactJson
               src={config.content}
               onEdit={editConfig}
