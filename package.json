@@ -66,5 +66,6 @@
     "markdown-folder-to-html": "^2.4.0",
     "react-intl-po": "^2.2.2",
     "source-map-explorer": "^2.5.0"
-  }
+  },
+  "proxy": "http://127.0.0.1:5000"
 }
