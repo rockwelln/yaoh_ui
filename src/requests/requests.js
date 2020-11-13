@@ -2338,13 +2338,21 @@ export class Requests extends Component{
                             value: filter_criteria[f].value
                         };
                     case 'proxied_username':
-                            return {
-                                model: filter_criteria[f].model,
-                                field: 'details',
-                                json_field: 'user',
-                                op: filter_criteria[f].op,
-                                value: filter_criteria[f].value
-                        };
+                        return {"or": [
+                            {
+                              model: filter_criteria[f].model,
+                              field: 'details',
+                              json_field: 'user',
+                              op: filter_criteria[f].op,
+                              value: filter_criteria[f].value
+                            },
+                            {
+                              model: filter_criteria[f].model,
+                              field: 'owner',
+                              op: filter_criteria[f].op,
+                              value: filter_criteria[f].value
+                            }
+                        ]};
                     case 'proxied_status':
                     case 'task_status':
                     case 'action_status':
