@@ -520,7 +520,7 @@ const InvalidLicense = ({validUntil}) => {
 };
 
 function fetchBackendHealth(onSuccess) {
-    return fetch_get("/api/v01/health").then(onSuccess);
+    return fetch("/api/v01/health").then(onSuccess);
 }
 
 class App extends Component {
