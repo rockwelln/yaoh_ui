@@ -3,7 +3,7 @@ import "regenerator-runtime/runtime";
 
 import "url-polyfill";
 import "isomorphic-fetch";
-import React, {Component, Suspense} from 'react';
+import React, {Component, Suspense, useEffect, useState} from 'react';
 
 import Alert from 'react-bootstrap/lib/Alert';
 import Col from 'react-bootstrap/lib/Col';
@@ -502,10 +502,21 @@ const DemoWatermark = () => (
     </>
 );
 
-const InvalidLicense = ({validUntil}) => {
+const LicenseAlert = () => {
+  const [health, setHealth] = useState({});
+
+  useEffect(() => {
+    fetchBackendHealth(setHealth);
+    const i = setInterval(() => { fetchBackendHealth(setHealth) }, 120_000);
+    return () => clearInterval(i);
+  }, []);
+
+  const validUntil = health.valid_until && new Date(health.valid_until);
+  const watermark = health.demo ? <DemoWatermark/> : <div/>;
+
   if(validUntil < new Date().addDays(30) && validUntil >= new Date()) {
     return (
-      <Alert bsStyle="warning">This instance run a license which will expire soon ({ validUntil.toLocaleString() }) - Take contact with support@netaxis.be before it's too late.
+      <Alert bsStyle="warning">This instance run a {health.demo?'demo ':''}license which will expire soon ({ validUntil.toLocaleString() }) - Take contact with support@netaxis.be before it's too late.
       </Alert>
     )
   } else if(validUntil < new Date()) {
@@ -515,7 +526,7 @@ const InvalidLicense = ({validUntil}) => {
       </Alert>
     )
   } else {
-    return <div/>
+    return watermark;
   }
 };
 
@@ -588,15 +599,7 @@ class App extends Component {
 
     componentDidMount() {
         this.getDatabaseStatus();
-        fetchBackendHealth(r => this.setState({health: r}));
-        this.healthInterval = setInterval(() => { fetchBackendHealth(r => this.setState({health: r})) }, 120_000);
         getCookie('auth_sso') === '1' && !sso_auth_service.isLoggedIn() && sso_auth_service.signinSilent();
-    }
-
-    componentWillUnmount() {
-        if(this.healthInterval) {
-            clearInterval(this.healthInterval);
-        }
     }
 
   updateToken(token, sso_auth) {
@@ -740,7 +743,7 @@ class App extends Component {
                 {
                     standby_alert
                 }
-                { health.valid_until && <InvalidLicense validUntil={new Date(health.valid_until)}/> }
+                <LicenseAlert />
                 {
                     ui_profile !== "provisioning" &&
                     <div className="App-header">
@@ -750,9 +753,6 @@ class App extends Component {
                             logoutUser={this.logout}
                             auth_token={auth_token}/>
                     </div>
-                }
-                {
-                    health.demo && <DemoWatermark/>
                 }
                 <Col mdOffset={1} md={10}>
                   <Suspense fallback={<div>Loading...</div>}>
