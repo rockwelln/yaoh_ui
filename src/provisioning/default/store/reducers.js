@@ -132,7 +132,10 @@ const initialState = {
   tenantOU: [],
   listOfRoutingProfiles: [],
   tenantRoutingProfile: "",
-  tenantVoiceMessaging: {}
+  tenantVoiceMessaging: {},
+  tenantSuspensionStatus: "",
+  suspensionOptions: [],
+  groupSuspensionStatus: ""
 };
 
 function mainReducer(state = initialState, action) {
@@ -725,6 +728,24 @@ function mainReducer(state = initialState, action) {
         tenantVoiceMessaging: action.data
       };
     }
+    case actionType.GET_TENANT_SUSPENSION_STATUS: {
+      return {
+        ...state,
+        tenantSuspensionStatus: action.data.suspensionStatus
+      };
+    }
+    case actionType.GET_SUSPENSION_OPTIONS: {
+      return {
+        ...state,
+        suspensionOptions: action.data.templates
+      };
+    }
+    case actionType.GET_GROUP_SUSPENSION_STATUS: {
+      return {
+        ...state,
+        groupSuspensionStatus: action.data.suspensionStatus
+      };
+    }
     case actionType.POST_CREATE_GROUP_ADMIN: {
       return {
         ...state,
@@ -989,6 +1010,16 @@ function mainReducer(state = initialState, action) {
       };
     }
     case actionType.PUT_UPDATE_TENANT_VOICE_MESSAGING: {
+      return {
+        ...state
+      };
+    }
+    case actionType.PUT_UPDATE_TENANT_SUSPENSION_STATUS: {
+      return {
+        ...state
+      };
+    }
+    case actionType.PUT_UPDATE_GROUP_SUSPENSION_STATUS: {
       return {
         ...state
       };

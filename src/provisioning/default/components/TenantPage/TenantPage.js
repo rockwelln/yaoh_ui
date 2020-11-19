@@ -8,6 +8,7 @@ import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import Button from "react-bootstrap/lib/Button";
 
 import Loading from "../../common/Loading";
+import SuspensionStatusModal from "../../common/SuspensionStatusModal";
 import GroupsTab from "./Tabs/Groups";
 import PhoneNumbersTab from "./Tabs/PhoneNumber";
 import Admins from "./Tabs/Admins";
@@ -23,7 +24,9 @@ import {
   fetchGetTenantById,
   refuseCreateGroup,
   refuseAddPhoneToTenant,
-  fetchGetSelfcareURL
+  fetchGetSelfcareURL,
+  fetchGetTenantSuspensionStatus,
+  fetchPutUpdateTenantSuspensionStatus
 } from "../../store/actions";
 
 import "./styles.css";
@@ -34,24 +37,38 @@ class TenantPage extends Component {
     isLoadingSCURL: true,
     showDelete: false,
     activeKey: 0,
-    refreshTab: ""
+    refreshTab: "",
+    isLoadingSS: true,
+    showSuspensionStatusModal: false
+  };
+
+  fetchReq = () => {
+    this.setState(
+      { isLoading: true, isLoadingSCURL: true, isLoadingSS: true },
+      () => {
+        this.props
+          .fetchGetTenantById(this.props.match.params.tenantId)
+          .then(() => this.setState({ isLoading: false }));
+        this.props.refuseCreateGroup();
+        this.props.refuseAddPhoneToTenant();
+        this.props
+          .fetchGetSelfcareURL()
+          .then(() => this.setState({ isLoadingSCURL: false }));
+        this.props
+          .fetchGetTenantSuspensionStatus(this.props.match.params.tenantId)
+          .then(() => this.setState({ isLoadingSS: false }));
+      }
+    );
   };
 
   componentDidMount() {
-    this.props
-      .fetchGetTenantById(this.props.match.params.tenantId)
-      .then(() => this.setState({ isLoading: false }));
-    this.props.refuseCreateGroup();
-    this.props.refuseAddPhoneToTenant();
-    this.props
-      .fetchGetSelfcareURL()
-      .then(() => this.setState({ isLoadingSCURL: false }));
+    this.fetchReq();
   }
 
   render() {
     const { tenant } = this.props;
-    const { isLoading, showDelete, isLoadingSCURL } = this.state;
-    if (isLoading || isLoadingSCURL) {
+    const { isLoading, showDelete, isLoadingSCURL, isLoadingSS } = this.state;
+    if (isLoading || isLoadingSCURL || isLoadingSS) {
       return <Loading />;
     }
 
@@ -61,6 +78,20 @@ class TenantPage extends Component {
           <div className={"header flex space-between"}>
             <div>
               {`${tenant.type}: ${tenant.name} (id: ${tenant.tenantId})`}
+              <Button
+                className={`${
+                  this.props.tenantSuspensionStatus
+                    ? "btn-danger"
+                    : "btn-success"
+                } margin-left-1`}
+                onClick={() =>
+                  this.setState({ showSuspensionStatusModal: true })
+                }
+              >
+                {this.props.tenantSuspensionStatus
+                  ? this.props.tenantSuspensionStatus
+                  : "Active"}
+              </Button>
               <Glyphicon
                 glyph="glyphicon glyphicon-trash"
                 onClick={() => this.setState({ showDelete: true })}
@@ -143,9 +174,32 @@ class TenantPage extends Component {
             )}
           </Tabs>
         </div>
+        {this.state.showSuspensionStatusModal && (
+          <SuspensionStatusModal
+            show={this.state.showSuspensionStatusModal}
+            handleClose={() =>
+              this.setState({ showSuspensionStatusModal: false })
+            }
+            status={this.props.tenantSuspensionStatus}
+            updateSuspensionStatus={this.updateSuspensionStatus}
+          />
+        )}
       </React.Fragment>
     );
   }
+
+  updateSuspensionStatus = status => {
+    const data = {
+      suspensionStatus: status
+    };
+    this.setState({ showSuspensionStatusModal: false });
+    this.props
+      .fetchPutUpdateTenantSuspensionStatus(
+        this.props.match.params.tenantId,
+        data
+      )
+      .then(() => this.fetchReq());
+  };
 
   changeTab = key => {
     let refreshTab = "";
@@ -182,13 +236,16 @@ const mapDispatchToProps = {
   fetchGetTenantById,
   refuseCreateGroup,
   refuseAddPhoneToTenant,
-  fetchGetSelfcareURL
+  fetchGetSelfcareURL,
+  fetchGetTenantSuspensionStatus,
+  fetchPutUpdateTenantSuspensionStatus
 };
 
 const mapStateToProps = state => ({
   tenant: state.tenant,
   isAuthorisedTrunkTenant: state.isAuthorisedTrunkTenant,
-  selfcareUrl: state.selfcareUrl
+  selfcareUrl: state.selfcareUrl,
+  tenantSuspensionStatus: state.tenantSuspensionStatus
 });
 
 export default withRouter(
