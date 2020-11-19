@@ -27,7 +27,7 @@ const SuspensionStatusModal = props => {
     );
   }, []);
 
-  if (true) {
+  if (isLoadingOptions) {
     return (
       <Modal show={show} onHide={handleClose}>
         <Modal.Header closeButton>
