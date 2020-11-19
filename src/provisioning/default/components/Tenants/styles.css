@@ -344,3 +344,8 @@ textarea {
   width: 100%;
   overflow-wrap: anywhere;
 }
+
+.crunch-suspension-modal {
+  position: relative;
+  margin-top: -434px;
+}

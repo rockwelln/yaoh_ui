@@ -300,6 +300,21 @@ export const getTenantVoiceMessaging = data => ({
   data
 });
 
+export const getTenantSuspensionStatus = data => ({
+  type: actionType.GET_TENANT_SUSPENSION_STATUS,
+  data
+});
+
+export const getSuspensionOptions = data => ({
+  type: actionType.GET_SUSPENSION_OPTIONS,
+  data
+});
+
+export const getGroupSuspensionStatus = data => ({
+  type: actionType.GET_GROUP_SUSPENSION_STATUS,
+  data
+});
+
 export const postCreateGroupAdmin = data => ({
   type: actionType.POST_CREATE_GROUP_ADMIN,
   data
@@ -491,6 +506,16 @@ export const putUpdateTenantRoutingProfile = data => ({
 
 export const putUpdateTenantVoiceMessaging = data => ({
   type: actionType.PUT_UPDATE_TENANT_VOICE_MESSAGING,
+  data
+});
+
+export const putUpdateTenantSuspensionStatus = data => ({
+  type: actionType.PUT_UPDATE_TENANT_SUSPENSION_STATUS,
+  data
+});
+
+export const putUpdateGroupSuspensionStatus = data => ({
+  type: actionType.PUT_UPDATE_GROUP_SUSPENSION_STATUS,
   data
 });
 
@@ -1741,6 +1766,60 @@ export function fetchGetTenantRoutingProfile(tenantId) {
   };
 }
 
+export function fetchGetTenantSuspensionStatus(tenantId) {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/properties/suspension/`
+    )
+      .then(data => dispatch(getTenantSuspensionStatus(data)))
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-suspension-status-failed"
+            defaultMessage="Failed to fetch suspension status"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchGetSuspensionOptions() {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/templates/categories/group_intercept`
+    )
+      .then(data => dispatch(getSuspensionOptions(data)))
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-suspension-options-failed"
+            defaultMessage="Failed to fetch suspension options"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchGetGroupSuspensionStatus(tenantId, groupId) {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/properties/suspension/`
+    )
+      .then(data => dispatch(getGroupSuspensionStatus(data)))
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-suspension-status-failed"
+            defaultMessage="Failed to fetch suspension status"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
 export function fetchGetTenantVoiceMessaging(tenantId) {
   return function(dispatch) {
     return fetch_get(
@@ -2737,6 +2816,64 @@ export function fetchPutUpdateTenantVoiceMessaging(tenantId, data) {
           <FormattedMessage
             id="voice-messaging-profile-failed"
             defaultMessage="Failed to update voice messaging!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchPutUpdateTenantSuspensionStatus(tenantId, data) {
+  return function(dispatch) {
+    return fetch_put(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/properties/suspension/`,
+      data
+    )
+      .then(res => res.json())
+      .then(data => {
+        dispatch(putUpdateTenantVoiceMessaging(data));
+        NotificationsManager.success(
+          <FormattedMessage
+            id="suspension-status-successfully-updated"
+            defaultMessage="Suspension status successfully updated"
+          />,
+          "Updated"
+        );
+      })
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="suspension-status-profile-failed"
+            defaultMessage="Failed to update suspension status!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchPutUpdateGroupSuspensionStatus(tenantId, groupId, data) {
+  return function(dispatch) {
+    return fetch_put(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/properties/suspension/`,
+      data
+    )
+      .then(res => res.json())
+      .then(data => {
+        dispatch(putUpdateGroupSuspensionStatus(data));
+        NotificationsManager.success(
+          <FormattedMessage
+            id="suspension-status-successfully-updated"
+            defaultMessage="Suspension status successfully updated"
+          />,
+          "Updated"
+        );
+      })
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="suspension-status-profile-failed"
+            defaultMessage="Failed to update suspension status!"
           />,
           error.message
         )
