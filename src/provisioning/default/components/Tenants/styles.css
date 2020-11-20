@@ -316,3 +316,8 @@ textarea {
   height: -webkit-fill-available;
   height: stretch;
 }
+
+.crunch-suspension-modal {
+  position: relative;
+  margin-top: -434px;
+}

@@ -126,7 +126,10 @@ const initialState = {
   tenantMobileNumbers: [],
   groupMobileNumbers: [],
   availableMobileNumbers: [],
-  fullListGroupNumber: []
+  fullListGroupNumber: [],
+  tenantSuspensionStatus: "",
+  suspensionOptions: [],
+  groupSuspensionStatus: ""
 };
 
 function mainReducer(state = initialState, action) {
@@ -679,6 +682,24 @@ function mainReducer(state = initialState, action) {
         groupMobileNumbers
       };
     }
+    case actionType.GET_TENANT_SUSPENSION_STATUS: {
+      return {
+        ...state,
+        tenantSuspensionStatus: action.data.suspensionStatus
+      };
+    }
+    case actionType.GET_SUSPENSION_OPTIONS: {
+      return {
+        ...state,
+        suspensionOptions: action.data.templates
+      };
+    }
+    case actionType.GET_GROUP_SUSPENSION_STATUS: {
+      return {
+        ...state,
+        groupSuspensionStatus: action.data.suspensionStatus
+      };
+    }
     case actionType.POST_CREATE_GROUP_ADMIN: {
       return {
         ...state,
@@ -935,6 +956,16 @@ function mainReducer(state = initialState, action) {
       return {
         ...state,
         templateDetails: action.data
+      };
+    }
+    case actionType.PUT_UPDATE_TENANT_SUSPENSION_STATUS: {
+      return {
+        ...state
+      };
+    }
+    case actionType.PUT_UPDATE_GROUP_SUSPENSION_STATUS: {
+      return {
+        ...state
       };
     }
     case actionType.DELETE_TENANT: {

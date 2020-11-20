@@ -8,6 +8,7 @@ import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import Button from "react-bootstrap/lib/Button";
 
 import Loading from "../../common/Loading";
+import SuspensionStatusModal from "../../common/SuspensionStatusModal";
 import Users from "./Tabs/Users";
 import PhoneNumbers from "./Tabs/PhoneNumbers";
 import Licenses from "./Tabs/Licenses";
@@ -23,7 +24,9 @@ import {
   fetchGetTenantById,
   fetchGetGroupById,
   fetchGetTrunksGroupsByGroup,
-  fetchGetSelfcareURL
+  fetchGetSelfcareURL,
+  fetchGetGroupSuspensionStatus,
+  fetchPutUpdateGroupSuspensionStatus
 } from "../../store/actions";
 
 import DeleteModal from "./DeleteModal";
@@ -35,26 +38,41 @@ class TenantPage extends Component {
     showDelete: false,
     isLoadingSCURL: true,
     activeKey: 0,
-    refreshTab: ""
+    refreshTab: "",
+    isLoadingSS: true,
+    showSuspensionStatusModal: false
   };
 
   fetchTennant = () => {
-    this.props
-      .fetchGetTenantById(this.props.match.params.tenantId)
-      .then(() => this.setState({ isLoadingTenant: false }));
-    this.props
-      .fetchGetGroupById(
-        this.props.match.params.tenantId,
-        this.props.match.params.groupId
-      )
-      .then(() => this.setState({ isLoadingGroup: false }));
-    this.props.fetchGetTrunksGroupsByGroup(
-      this.props.match.params.tenantId,
-      this.props.match.params.groupId
+    this.setState(
+      {
+        isLoadingTenant: true,
+        isLoadingGroup: true,
+        isLoadingSCURL: true,
+        isLoadingSS: true
+      },
+      () => {
+        this.props
+          .fetchGetTenantById(this.props.match.params.tenantId)
+          .then(() => this.setState({ isLoadingTenant: false }));
+        this.props
+          .fetchGetGroupById(
+            this.props.match.params.tenantId,
+            this.props.match.params.groupId
+          )
+          .then(() => this.setState({ isLoadingGroup: false }));
+        this.props.fetchGetTrunksGroupsByGroup(
+          this.props.match.params.tenantId,
+          this.props.match.params.groupId
+        );
+        this.props
+          .fetchGetSelfcareURL()
+          .then(() => this.setState({ isLoadingSCURL: false }));
+        this.props
+          .fetchGetGroupSuspensionStatus(this.props.match.params.tenantId)
+          .then(() => this.setState({ isLoadingSS: false }));
+      }
     );
-    this.props
-      .fetchGetSelfcareURL()
-      .then(() => this.setState({ isLoadingSCURL: false }));
   };
 
   componentDidMount() {
@@ -73,10 +91,11 @@ class TenantPage extends Component {
       isLoadingTenant,
       isLoadingGroup,
       showDelete,
-      isLoadingSCURL
+      isLoadingSCURL,
+      isLoadingSS
     } = this.state;
 
-    if (isLoadingTenant || isLoadingGroup || isLoadingSCURL) {
+    if (isLoadingTenant || isLoadingGroup || isLoadingSCURL || isLoadingSS) {
       return <Loading />;
     }
 
@@ -86,10 +105,26 @@ class TenantPage extends Component {
           <div className={"header flex space-between"}>
             <div>
               {`GROUP: ${group.groupName} (${this.props.match.params.groupId}) of tenant ${tenant.name} (${tenant.tenantId})`}
-              <Glyphicon
-                glyph="glyphicon glyphicon-trash"
-                onClick={() => this.setState({ showDelete: true })}
-              />
+              <Button
+                className={`${
+                  this.props.groupSuspensionStatus
+                    ? "btn-danger"
+                    : "btn-success"
+                } margin-left-1`}
+                onClick={() =>
+                  this.setState({ showSuspensionStatusModal: true })
+                }
+              >
+                {this.props.groupSuspensionStatus
+                  ? this.props.groupSuspensionStatus
+                  : "Active"}
+              </Button>
+              {!group.sync && (
+                <Glyphicon
+                  glyph="glyphicon glyphicon-trash"
+                  onClick={() => this.setState({ showDelete: true })}
+                />
+              )}
               <DeleteModal
                 groupId={this.props.match.params.groupId}
                 show={showDelete}
@@ -191,9 +226,33 @@ class TenantPage extends Component {
             </Tab>
           </Tabs>
         </div>
+        {this.state.showSuspensionStatusModal && (
+          <SuspensionStatusModal
+            show={this.state.showSuspensionStatusModal}
+            handleClose={() =>
+              this.setState({ showSuspensionStatusModal: false })
+            }
+            status={this.props.groupSuspensionStatus}
+            updateSuspensionStatus={this.updateSuspensionStatus}
+          />
+        )}
       </React.Fragment>
     );
   }
+
+  updateSuspensionStatus = status => {
+    const data = {
+      suspensionStatus: status
+    };
+    this.setState({ showSuspensionStatusModal: false });
+    this.props
+      .fetchPutUpdateGroupSuspensionStatus(
+        this.props.match.params.tenantId,
+        this.props.match.params.groupId,
+        data
+      )
+      .then(() => this.fetchTennant());
+  };
 
   changeTab = key => {
     let refreshTab = "";
@@ -233,7 +292,9 @@ const mapDispatchToProps = {
   fetchGetTenantById,
   fetchGetGroupById,
   fetchGetTrunksGroupsByGroup,
-  fetchGetSelfcareURL
+  fetchGetSelfcareURL,
+  fetchGetGroupSuspensionStatus,
+  fetchPutUpdateGroupSuspensionStatus
 };
 
 const mapStateToProps = state => ({
@@ -241,7 +302,8 @@ const mapStateToProps = state => ({
   group: state.group,
   fetchTrunksGroupsFail: state.fetchTrunksGroupsFail,
   trunkGroupNotAuthorisedGroup: state.trunkGroupNotAuthorisedGroup,
-  selfcareUrl: state.selfcareUrl
+  selfcareUrl: state.selfcareUrl,
+  groupSuspensionStatus: state.groupSuspensionStatus
 });
 
 export default withRouter(
