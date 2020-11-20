@@ -49,7 +49,7 @@ import {
 } from "./utils";
 import Databases from "./system/databases_mgm";
 import {AuditLogs} from "./system/audit";
-import {getHomePage, isAllowed, modules, pages, supportedModule} from "./utils/user";
+import {getHomePage, isAllowed, limited_menu, modules, pages, supportedModule} from "./utils/user";
 import {NotAllowed} from "./utils/common";
 import {AuthCallback, AuthSilentCallback} from "./sso/login";
 
@@ -101,374 +101,419 @@ const Loading = () => (
     </div>
 );
 
-const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => (
-  <Navbar staticTop collapseOnSelect inverse>
-    <Navbar.Header>
-        <Navbar.Brand style={{color: '#ef0803', fontWeight: 'bold',}}>
+const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => {
+  if(limited_menu(user_info.ui_profile)) {
+    return (
+      <Navbar staticTop collapseOnSelect inverse>
+        <Navbar.Header>
+          <Navbar.Brand style={{color: '#ef0803', fontWeight: 'bold',}}>
             <img src={apio_brand}
                  width="38"
                  height="42"
                  className="d-inline-block align-top"
                  style={{padding: 0}}
-                 alt="apio" />
-        </Navbar.Brand>
-        <Navbar.Toggle />
-    </Navbar.Header>
-    <Navbar.Collapse>
-      <Nav>
-          <ListItemLink to={"/dashboard"}>
+                 alt="apio"/>
+          </Navbar.Brand>
+          <Navbar.Toggle/>
+        </Navbar.Header>
+        <Navbar.Collapse>
+          <Nav pullRight>
+            <NavDropdown title={<Glyphicon glyph="user"/>} id="nav-local-user">
+              <LinkContainer to={"/user/profile"}>
+                <MenuItem>
+                  <FormattedMessage id="profile" defaultMessage="Profile"/>
+                </MenuItem>
+              </LinkContainer>
+              <MenuItem divider/>
+              <MenuItem onClick={logoutUser}>
+                <FormattedMessage id="logout" defaultMessage="Logout"/>
+              </MenuItem>
+            </NavDropdown>
+
+            <Navbar.Text
+              style={{
+                color: (database_status && database_status.env === 'TEST') ? '#ef0803' : '#777',
+                fontWeight: (database_status && database_status.env === 'TEST') ? 'bold' : 'normal',
+              }}>
+              {
+                (database_status && database_status.env) ? database_status.env : "unknown"
+              }
+            </Navbar.Text>
+          </Nav>
+        </Navbar.Collapse>
+      </Navbar>
+    );
+  } else {
+    return (
+      <Navbar staticTop collapseOnSelect inverse>
+        <Navbar.Header>
+          <Navbar.Brand style={{color: '#ef0803', fontWeight: 'bold',}}>
+            <img src={apio_brand}
+                 width="38"
+                 height="42"
+                 className="d-inline-block align-top"
+                 style={{padding: 0}}
+                 alt="apio"/>
+          </Navbar.Brand>
+          <Navbar.Toggle/>
+        </Navbar.Header>
+        <Navbar.Collapse>
+          <Nav>
+            <ListItemLink to={"/dashboard"}>
               <Glyphicon glyph="dashboard"/> {' '}
-              <FormattedMessage id="dashboard" defaultMessage="Dashboard" />
-          </ListItemLink>
+              <FormattedMessage id="dashboard" defaultMessage="Dashboard"/>
+            </ListItemLink>
 
-          { user_info.modules && supportedModule(modules.npact, user_info.modules) && isAllowed(user_info.ui_profile, pages.requests_nprequests) &&
-              <NavDropdown title={
-                    <span>
-                        <Glyphicon glyph="send"/> {' '}
-                        <FormattedMessage id="requests" defaultMessage="Requests"/>
-                    </span>
-                } id="nav-requests">
-
-                  <LinkContainer to={"/transactions/new_portin"}>
-                      <MenuItem>
-                          <FormattedMessage id="new-port-in" defaultMessage="New Port-in"/>
-                      </MenuItem>
-                  </LinkContainer>
-                  { supportedModule(modules.npact_crdc, user_info.modules) &&
-                      <LinkContainer to={"/transactions/new_update"}>
-                          <MenuItem>
-                              <FormattedMessage id="new-update" defaultMessage="New Update"/>
-                          </MenuItem>
-                      </LinkContainer>
-                  }
-                  <LinkContainer to={"/transactions/new_disconnect"}>
-                      <MenuItem>
-                          <FormattedMessage id="new-disconnect" defaultMessage="New Disconnect"/>
-                      </MenuItem>
-                  </LinkContainer>
-                  { supportedModule(modules.npact_crdb, user_info.modules) &&
-                      <LinkContainer to={"/transactions/new_install_address"}>
-                          <MenuItem>
-                              <FormattedMessage id="new-addess" defaultMessage="New Address Change"/>
-                          </MenuItem>
-                      </LinkContainer>
-                  }
-                  { supportedModule(modules.npact_crdb, user_info.modules) &&
-                      <LinkContainer to={"/transactions/emergency_notification"}>
-                          <MenuItem>
-                              <FormattedMessage id="emergency-notification" defaultMessage="New Emergency Notification"/>
-                          </MenuItem>
-                      </LinkContainer>
-                  }
-                  
-                  <MenuItem divider/>
-
-                  { supportedModule(modules.npact_crdc, user_info.modules) &&
-                      <LinkContainer to={"/transactions/mobile_events"}>
-                          <MenuItem>
-                              <FormattedMessage id="mobile-events" defaultMessage="Mobile Events"/>
-                          </MenuItem>
-                      </LinkContainer>
-                  }
-                  
-                  <LinkContainer to={"/transactions/list"}>
-                      <MenuItem>
-                          <FormattedMessage id="porting-requests" defaultMessage="Porting Requests"/>
-                      </MenuItem>
-                  </LinkContainer>
-
-              </NavDropdown>
-          }
-
-          {(!user_info.modules || !supportedModule(modules.npact, user_info.modules)) && isAllowed(user_info.ui_profile, pages.requests_nprequests) &&
-          <NavDropdown title={
+            {user_info.modules && supportedModule(modules.npact, user_info.modules) && isAllowed(user_info.ui_profile, pages.requests_nprequests) &&
+            <NavDropdown title={
               <span>
-                  <Glyphicon glyph="send"/> {' '}
-                  <FormattedMessage id="requests" defaultMessage="Requests"/>
-              </span>
-          } id="nav-requests">
+                          <Glyphicon glyph="send"/> {' '}
+                <FormattedMessage id="requests" defaultMessage="Requests"/>
+                      </span>
+            } id="nav-requests">
+
+              <LinkContainer to={"/transactions/new_portin"}>
+                <MenuItem>
+                  <FormattedMessage id="new-port-in" defaultMessage="New Port-in"/>
+                </MenuItem>
+              </LinkContainer>
+              {supportedModule(modules.npact_crdc, user_info.modules) &&
+              <LinkContainer to={"/transactions/new_update"}>
+                <MenuItem>
+                  <FormattedMessage id="new-update" defaultMessage="New Update"/>
+                </MenuItem>
+              </LinkContainer>
+              }
+              <LinkContainer to={"/transactions/new_disconnect"}>
+                <MenuItem>
+                  <FormattedMessage id="new-disconnect" defaultMessage="New Disconnect"/>
+                </MenuItem>
+              </LinkContainer>
+              {supportedModule(modules.npact_crdb, user_info.modules) &&
+              <LinkContainer to={"/transactions/new_install_address"}>
+                <MenuItem>
+                  <FormattedMessage id="new-addess" defaultMessage="New Address Change"/>
+                </MenuItem>
+              </LinkContainer>
+              }
+              {supportedModule(modules.npact_crdb, user_info.modules) &&
+              <LinkContainer to={"/transactions/emergency_notification"}>
+                <MenuItem>
+                  <FormattedMessage id="emergency-notification" defaultMessage="New Emergency Notification"/>
+                </MenuItem>
+              </LinkContainer>
+              }
+
+              <MenuItem divider/>
+
+              {supportedModule(modules.npact_crdc, user_info.modules) &&
+              <LinkContainer to={"/transactions/mobile_events"}>
+                <MenuItem>
+                  <FormattedMessage id="mobile-events" defaultMessage="Mobile Events"/>
+                </MenuItem>
+              </LinkContainer>
+              }
 
               <LinkContainer to={"/transactions/list"}>
-                  <MenuItem>
-                      <FormattedMessage id="apio-requests" defaultMessage="APIO Requests"/>
-                  </MenuItem>
+                <MenuItem>
+                  <FormattedMessage id="porting-requests" defaultMessage="Porting Requests"/>
+                </MenuItem>
+              </LinkContainer>
+
+            </NavDropdown>
+            }
+
+            {(!user_info.modules || !supportedModule(modules.npact, user_info.modules)) && isAllowed(user_info.ui_profile, pages.requests_nprequests) &&
+            <NavDropdown title={
+              <span>
+                    <Glyphicon glyph="send"/> {' '}
+                <FormattedMessage id="requests" defaultMessage="Requests"/>
+                </span>
+            } id="nav-requests">
+
+              <LinkContainer to={"/transactions/list"}>
+                <MenuItem>
+                  <FormattedMessage id="apio-requests" defaultMessage="APIO Requests"/>
+                </MenuItem>
               </LinkContainer>
               {(!user_info.modules || user_info.modules.includes(modules.orchestration)) &&
-                  [
-                      <LinkContainer to={"/custom-transactions/list"} key="custom-requests">
-                          <MenuItem>
-                              <FormattedMessage id="custom-requests" defaultMessage="Custom Requests"/>
-                          </MenuItem>
-                      </LinkContainer>,
-                      <LinkContainer to={"/transactions/timers"} key="timers">
-                          <MenuItem>
-                              <FormattedMessage id="timers" defaultMessage="Timers"/>
-                          </MenuItem>
-                      </LinkContainer>,
-                  ]
+              [
+                <LinkContainer to={"/custom-transactions/list"} key="custom-requests">
+                  <MenuItem>
+                    <FormattedMessage id="custom-requests" defaultMessage="Custom Requests"/>
+                  </MenuItem>
+                </LinkContainer>,
+                <LinkContainer to={"/transactions/timers"} key="timers">
+                  <MenuItem>
+                    <FormattedMessage id="timers" defaultMessage="Timers"/>
+                  </MenuItem>
+                </LinkContainer>,
+              ]
               }
               {(!user_info.modules || user_info.modules.includes(modules.orange)) && isAllowed(user_info.ui_profile, pages.requests_ndg) &&
-                  [
-                      <MenuItem key="divider-1" divider/>,
-                      <LinkContainer key="ndg-history" to={"/requests/ndg"}>
-                          <MenuItem>
-                              <FormattedMessage id="ndg-history" defaultMessage="NDG history"/>
-                          </MenuItem>
-                      </LinkContainer>,
-                  ]
-              }
-          </NavDropdown>
-          }
-
-          {(!user_info.modules || user_info.modules.includes(modules.bulk)) && isAllowed(user_info.ui_profile, pages.bulks) &&
-          <NavDropdown title={
-              <span>
-                  <Glyphicon glyph="equalizer" /> {' '}
-                  <FormattedMessage id="bulks" defaultMessage="Bulks"/>
-              </span>
-          } id="nav-bulks">
-              <LinkContainer to={"/transactions/bulk"}>
+              [
+                <MenuItem key="divider-1" divider/>,
+                <LinkContainer key="ndg-history" to={"/requests/ndg"}>
                   <MenuItem>
-                      <FormattedMessage id="bulk" defaultMessage="Bulk"/>
+                    <FormattedMessage id="ndg-history" defaultMessage="NDG history"/>
                   </MenuItem>
-              </LinkContainer>
-              { isAllowed(user_info.ui_profile, pages.bulk_actions) && isAllowed(user_info.ui_profile, pages.system) &&
-                  <LinkContainer to={"/system/bulk_actions"}>
-                      <MenuItem>
-                          <FormattedMessage id="bulk-actions" defaultMessage="Bulk actions"/>
-                      </MenuItem>
-                  </LinkContainer>
+                </LinkContainer>,
+              ]
               }
-          </NavDropdown>
-          }
-
-          {(!user_info.modules || user_info.modules.includes(modules.provisioning)) && isAllowed(user_info.ui_profile, pages.provisioning) &&
-              <NavDropdown
-                eventKey={4}
-                title={
-                  <span>
-                    <Glyphicon glyph="hdd" />{" "}
-                    <FormattedMessage
-                      id="provisioning"
-                      defaultMessage="Provisioning"
-                    />
-                  </span>
-                }
-                id="nav-data-apio"
-              >
-                  {
-                      ProvProxiesManager.listProxies().map((p, i) =>
-                          <LinkContainer to={"/provisioning/" + p.id + "/tenants"} key={i}>
-                              <MenuItem>
-                                  {p.name}
-                              </MenuItem>
-                            </LinkContainer>
-                      )
-                  }
-              </NavDropdown>
-          }
-
-          { (!user_info.modules || supportedModule(modules.npact, user_info.modules)) && isAllowed(user_info.ui_profile, pages.data) &&
-            <NavDropdown eventKey={4} title={
-                <span>
-                    <Glyphicon glyph="hdd"/> {' '}
-                    <FormattedMessage id="data" defaultMessage="Data"/>
-                </span>
-            } id="nav-system-data">
-                { isAllowed(user_info.ui_profile, pages.npact_operators) &&
-                    <LinkContainer to={"/system/operators"}>
-                        <MenuItem>
-                            <FormattedMessage id="operators" defaultMessage="Operators"/>
-                        </MenuItem>
-                    </LinkContainer>
-                }
-                { isAllowed(user_info.ui_profile, pages.npact_ranges) &&
-                    <LinkContainer to={"/system/ranges"}>
-                        <MenuItem>
-                            <FormattedMessage id="ranges" defaultMessage="Ranges"/>
-                        </MenuItem>
-                    </LinkContainer>
-                }
-                { isAllowed(user_info.ui_profile, pages.npact_routing_info) &&
-                    <LinkContainer to={"/system/routing_info"}>
-                        <MenuItem>
-                            <FormattedMessage id="routing-info" defaultMessage="Routing info"/>
-                        </MenuItem>
-                    </LinkContainer>
-                }
-                <MenuItem divider/>
-                { isAllowed(user_info.ui_profile, pages.npact_porting_cases) &&
-                    <LinkContainer to={"/system/porting_cases"}>
-                        <MenuItem>
-                            <FormattedMessage id="np-database" defaultMessage="NP database"/>
-                        </MenuItem>
-                    </LinkContainer>
-                }
-                { user_info.modules.includes(modules.npact_crdc) && isAllowed(user_info.ui_profile, pages.npact_mvno_numbers) &&
-                    <LinkContainer to={"/system/mvno_numbers"}>
-                        <MenuItem>
-                            <FormattedMessage id="mvno-numbers" defaultMessage="MVNO Numbers"/>
-                        </MenuItem>
-                    </LinkContainer>
-                }
-                { user_info.modules.includes(modules.npact_crdc) && isAllowed(user_info.ui_profile, pages.npact_holidays) &&
-                    <>
-                        <MenuItem divider/>
-                        <LinkContainer to={"/system/public_holidays"}>
-                            <MenuItem>
-                                <FormattedMessage id="public-holidays" defaultMessage="Public holidays"/>
-                            </MenuItem>
-                        </LinkContainer>
-                    </>
-                }
             </NavDropdown>
-          }
+            }
 
-          { isAllowed(user_info.ui_profile, pages.system) &&
-              <NavDropdown eventKey={4} title={
-                <span>
-                    <Glyphicon glyph="signal" /> {' '}
-                    <FormattedMessage id='settings' defaultMessage='Settings'/>
+            {(!user_info.modules || user_info.modules.includes(modules.bulk)) && isAllowed(user_info.ui_profile, pages.bulks) &&
+            <NavDropdown title={
+              <span>
+                    <Glyphicon glyph="equalizer"/> {' '}
+                <FormattedMessage id="bulks" defaultMessage="Bulks"/>
                 </span>
-                } id="nav-system-settings">
-                  { isAllowed(user_info.ui_profile, pages.system_users) &&
-                      <LinkContainer to={"/system/users"}>
-                          <MenuItem>
-                              <FormattedMessage id="users" defaultMessage="Users"/>
-                          </MenuItem>
-                      </LinkContainer>
-                  }
-                  { isAllowed(user_info.ui_profile, pages.system_config) &&
-                      [
-                          <LinkContainer to={"/system/webhooks"} key="webhooks">
-                              <MenuItem>
-                                  <FormattedMessage id="webhooks" defaultMessage="Webhooks"/>
-                              </MenuItem>
-                          </LinkContainer>,
-                          <LinkContainer to={"/system/config"} key={"configuration"}>
-                              <MenuItem>
-                                  <FormattedMessage id="configuration" defaultMessage="Configuration"/>
-                              </MenuItem>
-                          </LinkContainer>
-                      ]
-                  }
-                  { isAllowed(user_info.ui_profile, pages.system_gateways) &&
-                      [
-                          <MenuItem key="divider-2" divider/>,
-                          <LinkContainer to={"/system/gateways"} key="gateways">
-                              <MenuItem>
-                                  <FormattedMessage id="gateways" defaultMessage="Gateways"/>
-                              </MenuItem>
-                          </LinkContainer>
-                      ]
-                  }
-                  { isAllowed(user_info.ui_profile, pages.system_databases) &&
-                      <LinkContainer to={"/system/databases"}>
-                          <MenuItem>
-                              <FormattedMessage id="databases" defaultMessage="Databases"/>
-                          </MenuItem>
-                      </LinkContainer>
-                  }
-                  { isAllowed(user_info.ui_profile, pages.system_queues) &&
-                      <LinkContainer to={"/system/queues"}>
-                          <MenuItem>
-                              <FormattedMessage id="queues" defaultMessage="Queues"/>
-                          </MenuItem>
-                      </LinkContainer>
-                  }
-                  { isAllowed(user_info.ui_profile, pages.system_reporting) &&
-                      [
-                          <MenuItem key="divider-3" divider/>,
-                          <LinkContainer to={"/system/reporting"} key="reports">
-                              <MenuItem>
-                                  <FormattedMessage id="reporting" defaultMessage="Reporting"/>
-                              </MenuItem>
-                          </LinkContainer>
-                      ]
-                  }
-                  { isAllowed(user_info.ui_profile, pages.system_templates) &&
-                      [
-                          <MenuItem key="divider-4" divider/>,
-                          <LinkContainer to={"/system/templates"} key="templates">
-                              <MenuItem>
-                                  <FormattedMessage id="templates" defaultMessage="Templates"/>
-                              </MenuItem>
-                          </LinkContainer>
-                      ]
-                  }
-                  { isAllowed(user_info.ui_profile, pages.system_logs) &&
-                      [
-                          <LinkContainer to={"/system/logs"} key="logs">
-                              <MenuItem>
-                                  <FormattedMessage id="logs" defaultMessage="Logs"/>
-                              </MenuItem>
-                          </LinkContainer>
-                      ]
-                  }
-              </NavDropdown>
-          }
-          {(!user_info.modules || user_info.modules.includes(modules.orchestration)) && isAllowed(user_info.ui_profile, pages.requests_startup_events) &&
-              <NavDropdown eventKey={4} title={
-                <span>
-                    <Glyphicon glyph="cog" /> {' '}
-                    <FormattedMessage id='orchestration' defaultMessage='Orchestration'/>
-                </span>
-                } id="nav-orch">
-                  {isAllowed(user_info.ui_profile, pages.requests_startup_events) &&
-                  <LinkContainer to={"/transactions/config/startup_events"}>
-                      <MenuItem>
-                          <FormattedMessage id="startup-events" defaultMessage="Startup Events"/>
-                      </MenuItem>
-                  </LinkContainer>
-                  }
-                  {isAllowed(user_info.ui_profile, pages.requests_workflow_editor) &&
-                  <LinkContainer to={"/transactions/config/activities/editor"}>
-                      <MenuItem>
-                          <FormattedMessage id="editor" defaultMessage="Editor"/>
-                      </MenuItem>
-                  </LinkContainer>
-                  }
-                  {isAllowed(user_info.ui_profile, pages.requests_workflow_editor) &&
-                  <LinkContainer to={"/transactions/config/cron_timers"}>
-                      <MenuItem>
-                          <FormattedMessage id="cron-timers" defaultMessage="Cron timers"/>
-                      </MenuItem>
-                  </LinkContainer>
-                  }
-              </NavDropdown>
-          }
-
-        </Nav>
-        <Nav pullRight>
-            <NavDropdown title={<Glyphicon glyph="user"/>} id="nav-local-user">
-                <LinkContainer to={"/user/profile"}>
-                    <MenuItem>
-                        <FormattedMessage id="profile" defaultMessage="Profile"/>
-                    </MenuItem>
-                </LinkContainer>
-                <MenuItem divider/>
-                <MenuItem onClick={logoutUser}>
-                    <FormattedMessage id="logout" defaultMessage="Logout"/>
+            } id="nav-bulks">
+              <LinkContainer to={"/transactions/bulk"}>
+                <MenuItem>
+                  <FormattedMessage id="bulk" defaultMessage="Bulk"/>
                 </MenuItem>
+              </LinkContainer>
+              {isAllowed(user_info.ui_profile, pages.bulk_actions) && isAllowed(user_info.ui_profile, pages.system) &&
+              <LinkContainer to={"/system/bulk_actions"}>
+                <MenuItem>
+                  <FormattedMessage id="bulk-actions" defaultMessage="Bulk actions"/>
+                </MenuItem>
+              </LinkContainer>
+              }
+            </NavDropdown>
+            }
+
+            {(!user_info.modules || user_info.modules.includes(modules.provisioning)) && isAllowed(user_info.ui_profile, pages.provisioning) &&
+            <NavDropdown
+              eventKey={4}
+              title={
+                <span>
+                      <Glyphicon glyph="hdd"/>{" "}
+                  <FormattedMessage
+                    id="provisioning"
+                    defaultMessage="Provisioning"
+                  />
+                    </span>
+              }
+              id="nav-data-apio"
+            >
+              {
+                ProvProxiesManager.listProxies().map((p, i) =>
+                  <LinkContainer to={"/provisioning/" + p.id + "/tenants"} key={i}>
+                    <MenuItem>
+                      {p.name}
+                    </MenuItem>
+                  </LinkContainer>
+                )
+              }
+            </NavDropdown>
+            }
+
+            {(!user_info.modules || supportedModule(modules.npact, user_info.modules)) && isAllowed(user_info.ui_profile, pages.data) &&
+            <NavDropdown eventKey={4} title={
+              <span>
+                      <Glyphicon glyph="hdd"/> {' '}
+                <FormattedMessage id="data" defaultMessage="Data"/>
+                  </span>
+            } id="nav-system-data">
+              {isAllowed(user_info.ui_profile, pages.npact_operators) &&
+              <LinkContainer to={"/system/operators"}>
+                <MenuItem>
+                  <FormattedMessage id="operators" defaultMessage="Operators"/>
+                </MenuItem>
+              </LinkContainer>
+              }
+              {isAllowed(user_info.ui_profile, pages.npact_ranges) &&
+              <LinkContainer to={"/system/ranges"}>
+                <MenuItem>
+                  <FormattedMessage id="ranges" defaultMessage="Ranges"/>
+                </MenuItem>
+              </LinkContainer>
+              }
+              {isAllowed(user_info.ui_profile, pages.npact_routing_info) &&
+              <LinkContainer to={"/system/routing_info"}>
+                <MenuItem>
+                  <FormattedMessage id="routing-info" defaultMessage="Routing info"/>
+                </MenuItem>
+              </LinkContainer>
+              }
+              <MenuItem divider/>
+              {isAllowed(user_info.ui_profile, pages.npact_porting_cases) &&
+              <LinkContainer to={"/system/porting_cases"}>
+                <MenuItem>
+                  <FormattedMessage id="np-database" defaultMessage="NP database"/>
+                </MenuItem>
+              </LinkContainer>
+              }
+              {user_info.modules.includes(modules.npact_crdc) && isAllowed(user_info.ui_profile, pages.npact_mvno_numbers) &&
+              <LinkContainer to={"/system/mvno_numbers"}>
+                <MenuItem>
+                  <FormattedMessage id="mvno-numbers" defaultMessage="MVNO Numbers"/>
+                </MenuItem>
+              </LinkContainer>
+              }
+              {user_info.modules.includes(modules.npact_crdc) && isAllowed(user_info.ui_profile, pages.npact_holidays) &&
+              <>
+                <MenuItem divider/>
+                <LinkContainer to={"/system/public_holidays"}>
+                  <MenuItem>
+                    <FormattedMessage id="public-holidays" defaultMessage="Public holidays"/>
+                  </MenuItem>
+                </LinkContainer>
+              </>
+              }
+            </NavDropdown>
+            }
+
+            {isAllowed(user_info.ui_profile, pages.system) &&
+            <NavDropdown eventKey={4} title={
+              <span>
+                      <Glyphicon glyph="signal"/> {' '}
+                <FormattedMessage id='settings' defaultMessage='Settings'/>
+                  </span>
+            } id="nav-system-settings">
+              {isAllowed(user_info.ui_profile, pages.system_users) &&
+              <LinkContainer to={"/system/users"}>
+                <MenuItem>
+                  <FormattedMessage id="users" defaultMessage="Users"/>
+                </MenuItem>
+              </LinkContainer>
+              }
+              {isAllowed(user_info.ui_profile, pages.system_config) &&
+              [
+                <LinkContainer to={"/system/webhooks"} key="webhooks">
+                  <MenuItem>
+                    <FormattedMessage id="webhooks" defaultMessage="Webhooks"/>
+                  </MenuItem>
+                </LinkContainer>,
+                <LinkContainer to={"/system/config"} key={"configuration"}>
+                  <MenuItem>
+                    <FormattedMessage id="configuration" defaultMessage="Configuration"/>
+                  </MenuItem>
+                </LinkContainer>
+              ]
+              }
+              {isAllowed(user_info.ui_profile, pages.system_gateways) &&
+              [
+                <MenuItem key="divider-2" divider/>,
+                <LinkContainer to={"/system/gateways"} key="gateways">
+                  <MenuItem>
+                    <FormattedMessage id="gateways" defaultMessage="Gateways"/>
+                  </MenuItem>
+                </LinkContainer>
+              ]
+              }
+              {isAllowed(user_info.ui_profile, pages.system_databases) &&
+              <LinkContainer to={"/system/databases"}>
+                <MenuItem>
+                  <FormattedMessage id="databases" defaultMessage="Databases"/>
+                </MenuItem>
+              </LinkContainer>
+              }
+              {isAllowed(user_info.ui_profile, pages.system_queues) &&
+              <LinkContainer to={"/system/queues"}>
+                <MenuItem>
+                  <FormattedMessage id="queues" defaultMessage="Queues"/>
+                </MenuItem>
+              </LinkContainer>
+              }
+              {isAllowed(user_info.ui_profile, pages.system_reporting) &&
+              [
+                <MenuItem key="divider-3" divider/>,
+                <LinkContainer to={"/system/reporting"} key="reports">
+                  <MenuItem>
+                    <FormattedMessage id="reporting" defaultMessage="Reporting"/>
+                  </MenuItem>
+                </LinkContainer>
+              ]
+              }
+              {isAllowed(user_info.ui_profile, pages.system_templates) &&
+              [
+                <MenuItem key="divider-4" divider/>,
+                <LinkContainer to={"/system/templates"} key="templates">
+                  <MenuItem>
+                    <FormattedMessage id="templates" defaultMessage="Templates"/>
+                  </MenuItem>
+                </LinkContainer>
+              ]
+              }
+              {isAllowed(user_info.ui_profile, pages.system_logs) &&
+              [
+                <LinkContainer to={"/system/logs"} key="logs">
+                  <MenuItem>
+                    <FormattedMessage id="logs" defaultMessage="Logs"/>
+                  </MenuItem>
+                </LinkContainer>
+              ]
+              }
+            </NavDropdown>
+            }
+            {(!user_info.modules || user_info.modules.includes(modules.orchestration)) && isAllowed(user_info.ui_profile, pages.requests_startup_events) &&
+            <NavDropdown eventKey={4} title={
+              <span>
+                      <Glyphicon glyph="cog"/> {' '}
+                <FormattedMessage id='orchestration' defaultMessage='Orchestration'/>
+                  </span>
+            } id="nav-orch">
+              {isAllowed(user_info.ui_profile, pages.requests_startup_events) &&
+              <LinkContainer to={"/transactions/config/startup_events"}>
+                <MenuItem>
+                  <FormattedMessage id="startup-events" defaultMessage="Startup Events"/>
+                </MenuItem>
+              </LinkContainer>
+              }
+              {isAllowed(user_info.ui_profile, pages.requests_workflow_editor) &&
+              <LinkContainer to={"/transactions/config/activities/editor"}>
+                <MenuItem>
+                  <FormattedMessage id="editor" defaultMessage="Editor"/>
+                </MenuItem>
+              </LinkContainer>
+              }
+              {isAllowed(user_info.ui_profile, pages.requests_workflow_editor) &&
+              <LinkContainer to={"/transactions/config/cron_timers"}>
+                <MenuItem>
+                  <FormattedMessage id="cron-timers" defaultMessage="Cron timers"/>
+                </MenuItem>
+              </LinkContainer>
+              }
+            </NavDropdown>
+            }
+
+          </Nav>
+          <Nav pullRight>
+            <NavDropdown title={<Glyphicon glyph="user"/>} id="nav-local-user">
+              <LinkContainer to={"/user/profile"}>
+                <MenuItem>
+                  <FormattedMessage id="profile" defaultMessage="Profile"/>
+                </MenuItem>
+              </LinkContainer>
+              <MenuItem divider/>
+              <MenuItem onClick={logoutUser}>
+                <FormattedMessage id="logout" defaultMessage="Logout"/>
+              </MenuItem>
             </NavDropdown>
 
             <ListItemLink to={"/help"}>
-                <Glyphicon glyph="question-sign"/>
+              <Glyphicon glyph="question-sign"/>
             </ListItemLink>
 
             <Navbar.Text
-                style={{
-                    color: (database_status && database_status.env === 'TEST') ? '#ef0803' : '#777',
-                    fontWeight: (database_status && database_status.env === 'TEST') ? 'bold' : 'normal',
-                }}>
-                {
-                    (database_status && database_status.env) ? database_status.env : "unknown"
-                }
+              style={{
+                color: (database_status && database_status.env === 'TEST') ? '#ef0803' : '#777',
+                fontWeight: (database_status && database_status.env === 'TEST') ? 'bold' : 'normal',
+              }}>
+              {
+                (database_status && database_status.env) ? database_status.env : "unknown"
+              }
             </Navbar.Text>
-        </Nav>
-    </Navbar.Collapse>
-  </Navbar>
-);
+          </Nav>
+        </Navbar.Collapse>
+      </Navbar>
+    )
+  }
+};
 
 
 const NotFound = () => (
