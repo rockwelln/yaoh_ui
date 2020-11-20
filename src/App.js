@@ -117,6 +117,33 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
           <Navbar.Toggle/>
         </Navbar.Header>
         <Navbar.Collapse>
+          <Nav>
+            {(!user_info.modules || user_info.modules.includes(modules.provisioning)) && isAllowed(user_info.ui_profile, pages.provisioning) &&
+            <NavDropdown
+              eventKey={4}
+              title={
+                <span>
+                      <Glyphicon glyph="hdd"/>{" "}
+                  <FormattedMessage
+                    id="provisioning"
+                    defaultMessage="Provisioning"
+                  />
+                    </span>
+              }
+              id="nav-data-apio"
+            >
+              {
+                ProvProxiesManager.listProxies().map((p, i) =>
+                  <LinkContainer to={"/provisioning/" + p.id + "/tenants"} key={i}>
+                    <MenuItem>
+                      {p.name}
+                    </MenuItem>
+                  </LinkContainer>
+                )
+              }
+            </NavDropdown>
+            }
+          </Nav>
           <Nav pullRight>
             <NavDropdown title={<Glyphicon glyph="user"/>} id="nav-local-user">
               <LinkContainer to={"/user/profile"}>
