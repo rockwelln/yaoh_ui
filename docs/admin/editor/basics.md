@@ -104,6 +104,33 @@ with the property "attribute" set to "default value" if not present in the reque
 Because instance's context is a map into the database "string" to "string",
 it might be easier to use this filter to ensure the "body" property is turned into a dict.
 
+#### regex_replace
+(see `https://docs.ansible.com/ansible/latest/user_guide/playbooks_filters.html#searching-strings-with-regular-expressions`)
+
+#### regex_findall
+(see `https://docs.ansible.com/ansible/latest/user_guide/playbooks_filters.html#searching-strings-with-regular-expressions`)
+
+#### regex_search
+(see `https://docs.ansible.com/ansible/latest/user_guide/playbooks_filters.html#searching-strings-with-regular-expressions`)
+
+#### unique
+Remove all duplicates from an iterable
+
+#### intersect
+Intersection of multiple iterable sets (returns the common items)
+
+#### difference
+Union of multiple iterable sets (returns the items referenced only once per iterables)
+
+#### union
+Union of multiple iterable sets (returns all the items from all iterables only once)
+
+#### min
+Returns the min value of an iterable input
+
+#### max
+Returns the max value of an iterable input
+
 ## Python code
 
 Some cells accept inputs to be evaluated as python code.  
