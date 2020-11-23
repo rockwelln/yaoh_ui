@@ -191,6 +191,13 @@ class Tenants extends Component {
                             onClick={this.sortByType}
                           />
                         </th>
+                        <th style={{ width: "24%" }}>
+                          <FormattedMessage id="sync" defaultMessage="Sync" />
+                          <Glyphicon
+                            glyph="glyphicon glyphicon-sort"
+                            onClick={this.sortBySync}
+                          />
+                        </th>
                         <th style={{ width: "4%" }} />
                       </tr>
                     </thead>
@@ -347,6 +354,27 @@ class Tenants extends Component {
       });
       this.setState({ tenants: tenansSorted, sortedBy: "type" }, () =>
         this.pagination()
+      );
+    }
+  };
+
+  sortBySync = () => {
+    const { tenants, sortedBy } = this.state;
+    if (sortedBy === "sync") {
+      const tenansSorted = tenants.reverse();
+      this.setState({ tenants: tenansSorted }, () => this.pagination());
+    } else {
+      const notSyncTenants = tenants.filter(el => !el.sync);
+      const tenantsSorted = tenants
+        .filter(el => el.sync)
+        .sort((a, b) => {
+          if (a.sync.ldap < b.sync.ldap) return -1;
+          if (a.sync.ldap > b.sync.ldap) return 1;
+          return 0;
+        });
+      this.setState(
+        { tenants: [...tenantsSorted, ...notSyncTenants], sortedBy: "sync" },
+        () => this.pagination()
       );
     }
   };
