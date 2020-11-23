@@ -931,10 +931,12 @@ export function ActivityEditor(props) {
                   showNewCell(false);
                   if(c) {
                     // merge the output(s) if needed
+                    // clone c.def before changing it.
+                    const c_def = JSON.parse(JSON.stringify(c.def));
                     if(c.customOutputs) {
-                      c.def.outputs = c.def.outputs.concat(c.customOutputs).reduce((u, i) => u.includes(i) ? u : [...u, i], []);
+                      c_def.outputs = c.def.outputs.concat(c.customOutputs).reduce((u, i) => u.includes(i) ? u : [...u, i], []);
                     }
-                    import("./editor").then(e => e.addNode(editor, c.def, c.name, c.params, c.isEntity));
+                    import("./editor").then(e => e.addNode(editor, c_def, c.name, c.params, c.isEntity));
                   }
                 }}
             />
