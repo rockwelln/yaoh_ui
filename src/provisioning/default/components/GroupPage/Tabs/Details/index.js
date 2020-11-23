@@ -126,6 +126,7 @@ class Details extends Component {
                       group: { ...this.state.group, groupName: e.target.value }
                     });
                   }}
+                  disabled={this.props.group.sync}
                 />
               </Col>
             </FormGroup>
