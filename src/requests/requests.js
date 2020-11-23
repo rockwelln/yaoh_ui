@@ -843,7 +843,7 @@ function ErrorEntry(props){
     const [showDetails, setShowDetails] = useState(false);
 
     const {entry, userInfo} = props;
-    const summary = entry.output?entry.output:<FormattedMessage id="see-description" defaultMessage="See description" />;
+    const summary = entry.output?entry.output:"See description...";
     return (
         <tr key={entry.id}>
             <th>{entry.cell_id}</th>
