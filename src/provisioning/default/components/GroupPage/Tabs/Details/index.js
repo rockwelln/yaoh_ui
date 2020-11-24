@@ -89,28 +89,59 @@ class Details extends Component {
               </Col>
             </FormGroup>
             {this.props.group.sync && (
-              <FormGroup controlId="Sync">
-                <Col
-                  componentClass={ControlLabel}
-                  md={3}
-                  className={"text-left"}
-                >
-                  Sync
-                </Col>
-                <Col md={9}>
-                  <div className={"sync-group"}>
-                    <div className={"sync-group-item"}>
-                      {this.props.group.sync.ldap}
-                    </div>
-                    <div className={"sync-group-item"}>
-                      {this.props.tenant.sync.ou}
-                    </div>
-                    <div className={"sync-group-item"}>
-                      {this.props.group.sync.ou}
-                    </div>
-                  </div>
-                </Col>
-              </FormGroup>
+              <React.Fragment>
+                <FormGroup controlId="LDAP">
+                  <Col
+                    componentClass={ControlLabel}
+                    md={3}
+                    className={"text-left"}
+                  >
+                    External LDAP
+                  </Col>
+                  <Col md={9}>
+                    <FormControl
+                      type="text"
+                      placeholder="LDAP"
+                      disabled
+                      defaultValue={this.props.group.sync.ldap}
+                    />
+                  </Col>
+                </FormGroup>
+                <FormGroup controlId="Tenant OU">
+                  <Col
+                    componentClass={ControlLabel}
+                    md={3}
+                    className={"text-left"}
+                  >
+                    Tenant OU
+                  </Col>
+                  <Col md={9}>
+                    <FormControl
+                      type="text"
+                      placeholder="Tenant OU"
+                      disabled
+                      defaultValue={this.props.tenant.sync.ou}
+                    />
+                  </Col>
+                </FormGroup>
+                <FormGroup controlId="Group OU">
+                  <Col
+                    componentClass={ControlLabel}
+                    md={3}
+                    className={"text-left"}
+                  >
+                    Group OU
+                  </Col>
+                  <Col md={9}>
+                    <FormControl
+                      type="text"
+                      placeholder="Group OU"
+                      disabled
+                      defaultValue={this.props.group.sync.ou}
+                    />
+                  </Col>
+                </FormGroup>
+              </React.Fragment>
             )}
             <FormGroup controlId="groupName">
               <Col componentClass={ControlLabel} md={3} className={"text-left"}>
