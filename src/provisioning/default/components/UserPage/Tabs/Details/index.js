@@ -131,28 +131,62 @@ class Details extends Component {
           <FormGroup controlId="Details">
             <ControlLabel className={"margin-1"}>DETAILS</ControlLabel>
             {this.props.user.sync && (
-              <FormGroup controlId="Sync">
-                <Col
-                  componentClass={ControlLabel}
-                  md={3}
-                  className={"text-left"}
+              <React.Fragment>
+                <FormGroup
+                  controlId="External LDAP"
+                  validationState={emailIsValid}
                 >
-                  Sync
-                </Col>
-                <Col md={9}>
-                  <div className={"sync-group"}>
-                    <div className={"sync-group-item"}>
-                      {this.props.user.sync.ldap}
-                    </div>
-                    <div className={"sync-group-item"}>
-                      {this.props.user.sync.ou}
-                    </div>
-                    <div className={"sync-group-item"}>
-                      {this.props.user.sync.dn}
-                    </div>
-                  </div>
-                </Col>
-              </FormGroup>
+                  <Col
+                    componentClass={ControlLabel}
+                    md={3}
+                    className={"text-left"}
+                  >
+                    External LDAP
+                  </Col>
+                  <Col md={9}>
+                    <FormControl
+                      type="text"
+                      placeholder="External LDAP"
+                      defaultValue={this.props.user.sync.ldap}
+                      disabled
+                    />
+                  </Col>
+                </FormGroup>
+                <FormGroup controlId="Tenant OU" validationState={emailIsValid}>
+                  <Col
+                    componentClass={ControlLabel}
+                    md={3}
+                    className={"text-left"}
+                  >
+                    Tenant OU
+                  </Col>
+                  <Col md={9}>
+                    <FormControl
+                      type="text"
+                      placeholder="Tenant OU"
+                      defaultValue={this.props.user.sync.ou}
+                      disabled
+                    />
+                  </Col>
+                </FormGroup>
+                <FormGroup controlId="User DN" validationState={emailIsValid}>
+                  <Col
+                    componentClass={ControlLabel}
+                    md={3}
+                    className={"text-left"}
+                  >
+                    User DN
+                  </Col>
+                  <Col md={9}>
+                    <FormControl
+                      type="text"
+                      placeholder="User DN"
+                      defaultValue={this.props.user.sync.dn}
+                      disabled
+                    />
+                  </Col>
+                </FormGroup>
+              </React.Fragment>
             )}
             <FormGroup controlId="userEmail" validationState={emailIsValid}>
               <Col componentClass={ControlLabel} md={3} className={"text-left"}>
