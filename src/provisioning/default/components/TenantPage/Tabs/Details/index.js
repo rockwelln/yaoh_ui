@@ -191,6 +191,7 @@ class Details extends Component {
                   onChange={e => {
                     this.setState({ tenantName: e.target.value });
                   }}
+                  disabled={this.state.tenant.sync}
                 />
               </Col>
             </FormGroup>
