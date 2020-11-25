@@ -624,19 +624,6 @@ class Details extends Component {
                 </Col>
               </Row>
             )}
-            <Col mdOffset={3} md={9}>
-              {updateMassage && (
-                <HelpBlock
-                  bsClass={`${
-                    updateMassage === "Loading..."
-                      ? "color-info"
-                      : "color-success"
-                  }`}
-                >
-                  {updateMassage}
-                </HelpBlock>
-              )}
-            </Col>
           </FormGroup>
           <Row>
             <Col md={12} className={"padding-0"}>

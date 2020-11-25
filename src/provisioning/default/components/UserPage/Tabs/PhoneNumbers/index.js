@@ -143,19 +143,6 @@ class PhoneNumber extends Component {
                 />
               </Col>
             </FormGroup>
-            <Col mdOffset={3} md={9}>
-              {updateMassage && (
-                <HelpBlock
-                  bsClass={`${
-                    updateMassage === "Loading..."
-                      ? "color-info"
-                      : "color-success"
-                  }`}
-                >
-                  {updateMassage}
-                </HelpBlock>
-              )}
-            </Col>
           </FormGroup>
           <Row>
             <Col mdPush={10} md={1}>
