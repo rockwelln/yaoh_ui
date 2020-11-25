@@ -531,7 +531,17 @@ const LicenseAlert = () => {
 };
 
 function fetchBackendHealth(onSuccess) {
-    return fetch("/api/v01/health").then(onSuccess);
+    return fetch("/api/v01/health")
+      .then(r => {
+        if (r.status < 400) {
+          return r
+        } else {
+          throw new Error(r.statusText)
+        }
+      })
+      .then(r => r.json())
+      .then(onSuccess)
+      .catch(console.log);
 }
 
 class App extends Component {
