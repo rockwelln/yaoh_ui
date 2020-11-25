@@ -9,7 +9,6 @@ import Col from "react-bootstrap/lib/Col";
 import Row from "react-bootstrap/lib/Row";
 import Button from "react-bootstrap/lib/Button";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
-import HelpBlock from "react-bootstrap/lib/HelpBlock";
 import { Form } from "react-bootstrap";
 import Select from "react-select";
 
@@ -81,8 +80,7 @@ class PhoneNumber extends Component {
       isLoadingUser,
       phoneNumber,
       cliPhoneNumber,
-      extension,
-      updateMassage
+      extension
     } = this.state;
 
     if (isLoadingUser) {
@@ -107,6 +105,7 @@ class PhoneNumber extends Component {
                   onChange={selected =>
                     this.setState({ phoneNumber: selected })
                   }
+                  isDisabled={this.props.user.sync}
                   options={phoneNumbers}
                 />
               </Col>
@@ -135,6 +134,7 @@ class PhoneNumber extends Component {
                   type="number"
                   placeholder="Extension"
                   defaultValue={extension}
+                  disabled={this.props.user.sync}
                   onChange={e =>
                     this.setState({
                       extension: e.target.value
