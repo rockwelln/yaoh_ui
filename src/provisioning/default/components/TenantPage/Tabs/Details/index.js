@@ -37,6 +37,7 @@ class Details extends Component {
     addressInformation: {},
     isLoadingRoutingProfile: true,
     tenantRoutingProfile: "",
+    syncStatus: undefined,
 
     voiceMessageDelivery: "",
     voiceMessageNotification: "",
@@ -159,10 +160,17 @@ class Details extends Component {
             <FormGroup controlId="useTenantLanguages">
               <Col mdOffset={3} md={9}>
                 <Checkbox
-                //defaultChecked={this.state.tenant.useTenantLanguages}
-                // onChange={e =>
-                //   this.setState({ useTenantLanguages: e.target.checked })
-                // }
+                  defaultChecked={
+                    this.props.tenant.sync.status === "SYNCED" ||
+                    this.props.tenant.sync.status === "MUST_BE_SYNCED"
+                  }
+                  onChange={e => {
+                    if (e.target.checked) {
+                      this.setState({ syncStatus: "MUST_BE_SYNCED" });
+                    } else {
+                      this.setState({ syncStatus: "MUST_BE_SKIPPED" });
+                    }
+                  }}
                 >
                   Include the Tenant in next Synchronization cycle (Groups and
                   Users)
@@ -171,12 +179,7 @@ class Details extends Component {
             </FormGroup>
             <FormGroup controlId="useTenantLanguages">
               <Col mdOffset={1}>
-                <div>Last synchronization performed for this Tenant: </div>
-              </Col>
-            </FormGroup>
-            <FormGroup controlId="useTenantLanguages">
-              <Col mdOffset={1}>
-                <div>Next synchronization planned: </div>
+                <div>{`Last synchronization performed for this Tenant: ${this.props.tenant.sync.timeStamp}`}</div>
               </Col>
             </FormGroup>
             <FormGroup controlId="tentantName">
@@ -432,11 +435,12 @@ class Details extends Component {
       defaultDomain,
       useTenantLanguages,
       useCustomRoutingProfile,
-      addressInformation
+      addressInformation,
+      syncStatus
     } = this.state;
 
     const data = {
-      name: tenantName ? tenantName : this.state.tenant.name,
+      //name: tenantName ? tenantName : this.state.tenant.name,
       defaultDomain: defaultDomain
         ? defaultDomain
         : this.state.tenant.defaultDomain,
@@ -446,7 +450,10 @@ class Details extends Component {
       useCustomRoutingProfile: useCustomRoutingProfile
         ? useCustomRoutingProfile
         : this.state.tenant.useCustomRoutingProfile,
-      addressInformation
+      addressInformation,
+      sync: {
+        status: syncStatus
+      }
     };
     const clearData = removeEmpty(data);
 
