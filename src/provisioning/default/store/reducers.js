@@ -87,7 +87,9 @@ const initialState = {
   addedNumbersToTenant: {},
   phoneDeleted: false,
   categoriesOfTemplate: [],
-  category: {},
+  category: {
+    templates: []
+  },
   createdUserInGroup: {},
   trunksGroups: [],
   trunkGroup: {},
