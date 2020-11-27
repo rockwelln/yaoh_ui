@@ -10,6 +10,7 @@ import Row from "react-bootstrap/lib/Row";
 import { Form } from "react-bootstrap";
 import Button from "react-bootstrap/lib/Button";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
+import Creatable from "react-select/creatable";
 
 import Select from "react-select";
 
@@ -53,7 +54,7 @@ export class AddUserPage extends Component {
           .then(() => this.setState({ isLoadingGroup: false }))
       );
     this.props
-      .fetchGetCategoryByName("user")
+      .fetchGetCategoryByName("trunk_user")
       .then(() => this.setState({ isLoadingTemplates: false }));
   };
   render() {
@@ -62,7 +63,8 @@ export class AddUserPage extends Component {
       isLoadingTemplates,
       templateName,
       buttonName,
-      isLoadingLanguages
+      isLoadingLanguages,
+      isLoadingNumbers
     } = this.state;
 
     if (isLoadingGroup || isLoadingTemplates || isLoadingLanguages) {
@@ -77,14 +79,11 @@ export class AddUserPage extends Component {
           >{`Add a new user to ${this.props.match.params.groupId}`}</div>
         </div>
         <div className={"panel-body"}>
-          <div className="alert alert-info" role="alert">
-            To add users in bulk, please use the bulk tool
-          </div>
           <Row>
             <Col md={8}>
               <Form horizontal className={"margin-1"}>
                 <FormGroup controlId="addUser">
-                  <FormGroup controlId="phonenumber">
+                  {/* <FormGroup controlId="phonenumber">
                     <Col
                       componentClass={ControlLabel}
                       md={3}
@@ -108,8 +107,8 @@ export class AddUserPage extends Component {
                         ]}
                       />
                     </Col>
-                  </FormGroup>
-                  {this.state.phoneNumber.value === "New number" && (
+                  </FormGroup> */}
+                  {/* {this.state.phoneNumber.value === "New number" && (
                     <FormGroup controlId="newNumber">
                       <Col
                         componentClass={ControlLabel}
@@ -127,49 +126,72 @@ export class AddUserPage extends Component {
                         />
                       </Col>
                     </FormGroup>
-                  )}
-                  {this.state.phoneNumber.value === "Range" && (
-                    <React.Fragment>
-                      <FormGroup controlId="minNumber">
-                        <Col
-                          componentClass={ControlLabel}
-                          md={3}
-                          className={"text-left"}
-                        >
-                          Range start{"\u002a"}
-                        </Col>
-                        <Col md={9}>
-                          <FormControl
-                            type="number"
-                            placeholder="Start"
-                            value={this.state.minPhoneNumber}
-                            onChange={e =>
-                              this.setState({ minPhoneNumber: e.target.value })
-                            }
-                          />
-                        </Col>
-                      </FormGroup>
-                      <FormGroup controlId="maxNumber">
-                        <Col
-                          componentClass={ControlLabel}
-                          md={3}
-                          className={"text-left"}
-                        >
-                          Range end{"\u002a"}
-                        </Col>
-                        <Col md={9}>
-                          <FormControl
-                            type="number"
-                            placeholder="End"
-                            value={this.state.maxPhoneNumber}
-                            onChange={e =>
-                              this.setState({ maxPhoneNumber: e.target.value })
-                            }
-                          />
-                        </Col>
-                      </FormGroup>
-                    </React.Fragment>
-                  )}
+                  )} */}
+                  <React.Fragment>
+                    <FormGroup controlId="minNumber">
+                      <Col
+                        componentClass={ControlLabel}
+                        md={3}
+                        className={"text-left"}
+                      >
+                        Range start{"\u002a"}
+                      </Col>
+                      <Col md={9}>
+                        <Creatable
+                          isClearable
+                          options={this.props.availableNumbers.map(number => ({
+                            value: number,
+                            label: number
+                          }))}
+                          onChange={newValue => {
+                            this.setState({ minPhoneNumber: newValue.value });
+                          }}
+                          // onInputChange={this.handleInputChange}
+                          // options={colourOptions}
+                        />
+                        {/* <FormControl
+                          type="number"
+                          placeholder="Start"
+                          value={this.state.minPhoneNumber}
+                          onChange={e =>
+                            this.setState({ minPhoneNumber: e.target.value })
+                          }
+                        /> */}
+                      </Col>
+                    </FormGroup>
+                    <FormGroup controlId="maxNumber">
+                      <Col
+                        componentClass={ControlLabel}
+                        md={3}
+                        className={"text-left"}
+                      >
+                        Range end{"\u002a"}
+                      </Col>
+                      <Col md={9}>
+                        <Creatable
+                          isClearable
+                          options={this.props.availableNumbers.map(number => ({
+                            value: number,
+                            label: number
+                          }))}
+                          onChange={newValue => {
+                            this.setState({ maxPhoneNumber: newValue.value });
+                          }}
+                          // onChange={this.handleChange}
+                          // onInputChange={this.handleInputChange}
+                          // options={colourOptions}
+                        />
+                        {/* <FormControl
+                          type="number"
+                          placeholder="End"
+                          value={this.state.maxPhoneNumber}
+                          onChange={e =>
+                            this.setState({ maxPhoneNumber: e.target.value })
+                          }
+                        /> */}
+                      </Col>
+                    </FormGroup>
+                  </React.Fragment>
                   <FormGroup controlId="template">
                     <Col
                       componentClass={ControlLabel}
@@ -202,10 +224,11 @@ export class AddUserPage extends Component {
                           type="submit"
                           className="btn-primary"
                           disabled={
-                            buttonName === "Creating..." ||
-                            !this.state.phoneNumber.value ||
-                            (this.state.phoneNumber.value === "New number" &&
-                              !this.state.newPhoneNumber)
+                            buttonName === "Creating..."
+                            // ||
+                            // !this.state.phoneNumber.value ||
+                            // (this.state.phoneNumber.value === "New number" &&
+                            //   !this.state.newPhoneNumber)
                           }
                         >
                           <Glyphicon glyph="glyphicon glyphicon-ok" />{" "}
@@ -257,7 +280,6 @@ export class AddUserPage extends Component {
     const {
       templateName,
       phoneNumber,
-      newPhoneNumber,
       minPhoneNumber,
       maxPhoneNumber
     } = this.state;
@@ -267,18 +289,10 @@ export class AddUserPage extends Component {
         phoneNumber.value === "New number" || phoneNumber.value === "Range"
           ? true
           : "",
-      numbers: [
-        {
-          phoneNumber:
-            phoneNumber.value === "New number"
-              ? newPhoneNumber
-              : phoneNumber.value !== "Range"
-              ? phoneNumber.value
-              : ""
-        }
-      ],
-      range:
-        phoneNumber.value === "Range" ? { minPhoneNumber, maxPhoneNumber } : "",
+      range: {
+        minPhoneNumber,
+        maxPhoneNumber: maxPhoneNumber ? maxPhoneNumber : minPhoneNumber
+      },
       templateName: templateName.value
     };
 

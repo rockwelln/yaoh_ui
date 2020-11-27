@@ -1136,15 +1136,16 @@ export function fetchGetCategoryByName(category) {
       `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/templates/categories/${category}`
     )
       .then(data => dispatch(getCategoryByName(data)))
-      .catch(error =>
+      .catch(error => {
+        getCategoryByName({ templates: [] });
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-category-failed"
             defaultMessage="Failed to fetch category!"
           />,
           error.message
-        )
-      );
+        );
+      });
   };
 }
 
