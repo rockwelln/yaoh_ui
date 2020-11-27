@@ -437,6 +437,10 @@ function setup_toolbar(editor, container, spacer, handlers, props) {
         addToolbarButton(editor, container, 'add_process', '+', null, false, null, 'add a process');
         container.appendChild(spacer.cloneNode(true));
     }
+    if(cells !== undefined) {
+        addToolbarButton(editor, container, 'clone_process', '🐑', null, false, null, 'clone a process');
+        container.appendChild(spacer.cloneNode(true));
+    }
     if(onSave !== undefined) {
         addToolbarButton(editor, container, 'delete', '✘', null, false, null, 'delete an element');
         container.appendChild(spacer.cloneNode(true));

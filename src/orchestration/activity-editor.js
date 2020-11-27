@@ -377,6 +377,54 @@ function ActivityStatsModal(props) {
 }
 
 
+function NewNameModal(props) {
+    const {show, activity, onHide} = props;
+    const [name, setName] = useState("");
+
+    useEffect(() => {
+      !show && setName("");
+    }, [show]);
+
+    const duplicateName = activity && Object.keys(activity.definition.cells).includes(name);
+    const validName = name && name.length !== 0 && (!activity || !duplicateName);
+
+    return (
+        <Modal show={show} onHide={() => onHide(null)} bsSize={"large"}>
+            <Modal.Header closeButton>
+                <Modal.Title>New cell</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <Form horizontal>
+                    <FormGroup validationState={duplicateName?"error":null}>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="name" defaultMessage="Name" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="input"
+                                value={name}
+                                onChange={e => setName(e.target.value)}/>
+                          { duplicateName &&
+                            <HelpBlock>Duplicate name in the workflow</HelpBlock>
+                          }
+                        </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                      <Col smOffset={2} sm={10}>
+                          <Button onClick={() => {onHide(name)}} disabled={!validName} >
+                              Save
+                          </Button>
+                      </Col>
+                    </FormGroup>
+                </Form>
+            </Modal.Body>
+        </Modal>
+    )
+}
+
+
 function NewCellModal(props)  {
     const {show, onHide, cells, entities, activity} = props;
     const [name, setName] = useState("");
@@ -814,6 +862,7 @@ export function ActivityEditor(props) {
     const [showStats, setShowStats] = useState(false);
     const [editor, setEditor] = useState(null);
     const [newCell, showNewCell] = useState(false);
+    const [newName, showNewName] = useState(false);
     const [editedCell, setEditedCell] = useState(undefined);
 
     useEffect(() => {
@@ -866,6 +915,13 @@ export function ActivityEditor(props) {
         editor && editor.addAction('add_process', () =>
             showNewCell(true)
         );
+        editor && editor.addAction('clone_process', () => {
+            const cell = editor.graph.getSelectionCell();
+            if(cell) {
+              showNewName(true);
+            }
+        });
+
     }, [editor]);
 
     useEffect(() => {
@@ -940,6 +996,20 @@ export function ActivityEditor(props) {
                   }
                 }}
             />
+
+            <NewNameModal
+                show={newName}
+                activity={editor && editor.getDefinition().activity}
+                onHide={newName => import("./editor").then(e => {
+                    showNewName(false);
+                    if(!newName) return;
+                    const cell = editor.graph.getSelectionCell();
+                    const cDef = cells.find(c => c.original_name === cell.getAttribute("original_name"));
+                    if(cDef) {
+                        const params = (cell.getAttribute('attrList') || "").split(",").reduce((xa, a) => {xa[a] = cell.getAttribute(a); return xa;}, {});
+                        e.addNode(editor, cDef, newName, params, false);
+                    }
+                })} />
 
             <EditCellModal
                 cell={editedCell}
