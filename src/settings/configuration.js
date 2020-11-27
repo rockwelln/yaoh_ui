@@ -61,7 +61,8 @@ const newGateway = {
   session_holder: "",
   auth: "default",
   login_url: "/api/v1/login/",
-  check: false
+  check: false,
+  check_url: "/health",
 };
 
 function NewGatewayModal(props) {
@@ -104,9 +105,6 @@ function NewGatewayModal(props) {
                 componentClass="input"
                 value={entry.url}
                 onChange={e => setEntry(update(entry, {$merge: {url: e.target.value}}))}/>
-              <HelpBlock>
-                URL with the '/' at end to reach the gateway
-              </HelpBlock>
             </Col>
           </FormGroup>
           <FormGroup>
@@ -368,6 +366,20 @@ function GatewaysPanel(props) {
                           Monitor the status of the gateway and present it to the dashboard.
                           (The gateway has to support some protocols to be integrated properly)
                         </HelpBlock>
+                      </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                      <Col componentClass={ControlLabel} sm={2}>
+                        <FormattedMessage id="check-url" defaultMessage="Check url"/>
+                      </Col>
+
+                      <Col sm={9}>
+                        <FormControl
+                          componentClass="input"
+                          placeHolder="/health"
+                          value={gateway.check_url}
+                          onChange={e => onChange(update(gateways, {[g]: {$merge: {check_url: e.target.value || undefined}}}))}/>
                       </Col>
                     </FormGroup>
 
