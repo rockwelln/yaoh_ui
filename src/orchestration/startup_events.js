@@ -276,7 +276,7 @@ function NewCustomRoute(props) {
                         <Col smOffset={2} sm={10}>
                             <HelpBlock>
                                 <FormattedMessage id="custom-route-help" defaultMessage="The final endpoint will be: " />
-                                {`${CUSTOM_ROUTE_PREFIX}${route.route || ''}`}
+                                {`${route.route && route.route.startsWith("/api/v01/p")?'https://<target>':CUSTOM_ROUTE_PREFIX}${route.route || ''}`}
                             </HelpBlock>
                         </Col>
                     </FormGroup>
@@ -434,6 +434,11 @@ function UpdateCustomRouteModal(props) {
 
     const localEntry = update(entry, {$merge: diffEntry});
     let validUpdateSchema = null;
+
+    const r = localEntry.route;
+    const validRoute = !r || r.length<5 ? null : (
+         ["..", "?", "&"].map(c => r.indexOf(c)).filter(i => i !== -1).length !== 0
+    )  || r[0] !== "/" ? "error" : "success";
     if(diffEntry.schema) {
         try {
             JSON.parse(diffEntry.schema);
@@ -462,17 +467,46 @@ function UpdateCustomRouteModal(props) {
             </Modal.Header>
             <Modal.Body>
                 <Form horizontal>
-                    <StaticControl label={<FormattedMessage id='route' defaultMessage='Route'/>} value={entry.route}/>
+                    <FormGroup validationState={validRoute}>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="route" defaultMessage="Route" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="input"
+                                value={localEntry.route}
+                                placeholder="ex: /clients/{client_id:\d+}/addresses"
+                                onChange={e => setDiffEntry(update(diffEntry, {$merge: {route: e.target.value}}))}/>
+                        </Col>
+                    </FormGroup>
+
                     <FormGroup>
                         <Col smOffset={2} sm={10}>
                             <HelpBlock>
                                 <FormattedMessage id="custom-route-help" defaultMessage="The final endpoint will be: " />
-                                {`${CUSTOM_ROUTE_PREFIX}${entry.route || ''}`}
+                                {`${entry.route && entry.route.startsWith("/api/v01/p")?'https://<target>':CUSTOM_ROUTE_PREFIX}${entry.route || ''}`}
                             </HelpBlock>
                         </Col>
                     </FormGroup>
 
-                    <StaticControl label={<FormattedMessage id='method' defaultMessage='Method'/>} value={entry.method}/>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="method" defaultMessage="Method" />
+                        </Col>
+
+                        <Col sm={2}>
+                            <FormControl
+                                componentClass="select"
+                                value={localEntry.method}
+                                onChange={e => setDiffEntry(update(diffEntry, {$merge: {method: e.target.value}}))}>
+                                <option value="get">get</option>
+                                <option value="post">post</option>
+                                <option value="put">put</option>
+                                <option value="delete">delete</option>
+                            </FormControl>
+                        </Col>
+                    </FormGroup>
 
                     <FormGroup validationState={validUpdateSchema}>
                          <Col componentClass={ControlLabel} sm={2}>
