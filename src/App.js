@@ -80,6 +80,8 @@ import {LoginPage, LoginForm} from "./login";
 import {RESET_PASSWORD_PREFIX, ResetPasswordRequestForm, ResetPasswordForm} from "./reset_password";
 import {NPEmergencyNotificationRequest} from "./np/emergency-notification";
 
+const ListProvisioningGateways=React.lazy(() => import("./provisioning/ListProvisioningGateways"))
+
 const ListItemLink = ({to, children}) => (
     <Route path={to} children={({match}) => (
         <li role="presentation" className={match ? 'active' : ''}>
@@ -1126,7 +1128,7 @@ class App extends Component {
                         </Route>
                         <Route path="/provisioning/list"
                                component={
-                                 React.lazy(() => import("./provisioning/ListProvisioningGateways"))
+                                ListProvisioningGateways
                                } exact/>
                         {/*================ Provisioning UI routes ==============*/
                             provisioningRoutes
