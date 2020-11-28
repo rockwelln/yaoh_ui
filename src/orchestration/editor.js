@@ -8,7 +8,7 @@ const BASIC_CELL_HEIGHT = 120;
 const CHAR_HEIGHT_APPROX = 7.5;
 const BASE_Y = 35;
 const mxnspace = require("mxgraph")({
-    mxImageBasePath: "mxgraph/javascript/src/images",
+    mxImageBasePath: "/static/images",
     mxBasePath: "mxgraph/javascript/src"
 });
 
@@ -42,6 +42,7 @@ const SCHEMA_DEFINITION = {
                   "x": {"type": "number"},
                   "y": {"type": "number"},
                   "params": {"type": "object"},
+                  "group": {"type": "string"},
                   "outputs": {"type": "array", "items": {"type": "string"}}
               },
               "required": ["original_name", "x", "y"],
@@ -64,6 +65,7 @@ const SCHEMA_DEFINITION = {
               "additionalProperties": false
           }
       },
+      "groups": { "type": "array", "items": {"type": "array"} },
       "transitions": { "type": "array", "items": {"type": "array", "minItems": 2, "maxItems": 2} }
   },
   "required": ["cells", "transitions"],
@@ -239,6 +241,14 @@ function new_editor() {
         let geo = this.getCellGeometry(cell);
         return (geo !== null) ? geo.relative : false;
     };
+    let graphGetPreferredSizeForCell = graph.getPreferredSizeForCell;
+    graph.getPreferredSizeForCell = function(cell)
+    {
+      var result = graphGetPreferredSizeForCell.apply(this, arguments);
+      // result.width = cell.geometry.width;
+      result.width = Math.max(BASIC_CELL_HEIGHT, result.width);
+      return result;
+    };
 
     graph.setMultigraph(false);
     // set the validation rules:
@@ -253,6 +263,8 @@ function new_editor() {
 				   null));
     // Installs automatic validation (use editor.validation = true if you are using an mxEditor instance)
     editor.validation = true;
+    graph.collapseToPreferredSize = true;
+    graph.extendParents = true;
     configureStylesheet(graph);
     return editor;
 }
@@ -287,6 +299,15 @@ export function updateGraphModel(editor, activity, options) {
     {
         let endpoints = [];
         parent.originalActivity = activity;
+
+        const groups_vertexes = data.groups && data.groups.reduce(
+            (p, grp) => {
+                p[grp.name] = graph.insertVertex(parent, null, cellNode.cloneNode(true), grp.x, grp.y, 100, 35, 'group');
+                return p;
+            },
+            {}
+        );
+
         data.cells && Object.keys(data.cells).map(name => {
             const c = data.cells[name];
             let node = cellNode.cloneNode(true);
@@ -303,14 +324,15 @@ export function updateGraphModel(editor, activity, options) {
             let v = undefined;
             let v10 = undefined;
             let baseY = BASE_Y;
+            const p_ = c.group?groups_vertexes[c.group]:parent;
             switch(c.original_name) {
                 case 'start':
-                    v = graph.insertVertex(parent, null, node, c.x, c.y, c.height || 100, 25, 'start');
+                    v = graph.insertVertex(p_, null, node, c.x, c.y, c.height || 100, 25, 'start');
                     v.setConnectable(false);
                     baseY = 7;
                     break;
                 case 'end':
-                    v = graph.insertVertex(parent, null, node, c.x, c.y, c.height || 100, 25, 'end');
+                    v = graph.insertVertex(p_, null, node, c.x, c.y, c.height || 100, 25, 'end');
                     v.setConnectable(false);
 
                     v10 = graph.insertVertex(v, null, targetNode.cloneNode(true), 0, 0, 10, 10, 'port;target;spacingLeft=18', true);
@@ -318,7 +340,7 @@ export function updateGraphModel(editor, activity, options) {
                     endpoints.push([name, v10]);
                     break;
                 default:
-                    v = graph.insertVertex(parent, null, node, c.x, c.y, min_cell_height(c, name), baseY + (20 * c.outputs.length) + 15);
+                    v = graph.insertVertex(p_, null, node, c.x, c.y, min_cell_height(c, name), baseY + (20 * c.outputs.length) + 15);
                     v.setConnectable(false);
 
                     v10 = graph.insertVertex(v, null, targetNode.cloneNode(true), 0, 0, 10, 10, 'port;target;spacingLeft=18', true);
@@ -878,6 +900,7 @@ function configureStylesheet(graph)
     style[mxConstants.STYLE_IMAGE_WIDTH] = '48';
     style[mxConstants.STYLE_IMAGE_HEIGHT] = '48';
     style[mxConstants.STYLE_ARCSIZE] = 6;
+    style[mxConstants.STYLE_FOLDABLE] = 0;
     graph.getStylesheet().putDefaultVertexStyle(style);
 
     style = {};
@@ -959,7 +982,7 @@ function configureStylesheet(graph)
     style[mxConstants.STYLE_IMAGE_HEIGHT] = '48';
     graph.getStylesheet().putCellStyle('end', style);
 
-    style = {};
+    style = [];
     style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_RECTANGLE;
     style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter;
     style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_CENTER;
@@ -971,9 +994,26 @@ function configureStylesheet(graph)
     style[mxConstants.STYLE_OPACITY] = '80';
     style[mxConstants.STYLE_FONTSIZE] = 12;
     style[mxConstants.STYLE_FONTSTYLE] = 1;
+    style[mxConstants.STYLE_FOLDABLE] = 1;
+    graph.getStylesheet().putCellStyle('entity', style);
+
+    style = {};
+    style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_RECTANGLE;
+    style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter;
+    style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_CENTER;
+    style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_TOP;
+    style[mxConstants.STYLE_GRADIENTCOLOR] = 'Red';
+    style[mxConstants.STYLE_FILLCOLOR] = 'Red';
+    style[mxConstants.STYLE_STROKECOLOR] = '#1B78C8';
+    style[mxConstants.STYLE_FONTCOLOR] = '#000000';
+    style[mxConstants.STYLE_OPACITY] = '80';
+    style[mxConstants.STYLE_FONTSIZE] = 12;
+    style[mxConstants.STYLE_FONTSTYLE] = 1;
     style[mxConstants.STYLE_IMAGE_WIDTH] = '48';
     style[mxConstants.STYLE_IMAGE_HEIGHT] = '48';
-    graph.getStylesheet().putCellStyle('entity', style);
+    style[mxConstants.STYLE_STARTSIZE] = 200;
+    style[mxConstants.STYLE_FOLDABLE] = 1;
+    graph.getStylesheet().putCellStyle('group', style);
 
     style = graph.getStylesheet().getDefaultEdgeStyle();
     style[mxConstants.STYLE_LABEL_BACKGROUNDCOLOR] = '#FFFFFF';
