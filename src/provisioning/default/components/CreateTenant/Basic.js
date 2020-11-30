@@ -113,6 +113,7 @@ export class Basic extends Component {
                         this.props.changeDetailsOfTenant("");
                         this.props.fetchGetTenantOU(this.props.ldapBackends[0]);
                       } else {
+                        this.props.changeNameOfTenant("");
                         this.props.changeBackendOfTenant("");
                       }
                     }}
