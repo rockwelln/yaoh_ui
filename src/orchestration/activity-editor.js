@@ -425,6 +425,12 @@ function NewNameModal(props) {
 }
 
 
+const miscDefs = {
+  entity: {original_name: "entity", outputs: []},
+  group: {original_name: "group"},
+  note: {original_name: "note", outputs: [], static_params: [{"name": "text", "nature": "text"}]},
+}
+
 function NewCellModal(props)  {
     const {show, onHide, cells, entities, activity} = props;
     const [name, setName] = useState("");
@@ -513,7 +519,7 @@ function NewCellModal(props)  {
                                 value={definition.original_name || definition.name}
                                 onChange={e => {
                                   const cellDef = cells.find(c => c.original_name === e.target.value);
-                                  setDefinition(cellDef?cellDef:entities.find(ent => ent.name === e.target.value))
+                                  setDefinition(cellDef?cellDef:miscDefs[e.target.value]);
                                 }}>
                                 <option value=""/>
                               {
@@ -542,6 +548,11 @@ function NewCellModal(props)  {
                                     ))
                                   })
                               }
+                              <optgroup label="Misc">
+                                <option value="entity">Entity</option>
+                                <option value="note">Note</option>
+                                <option value="group">Group</option>
+                              </optgroup>
 
                             </FormControl>
                             {
@@ -556,7 +567,7 @@ function NewCellModal(props)  {
                       <Col smOffset={2} sm={10}>
                           <Button
                             onClick={() => {
-                              onHide({def:definition, name:name, params:staticParams, isEntity:definition.original_name === undefined, customOutputs: customOutputs});
+                              onHide({def:definition, name:name, params:staticParams, customOutputs: customOutputs});
                             }}
                             disabled={!validName || invalidParams.length !== 0}
                           >
@@ -992,7 +1003,7 @@ export function ActivityEditor(props) {
                     if(c.customOutputs) {
                       c_def.outputs = c.def.outputs.concat(c.customOutputs).reduce((u, i) => u.includes(i) ? u : [...u, i], []);
                     }
-                    import("./editor").then(e => e.addNode(editor, c_def, c.name, c.params, c.isEntity));
+                    import("./editor").then(e => e.addNode(editor, c_def, c.name, c.params));
                   }
                 }}
             />
@@ -1007,7 +1018,7 @@ export function ActivityEditor(props) {
                     const cDef = cells.find(c => c.original_name === cell.getAttribute("original_name"));
                     if(cDef) {
                         const params = (cell.getAttribute('attrList') || "").split(",").reduce((xa, a) => {xa[a] = cell.getAttribute(a); return xa;}, {});
-                        e.addNode(editor, cDef, newName, params, false);
+                        e.addNode(editor, cDef, newName, params);
                     }
                 })} />
 

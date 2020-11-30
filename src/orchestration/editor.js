@@ -65,7 +65,8 @@ const SCHEMA_DEFINITION = {
               "additionalProperties": false
           }
       },
-      "groups": { "type": "array", "items": {"type": "array"} },
+      "groups": { "type": "array", "items": {"type": "object"} },
+      "notes": { "type": "array", "items": {"type": "object"} },
       "transitions": { "type": "array", "items": {"type": "array", "minItems": 2, "maxItems": 2} }
   },
   "required": ["cells", "transitions"],
@@ -95,6 +96,8 @@ export function getDefinition(editor, title) {
     activity.definition.cells = {};
     activity.definition.entities = [];
     activity.definition.transitions = [];
+    activity.definition.notes = [];
+    activity.definition.groups = [];
     let hasAStart = false;
     for (let cellId in model.cells) {
         if (model.cells.hasOwnProperty(cellId)) {
@@ -106,6 +109,8 @@ export function getDefinition(editor, title) {
                 original_name: c.getAttribute('original_name'),
                 x: c.geometry.x,
                 y: c.geometry.y,
+                // height: c.geometry.height,
+                // width: c.geometry.width,
                 params: {},
                 outputs: outputs.split(",").filter(o => o !== ""),
             };
@@ -114,8 +119,20 @@ export function getDefinition(editor, title) {
                 cell.params = c.getAttribute('attrList').split(",").reduce((xa, a) => {xa[a] = c.getAttribute(a); return xa;}, {});
             }
 
-            if(c.style === 'entity') activity.definition.entities.push(cell);
-            else activity.definition.cells[c.getAttribute('label')] = cell;
+            switch(c.style) {
+                case 'entity':
+                    activity.definition.entities.push(cell);
+                    break;
+                case 'note':
+                    activity.definition.notes.push(cell);
+                    break;
+                case 'group':
+                    activity.definition.groups.push(cell);
+                    break;
+                default:
+                    activity.definition.cells[c.getAttribute('label')] = cell;
+                    break;
+            }
 
             activity.definition.transitions = activity.definition.transitions.concat(model.getOutgoingEdges(c).map((e) => {
                 let sourcePortId = e.style.split(';')
@@ -131,9 +148,21 @@ export function getDefinition(editor, title) {
     return {activity: activity, hasAStart: hasAStart};
 }
 
+function getClass(def) {
+    switch(def.original_name) {
+        case 'entity':
+            return 'entity'
+        case 'note':
+            return 'note'
+        case 'group':
+            return 'group';
+        default:
+            return 'cell';
+    }
+}
 
-export function addNode(editor, def, name, paramsFields, isEntity) {
-    const cls = isEntity?"entity":"cell";
+export function addNode(editor, def, name, paramsFields) {
+    const cls = getClass(def);
     const c = def;
     const value = def.original_name || def.name;
     let graph = editor.graph;
@@ -165,8 +194,10 @@ export function addNode(editor, def, name, paramsFields, isEntity) {
                 v = graph.insertVertex(parent, null, node, 0, 0, min_cell_height(c, name), baseY + (20 * c.outputs.length) + 15, cls);
                 v.setConnectable(false);
 
-                v10 = graph.insertVertex(v, null, document.createElement('Target'), 0, 0, 10, 10, 'port;target;spacingLeft=18', true);
-                v10.geometry.offset = new mxPoint(-5, 15);
+                if(node.getAttribute('original_name') !== "note") {
+                    v10 = graph.insertVertex(v, null, document.createElement('Target'), 0, 0, 10, 10, 'port;target;spacingLeft=18', true);
+                    v10.geometry.offset = new mxPoint(-5, 15);
+                }
                 break
         }
 
