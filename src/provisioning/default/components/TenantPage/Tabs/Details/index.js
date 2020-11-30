@@ -38,6 +38,7 @@ class Details extends Component {
     isLoadingRoutingProfile: true,
     tenantRoutingProfile: "",
     syncStatus: undefined,
+    isLoadingListRoutingProfile: true,
 
     voiceMessageDelivery: "",
     voiceMessageNotification: "",
@@ -46,8 +47,16 @@ class Details extends Component {
 
   fetchReq = () => {
     this.setState(
-      { isLoading: true, isLoadingRoutingProfile: true, isLoadingVM: true },
+      {
+        isLoading: true,
+        isLoadingRoutingProfile: true,
+        isLoadingVM: true,
+        isLoadingListRoutingProfile: true
+      },
       () => {
+        this.props
+          .fetchGetListOfRoutingProfiles()
+          .then(() => this.setState({ isLoadingListRoutingProfile: false }));
         this.props.fetchGetTenantById(this.props.tenantId).then(() =>
           this.setState({
             tenant: { ...this.props.tenant },
