@@ -161,8 +161,10 @@ class Details extends Component {
               <Col mdOffset={3} md={9}>
                 <Checkbox
                   defaultChecked={
-                    this.props.tenant.sync.status === "SYNCED" ||
-                    this.props.tenant.sync.status === "MUST_BE_SYNCED"
+                    get(this.props, "tenant.sync.status")
+                      ? this.props.tenant.sync.status === "SYNCED" ||
+                        this.props.tenant.sync.status === "MUST_BE_SYNCED"
+                      : false
                   }
                   onChange={e => {
                     if (e.target.checked) {
@@ -179,7 +181,11 @@ class Details extends Component {
             </FormGroup>
             <FormGroup controlId="useTenantLanguages">
               <Col mdOffset={1}>
-                <div>{`Last synchronization performed for this Tenant: ${this.props.tenant.sync.timeStamp}`}</div>
+                <div>{`Last synchronization performed for this Tenant: ${
+                  get(this.props, "tenant.sync.timeStamp")
+                    ? this.props.tenant.sync.timeStamp
+                    : ""
+                } `}</div>
               </Col>
             </FormGroup>
             <FormGroup controlId="tentantName">
