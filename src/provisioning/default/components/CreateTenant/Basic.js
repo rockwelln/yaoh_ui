@@ -272,94 +272,88 @@ export class Basic extends Component {
                   </Col>
                 </Row>
               )}
+            </React.Fragment>
+          )}
+          <Row className={"margin-1"}>
+            <Col mdOffset={0} md={2}>
+              {!this.state.showHideMore ? (
+                <Glyphicon
+                  className={"glyphicon-light"}
+                  glyph="glyphicon glyphicon-collapse-down"
+                  onClick={this.showHideMore}
+                  style={{ display: "flex", lineHeight: "20px" }}
+                >
+                  <div
+                    style={{
+                      fontFamily: `"Ubuntu, Helvetica Neue",Helvetica,Arial,sans-serif`
+                    }}
+                  >
+                    Add address
+                  </div>
+                </Glyphicon>
+              ) : (
+                <Glyphicon
+                  className={"glyphicon-light"}
+                  glyph="glyphicon glyphicon-collapse-down"
+                  onClick={this.showHideMore}
+                  style={{ display: "flex", lineHeight: "20px" }}
+                >
+                  <div
+                    style={{
+                      fontFamily: `"Helvetica Neue",Helvetica,Arial,sans-serif`
+                    }}
+                  >
+                    Hide
+                  </div>
+                </Glyphicon>
+              )}
+            </Col>
+          </Row>
+          {this.state.showHideMore && (
+            <React.Fragment>
               <Row className={"margin-1"}>
-                <Col mdOffset={0} md={2}>
-                  {!this.state.showHideMore ? (
-                    <Glyphicon
-                      className={"glyphicon-light"}
-                      glyph="glyphicon glyphicon-collapse-down"
-                      onClick={this.showHideMore}
-                      style={{ display: "flex", lineHeight: "20px" }}
-                    >
-                      <div
-                        style={{
-                          fontFamily: `"Ubuntu, Helvetica Neue",Helvetica,Arial,sans-serif`
-                        }}
-                      >
-                        Add address
-                      </div>
-                    </Glyphicon>
-                  ) : (
-                    <Glyphicon
-                      className={"glyphicon-light"}
-                      glyph="glyphicon glyphicon-collapse-down"
-                      onClick={this.showHideMore}
-                      style={{ display: "flex", lineHeight: "20px" }}
-                    >
-                      <div
-                        style={{
-                          fontFamily: `"Helvetica Neue",Helvetica,Arial,sans-serif`
-                        }}
-                      >
-                        Hide
-                      </div>
-                    </Glyphicon>
-                  )}
+                <Col componentClass={ControlLabel} md={3}>
+                  Addess
+                </Col>
+                <Col md={9}>
+                  <FormControl
+                    type="text"
+                    placeholder="Street"
+                    defaultValue={this.props.createTenant.address.addressLine1}
+                    onChange={e =>
+                      this.props.changeAddressOfTenant(e.target.value)
+                    }
+                  />
                 </Col>
               </Row>
-              {this.state.showHideMore && (
-                <React.Fragment>
-                  <Row className={"margin-1"}>
-                    <Col componentClass={ControlLabel} md={3}>
-                      Addess
-                    </Col>
-                    <Col md={9}>
-                      <FormControl
-                        type="text"
-                        placeholder="Street"
-                        defaultValue={
-                          this.props.createTenant.address.addressLine1
-                        }
-                        onChange={e =>
-                          this.props.changeAddressOfTenant(e.target.value)
-                        }
-                      />
-                    </Col>
-                  </Row>
-                  <Row className={"margin-1"}>
-                    <Col mdOffset={3} md={3}>
-                      <FormControl
-                        type="text"
-                        placeholder="ZIP"
-                        defaultValue={
-                          this.props.createTenant.address.postalCode
-                        }
-                        onChange={e =>
-                          this.props.changeZIPOfTenant(e.target.value)
-                        }
-                      />
-                    </Col>
-                    <Col md={6}>
-                      <FormControl
-                        type="text"
-                        placeholder="City"
-                        defaultValue={this.props.createTenant.address.city}
-                        onChange={e =>
-                          this.props.changeCityOfTenant(e.target.value)
-                        }
-                      />
-                    </Col>
-                  </Row>
-                </React.Fragment>
-              )}
-              {this.state.errorMessage && (
-                <Row className={"margin-1 color-error"}>
-                  <Col md={12}>
-                    <p>{this.state.errorMessage}</p>
-                  </Col>
-                </Row>
-              )}
+              <Row className={"margin-1"}>
+                <Col mdOffset={3} md={3}>
+                  <FormControl
+                    type="text"
+                    placeholder="ZIP"
+                    defaultValue={this.props.createTenant.address.postalCode}
+                    onChange={e => this.props.changeZIPOfTenant(e.target.value)}
+                  />
+                </Col>
+                <Col md={6}>
+                  <FormControl
+                    type="text"
+                    placeholder="City"
+                    defaultValue={this.props.createTenant.address.city}
+                    onChange={e =>
+                      this.props.changeCityOfTenant(e.target.value)
+                    }
+                  />
+                </Col>
+              </Row>
             </React.Fragment>
+          )}
+          {this.state.errorMessage && (
+            <Row className={"margin-1 color-error"}>
+              <Col md={12}>
+                <p>{this.state.errorMessage}</p>
+              </Col>
+            </Row>
           )}
           <Row className={"margin-1"}>
             <div class="button-row">
@@ -402,7 +396,6 @@ export class Basic extends Component {
   };
 
   nextStep = () => {
-    const { tenantId, type } = this.props.createTenant;
     this.props.changeStepOfCreateTenant("Template");
   };
 
