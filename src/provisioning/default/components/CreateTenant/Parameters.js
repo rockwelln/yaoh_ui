@@ -33,7 +33,10 @@ export class TenantParameters extends Component {
     enabledVoiceMessagingSettings: false,
     voiceMessageNotification: "",
     voiceMessageDelivery: "",
-    voicePortalPasscodeLockout: ""
+    voicePortalPasscodeLockout: "",
+    systemDefaultMN: true,
+    systemDefaultMD: true,
+    systemDefaultPPL: true
   };
 
   componentDidMount() {
@@ -145,6 +148,12 @@ export class TenantParameters extends Component {
                       <div className="nowrap margin-right-1 width-50p">
                         Voicemail Notification
                       </div>
+                      <Checkbox
+                        checked={!this.state.systemDefaultMN}
+                        onChange={e =>
+                          this.setState({ systemDefaultMN: !e.target.checked })
+                        }
+                      />
                       <FormControl
                         type="text"
                         placeholder="Voicemail Notification"
@@ -154,12 +163,19 @@ export class TenantParameters extends Component {
                             voiceMessageNotification: e.target.value
                           })
                         }
+                        disabled={this.state.systemDefaultMN}
                       />
                     </div>
                     <div className="flex space-between align-items-center margin-bottom-1">
                       <div className="nowrap margin-right-1 width-50p">
                         Voicemail Delivery
                       </div>
+                      <Checkbox
+                        checked={!this.state.systemDefaultMD}
+                        onChange={e =>
+                          this.setState({ systemDefaultMD: !e.target.checked })
+                        }
+                      />
                       <FormControl
                         type="text"
                         placeholder="Voicemail Delivery"
@@ -169,12 +185,19 @@ export class TenantParameters extends Component {
                             voiceMessageDelivery: e.target.value
                           })
                         }
+                        disabled={this.state.systemDefaultMD}
                       />
                     </div>
                     <div className="flex space-between align-items-center margin-bottom-1">
                       <div className="nowrap margin-right-1 width-50p">
                         Voice portal passcode lockout
                       </div>
+                      <Checkbox
+                        checked={!this.state.systemDefaultPPL}
+                        onChange={e =>
+                          this.setState({ systemDefaultPPL: !e.target.checked })
+                        }
+                      />
                       <FormControl
                         type="text"
                         placeholder="Voice portal passcode lockout"
@@ -184,6 +207,7 @@ export class TenantParameters extends Component {
                             voicePortalPasscodeLockout: e.target.value
                           })
                         }
+                        disabled={this.state.systemDefaultPPL}
                       />
                     </div>
                     <div class="button-row margin-right-0">
@@ -192,9 +216,12 @@ export class TenantParameters extends Component {
                           className={"btn-primary"}
                           onClick={this.saveVoiceMessaging}
                           disabled={
-                            !this.state.voiceMessageNotification &&
-                            !this.state.voiceMessageDelivery &&
-                            !this.state.voicePortalPasscodeLockout
+                            (!this.state.systemDefaultMN &&
+                              !this.state.voiceMessageNotification) ||
+                            (!this.state.systemDefaultMD &&
+                              !this.state.voiceMessageDelivery) ||
+                            (!this.state.systemDefaultPPL &&
+                              !this.state.voicePortalPasscodeLockout)
                           }
                         >
                           Save
@@ -233,13 +260,16 @@ export class TenantParameters extends Component {
   saveVoiceMessaging = () => {
     const data = {
       voiceMessageDelivery: {
-        fromAddress: this.state.voiceMessageDelivery
+        fromAddress: this.state.voiceMessageDelivery,
+        systemDefault: this.state.systemDefaultMD
       },
       voiceMessageNotification: {
-        fromAddress: this.state.voiceMessageNotification
+        fromAddress: this.state.voiceMessageNotification,
+        systemDefault: this.state.systemDefaultMN
       },
       voicePortalPasscodeLockout: {
-        fromAddress: this.state.voicePortalPasscodeLockout
+        fromAddress: this.state.voicePortalPasscodeLockout,
+        systemDefault: this.state.systemDefaultPPL
       }
     };
     const clearData = removeEmpty(data);
