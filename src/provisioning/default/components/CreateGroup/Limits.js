@@ -30,7 +30,8 @@ import {
   fetchGetTenantServicePack,
   showHideAdditionalServiceGroup,
   fetchGetTenantGroupService,
-  refuseCreateGroup
+  refuseCreateGroup,
+  fetchGetTenantPasswordRules
 } from "../../store/actions";
 
 const INFINITY = 8734;
@@ -50,10 +51,14 @@ export class Licenses extends Component {
     editServicePacks: false,
     indexOfService: 0,
     showMore: true,
-    editUserLimit: false
+    editUserLimit: false,
+    isLoadingTPR: true
   };
 
   fetchData = () => {
+    this.props
+      .fetchGetTenantPasswordRules(this.props.match.params.tenantId)
+      .then(() => this.setState({ isLoadingTPR: false }));
     this.props
       .fetchGetLicensesByGroupId(
         this.props.match.params.tenantId,
@@ -98,10 +103,11 @@ export class Licenses extends Component {
       editServicePacks,
       editGroupServices,
       indexOfService,
-      editUserLimit
+      editUserLimit,
+      isLoadingTPR
     } = this.state;
 
-    if (isLoading || isLoadingTrunk) {
+    if (isLoading || isLoadingTrunk || isLoadingTPR) {
       return <Loading />;
     }
 
@@ -536,17 +542,23 @@ export class Licenses extends Component {
           <Row className={"margin-1"}>
             <div className="button-row">
               <div className="pull-right">
-                <Button onClick={this.nextStep} className={"btn-primary"}>
-                  <Glyphicon glyph="glyphicon glyphicon-ok" />
-                  &nbsp; Next
-                </Button>
+                {this.props.tenantPasswordRules.rulesApplyTo !==
+                "Group Administrator and User External Authentication" ? (
+                  <Button onClick={this.nextStep} className={"btn-primary"}>
+                    <Glyphicon glyph="glyphicon glyphicon-ok" />
+                    &nbsp; Next
+                  </Button>
+                ) : null}
               </div>
               <div className="pull-right link-button">
                 <Link
                   to={`/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}`}
                 >
                   <div onClick={() => this.props.refuseCreateGroup()}>
-                    Quit wizard
+                    {this.props.tenantPasswordRules.rulesApplyTo !==
+                    "Group Administrator and User External Authentication"
+                      ? "Quit wizard"
+                      : "Finish"}
                   </div>
                 </Link>
               </div>
@@ -773,7 +785,8 @@ const mapStateToProps = state => ({
   userServices: state.userServicesGroup,
   createdGroup: state.createdGroup,
   tenantServicePack: state.tenantServicePack,
-  tenantGroupService: state.tenantGroupService
+  tenantGroupService: state.tenantGroupService,
+  tenantPasswordRules: state.tenantPasswordRules
 });
 
 const mapDispatchToProps = {
@@ -790,7 +803,8 @@ const mapDispatchToProps = {
   fetchGetTenantServicePack,
   showHideAdditionalServiceGroup,
   fetchGetTenantGroupService,
-  refuseCreateGroup
+  refuseCreateGroup,
+  fetchGetTenantPasswordRules
 };
 
 export default withRouter(

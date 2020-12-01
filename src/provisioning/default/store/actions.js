@@ -315,6 +315,11 @@ export const getGroupSuspensionStatus = data => ({
   data
 });
 
+export const getTenantPasswordRules = data => ({
+  type: actionType.GET_TENANT_PASSWORD_RULES,
+  data
+});
+
 export const postCreateGroupAdmin = data => ({
   type: actionType.POST_CREATE_GROUP_ADMIN,
   data
@@ -1832,6 +1837,24 @@ export function fetchGetTenantVoiceMessaging(tenantId) {
           <FormattedMessage
             id="fetch-voice-messaging-failed"
             defaultMessage="Failed to fetch voice-messaging"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchGetTenantPasswordRules(tenantId) {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/password_rules/`
+    )
+      .then(data => dispatch(getTenantPasswordRules(data)))
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-password-rules-failed"
+            defaultMessage="Failed to fetch password rules"
           />,
           error.message
         );

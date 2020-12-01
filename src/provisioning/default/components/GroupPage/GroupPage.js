@@ -26,7 +26,8 @@ import {
   fetchGetTrunksGroupsByGroup,
   fetchGetSelfcareURL,
   fetchGetGroupSuspensionStatus,
-  fetchPutUpdateGroupSuspensionStatus
+  fetchPutUpdateGroupSuspensionStatus,
+  fetchGetTenantPasswordRules
 } from "../../store/actions";
 
 import DeleteModal from "./DeleteModal";
@@ -40,7 +41,8 @@ class TenantPage extends Component {
     activeKey: 0,
     refreshTab: "",
     isLoadingSS: true,
-    showSuspensionStatusModal: false
+    showSuspensionStatusModal: false,
+    isLoadingTPP: true
   };
 
   fetchTennant = () => {
@@ -49,9 +51,13 @@ class TenantPage extends Component {
         isLoadingTenant: true,
         isLoadingGroup: true,
         isLoadingSCURL: true,
-        isLoadingSS: true
+        isLoadingSS: true,
+        isLoadingTPP: true
       },
       () => {
+        this.props
+          .fetchGetTenantPasswordRules(this.props.match.params.tenantId)
+          .then(() => this.setState({ isLoadingTPP: false }));
         this.props
           .fetchGetTenantById(this.props.match.params.tenantId)
           .then(() => this.setState({ isLoadingTenant: false }));
@@ -92,10 +98,17 @@ class TenantPage extends Component {
       isLoadingGroup,
       showDelete,
       isLoadingSCURL,
-      isLoadingSS
+      isLoadingSS,
+      isLoadingTPP
     } = this.state;
 
-    if (isLoadingTenant || isLoadingGroup || isLoadingSCURL || isLoadingSS) {
+    if (
+      isLoadingTenant ||
+      isLoadingGroup ||
+      isLoadingSCURL ||
+      isLoadingSS ||
+      isLoadingTPP
+    ) {
       return <Loading />;
     }
 
@@ -210,13 +223,16 @@ class TenantPage extends Component {
                 refreshTab={this.state.refreshTab === "Devices"}
               />
             </Tab>
-            <Tab eventKey={5} title="ADMINISTRATORS">
-              <Admins
-                tenantId={this.props.match.params.tenantId}
-                groupId={this.props.match.params.groupId}
-                refreshTab={this.state.refreshTab === "Admins"}
-              />
-            </Tab>
+            {this.props.tenantPasswordRules.rulesApplyTo !==
+            "Group Administrator and User External Authentication" ? (
+              <Tab eventKey={5} title="ADMINISTRATORS">
+                <Admins
+                  tenantId={this.props.match.params.tenantId}
+                  groupId={this.props.match.params.groupId}
+                  refreshTab={this.state.refreshTab === "Admins"}
+                />
+              </Tab>
+            ) : null}
             <Tab eventKey={6} title="DETAILS">
               <Details
                 group={group}
@@ -294,7 +310,8 @@ const mapDispatchToProps = {
   fetchGetTrunksGroupsByGroup,
   fetchGetSelfcareURL,
   fetchGetGroupSuspensionStatus,
-  fetchPutUpdateGroupSuspensionStatus
+  fetchPutUpdateGroupSuspensionStatus,
+  fetchGetTenantPasswordRules
 };
 
 const mapStateToProps = state => ({
@@ -303,7 +320,8 @@ const mapStateToProps = state => ({
   fetchTrunksGroupsFail: state.fetchTrunksGroupsFail,
   trunkGroupNotAuthorisedGroup: state.trunkGroupNotAuthorisedGroup,
   selfcareUrl: state.selfcareUrl,
-  groupSuspensionStatus: state.groupSuspensionStatus
+  groupSuspensionStatus: state.groupSuspensionStatus,
+  tenantPasswordRules: state.tenantPasswordRules
 });
 
 export default withRouter(

@@ -137,7 +137,8 @@ const initialState = {
   tenantVoiceMessaging: {},
   tenantSuspensionStatus: "",
   suspensionOptions: [],
-  groupSuspensionStatus: ""
+  groupSuspensionStatus: "",
+  tenantPasswordRules: {}
 };
 
 function mainReducer(state = initialState, action) {
@@ -746,6 +747,12 @@ function mainReducer(state = initialState, action) {
       return {
         ...state,
         groupSuspensionStatus: action.data.suspensionStatus
+      };
+    }
+    case actionType.GET_TENANT_PASSWORD_RULES: {
+      return {
+        ...state,
+        tenantPasswordRules: action.data
       };
     }
     case actionType.POST_CREATE_GROUP_ADMIN: {
