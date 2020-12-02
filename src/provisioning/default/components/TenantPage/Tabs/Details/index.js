@@ -71,7 +71,8 @@ class Details extends Component {
           .then(() => {
             this.setState({
               isLoadingRoutingProfile: false,
-              tenantRoutingProfile: this.props.tenantRoutingProfile
+              tenantRoutingProfile: this.props.tenantRoutingProfile,
+              useCustomRoutingProfile: !!this.props.tenantRoutingProfile
             });
           });
         this.props
@@ -313,52 +314,86 @@ class Details extends Component {
                 />
               </Col>
             </FormGroup>
+            <Col mdPush={10} md={1}>
+              <Button className={"btn-primary"} onClick={this.updateTenant}>
+                <Glyphicon glyph="glyphicon glyphicon-ok" />
+                {` Save`}
+              </Button>
+            </Col>
             <FormGroup controlId="useCustomRoutingProfile">
               <Col mdOffset={3} md={9}>
                 <Checkbox
-                  defaultChecked={this.state.tenant.useCustomRoutingProfile}
-                  onChange={e =>
-                    this.setState({ useCustomRoutingProfile: e.target.checked })
-                  }
+                  checked={this.state.useCustomRoutingProfile}
+                  onChange={e => {
+                    if (!e.target.checked) {
+                      this.setState({
+                        useCustomRoutingProfile: e.target.checked,
+                        tenantRoutingProfile: ""
+                      });
+                    } else {
+                      this.setState({
+                        useCustomRoutingProfile: e.target.checked
+                      });
+                    }
+                  }}
                 >
                   Use custom routing profile
                 </Checkbox>
               </Col>
             </FormGroup>
-            {this.state.useCustomRoutingProfile && (
-              <FormGroup controlId="routingProfile">
-                <Col componentClass={ControlLabel} md={3}>
-                  Routing profile
-                </Col>
-                <Col md={9}>
-                  <FormControl
-                    componentClass="select"
-                    value={this.state.tenantRoutingProfile}
-                    onChange={e => {
-                      this.setState({
-                        tenantRoutingProfile: e.target.value
-                      });
-                    }}
-                  >
-                    {!this.state.tenantRoutingProfile && (
-                      <option key={"null"} value={""}>
-                        {""}
-                      </option>
-                    )}
-                    {this.props.listOfRoutingProfiles.map(el => (
-                      <option key={el} value={el}>
-                        {el}
-                      </option>
-                    ))}
-                  </FormControl>
-                </Col>
+            {this.state.useCustomRoutingProfile &&
+              this.props.tenant.type === "Enterprise" && (
+                <FormGroup controlId="routingProfile">
+                  <Col componentClass={ControlLabel} md={3}>
+                    Routing profile
+                  </Col>
+                  <Col md={9}>
+                    <FormControl
+                      componentClass="select"
+                      value={this.state.tenantRoutingProfile}
+                      onChange={e => {
+                        this.setState({
+                          tenantRoutingProfile: e.target.value
+                        });
+                      }}
+                    >
+                      {!this.state.tenantRoutingProfile && (
+                        <option key={"null"} value={""}>
+                          {""}
+                        </option>
+                      )}
+                      {this.props.listOfRoutingProfiles.map(el => (
+                        <option key={el} value={el}>
+                          {el}
+                        </option>
+                      ))}
+                    </FormControl>
+                  </Col>
+                  <Col md={12}>
+                    <div class="button-row margin-right-0">
+                      <div className="pull-right">
+                        <Button
+                          className={"btn-primary"}
+                          onClick={this.saveRoutingProfile}
+                        >
+                          Save
+                        </Button>
+                      </div>
+                    </div>
+                  </Col>
+                </FormGroup>
+              )}
+            {((this.state.tenantRoutingProfile !==
+              this.props.tenantRoutingProfile &&
+              !this.state.useCustomRoutingProfile) ||
+              this.props.tenant.type === "ServiceProvider") && (
+              <FormGroup>
                 <Col md={12}>
                   <div class="button-row margin-right-0">
                     <div className="pull-right">
                       <Button
                         className={"btn-primary"}
                         onClick={this.saveRoutingProfile}
-                        disabled={!this.state.tenantRoutingProfile}
                       >
                         Save
                       </Button>
@@ -489,12 +524,6 @@ class Details extends Component {
                 </FormGroup>
               </React.Fragment>
             )}
-            <Col mdPush={10} md={1}>
-              <Button onClick={this.updateTenant}>
-                <Glyphicon glyph="glyphicon glyphicon-ok" />
-                {` UPDATE`}
-              </Button>
-            </Col>
           </FormGroup>
         </Form>
       </Col>
@@ -541,12 +570,13 @@ class Details extends Component {
         useCustomRoutingProfile: true
       })
       .then(() => {
-        this.props.fetchPutUpdateTenantRoutingProfile(
-          this.state.tenant.tenantId,
-          {
-            routingProfile: this.state.tenantRoutingProfile
-          }
-        );
+        this.props.tenant.type === "Enterprise" &&
+          this.props.fetchPutUpdateTenantRoutingProfile(
+            this.state.tenant.tenantId,
+            {
+              routingProfile: this.state.tenantRoutingProfile
+            }
+          );
       });
   };
 

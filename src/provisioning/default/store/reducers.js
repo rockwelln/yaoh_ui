@@ -1015,7 +1015,8 @@ function mainReducer(state = initialState, action) {
     }
     case actionType.PUT_UPDATE_TENANT_ROUTING_PROFILE: {
       return {
-        ...state
+        ...state,
+        tenantRoutingProfile: action.data.routingProfile
       };
     }
     case actionType.PUT_UPDATE_TENANT_VOICE_MESSAGING: {
