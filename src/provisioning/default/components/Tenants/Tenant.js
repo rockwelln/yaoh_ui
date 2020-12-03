@@ -23,7 +23,7 @@ class Tenant extends Component {
     const { t, onReload } = this.props;
     const { showDelete } = this.state;
     return (
-      <tr key={t.tenantId}>
+      <tr className={"table-cell"}>
         <td>
           <Link
             to={`/provisioning/${this.props.match.params.gwName}/tenants/${t.tenantId}`}

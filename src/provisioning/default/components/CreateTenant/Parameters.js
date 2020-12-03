@@ -36,7 +36,8 @@ export class TenantParameters extends Component {
     voicePortalPasscodeLockout: "",
     systemDefaultMN: true,
     systemDefaultMD: true,
-    systemDefaultPPL: true
+    systemDefaultPPL: true,
+    skipNextButtonName: "Skip"
   };
 
   componentDidMount() {
@@ -238,7 +239,7 @@ export class TenantParameters extends Component {
               <div className="pull-right">
                 <Button className={"btn-primary"} onClick={this.goToLicenses}>
                   <Glyphicon glyph="glyphicon glyphicon-ok" />
-                  Skip
+                  {this.state.skipNextButtonName}
                 </Button>
               </div>
               <div className="pull-right link-button">
@@ -273,10 +274,12 @@ export class TenantParameters extends Component {
       }
     };
     const clearData = removeEmpty(data);
-    this.props.fetchPutUpdateTenantVoiceMessaging(
-      this.props.createdTenant.tenantId,
-      clearData
-    );
+    this.props
+      .fetchPutUpdateTenantVoiceMessaging(
+        this.props.createdTenant.tenantId,
+        clearData
+      )
+      .then(() => this.setState({ skipNextButtonName: "Next" }));
   };
 
   saveRoutingProfile = () => {
@@ -285,12 +288,14 @@ export class TenantParameters extends Component {
         useCustomRoutingProfile: true
       })
       .then(() => {
-        this.props.fetchPutUpdateTenantRoutingProfile(
-          this.props.createdTenant.tenantId,
-          {
-            routingProfile: this.state.selectedRoutingProfile
-          }
-        );
+        this.props
+          .fetchPutUpdateTenantRoutingProfile(
+            this.props.createdTenant.tenantId,
+            {
+              routingProfile: this.state.selectedRoutingProfile
+            }
+          )
+          .then(() => this.setState({ skipNextButtonName: "Next" }));
       });
   };
 

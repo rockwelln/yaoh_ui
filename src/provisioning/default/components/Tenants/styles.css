@@ -353,3 +353,7 @@ textarea {
   position: relative;
   margin-top: -434px;
 }
+
+.table-cell {
+  word-break: break-word;
+}
