@@ -108,19 +108,39 @@ const filters = [
   {id: "abs", display: "abs", help: (
     <>
       <p><u>abs</u> (from jinja2)</p>
-      <p></p>
+      <p>Return the absolute value of the argument.</p>
       </>
     )},
   {id: "attr", display: "attr", help: (
     <>
       <p><u>attr</u> (from jinja2)</p>
-      <p></p>
+      <p>Get an attribute of an object.</p>
+      <p>
+        <pre>foo|attr("bar")</pre> works like
+        <pre>foo.bar</pre> just that always an attribute is returned and items are not looked up.
+      </p>
     </>
     )},
   {id: "batch", display: "batch", help: (
     <>
       <p><u>batch</u> (from jinja2)</p>
-      <p></p>
+      <p>A filter that batches items. It works pretty much like <i>slice</i> just the other way round.
+        <br/>It returns a list of lists with the given number of items.
+        <br/>If you provide a second parameter this is used to fill up missing items.
+      </p>
+      <br/>
+      <i>Example:</i>
+      <pre>
+        {`<table>
+{%- for row in items|batch(3, '&nbsp;') %}
+  <tr>
+  {%- for column in row %}
+    <td>{{ column }}</td>
+  {%- endfor %}
+  </tr>
+{%- endfor %}
+</table>`}
+      </pre>
     </>
     )},
   {id: "capitalize", display: "capitalize", help: (
@@ -198,7 +218,16 @@ const filters = [
   {id: "format", display: "format", help: (
     <>
       <p><u>format</u> (from jinja2)</p>
-      <p></p>
+      <p>
+        Apply the given values to a <a href={"https://docs.python.org/library/stdtypes.html#printf-style-string-formatting"}><i>printf-style</i></a> format string, like
+        <pre>string % values</pre>
+      </p>
+      <pre>{`{{ "%s, %s!"|format(greeting, name) }}
+Hello, World!`}
+      </pre>
+      <p>In most cases it should be more convenient and efficient to use the ``%`` operator or :meth:`str.format`.</p>
+      <pre>{`{{ "%s, %s!" % (greeting, name) }}
+{{ "{}, {}!".format(greeting, name) }}`}</pre>
     </>
     )},
   {id: "groupby", display: "groupby", help: (
@@ -330,7 +359,26 @@ const filters = [
   {id: "slice", display: "slice", help: (
     <>
       <p><u>slice</u> (from jinja2)</p>
-      <p></p>
+      <p>
+        Slice an iterator and return a list of lists containing those items.
+        <br/>Useful if you want to create a div containing three ul tags that represent columns.
+      </p>
+      <pre>
+        {`<div class="columnwrapper">
+  {%- for column in items|slice(3) %}
+    <ul class="column-{{ loop.index }}">
+    {%- for item in column %}
+      <li>{{ item }}</li>
+    {%- endfor %}
+    </ul>
+  {%- endfor %}
+</div>`}
+      </pre>
+      <p>
+    If you pass it a second argument it's used to fill missing
+    values on the last iteration.
+
+      </p>
     </>
     )},
   {id: "sort", display: "sort", help: (
@@ -348,7 +396,7 @@ const filters = [
   {id: "striptags", display: "striptags", help: (
     <>
       <p><u>striptags</u> (from jinja2)</p>
-      <p></p>
+      <p>Strip SGML/XML tags and replace adjacent whitespace by one space.</p>
     </>
     )},
   {id: "sum", display: "sum", help: (
@@ -366,7 +414,7 @@ const filters = [
   {id: "trim", display: "trim", help: (
     <>
       <p><u>trim</u> (from jinja2)</p>
-      <p></p>
+      <p>Strip leading and trailing characters, by default whitespace.</p>
     </>
     )},
   {id: "truncate", display: "truncate", help: (
