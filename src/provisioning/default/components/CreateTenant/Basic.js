@@ -275,7 +275,11 @@ export class Basic extends Component {
           <Row className={"margin-1"}>
             <div class="button-row">
               <div className="pull-right">
-                <Button className={"btn-primary"} onClick={this.nextStep}>
+                <Button
+                  className={"btn-primary"}
+                  onClick={this.nextStep}
+                  disabled={!this.props.createTenant.type}
+                >
                   <Glyphicon glyph="glyphicon glyphicon-ok"></Glyphicon>
                   &nbsp; Next
                 </Button>
