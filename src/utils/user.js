@@ -277,7 +277,7 @@ const definition = {
 };
 
 export function limited_menu(ui_profile) {
-    return UI_PROFILES["telenet"].filter(p => !UI_PROFILES["default"].includes(p)).includes(ui_profile);
+    return ui_profile === "provisioning" || UI_PROFILES["telenet"].filter(p => !UI_PROFILES["default"].includes(p)).includes(ui_profile);
 }
 
 export function get_ui_profiles(m) {

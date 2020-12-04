@@ -816,16 +816,14 @@ class App extends Component {
                     standby_alert
                 }
                 <LicenseAlert />
-                {
-                    ui_profile !== "provisioning" &&
-                    <div className="App-header">
-                        <AsyncApioNavBar
-                            user_info={user_info}
-                            database_status={database_status}
-                            logoutUser={this.logout}
-                            auth_token={auth_token}/>
-                    </div>
-                }
+                <div className="App-header">
+                    <AsyncApioNavBar
+                        user_info={user_info}
+                        database_status={database_status}
+                        logoutUser={this.logout}
+                        auth_token={auth_token}/>
+                </div>
+
                 <Col mdOffset={1} md={10}>
                   <Suspense fallback={<div>Loading...</div>}>
                     <Switch>
