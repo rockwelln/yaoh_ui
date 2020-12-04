@@ -13,7 +13,7 @@ class Group extends Component {
     const { group, onReload } = this.props;
     const { showDelete } = this.state;
     return (
-      <tr className={"table-cell"}>
+      <tr>
         <td>
           <Link
             to={`/provisioning/${this.props.match.params.gwName}/tenants/${group.tenantId}/groups/${group.groupId}`}
