@@ -181,8 +181,6 @@ export function LocalUserProfile(props) {
                                     componentClass="select"
                                     value={language}
                                     onChange={(e) => setLanguage(e.target.value)}>
-                                    <option value="fr">fr</option>
-                                    <option value="nl">nl</option>
                                     <option value="en">en</option>
                                 </FormControl>
                             </Col>
@@ -460,8 +458,6 @@ function UpdateUser(props) {
                                     componentClass="select"
                                     value={localUser.language}
                                     onChange={e => setDiffUser(update(diffUser, {$merge: {language: e.target.value}}))}>
-                                    <option value="fr">fr</option>
-                                    <option value="nl">nl</option>
                                     <option value="en">en</option>
                                 </FormControl>
                             </Col>
@@ -789,8 +785,6 @@ function NewUser(props) {
                                 componentClass="select"
                                 value={user.language}
                                 onChange={e => setUser(update(user, {$merge: {language: e.target.value}}))}>
-                                <option value="fr">fr</option>
-                                <option value="nl">nl</option>
                                 <option value="en">en</option>
                             </FormControl>
                         </Col>
