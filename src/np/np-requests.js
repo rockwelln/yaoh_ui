@@ -157,6 +157,7 @@ export class NPRequests extends Component {
   }
 
   componentDidMount() {
+    document.title = "Requests";
     this._refreshOperators();
     this._refresh();
   }

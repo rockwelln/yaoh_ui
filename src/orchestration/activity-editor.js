@@ -857,6 +857,7 @@ export function ActivityEditor(props) {
     useEffect(() => {
         fetchConfiguration(setConfiguration);
         fetchCells(setCells);
+        document.title = "Editor";
     }, []);
 
     const editorRef = useRef(null);
@@ -918,6 +919,7 @@ export function ActivityEditor(props) {
                 activity => {
                     setCurrentActivity(activity);
                     setNewActivity(false);
+                    document.title = `Editor - ${activity.name}`;
                 }
             );
         }

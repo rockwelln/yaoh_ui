@@ -1061,7 +1061,12 @@ export default class SearchUsers extends Search {
         return filter_criteria;
     }
 
-    render() {
+    componentDidMount() {
+      document.title = "Users";
+      super.componentDidMount();
+    }
+
+  render() {
         const {resources, error, sorting_spec, pagination, filter_criteria, showNew} = this.state;
         const {user_info} = this.props;
         return (

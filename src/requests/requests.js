@@ -2512,6 +2512,7 @@ export class Requests extends Component{
     }
 
     componentDidMount() {
+        document.title = "Requests";
         fetchRoles(roles => this.setState({roles: roles}));
         this._load_activities();
         this._load_proxy_hosts();
