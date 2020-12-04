@@ -1833,6 +1833,10 @@ export function fetchGetTenantVoiceMessaging(tenantId) {
     )
       .then(data => dispatch(getTenantVoiceMessaging(data)))
       .catch(error => {
+        if (error.response.status === 404) {
+          dispatch(getTenantVoiceMessaging({}));
+          return;
+        }
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-voice-messaging-failed"

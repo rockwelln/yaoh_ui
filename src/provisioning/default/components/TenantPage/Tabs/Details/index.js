@@ -150,6 +150,8 @@ class Details extends Component {
       return <Loading />;
     }
 
+    console.log(Object.keys(this.props.tenantVoiceMessaging));
+
     return (
       <Col md={8}>
         <Form horizontal className={"margin-1"}>
@@ -402,128 +404,138 @@ class Details extends Component {
                 </Col>
               </FormGroup>
             )}
-            <FormGroup controlId="useCustomRoutingProfile">
-              <Col mdOffset={3} md={9}>
-                <Checkbox
-                  defaultChecked={this.state.enabledVoiceMessagingSettings}
-                  onChange={e =>
-                    this.setState({
-                      enabledVoiceMessagingSettings: e.target.checked
-                    })
-                  }
-                >
-                  Voice messaging settings
-                </Checkbox>
-              </Col>
-            </FormGroup>
-            {this.state.enabledVoiceMessagingSettings && (
+            {Object.keys(this.props.tenantVoiceMessaging).length ? (
               <React.Fragment>
-                <FormGroup controlId="tentantID">
-                  <Col
-                    componentClass={ControlLabel}
-                    md={3}
-                    className={"padding-top-0"}
-                  >
-                    Voicemail Notification
-                  </Col>
-                  <Col md={9} className={"flex"}>
+                <FormGroup controlId="useCustomRoutingProfile">
+                  <Col mdOffset={3} md={9}>
                     <Checkbox
-                      checked={!this.state.systemDefaultMN}
-                      onChange={e =>
-                        this.setState({ systemDefaultMN: !e.target.checked })
-                      }
-                    />
-                    <FormControl
-                      type="text"
-                      placeholder="Voicemail Notification"
-                      value={this.state.voiceMessageNotification}
+                      defaultChecked={this.state.enabledVoiceMessagingSettings}
                       onChange={e =>
                         this.setState({
-                          voiceMessageNotification: e.target.value
+                          enabledVoiceMessagingSettings: e.target.checked
                         })
                       }
-                      disabled={this.state.systemDefaultMN}
-                    />
+                    >
+                      Voice messaging settings
+                    </Checkbox>
                   </Col>
                 </FormGroup>
-                <FormGroup controlId="tentantID">
-                  <Col
-                    componentClass={ControlLabel}
-                    md={3}
-                    className={"padding-top-0"}
-                  >
-                    Voicemail Delivery
-                  </Col>
-                  <Col md={9} className={"flex"}>
-                    <Checkbox
-                      checked={!this.state.systemDefaultMD}
-                      onChange={e =>
-                        this.setState({ systemDefaultMD: !e.target.checked })
-                      }
-                    />
-                    <FormControl
-                      type="text"
-                      placeholder="Voicemail Delivery"
-                      value={this.state.voiceMessageDelivery}
-                      onChange={e =>
-                        this.setState({
-                          voiceMessageDelivery: e.target.value
-                        })
-                      }
-                      disabled={this.state.systemDefaultMD}
-                    />
-                  </Col>
-                </FormGroup>
-                <FormGroup controlId="tentantID">
-                  <Col
-                    componentClass={ControlLabel}
-                    md={3}
-                    className={"padding-top-0"}
-                  >
-                    Voice portal passcode lockout
-                  </Col>
-                  <Col md={9} className={"flex"}>
-                    <Checkbox
-                      checked={!this.state.systemDefaultPPL}
-                      onChange={e =>
-                        this.setState({ systemDefaultPPL: !e.target.checked })
-                      }
-                    />
-                    <FormControl
-                      type="text"
-                      placeholder="Voice portal passcode lockout"
-                      value={this.state.voicePortalPasscodeLockout}
-                      onChange={e =>
-                        this.setState({
-                          voicePortalPasscodeLockout: e.target.value
-                        })
-                      }
-                      disabled={this.state.systemDefaultPPL}
-                    />
-                  </Col>
-                  <Col md={12}>
-                    <div class="button-row margin-right-0">
-                      <div className="pull-right">
-                        <Button
-                          className={"btn-primary"}
-                          onClick={this.saveVoiceMessaging}
-                          disabled={
-                            (!this.state.systemDefaultMN &&
-                              !this.state.voiceMessageNotification) ||
-                            (!this.state.systemDefaultMD &&
-                              !this.state.voiceMessageDelivery) ||
-                            (!this.state.systemDefaultPPL &&
-                              !this.state.voicePortalPasscodeLockout)
+                {this.state.enabledVoiceMessagingSettings && (
+                  <React.Fragment>
+                    <FormGroup controlId="tentantID">
+                      <Col
+                        componentClass={ControlLabel}
+                        md={3}
+                        className={"padding-top-0"}
+                      >
+                        Voicemail Notification
+                      </Col>
+                      <Col md={9} className={"flex"}>
+                        <Checkbox
+                          checked={!this.state.systemDefaultMN}
+                          onChange={e =>
+                            this.setState({
+                              systemDefaultMN: !e.target.checked
+                            })
                           }
-                        >
-                          Save
-                        </Button>
-                      </div>
-                    </div>
-                  </Col>
-                </FormGroup>
+                        />
+                        <FormControl
+                          type="text"
+                          placeholder="Voicemail Notification"
+                          value={this.state.voiceMessageNotification}
+                          onChange={e =>
+                            this.setState({
+                              voiceMessageNotification: e.target.value
+                            })
+                          }
+                          disabled={this.state.systemDefaultMN}
+                        />
+                      </Col>
+                    </FormGroup>
+                    <FormGroup controlId="tentantID">
+                      <Col
+                        componentClass={ControlLabel}
+                        md={3}
+                        className={"padding-top-0"}
+                      >
+                        Voicemail Delivery
+                      </Col>
+                      <Col md={9} className={"flex"}>
+                        <Checkbox
+                          checked={!this.state.systemDefaultMD}
+                          onChange={e =>
+                            this.setState({
+                              systemDefaultMD: !e.target.checked
+                            })
+                          }
+                        />
+                        <FormControl
+                          type="text"
+                          placeholder="Voicemail Delivery"
+                          value={this.state.voiceMessageDelivery}
+                          onChange={e =>
+                            this.setState({
+                              voiceMessageDelivery: e.target.value
+                            })
+                          }
+                          disabled={this.state.systemDefaultMD}
+                        />
+                      </Col>
+                    </FormGroup>
+                    <FormGroup controlId="tentantID">
+                      <Col
+                        componentClass={ControlLabel}
+                        md={3}
+                        className={"padding-top-0"}
+                      >
+                        Voice portal passcode lockout
+                      </Col>
+                      <Col md={9} className={"flex"}>
+                        <Checkbox
+                          checked={!this.state.systemDefaultPPL}
+                          onChange={e =>
+                            this.setState({
+                              systemDefaultPPL: !e.target.checked
+                            })
+                          }
+                        />
+                        <FormControl
+                          type="text"
+                          placeholder="Voice portal passcode lockout"
+                          value={this.state.voicePortalPasscodeLockout}
+                          onChange={e =>
+                            this.setState({
+                              voicePortalPasscodeLockout: e.target.value
+                            })
+                          }
+                          disabled={this.state.systemDefaultPPL}
+                        />
+                      </Col>
+                      <Col md={12}>
+                        <div class="button-row margin-right-0">
+                          <div className="pull-right">
+                            <Button
+                              className={"btn-primary"}
+                              onClick={this.saveVoiceMessaging}
+                              disabled={
+                                (!this.state.systemDefaultMN &&
+                                  !this.state.voiceMessageNotification) ||
+                                (!this.state.systemDefaultMD &&
+                                  !this.state.voiceMessageDelivery) ||
+                                (!this.state.systemDefaultPPL &&
+                                  !this.state.voicePortalPasscodeLockout)
+                              }
+                            >
+                              Save
+                            </Button>
+                          </div>
+                        </div>
+                      </Col>
+                    </FormGroup>
+                  </React.Fragment>
+                )}
               </React.Fragment>
-            )}
+            ) : null}
           </FormGroup>
         </Form>
       </Col>
