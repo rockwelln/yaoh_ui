@@ -553,7 +553,11 @@ class Details extends Component {
     } = this.state;
 
     const data = {
-      //name: tenantName ? tenantName : this.state.tenant.name,
+      name: this.props.tenant.sync
+        ? ""
+        : tenantName
+        ? tenantName
+        : this.state.tenant.name,
       defaultDomain: defaultDomain
         ? defaultDomain
         : this.state.tenant.defaultDomain,
