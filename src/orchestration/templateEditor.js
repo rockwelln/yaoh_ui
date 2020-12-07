@@ -1,5 +1,6 @@
-import React, {useEffect, useState} from 'react'
-import { MentionsInput, Mention } from 'react-mentions'
+import React, {useEffect, useRef, useState} from 'react'
+import ReactTextareaAutocomplete from '@webscopeio/react-textarea-autocomplete'
+import "@webscopeio/react-textarea-autocomplete/style.css";
 
 const filters = [
   {
@@ -45,28 +46,133 @@ const filters = [
       </>
     )
   },
-  { id: "url_qs", display: "url_qs" },
-  { id: "url_raw_query", display: "url_raw_query" },
-  { id: "json", display: "json" },
-  { id: "url_path", display: "url_path" },
-  { id: "combine", display: "combine", help: (
-    <>
-      <p><u>combine</u> merge objects together</p>
-      <br/>
-      <i>Example:</i>
-      <pre>{`{{ {"a": 1, "b": 2} | combine({"b": 5, "e": 6}) }}
-// output: {"a": 1, "b": 5, "e": 6}`}</pre>
-    </>
-    )},
+  {
+    id: "url_qs",
+    display: "url_qs",
+    help: (
+      <>
+        <p><u>url_qs</u> extract query string from an URL in input and return it as a dict object.</p>
+        <br/>
+        <i>Example:</i>
+        <pre>{`{{ "http://www.google.com/?param=1&filter=test" | url_qs }}
+// output: {"param": "1", "filter": "test"}`}</pre>
+      </>
+    )
+  },
+  {
+    id: "url_raw_query",
+    display: "url_raw_query",
+    help: (
+      <>
+        <p><u>url_raw_query</u> extract query string from an URL in input.</p>
+        <br/>
+        <i>Example:</i>
+        <pre>{`{{ "http://www.google.com/?param=1&filter=test" | url_raw_query }}
+// output: param=1&filter=test`}</pre>
+      </>
+    )
+  },
+  {
+    id: "json",
+    display: "json",
+    help: (
+      <>
+        <p><u>json</u> turns a JSON string into a dictionary object</p>
+        <p>Note: if the output contains an attribute "body" which is also a JSON string representation, it is automatically loaded as a dictionary object.</p>
+      </>
+    )
+  },
+  {
+    id: "url_path",
+    display: "url_path",
+    help: (
+      <>
+        <p><u>url_path</u> extract the path from an URL in input.</p>
+        <br/>
+        <i>Example:</i>
+        <pre>{`{{ "http://www.google.com/?param=1&filter=test" | url_path }}
+// output: /
+{{ "http://www.google.com/path/to/your/page?param=1&filter=test" | url_path }}
+// output: /path/to/your/page`}</pre>
+      </>
+    )
+  },
+  {
+    id: "combine",
+    display: "combine",
+    help: (
+      <>
+        <p><u>combine</u> merge objects together</p>
+        <br/>
+        <i>Example:</i>
+        <pre>{`{{ {"a": 1, "b": 2} | combine({"b": 5, "e": 6}) }}
+  // output: {"a": 1, "b": 5, "e": 6}`}</pre>
+      </>
+      )
+  },
   { id: "rest2dict", display: "rest2dict", help: (
     <>
-      <p><u>rest2dict</u> turns a JSON string into a dictionary object</p>
+      <p><u>rest2dict</u> (alias for json filter) turns a JSON string into a dictionary object</p>
       <p>Note: if the output contains an attribute "body" which is also a JSON string representation, it is automatically loaded as a dictionary object.</p>
     </>
     ) },
-  { id: "regex_replace", display: "regex_replace" },
-  { id: "regex_findall", display: "regex_findall" },
-  { id: "regex_search", display: "regex_search" },
+  {
+    id: "regex_replace",
+    display: "regex_replace",
+    help: (
+      <>
+        <p><u>regex_replace</u> replace text in a string with regex</p>
+        <br/>
+        <i>Example:</i>
+        <pre>{`# convert "ansible" to "able"
+{{ 'ansible' | regex_replace('^a.*i(.*)$', 'a\\\\1') }}
+
+# convert "foobar" to "bar"
+{{ 'foobar' | regex_replace('^f.*o(.*)$', '\\\\1') }}
+
+# convert "localhost:80" to "localhost, 80" using named groups
+{{ 'localhost:80' | regex_replace('^(?P<host>.+):(?P<port>\\\\d+)$', '\\\\g<host>, \\\\g<port>') }}
+
+# convert "localhost:80" to "localhost"
+{{ 'localhost:80' | regex_replace(':80') }}
+
+# change a multiline string
+{{ var | regex_replace('^', '#CommentThis#', multiline=True) }}`}</pre>
+      </>
+    )
+  },
+  {
+    id: "regex_findall",
+    display: "regex_findall",
+    help: (
+      <>
+        <p><u>regex_findall</u> search for all occurrences of regex matches</p>
+        <br/>
+        <i>Example:</i>
+        <pre>{`# Return a list of all IPv4 addresses in the string
+{{ 'Some DNS servers are 8.8.8.8 and 8.8.4.4' | regex_findall('\\\\b(?:[0-9]{1,3}\\\\.){3}[0-9]{1,3}\\\\b') }}`}</pre>
+      </>
+    )
+  },
+  {
+    id: "regex_search",
+    display: "regex_search",
+    help: (
+      <>
+        <p><u>regex_search</u> search a string with a regex</p>
+        <br/>
+        <i>Example:</i>
+        <pre>{`# search for "foo" in "foobar"
+{{ 'foobar' | regex_search('(foo)') }}
+
+# will return empty if it cannot find a match
+{{ 'ansible' | regex_search('(foobar)') }}
+
+# case insensitive search in multiline mode
+{{ 'foo\\nBAR' | regex_search("^bar", multiline=True, ignorecase=True) }}`}</pre>
+      </>
+    )
+  },
   { id: "unique", display: "unique", help: (
     <>
       <p><u>unique</u> remove all duplicates from an iterable.</p>
@@ -471,116 +577,112 @@ const requestAttributes = [
   { id: "body", display: "body" },
 ]
 
-const defaultStyle = {
-  control: {
-    backgroundColor: '#fff',
-    fontSize: 14,
-    fontWeight: 'normal',
-  },
-
-  '&multiLine': {
-    control: {
-      fontFamily: 'monospace',
-      minHeight: 63,
-    },
-    highlighter: {
-      padding: 9,
-      border: '1px solid transparent',
-    },
-    input: {
-      padding: 9,
-      border: '1px solid silver',
-    },
-  },
-
-  '&singleLine': {
-    display: 'inline-block',
-    width: 180,
-
-    highlighter: {
-      padding: 1,
-      border: '2px inset transparent',
-    },
-    input: {
-      padding: 1,
-      border: '2px inset',
-    },
-  },
-
-  suggestions: {
-    list: {
-      backgroundColor: 'white',
-      border: '1px solid rgba(0,0,0,0.15)',
-      fontSize: 14,
-    },
-    item: {
-      padding: '5px 15px',
-      borderBottom: '1px solid rgba(0,0,0,0.15)',
-      '&focused': {
-        backgroundColor: '#cee4e5',
-      },
-    },
-  },
+const Item = ({ entity: { id, display, help }, selected }) => {
+  const left = 100 + 40;
+  const top = 10;
+  const width = 400;
+  return <>
+    <div>{`${display}`}</div>
+    {
+      selected && help &&
+        <div style={{backgroundColor: '#ffffc6', padding: '5px 15px', color: 'black', position: 'absolute', left, top, width}}>
+          { help }
+        </div>
+    }
+  </>
 }
 
+const Loading = ({ data }) => <div>Loading...</div>;
 
 export function MentionExample({cells, value, onChange}) {
   const [contextVars, setContextVars] = useState([]);
+  const [caretP, setCaretP] = useState(0);
+  const [currentFilter, setCurrentFilter] = useState();
+
   useEffect(() => {
     setContextVars(cells && Object.values(cells).filter(options => options.original_name === "context_setter").map(options => options.params.key))
   }, [cells]);
 
+  useEffect(() => {
+    if(caretP > 0 && value[caretP - 1] === "(") {
+      const match = /([\w0-9\-_]*)\($/.exec(value.slice(0, caretP))
+      if(match === null) {
+        setCurrentFilter(null)
+        return null
+      }
+      const f = filters.find(f => f.display === match[1])
+      console.log("value", value.slice(0, caretP), "match", match, "filter", f)
+      if(!f || !f.help) setCurrentFilter(null)
+      else setCurrentFilter({...f, openPara: 0})
+    } else if(caretP > 0 && value[caretP - 1] === ")" && currentFilter) {
+      if(currentFilter.openPara) {
+        setCurrentFilter({...currentFilter, openPara: currentFilter.openPara - 1})
+      } else {
+        setCurrentFilter(null)
+      }
+    }
+  },
+    [caretP, value]
+  )
+
   return (
-   <MentionsInput value={value} onChange={(e, value) => onChange(value)} style={defaultStyle} allowSpaceInQuery>
-      <Mention
-        trigger={/(\|\s?([^ (|]*))/}
-        displayTransform={filterName => `| ${filterName}`}
-        markup={"| [__id__]"}
-        data={filters.sort((a, b) => a.id.localeCompare(b.id))}
-        renderSuggestion={(entry, search, highlightedDisplay, index, focused) => {
-          const left = 100 + 40;
-          const top = 10;
-          const width = 400;
-          if(focused) {
-            console.log("renderSug.", entry, search, highlightedDisplay, index, focused);
+    <>
+      <ReactTextareaAutocomplete
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className={"form-control"}
+        loadingComponent={Loading}
+        style={{fontSize: "14px"}}
+        dropdownStyle={{zIndex:1000}}
+        movePopupAsYouType={true}
+        onCaretPositionChange={setCaretP}
+        minChar={0}
+
+        trigger={{
+          "|": {
+            dataProvider: token => {
+              return filters
+                .filter(f => f.display.includes(token))
+                .slice(0, 5);
+            },
+            component: Item,
+            output: (item, trigger) => ({text: `| ${item.display}`, caretPosition: "end"}),
+          },
+          "context.": {
+            dataProvider: token => {
+              return contextVars
+                .map(v => ({id: v, display: v}))
+                .reduce((p, c) => {
+                  if(p.find(e => e.id === c.id) === undefined) {
+                    p.push(c)
+                  }
+                  return p
+                }, [])
+                .map(a => ({id: `context.${a.id}`, display: `context.${a.display}`}))
+                .filter(a => a.display.includes(token))
+                .slice(0, 5);
+            },
+            component: Item,
+            output: (item, trigger) => `${item.display}`,
+          },
+          "request.": {
+            dataProvider: token => {
+              return requestAttributes
+                .map(a => ({id: `request.${a.id}`, display: `request.${a.display}`}))
+                .filter(a => a.display.includes(token))
+                .slice(0, 5);
+            },
+            component: Item,
+            output: (item, trigger) => `${item.display}`,
           }
-          return (
-            <div>
-              <div className={`${focused ? 'focused' : ''}`}>
-                {highlightedDisplay}
-              </div>
-              { focused && entry.help &&
-                <div style={{backgroundColor: '#ffffc6', padding: '5px 15px', position: 'absolute', left, top, width}}>
-                  { entry.help }
-                </div>
-              }
-            </div>
-          )
         }}
-      />
-
-      <Mention
-        trigger={/(request\.([^ (|]*))/}
-        displayTransform={a => `request.${a}`}
-        data={requestAttributes}
-        markup={"request.[__id__]"}
-        // renderSuggestion={this.renderTagSuggestion}
-      />
-
-      <Mention
-        trigger={/(context\.([^ (|]*))/}
-        displayTransform={a => `context.${a}`}
-        markup={"context.[__id__]"}
-        data={contextVars
-          .map(v => ({id: v, display: v}))
-          .reduce((p, c) => {
-            if(p.find(e => e.id === c.id) === undefined) {
-              p.push(c)
-            }
-            return p
-          }, [])
+        />
+        {
+          currentFilter &&
+          <div style={{backgroundColor: '#ffffc6', padding: '5px 15px', color: 'black'}}>
+            { currentFilter.help }
+          </div>
         }
-      />
-    </MentionsInput>
+    </>
   )
 }

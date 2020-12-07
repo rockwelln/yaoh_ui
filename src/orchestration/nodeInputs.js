@@ -167,12 +167,11 @@ function ListInput(props) {
 
 function TextareaInput(props) {
   // todo can become a "list" of key (string) + value (jinja code)
-  const {rows, value, onChange, cells} = props;
+  const {value, onChange, cells} = props;
   return (
     <FormControl
         componentClass={MentionExample}
         cells={cells}
-        rows={rows}
         value={value}
         onChange={onChange}
     />
@@ -468,9 +467,6 @@ export function Param2Input({param, activity, cells, value, onChange}) {
     case 'user_profile':
       i = <UserProfileInput value={value} onChange={e => onChange(e)} />
       break;
-    case 'user_properties':
-      i = <TextareaInput rows={4} value={value} onChange={e => onChange(e)} cells={activity.definition.cells} />
-      break;
     case 'timer':
       i = <TimerInput cells={activity.definition.cells} cellsDef={cells} value={value} onChange={e => onChange(e)} />
       break;
@@ -478,9 +474,9 @@ export function Param2Input({param, activity, cells, value, onChange}) {
       i = <ListInput options={param.values} value={value} onChange={e => onChange(e)} />
       break;
     case 'jinja':
-      i = <TextareaInput rows={4} value={value} onChange={e => onChange(e)} cells={activity.definition.cells} />
-      break;
     case 'python':
+    case 'python_bool':
+    case 'user_properties':
     case 'json':
       i = <TextareaInput rows={10} value={value} onChange={e => onChange(e)} cells={activity.definition.cells} />
       break;
