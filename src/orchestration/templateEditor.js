@@ -594,7 +594,7 @@ const Item = ({ entity: { id, display, help }, selected }) => {
 
 const Loading = ({ data }) => <div>Loading...</div>;
 
-export function MentionExample({cells, value, onChange}) {
+export function MentionExample({cells, value, onChange, ...props}) {
   const [contextVars, setContextVars] = useState([]);
   const [caretP, setCaretP] = useState(0);
   const [currentFilter, setCurrentFilter] = useState();
@@ -604,21 +604,31 @@ export function MentionExample({cells, value, onChange}) {
   }, [cells]);
 
   useEffect(() => {
-    if(caretP > 0 && value[caretP - 1] === "(") {
-      const match = /([\w0-9\-_]*)\($/.exec(value.slice(0, caretP))
-      if(match === null) {
-        setCurrentFilter(null)
-        return null
+    if(!value) setCurrentFilter(null)
+    if(caretP > 0) {
+      const matches = value.slice(0, caretP).matchAll(/([\w0-9\-_]*)\(/mg)
+      let lastMatch = undefined
+      for (const match_ of matches) {
+        // console.log(`Found ${match_[0]} start=${match_.index} end=${match_.index + match_[0].length}.`);
+        lastMatch = match_
       }
-      const f = filters.find(f => f.display === match[1])
-      console.log("value", value.slice(0, caretP), "match", match, "filter", f)
-      if(!f || !f.help) setCurrentFilter(null)
-      else setCurrentFilter({...f, openPara: 0})
-    } else if(caretP > 0 && value[caretP - 1] === ")" && currentFilter) {
-      if(currentFilter.openPara) {
-        setCurrentFilter({...currentFilter, openPara: currentFilter.openPara - 1})
-      } else {
+
+      if(lastMatch===undefined) {
         setCurrentFilter(null)
+        return undefined
+      }
+
+      const f = filters.find(f => f.display === lastMatch[1])
+      console.log("value", value.slice(0, caretP), "match", lastMatch, "filter", f)
+      if(!f || !f.help) setCurrentFilter(null)
+      else {
+        const openPara = (value.slice(lastMatch.index, caretP).match(/\(/g) || []).length
+        const closePara = (value.slice(lastMatch.index, caretP).match(/\)/g) || []).length
+        if(openPara > closePara) {
+          setCurrentFilter(f)
+        } else {
+          setCurrentFilter(null)
+        }
       }
     }
   },
@@ -676,6 +686,7 @@ export function MentionExample({cells, value, onChange}) {
             output: (item, trigger) => `${item.display}`,
           }
         }}
+        {...props}
         />
         {
           currentFilter &&

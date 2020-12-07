@@ -167,13 +167,14 @@ function ListInput(props) {
 
 function TextareaInput(props) {
   // todo can become a "list" of key (string) + value (jinja code)
-  const {value, onChange, cells} = props;
+  const {value, onChange, cells, rows} = props;
   return (
     <FormControl
         componentClass={MentionExample}
         cells={cells}
         value={value}
         onChange={onChange}
+        rows={rows}
     />
   )
 }
