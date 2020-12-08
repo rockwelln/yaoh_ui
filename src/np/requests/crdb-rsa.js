@@ -1029,6 +1029,9 @@ function RequestTable(props) {
                   );
                 })
               }
+              <tr><th><FormattedMessage id="external-id" defaultMessage="External id" /></th><td colSpan={rangeNbCols}>{req.external_id}</td></tr>
+              <tr><th><FormattedMessage id="label" defaultMessage="Label" /></th><td colSpan={rangeNbCols}>{req.label}</td></tr>
+              <tr><th><FormattedMessage id="contact-email" defaultMessage="Contact email" /></th><td colSpan={rangeNbCols}>{req.contact_email}</td></tr>
             </tbody>
           </Table>
         </Panel.Body>
