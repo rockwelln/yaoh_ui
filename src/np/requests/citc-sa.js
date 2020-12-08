@@ -1359,9 +1359,9 @@ export class NPTransaction extends Component {
           return
         }
         switch (error.response.status) {
-          case 404: error_msg = <FormattedMessage id="unknown-transaction" defaultMessage="Unknown transaction." />; break;
-          case 401: error_msg = <FormattedMessage id="not-allowed-transaction" defaultMessage="You are not allowed to see this transaction." />; break;
-          default: error_msg = <FormattedMessage id="unknown-error" defaultMessage="Unknown error: {status}" values={{ status: error.response.status }} />;
+          case 404: error_msg = "Unknown transaction."; break;
+          case 403: error_msg = "You are not allowed to see this transaction."; break;
+          default: error_msg = `Unknown error: ${error.response.status}`;
         }
         this.setState({ error: new Error(error_msg) })
       });
