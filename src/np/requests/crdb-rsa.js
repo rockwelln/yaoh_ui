@@ -33,6 +33,7 @@ import ButtonGroup from "react-bootstrap/lib/ButtonGroup";
 import Alert from "react-bootstrap/lib/Alert";
 import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 import {
+  Attachments,
   Comments,
   ContextTable, Errors, Events, ReplayingSubInstancesModal, SavingModal,
   TasksTable,
@@ -1661,6 +1662,16 @@ export class NPTransaction extends Component {
               }
               <Panel header="Context">
                 <ContextTable context={tx.context} />
+              </Panel>
+            </Col>
+            <Col xs={12} sm={12} md={12} lg={12}>
+              <Panel>
+                <Panel.Heading>
+                  <Panel.Title><FormattedMessage id="attachments" defaultMessage="Attachments" /></Panel.Title>
+                </Panel.Heading>
+                <Panel.Body>
+                  <Attachments txId={tx.id}/>
+                </Panel.Body>
               </Panel>
             </Col>
             <Col xs={12} sm={12} md={12} lg={12}>

@@ -1142,6 +1142,7 @@ export function SyncMessagesFlow(props) {
             data.map(
               (d, i) => (
                 <text
+                  key={`data-text-${i}`}
                   textAnchor="middle"
                   x={Math.abs(messageWidth(d) - sourceX(d)) / 2}
                   y={(vSpacing * (i+1)) - 10}

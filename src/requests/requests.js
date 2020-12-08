@@ -34,12 +34,14 @@ import {
   API_URL_PREFIX,
   API_URL_PROXY_PREFIX,
   fetch_get,
-  parseJSON,
   fetch_post,
   fetch_put,
   API_WS_URL,
   NotificationsManager,
-  userLocalizeUtcDate, AuthServiceManager
+  userLocalizeUtcDate,
+  AuthServiceManager,
+  fetch_post_raw,
+  fetch_delete,
 } from "../utils";
 import {ApioDatatable, Pagination} from "../utils/datatable";
 
@@ -55,6 +57,8 @@ import {LinkContainer} from "react-router-bootstrap";
 import {EditCellModal} from "../orchestration/activity-editor";
 import {SavedFiltersFormGroup} from "../utils/searchFilters";
 import ManualActionsBox, {ManualActionInputForm} from "../dashboard/manualActions";
+import {useDropzone} from "react-dropzone";
+import {DeleteConfirmButton} from "../utils/deleteConfirm";
 
 export const DATE_FORMAT = 'DD/MM/YYYY HH:mm:ss';
 const SUB_REQUESTS_PAGE_SIZE = 25;
@@ -1031,6 +1035,213 @@ export function Events(props) {
         </div>)
 }
 
+async function fetchAttachments(txId) {
+    const resp = await fetch_get(`/api/v01/transactions/${txId}/documents`)
+    return resp.documents
+}
+
+function deleteAttachment(txId, docId) {
+    return fetch_delete(`/api/v01/transactions/${txId}/documents/${docId}`)
+}
+
+function saveDocument(txId, description, f, onSuccess) {
+    let data = new FormData();
+    data.append('description', description);
+    data.append('content', f, f.source);
+    return fetch_post_raw(`/api/v01/transactions/${txId}/documents`, data)
+      .then(r => {
+          NotificationsManager.success("document saved!");
+          onSuccess && onSuccess(r);
+      })
+}
+
+function NewAttachmentModal(props) {
+  const {show, onHide, txId, onLoaded} = props;
+  const [errors, setErrors] = useState([]);
+  const [loaded, setLoaded] = useState([]);
+  const {
+    acceptedFiles,
+    fileRejections,
+    getRootProps,
+    getInputProps,
+  } = useDropzone();
+
+  useEffect(() => {
+    if(!show) {
+      setErrors([]);
+      setLoaded([]);
+    }
+  }, [show])
+
+  const acceptedFileItems = acceptedFiles.map((file, i) => (
+    <li key={file.path}>
+      {file.path} - {file.size} bytes
+      <ul style={{color: "green"}}>
+      {
+        loaded.includes(i) && <li>Loaded</li>
+      }
+      </ul>
+      <ul style={{color: "red"}}>
+      {
+        errors.filter(e => e.id === i).map(e => <li color={"red"}>{e.error}</li>)
+      }
+      </ul>
+    </li>
+  ));
+
+  const fileRejectionItems = fileRejections.map(({ file, errors }) => (
+    <li key={file.path}>
+      {file.path} - {file.size} bytes
+      <ul>
+        {errors.map(e => (
+          <li key={e.code}>{e.message}</li>
+        ))}
+      </ul>
+    </li>
+  ));
+
+  return (
+    <Modal show={show} onHide={() => onHide(true)} backdrop={false} bsSize="large">
+      <Modal.Header closeButton>
+          <Modal.Title>
+              <FormattedMessage id="import" defaultMessage="Import"/>
+          </Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Form horizontal>
+          <section className="dropcontainer" >
+            <div {...getRootProps({className: 'dropzone'})} >
+              <input {...getInputProps()} />
+              <p>Drag 'n' drop some files here, or click to select files</p>
+            </div>
+            <aside>
+              <h5>Rejected</h5>
+              <ul style={{color: "red"}}>{fileRejectionItems}</ul>
+              <h5>Accepted</h5>
+              <ul>{acceptedFileItems}</ul>
+            </aside>
+          </section>
+
+          <FormGroup>
+            <Col smOffset={2} sm={10}>
+              <ButtonToolbar>
+                <Button
+                  type="submit"
+                  bsStyle="primary"
+                  onClick={e => {
+                    e.preventDefault();
+                    setErrors([]);
+                    setLoaded([]);
+                    acceptedFiles.map((f, i) => {
+                      saveDocument(txId, "", f, () => {
+                          setLoaded(l => update(l, {$push: [i]}))
+                          onLoaded && onLoaded(i, acceptedFiles.length)
+                      })
+                      .catch(e => setErrors(es => update(es, {$push: [{id: i, error: e.message}]})));
+                    })
+                  }} >
+                  Save
+                </Button>
+              </ButtonToolbar>
+            </Col>
+          </FormGroup>
+        </Form>
+      </Modal.Body>
+    </Modal>
+  )
+}
+
+function humanFileSize(bytes, si=false, dp=1) {
+  const thresh = si ? 1000 : 1024;
+
+  if (Math.abs(bytes) < thresh) {
+    return bytes + ' B';
+  }
+
+  const units = si
+    ? ['kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+    : ['KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
+  let u = -1;
+  const r = 10**dp;
+
+  do {
+    bytes /= thresh;
+    ++u;
+  } while (Math.round(Math.abs(bytes) * r) / r >= thresh && u < units.length - 1);
+  return bytes.toFixed(dp) + ' ' + units[u];
+}
+
+export function Attachments({txId, userInfo}) {
+    const [docs, setDocs] = useState([]);
+    const [showAddModal, setShowAddModal] = useState(false);
+
+    useEffect(() => {
+        fetchAttachments(txId)
+          .then(setDocs)
+          .catch(error => NotificationsManager.error("Failed to fetch documents", error.message))
+    }, []);
+
+    const closeModal = () => {
+        setShowAddModal(false);
+    };
+
+    return (<div>
+        <Table condensed>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>MIME type</th>
+                    <th>When</th>
+                    <th/>
+                </tr>
+            </thead>
+            <tbody>
+                {docs.map(doc => (
+                    <tr key={doc.id}>
+                        <td>{doc.name}</td>
+                        <td>{doc.description}</td>
+                        <td>{doc.mime_type}</td>
+                        <td>{userLocalizeUtcDate(moment.utc(doc.created_on), userInfo).format()}</td>
+                        <td>
+                            <Button
+                                bsStyle="primary"
+                                onClick={() => {
+                                  AuthServiceManager.getValidToken().then(token => {
+                                      window.location=`${API_URL_PREFIX}/api/v01/transactions/${txId}/documents/${doc.id}?auth_token=${token}`
+                                    })
+                                }}
+                                style={{marginLeft: '5px', marginRight: '5px'}} >
+                                <Glyphicon glyph="save"/>
+                            </Button>
+                            <br/>{humanFileSize(doc.size_in_bytes)}
+                        </td>
+                        <td>
+                            <DeleteConfirmButton
+                                resourceName={doc.name}
+                                style={{marginLeft: '5px', marginRight: '5px'}}
+                                onConfirm={() => deleteAttachment(txId, doc.id).then(() => fetchAttachments(txId).then(setDocs))} />
+                        </td>
+                    </tr>
+                    ))
+                }
+                <tr>
+                    <td colSpan={6}>
+                        <Button onClick={() => setShowAddModal(true)} bsStyle="info">
+                            <FormattedMessage id="attach" defaultMessage="Attach"/>
+                        </Button>
+                    </td>
+                </tr>
+            </tbody>
+        </Table>
+        <NewAttachmentModal
+          show={showAddModal}
+          onHide={closeModal}
+          onLoaded={() => fetchAttachments(txId).then(setDocs)}
+          txId={txId}
+          backdrop={false} />
+    </div>);
+}
 
 const FORCEABLE_TASKS = [
     "delete @ENUM",
