@@ -107,11 +107,17 @@ function validateRanges(ranges) {
   }).filter(e => e !== null);
 }
 
+function generateNewPortId(prefix="", suffix="") {
+  const now = (new Date()).toISOString().slice(0,19).replace(/-/g,"").replace(/T/g,"").replace(/:/g,"")
+  return `${prefix}${now}MTNBSGNP${suffix}`
+}
+
 const emptyRequest = {
   ranges: [{ from: '', to: '' }],
   donor: '',
   change_addr_installation_porting_id: '',
   isB2B: false,
+  crdc_id: generateNewPortId(),
   service_type: 'GEOGRAPHIC',
   routing_info: '',
   subscriber_data: {
@@ -186,6 +192,19 @@ export function NPPortInRequest(props) {
             <option value="MOBILE">MOBILE</option>
             <option value="GEOGRAPHIC">GEOGRAPHIC</option>
           </FormControl>
+        </Col>
+      </FormGroup>
+
+      <FormGroup>
+        <Col componentClass={ControlLabel} sm={2}>
+          <FormattedMessage id="port-id" defaultMessage="Port ID" />
+        </Col>
+
+        <Col sm={9}>
+          <FormControl
+            type="text"
+            value={request.crdc_id}
+            onChange={e => setRequest(update(request, { $merge: { crdc_id: e.target.value } }))} />
         </Col>
       </FormGroup>
 
