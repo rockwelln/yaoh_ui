@@ -1141,6 +1141,10 @@ export const TxTable = ({tx, request, userInfo}) => (
             <tr><th><FormattedMessage id="creation-date" defaultMessage="Creation date" /></th><td>{userLocalizeUtcDate(moment.utc(tx.created_on), userInfo).format()}</td></tr>
             <tr><th><FormattedMessage id="last-update" defaultMessage="Last update" /></th><td>{userLocalizeUtcDate(moment.utc(tx.updated_on), userInfo).format()}</td></tr>
             <tr><th><FormattedMessage id="errors" defaultMessage="Errors" /></th><td>{tx.errors.length}</td></tr>
+            {
+                tx.label &&
+                <tr><th><FormattedMessage id="label" defaultMessage="Label" /></th><td>{tx.label}</td></tr>
+            }
         </tbody>
     </Table>
 );
