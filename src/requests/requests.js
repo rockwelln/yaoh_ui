@@ -3713,7 +3713,7 @@ export class CustomRequests extends Component{
             <div>
                 <Breadcrumb>
                     <Breadcrumb.Item active><FormattedMessage id="requests" defaultMessage="Requests"/></Breadcrumb.Item>
-                    <Breadcrumb.Item active><FormattedMessage id="custom-requests" defaultMessage="Custom requests"/></Breadcrumb.Item>
+                    <Breadcrumb.Item active><FormattedMessage id="cron-requests" defaultMessage="Cron requests"/></Breadcrumb.Item>
                 </Breadcrumb>
                 <Panel defaultExpanded={false} >
                     <Panel.Heading>

@@ -269,7 +269,7 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
               [
                 <LinkContainer to={"/custom-transactions/list"} key="custom-requests">
                   <MenuItem>
-                    <FormattedMessage id="custom-requests" defaultMessage="Custom Requests"/>
+                    <FormattedMessage id="cron-requests" defaultMessage="Cron Requests"/>
                   </MenuItem>
                 </LinkContainer>,
                 <LinkContainer to={"/transactions/timers"} key="timers">
