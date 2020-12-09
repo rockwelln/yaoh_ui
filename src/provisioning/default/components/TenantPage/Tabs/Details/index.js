@@ -315,13 +315,19 @@ class Details extends Component {
                   }
                 />
               </Col>
+              <Col md={12}>
+                <div class="button-row margin-right-0">
+                  <div className="pull-right">
+                    <Button
+                      className={"btn-primary"}
+                      onClick={this.updateTenant}
+                    >
+                      {`Save`}
+                    </Button>
+                  </div>
+                </div>
+              </Col>
             </FormGroup>
-            <Col mdPush={10} md={1}>
-              <Button className={"btn-primary"} onClick={this.updateTenant}>
-                <Glyphicon glyph="glyphicon glyphicon-ok" />
-                {` Save`}
-              </Button>
-            </Col>
             <FormGroup controlId="useCustomRoutingProfile">
               <Col mdOffset={3} md={9}>
                 <Checkbox
