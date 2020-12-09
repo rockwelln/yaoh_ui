@@ -22,7 +22,8 @@ import {
   fetchGetListOfRoutingProfiles,
   fetchPutUpdateTenantDetails,
   fetchPutUpdateTenantRoutingProfile,
-  fetchPutUpdateTenantVoiceMessaging
+  fetchPutUpdateTenantVoiceMessaging,
+  fetchGetTenantVoiceMessaging
 } from "../../store/actions";
 
 export class TenantParameters extends Component {
@@ -37,17 +38,21 @@ export class TenantParameters extends Component {
     systemDefaultMN: true,
     systemDefaultMD: true,
     systemDefaultPPL: true,
-    skipNextButtonName: "Skip"
+    skipNextButtonName: "Skip",
+    isLoadingVM: true
   };
 
   componentDidMount() {
     this.props.fetchGetListOfRoutingProfiles();
+    this.props
+      .fetchGetTenantVoiceMessaging(this.props.createdTenant.tenantId)
+      .then(() => this.setState({ isLoadingVM: false }));
   }
 
   render() {
-    // if (this.state.isLoading) {
-    //   return <Loading />;
-    // }
+    if (this.state.isLoadingVM) {
+      return <Loading />;
+    }
 
     return (
       <React.Fragment>
@@ -120,120 +125,128 @@ export class TenantParameters extends Component {
               </div>
             </Col>
           </Row>
-          <Row>
-            <Col md={12} className={"flex-row"}>
-              <div className={"width-100p"}>
-                <Checkbox
-                  className={"margin-top-0"}
-                  checked={this.state.enabledVoiceMessagingSettings}
-                  onChange={e => {
-                    if (e.target.checked) {
-                      this.setState({
-                        enabledVoiceMessagingSettings: e.target.checked
-                      });
-                    } else {
-                      this.setState({
-                        enabledVoiceMessagingSettings: e.target.checked,
-                        voiceMessageNotification: "",
-                        voiceMessageDelivery: "",
-                        voicePortalPasscodeLockout: ""
-                      });
-                    }
-                  }}
-                >
-                  Voice messaging settings
-                </Checkbox>
-                {this.state.enabledVoiceMessagingSettings && (
-                  <React.Fragment>
-                    <div className="flex space-between align-items-center margin-bottom-1">
-                      <div className="nowrap margin-right-1 width-50p">
-                        Voicemail Notification
-                      </div>
-                      <Checkbox
-                        checked={!this.state.systemDefaultMN}
-                        onChange={e =>
-                          this.setState({ systemDefaultMN: !e.target.checked })
-                        }
-                      />
-                      <FormControl
-                        type="text"
-                        placeholder="Voicemail Notification"
-                        value={this.state.voiceMessageNotification}
-                        onChange={e =>
-                          this.setState({
-                            voiceMessageNotification: e.target.value
-                          })
-                        }
-                        disabled={this.state.systemDefaultMN}
-                      />
-                    </div>
-                    <div className="flex space-between align-items-center margin-bottom-1">
-                      <div className="nowrap margin-right-1 width-50p">
-                        Voicemail Delivery
-                      </div>
-                      <Checkbox
-                        checked={!this.state.systemDefaultMD}
-                        onChange={e =>
-                          this.setState({ systemDefaultMD: !e.target.checked })
-                        }
-                      />
-                      <FormControl
-                        type="text"
-                        placeholder="Voicemail Delivery"
-                        value={this.state.voiceMessageDelivery}
-                        onChange={e =>
-                          this.setState({
-                            voiceMessageDelivery: e.target.value
-                          })
-                        }
-                        disabled={this.state.systemDefaultMD}
-                      />
-                    </div>
-                    <div className="flex space-between align-items-center margin-bottom-1">
-                      <div className="nowrap margin-right-1 width-50p">
-                        Voice portal passcode lockout
-                      </div>
-                      <Checkbox
-                        checked={!this.state.systemDefaultPPL}
-                        onChange={e =>
-                          this.setState({ systemDefaultPPL: !e.target.checked })
-                        }
-                      />
-                      <FormControl
-                        type="text"
-                        placeholder="Voice portal passcode lockout"
-                        value={this.state.voicePortalPasscodeLockout}
-                        onChange={e =>
-                          this.setState({
-                            voicePortalPasscodeLockout: e.target.value
-                          })
-                        }
-                        disabled={this.state.systemDefaultPPL}
-                      />
-                    </div>
-                    <div class="button-row margin-right-0">
-                      <div className="pull-right">
-                        <Button
-                          className={"btn-primary"}
-                          onClick={this.saveVoiceMessaging}
-                          disabled={
-                            (!this.state.systemDefaultMN &&
-                              !this.state.voiceMessageNotification) ||
-                            (!this.state.systemDefaultMD &&
-                              !this.state.voiceMessageDelivery) ||
-                            (!this.state.systemDefaultPPL &&
-                              !this.state.voicePortalPasscodeLockout)
+          {Object.keys(this.props.tenantVoiceMessaging).length ? (
+            <Row>
+              <Col md={12} className={"flex-row"}>
+                <div className={"width-100p"}>
+                  <Checkbox
+                    className={"margin-top-0"}
+                    checked={this.state.enabledVoiceMessagingSettings}
+                    onChange={e => {
+                      if (e.target.checked) {
+                        this.setState({
+                          enabledVoiceMessagingSettings: e.target.checked
+                        });
+                      } else {
+                        this.setState({
+                          enabledVoiceMessagingSettings: e.target.checked,
+                          voiceMessageNotification: "",
+                          voiceMessageDelivery: "",
+                          voicePortalPasscodeLockout: ""
+                        });
+                      }
+                    }}
+                  >
+                    Voice messaging settings
+                  </Checkbox>
+                  {this.state.enabledVoiceMessagingSettings && (
+                    <React.Fragment>
+                      <div className="flex space-between align-items-center margin-bottom-1">
+                        <div className="nowrap margin-right-1 width-50p">
+                          Voicemail Notification
+                        </div>
+                        <Checkbox
+                          checked={!this.state.systemDefaultMN}
+                          onChange={e =>
+                            this.setState({
+                              systemDefaultMN: !e.target.checked
+                            })
                           }
-                        >
-                          Save
-                        </Button>
+                        />
+                        <FormControl
+                          type="text"
+                          placeholder="Voicemail Notification"
+                          value={this.state.voiceMessageNotification}
+                          onChange={e =>
+                            this.setState({
+                              voiceMessageNotification: e.target.value
+                            })
+                          }
+                          disabled={this.state.systemDefaultMN}
+                        />
                       </div>
-                    </div>
-                  </React.Fragment>
-                )}
-              </div>
-            </Col>
-          </Row>
+                      <div className="flex space-between align-items-center margin-bottom-1">
+                        <div className="nowrap margin-right-1 width-50p">
+                          Voicemail Delivery
+                        </div>
+                        <Checkbox
+                          checked={!this.state.systemDefaultMD}
+                          onChange={e =>
+                            this.setState({
+                              systemDefaultMD: !e.target.checked
+                            })
+                          }
+                        />
+                        <FormControl
+                          type="text"
+                          placeholder="Voicemail Delivery"
+                          value={this.state.voiceMessageDelivery}
+                          onChange={e =>
+                            this.setState({
+                              voiceMessageDelivery: e.target.value
+                            })
+                          }
+                          disabled={this.state.systemDefaultMD}
+                        />
+                      </div>
+                      <div className="flex space-between align-items-center margin-bottom-1">
+                        <div className="nowrap margin-right-1 width-50p">
+                          Voice portal passcode lockout
+                        </div>
+                        <Checkbox
+                          checked={!this.state.systemDefaultPPL}
+                          onChange={e =>
+                            this.setState({
+                              systemDefaultPPL: !e.target.checked
+                            })
+                          }
+                        />
+                        <FormControl
+                          type="text"
+                          placeholder="Voice portal passcode lockout"
+                          value={this.state.voicePortalPasscodeLockout}
+                          onChange={e =>
+                            this.setState({
+                              voicePortalPasscodeLockout: e.target.value
+                            })
+                          }
+                          disabled={this.state.systemDefaultPPL}
+                        />
+                      </div>
+                      <div class="button-row margin-right-0">
+                        <div className="pull-right">
+                          <Button
+                            className={"btn-primary"}
+                            onClick={this.saveVoiceMessaging}
+                            disabled={
+                              (!this.state.systemDefaultMN &&
+                                !this.state.voiceMessageNotification) ||
+                              (!this.state.systemDefaultMD &&
+                                !this.state.voiceMessageDelivery) ||
+                              (!this.state.systemDefaultPPL &&
+                                !this.state.voicePortalPasscodeLockout)
+                            }
+                          >
+                            Save
+                          </Button>
+                        </div>
+                      </div>
+                    </React.Fragment>
+                  )}
+                </div>
+              </Col>
+            </Row>
+          ) : null}
           <Row>
             <div class="button-row">
               <div className="pull-right">
@@ -306,7 +319,8 @@ export class TenantParameters extends Component {
 
 const mapStateToProps = state => ({
   createdTenant: state.createdTenant,
-  listOfRoutingProfiles: state.listOfRoutingProfiles
+  listOfRoutingProfiles: state.listOfRoutingProfiles,
+  tenantVoiceMessaging: state.tenantVoiceMessaging
 });
 
 const mapDispatchToProps = {
@@ -315,7 +329,8 @@ const mapDispatchToProps = {
   fetchGetListOfRoutingProfiles,
   fetchPutUpdateTenantDetails,
   fetchPutUpdateTenantRoutingProfile,
-  fetchPutUpdateTenantVoiceMessaging
+  fetchPutUpdateTenantVoiceMessaging,
+  fetchGetTenantVoiceMessaging
 };
 
 export default withRouter(
