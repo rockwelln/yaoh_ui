@@ -31,6 +31,7 @@ import {useDropzone} from "react-dropzone";
 import {JSON_TRANS_OPTIONS_SAMPLE} from "../system/bulk_actions";
 import Select from "react-select";
 import {SearchBar} from "../utils/datatable";
+import InputGroup from "react-bootstrap/lib/InputGroup";
 
 const CUSTOM_ROUTE_PREFIX = "https://<target>/api/v01/custom";
 const JSON_SCHEMA_SAMPLE = (
@@ -827,19 +828,34 @@ function CustomRoutes(props) {
                                     <td>{ route.method }</td>
                                     <td>{ route.route }</td>
                                     <td>
-                                        <Select
-                                            className="basic-single"
-                                            classNamePrefix="select"
-                                            value={route.activity_id && activitiesOptions.find(a => a.value === route.activity_id)}
-                                            isClearable={true}
-                                            isSearchable={true}
-                                            name="activity"
-                                            onChange={(value, action) => {
-                                                if(["select-option", "clear"].includes(action.action)) {
-                                                  updateCustomRouteActivity(route.route_id, value && value.value, () => fetchCustomRoutes(setCustomRoutes));
-                                                }
-                                            }}
-                                            options={activitiesOptions} />
+                                        <InputGroup>
+                                            <Select
+                                                className="basic-single"
+                                                classNamePrefix="select"
+                                                value={route.activity_id && activitiesOptions.find(a => a.value === route.activity_id)}
+                                                isClearable={true}
+                                                isSearchable={true}
+                                                name="activity"
+                                                onChange={(value, action) => {
+                                                    if(["select-option", "clear"].includes(action.action)) {
+                                                      updateCustomRouteActivity(route.route_id, value && value.value, () => fetchCustomRoutes(setCustomRoutes));
+                                                    }
+                                                }}
+                                                options={activitiesOptions} />
+                                            <InputGroup.Button>
+                                                <Button
+                                                    disabled={route.activity_id === null}
+                                                    bsStyle="primary"
+                                                    onClick={() => {
+                                                        let win = window.open(`/transactions/config/activities/editor/${route.activity_id}`, '_blank');
+                                                        win.focus();
+                                                    }}
+                                                    style={{marginLeft: '5px'}}
+                                                >
+                                                    <Glyphicon glyph="eye-open"/>
+                                                </Button>
+                                            </InputGroup.Button>
+                                        </InputGroup>
                                     </td>
                                     <td>
                                         <Checkbox
