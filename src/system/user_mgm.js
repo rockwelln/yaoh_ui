@@ -474,7 +474,7 @@ function UpdateUser(props) {
                                     onChange={(e) => setDiffUser(update(diffUser, {$merge: {timezone: e.target.value}}))}>
                                     <option value="">* local *</option>
                                     {
-                                        ["+01:00", "+02:00", "+03:00"].map(t => <option value={t}>{t}</option>)
+                                        ["+01:00", "+02:00", "+03:00"].map(t => <option key={t} value={t}>{t}</option>)
                                     }
                                 </FormControl>
                             </Col>
