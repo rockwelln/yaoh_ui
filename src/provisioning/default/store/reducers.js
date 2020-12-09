@@ -138,7 +138,9 @@ const initialState = {
   tenantSuspensionStatus: "",
   suspensionOptions: [],
   groupSuspensionStatus: "",
-  tenantPasswordRules: {}
+  tenantPasswordRules: {},
+  tenantEntitlements: [],
+  entitlementTypes: { customer_licenses: [] }
 };
 
 function mainReducer(state = initialState, action) {
@@ -755,6 +757,18 @@ function mainReducer(state = initialState, action) {
         tenantPasswordRules: action.data
       };
     }
+    case actionType.GET_TENANT_ENTITLEMENTS: {
+      return {
+        ...state,
+        tenantEntitlements: action.data.entitlements
+      };
+    }
+    case actionType.GET_ENTITLEMENT_TYPES: {
+      return {
+        ...state,
+        entitlementTypes: action.data
+      };
+    }
     case actionType.POST_CREATE_GROUP_ADMIN: {
       return {
         ...state,
@@ -913,6 +927,11 @@ function mainReducer(state = initialState, action) {
         ...state
       };
     }
+    case actionType.POST_ADD_ENTITLEMENTS_TO_TENANT: {
+      return {
+        ...state
+      };
+    }
     case actionType.PUT_UPDATE_USER: {
       return {
         ...state,
@@ -1034,6 +1053,11 @@ function mainReducer(state = initialState, action) {
         ...state
       };
     }
+    case actionType.PUT_UPDATE_TENANT_ENTITLEMENT: {
+      return {
+        ...state
+      };
+    }
     case actionType.DELETE_TENANT: {
       return {
         ...state
@@ -1119,6 +1143,11 @@ function mainReducer(state = initialState, action) {
       };
     }
     case actionType.DELETE_TEMPLATE: {
+      return {
+        ...state
+      };
+    }
+    case actionType.DELETE_ENTITLEMENT_FROM_TENANT: {
       return {
         ...state
       };

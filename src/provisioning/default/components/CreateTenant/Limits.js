@@ -12,7 +12,9 @@ import {
   fetchPutUpdateTenantServicePacks,
   showHideAdditionalServicesTenant,
   changeStepOfCreateTenant,
-  refuseCreateTenant
+  refuseCreateTenant,
+  fetchGetTenantEntitlements,
+  fetchGetSelfcareURL
 } from "../../store/actions";
 
 import Panel from "react-bootstrap/lib/Panel";
@@ -21,14 +23,19 @@ import Col from "react-bootstrap/lib/Col";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import Button from "react-bootstrap/lib/Button";
 import Table from "react-bootstrap/lib/Table";
+import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 
 import { FormattedMessage } from "react-intl";
 import Loading from "../../common/Loading";
 import ServicePackAuthorisation from "../ServicePackAuthorisation";
 import LicensesPanel from "../../common/License";
 import SingleEdit from "../../common/License/SingleEdit";
+import AddEntitlements from "./Entitlement/AddEntitlements";
+import EditEntitlements from "./Entitlement/EditEntitlements";
+import DeleteEntitlements from "./Entitlement/DeleteEntitlements";
 
 import { removeEmpty } from "../remuveEmptyInObject";
+import { get } from "../get";
 
 const INFINITY = 8734;
 
@@ -46,30 +53,58 @@ export class Limits extends Component {
     editMaxBursting: false,
     editServicePacks: false,
     indexOfService: 0,
-    showMore: true
+    showMore: true,
+    isLoadingEntitlements: true,
+    showAddEntitlements: false,
+    editEntitlement: undefined,
+    deleteEntitlement: undefined,
+    isLoadingSCURL: true
   };
 
   fetchData() {
-    this.props
-      .fetchGetTenantLicenses(this.props.createdTenant.tenantId)
-      .then(() =>
-        this.setState(
-          {
-            isLoading: false,
-            groupServices: this.props.tenantLicenses.groups,
-            servicePacks: this.props.tenantServicePacks
-          },
-          () => this.props.showHideAdditionalServicesTenant(this.state.showMore)
-        )
-      );
-    this.props
-      .fetchGetTrunkByTenantID(this.props.createdTenant.tenantId)
-      .then(() => {
-        this.setState({
-          trunkGroups: this.props.tenantTrunkGroups,
-          isLoadingTrunk: false
-        });
-      });
+    this.setState(
+      {
+        isLoading: true,
+        isLoadingTrunk: true,
+        isLoadingSCURL: true,
+        isLoadingEntitlements: true
+      },
+      () => {
+        this.props
+          .fetchGetTenantLicenses(this.props.createdTenant.tenantId)
+          .then(() =>
+            this.setState(
+              {
+                isLoading: false,
+                groupServices: this.props.tenantLicenses.groups,
+                servicePacks: this.props.tenantServicePacks
+              },
+              () =>
+                this.props.showHideAdditionalServicesTenant(this.state.showMore)
+            )
+          );
+        this.props
+          .fetchGetTrunkByTenantID(this.props.createdTenant.tenantId)
+          .then(() => {
+            this.setState({
+              trunkGroups: this.props.tenantTrunkGroups,
+              isLoadingTrunk: false
+            });
+          });
+
+        this.props.fetchGetSelfcareURL().then(() =>
+          this.setState({ isLoadingSCURL: false }, () => {
+            if (get(this.props, "selfcareUrl.modules.nims")) {
+              this.props
+                .fetchGetTenantEntitlements(this.props.createdTenant.tenantId)
+                .then(this.setState({ isLoadingEntitlements: false }));
+            } else {
+              this.setState({ isLoadingEntitlements: false });
+            }
+          })
+        );
+      }
+    );
   }
   componentDidMount() {
     this.fetchData();
@@ -82,10 +117,17 @@ export class Limits extends Component {
       editMaxBursting,
       editServicePacks,
       editGroupServices,
-      indexOfService
+      indexOfService,
+      isLoadingEntitlements,
+      isLoadingSCURL
     } = this.state;
 
-    if (this.state.isLoading || isLoadingTrunk) {
+    if (
+      this.state.isLoading ||
+      isLoadingTrunk ||
+      isLoadingEntitlements ||
+      isLoadingSCURL
+    ) {
       return <Loading />;
     }
 
@@ -359,6 +401,122 @@ export class Limits extends Component {
                     </div>
                   </Col>
                   <Col md={7}>
+                    {get(this.props, "selfcareUrl.modules.nims") &&
+                      this.props.selfcareUrl.modules.nims && (
+                        <Panel>
+                          <Panel.Heading
+                            className={"flex space-between align-items-center"}
+                          >
+                            <FormattedMessage
+                              id="number_entitlement"
+                              defaultMessage="Number entitlement"
+                            />
+                            <Button
+                              bsStyle="primary"
+                              onClick={() =>
+                                this.setState({ showAddEntitlements: true })
+                              }
+                            >
+                              <FormattedMessage id="add" defaultMessage="ADD" />
+                            </Button>
+                          </Panel.Heading>
+                          <Panel.Body>
+                            {this.props.tenantEntitlements.length ? (
+                              <Table hover>
+                                <thead>
+                                  <tr>
+                                    <th />
+                                    <th>
+                                      <FormattedMessage
+                                        id="assigned"
+                                        defaultMessage="assigned"
+                                      />
+                                    </th>
+                                    <th>
+                                      <FormattedMessage
+                                        id="entitled"
+                                        defaultMessage="entitled"
+                                      />
+                                    </th>
+                                    <th />
+                                    <th />
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {this.props.tenantEntitlements.map(el => (
+                                    <tr key={el.id}>
+                                      <td>{el.name}</td>
+                                      <td>{el.counter ? el.counter : 0}</td>
+                                      <td>{el.entitlement}</td>
+                                      <td>
+                                        <Glyphicon
+                                          glyph="glyphicon glyphicon-pencil"
+                                          className={"edit-pencil"}
+                                          onClick={() =>
+                                            this.setState({
+                                              editEntitlement: el
+                                            })
+                                          }
+                                        />
+                                      </td>
+                                      <td>
+                                        {el.counter ? null : (
+                                          <ButtonToolbar
+                                            onClick={() =>
+                                              this.setState({
+                                                deleteEntitlement: el
+                                              })
+                                            }
+                                          >
+                                            <Glyphicon glyph="glyphicon glyphicon-remove" />
+                                          </ButtonToolbar>
+                                        )}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </Table>
+                            ) : (
+                              <FormattedMessage
+                                id="entitlements_not_assigned"
+                                defaultMessage="Entitlements is not assigned yet"
+                              />
+                            )}
+                          </Panel.Body>
+                        </Panel>
+                      )}
+                    {this.state.showAddEntitlements && (
+                      <AddEntitlements
+                        show={this.state.showAddEntitlements}
+                        onClose={() =>
+                          this.setState({ showAddEntitlements: false }, () =>
+                            this.fetchData()
+                          )
+                        }
+                      />
+                    )}
+                    {this.state.editEntitlement && (
+                      <EditEntitlements
+                        show={this.state.editEntitlement}
+                        entitlement={this.state.editEntitlement}
+                        onClose={() =>
+                          this.setState({ editEntitlement: undefined }, () =>
+                            this.fetchData()
+                          )
+                        }
+                      />
+                    )}
+                    {this.state.deleteEntitlement && (
+                      <DeleteEntitlements
+                        show={this.state.deleteEntitlement}
+                        entitlement={this.state.deleteEntitlement}
+                        onClose={() =>
+                          this.setState({ deleteEntitlement: undefined }, () =>
+                            this.fetchData()
+                          )
+                        }
+                      />
+                    )}
                     <Panel>
                       <Panel.Heading>
                         <FormattedMessage
@@ -629,7 +787,9 @@ const mapStateToProps = state => ({
   tenantTrunkGroups: state.tenantTrunkGroups,
   tenantServicePacks: state.tenantServicePacks,
   userServices: state.userServicesTenant,
-  isAuthorisedTrunkTenant: state.isAuthorisedTrunkTenant
+  isAuthorisedTrunkTenant: state.isAuthorisedTrunkTenant,
+  selfcareUrl: state.selfcareUrl,
+  tenantEntitlements: state.tenantEntitlements
 });
 
 const mapDispatchToProps = {
@@ -640,7 +800,9 @@ const mapDispatchToProps = {
   fetchPutUpdateTenantServicePacks,
   showHideAdditionalServicesTenant,
   changeStepOfCreateTenant,
-  refuseCreateTenant
+  refuseCreateTenant,
+  fetchGetTenantEntitlements,
+  fetchGetSelfcareURL
 };
 
 export default withRouter(
