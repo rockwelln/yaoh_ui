@@ -498,7 +498,7 @@ export function Param2Input({param, activity, cells, value, onChange}) {
     case 'outputs':
       i = <DynamicOutputs
         value={value}
-        regexp={param.regexp || param.schema.items.pattern}
+        regexp={param.regexp || (param.schema && param.schema.items.pattern)}
         onChange={(e, outputs) => {
           onChange(e, outputs);
         }} />

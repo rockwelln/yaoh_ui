@@ -112,8 +112,14 @@ export function getDefinition(editor, title) {
                 cell.params = c.getAttribute('attrList').split(",").reduce((xa, a) => {xa[a] = c.getAttribute(a); return xa;}, {});
             }
 
-            if(c.style === 'entity') activity.definition.entities.push(cell);
-            else activity.definition.cells[c.getAttribute('label')] = cell;
+            switch(c.style) {
+                case 'entity':
+                    activity.definition.entities.push(cell);
+                    break;
+                default:
+                    activity.definition.cells[c.getAttribute('label')] = cell;
+                    break;
+            }
 
             activity.definition.transitions = activity.definition.transitions.concat(model.getOutgoingEdges(c).map((e) => {
                 let sourcePortId = e.style.split(';')
@@ -129,9 +135,17 @@ export function getDefinition(editor, title) {
     return {activity: activity, hasAStart: hasAStart};
 }
 
+function getClass(def) {
+    switch(def.original_name) {
+        case 'entity':
+            return 'entity'
+        default:
+            return 'cell';
+    }
+}
 
-export function addNode(editor, def, name, paramsFields, isEntity) {
-    const cls = isEntity?"entity":"cell";
+export function addNode(editor, def, name, paramsFields) {
+    const cls = getClass(def);
     const c = def;
     const value = def.original_name || def.name;
     let graph = editor.graph;
@@ -351,6 +365,13 @@ export function updateGraphModel(editor, activity, options) {
             node.setAttribute('label', e.name);
             node.setAttribute('original_name', e.original_name);
             node.setAttribute('outputs', e.outputs);
+            if(e.params !== undefined && Object.keys(e.params).length !== 0) {
+                node.setAttribute('attrList', Object.keys(e.params).filter(p => p).map(param_name => {
+                    const value = e.params[param_name];
+                    node.setAttribute(param_name, value);
+                    return param_name;
+                }))
+            }
 
             let v = graph.insertVertex(parent, null, node, e.x, e.y, e.height || BASIC_CELL_HEIGHT, BASE_Y + (20 * e.outputs.length) + 15, 'entity');
             v.setConnectable(false);

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import {Redirect} from "react-router";
-// import draw_editor, {addNode, getDefinition, updateGraphModel} from "./editor";
 import {fetch_post, fetch_get, fetch_delete, fetch_put, NotificationsManager} from "../utils";
 
 import Col from 'react-bootstrap/lib/Col';
@@ -85,12 +84,6 @@ function isValid(p, v) {
 function fetchCells(onSuccess) {
     fetch_get('/api/v01/cells')
         .then(data => onSuccess(data.cells))
-        .catch(console.error);
-}
-
-function fetchEntities(onSuccess) {
-    fetch_get('/api/v01/entities')
-        .then(data => onSuccess(data.entities))
         .catch(console.error);
 }
 
@@ -424,9 +417,12 @@ function NewNameModal(props) {
     )
 }
 
+const miscDefs = {
+  entity: {original_name: "entity", params: [{"name": "events", "nature": "outputs"}], outputs: []},
+}
 
 function NewCellModal(props)  {
-    const {show, onHide, cells, entities, activity} = props;
+    const {show, onHide, cells, activity} = props;
     const [name, setName] = useState("");
     const [definition, setDefinition] = useState({});
     const [staticParams, setStaticParams] = useState({});
@@ -513,18 +509,13 @@ function NewCellModal(props)  {
                                 value={definition.original_name || definition.name}
                                 onChange={e => {
                                   const cellDef = cells.find(c => c.original_name === e.target.value);
-                                  setDefinition(cellDef?cellDef:entities.find(ent => ent.name === e.target.value))
+                                  setDefinition(cellDef?cellDef:miscDefs[e.target.value])
                                 }}>
                                 <option value=""/>
-                              {
-                                entities && entities.length !== 0 &&
-                                  <optgroup label="Entities">
-                                    {
-                                      entities.map(e => <option value={e.name}>{e.name}</option>)
-                                    }
-                                  </optgroup>
-                              }
-                              {
+                                <optgroup label="Misc.">
+                                  <option value={"entity"}>Entity</option>
+                                </optgroup>
+                                {
                                 Object.entries(cells
                                   .sort((a, b) => a.category.localeCompare(b.category))
                                   .reduce((o, item) => {
@@ -541,8 +532,7 @@ function NewCellModal(props)  {
                                     </optgroup>
                                     ))
                                   })
-                              }
-
+                                }
                             </FormControl>
                             {
                                 definition && definition.doc && <HelpBlock>{definition.doc}</HelpBlock>
@@ -556,7 +546,7 @@ function NewCellModal(props)  {
                       <Col smOffset={2} sm={10}>
                           <Button
                             onClick={() => {
-                              onHide({def:definition, name:name, params:staticParams, isEntity:definition.original_name === undefined, customOutputs: customOutputs});
+                              onHide({def:definition, name:name, params:staticParams, customOutputs: customOutputs});
                             }}
                             disabled={!validName || invalidParams.length !== 0}
                           >
@@ -681,7 +671,7 @@ function OutputsTable(props) {
 
 
 export function EditCellModal(props) {
-    const {show, cell, cells, entities, activity, onHide, readOnly = false} = props;
+    const {show, cell, cells, activity, onHide, readOnly = false} = props;
     const [staticParams, setStaticParams] = useState({});
     const [outputs, setOutputs] = useState([]);
 
@@ -691,7 +681,7 @@ export function EditCellModal(props) {
 
     let cellDef = cells && cells.find(c => c.name === originalName);
     if(!cellDef) {
-      cellDef = entities && entities.find(c => c.name === originalName);
+      cellDef = miscDefs[originalName];
     }
 
     useEffect(() => {
@@ -836,7 +826,6 @@ export function EditCellModal(props) {
                         name: cell.value.getAttribute("label"),
                         originalName: originalName,
                         params: staticParams,
-                        isEntity: entities && entities.find(c => c.name === originalName) !== undefined,
                         outputs: outputs.filter(o => o.visible).map(o => o.value),
                       });
                     }}
@@ -854,7 +843,6 @@ export function EditCellModal(props) {
 
 
 export function ActivityEditor(props) {
-    const [entities, setEntities] = useState([]);
     const [cells, setCells] = useState([]);
     const [configuration, setConfiguration] = useState({});
     const [currentActivity, setCurrentActivity] = useState(null);
@@ -868,7 +856,6 @@ export function ActivityEditor(props) {
     useEffect(() => {
         fetchConfiguration(setConfiguration);
         fetchCells(setCells);
-        fetchEntities((setEntities));
     }, []);
 
     const editorRef = useRef(null);
@@ -903,13 +890,12 @@ export function ActivityEditor(props) {
             {
               configuration: configuration,
               cells: cells,
-              entities: entities,
             }
           );
           e.getDefinition = function(titleNode) { return editor.getDefinition(this, titleNode); }
           setEditor(e);
         })
-    }, [editorRef, toolbarRef, titleRef, currentActivity, newActivity, cells, entities]);
+    }, [editorRef, toolbarRef, titleRef, currentActivity, newActivity, cells]);
 
     useEffect(() => {
         editor && editor.addAction('add_process', () =>
@@ -981,7 +967,6 @@ export function ActivityEditor(props) {
             <NewCellModal
                 show={newCell}
                 cells={cells}
-                entities={entities}
                 activity={editor && editor.getDefinition().activity}
                 onHide={c => {
                   showNewCell(false);
@@ -992,7 +977,7 @@ export function ActivityEditor(props) {
                     if(c.customOutputs) {
                       c_def.outputs = c.def.outputs.concat(c.customOutputs).reduce((u, i) => u.includes(i) ? u : [...u, i], []);
                     }
-                    import("./editor").then(e => e.addNode(editor, c_def, c.name, c.params, c.isEntity));
+                    import("./editor").then(e => e.addNode(editor, c_def, c.name, c.params));
                   }
                 }}
             />
@@ -1007,7 +992,7 @@ export function ActivityEditor(props) {
                     const cDef = cells.find(c => c.original_name === cell.getAttribute("original_name"));
                     if(cDef) {
                         const params = (cell.getAttribute('attrList') || "").split(",").reduce((xa, a) => {xa[a] = cell.getAttribute(a); return xa;}, {});
-                        e.addNode(editor, cDef, newName, params, false);
+                        e.addNode(editor, cDef, newName, params);
                     }
                 })} />
 
@@ -1015,22 +1000,22 @@ export function ActivityEditor(props) {
                 cell={editedCell}
                 show={editedCell !== undefined}
                 cells={cells}
-                entities={entities}
                 activity={editor && editor.getDefinition().activity}
                 onHide={c => {
                   setEditedCell(undefined);
                   if(c === null) return;
 
                   const activity = editor && editor.getDefinition().activity;
-                  if(!c.isEntity) {
-                    activity.definition.cells[c.name]["params"] = c.params;
-                  }
-                  if(c.outputs !== undefined) {
-                    if(!c.isEntity) {
-                      activity.definition.cells[c.name]["outputs"] = c.outputs;
-                    } else {
-                      const i = activity.definition.entities.findIndex(e => e.name === c.name);
+                  if(c.originalName === "entity") {
+                    const i = activity.definition.entities.findIndex(e => e.name === c.name)
+                    activity.definition.entities[i]["params"] = c.params;
+                    if(c.outputs !== undefined) {
                       activity.definition.entities[i]["outputs"] = c.outputs;
+                    }
+                  } else {
+                    activity.definition.cells[c.name]["params"] = c.params;
+                    if(c.outputs !== undefined) {
+                      activity.definition.cells[c.name]["outputs"] = c.outputs;
                     }
                   }
                   import("./editor").then(e => e.updateGraphModel(editor, activity, {clear: true, nofit: true}));
