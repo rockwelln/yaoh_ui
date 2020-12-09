@@ -6,6 +6,10 @@
   color: #000;
 }
 
+.glyphicon-plus-sign-disabled {
+  color: gray !important;
+}
+
 .glyphicon-remove {
   color: #000;
 }
@@ -324,4 +328,8 @@ textarea {
 
 .table-cell {
   word-break: break-word;
+}
+
+.pointer-event-none {
+  pointer-events: none;
 }

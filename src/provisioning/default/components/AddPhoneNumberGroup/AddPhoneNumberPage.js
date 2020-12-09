@@ -11,18 +11,47 @@ import {
   fetchGetAvailableNumbersByTenantID,
   refuseAddPhoneToTenant,
   changeStepOfAddPhoneTenant,
-  fetchGetMobileNumbersForTenant
+  fetchGetMobileNumbersForTenant,
+  fetchGetSelfcareURL
 } from "../../store/actions";
 import Loading from "../../common/Loading";
 
 import SelectAvalibleNumbers from "./SelectAvalibleNumbers";
 import Steps from "../AddPhoneNumberTenant/Steps";
+import { get } from "../get";
 
 export class AddPhoneNumberPage extends Component {
-  state = { isLoadNewPhones: null, isLoading: true };
+  state = { isLoadNewPhones: null, isLoading: true, isLoadingSCURL: true };
 
   componentDidMount() {
+    const pathNameArr = this.props.location.pathname.split("/");
     this.props.changeStepOfAddPhoneTenant("Basic");
+    this.props.fetchGetSelfcareURL().then(() => {
+      this.setState({ isLoadingSCURL: false });
+      if (
+        get(this.props, "selfcareUrl.modules.nims") &&
+        this.props.selfcareUrl.modules.nims
+      ) {
+        this.setState(
+          {
+            isLoadNewPhones: "not load"
+          },
+          () => {
+            pathNameArr[pathNameArr.length - 1] === "add-mobile-phone"
+              ? this.props
+                  .fetchGetMobileNumbersForTenant(
+                    this.props.match.params.tenantId
+                  )
+                  .then(() => this.setState({ isLoading: false }))
+              : this.props
+                  .fetchGetAvailableNumbersByTenantID(
+                    this.props.match.params.tenantId
+                  )
+                  .then(() => this.setState({ isLoading: false }));
+          }
+        );
+      }
+    });
   }
 
   componentDidUpdate(prevProps) {
@@ -48,8 +77,13 @@ export class AddPhoneNumberPage extends Component {
             .then(() => this.setState({ isLoading: false }));
     });
   };
+
   render() {
     const pathNameArr = this.props.location.pathname.split("/");
+
+    if (this.state.isLoadingSCURL) {
+      return <Loading />;
+    }
 
     return (
       <React.Fragment>
@@ -102,7 +136,10 @@ export class AddPhoneNumberPage extends Component {
                     })
                   }
                   disabled={
-                    pathNameArr[pathNameArr.length - 1] === "add-mobile-phone"
+                    pathNameArr[pathNameArr.length - 1] ===
+                      "add-mobile-phone" ||
+                    (get(this.props, "selfcareUrl.modules.nims") &&
+                      this.props.selfcareUrl.modules.nims)
                   }
                 >
                   <div>
@@ -154,14 +191,16 @@ export class AddPhoneNumberPage extends Component {
 
 const mapStateToProps = state => ({
   availableNumbersTenant: state.availableNumbersTenant,
-  availableMobileNumbers: state.availableMobileNumbers
+  availableMobileNumbers: state.availableMobileNumbers,
+  selfcareUrl: state.selfcareUrl
 });
 
 const mapDispatchToProps = {
   fetchGetAvailableNumbersByTenantID,
   refuseAddPhoneToTenant,
   changeStepOfAddPhoneTenant,
-  fetchGetMobileNumbersForTenant
+  fetchGetMobileNumbersForTenant,
+  fetchGetSelfcareURL
 };
 
 export default withRouter(

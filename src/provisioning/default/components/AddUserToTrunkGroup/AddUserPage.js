@@ -13,6 +13,7 @@ import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import Creatable from "react-select/creatable";
 
 import Select from "react-select";
+import { get } from "../get";
 
 import {
   fetchGetCategoryByName,
@@ -20,7 +21,8 @@ import {
   fetchGetGroupById,
   fetchGetAvailableNumbersByGroupId,
   fetchGetLanguages,
-  fetchPostAssignPhoneNumbersToGroup
+  fetchPostAssignPhoneNumbersToGroup,
+  fetchGetSelfcareURL
 } from "../../store/actions";
 import { removeEmpty } from "../remuveEmptyInObject";
 
@@ -36,7 +38,8 @@ export class AddUserPage extends Component {
     phoneNumber: { value: "New number", label: "New number" },
     newPhoneNumber: "",
     minPhoneNumber: "",
-    maxPhoneNumber: ""
+    maxPhoneNumber: "",
+    isLoadingSCURL: true
   };
 
   componentDidMount = () => {
@@ -56,6 +59,9 @@ export class AddUserPage extends Component {
     this.props
       .fetchGetCategoryByName("trunk_user")
       .then(() => this.setState({ isLoadingTemplates: false }));
+    this.props.fetchGetSelfcareURL().then(() => {
+      this.setState({ isLoadingSCURL: false });
+    });
   };
   render() {
     const {
@@ -64,10 +70,16 @@ export class AddUserPage extends Component {
       templateName,
       buttonName,
       isLoadingLanguages,
-      isLoadingNumbers
+      isLoadingNumbers,
+      isLoadingSCURL
     } = this.state;
 
-    if (isLoadingGroup || isLoadingTemplates || isLoadingLanguages) {
+    if (
+      isLoadingGroup ||
+      isLoadingTemplates ||
+      isLoadingLanguages ||
+      isLoadingSCURL
+    ) {
       return <Loading />;
     }
 
@@ -137,18 +149,34 @@ export class AddUserPage extends Component {
                         Range start{"\u002a"}
                       </Col>
                       <Col md={9}>
-                        <Creatable
-                          isClearable
-                          options={this.props.availableNumbers.map(number => ({
-                            value: number,
-                            label: number
-                          }))}
-                          onChange={newValue => {
-                            this.setState({ minPhoneNumber: newValue.value });
-                          }}
-                          // onInputChange={this.handleInputChange}
-                          // options={colourOptions}
-                        />
+                        {get(this.props, "selfcareUrl.modules.nims") &&
+                        this.props.selfcareUrl.modules.nims ? (
+                          <Select
+                            isClearable
+                            options={this.props.availableNumbers.map(
+                              number => ({
+                                value: number,
+                                label: number
+                              })
+                            )}
+                            onChange={newValue => {
+                              this.setState({ minPhoneNumber: newValue.value });
+                            }}
+                          />
+                        ) : (
+                          <Creatable
+                            isClearable
+                            options={this.props.availableNumbers.map(
+                              number => ({
+                                value: number,
+                                label: number
+                              })
+                            )}
+                            onChange={newValue => {
+                              this.setState({ minPhoneNumber: newValue.value });
+                            }}
+                          />
+                        )}
                         {/* <FormControl
                           type="number"
                           placeholder="Start"
@@ -168,19 +196,34 @@ export class AddUserPage extends Component {
                         Range end{"\u002a"}
                       </Col>
                       <Col md={9}>
-                        <Creatable
-                          isClearable
-                          options={this.props.availableNumbers.map(number => ({
-                            value: number,
-                            label: number
-                          }))}
-                          onChange={newValue => {
-                            this.setState({ maxPhoneNumber: newValue.value });
-                          }}
-                          // onChange={this.handleChange}
-                          // onInputChange={this.handleInputChange}
-                          // options={colourOptions}
-                        />
+                        {get(this.props, "selfcareUrl.modules.nims") &&
+                        this.props.selfcareUrl.modules.nims ? (
+                          <Select
+                            isClearable
+                            options={this.props.availableNumbers.map(
+                              number => ({
+                                value: number,
+                                label: number
+                              })
+                            )}
+                            onChange={newValue => {
+                              this.setState({ maxPhoneNumber: newValue.value });
+                            }}
+                          />
+                        ) : (
+                          <Creatable
+                            isClearable
+                            options={this.props.availableNumbers.map(
+                              number => ({
+                                value: number,
+                                label: number
+                              })
+                            )}
+                            onChange={newValue => {
+                              this.setState({ maxPhoneNumber: newValue.value });
+                            }}
+                          />
+                        )}
                         {/* <FormControl
                           type="number"
                           placeholder="End"
@@ -324,7 +367,8 @@ const mapStateToProps = state => ({
   group: state.group,
   createdUserInGroup: state.createdUserInGroup,
   availableNumbers: state.availableNumbers,
-  languages: state.languages
+  languages: state.languages,
+  selfcareUrl: state.selfcareUrl
 });
 
 const mapDispatchToProps = {
@@ -333,7 +377,8 @@ const mapDispatchToProps = {
   fetchGetGroupById,
   fetchGetAvailableNumbersByGroupId,
   fetchGetLanguages,
-  fetchPostAssignPhoneNumbersToGroup
+  fetchPostAssignPhoneNumbersToGroup,
+  fetchGetSelfcareURL
 };
 
 export default withRouter(
