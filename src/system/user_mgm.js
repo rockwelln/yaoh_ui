@@ -117,10 +117,30 @@ function deassignRole(userId, roleId, onSuccess) {
         .catch(error => NotificationsManager.error(<FormattedMessage id="deassignation-failed" defaultMessage="De-assignation failed" />, error.message))
 }
 
+
+export function fetchLocalUser(onSuccess, onError) {
+    fetch_get('/api/v01/system/users/local')
+      .then(r => onSuccess && onSuccess(r))
+      .catch(error => onError && onError(error.message))
+}
+
+
+function refreshLocalUserApiToken(onSuccess) {
+    fetch_put(`/api/v01/system/users/local`, {token: true})
+      .then(() => {
+        NotificationsManager.success(<FormattedMessage id="user-updated" defaultMessage="User updated" />);
+        onSuccess && onSuccess();
+    })
+    .catch(error =>
+        NotificationsManager.error(<FormattedMessage id="update-failed" defaultMessage="Update failed" />, error.message)
+    )
+}
+
 // React components
 
-export function LocalUserProfile(props) {
-    const {user_info} = props;
+export function LocalUserProfile({onUserInfoChanged}) {
+    const [userInfo, setUserInfo] = useState({});
+    const user_info = userInfo;
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [profileName, setProfileName] = useState('');
@@ -142,10 +162,10 @@ export function LocalUserProfile(props) {
             .then(data => setProfileName(data.profiles.find(p => p.id === user_info.profile_id).name))
             .catch(console.error)
     }, [user_info.profile_id]);
+    useEffect(() => { fetchLocalUser(setUserInfo) }, [])
     const validPassword = (newPassword === '')?null:(newPassword.length >= 7)?"success":"error";
     const validRepPassword = (newPassword === '')?null:(confirmPassword === newPassword)?"success":"error";
     const validForm = validPassword !== 'error' && validRepPassword !== 'error' && Object.keys(delta).length !== 0;
-
     return (
         <Panel>
             <Panel.Heading>
@@ -197,7 +217,7 @@ export function LocalUserProfile(props) {
                                     onChange={(e) => setTimezone(e.target.value)}>
                                     <option value="">* local *</option>
                                     {
-                                        ["+01:00", "+02:00", "+03:00"].map(t => <option value={t}>{t}</option>)
+                                        ["+01:00", "+02:00", "+03:00"].map(t => <option value={t} key={t}>{t}</option>)
                                     }
                                 </FormControl>
                             </Col>
@@ -286,12 +306,24 @@ export function LocalUserProfile(props) {
                                     onChange={(e) => setConfirmPassword(e.target.value)} />
                             </Col>
                         </FormGroup>
-                        <StaticControl
-                            label={<FormattedMessage id='token' defaultMessage='Token' />}
-                            value={user_info.token} />
+                        <FormGroup validationState={validRepPassword}>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id='token' defaultMessage='Token' />
+                            </Col>
+
+                            <Col sm={9}>
+                                <FormControl.Static>
+                                    {user_info.token}
+                                    {" "}
+                                    <Button onClick={() => refreshLocalUserApiToken(() => fetchLocalUser(setUserInfo))}>
+                                        <Glyphicon glyph={"refresh"}/>
+                                    </Button>
+                                </FormControl.Static>
+                            </Col>
+                        </FormGroup>
                         <FormGroup>
                             <Col smOffset={2} sm={9}>
-                                <Button bsStyle="primary" onClick={() => updateLocalUser(delta, props.onUserInfoChanged)} disabled={!validForm}>
+                                <Button bsStyle="primary" onClick={() => updateLocalUser(delta, onUserInfoChanged)} disabled={!validForm}>
                                     <FormattedMessage id="save" defaultMessage="Save" />
                                 </Button>
                             </Col>
@@ -299,14 +331,14 @@ export function LocalUserProfile(props) {
                     </Form>
                 </Tab>
                 <Tab eventKey={2} title={<FormattedMessage id="callbacks" defaultMessage="Callbacks" />}>
-                     <CallbackHandler userId={user_info.id} />
+                    { user_info.id && <CallbackHandler userId={user_info.id} /> }
                 </Tab>
                 <Tab eventKey={"trusted-locs"} title={<FormattedMessage id="trusted-loc" defaultMessage="Trusted Loc." />}>
                      <TrustedLocationsTable
                        userId={user_info.id}
                        locations={user_info.trusted_locs}
                        userInfo={user_info}
-                       onChange={props.onUserInfoChanged} />
+                       onChange={onUserInfoChanged} />
                 </Tab>
             </Tabs>
             </Panel.Body>
@@ -356,7 +388,16 @@ function UpdateUser(props) {
     const validPassword = (diffUser.newPassword === '' || diffUser.newPassword === undefined) ? null : (diffUser.newPassword.length >= 7) ? "success" : "error";
     const validRepPassword = (diffUser.newPassword === '' || diffUser.newPassword === undefined) ? null : (diffUser.confirmPassword === diffUser.newPassword) ? "success" : "error";
 
-    const validForm = validUsername !== 'error' && validEmail !== 'error' && validPassword !== 'error' && validRepPassword !== 'error' && Object.keys(delta).length !== 0;
+    const validForm = (
+      validUsername !== 'error' &&
+      validEmail !== 'error' &&
+      validPassword !== 'error' &&
+      validRepPassword !== 'error' &&
+      Object.keys(delta).length !== 0 &&
+      (
+        !fullUser.entity || localUser.entity
+      )
+    );
 
     return (
         <Modal show={show} onHide={onClose} backdrop={false} bsSize="large">
@@ -582,6 +623,41 @@ function UpdateUser(props) {
                                     onChange={e => setDiffUser(update(diffUser, {$merge: {token_expiry: e.target.checked}}))}/>
                             </Col>
                         </FormGroup>
+                        { fullUser.entity &&
+                            <FormGroup validationState={localUser.entity?null:"error"}>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="entity" defaultMessage="Entity"/>
+                                </Col>
+
+                                <Col sm={9}>
+                                    <FormControl
+                                      componentClass="input"
+                                      name="entity"
+                                      value={localUser.entity || ''}
+                                      onChange={e => setDiffUser(update(diffUser, {$merge: {entity: e.target.value || null}}))}/>
+                                    <Alert bsStyle={"warning"}>
+                                        Entity indicates the user is representing an external system. (M2M user)
+                                        If the user interact with workflows as "entity", the value must match the entity name in the workflow.
+                                        This field is only set at user creation time and a regular user cannot be turned into a M2M user afterwards.
+                                    </Alert>
+                                </Col>
+                            </FormGroup>
+                        }
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="token" defaultMessage="Token" />
+                            </Col>
+
+                            <Col sm={9}>
+                                <FormControl.Static>
+                                    {localUser.token}
+                                    {" "}
+                                    <Button onClick={() => updateUser(user.id, {token: true}, () => loadFullUser(user.id))}>
+                                        <Glyphicon glyph={"refresh"}/>
+                                    </Button>
+                                </FormControl.Static>
+                            </Col>
+                        </FormGroup>
                         <FormGroup validationState={"error"}>
                             <Col componentClass={ControlLabel} sm={2}>
                                 <FormattedMessage id="danger-zone" defaultMessage="Dangerous zone" />
@@ -670,6 +746,7 @@ function NewUser(props) {
         groups: [],
         password: '',
         token_expiry: true,
+        entity: null,
         properties: {},
     });
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -898,6 +975,24 @@ function NewUser(props) {
                                 checked={user.token_expiry || false}
                                 readOnly={!props.user_info.is_system} // only "system" user may change it.
                                 onChange={e => setUser(update(user, {$merge: {token_expiry: e.target.checked}}))}/>
+                        </Col>
+                    </FormGroup>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="entity" defaultMessage="Entity" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="input"
+                                name="entity"
+                                value={user.entity || ""}
+                                onChange={e => setUser(update(user, {$merge: {entity: e.target.value || null}}))}/>
+                            <Alert bsStyle={"warning"}>
+                                Entity indicates the user is representing an external system. (M2M user)
+                                If the user interact with workflows as "entity", the value must match the entity name in the workflow.
+                                This field is only set at user creation time and a regular user cannot be turned into a M2M user afterwards.
+                            </Alert>
                         </Col>
                     </FormGroup>
                 </Form>
