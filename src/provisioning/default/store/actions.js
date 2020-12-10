@@ -9,6 +9,7 @@ import {
 import * as actionType from "./constants";
 import { FormattedMessage } from "react-intl";
 import React from "react";
+import { get } from "../components/get";
 
 export const getTenants = data => ({
   type: actionType.GET_TENANTS,
@@ -1736,6 +1737,11 @@ export function fetchGetTenantEntitlements(tenantId) {
     )
       .then(data => dispatch(getTenantEntitlements(data)))
       .catch(error => {
+        console.log(error.response);
+        if (error.response.status === 404) {
+          dispatch(getTenantEntitlements({ entitlements: [] }));
+          return;
+        }
         dispatch(getTenantEntitlements({ entitlements: [] }));
         NotificationsManager.error(
           <FormattedMessage
