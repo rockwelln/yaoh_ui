@@ -611,18 +611,6 @@ function UpdateUser(props) {
                                     onChange={e => setDiffUser(update(diffUser, {$merge: {confirmPassword: e.target.value}}))}/>
                             </Col>
                         </FormGroup>
-                        <FormGroup>
-                            <Col componentClass={ControlLabel} sm={2}>
-                                <FormattedMessage id="token-expiry" defaultMessage="Token expiry" />
-                            </Col>
-
-                            <Col sm={9}>
-                                <Checkbox
-                                    checked={localUser.token_expiry || false}
-                                    readOnly={!props.user_info.is_system} // only "system" user may change it.
-                                    onChange={e => setDiffUser(update(diffUser, {$merge: {token_expiry: e.target.checked}}))}/>
-                            </Col>
-                        </FormGroup>
                         { fullUser.entity &&
                             <FormGroup validationState={localUser.entity?null:"error"}>
                                 <Col componentClass={ControlLabel} sm={2}>
@@ -745,7 +733,6 @@ function NewUser(props) {
         timezone: null,
         groups: [],
         password: '',
-        token_expiry: true,
         entity: null,
         properties: {},
     });
@@ -963,18 +950,6 @@ function NewUser(props) {
                                 name="confirm-new-password"
                                 value={confirmPassword}
                                 onChange={e => setConfirmPassword(e.target.value)}/>
-                        </Col>
-                    </FormGroup>
-                    <FormGroup>
-                        <Col componentClass={ControlLabel} sm={2}>
-                            <FormattedMessage id="token-expiry" defaultMessage="Token expiry" />
-                        </Col>
-
-                        <Col sm={9}>
-                            <Checkbox
-                                checked={user.token_expiry || false}
-                                readOnly={!props.user_info.is_system} // only "system" user may change it.
-                                onChange={e => setUser(update(user, {$merge: {token_expiry: e.target.checked}}))}/>
                         </Col>
                     </FormGroup>
                     <FormGroup>
