@@ -618,6 +618,10 @@ function fetchBackendHealth(onSuccess) {
       .catch(console.log);
 }
 
+function logoutUser() {
+    return fetch_get(`/api/v01/auth/logout?sign=${AuthServiceManager.getLogoutSignature()}`)
+}
+
 class App extends Component {
     constructor(props) {
         super(props);
@@ -832,7 +836,7 @@ class App extends Component {
                     <AsyncApioNavBar
                         user_info={user_info}
                         database_status={database_status}
-                        logoutUser={this.logout}
+                        logoutUser={() => logoutUser().catch(console.error).then(this.logout)}
                         auth_token={auth_token}/>
                 </div>
 

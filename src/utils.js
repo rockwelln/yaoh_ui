@@ -1,4 +1,5 @@
 import { Base64 } from 'js-base64';
+import crypto from "crypto";
 
 const BASE_LOC = process.env.REACT_APP_BASE_URL ? new URL(process.env.REACT_APP_BASE_URL): window.location;
 export const API_WS_URL = (BASE_LOC.protocol === 'https:'?'wss':'ws') + '://' + BASE_LOC.host;
@@ -110,6 +111,12 @@ class AuthService {
 
     getToken() {
         return localStorage.getItem("auth_token");
+    }
+
+    getLogoutSignature() {
+        const refreshToken = localStorage.getItem("refreshToken");
+        if(!refreshToken) return null;
+        return "sha1:" + crypto.createHash("sha1").update(refreshToken).digest("hex")
     }
 
     logout() {
