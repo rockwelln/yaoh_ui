@@ -83,7 +83,10 @@ export class Licenses extends Component {
           });
       }
     );
-    if (get(this.props, "selfcareUrl.modules.nims")) {
+    if (
+      get(this.props, "selfcareUrl.modules.nims") &&
+      this.props.selfcareUrl.modules.nims
+    ) {
       this.props
         .fetchGetTenantEntitlements(this.props.match.params.tenantId)
         .then(this.setState({ isLoadingEntitlements: false }));
@@ -415,7 +418,7 @@ export class Licenses extends Component {
                   ) : (
                     <FormattedMessage
                       id="entitlements_not_assigned"
-                      defaultMessage="Entitlements is not assigned yet"
+                      defaultMessage="No entitlements assigned for this tenant"
                     />
                   )}
                 </Panel.Body>

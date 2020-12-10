@@ -125,10 +125,15 @@ export class PhoneNumbersTab extends Component {
             <OverlayTrigger
               placement="top"
               overlay={
-                <Tooltip id="tooltip">
-                  To select numbers from the inventory and assign to this
-                  tenant, please use the selfcare portal
-                </Tooltip>
+                get(this.props, "selfcareUrl.modules.nims") &&
+                this.props.selfcareUrl.modules.nims ? (
+                  <Tooltip id="tooltip">
+                    To select numbers from the inventory and assign to this
+                    tenant, please use the selfcare portal
+                  </Tooltip>
+                ) : (
+                  <div />
+                )
               }
             >
               <Link
