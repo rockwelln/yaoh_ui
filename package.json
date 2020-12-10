@@ -7,6 +7,7 @@
     "@fortawesome/free-brands-svg-icons": "^5.15.1",
     "@fortawesome/free-solid-svg-icons": "^5.15.1",
     "@fortawesome/react-fontawesome": "^0.1.12",
+    "@webscopeio/react-textarea-autocomplete": "^4.7.2",
     "ajv": "latest",
     "chart.js": "^2.9.4",
     "color-hash": "^1.0.3",
