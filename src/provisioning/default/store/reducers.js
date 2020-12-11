@@ -140,7 +140,8 @@ const initialState = {
   groupSuspensionStatus: "",
   tenantPasswordRules: {},
   tenantEntitlements: [],
-  entitlementTypes: { customer_licenses: [] }
+  entitlementTypes: { customer_licenses: [] },
+  availableNumbersGroup: []
 };
 
 function mainReducer(state = initialState, action) {
@@ -241,10 +242,21 @@ function mainReducer(state = initialState, action) {
           });
         }
       });
+      const availablePhoneNumbers = action.data.assigned_numbers
+        .filter(el => !el.userId)
+        .map(phone => ({
+          ...phone,
+          rangeStart:
+            (phone.phoneNumber && phone.phoneNumber.split(" - ")[0]) || "",
+          rangeEnd:
+            (phone.phoneNumber && phone.phoneNumber.split(" - ")[1]) || "",
+          phoneChecked: false
+        }));
       return {
         ...state,
         phoneNumbersByGroup: phoneNumbers,
-        fullListGroupNumber
+        fullListGroupNumber,
+        availableNumbersGroup: availablePhoneNumbers
       };
     }
     case actionType.GET_LICENSES_BY_GROUP_ID: {

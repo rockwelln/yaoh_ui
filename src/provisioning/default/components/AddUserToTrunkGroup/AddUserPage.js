@@ -59,9 +59,6 @@ export class AddUserPage extends Component {
     this.props
       .fetchGetCategoryByName("trunk_user")
       .then(() => this.setState({ isLoadingTemplates: false }));
-    this.props.fetchGetSelfcareURL().then(() => {
-      this.setState({ isLoadingSCURL: false });
-    });
   };
   render() {
     const {
@@ -69,27 +66,15 @@ export class AddUserPage extends Component {
       isLoadingTemplates,
       templateName,
       buttonName,
-      isLoadingLanguages,
-      isLoadingNumbers,
-      isLoadingSCURL
+      isLoadingLanguages
     } = this.state;
 
-    if (
-      isLoadingGroup ||
-      isLoadingTemplates ||
-      isLoadingLanguages ||
-      isLoadingSCURL
-    ) {
+    if (isLoadingGroup || isLoadingTemplates || isLoadingLanguages) {
       return <Loading />;
     }
 
     return (
       <React.Fragment>
-        <div className={"panel-heading"}>
-          <div
-            className={"header"}
-          >{`Add a new user to ${this.props.match.params.groupId}`}</div>
-        </div>
         <div className={"panel-body"}>
           <Row>
             <Col md={8}>
@@ -149,7 +134,7 @@ export class AddUserPage extends Component {
                         Range start{"\u002a"}
                       </Col>
                       <Col md={9}>
-                        {get(this.props, "selfcareUrl.modules.nims") &&
+                        {/* {get(this.props, "selfcareUrl.modules.nims") &&
                         this.props.selfcareUrl.modules.nims ? (
                           <Select
                             isClearable
@@ -176,15 +161,15 @@ export class AddUserPage extends Component {
                               this.setState({ minPhoneNumber: newValue.value });
                             }}
                           />
-                        )}
-                        {/* <FormControl
+                        )} */}
+                        <FormControl
                           type="number"
                           placeholder="Start"
                           value={this.state.minPhoneNumber}
                           onChange={e =>
                             this.setState({ minPhoneNumber: e.target.value })
                           }
-                        /> */}
+                        />
                       </Col>
                     </FormGroup>
                     <FormGroup controlId="maxNumber">
@@ -196,7 +181,7 @@ export class AddUserPage extends Component {
                         Range end{"\u002a"}
                       </Col>
                       <Col md={9}>
-                        {get(this.props, "selfcareUrl.modules.nims") &&
+                        {/* {get(this.props, "selfcareUrl.modules.nims") &&
                         this.props.selfcareUrl.modules.nims ? (
                           <Select
                             isClearable
@@ -223,19 +208,19 @@ export class AddUserPage extends Component {
                               this.setState({ maxPhoneNumber: newValue.value });
                             }}
                           />
-                        )}
-                        {/* <FormControl
+                        )} */}
+                        <FormControl
                           type="number"
                           placeholder="End"
                           value={this.state.maxPhoneNumber}
                           onChange={e =>
                             this.setState({ maxPhoneNumber: e.target.value })
                           }
-                        /> */}
+                        />
                       </Col>
                     </FormGroup>
                   </React.Fragment>
-                  <FormGroup controlId="template">
+                  {/* <FormGroup controlId="template">
                     <Col
                       componentClass={ControlLabel}
                       md={3}
@@ -256,7 +241,7 @@ export class AddUserPage extends Component {
                         ]}
                       />
                     </Col>
-                  </FormGroup>
+                  </FormGroup> */}
                 </FormGroup>
                 <Row>
                   <Col md={12} className={"padding-0"}>
@@ -266,13 +251,7 @@ export class AddUserPage extends Component {
                           onClick={this.addUser}
                           type="submit"
                           className="btn-primary"
-                          disabled={
-                            buttonName === "Creating..."
-                            // ||
-                            // !this.state.phoneNumber.value ||
-                            // (this.state.phoneNumber.value === "New number" &&
-                            //   !this.state.newPhoneNumber)
-                          }
+                          disabled={buttonName === "Creating..."}
                         >
                           <Glyphicon glyph="glyphicon glyphicon-ok" />{" "}
                           {buttonName}
@@ -320,18 +299,10 @@ export class AddUserPage extends Component {
 
   addUser = e => {
     e.preventDefault();
-    const {
-      templateName,
-      phoneNumber,
-      minPhoneNumber,
-      maxPhoneNumber
-    } = this.state;
+    const { templateName, minPhoneNumber, maxPhoneNumber } = this.state;
 
     const data = {
-      auto_create:
-        phoneNumber.value === "New number" || phoneNumber.value === "Range"
-          ? true
-          : "",
+      auto_create: true,
       range: {
         minPhoneNumber,
         maxPhoneNumber: maxPhoneNumber ? maxPhoneNumber : minPhoneNumber
