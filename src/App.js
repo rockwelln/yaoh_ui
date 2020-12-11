@@ -644,7 +644,6 @@ class App extends Component {
         fetch_get('/api/v01/system/users/local')
             .then(data => {
                 this.setState({user_info: data});
-                this.props.onLanguageUpdate(data.language);
                 localStorage.setItem("userProfile", data.ui_profile);
 
                 if(data.modules && supportedModule(modules.provisioning, data.modules)) {
@@ -658,6 +657,7 @@ class App extends Component {
                 if(error.response !== undefined && error.response.status === 401) {  // unauthorized
                     this.logout()
                 } else {
+                    console.error("fetch user profile error", error)
                     this.setState({error_msg: <FormattedMessage id="app.no_connection" defaultMessage="Connection issue: Refresh the page or contact the site admin." /> })
                 }
             })
@@ -710,8 +710,7 @@ class App extends Component {
         AuthServiceManager.logout();
         localStorage.removeItem("userProfile");
         removeCookie("auth_sso");
-        removeCookie("user_language");
-        sso_auth_service.removeUser().then(() => this.props.onLanguageUpdate(undefined));
+        sso_auth_service.removeUser(); // .then(() => this.props.onLanguageUpdate(undefined));
     }
 
     ssoTokenToLocalToken(user) {

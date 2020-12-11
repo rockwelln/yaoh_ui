@@ -45,25 +45,13 @@ class AppWithIntl extends Component {
         return locale
     }
 
-    changeLanguage(locale) {
-        if(locale !== this.state.locale) {
-            this.setState({locale: locale});
-            if(locale === undefined) {
-                removeCookie('user_language')
-            } else {
-                createCookie('user_language', locale, null, '/');
-                window.location.reload();
-            }
-        }
-    }
-
     render() {
         let locale = this._getLocale();
         let messages = getMessages(locale);
 
         return (
             <IntlProvider locale={locale} key={locale} messages={messages}>
-                <App onLanguageUpdate={this.changeLanguage}/>
+                <App />
                 <AutoReload
                     url="/index.html" tryDelay={10 * 60 * 1000}
                 />
