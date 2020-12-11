@@ -47,7 +47,8 @@ export class AddUserPage extends Component {
     buttonName: "Create",
     isLoadingGroup: true,
     phoneNumber: "",
-    isLoadingLanguages: true
+    isLoadingLanguages: true,
+    overrideId: false
   };
 
   componentDidMount = () => {
@@ -115,40 +116,56 @@ export class AddUserPage extends Component {
             <Col md={8}>
               <Form horizontal className={"margin-1"}>
                 <FormGroup controlId="addUser">
-                  <FormGroup
-                    controlId="new-userId"
-                    validationState={userIdError}
-                  >
-                    <Col
-                      componentClass={ControlLabel}
-                      md={3}
-                      className={"text-left"}
-                    >
-                      User ID{"\u002a"}
-                    </Col>
-                    <Col md={9}>
-                      <InputGroup>
-                        <FormControl
-                          type="text"
-                          placeholder="User ID"
-                          autoComplete="new-userId"
-                          defaultValue={userId}
-                          onChange={e =>
-                            this.setState({
-                              userId: e.target.value,
-                              userIdError: null
-                            })
-                          }
-                        />
-                        <InputGroup.Addon>{`@${this.props.group.defaultDomain}`}</InputGroup.Addon>
-                      </InputGroup>
-                      {userIdError && (
-                        <HelpBlock>
-                          Field is required and min length 6 characters
-                        </HelpBlock>
-                      )}
+                  <FormGroup controlId="overrideId">
+                    <Col md={12}>
+                      <Checkbox
+                        checked={this.state.overrideId}
+                        onChange={e =>
+                          this.setState({
+                            overrideId: e.target.checked
+                          })
+                        }
+                      >
+                        Overwrite default user ID
+                      </Checkbox>
                     </Col>
                   </FormGroup>
+                  {this.state.overrideId ? (
+                    <FormGroup
+                      controlId="new-userId"
+                      validationState={userIdError}
+                    >
+                      <Col
+                        componentClass={ControlLabel}
+                        md={3}
+                        className={"text-left"}
+                      >
+                        User ID{"\u002a"}
+                      </Col>
+                      <Col md={9}>
+                        <InputGroup>
+                          <FormControl
+                            type="text"
+                            placeholder="User ID"
+                            autoComplete="new-userId"
+                            defaultValue={userId}
+                            onChange={e =>
+                              this.setState({
+                                userId: e.target.value,
+                                userIdError: null
+                              })
+                            }
+                          />
+                          <InputGroup.Addon>{`@${this.props.group.defaultDomain}`}</InputGroup.Addon>
+                        </InputGroup>
+                        {userIdError && (
+                          <HelpBlock>
+                            Field is required and min length 6 characters
+                          </HelpBlock>
+                        )}
+                      </Col>
+                    </FormGroup>
+                  ) : null}
                   <FormGroup
                     controlId="userEmail"
                     validationState={emailIsValid}
@@ -455,7 +472,8 @@ export class AddUserPage extends Component {
       templateName,
       userId,
       password,
-      language
+      language,
+      overrideId
       //phoneNumber
     } = this.state;
 
@@ -465,7 +483,7 @@ export class AddUserPage extends Component {
         return;
       }
     }
-    if (!userId || userId.length < 6) {
+    if (overrideId && (!userId || userId.length < 6)) {
       this.setState({ userIdError: "error" });
       return;
     }
@@ -483,7 +501,9 @@ export class AddUserPage extends Component {
     }
 
     const data = {
-      userId: `${userId}@${this.props.group.defaultDomain}`,
+      userId: `${
+        overrideId ? `${userId}@${this.props.group.defaultDomain}` : ""
+      }`,
       emailAddress,
       firstName,
       lastName,
