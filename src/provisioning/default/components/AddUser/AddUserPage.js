@@ -409,7 +409,7 @@ export class AddUserPage extends Component {
                             key={`${template.name}`}
                             value={template.name}
                           >
-                            {template.name}
+                            {`${template.name} ${template.description}`}
                           </option>
                         ))}
                       </FormControl>
