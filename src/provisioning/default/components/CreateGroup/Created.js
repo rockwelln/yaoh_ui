@@ -42,7 +42,7 @@ export class Created extends Component {
               </div>
               <div className="pull-right link-button">
                 <Link
-                  to={`/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}`}
+                  to={`/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}/groups/${this.props.createdGroup.groupId}`}
                 >
                   <div onClick={() => this.props.refuseCreateGroup()}>
                     Quit wizard
