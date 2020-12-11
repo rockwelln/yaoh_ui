@@ -186,7 +186,7 @@ export class Admin extends Component {
               }
             >
               <Col componentClass={ControlLabel} md={2} className={"text-left"}>
-                Password{"\u002a"}
+                Password
               </Col>
               <Col md={10}>
                 <FormControl
@@ -220,7 +220,7 @@ export class Admin extends Component {
               validationState={this.state.passwordNotMatch}
             >
               <Col componentClass={ControlLabel} md={2} className={"text-left"}>
-                Password confirmation{"\u002a"}
+                Password confirmation
               </Col>
               <Col md={10}>
                 <FormControl
@@ -290,11 +290,14 @@ export class Admin extends Component {
       this.setState({ requiredEmail: "error" });
       return;
     }
-    if (createAdminData.password.length < 6) {
-      this.setState({ passwordLenthError: "error" });
-      return;
-    }
-    if (createAdminData.password !== passwordConfirmation) {
+    // if (createAdminData.password.length < 6) {
+    //   this.setState({ passwordLenthError: "error" });
+    //   return;
+    // }
+    if (
+      (createAdminData.password || passwordConfirmation) &&
+      createAdminData.password !== passwordConfirmation
+    ) {
       this.setState({ passwordNotMatch: "error" });
       return;
     }
