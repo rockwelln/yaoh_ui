@@ -282,7 +282,11 @@ export class Admin extends Component {
 
   createAdmin = () => {
     const { createAdminData, passwordConfirmation } = this.state;
-    if (createAdminData.userId < 6 || createAdminData.userId > 80) {
+
+    if (
+      createAdminData.userId.length < 6 ||
+      createAdminData.userId.length > 80
+    ) {
       this.setState({ userIdError: "error" });
       return;
     }
