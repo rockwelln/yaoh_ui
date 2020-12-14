@@ -6,7 +6,6 @@ import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import FormControl from "react-bootstrap/lib/FormControl";
 import Col from "react-bootstrap/lib/Col";
 import Button from "react-bootstrap/lib/Button";
-import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 import { Form } from "react-bootstrap";
 
@@ -188,38 +187,42 @@ class Details extends Component {
                 </FormGroup>
               </React.Fragment>
             )}
-            <FormGroup controlId="useTenantLanguages">
-              <Col mdOffset={3} md={9}>
-                <Checkbox
-                  defaultChecked={
-                    get(this.props, "tenant.sync.status")
-                      ? this.props.tenant.sync.status === "SYNCED" ||
-                        this.props.tenant.sync.status === "MUST_BE_SYNCED"
-                      : false
-                  }
-                  onChange={e => {
-                    if (e.target.checked) {
-                      this.setState({ syncStatus: "MUST_BE_SYNCED" });
-                    } else {
-                      this.setState({ syncStatus: "MUST_BE_SKIPPED" });
-                    }
-                  }}
-                >
-                  Include the Tenant in next Synchronization cycle (Groups and
-                  Users)
-                </Checkbox>
-              </Col>
-            </FormGroup>
-            <FormGroup controlId="useTenantLanguages">
-              <Col mdOffset={1}>
-                <div>{`Last synchronization performed for this Tenant: ${
-                  get(this.props, "tenant.sync.timeStamp")
-                    ? this.props.tenant.sync.timeStamp
-                    : ""
-                } `}</div>
-              </Col>
-            </FormGroup>
-            <FormGroup controlId="tentantName">
+            {this.state.tenant.sync && (
+              <React.Fragment>
+                <FormGroup>
+                  <Col mdOffset={3} md={9}>
+                    <Checkbox
+                      defaultChecked={
+                        get(this.props, "tenant.sync.status")
+                          ? this.props.tenant.sync.status === "SYNCED" ||
+                            this.props.tenant.sync.status === "MUST_BE_SYNCED"
+                          : false
+                      }
+                      onChange={e => {
+                        if (e.target.checked) {
+                          this.setState({ syncStatus: "MUST_BE_SYNCED" });
+                        } else {
+                          this.setState({ syncStatus: "MUST_BE_SKIPPED" });
+                        }
+                      }}
+                    >
+                      Include the Tenant in next Synchronization cycle (Groups
+                      and Users)
+                    </Checkbox>
+                  </Col>
+                </FormGroup>
+                <FormGroup>
+                  <Col mdOffset={1}>
+                    <div>{`Last synchronization performed for this Tenant: ${
+                      get(this.props, "tenant.sync.timeStamp")
+                        ? this.props.tenant.sync.timeStamp
+                        : ""
+                    } `}</div>
+                  </Col>
+                </FormGroup>
+              </React.Fragment>
+            )}
+            <FormGroup controlId="tenantName">
               <Col componentClass={ControlLabel} md={3}>
                 Name
               </Col>
