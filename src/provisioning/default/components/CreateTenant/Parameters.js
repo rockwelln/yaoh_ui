@@ -127,28 +127,41 @@ export class TenantParameters extends Component {
           </Row>
           {Object.keys(this.props.tenantVoiceMessaging).length ? (
             <Row>
+              <Col md={12}>
+                {!this.state.enabledVoiceMessagingSettings ? (
+                  <Glyphicon
+                    className={"glyphicon-light"}
+                    glyph="glyphicon glyphicon-collapse-down"
+                    onClick={this.showHideMore}
+                    style={{ display: "flex", lineHeight: "20px" }}
+                  >
+                    <div
+                      style={{
+                        fontFamily: `"Ubuntu, Helvetica Neue",Helvetica,Arial,sans-serif`
+                      }}
+                    >
+                      &nbsp; Show voice messaging settings
+                    </div>
+                  </Glyphicon>
+                ) : (
+                  <Glyphicon
+                    className={"glyphicon-light"}
+                    glyph="glyphicon glyphicon-collapse-down"
+                    onClick={this.showHideMore}
+                    style={{ display: "flex", lineHeight: "20px" }}
+                  >
+                    <div
+                      style={{
+                        fontFamily: `"Helvetica Neue",Helvetica,Arial,sans-serif`
+                      }}
+                    >
+                      &nbsp; Hide voice messaging settings
+                    </div>
+                  </Glyphicon>
+                )}
+              </Col>
               <Col md={12} className={"flex-row"}>
                 <div className={"width-100p"}>
-                  <Checkbox
-                    className={"margin-top-0"}
-                    checked={this.state.enabledVoiceMessagingSettings}
-                    onChange={e => {
-                      if (e.target.checked) {
-                        this.setState({
-                          enabledVoiceMessagingSettings: e.target.checked
-                        });
-                      } else {
-                        this.setState({
-                          enabledVoiceMessagingSettings: e.target.checked,
-                          voiceMessageNotification: "",
-                          voiceMessageDelivery: "",
-                          voicePortalPasscodeLockout: ""
-                        });
-                      }
-                    }}
-                  >
-                    Voice messaging settings
-                  </Checkbox>
                   {this.state.enabledVoiceMessagingSettings && (
                     <React.Fragment>
                       <div className="flex space-between align-items-center margin-bottom-1">
@@ -270,6 +283,12 @@ export class TenantParameters extends Component {
       </React.Fragment>
     );
   }
+
+  showHideMore = () => {
+    this.setState(prevState => ({
+      enabledVoiceMessagingSettings: !prevState.enabledVoiceMessagingSettings
+    }));
+  };
 
   saveVoiceMessaging = () => {
     const data = {

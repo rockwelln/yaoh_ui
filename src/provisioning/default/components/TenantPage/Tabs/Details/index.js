@@ -8,6 +8,7 @@ import Col from "react-bootstrap/lib/Col";
 import Button from "react-bootstrap/lib/Button";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 import { Form } from "react-bootstrap";
+import Glyphicon from "react-bootstrap/lib/Glyphicon";
 
 import Loading from "../../../../common/Loading";
 
@@ -415,21 +416,42 @@ class Details extends Component {
               <React.Fragment>
                 <FormGroup controlId="useCustomRoutingProfile">
                   <Col mdOffset={3} md={9}>
-                    <Checkbox
-                      defaultChecked={this.state.enabledVoiceMessagingSettings}
-                      onChange={e =>
-                        this.setState({
-                          enabledVoiceMessagingSettings: e.target.checked
-                        })
-                      }
-                    >
-                      Voice messaging settings
-                    </Checkbox>
+                    {!this.state.enabledVoiceMessagingSettings ? (
+                      <Glyphicon
+                        className={"glyphicon-light"}
+                        glyph="glyphicon glyphicon-collapse-down"
+                        onClick={this.showHideMore}
+                        style={{ display: "flex", lineHeight: "20px" }}
+                      >
+                        <div
+                          style={{
+                            fontFamily: `"Ubuntu, Helvetica Neue",Helvetica,Arial,sans-serif`
+                          }}
+                        >
+                          &nbsp; Show voice messaging settings
+                        </div>
+                      </Glyphicon>
+                    ) : (
+                      <Glyphicon
+                        className={"glyphicon-light"}
+                        glyph="glyphicon glyphicon-collapse-down"
+                        onClick={this.showHideMore}
+                        style={{ display: "flex", lineHeight: "20px" }}
+                      >
+                        <div
+                          style={{
+                            fontFamily: `"Helvetica Neue",Helvetica,Arial,sans-serif`
+                          }}
+                        >
+                          &nbsp; Hide voice messaging settings
+                        </div>
+                      </Glyphicon>
+                    )}
                   </Col>
                 </FormGroup>
                 {this.state.enabledVoiceMessagingSettings && (
                   <React.Fragment>
-                    <FormGroup controlId="tentantID">
+                    <FormGroup>
                       <Col
                         componentClass={ControlLabel}
                         md={3}
@@ -459,7 +481,7 @@ class Details extends Component {
                         />
                       </Col>
                     </FormGroup>
-                    <FormGroup controlId="tentantID">
+                    <FormGroup>
                       <Col
                         componentClass={ControlLabel}
                         md={3}
@@ -489,7 +511,7 @@ class Details extends Component {
                         />
                       </Col>
                     </FormGroup>
-                    <FormGroup controlId="tentantID">
+                    <FormGroup>
                       <Col
                         componentClass={ControlLabel}
                         md={3}
@@ -548,6 +570,12 @@ class Details extends Component {
       </Col>
     );
   }
+
+  showHideMore = () => {
+    this.setState(prevState => ({
+      enabledVoiceMessagingSettings: !prevState.enabledVoiceMessagingSettings
+    }));
+  };
 
   updateTenant = () => {
     const {
