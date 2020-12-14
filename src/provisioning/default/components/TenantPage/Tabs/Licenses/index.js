@@ -675,8 +675,10 @@ export class Licenses extends Component {
       .then(() => this.setState({ editGroupServices: false }));
   };
 
-  updateServicePacks = () => {
-    const packs = [...this.state.servicePacks];
+  updateServicePacks = servicePack => {
+    const packs = [...this.state.servicePacks].filter(
+      pack => pack.name === servicePack
+    );
     const arrayOfPromise = [];
     packs.forEach(pack => {
       const clearPack = removeEmpty(pack);
