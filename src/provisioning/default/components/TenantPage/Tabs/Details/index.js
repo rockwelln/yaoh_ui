@@ -150,8 +150,6 @@ class Details extends Component {
       return <Loading />;
     }
 
-    console.log(Object.keys(this.props.tenantVoiceMessaging));
-
     return (
       <Col md={8}>
         <Form horizontal className={"margin-1"}>
@@ -617,9 +615,12 @@ class Details extends Component {
         systemDefault: this.state.systemDefaultPPL
       }
     };
+
+    const clearData = removeEmpty(data);
+
     this.props.fetchPutUpdateTenantVoiceMessaging(
       this.state.tenant.tenantId,
-      data
+      clearData
     );
   };
 }
