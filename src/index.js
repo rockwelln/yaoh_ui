@@ -30,7 +30,6 @@ class AppWithIntl extends Component {
     constructor(props) {
         super(props);
         this._getLocale = this._getLocale.bind(this);
-        this.changeLanguage = this.changeLanguage.bind(this);
         this.state = {locale: this._getLocale()}
     }
 
