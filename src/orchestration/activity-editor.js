@@ -387,7 +387,7 @@ function NewNameModal(props) {
                 <Modal.Title>New cell</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                <Form horizontal>
+                <Form onSubmit={e => {e.preventDefault(); onHide(name);}} horizontal>
                     <FormGroup validationState={duplicateName?"error":null}>
                         <Col componentClass={ControlLabel} sm={2}>
                             <FormattedMessage id="name" defaultMessage="Name" />
@@ -395,6 +395,7 @@ function NewNameModal(props) {
 
                         <Col sm={9}>
                             <FormControl
+                                autoFocus
                                 componentClass="input"
                                 value={name}
                                 onChange={e => setName(e.target.value)}/>
@@ -406,7 +407,7 @@ function NewNameModal(props) {
 
                     <FormGroup>
                       <Col smOffset={2} sm={10}>
-                          <Button onClick={() => {onHide(name)}} disabled={!validName} >
+                          <Button disabled={!validName} type={"submit"} >
                               Save
                           </Button>
                       </Col>
