@@ -31,7 +31,7 @@ class Details extends Component {
     tenant: {},
     tenantName: "",
     defaultDomain: "",
-    useTenantLanguages: "",
+    //useTenantLanguages: "",
     useCustomRoutingProfile: "",
     isLoading: true,
     addressInformation: {},
@@ -254,7 +254,7 @@ class Details extends Component {
                 />
               </Col>
             </FormGroup>
-            <FormGroup controlId="useTenantLanguages">
+            {/* <FormGroup controlId="useTenantLanguages">
               <Col mdOffset={3} md={9}>
                 <Checkbox
                   defaultChecked={this.state.tenant.useTenantLanguages}
@@ -265,7 +265,7 @@ class Details extends Component {
                   Use tenant languages
                 </Checkbox>
               </Col>
-            </FormGroup>
+            </FormGroup> */}
             <FormGroup controlId="tentantStreet">
               <Col componentClass={ControlLabel} md={3}>
                 Addess
@@ -581,7 +581,7 @@ class Details extends Component {
     const {
       tenantName,
       defaultDomain,
-      useTenantLanguages,
+      //useTenantLanguages,
       useCustomRoutingProfile,
       addressInformation,
       syncStatus
@@ -596,9 +596,9 @@ class Details extends Component {
       defaultDomain: defaultDomain
         ? defaultDomain
         : this.state.tenant.defaultDomain,
-      useTenantLanguages: useTenantLanguages
-        ? useTenantLanguages
-        : this.state.tenant.useTenantLanguages,
+      // useTenantLanguages: useTenantLanguages
+      //   ? useTenantLanguages
+      //   : this.state.tenant.useTenantLanguages,
       useCustomRoutingProfile: useCustomRoutingProfile
         ? useCustomRoutingProfile
         : this.state.tenant.useCustomRoutingProfile,
