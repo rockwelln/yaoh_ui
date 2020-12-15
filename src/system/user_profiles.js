@@ -448,7 +448,10 @@ function UpdateProfile(props) {
 
 export default function UserProfiles() {
     const [profiles, setProfiles] = useState([]);
-    const refresh = () => { fetchProfiles(setProfiles); };
+    const refresh = () => {
+      fetchProfiles(setProfiles);
+      document.title = "Profiles";
+    };
     useEffect(refresh, []);
 
     return (

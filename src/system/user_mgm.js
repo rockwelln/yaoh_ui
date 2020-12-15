@@ -162,7 +162,10 @@ export function LocalUserProfile({onUserInfoChanged}) {
             .then(data => setProfileName(data.profiles.find(p => p.id === user_info.profile_id).name))
             .catch(console.error)
     }, [user_info.profile_id]);
-    useEffect(() => { fetchLocalUser(setUserInfo) }, [])
+    useEffect(() => {
+      fetchLocalUser(setUserInfo);
+      document.title = "User";
+    }, [])
     const validPassword = (newPassword === '')?null:(newPassword.length >= 7)?"success":"error";
     const validRepPassword = (newPassword === '')?null:(confirmPassword === newPassword)?"success":"error";
     const validForm = validPassword !== 'error' && validRepPassword !== 'error' && Object.keys(delta).length !== 0;

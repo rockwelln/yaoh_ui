@@ -499,6 +499,7 @@ export default class CronTimers extends Search {
     }
 
     componentDidMount() {
+        document.title = "Cron";
         super.componentDidMount();
         this.fetchActivities();
     }

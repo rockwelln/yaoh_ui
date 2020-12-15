@@ -751,10 +751,10 @@ export function Webhooks(props) {
     const [showNew, setShowNew] = useState(false);
     const [updateWh, setUpdateWh] = useState(undefined);
 
-    useEffect(() => {fetchWebhooks(setWebhooks);}, []);
-
-    const {user_info} = props;
-    const can_edit_webhook_events = user_info.is_system;
+    useEffect(() => {
+      fetchWebhooks(setWebhooks);
+      document.title = "Webhooks";
+      }, []);
 
     return (
         <div>

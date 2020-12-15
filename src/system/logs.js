@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
 import {FormattedMessage} from "react-intl";
 import Nav from "react-bootstrap/lib/Nav";
@@ -157,54 +157,52 @@ class FollowLog extends React.Component {
 }
 
 
-export default class LogsManagement extends React.Component {
-    state = {
-        logs: [],
-        currentLog: null,
-        activeTab: 1
-    };
+export default function LogsManagement() {
+    const [logs, setLogs] = useState([]);
+    const [currentLog, setCurrentLog] = useState(null);
+    const [activeTab, setActiveTab] = useState(1);
 
-    componentDidMount() {
+    useEffect(() => {
         fetch_get("/api/v01/logs")
-            .then(data => this.setState({logs: data.logs}))
-            .catch(error => NotificationsManager.error(<FormattedMessage id="fail-loading-logs" defaultMessage="Fail to load logs"/>, error.message ))
-    }
+            .then(data => setLogs(data.logs))
+            .catch(error => NotificationsManager.error(<FormattedMessage id="fail-loading-logs" defaultMessage="Fail to load logs"/>, error.message ));
+        document.title = "Logs"
+    }, [])
 
-    render() {
-        const {logs, currentLog, activeTab} = this.state;
-
-        return (
-            <div>
-                <Breadcrumb>
-                    <Breadcrumb.Item active><FormattedMessage id="system" defaultMessage="System"/></Breadcrumb.Item>
-                    <Breadcrumb.Item active><FormattedMessage id="logs" defaultMessage="Logs"/></Breadcrumb.Item>
-                </Breadcrumb>
-                <Row>
-                    <Col sm={3} className="vl">
-                        <Nav bsSize="small" bsStyle="pills" stacked>
-                        {
-                            logs.map(l =>
-                                <NavItem key={l.log_id} onClick={() => this.setState({currentLog: l, activeTab: 1})}>
-                                    {l.log_id}
-                                </NavItem>
-                            )
-                        }
-                        </Nav>
-                    </Col>
-                    <Col sm={9}>
-                        { currentLog &&
-                            <Tabs defaultActiveKey={1} activeKey={activeTab} onSelect={e => this.setState({activeTab: e})}>
-                                <Tab eventKey={1} title={<FormattedMessage id="relatives" defaultMessage="Relatives" />}>
-                                    <Relatives log={currentLog} />
-                                </Tab>
-                                <Tab eventKey={2} title={<FormattedMessage id="follow" defaultMessage="Follow" />}>
-                                    { activeTab === 2 && <FollowLog log={currentLog} /> }
-                                </Tab>
-                            </Tabs>
-                        }
-                    </Col>
-                </Row>
-            </div>
-        )
-    }
+    return (
+        <div>
+            <Breadcrumb>
+                <Breadcrumb.Item active><FormattedMessage id="system" defaultMessage="System"/></Breadcrumb.Item>
+                <Breadcrumb.Item active><FormattedMessage id="logs" defaultMessage="Logs"/></Breadcrumb.Item>
+            </Breadcrumb>
+            <Row>
+                <Col sm={3} className="vl">
+                    <Nav bsSize="small" bsStyle="pills" stacked>
+                    {
+                        logs.map(l =>
+                            <NavItem key={l.log_id} onClick={() => {
+                              setCurrentLog(l);
+                              setActiveTab(1);
+                            }}>
+                                {l.log_id}
+                            </NavItem>
+                        )
+                    }
+                    </Nav>
+                </Col>
+                <Col sm={9}>
+                    { currentLog &&
+                        <Tabs defaultActiveKey={1} activeKey={activeTab} onSelect={e => setActiveTab(e)}>
+                            <Tab eventKey={1} title={<FormattedMessage id="relatives" defaultMessage="Relatives" />}>
+                                <Relatives log={currentLog} />
+                            </Tab>
+                            <Tab eventKey={2} title={<FormattedMessage id="follow" defaultMessage="Follow" />}>
+                                { activeTab === 2 && <FollowLog log={currentLog} /> }
+                            </Tab>
+                        </Tabs>
+                    }
+                </Col>
+            </Row>
+        </div>
+    )
 }

@@ -275,6 +275,7 @@ export default class Gateways extends Component {
     }
 
     componentDidMount() {
+        document.title = "Gateways";
         this.fetch_gateways(true);
         
         this.refreshGatewaysHandler = setInterval(() => this.fetch_gateways(true), REFRESH_CYCLE * 1000);

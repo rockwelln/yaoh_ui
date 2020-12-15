@@ -223,6 +223,7 @@ export function Activities(props) {
 
     useEffect(() => {
         fetchActivities(setActivities);
+        document.title = "Activities";
     }, []);
 
     return (
