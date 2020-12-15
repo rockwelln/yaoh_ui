@@ -9,7 +9,7 @@ import update from "immutability-helper";
 import {fetchActivities} from "./activity-editor";
 import {fetch_get} from "../utils";
 import {MentionExample} from "./templateEditor";
-
+import Creatable from 'react-select/creatable';
 
 
 function BasicInput(props) {
@@ -41,16 +41,17 @@ function SessionHolderInput(props) {
     )
   }, []);
   return (
-    <FormControl
-        componentClass="select"
-        value={value}
-        onChange={e => onChange(e.target.value)}
-    >
-      <option value={""}/>
-      {
-        holders.map(h => <option value={h} key={h}>{h}</option>)
-      }
-    </FormControl>
+    <Creatable
+      value={{value: value, label: value}}
+      isClearable
+      isSearchable
+      name="session-holder"
+      onChange={(value, action) => {
+        if(["select-option", "create-option", "clear"].includes(action.action)) {
+          onChange(value && value.value);
+        }
+      }}
+      options={holders.map(h => ({value: h, label: h}))} />
   )
 }
 
