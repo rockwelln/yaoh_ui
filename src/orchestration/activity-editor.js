@@ -992,8 +992,10 @@ export function ActivityEditor(props) {
                     const cell = editor.graph.getSelectionCell();
                     const cDef = cells.find(c => c.original_name === cell.getAttribute("original_name"));
                     if(cDef) {
+                        const c_def = JSON.parse(JSON.stringify(cDef));
+                        c_def.outputs = (cell.getAttribute('outputs') || "").split(",");
                         const params = (cell.getAttribute('attrList') || "").split(",").reduce((xa, a) => {xa[a] = cell.getAttribute(a); return xa;}, {});
-                        e.addNode(editor, cDef, newName, params);
+                        e.addNode(editor, c_def, newName, params);
                     }
                 })} />
 
