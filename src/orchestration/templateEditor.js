@@ -600,7 +600,15 @@ export function MentionExample({cells, value, onChange, ...props}) {
   const [currentFilter, setCurrentFilter] = useState();
 
   useEffect(() => {
-    setContextVars(cells && Object.values(cells).filter(options => options.original_name === "context_setter").map(options => options.params.key))
+    setContextVars(cells && Object.values(cells).reduce((o, options) => {
+        if(options.original_name === "context_setter") {
+          o.push(options.params.key)
+        } else if(options.params && options.params.output_context_key) {
+          o.push(options.params.output_context_key)
+        }
+        return o;
+      }, [])
+    )
   }, [cells]);
 
   useEffect(() => {
