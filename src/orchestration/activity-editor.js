@@ -18,6 +18,7 @@ import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 import {LinkContainer} from "react-router-bootstrap";
 import Panel from "react-bootstrap/lib/Panel";
 import Modal from "react-bootstrap/lib/Modal";
+import Alert from "react-bootstrap/lib/Alert";
 import Form from "react-bootstrap/lib/Form";
 import FormGroup from "react-bootstrap/lib/FormGroup";
 import ControlLabel from "react-bootstrap/lib/ControlLabel";
@@ -843,6 +844,16 @@ export function EditCellModal(props) {
     )
 }
 
+function compareActivitiesDef(a, b) {
+  return (b.definition &&
+    (
+      typeof b.definition === "string" &&
+        JSON.stringify(JSON.parse(a.definition)) !== JSON.stringify(JSON.parse(b.definition)) ||
+      typeof b.definition === "object" &&
+        JSON.stringify(JSON.parse(a.definition)) !== JSON.stringify(b.definition)
+    )
+  )
+}
 
 export function ActivityEditor(props) {
     const [cells, setCells] = useState([]);
@@ -854,6 +865,7 @@ export function ActivityEditor(props) {
     const [newCell, showNewCell] = useState(false);
     const [newName, showNewName] = useState(false);
     const [editedCell, setEditedCell] = useState(undefined);
+    const [alertNewVersion, setAlertNewVersion] = useState(false);
 
     useEffect(() => {
         fetchConfiguration(setConfiguration);
@@ -914,9 +926,10 @@ export function ActivityEditor(props) {
     }, [editor]);
 
     useEffect(() => {
-        if(props.match.params.activityId) {
+        const activityId = props.match.params.activityId;
+        if(activityId) {
             fetchActivity(
-                props.match.params.activityId,
+                activityId,
                 activity => {
                     setCurrentActivity(activity);
                     setNewActivity(false);
@@ -925,6 +938,19 @@ export function ActivityEditor(props) {
             );
         }
     }, [props.match.params.activityId]);
+
+    useEffect(() => {
+      const activityId = props.match.params.activityId;
+      const i = setInterval(() => {
+        fetchActivity(
+          activityId,
+          activity => {
+            setAlertNewVersion(compareActivitiesDef(activity, currentActivity))
+          }
+        )
+      }, 3000);
+      return () => clearInterval(i);
+    }, [props.match.params.activityId, currentActivity])
 
     return (
         <>
@@ -946,6 +972,13 @@ export function ActivityEditor(props) {
                     <Button onClick={() => setShowStats(true)}><FontAwesomeIcon icon={faChartBar} /></Button>
                 </Col>
             </Row>
+            {
+              alertNewVersion &&
+                <Alert bsStyle={"danger"}>
+                  A new version has been saved in the meantime.<br/>
+                  Refresh to have the very last version.
+                </Alert>
+            }
             <hr />
             <Row>
                 <Col>
