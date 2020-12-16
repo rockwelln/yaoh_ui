@@ -1952,7 +1952,10 @@ export default function Configuration(props) {
   const [config, setConfig] = useState({});
   const {userInfo} = props;
 
-  useEffect(() => fetchConfiguration(setConfig), []);
+  useEffect(() => {
+    fetchConfiguration(setConfig);
+    document.title = "Configuration"
+  }, []);
   const editConfig = e => setConfig(update(config, {$merge: {content: e.updated_src}}));
 
   // const ajv = new Ajv();

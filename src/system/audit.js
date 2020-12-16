@@ -90,6 +90,7 @@ export class AuditLogs extends Search {
     }});
 
     componentDidMount() {
+        document.title = "Audit logs"
         this._fetchUsers();
         this._refresh();
     }

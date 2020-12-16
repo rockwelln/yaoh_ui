@@ -60,6 +60,7 @@ export default function Dashboard(props) {
     const isNpact = supportedModule(modules.npact, props.user_info.modules);
 
     useEffect(() => {
+        document.title = "Dashboard";
         fetch_gateways(setGateways);
         const interval = setInterval(() => fetch_gateways(setGateways), REFRESH_CYCLE * 1000);
         return () => clearInterval(interval);

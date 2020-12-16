@@ -19,6 +19,7 @@ export default function AsynApioHelp() {
     const [packages, setPackages] = useState([]);
     useEffect(() => {
         fetch_get("/health").then(data => setPackages(data.versions))
+        document.title = "help"
     }, []);
 
     return <div>

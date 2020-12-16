@@ -942,13 +942,16 @@ function CustomRoutes(props) {
     )
 }
 
-export const StartupEvents = () => (
+export function StartupEvents() {
+  useEffect(() => {document.title = "Startup events"}, []);
+  return (
     <div>
-        <Breadcrumb>
-            <Breadcrumb.Item active><FormattedMessage id="orchestration" defaultMessage="Orchestration"/></Breadcrumb.Item>
-            <Breadcrumb.Item active><FormattedMessage id="startup-events" defaultMessage="Startup events"/></Breadcrumb.Item>
-        </Breadcrumb>
-        <DedicatedEvents />
-        <CustomRoutes />
+      <Breadcrumb>
+        <Breadcrumb.Item active><FormattedMessage id="orchestration" defaultMessage="Orchestration"/></Breadcrumb.Item>
+        <Breadcrumb.Item active><FormattedMessage id="startup-events" defaultMessage="Startup events"/></Breadcrumb.Item>
+      </Breadcrumb>
+      <DedicatedEvents/>
+      <CustomRoutes/>
     </div>
-);
+  )
+};

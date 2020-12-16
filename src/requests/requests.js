@@ -1627,6 +1627,7 @@ export class Transaction extends Component {
     }
 
     componentDidMount() {
+        document.title = `Instance - ${this.props.match.params.txId}`;
         USE_WS ? this.fetchDetails() : this.fetchTxDetails(true);
     }
 
@@ -1637,6 +1638,7 @@ export class Transaction extends Component {
 
     componentDidUpdate(prevProps, prevState, snapshot) {
         if(prevState.tx !== undefined && prevProps.match.params.txId !== this.props.match.params.txId) {
+            document.title = `Instance - ${this.props.match.params.txId}`;
             this.setState({
                 activeTab: 1,
                 tx: undefined,
@@ -2289,6 +2291,7 @@ export class Request extends Component {
     }
 
     componentDidMount() {
+        document.title = `Request - ${this.props.match.params.reqId}`;
         this.fetchDetails();
     }
 
@@ -2512,6 +2515,7 @@ export class Requests extends Component{
     }
 
     componentDidMount() {
+        document.title = "Requests";
         fetchRoles(roles => this.setState({roles: roles}));
         this._load_activities();
         this._load_proxy_hosts();
@@ -3526,6 +3530,7 @@ export class CustomRequests extends Component{
     }
 
     componentDidMount() {
+        document.title = "Requests";
         fetchRoles(roles => this.setState({roles: roles}));
         this._load_activities();
         this._refresh();

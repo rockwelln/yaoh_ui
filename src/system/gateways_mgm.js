@@ -239,6 +239,7 @@ export default function Gateways(props) {
     useEffect(() => {
       fetch_gateways(setGateways);
       setRemainingSecs(REFRESH_CYCLE);
+      document.title = "Gateways";
 
       const refreshHandler = setInterval(() => {
         fetch_gateways(setGateways);

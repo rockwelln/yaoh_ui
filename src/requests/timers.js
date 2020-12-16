@@ -187,7 +187,12 @@ export default class Timers extends Search {
         this.state["selected_timers"] = [];
     }
 
-    render() {
+    componentDidMount() {
+      super.componentDidMount();
+      document.title = "Timers";
+    }
+
+  render() {
         const {filter_criteria, resources, sorting_spec, pagination, selected_timers} = this.state;
         const invalid_created_on = filter_criteria.created_on.value && !moment(filter_criteria.created_on.value).isValid();
         return (

@@ -216,7 +216,10 @@ export default function Templates() {
     const [templates, setTemplates] = useState([]);
     const refresh = () => {fetchTemplates(setTemplates);}
 
-    useEffect(refresh, []);
+    useEffect(() => {
+      refresh();
+      document.title = "Templates";
+    }, []);
 
     return (
         <div>

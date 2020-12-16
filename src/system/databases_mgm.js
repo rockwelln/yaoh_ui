@@ -99,6 +99,7 @@ export default function Databases(props) {
     const [databases, setDatabases] = useState([]);
 
     useEffect(() => {
+        document.title = "Databases"
         _refresh(setDatabases);
         const i = setInterval(() => _refresh(setDatabases), REFRESH_CYCLE * 1000);
         return () => clearInterval(i);
