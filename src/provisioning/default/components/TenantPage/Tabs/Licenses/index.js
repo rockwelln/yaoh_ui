@@ -10,7 +10,8 @@ import {
   fetchPutUpdateTenantServicePacks,
   showHideAdditionalServicesTenant,
   fetchGetTenantEntitlements,
-  fetchGetSelfcareURL
+  fetchGetSelfcareURL,
+  showHideAdditionalUserServicesTenant
 } from "../../../../store/actions";
 
 import Panel from "react-bootstrap/lib/Panel";
@@ -53,7 +54,10 @@ export class Licenses extends Component {
     isLoadingEntitlements: true,
     showAddEntitlements: false,
     editEntitlement: undefined,
-    deleteEntitlement: undefined
+    deleteEntitlement: undefined,
+    limitedUserServicesTenant: [],
+    showMoreUserServices: true,
+    editUserServices: false
   };
 
   fetchData() {
@@ -67,7 +71,9 @@ export class Licenses extends Component {
               {
                 isLoading: false,
                 groupServices: this.props.tenantLicenses.groups,
-                servicePacks: this.props.tenantServicePacks
+                servicePacks: this.props.tenantServicePacks,
+                limitedUserServicesTenant: this.props.limitedUserServicesTenant
+                  .services
               },
               () =>
                 this.props.showHideAdditionalServicesTenant(this.state.showMore)
@@ -116,7 +122,8 @@ export class Licenses extends Component {
       editServicePacks,
       editGroupServices,
       indexOfService,
-      isLoadingEntitlements
+      isLoadingEntitlements,
+      editUserServices
     } = this.state;
     if (this.state.isLoading || isLoadingTrunk || isLoadingEntitlements) {
       return <Loading />;
@@ -510,6 +517,65 @@ export class Licenses extends Component {
               )}
             </Panel.Body>
           </Panel>
+          <Panel>
+            <Panel.Heading>
+              <FormattedMessage
+                id="user_services"
+                defaultMessage="USER SERVICES"
+              />
+            </Panel.Heading>
+            <Panel.Body>
+              {this.props.limitedUserServicesTenant &&
+              this.props.limitedUserServicesTenant.services.length ? (
+                <LicensesPanel
+                  licenses={this.props.limitedUserServicesTenant.services}
+                  showHide={this.showHideAdditionalUserServices}
+                  showEdit={this.showEditUserServices}
+                  withShowMore
+                />
+              ) : (
+                <FormattedMessage
+                  id="No_services_found"
+                  defaultMessage="No services were found"
+                />
+              )}
+              {editUserServices && (
+                <SingleEdit
+                  isEditPacks
+                  show={editUserServices}
+                  title={
+                    <FormattedMessage
+                      id="user_services"
+                      defaultMessage="USER SERVICES"
+                    />
+                  }
+                  onClose={() =>
+                    this.setState({ editUserServices: false }, () =>
+                      this.fetchData()
+                    )
+                  }
+                  licenseTitle={
+                    this.state.limitedUserServicesTenant[indexOfService].name
+                  }
+                  allocated={
+                    this.state.limitedUserServicesTenant[indexOfService]
+                      .currentlyAllocated
+                  }
+                  value={
+                    this.state.limitedUserServicesTenant[indexOfService]
+                      .allocated.maximum
+                  }
+                  infinity={
+                    this.state.limitedUserServicesTenant[indexOfService]
+                      .allocated.unlimited
+                  }
+                  onChangeInfinity={this.changeUserServicesUnlimeted}
+                  onChange={this.changeUserServicesMaximum}
+                  onSave={this.updateUserServices}
+                />
+              )}
+            </Panel.Body>
+          </Panel>
         </Col>
       </Row>
     );
@@ -524,6 +590,12 @@ export class Licenses extends Component {
   showEditGroupServices = index => {
     this.setState({ indexOfService: index }, () =>
       this.setState({ editGroupServices: true })
+    );
+  };
+
+  showEditUserServices = index => {
+    this.setState({ indexOfService: index }, () =>
+      this.setState({ editUserServices: true })
     );
   };
 
@@ -554,6 +626,11 @@ export class Licenses extends Component {
   showHideAdditionalServices = status => {
     this.setState({ showMore: status });
     this.props.showHideAdditionalServicesTenant(status);
+  };
+
+  showHideAdditionalUserServices = status => {
+    this.setState({ showMoreUserServices: status });
+    this.props.showHideAdditionalUserServicesTenant(status);
   };
 
   changeTrunkingLicenses = value => {
@@ -621,6 +698,28 @@ export class Licenses extends Component {
     }));
   };
 
+  changeUserServicesUnlimeted = checked => {
+    this.setState(prevState => ({
+      limitedUserServicesTenant: [
+        ...prevState.limitedUserServicesTenant.slice(
+          0,
+          this.state.indexOfService
+        ),
+        {
+          ...prevState.limitedUserServicesTenant[this.state.indexOfService],
+          allocated: {
+            ...prevState.limitedUserServicesTenant[this.state.indexOfService]
+              .allocated,
+            unlimited: checked
+          }
+        },
+        ...prevState.limitedUserServicesTenant.slice(
+          this.state.indexOfService + 1
+        )
+      ]
+    }));
+  };
+
   changeGroupServicesMaximum = max => {
     this.setState(prevState => ({
       groupServices: [
@@ -633,6 +732,28 @@ export class Licenses extends Component {
           }
         },
         ...prevState.groupServices.slice(this.state.indexOfService + 1)
+      ]
+    }));
+  };
+
+  changeUserServicesMaximum = max => {
+    this.setState(prevState => ({
+      limitedUserServicesTenant: [
+        ...prevState.limitedUserServicesTenant.slice(
+          0,
+          this.state.indexOfService
+        ),
+        {
+          ...prevState.limitedUserServicesTenant[this.state.indexOfService],
+          allocated: {
+            ...prevState.limitedUserServicesTenant[this.state.indexOfService]
+              .allocated,
+            maximum: Number(max)
+          }
+        },
+        ...prevState.limitedUserServicesTenant.slice(
+          this.state.indexOfService + 1
+        )
       ]
     }));
   };
@@ -675,6 +796,20 @@ export class Licenses extends Component {
       .then(() => this.setState({ editGroupServices: false }));
   };
 
+  updateUserServices = () => {
+    const data = {
+      userServices: this.state.limitedUserServicesTenant
+    };
+
+    this.props
+      .fetchPutUpdateGroupServicesByTenantId(
+        this.props.match.params.tenantId,
+        data
+      )
+      .then(() => this.fetchData())
+      .then(() => this.setState({ editUserServices: false }));
+  };
+
   updateServicePacks = servicePack => {
     const packs = [...this.state.servicePacks].filter(
       pack => pack.name === servicePack
@@ -703,7 +838,8 @@ const mapStateToProps = state => ({
   userServices: state.userServicesTenant,
   isAuthorisedTrunkTenant: state.isAuthorisedTrunkTenant,
   selfcareUrl: state.selfcareUrl,
-  tenantEntitlements: state.tenantEntitlements
+  tenantEntitlements: state.tenantEntitlements,
+  limitedUserServicesTenant: state.limitedUserServicesTenant
 });
 
 const mapDispatchToProps = {
@@ -714,7 +850,8 @@ const mapDispatchToProps = {
   fetchPutUpdateTenantServicePacks,
   showHideAdditionalServicesTenant,
   fetchGetTenantEntitlements,
-  fetchGetSelfcareURL
+  fetchGetSelfcareURL,
+  showHideAdditionalUserServicesTenant
 };
 
 export default withRouter(

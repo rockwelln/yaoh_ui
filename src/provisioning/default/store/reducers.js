@@ -134,7 +134,8 @@ const initialState = {
   groupSuspensionStatus: "",
   tenantEntitlements: [],
   entitlementTypes: { customer_licenses: [] },
-  availableNumbersGroup: []
+  availableNumbersGroup: [],
+  limitedUserServicesTenant: {}
 };
 
 function mainReducer(state = initialState, action) {
@@ -576,6 +577,15 @@ function mainReducer(state = initialState, action) {
         return 0;
       });
       const groupServices = [...groupServicesShown, ...groupServicesHide];
+      const limitedUS = action.data.userServices.filter(
+        el => el.allocated && !el.allocated.unlimited
+      );
+      const userServices = [
+        ...limitedUS.slice(0, 9),
+        ...limitedUS
+          .slice(9, limitedUS.length)
+          .map(el => ({ ...el, hide: true, additional: true }))
+      ];
       return {
         ...state,
         tenantLicenses: {
@@ -583,6 +593,7 @@ function mainReducer(state = initialState, action) {
           countShown: groupServicesShown.length
         },
         userServicesTenant: action.data.userServices,
+        limitedUserServicesTenant: { services: userServices, countShown: 10 },
         tenantServicePacks: action.data.servicePacks
       };
     }
@@ -1402,6 +1413,24 @@ function mainReducer(state = initialState, action) {
       return {
         ...state,
         tenantLicenses: { ...state.tenantLicenses, groups: newTanantLicenses }
+      };
+    }
+    case actionType.SHOW_HIDE_ADDITIONAL_USER_SERVICES_TENANT: {
+      const newTanantLicenses = [];
+      state.limitedUserServicesTenant.services &&
+        state.limitedUserServicesTenant.services.forEach(el => {
+          if (el.additional) {
+            newTanantLicenses.push({ ...el, hide: action.data });
+          } else {
+            newTanantLicenses.push(el);
+          }
+        });
+      return {
+        ...state,
+        limitedUserServicesTenant: {
+          ...state.tenantLicenses,
+          services: newTanantLicenses
+        }
       };
     }
     case actionType.SHOW_HIDE_ADDITIONAL_SERVICES_GROUP: {
