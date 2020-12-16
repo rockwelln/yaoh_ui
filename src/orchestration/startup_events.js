@@ -32,6 +32,8 @@ import {JSON_TRANS_OPTIONS_SAMPLE} from "../system/bulk_actions";
 import Select from "react-select";
 import {SearchBar} from "../utils/datatable";
 import InputGroup from "react-bootstrap/lib/InputGroup";
+import {faSpinner} from "@fortawesome/free-solid-svg-icons";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 
 const CUSTOM_ROUTE_PREFIX = "https://<target>/api/v01/custom";
 const JSON_SCHEMA_SAMPLE = (
@@ -788,12 +790,17 @@ function CustomRoutes(props) {
     const [showUpdateModal, setShowUpdateModal] = useState(undefined);
     const [showNew, setShowNew] = useState(false);
     const [showImport, setShowImport] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [key, setKey] = useState(0);
     const [filter, setFilter] = useState("");
 
     useEffect(() => {
+        setLoading(true);
         fetchActivities(setActivities);
-        fetchCustomRoutes(setCustomRoutes);
+        fetchCustomRoutes(r => {
+          setCustomRoutes(r)
+          setLoading(false)
+        });
     }, []);
 
     const activitiesOptions = activities.sort((a, b) => a.name.localeCompare(b.name)).map(a => ({value: a.id, label: a.name}));
@@ -818,6 +825,10 @@ function CustomRoutes(props) {
                     </tr>
                     </thead>
                     <tbody>
+                    {
+                      loading &&
+                        <tr><td colSpan={7}><FontAwesomeIcon icon={faSpinner} aria-hidden="true" style={{'fontSize': '24px'}} spin /></td></tr>
+                    }
                     {
                         customRoutes
                             .sort((a, b) => a.route_id - b.route_id)

@@ -27,7 +27,7 @@ import InputGroup from "react-bootstrap/lib/InputGroup";
 import InputGroupButton from "react-bootstrap/lib/InputGroupButton";
 import {DeleteConfirmButton} from "../utils/deleteConfirm";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChartBar } from "@fortawesome/free-solid-svg-icons";
+import {faChartBar, faSpinner} from "@fortawesome/free-solid-svg-icons";
 import {Link} from "react-router-dom";
 import {SimulatorPanel} from "./simulator";
 import Checkbox from "react-bootstrap/lib/Checkbox";
@@ -220,10 +220,15 @@ function SearchBar(props) {
 export function Activities(props) {
     const [activities, setActivities] = useState([]);
     const [showNew, setShowNew] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [filter, setFilter] = useState("");
 
     useEffect(() => {
-        fetchActivities(setActivities);
+        setLoading(true);
+        fetchActivities(a => {
+            setActivities(a);
+            setLoading(false);
+        });
         document.title = "Activities";
     }, []);
 
@@ -247,6 +252,10 @@ export function Activities(props) {
                             </tr>
                         </thead>
                         <tbody>
+                        {
+                            loading &&
+                                <tr><td colSpan={4}><FontAwesomeIcon icon={faSpinner} aria-hidden="true" style={{'fontSize': '24px'}} spin /></td></tr>
+                        }
                         {
                             activities
                                 .filter(a => filter.length === 0 || a.name.includes(filter))
