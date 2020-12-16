@@ -38,7 +38,8 @@ class CreateAdmin extends Component {
     passwordNotMatch: null,
     requiredEmail: null,
     isLoading: true,
-    isLoadingLang: true
+    isLoadingLang: true,
+    userIdError: null
   };
 
   componentDidMount() {
@@ -99,7 +100,10 @@ class CreateAdmin extends Component {
             <Col md={8}>
               <Form horizontal className={"margin-1"}>
                 <FormGroup controlId="Details">
-                  <FormGroup controlId="usernameGroupAdmin">
+                  <FormGroup
+                    controlId="usernameGroupAdmin"
+                    validationState={this.state.userIdError}
+                  >
                     <Col
                       componentClass={ControlLabel}
                       md={3}
@@ -130,6 +134,11 @@ class CreateAdmin extends Component {
                             : this.props.tenantDefaultDomain
                         }`}</InputGroup.Addon>
                       </InputGroup>
+                      {this.state.userIdError && (
+                        <HelpBlock>
+                          Must be greater than 6 and less than 80 characters
+                        </HelpBlock>
+                      )}
                     </Col>
                   </FormGroup>
                   <FormGroup controlId="email" validationState={requiredEmail}>
@@ -325,6 +334,13 @@ class CreateAdmin extends Component {
 
   createAdmin = () => {
     const { createAdminData, passwordConfirmation } = this.state;
+    if (
+      createAdminData.userId.length < 6 ||
+      createAdminData.userId.length > 80
+    ) {
+      this.setState({ userIdError: "error" });
+      return;
+    }
     if (!createAdminData.emailAddress) {
       this.setState({ requiredEmail: "error" });
       return;
