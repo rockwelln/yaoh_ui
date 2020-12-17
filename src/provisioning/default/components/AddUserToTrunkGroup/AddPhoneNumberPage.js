@@ -8,7 +8,7 @@ import FormGroup from "react-bootstrap/lib/FormGroup";
 import Radio from "react-bootstrap/lib/Radio";
 
 import {
-  fetchGetAvailableNumbersByTenantID,
+  fetchGetPhoneNumbersByGroupId,
   refuseAddPhoneToTenant,
   changeStepOfAddPhoneTenant,
   fetchGetMobileNumbersForTenant,
@@ -17,14 +17,13 @@ import {
 import Loading from "../../common/Loading";
 
 import SelectAvalibleNumbers from "./SelectAvalibleNumbers";
-import Steps from "../AddPhoneNumberTenant/Steps";
+import AddUserPage from "./AddUserPage";
 import { get } from "../get";
 
 export class AddPhoneNumberPage extends Component {
   state = { isLoadNewPhones: null, isLoading: true, isLoadingSCURL: true };
 
   componentDidMount() {
-    const pathNameArr = this.props.location.pathname.split("/");
     this.props.changeStepOfAddPhoneTenant("Basic");
     this.props.fetchGetSelfcareURL().then(() => {
       this.setState({ isLoadingSCURL: false });
@@ -37,17 +36,12 @@ export class AddPhoneNumberPage extends Component {
             isLoadNewPhones: "not load"
           },
           () => {
-            pathNameArr[pathNameArr.length - 1] === "add-mobile-phone"
-              ? this.props
-                  .fetchGetMobileNumbersForTenant(
-                    this.props.match.params.tenantId
-                  )
-                  .then(() => this.setState({ isLoading: false }))
-              : this.props
-                  .fetchGetAvailableNumbersByTenantID(
-                    this.props.match.params.tenantId
-                  )
-                  .then(() => this.setState({ isLoading: false }));
+            this.props
+              .fetchGetPhoneNumbersByGroupId(
+                this.props.match.params.tenantId,
+                this.props.match.params.groupId
+              )
+              .then(() => this.setState({ isLoading: false }));
           }
         );
       }
@@ -65,16 +59,12 @@ export class AddPhoneNumberPage extends Component {
 
   fetchAvailableNumbers = () => {
     this.setState({ isLoading: true }, () => {
-      const pathNameArr = this.props.location.pathname.split("/");
-      pathNameArr[pathNameArr.length - 1] === "add-mobile-phone"
-        ? this.props
-            .fetchGetMobileNumbersForTenant(this.props.match.params.tenantId)
-            .then(() => this.setState({ isLoading: false }))
-        : this.props
-            .fetchGetAvailableNumbersByTenantID(
-              this.props.match.params.tenantId
-            )
-            .then(() => this.setState({ isLoading: false }));
+      this.props
+        .fetchGetPhoneNumbersByGroupId(
+          this.props.match.params.tenantId,
+          this.props.match.params.groupId
+        )
+        .then(() => this.setState({ isLoading: false }));
     });
   };
 
@@ -87,7 +77,9 @@ export class AddPhoneNumberPage extends Component {
 
     return (
       <React.Fragment>
-        <div className={"header panel-heading"}>Add phonenumbers for group</div>
+        <div className={"header panel-heading"}>
+          Add phonenumbers to trunkgroup
+        </div>
         <div className={"panel-body"}>
           <Row>
             <Col md={12}>
@@ -116,15 +108,16 @@ export class AddPhoneNumberPage extends Component {
                               )
                               .then(() => this.setState({ isLoading: false }))
                           : this.props
-                              .fetchGetAvailableNumbersByTenantID(
-                                this.props.match.params.tenantId
+                              .fetchGetPhoneNumbersByGroupId(
+                                this.props.match.params.tenantId,
+                                this.props.match.params.groupId
                               )
                               .then(() => this.setState({ isLoading: false }));
                       }
                     );
                   }}
                 >
-                  <div>I want to select free numbers from the tenant level</div>
+                  <div>I want to select free numbers from the group level</div>
                 </Radio>
                 <Radio
                   className={"margin-left-1"}
@@ -143,8 +136,8 @@ export class AddPhoneNumberPage extends Component {
                   }
                 >
                   <div>
-                    I want to copy-paste numbers. If some numbers are not yet
-                    assigned on tenant level, please do it for me!
+                    I want to add a range (start/end - free entry). If not yet
+                    assigned to the tenant, add them for me!
                   </div>
                 </Radio>
               </FormGroup>
@@ -157,19 +150,12 @@ export class AddPhoneNumberPage extends Component {
                   <Loading />
                 ) : (
                   <SelectAvalibleNumbers
-                    phoneNumbers={
-                      pathNameArr[pathNameArr.length - 1] === "add-mobile-phone"
-                        ? this.props.availableMobileNumbers
-                        : this.props.availableNumbersTenant
-                    }
+                    phoneNumbers={this.props.availableNumbersTenant}
                     toUpdate={() => {
-                      pathNameArr[pathNameArr.length - 1] === "add-mobile-phone"
-                        ? this.props.fetchGetMobileNumbersForTenant(
-                            this.props.match.params.tenantId
-                          )
-                        : this.props.fetchGetAvailableNumbersByTenantID(
-                            this.props.match.params.tenantId
-                          );
+                      this.props.fetchGetPhoneNumbersByGroupId(
+                        this.props.match.params.tenantId,
+                        this.props.match.params.groupId
+                      );
                     }}
                   />
                 )}
@@ -179,7 +165,7 @@ export class AddPhoneNumberPage extends Component {
           {this.state.isLoadNewPhones === "load" && (
             <Row>
               <Col md={12}>
-                <Steps isGroupPage />
+                <AddUserPage />
               </Col>
             </Row>
           )}
@@ -190,13 +176,12 @@ export class AddPhoneNumberPage extends Component {
 }
 
 const mapStateToProps = state => ({
-  availableNumbersTenant: state.availableNumbersTenant,
-  availableMobileNumbers: state.availableMobileNumbers,
+  availableNumbersTenant: state.availableNumbersGroup,
   selfcareUrl: state.selfcareUrl
 });
 
 const mapDispatchToProps = {
-  fetchGetAvailableNumbersByTenantID,
+  fetchGetPhoneNumbersByGroupId,
   refuseAddPhoneToTenant,
   changeStepOfAddPhoneTenant,
   fetchGetMobileNumbersForTenant,

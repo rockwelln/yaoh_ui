@@ -1,6 +1,8 @@
 import React, { Component } from "react";
 import { withRouter } from "react-router";
 import { connect } from "react-redux";
+import { FormattedMessage } from "react-intl";
+import { NotificationsManager } from "../../../../utils";
 
 import {
   fetchGetTemplateDetails,
@@ -80,12 +82,27 @@ export class TemplatePage extends Component {
   }
 
   saveTemplate = () => {
+    const { templateData } = this.state;
+    let jsonData = "";
+    try {
+      jsonData = JSON.parse(templateData);
+    } catch (e) {
+      NotificationsManager.error(
+        <FormattedMessage
+          id="failed-parse-json"
+          defaultMessage="Failed to parse template data!"
+        />,
+        e.message
+      );
+      return;
+    }
+
     this.setState({ isLoading: true }, () =>
       this.props
         .fetchPutUpdateTemplate(
           this.props.match.params.categoryName,
           this.props.match.params.templateName,
-          { data: JSON.parse(this.state.templateData) }
+          { data: jsonData }
         )
         .finally(() =>
           this.setState({

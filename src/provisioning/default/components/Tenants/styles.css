@@ -6,6 +6,10 @@
   color: #000;
 }
 
+.glyphicon-plus-sign-disabled {
+  color: gray !important;
+}
+
 .glyphicon-remove {
   color: #000;
 }
@@ -315,4 +319,17 @@ textarea {
   height: -moz-available;
   height: -webkit-fill-available;
   height: stretch;
+}
+
+.crunch-suspension-modal {
+  position: relative;
+  margin-top: -434px;
+}
+
+.table-cell {
+  word-break: break-word;
+}
+
+.pointer-event-none {
+  pointer-events: none;
 }

@@ -15,7 +15,7 @@ class User extends Component {
     const { user, onReload, tenantId, groupId } = this.props;
     const { showDelete } = this.state;
     return (
-      <tr key={user.userId}>
+      <tr className={"table-cell"}>
         {/* <td>
           <Checkbox
             checked={user.userChecked}

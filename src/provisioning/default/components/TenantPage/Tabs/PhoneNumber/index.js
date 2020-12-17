@@ -11,6 +11,8 @@ import Row from "react-bootstrap/lib/Row";
 import Col from "react-bootstrap/lib/Col";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 import Pagination from "react-bootstrap/lib/Pagination";
+import OverlayTrigger from "react-bootstrap/lib/OverlayTrigger";
+import Tooltip from "react-bootstrap/lib/Tooltip";
 
 import { FormattedMessage } from "react-intl";
 
@@ -20,6 +22,7 @@ import Loading from "../../../../common/Loading";
 import PhoneNumber from "./PhoneNumber";
 import DeleteModal from "./MultipleDeleteModal";
 import { countsPerPages } from "../../../../constants";
+import { get } from "../../../get";
 
 import "./styles.css";
 
@@ -119,14 +122,35 @@ export class PhoneNumbersTab extends Component {
             </InputGroup>
           </Col>
           <Col md={1}>
-            <Link
-              to={`/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}/addphone`}
+            <OverlayTrigger
+              placement="top"
+              overlay={
+                get(this.props, "selfcareUrl.modules.nims") &&
+                this.props.selfcareUrl.modules.nims ? (
+                  <Tooltip id="tooltip">
+                    To select numbers from the inventory and assign to this
+                    tenant, please use the selfcare portal
+                  </Tooltip>
+                ) : (
+                  <div />
+                )
+              }
             >
-              <Glyphicon
-                className={"x-large"}
-                glyph="glyphicon glyphicon-plus-sign"
-              />
-            </Link>
+              <Link
+                to={`/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}/addphone`}
+                onClick={e => this.handleAddPhone(e)}
+              >
+                <Glyphicon
+                  className={`x-large ${
+                    get(this.props, "selfcareUrl.modules.nims") &&
+                    this.props.selfcareUrl.modules.nims
+                      ? "glyphicon-plus-sign-disabled"
+                      : ""
+                  }`}
+                  glyph="glyphicon glyphicon-plus-sign"
+                />
+              </Link>
+            </OverlayTrigger>
           </Col>
         </Row>
         {paginationPhoneNumbers.length ? (
@@ -421,11 +445,21 @@ export class PhoneNumbersTab extends Component {
       this.pagination()
     );
   };
+
+  handleAddPhone = e => {
+    if (
+      get(this.props, "selfcareUrl.modules.nims") &&
+      this.props.selfcareUrl.modules.nims
+    ) {
+      e.preventDefault();
+    }
+  };
 }
 
 const mapStateToProps = state => ({
   phoneNumbers: state.phoneNumbers,
-  phoneDeleted: state.phoneDeleted
+  phoneDeleted: state.phoneDeleted,
+  selfcareUrl: state.selfcareUrl
 });
 
 const mapDispatchToProps = {

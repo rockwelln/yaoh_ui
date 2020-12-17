@@ -9,6 +9,7 @@ import {
 import * as actionType from "./constants";
 import { FormattedMessage } from "react-intl";
 import React from "react";
+import { get } from "../components/get";
 
 export const getTenants = data => ({
   type: actionType.GET_TENANTS,
@@ -275,6 +276,31 @@ export const getMobileNumbersForGroup = data => ({
   data
 });
 
+export const getTenantSuspensionStatus = data => ({
+  type: actionType.GET_TENANT_SUSPENSION_STATUS,
+  data
+});
+
+export const getSuspensionOptions = data => ({
+  type: actionType.GET_SUSPENSION_OPTIONS,
+  data
+});
+
+export const getGroupSuspensionStatus = data => ({
+  type: actionType.GET_GROUP_SUSPENSION_STATUS,
+  data
+});
+
+export const getTenantEntitlements = data => ({
+  type: actionType.GET_TENANT_ENTITLEMENTS,
+  data
+});
+
+export const getEntitlementTypes = data => ({
+  type: actionType.GET_ENTITLEMENT_TYPES,
+  data
+});
+
 export const postCreateGroupAdmin = data => ({
   type: actionType.POST_CREATE_GROUP_ADMIN,
   data
@@ -370,6 +396,10 @@ export const postCreateTemplate = () => ({
   type: actionType.POST_CREATE_TEMPLATE
 });
 
+export const postAddEntitlementToTenant = () => ({
+  type: actionType.POST_ADD_ENTITLEMENTS_TO_TENANT
+});
+
 export const putUpdateUser = data => ({
   type: actionType.PUT_UPDATE_USER,
   data
@@ -459,6 +489,21 @@ export const putUpdateTemplate = data => ({
   data
 });
 
+export const putUpdateTenantSuspensionStatus = data => ({
+  type: actionType.PUT_UPDATE_TENANT_SUSPENSION_STATUS,
+  data
+});
+
+export const putUpdateGroupSuspensionStatus = data => ({
+  type: actionType.PUT_UPDATE_GROUP_SUSPENSION_STATUS,
+  data
+});
+
+export const putUpdateTenantEntitlement = data => ({
+  type: actionType.PUT_UPDATE_TENANT_ENTITLEMENT,
+  data
+});
+
 export const deleteTenant = data => ({
   type: actionType.DELETE_TENANT,
   data
@@ -531,6 +576,10 @@ export const deleteMobileNumberFromGroup = () => ({
 
 export const deleteTemplate = () => ({
   type: actionType.DELETE_TEMPLATE
+});
+
+export const deleteEntitlementFromTenant = () => ({
+  type: actionType.DELETE_ENTITLEMENT_FROM_TENANT
 });
 
 export const clearErrorMassage = () => ({
@@ -1066,15 +1115,16 @@ export function fetchGetCategoryByName(category) {
       `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/templates/categories/${category}`
     )
       .then(data => dispatch(getCategoryByName(data)))
-      .catch(error =>
+      .catch(error => {
+        getCategoryByName({ templates: [] });
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-category-failed"
             defaultMessage="Failed to fetch category!"
           />,
           error.message
-        )
-      );
+        );
+      });
   };
 }
 
@@ -1626,6 +1676,103 @@ export function fetchGetMobileNumbersForGroup(tenantId, groupId) {
   };
 }
 
+export function fetchGetTenantSuspensionStatus(tenantId) {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/properties/suspension/`
+    )
+      .then(data => dispatch(getTenantSuspensionStatus(data)))
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-suspension-status-failed"
+            defaultMessage="Failed to fetch suspension status"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchGetSuspensionOptions() {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/templates/categories/group_intercept`
+    )
+      .then(data => dispatch(getSuspensionOptions(data)))
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-suspension-options-failed"
+            defaultMessage="Failed to fetch suspension options"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchGetGroupSuspensionStatus(tenantId, groupId) {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/properties/suspension/`
+    )
+      .then(data => dispatch(getGroupSuspensionStatus(data)))
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-suspension-status-failed"
+            defaultMessage="Failed to fetch suspension status"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchGetTenantEntitlements(tenantId) {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/number_inventory/entitlements/`
+    )
+      .then(data => dispatch(getTenantEntitlements(data)))
+      .catch(error => {
+        console.log(error.response);
+        if (error.response.status === 404) {
+          dispatch(getTenantEntitlements({ entitlements: [] }));
+          return;
+        }
+        dispatch(getTenantEntitlements({ entitlements: [] }));
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-entitlements-failed"
+            defaultMessage="Failed to fetch entitlements"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchGetEntitlementTypes() {
+  return function(dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/number_inventory/entitlement_types/`
+    )
+      .then(data => dispatch(getEntitlementTypes(data)))
+      .catch(error => {
+        //dispatch(getTenantEntitlements({ entitlements: [] }));
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-entitlement-types-failed"
+            defaultMessage="Failed to fetch entitlement types"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
 export function fetchPostCreateGroupAdmin(tenantId, groupId, data) {
   return function(dispatch) {
     return fetch_post(
@@ -2029,6 +2176,36 @@ export function fetchPostCreateTemplate(category, data) {
           <FormattedMessage
             id="failed-to-create-template"
             defaultMessage="Failed to create template!"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchPostAddEntitlementToTenant(tenantId, data) {
+  return function(dispatch) {
+    return fetch_post(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/number_inventory/entitlements/`,
+      data
+    )
+      .then(res => res.json())
+      .then(() => {
+        dispatch(postAddEntitlementToTenant());
+        NotificationsManager.success(
+          <FormattedMessage
+            id="Entitlements-successfully-added"
+            defaultMessage="Entitlements successfully added"
+          />,
+          "Created"
+        );
+        return "success";
+      })
+      .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-add-entitlements"
+            defaultMessage="Failed to add entitlements!"
           />,
           error.message
         );
@@ -2552,6 +2729,97 @@ export function fetchPutUpdateTemplate(instanceName, templateName, data) {
   };
 }
 
+export function fetchPutUpdateTenantSuspensionStatus(tenantId, data) {
+  return function(dispatch) {
+    return fetch_put(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/properties/suspension/`,
+      data
+    )
+      .then(res => res.json())
+      .then(data => {
+        dispatch(putUpdateTenantSuspensionStatus(data));
+        NotificationsManager.success(
+          <FormattedMessage
+            id="suspension-status-successfully-updated"
+            defaultMessage="Suspension status successfully updated"
+          />,
+          "Updated"
+        );
+      })
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="suspension-status-profile-failed"
+            defaultMessage="Failed to update suspension status!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchPutUpdateGroupSuspensionStatus(tenantId, groupId, data) {
+  return function(dispatch) {
+    return fetch_put(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/properties/suspension/`,
+      data
+    )
+      .then(res => res.json())
+      .then(data => {
+        dispatch(putUpdateGroupSuspensionStatus(data));
+        NotificationsManager.success(
+          <FormattedMessage
+            id="suspension-status-successfully-updated"
+            defaultMessage="Suspension status successfully updated"
+          />,
+          "Updated"
+        );
+      })
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="suspension-status-profile-failed"
+            defaultMessage="Failed to update suspension status!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchPutUpdateTenantEntitlements(
+  tenantId,
+  entitlementId,
+  data
+) {
+  return function(dispatch) {
+    return fetch_put(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/number_inventory/entitlements/${entitlementId}`,
+      data
+    )
+      .then(res => res.json())
+      .then(() => {
+        dispatch(putUpdateTenantEntitlement());
+        NotificationsManager.success(
+          <FormattedMessage
+            id="Entitlement-successfully-updated"
+            defaultMessage="Entitlement successfully updated"
+          />,
+          "Updated"
+        );
+      })
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="entitlement-update-failed"
+            defaultMessage="Failed to update entitlement!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
 export function fetchDeleteTenant(ID) {
   return function(dispatch) {
     return fetch_delete(
@@ -2922,6 +3190,27 @@ export function fetchDeleteTemplate(category, templateName) {
           <FormattedMessage
             id="failed-to-delete-template"
             defaultMessage="Failed to delete template!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchDeleteEntitlementFromTenant(tenantId, entitlementId) {
+  return function(dispatch) {
+    return fetch_delete(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/number_inventory/entitlements/${entitlementId}`
+    )
+      .then(res => res.json())
+      .then(() => {
+        dispatch(deleteEntitlementFromTenant());
+      })
+      .catch(error =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-delete-entitlement"
+            defaultMessage="Failed to delete entitlement!"
           />,
           error.message
         )
