@@ -120,6 +120,7 @@ function saveActivity(activity, cb) {
         {
             'name': activity.name,
             'definition': activity.definition,
+            'description': activity.description,
         }
     )
     .then(r => r.json())
@@ -853,6 +854,37 @@ export function EditCellModal(props) {
     )
 }
 
+function EditDescriptionModal({show, value, onChange, onHide}) {
+    return (
+      <Modal show={show} onHide={() => onHide(false)} bsSize="large">
+        <Modal.Header closeButton>
+          <Modal.Title>Description</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form horizontal>
+            <FormGroup>
+              <Col sm={12}>
+                <FormControl componentClass="textarea"
+                 value={value || ""}
+                 rows={15}
+                 placeholder={"Description or website"}
+                 autoFocus
+                 onChange={onChange} />
+             </Col>
+            </FormGroup>
+            <FormGroup>
+              <Col sm={12}>
+                <Button onClick={() => onHide(true)} bsStyle={"primary"}>
+                  Save
+                </Button>
+              </Col>
+            </FormGroup>
+          </Form>
+        </Modal.Body>
+      </Modal>
+    )
+}
+
 function compareActivitiesDef(a, b) {
   return (b.definition &&
     (
@@ -863,6 +895,16 @@ function compareActivitiesDef(a, b) {
     )
   )
 }
+
+const DefaultDescriptionStyle = {
+    height: 50,
+    overflowY: 'hidden',
+    textOverflow: 'ellipsis'
+};
+
+const ExpandedDescriptionStyle= {
+    textOverflow: 'ellipsis'
+};
 
 export function ActivityEditor(props) {
     const [cells, setCells] = useState([]);
@@ -875,6 +917,9 @@ export function ActivityEditor(props) {
     const [newName, showNewName] = useState(false);
     const [editedCell, setEditedCell] = useState(undefined);
     const [alertNewVersion, setAlertNewVersion] = useState(false);
+    const [showEditDescription, setShowEditDescription] = useState(false);
+    const [description, setDescription] = useState("");
+    const [descriptionStyle, setDescriptionStyle] = useState(DefaultDescriptionStyle);
 
     useEffect(() => {
         fetchConfiguration(setConfiguration);
@@ -941,6 +986,7 @@ export function ActivityEditor(props) {
                 activityId,
                 activity => {
                     setCurrentActivity(activity);
+                    setDescription(activity.description);
                     setNewActivity(false);
                     document.title = `Editor - ${activity.name}`;
                 }
@@ -959,7 +1005,7 @@ export function ActivityEditor(props) {
         )
       }, 3000);
       return () => clearInterval(i);
-    }, [props.match.params.activityId, currentActivity])
+    }, [props.match.params.activityId, currentActivity]);
 
     return (
         <>
@@ -970,6 +1016,38 @@ export function ActivityEditor(props) {
                 </LinkContainer>
                 <Breadcrumb.Item active>{(currentActivity && currentActivity.name) || props.match.params.activityId}</Breadcrumb.Item>
             </Breadcrumb>
+            <Row>
+              <Col sm={11}>
+                <p style={descriptionStyle}>
+                  { currentActivity && (currentActivity.description || "no description").split("\n").map(d => <div>{d}<br/></div>) }
+                </p>
+                {descriptionStyle.height ?
+                  <Button bsStyle={"link"} onClick={() => setDescriptionStyle(ExpandedDescriptionStyle)}>show
+                    all</Button> :
+                  <Button bsStyle={"link"} onClick={() => setDescriptionStyle(DefaultDescriptionStyle)}>show
+                    less</Button>
+                }
+              </Col>
+              <Col sm={1}>
+                <Button onClick={() => setShowEditDescription(true)}>Edit</Button>
+                <EditDescriptionModal
+                  show={showEditDescription}
+                  onChange={e => setDescription(e.target.value)}
+                  value={description}
+                  onHide={save =>
+                    save ? saveActivity(
+                      {id: currentActivity.id, description: description},
+                      () => {
+                        setCurrentActivity(a => update(a, {$merge: {description: description}}));
+                        setShowEditDescription(false);
+                      }
+                    ) :
+                      setShowEditDescription(false)
+                  }
+                />
+              </Col>
+            </Row>
+            <hr />
             <Row>
                 <Col sm={2}>
                     <FormControl componentClass="input" placeholder="Name" ref={titleRef}/>
@@ -988,7 +1066,6 @@ export function ActivityEditor(props) {
                   Refresh to have the very last version.
                 </Alert>
             }
-            <hr />
             <Row>
                 <Col>
                     <div ref={editorRef} style={{overflow: 'hidden', backgroundImage: `url(${GridPic})`}} />
