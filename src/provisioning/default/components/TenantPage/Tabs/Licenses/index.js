@@ -558,8 +558,7 @@ export class Licenses extends Component {
                     this.state.limitedUserServicesTenant[indexOfService].name
                   }
                   allocated={
-                    this.state.limitedUserServicesTenant[indexOfService]
-                      .currentlyAllocated
+                    this.state.limitedUserServicesTenant[indexOfService].inUse
                   }
                   value={
                     this.state.limitedUserServicesTenant[indexOfService]

@@ -135,7 +135,8 @@ const initialState = {
   tenantEntitlements: [],
   entitlementTypes: { customer_licenses: [] },
   availableNumbersGroup: [],
-  limitedUserServicesTenant: {}
+  limitedUserServicesTenant: {},
+  limitedUserServicesGroup: {}
 };
 
 function mainReducer(state = initialState, action) {
@@ -298,6 +299,15 @@ function mainReducer(state = initialState, action) {
         return 0;
       });
       const groupServices = [...groupServicesShown, ...groupServicesHide];
+      const limitedUS = action.data.userServices.filter(
+        el => el.allocated && !el.allocated.unlimited
+      );
+      const userServices = [
+        ...limitedUS.slice(0, 9),
+        ...limitedUS
+          .slice(9, limitedUS.length)
+          .map(el => ({ ...el, hide: true, additional: true }))
+      ];
       return {
         ...state,
         servicePacks: action.data.servicePacks,
@@ -305,6 +315,7 @@ function mainReducer(state = initialState, action) {
           groups: groupServices,
           countShown: groupServicesShown.length
         },
+        limitedUserServicesGroup: { services: userServices, countShown: 10 },
         availableTrunkGroups:
           availableTrunkGroups[0] && availableTrunkGroups[0],
         userServicesGroup: action.data.userServices
@@ -1428,6 +1439,24 @@ function mainReducer(state = initialState, action) {
       return {
         ...state,
         limitedUserServicesTenant: {
+          ...state.tenantLicenses,
+          services: newTanantLicenses
+        }
+      };
+    }
+    case actionType.SHOW_HIDE_ADDITIONAL_USER_SERVICES_GROUP: {
+      const newTanantLicenses = [];
+      state.limitedUserServicesGroup.services &&
+        state.limitedUserServicesGroup.services.forEach(el => {
+          if (el.additional) {
+            newTanantLicenses.push({ ...el, hide: action.data });
+          } else {
+            newTanantLicenses.push(el);
+          }
+        });
+      return {
+        ...state,
+        limitedUserServicesGroup: {
           ...state.tenantLicenses,
           services: newTanantLicenses
         }

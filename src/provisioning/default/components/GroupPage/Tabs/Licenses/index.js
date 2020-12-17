@@ -26,7 +26,8 @@ import {
   fetchPostAddGroupServicesToGroup,
   fetchGetTenantServicePack,
   showHideAdditionalServiceGroup,
-  fetchGetTenantGroupService
+  fetchGetTenantGroupService,
+  showHideAdditionalUserServicesGroup
 } from "../../../../store/actions";
 
 const INFINITY = 8734;
@@ -46,7 +47,8 @@ export class Licenses extends Component {
     editServicePacks: false,
     indexOfService: 0,
     showMore: true,
-    editUserLimit: false
+    editUserLimit: false,
+    editUserServices: false
   };
 
   fetchData = () => {
@@ -59,6 +61,8 @@ export class Licenses extends Component {
               groupServices: this.props.groupServices.groups,
               servicePacks: this.props.servicePacks,
               newUserLimit: this.props.group.userLimit,
+              limitedUserServicesGroup: this.props.limitedUserServicesGroup
+                .services,
               isLoading: data ? false : true
             },
             () => this.props.showHideAdditionalServiceGroup(this.state.showMore)
@@ -99,7 +103,8 @@ export class Licenses extends Component {
       editServicePacks,
       editGroupServices,
       indexOfService,
-      editUserLimit
+      editUserLimit,
+      editUserServices
     } = this.state;
 
     if (isLoading || isLoadingTrunk) {
@@ -484,10 +489,138 @@ export class Licenses extends Component {
               )}
             </Panel.Body>
           </Panel>
+          <Panel>
+            <Panel.Heading>
+              <FormattedMessage
+                id="user_services"
+                defaultMessage="USER SERVICES"
+              />
+            </Panel.Heading>
+            <Panel.Body>
+              {this.props.limitedUserServicesGroup &&
+              this.props.limitedUserServicesGroup.services.length ? (
+                <LicensesPanel
+                  licenses={this.props.limitedUserServicesGroup.services}
+                  showHide={this.showHideAdditionalUserServices}
+                  showEdit={this.showEditUserServices}
+                  withShowMore
+                />
+              ) : (
+                <FormattedMessage
+                  id="No_services_found"
+                  defaultMessage="No services were found"
+                />
+              )}
+              {editUserServices && (
+                <SingleEdit
+                  isEditPacks
+                  show={editUserServices}
+                  title={
+                    <FormattedMessage
+                      id="user_services"
+                      defaultMessage="USER SERVICES"
+                    />
+                  }
+                  onClose={() =>
+                    this.setState({ editUserServices: false }, () =>
+                      this.fetchData()
+                    )
+                  }
+                  licenseTitle={
+                    this.state.limitedUserServicesGroup[indexOfService].name
+                  }
+                  allocated={
+                    this.state.limitedUserServicesGroup[indexOfService].inUse
+                  }
+                  value={
+                    this.state.limitedUserServicesGroup[indexOfService]
+                      .allocated.maximum
+                  }
+                  infinity={
+                    this.state.limitedUserServicesGroup[indexOfService]
+                      .allocated.unlimited
+                  }
+                  onChangeInfinity={this.changeUserServicesUnlimeted}
+                  onChange={this.changeUserServicesMaximum}
+                  onSave={this.updateUserServices}
+                />
+              )}
+            </Panel.Body>
+          </Panel>
         </Col>
       </Row>
     );
   }
+
+  updateUserServices = () => {
+    const data = {
+      userServices: this.state.limitedUserServicesGroup
+    };
+
+    this.props
+      .fetchPutUpdateGroupServicesByGroupId(
+        this.props.match.params.tenantId,
+        this.props.match.params.groupId,
+        data
+      )
+      .then(() => this.fetchData())
+      .then(() => this.setState({ editUserServices: false }));
+  };
+
+  changeUserServicesMaximum = max => {
+    this.setState(prevState => ({
+      limitedUserServicesGroup: [
+        ...prevState.limitedUserServicesGroup.slice(
+          0,
+          this.state.indexOfService
+        ),
+        {
+          ...prevState.limitedUserServicesGroup[this.state.indexOfService],
+          allocated: {
+            ...prevState.limitedUserServicesGroup[this.state.indexOfService]
+              .allocated,
+            maximum: Number(max)
+          }
+        },
+        ...prevState.limitedUserServicesGroup.slice(
+          this.state.indexOfService + 1
+        )
+      ]
+    }));
+  };
+
+  changeUserServicesUnlimeted = checked => {
+    this.setState(prevState => ({
+      limitedUserServicesGroup: [
+        ...prevState.limitedUserServicesGroup.slice(
+          0,
+          this.state.indexOfService
+        ),
+        {
+          ...prevState.limitedUserServicesGroup[this.state.indexOfService],
+          allocated: {
+            ...prevState.limitedUserServicesGroup[this.state.indexOfService]
+              .allocated,
+            unlimited: checked
+          }
+        },
+        ...prevState.limitedUserServicesGroup.slice(
+          this.state.indexOfService + 1
+        )
+      ]
+    }));
+  };
+
+  showEditUserServices = index => {
+    this.setState({ indexOfService: index }, () =>
+      this.setState({ editUserServices: true })
+    );
+  };
+
+  showHideAdditionalUserServices = status => {
+    this.setState({ showMoreUserServices: status });
+    this.props.showHideAdditionalUserServicesGroup(status);
+  };
 
   showEditGroupServices = index => {
     this.setState({ indexOfService: index }, () =>
@@ -701,7 +834,8 @@ const mapStateToProps = state => ({
   userServices: state.userServicesGroup,
   fetchTrunksGroupsFail: state.fetchTrunksGroupsFail,
   tenantServicePack: state.tenantServicePack,
-  tenantGroupService: state.tenantGroupService
+  tenantGroupService: state.tenantGroupService,
+  limitedUserServicesGroup: state.limitedUserServicesGroup
 });
 
 const mapDispatchToProps = {
@@ -715,7 +849,8 @@ const mapDispatchToProps = {
   fetchPostAddGroupServicesToGroup,
   fetchGetTenantServicePack,
   showHideAdditionalServiceGroup,
-  fetchGetTenantGroupService
+  fetchGetTenantGroupService,
+  showHideAdditionalUserServicesGroup
 };
 
 export default withRouter(
