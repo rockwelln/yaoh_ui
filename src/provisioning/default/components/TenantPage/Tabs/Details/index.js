@@ -78,51 +78,7 @@ class Details extends Component {
         this.props
           .fetchGetTenantVoiceMessaging(this.props.tenantId)
           .then(() => {
-            this.setState({
-              isLoadingVM: false,
-              voiceMessageDelivery: get(
-                this.props,
-                "tenantVoiceMessaging.voiceMessageDelivery.fromAddress"
-              )
-                ? this.props.tenantVoiceMessaging.voiceMessageDelivery
-                    .fromAddress
-                : "",
-              systemDefaultMD: get(
-                this.props,
-                "tenantVoiceMessaging.voiceMessageDelivery.systemDefault"
-              )
-                ? this.props.tenantVoiceMessaging.voiceMessageDelivery
-                    .systemDefault
-                : true,
-              voiceMessageNotification: get(
-                this.props,
-                "tenantVoiceMessaging.voiceMessageNotification.fromAddress"
-              )
-                ? this.props.tenantVoiceMessaging.voiceMessageNotification
-                    .fromAddress
-                : "",
-              systemDefaultMN: get(
-                this.props,
-                "tenantVoiceMessaging.voiceMessageNotification.systemDefault"
-              )
-                ? this.props.tenantVoiceMessaging.voiceMessageNotification
-                    .systemDefault
-                : true,
-              voicePortalPasscodeLockout: get(
-                this.props,
-                "tenantVoiceMessaging.voicePortalPasscodeLockout.fromAddress"
-              )
-                ? this.props.tenantVoiceMessaging.voicePortalPasscodeLockout
-                    .fromAddress
-                : "",
-              systemDefaultPPL: get(
-                this.props,
-                "tenantVoiceMessaging.voicePortalPasscodeLockout.systemDefault"
-              )
-                ? this.props.tenantVoiceMessaging.voicePortalPasscodeLockout
-                    .systemDefault
-                : true
-            });
+            this.setVoiceMessaging();
           });
       }
     );
@@ -138,6 +94,12 @@ class Details extends Component {
       this.props.refreshTab
     ) {
       this.fetchReq();
+    }
+    if (
+      JSON.stringify(prevProps.tenantVoiceMessaging) !==
+      JSON.stringify(this.props.tenantVoiceMessaging)
+    ) {
+      this.setVoiceMessaging();
     }
   }
 
@@ -570,6 +532,49 @@ class Details extends Component {
       </Col>
     );
   }
+
+  setVoiceMessaging = () => {
+    this.setState({
+      isLoadingVM: false,
+      voiceMessageDelivery: get(
+        this.props,
+        "tenantVoiceMessaging.voiceMessageDelivery.fromAddress"
+      )
+        ? this.props.tenantVoiceMessaging.voiceMessageDelivery.fromAddress
+        : "",
+      systemDefaultMD: get(
+        this.props,
+        "tenantVoiceMessaging.voiceMessageDelivery.systemDefault"
+      )
+        ? this.props.tenantVoiceMessaging.voiceMessageDelivery.systemDefault
+        : true,
+      voiceMessageNotification: get(
+        this.props,
+        "tenantVoiceMessaging.voiceMessageNotification.fromAddress"
+      )
+        ? this.props.tenantVoiceMessaging.voiceMessageNotification.fromAddress
+        : "",
+      systemDefaultMN: get(
+        this.props,
+        "tenantVoiceMessaging.voiceMessageNotification.systemDefault"
+      )
+        ? this.props.tenantVoiceMessaging.voiceMessageNotification.systemDefault
+        : true,
+      voicePortalPasscodeLockout: get(
+        this.props,
+        "tenantVoiceMessaging.voicePortalPasscodeLockout.fromAddress"
+      )
+        ? this.props.tenantVoiceMessaging.voicePortalPasscodeLockout.fromAddress
+        : "",
+      systemDefaultPPL: get(
+        this.props,
+        "tenantVoiceMessaging.voicePortalPasscodeLockout.systemDefault"
+      )
+        ? this.props.tenantVoiceMessaging.voicePortalPasscodeLockout
+            .systemDefault
+        : true
+    });
+  };
 
   showHideMore = () => {
     this.setState(prevState => ({

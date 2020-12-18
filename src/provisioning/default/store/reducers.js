@@ -1052,7 +1052,8 @@ function mainReducer(state = initialState, action) {
     }
     case actionType.PUT_UPDATE_TENANT_VOICE_MESSAGING: {
       return {
-        ...state
+        ...state,
+        tenantVoiceMessaging: action.data
       };
     }
     case actionType.PUT_UPDATE_TENANT_SUSPENSION_STATUS: {
