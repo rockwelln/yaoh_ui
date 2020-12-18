@@ -18,6 +18,9 @@ import FormControl from "react-bootstrap/lib/FormControl";
 import Table, {th, tr, td} from "react-bootstrap/lib/Table";
 import HelpBlock from "react-bootstrap/lib/HelpBlock";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
+import Select from "react-select";
+import InputGroup from "react-bootstrap/lib/InputGroup";
+import {DeleteConfirmButton} from "../utils/deleteConfirm";
 
 
 const validateCronEntry = (timer) => {
@@ -76,7 +79,7 @@ class NewCronTimer extends React.Component {
     }
 
     static getDerivedStateFromProps(props, state) {
-        if (props.activities && state.new_timer && state.new_timer.activity_id === undefined) {
+        if (props.activities && props.activities.length > 0 && state.new_timer && state.new_timer.activity_id === undefined) {
             return {
                 new_timer: update(state.new_timer, {$merge: {activity_id: props.activities[0]["id"]}})
             };
@@ -92,9 +95,11 @@ class NewCronTimer extends React.Component {
         const validJobId = new_timer.job_id && new_timer.job_id.length > 0 ? "success": null;
         const validCronEntry = validateCronEntry(new_timer) ? null :"error";
         const validForm = validJobId === "success" && validCronEntry !== "error";
+
+        const activitiesOptions = activities.sort((a, b) => a.name.localeCompare(b.name)).map(a => ({value: a.id, label: a.name}));
         return (
             <div>
-                <Button onClick={() => this.setState({show: true})}>
+                <Button onClick={() => this.setState({show: true})} bsStyle={"primary"}>
                     <FormattedMessage id="new-timer" defaultMessage="New timer" />
                 </Button>
                 <Modal show={show} onHide={hideNewTimer} backdrop={false}>
@@ -197,20 +202,19 @@ class NewCronTimer extends React.Component {
                                 </Col>
 
                                 <Col sm={9}>
-                                    <FormControl
-                                        componentClass="select"
-                                        value={new_timer.activity_id}
-                                        onChange={e => this.setState({new_timer: update(new_timer, {$merge: {activity_id: parseInt(e.target.value, 10)}})})}>
-                                        {
-                                            activities && activities
-                                            .sort((a,b) => {
-                                                if(a.name > b.name) return 1;
-                                                if(a.name < b.name) return -1;
-                                                return 0;
-                                            })
-                                            .map(a => <option value={a.id} key={a.id}>{a.name}</option>)
-                                        }
-                                    </FormControl>
+                                    <Select
+                                        className="basic-single"
+                                        classNamePrefix="select"
+                                        value={new_timer.activity_id && activitiesOptions.find(a => a.value === new_timer.activity_id)}
+                                        isClearable={false}
+                                        isSearchable={true}
+                                        name="activity"
+                                        onChange={(value, action) => {
+                                            if(["select-option", "clear"].includes(action.action)) {
+                                              this.setState({new_timer: update(new_timer, {$merge: {activity_id: value.value}})})
+                                            }
+                                        }}
+                                        options={activitiesOptions} />
                                 </Col>
                             </FormGroup>
                             <FormGroup>
@@ -278,6 +282,8 @@ class UpdateTimer extends React.Component {
         const validJobId = !new_timer.job_id || new_timer.job_id.length === 0 ? "error": null;
         const validCronEntry = validateCronEntry(new_timer) ? null :"error";
         const validForm = validJobId !== "error" && validCronEntry !== "error";
+        const activitiesOptions = activities.sort((a, b) => a.name.localeCompare(b.name)).map(a => ({value: a.id, label: a.name}));
+
         return (
             <div>
                 <Button onClick={() => this.setState({show: true})} bsStyle="primary" style={{marginLeft: '5px', marginRight: '5px'}}>
@@ -383,20 +389,19 @@ class UpdateTimer extends React.Component {
                                 </Col>
 
                                 <Col sm={9}>
-                                    <FormControl
-                                        componentClass="select"
-                                        value={new_timer.activity_id}
-                                        onChange={e => this.setState({diff_timer: update(diff_timer, {$merge: {activity_id: parseInt(e.target.value, 10)}})})}>
-                                        {
-                                            activities && activities
-                                            .sort((a,b) => {
-                                                if(a.name > b.name) return 1;
-                                                if(a.name < b.name) return -1;
-                                                return 0;
-                                            })
-                                            .map(a => <option value={a.id} key={a.id}>{a.name}</option>)
-                                        }
-                                    </FormControl>
+                                    <Select
+                                        className="basic-single"
+                                        classNamePrefix="select"
+                                        value={new_timer.activity_id && activitiesOptions.find(a => a.value === new_timer.activity_id)}
+                                        isClearable={false}
+                                        isSearchable={true}
+                                        name="activity"
+                                        onChange={(value, action) => {
+                                            if(["select-option", "clear"].includes(action.action)) {
+                                              this.setState({diff_timer: update(diff_timer, {$merge: {activity_id: value.value}})})
+                                            }
+                                        }}
+                                        options={activitiesOptions} />
                                 </Col>
                             </FormGroup>
                             <FormGroup>
@@ -433,25 +438,17 @@ class UpdateTimer extends React.Component {
 }
 
 
-const DeleteTimer = ({timer, onClose}) => {
-    const onDelete = () => {
-        fetch_delete(`/api/v01/timers/cron/${timer.id}`)
-            .then(() => {
-                NotificationsManager.success(<FormattedMessage id="cron-timer-delete-failed" defaultMessage="Timer deleted!" />);
-                onClose();
-            })
-            .catch(error => NotificationsManager.error(
-                <FormattedMessage id="cron-timer-delete-failed" defaultMessage="Timer delete failed!" />,
-                error.message
-        ))
-    };
-
-    return (
-        <Button onClick={onDelete} bsStyle="danger" style={{marginLeft: '5px', marginRight: '5px'}}>
-            <Glyphicon glyph="remove-sign"/>
-        </Button>
-    )
-};
+function deleteCronTimer(id, onSuccess) {
+    fetch_delete(`/api/v01/timers/cron/${id}`)
+        .then(() => {
+            NotificationsManager.success(<FormattedMessage id="cron-timer-delete-failed" defaultMessage="Timer deleted!" />);
+            onSuccess && onSuccess();
+        })
+        .catch(error => NotificationsManager.error(
+            <FormattedMessage id="cron-timer-delete-failed" defaultMessage="Timer delete failed!" />,
+            error.message
+    ))
+}
 
 
 export default class CronTimers extends Search {
@@ -461,6 +458,10 @@ export default class CronTimers extends Search {
         defaultSortingSpec: [{field: 'job_id', direction: 'asc'}],
     }});
 
+    constructor(props) {
+        super(props);
+        this.state.activities = [];
+    }
     fetchActivities() {
         fetch_get('/api/v01/activities')
             .then(data => !this.cancelLoad && this.setState({activities: data.activities}))
@@ -505,6 +506,8 @@ export default class CronTimers extends Search {
 
     render() {
         const {resources, sorting_spec, pagination, activities} = this.state;
+        const activitiesOptions = activities.sort((a, b) => a.name.localeCompare(b.name)).map(a => ({value: a.id, label: a.name}));
+
         return (
             <div>
                 <Breadcrumb>
@@ -524,6 +527,7 @@ export default class CronTimers extends Search {
                                     title: '',
                                     field: 'enabled',
                                     sortable: true,
+                                    style: { width: 50 },
                                     render: n => (
                                         <Checkbox
                                             checked={n.enabled}
@@ -535,32 +539,56 @@ export default class CronTimers extends Search {
                                     )
                                 },
                                 {title: "job id", field: 'job_id', sortable: true},
-                                {title: "minute", field: 'minute'},
-                                {title: "hour", field: 'hour'},
-                                {title: "day", field: 'day'},
-                                {title: "month", field: 'month'},
-                                {title: "year", field: 'year'},
+                                {title: "minute", field: 'minute', style: { width: 70 }},
+                                {title: "hour", field: 'hour', style: { width: 70 }},
+                                {title: "day", field: 'day', style: { width: 70 }},
+                                {title: "month", field: 'month', style: { width: 70 }},
+                                {title: "year", field: 'year', style: { width: 70 }},
                                 {
                                     title: <FormattedMessage id="activity" defaultMessage="Activity"/>,
                                     field: 'activity_id',
+                                    style: { width: 300 },
                                     render: n => (
-                                        <select onChange={e => this.onSelectActivity(n.id, e.target.value)} value={n.activity_id || ''}>
-                                            {activities && activities
-                                                .sort((a,b) => {
-                                                    if(a.name > b.name) return 1;
-                                                    if(a.name < b.name) return -1;
-                                                    return 0;
-                                                })
-                                                .map(a => <option value={a.id} key={a.id}>{a.name}</option>)
-                                            }
-                                        </select>
+                                        <InputGroup>
+                                            <Select
+                                                className="basic-single"
+                                                classNamePrefix="select"
+                                                value={n.activity_id && activitiesOptions.find(a => a.value === n.activity_id)}
+                                                isClearable={false}
+                                                isSearchable={true}
+                                                name="activity"
+                                                onChange={(value, action) => {
+                                                    if(["select-option", "clear"].includes(action.action)) {
+                                                      this.onSelectActivity(n.id, value && value.value);
+                                                    }
+                                                }}
+                                                options={activitiesOptions} />
+                                            <InputGroup.Button>
+                                                <Button
+                                                    disabled={n.activity_id === null}
+                                                    bsStyle="primary"
+                                                    onClick={() => {
+                                                        let win = window.open(`/transactions/config/activities/editor/${n.activity_id}`, '_blank');
+                                                        win.focus();
+                                                    }}
+                                                    style={{marginLeft: '5px'}}
+                                                >
+                                                    <Glyphicon glyph="eye-open"/>
+                                                </Button>
+                                            </InputGroup.Button>
+                                        </InputGroup>
                                     )
                                 },
                                 {
-                                    title: '', render: n => (
-                                        <ButtonToolbar style={{width: "100px"}}>
+                                    title: '',
+                                    style: { width: "200px" },
+                                    render: n => (
+                                        <ButtonToolbar>
                                             <UpdateTimer onClose={() => this._refresh()} timer={n}  activities={activities} />
-                                            <DeleteTimer onClose={() => this._refresh()} timer={n} />
+                                            <DeleteConfirmButton
+                                                resourceName={n.job_id}
+                                                style={{marginLeft: '5px', marginRight: '5px'}}
+                                                onConfirm={() => deleteCronTimer(n.id, () => this._refresh())} />
                                         </ButtonToolbar>
                                     )
                                 },
