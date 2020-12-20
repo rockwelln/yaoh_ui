@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, {useState, useEffect, useRef, useLayoutEffect} from 'react';
 import ReactDOM from 'react-dom';
 import {Redirect} from "react-router";
 import {fetch_post, fetch_get, fetch_delete, fetch_put, NotificationsManager} from "../utils";
@@ -906,6 +906,21 @@ const ExpandedDescriptionStyle= {
     textOverflow: 'ellipsis'
 };
 
+
+function useWindowSize() {
+  const [size, setSize] = useState([0, 0]);
+  useLayoutEffect(() => {
+    function updateSize() {
+      setSize([window.innerWidth, window.innerHeight]);
+    }
+    window.addEventListener('resize', updateSize);
+    updateSize();
+    return () => window.removeEventListener('resize', updateSize);
+  }, []);
+  return size;
+}
+
+
 export function ActivityEditor(props) {
     const [cells, setCells] = useState([]);
     const [configuration, setConfiguration] = useState({});
@@ -920,6 +935,7 @@ export function ActivityEditor(props) {
     const [showEditDescription, setShowEditDescription] = useState(false);
     const [description, setDescription] = useState("");
     const [descriptionStyle, setDescriptionStyle] = useState(DefaultDescriptionStyle);
+    const [width, height] = useWindowSize();
 
     useEffect(() => {
         fetchConfiguration(setConfiguration);
@@ -965,6 +981,33 @@ export function ActivityEditor(props) {
           setEditor(e);
         })
     }, [editorRef, toolbarRef, titleRef, currentActivity, newActivity, cells]);
+
+    useEffect(() => {
+      // force the width of the container
+      if (editor && editorRef.current) {
+        const graph = editor.graph;
+        const container = ReactDOM.findDOMNode(editorRef.current);
+        graph.doResizeContainer(container.parentElement.getBoundingClientRect().width, 600);
+
+        // reset the graph start to adjust correctly the view afterwards
+        graph.view.setTranslate(0, 0);
+        // fit
+        var margin = 2;
+        var max = 1;
+
+        var bounds = graph.getGraphBounds();
+        var cw = graph.container.clientWidth - margin;
+        var ch = graph.container.clientHeight - margin;
+        var w = bounds.width / graph.view.scale;
+        var h = bounds.height / graph.view.scale;
+        var s = Math.min(max, Math.min(cw / w, ch / h));
+
+        graph.view.scaleAndTranslate(s,
+          (margin + cw - w * s) / (2 * s) - bounds.x / graph.view.scale,
+          (margin + ch - h * s) / (4 * s) - bounds.y / graph.view.scale
+        )
+      }
+    }, [height, width, editor, editorRef]);
 
     useEffect(() => {
         editor && editor.addAction('add_process', () =>
