@@ -272,6 +272,7 @@ export function Activities(props) {
                         <thead>
                             <tr>
                                 <th>Name</th>
+                                <th>Version</th>
                                 <th>Created on</th>
                                 <th/>
                             </tr>
@@ -288,6 +289,7 @@ export function Activities(props) {
                                 .map(a => (
                                     <tr key={a.id}>
                                         <td>{a.name}</td>
+                                        <td>{a.version_label || WORKING_VERSION_LABEL}</td>
                                         <td>{a.created_on}</td>
 
                                         <td>
