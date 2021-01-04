@@ -27,7 +27,7 @@ import InputGroup from "react-bootstrap/lib/InputGroup";
 import InputGroupButton from "react-bootstrap/lib/InputGroupButton";
 import {DeleteConfirmButton} from "../utils/deleteConfirm";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {faArrowDown, faArrowUp, faChartBar, faSpinner} from "@fortawesome/free-solid-svg-icons";
+import {faArrowDown, faArrowUp, faChartBar, faCopy, faSpinner} from "@fortawesome/free-solid-svg-icons";
 import {Link} from "react-router-dom";
 import {SimulatorPanel} from "./simulator";
 import Checkbox from "react-bootstrap/lib/Checkbox";
@@ -243,13 +243,18 @@ export function Activities(props) {
     const [showNew, setShowNew] = useState(false);
     const [loading, setLoading] = useState(false);
     const [filter, setFilter] = useState("");
+    const [duplicateActivity, setDuplicateActivity] = useState();
+
+    const loadActivities = () => {
+      setLoading(true);
+      fetchActivities(a => {
+          setActivities(a);
+          setLoading(false);
+      });
+    }
 
     useEffect(() => {
-        setLoading(true);
-        fetchActivities(a => {
-            setActivities(a);
-            setLoading(false);
-        });
+        loadActivities();
         document.title = "Activities";
     }, []);
 
@@ -288,15 +293,20 @@ export function Activities(props) {
                                         <td>
                                             <ButtonToolbar>
                                                 <LinkContainer to={`/transactions/config/activities/editor/${a.id}`}>
-                                                    <Button bsStyle="primary"
-                                                            style={{marginLeft: '5px', marginRight: '5px'}}>
+                                                    <Button bsStyle="primary">
                                                         <Glyphicon glyph="pencil"/>
                                                     </Button>
                                                 </LinkContainer>
                                                 <DeleteConfirmButton
                                                     resourceName={a.name}
-                                                    style={{marginLeft: '5px', marginRight: '5px'}}
+                                                    style={{marginLeft: '5px'}}
                                                     onConfirm={() => deleteActivity(a.id, () => fetchActivities(setActivities))} />
+                                                <Button
+                                                  bsStyle="primary"
+                                                  style={{marginLeft: '5px'}}
+                                                  onClick={() => setDuplicateActivity(a.id)}>
+                                                    <FontAwesomeIcon icon={faCopy}/>
+                                                </Button>
                                             </ButtonToolbar>
                                         </td>
                                     </tr>
@@ -305,6 +315,21 @@ export function Activities(props) {
                         }
                         </tbody>
                     </Table>
+                    <NewNameModal
+                        show={duplicateActivity !== undefined}
+                        isValidName={name => !activities.map(a => a.name).includes(name)}
+                        title={"Duplicate"}
+                        onHide={name => {
+                            fetchActivity(duplicateActivity, a => {
+                              a.name = name;
+                              delete a.id;
+                              a.definition = JSON.parse(a.definition);
+                              saveActivity(a, () => {
+                                setDuplicateActivity(undefined);
+                                loadActivities();
+                              });
+                            })
+                        }} />
                 </Panel.Body>
             </Panel>
 
@@ -401,20 +426,20 @@ function ActivityStatsModal(props) {
 
 
 function NewNameModal(props) {
-    const {show, activity, onHide} = props;
+    const {show, title, onHide, isValidName} = props;
     const [name, setName] = useState("");
 
     useEffect(() => {
       !show && setName("");
     }, [show]);
 
-    const duplicateName = activity && Object.keys(activity.definition.cells).includes(name);
-    const validName = name && name.length !== 0 && (!activity || !duplicateName);
+    const duplicateName = !isValidName(name);
+    const validName = name && name.length !== 0 && !duplicateName;
 
     return (
         <Modal show={show} onHide={() => onHide(null)} bsSize={"large"}>
             <Modal.Header closeButton>
-                <Modal.Title>New cell</Modal.Title>
+                <Modal.Title>{title}</Modal.Title>
             </Modal.Header>
             <Modal.Body>
                 <Form onSubmit={e => {e.preventDefault(); onHide(name);}} horizontal>
@@ -430,7 +455,7 @@ function NewNameModal(props) {
                                 value={name}
                                 onChange={e => setName(e.target.value)}/>
                           { duplicateName &&
-                            <HelpBlock>Duplicate name in the workflow</HelpBlock>
+                            <HelpBlock>Duplicate name</HelpBlock>
                           }
                         </Col>
                     </FormGroup>
@@ -1328,7 +1353,8 @@ export function ActivityEditor(props) {
 
             <NewNameModal
                 show={newName}
-                activity={editor && editor.getDefinition().activity}
+                title={"New cell"}
+                isValidName={name => editor && !Object.keys(editor.getDefinition().activity.definition.cells).includes(name)}
                 onHide={newName => import("./editor").then(e => {
                     showNewName(false);
                     if(!newName) return;
