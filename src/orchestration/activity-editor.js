@@ -1189,9 +1189,8 @@ export function ActivityEditor(props) {
                 <LinkContainer to={`/transactions/config/activities/editor`}>
                     <Breadcrumb.Item><FormattedMessage id="activity-editor" defaultMessage="Activities"/></Breadcrumb.Item>
                 </LinkContainer>
-                <Breadcrumb.Item active>
+                <Breadcrumb.Item style={{textTransform: "none"}} active>
                   {(currentActivity && currentActivity.name) || activityId}
-                  {' '}
                 </Breadcrumb.Item>
             </Breadcrumb>
             <Row>
