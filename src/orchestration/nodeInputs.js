@@ -10,6 +10,9 @@ import {fetchActivities} from "./activity-editor";
 import {fetch_get} from "../utils";
 import {MentionExample} from "./templateEditor";
 import Creatable from 'react-select/creatable';
+import Select from "react-select";
+import InputGroup from "react-bootstrap/lib/InputGroup";
+import Glyphicon from "react-bootstrap/lib/Glyphicon";
 
 
 function BasicInput(props) {
@@ -81,8 +84,40 @@ function ActivityInput(props) {
   const [activities, setActivities] = useState([]);
 
   useEffect(() => {
-    fetchActivities(activities => setActivities(activities.map(a => a.name).sort((a, b) => a.localeCompare(b))))
+    fetchActivities(setActivities)
   }, []);
+
+  const activitiesOptions = activities.sort((a, b) => a.name.localeCompare(b.name)).map(a => ({value: a.name, label: a.name, id: a.id}));
+
+  return (
+    <InputGroup>
+      <Select
+          className="basic-single"
+          classNamePrefix="select"
+          value={value && activitiesOptions.find(a => a.value === value)}
+          isClearable={true}
+          isSearchable={true}
+          name="activity"
+          onChange={(value, action) => {
+              if(["select-option", "clear"].includes(action.action)) {
+                onChange(value?value.value:"");
+              }
+          }}
+          options={activitiesOptions} />
+      <InputGroup.Button>
+          <Button
+              disabled={!value}
+              bsStyle="primary"
+              onClick={() => {
+                window.open(`/transactions/config/activities/editor/${activitiesOptions.find(a => a.value === value).id}`, '_blank').focus();
+              }}
+              style={{marginLeft: '5px'}}
+          >
+              <Glyphicon glyph="eye-open"/>
+          </Button>
+      </InputGroup.Button>
+    </InputGroup>
+  )
 
   return (
     <FormControl
