@@ -118,20 +118,6 @@ function ActivityInput(props) {
       </InputGroup.Button>
     </InputGroup>
   )
-
-  return (
-    <FormControl
-        componentClass="select"
-        value={value}
-        onChange={e => onChange(e.target.value)}
-    >
-      <option value={""}/>
-      {
-        activities
-          .map(a => <option value={a} key={a}>{a}</option>)
-      }
-    </FormControl>
-  )
 }
 
 
@@ -299,10 +285,10 @@ function TimerInput(props) {
 
 
 function BoolInput(props) {
-  const {value, onChange} = props;
+  const {value, defaultChecked, onChange} = props;
   return (
     <Checkbox
-      checked={value === "true"}
+      checked={value !== undefined?value === "true":defaultChecked}
       onChange={e => onChange(e.target.checked?"true":"false")} />
   )
 }
@@ -521,7 +507,7 @@ export function Param2Input({param, activity, cells, value, onChange}) {
       i = <JsonSchemaFormFields value={value} onChange={e => onChange(e)} />
       break;
     case 'bool':
-      i = <BoolInput value={value} onChange={e => onChange(e)} />
+      i = <BoolInput value={value} defaultChecked={param.default} onChange={e => onChange(e)} />
       break;
     case 'python_switch':
       i = <SwitchOutputs
