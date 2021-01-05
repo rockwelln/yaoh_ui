@@ -1156,6 +1156,32 @@ export function ActivityEditor(props) {
       }
     }, [activityId, currentVersion]);
 
+    const save = () => {
+      const r = editor.getDefinition(ReactDOM.findDOMNode(titleRef.current).value);
+      if(!r.hasAStart) {
+          alert("the workflow need a `start`");
+          return false;
+      }
+      const {activity} = r;
+      if(activity.name.length === 0) {
+        alert("The workflow need a name");
+        return false;
+      }
+      Object.keys(activity.definition.cells).map(c => delete activity.definition.cells[c].name);
+      activity.id = currentActivity.id;
+      saveActivity(
+        activity,
+        resp => {
+          editor.graph.getDefaultParent().originalActivity = activity;
+          activity.id = resp.id;
+          setCurrentActivity(activity);
+          setNewActivity(false);
+          fetchActivityVersions(activityId, setVersions);
+        }
+      )
+      return true;
+    }
+
     return (
         <>
             <Breadcrumb>
@@ -1207,31 +1233,7 @@ export function ActivityEditor(props) {
                 <Col md={8}>
                     <ButtonToolbar>
                         <ButtonGroup>
-                            <Button onClick={() => {
-                              const title = ReactDOM.findDOMNode(titleRef.current).value;
-                              if(title.length === 0) {
-                                alert("The workflow need a name");
-                                return;
-                              }
-                              const r = editor.getDefinition(ReactDOM.findDOMNode(titleRef.current).value);
-                              if(!r.hasAStart) {
-                                  alert("the workflow need a `start`");
-                                  return;
-                              }
-                              const {activity} = r;
-                              Object.keys(activity.definition.cells).map(c => delete activity.definition.cells[c].name);
-                              activity.id = currentActivity.id;
-                              saveActivity(
-                                activity,
-                                resp => {
-                                  editor.graph.getDefaultParent().originalActivity = activity;
-                                  activity.id = resp.id;
-                                  setCurrentActivity(activity);
-                                  setNewActivity(false);
-                                  fetchActivityVersions(activityId, setVersions);
-                                }
-                              )
-                            }} disabled={!canSave}>Save</Button>
+                            <Button onClick={() => save()} disabled={!canSave}>Save</Button>
                         </ButtonGroup>
                         <ButtonGroup style={{paddingLeft: '1rem'}}>
                             <Button onClick={() => editor && editor.execute("add_process")} disabled={!canSave}>+</Button>
@@ -1285,7 +1287,9 @@ export function ActivityEditor(props) {
                       options={versionsOptions} />
               </Col>
               <Col md={8}>
-                <Button disabled={!canCommit} onClick={() => setShowCommit(true)}>Commit</Button>
+                <Button disabled={!canCommit} onClick={() => {
+                  save() && setShowCommit(true)
+                }}>Commit</Button>
                 <Button
                   disabled={!currentVersion || currentVersion.active}
                   onClick={() => activateVersion(currentActivity.id, versionId, () => {
