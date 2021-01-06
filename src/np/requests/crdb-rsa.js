@@ -156,7 +156,7 @@ export function NPPortInRequest(props) {
   const validForm = (
     validateRanges(request.ranges).length === 0 &&
     validRecipient === "success" &&
-    request.routing_info != "" &&
+    request.routing_info !== "" &&
     request.subscriber_data.AccountNum.length !== 0 &&
     validManagedPerson !== "error" &&
     validManagedPhone !== "error" &&
@@ -808,8 +808,9 @@ function disabledAction(action, output, request) {
   switch (action.description) {
     case "Plan port":
       return !request.due_date || request.due_date.length === 0;
+    default:
+      return false;
   }
-  return false;
 }
 
 function getRangeFlags(actions, ranges) {

@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react'
+import React, {useEffect, useState} from 'react'
 import ReactTextareaAutocomplete from '@webscopeio/react-textarea-autocomplete'
 import "@webscopeio/react-textarea-autocomplete/style.css";
 

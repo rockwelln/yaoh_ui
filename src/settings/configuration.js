@@ -8,7 +8,7 @@ import Tab from "react-bootstrap/lib/Tab";
 
 import {FormattedMessage} from 'react-intl';
 
-import {fetch_get, fetch_post, fetch_put, NotificationsManager, userLocalizeUtcDate} from "../utils";
+import {fetch_get, fetch_put, NotificationsManager, userLocalizeUtcDate} from "../utils";
 import update from 'immutability-helper';
 //import Ajv from 'ajv';
 import {Panel} from "react-bootstrap";
@@ -1444,7 +1444,7 @@ function LicensePanel(props) {
                   loadLicense(newLicense, details => {
                     // onChange(update(license, {$set: newLicense}));
                     setNewDetails(details);
-                    window.location = window.location; // refresh the page to cleanup possible alerts
+                    window.location.reload(); // refresh the page to cleanup possible alerts
                   }).catch(e => NotificationsManager.error("Failed to load a new license", e.message))
                 }}
                 bsStyle="primary" >

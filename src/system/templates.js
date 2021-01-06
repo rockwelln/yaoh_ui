@@ -93,7 +93,7 @@ function Template(props) {
     const refresh = () => fetchTemplate(props.template.id, setTemplate);
 
     const validKey = template.key !== props.template.key && template.key.length !== 0 ? "success" : null;
-    const validForm = validKey === "success";
+    // const validForm = validKey === "success";
 
     return (
         <Panel

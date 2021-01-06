@@ -39,11 +39,8 @@ import {
   Errors,
   Events,
   ReplayingSubInstancesModal,
-  SavingModal,
-  MessagesTable,
   TasksTable,
   TransactionFlow,
-  triggerManualAction,
   TxTable,
   pp_output,
 } from "../../requests/requests";
@@ -1262,7 +1259,7 @@ function CitcMessages(props) {
     .reduce((l, m) => {
       const o = JSON.parse(m.output);
       const i = m.input ? JSON.parse(m.input) : null;
-      const match = /MessageCode\>([A-Za-z ]+)\<\/.*$/gm.exec(o.request);
+      const match = /MessageCode>([A-Za-z ]+)<\/.*$/gm.exec(o.request);
 
       o.request && l.push({id: m.processing_trace_id, endpoint: "CITC", summary: match?match[1]:"-", type:"request", created_on: m.created_on, raw: o.request});
       o.response && l.push({id: m.processing_trace_id, endpoint: "APIO", summary: o.status, type: "response", created_on: m.created_on, status: m.status === 200 ? o.status : m.status, ...o.response});
@@ -1504,7 +1501,7 @@ export class NPTransaction extends Component {
     const is_active = tx.status === 'ACTIVE';
     const edited = this.state.edit_request === true;
     const is_portin = request && request.kind === 'PortIn';
-    const is_portout = request && request.kind === 'PortOut';
+    // const is_portout = request && request.kind === 'PortOut';
     const fnp_exec_sent = is_portin && tx.tasks && tx.tasks.findIndex(t => t.cell_id === 'Set accepted' && t.status === 'OK') !== -1;
 
     let can_edit = false; // is_active && !is_portout;
@@ -1548,7 +1545,7 @@ export class NPTransaction extends Component {
   }
 
   render() {
-    const { sending, error, tx, request, activeTab, manualActions, events, logs, replaying, messages, messageShown } = this.state;
+    const { sending, error, tx, request, activeTab, events, logs, replaying, messages, messageShown } = this.state;
     const { user_info } = this.props;
     let alerts = [];
     error && alerts.push(
