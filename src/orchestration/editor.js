@@ -598,10 +598,10 @@ export default function draw_editor(container, activity, handlers, placeholders,
         if(cell.getAttribute('original_name', '') === 'start' || cell.getAttribute('original_name', '') === 'end')
             return cell.getAttribute('label', '');
         else if(cell.getAttribute('original_name', '') === 'sync_outputs'){
-            return "X";
+            return "<div style='transform: rotate(45deg)'>+</div>";
         }
         else if(cell.getAttribute('original_name', '') === 'or_outputs'){
-            return "&#9711;"
+            return "<div style='font-size: 10rem; margin-top: -1.5rem'>&cir;</div>";
         }
         else {
             let div = document.createElement('div');
@@ -1039,8 +1039,8 @@ function configureStylesheet(graph)
     style[mxConstants.STYLE_STROKECOLOR] = '#1B78C8';
     style[mxConstants.STYLE_FONTCOLOR] = '#000000';
     style[mxConstants.STYLE_OPACITY] = '80';
-    style[mxConstants.STYLE_FONTSIZE] = "40";
-    style[mxConstants.STYLE_ROTATION] = "-45";
+    style[mxConstants.STYLE_FONTSIZE] = 45;
+    style[mxConstants.STYLE_ROTATION] = -45;
     style[mxConstants.STYLE_FONTSTYLE] = 1;
     style[mxConstants.STYLE_IMAGE_WIDTH] = '48';
     style[mxConstants.STYLE_IMAGE_HEIGHT] = '48';
