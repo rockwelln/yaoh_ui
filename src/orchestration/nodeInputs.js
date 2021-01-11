@@ -202,6 +202,35 @@ function TextareaInput(props) {
 }
 
 
+function ContextKey({value, onChange}) {
+  const invalidOutput = value && value.includes(" ");
+
+  let cleanupFlag = false;
+  let key = value;
+  if(value) {
+    try {
+      const o = JSON.parse(value);
+      cleanupFlag = o.cleanup;
+      key = o.key;
+    } catch (e) {
+      console.log("old processing for the context key", value, e);
+    }
+  }
+
+  return (
+    <>
+      <FormControl
+        style={{color: invalidOutput?"red":"black"}}
+        value={key}
+        onChange={e => onChange(JSON.stringify({key: e.target.value, cleanup: cleanupFlag}))} />
+      <Checkbox checked={cleanupFlag} onChange={e => onChange(JSON.stringify({key: key, cleanup: e.target.checked}))}>
+        Delete key on workflow ending
+      </Checkbox>
+    </>
+  )
+}
+
+
 function HttpHeaders(props) {
   const {value, onChange} = props;
   const [newHeader, setNewHeader] = useState(["", ""])
@@ -526,6 +555,9 @@ export function Param2Input({param, activity, cells, value, onChange}) {
       break;
     case 'http_headers':
       i = <HttpHeaders value={value} onChange={e => onChange(e)} />
+      break;
+    case 'context_key':
+      i = <ContextKey value={value} onChange={e => onChange(e)} />
       break;
     default:
       i = <BasicInput value={value} onChange={e => onChange(e.target.value)} />
