@@ -88,7 +88,7 @@ class AuthService {
     }
 
     getValidToken() {
-        const SAFE_GUARD_DELAY = 5; // seconds of safe guards
+        const SAFE_GUARD_DELAY = 20; // seconds of safe guards
         const refreshToken = localStorage.getItem("refreshToken");
         const token = this.getToken();
         if(refreshToken) {
