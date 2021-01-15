@@ -735,7 +735,6 @@ function NewUser(props) {
         language: 'en',
         timezone: null,
         groups: [],
-        password: '',
         entity: null,
         properties: {},
     });
@@ -750,8 +749,8 @@ function NewUser(props) {
     // email has to contain @
     const validEmail = (user.email.length === 0) ? null : (user.email.indexOf('@') !== -1) ? "success" : "error";
     // a password is at least 8 characters long
-    const validPassword = user.password.length === 0 ? null : (user.password.length >= 7) ? "success" : "error";
-    const validRepPassword = user.password.length === 0 ? null : confirmPassword === user.password ? "success" : "error";
+    const validPassword = user.password === undefined || user.password.length === 0 ? null : (user.password.length >= 7) ? "success" : "error";
+    const validRepPassword = user.password === undefined || user.password.length === 0 ? null : confirmPassword === user.password ? "success" : "error";
 
     const validForm = validEmail === 'success' && ((validPassword === null && validRepPassword === null) || (validPassword === 'success' && validRepPassword === 'success'));
 
@@ -935,8 +934,8 @@ function NewUser(props) {
                                 type="password"
                                 autoComplete="off"
                                 name="new-password"
-                                value={user.password}
-                                onChange={e => setUser(update(user, {$merge: {password: e.target.value}}))}/>
+                                value={user.password || ""}
+                                onChange={e => setUser(update(user, {$merge: {password: e.target.value || undefined}}))}/>
                         </Col>
                     </FormGroup>
                     <FormGroup validationState={validRepPassword}>
