@@ -112,8 +112,14 @@ export function getDefinition(editor, title) {
                 cell.params = c.getAttribute('attrList').split(",").reduce((xa, a) => {xa[a] = c.getAttribute(a); return xa;}, {});
             }
 
-            if(c.style === 'entity') activity.definition.entities.push(cell);
-            else activity.definition.cells[c.getAttribute('label')] = cell;
+            switch(c.style) {
+                case 'entity':
+                    activity.definition.entities.push(cell);
+                    break;
+                default:
+                    activity.definition.cells[c.getAttribute('label')] = cell;
+                    break;
+            }
 
             activity.definition.transitions = activity.definition.transitions.concat(model.getOutgoingEdges(c).map((e) => {
                 let sourcePortId = e.style.split(';')
@@ -129,9 +135,17 @@ export function getDefinition(editor, title) {
     return {activity: activity, hasAStart: hasAStart};
 }
 
+function getClass(def) {
+    switch(def.original_name) {
+        case 'entity':
+            return 'entity'
+        default:
+            return 'cell';
+    }
+}
 
-export function addNode(editor, def, name, paramsFields, isEntity) {
-    const cls = isEntity?"entity":"cell";
+export function addNode(editor, def, name, paramsFields) {
+    const cls = getClass(def);
     const c = def;
     const value = def.original_name || def.name;
     let graph = editor.graph;
@@ -159,6 +173,14 @@ export function addNode(editor, def, name, paramsFields, isEntity) {
                 v10 = graph.insertVertex(v, null, document.createElement('Target'), 0, 0, 10, 10, 'port;target;spacingLeft=18', true);
                 v10.geometry.offset = new mxPoint(-5, 9);
                 break;
+            case 'sync_outputs':
+            case 'or_outputs':
+                v = graph.insertVertex(parent, null, node, c.x, c.y, 50, 50, 'gate');
+                v.setConnectable(false);
+
+                v10 = graph.insertVertex(v, null, document.createElement('Target'), 0, 0, 10, 10, 'port;target;spacingLeft=18', true);
+                v10.geometry.offset = new mxPoint(-5, -5);
+                break;
             default:
                 v = graph.insertVertex(parent, null, node, 0, 0, min_cell_height(c, name), baseY + (20 * c.outputs.length) + 15, cls);
                 v.setConnectable(false);
@@ -173,7 +195,11 @@ export function addNode(editor, def, name, paramsFields, isEntity) {
             let p = graph.insertVertex(v, null, document.createElement('Source'), 1, 0, 10, 10, 'port;source;align=right;spacingRight=18', true);
 
             p.value = o;
-            p.geometry.offset = new mxPoint(-5, baseY + (i * 20))
+            if(c.original_name === "or_outputs" || c.original_name === "sync_outputs") {
+              p.geometry.offset = new mxPoint(-5, 45);
+            } else {
+              p.geometry.offset = new mxPoint(-5, baseY + (i * 20));
+            }
         }
     }finally {
         graph.getModel().endUpdate();
@@ -317,6 +343,15 @@ export function updateGraphModel(editor, activity, options) {
                     v10.geometry.offset = new mxPoint(-5, 9);
                     endpoints.push([name, v10]);
                     break;
+                case 'sync_outputs':
+                case 'or_outputs':
+                    v = graph.insertVertex(parent, null, node, c.x, c.y, 50, 50, 'gate');
+                    v.setConnectable(false);
+
+                    v10 = graph.insertVertex(v, null, targetNode.cloneNode(true), 0, 0, 10, 10, 'port;target;spacingLeft=18', true);
+                    v10.geometry.offset = new mxPoint(-5, -5);
+                    endpoints.push([name, v10]);
+                    break;
                 default:
                     v = graph.insertVertex(parent, null, node, c.x, c.y, min_cell_height(c, name), baseY + (20 * c.outputs.length) + 15);
                     v.setConnectable(false);
@@ -332,7 +367,11 @@ export function updateGraphModel(editor, activity, options) {
                 let p = graph.insertVertex(v, null, sourceNode.cloneNode(true), 1, 0, 10, 10, 'port;source;align=right;spacingRight=18', true);
 
                 p.value = o;
-                p.geometry.offset = new mxPoint(-5, baseY + (i * 20));
+                if(c.original_name === "or_outputs" || c.original_name === "sync_outputs") {
+                  p.geometry.offset = new mxPoint(-5, 45);
+                } else {
+                  p.geometry.offset = new mxPoint(-5, baseY + (i * 20));
+                }
                 endpoints.push([name + '.' + o, p]);
             }
 
@@ -351,6 +390,13 @@ export function updateGraphModel(editor, activity, options) {
             node.setAttribute('label', e.name);
             node.setAttribute('original_name', e.original_name);
             node.setAttribute('outputs', e.outputs);
+            if(e.params !== undefined && Object.keys(e.params).length !== 0) {
+                node.setAttribute('attrList', Object.keys(e.params).filter(p => p).map(param_name => {
+                    const value = e.params[param_name];
+                    node.setAttribute(param_name, value);
+                    return param_name;
+                }))
+            }
 
             let v = graph.insertVertex(parent, null, node, e.x, e.y, e.height || BASIC_CELL_HEIGHT, BASE_Y + (20 * e.outputs.length) + 15, 'entity');
             v.setConnectable(false);
@@ -435,6 +481,10 @@ function setup_toolbar(editor, container, spacer, handlers, props) {
     }
     if(cells !== undefined) {
         addToolbarButton(editor, container, 'add_process', '+', null, false, null, 'add a process');
+        container.appendChild(spacer.cloneNode(true));
+    }
+    if(cells !== undefined) {
+        addToolbarButton(editor, container, 'clone_process', '🐑', null, false, null, 'clone a process');
         container.appendChild(spacer.cloneNode(true));
     }
     if(onSave !== undefined) {
@@ -547,6 +597,12 @@ export default function draw_editor(container, activity, handlers, placeholders,
       {
         if(cell.getAttribute('original_name', '') === 'start' || cell.getAttribute('original_name', '') === 'end')
             return cell.getAttribute('label', '');
+        else if(cell.getAttribute('original_name', '') === 'sync_outputs'){
+            return "<div style='transform: rotate(45deg)'>+</div>";
+        }
+        else if(cell.getAttribute('original_name', '') === 'or_outputs'){
+            return "<div style='font-size: 10rem; margin-top: -1.5rem'>&cir;</div>";
+        }
         else {
             let div = document.createElement('div');
             div.innerHTML = cell.getAttribute('label');
@@ -556,6 +612,8 @@ export default function draw_editor(container, activity, handlers, placeholders,
             div.appendChild(i);
             return div;
         }
+      } else if(cell.getParent() && cell.getParent().getAttribute('original_name', '') === 'sync_outputs' || cell.getParent().getAttribute('original_name', '') === 'or_outputs') {
+          return "";
       }
       return convertValueToString.apply(this, arguments); // call super
     };
@@ -970,6 +1028,23 @@ function configureStylesheet(graph)
     style[mxConstants.STYLE_IMAGE_WIDTH] = '48';
     style[mxConstants.STYLE_IMAGE_HEIGHT] = '48';
     graph.getStylesheet().putCellStyle('entity', style);
+
+    style = {};
+    style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_RECTANGLE;
+    style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter;
+    style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_CENTER;
+    style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_CENTER;
+    style[mxConstants.STYLE_GRADIENTCOLOR] = 'PapayaWhip';
+    style[mxConstants.STYLE_FILLCOLOR] = 'PapayaWhip';
+    style[mxConstants.STYLE_STROKECOLOR] = '#1B78C8';
+    style[mxConstants.STYLE_FONTCOLOR] = '#000000';
+    style[mxConstants.STYLE_OPACITY] = '80';
+    style[mxConstants.STYLE_FONTSIZE] = 45;
+    style[mxConstants.STYLE_ROTATION] = -45;
+    style[mxConstants.STYLE_FONTSTYLE] = 1;
+    style[mxConstants.STYLE_IMAGE_WIDTH] = '48';
+    style[mxConstants.STYLE_IMAGE_HEIGHT] = '48';
+    graph.getStylesheet().putCellStyle('gate', style);
 
     style = graph.getStylesheet().getDefaultEdgeStyle();
     style[mxConstants.STYLE_LABEL_BACKGROUNDCOLOR] = '#FFFFFF';

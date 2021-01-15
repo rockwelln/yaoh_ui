@@ -641,6 +641,7 @@ export function Bulks(props) {
     const setBulksWithPage = (bulks, pagination) => {setBulks(bulks); setPagination(pagination)};
 
     useEffect(() => {
+        document.title = "Bulks";
         fetchActions(setActions);
         fetchHistory(pagination, setBulksWithPage);
     }, []);

@@ -377,6 +377,7 @@ export class Reporting extends Component {
     }
 
     componentDidMount() {
+        document.title = "Reports";
         this._refresh();
     }
 

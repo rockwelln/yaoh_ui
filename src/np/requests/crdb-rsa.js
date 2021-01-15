@@ -33,6 +33,7 @@ import ButtonGroup from "react-bootstrap/lib/ButtonGroup";
 import Alert from "react-bootstrap/lib/Alert";
 import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 import {
+  Attachments,
   Comments,
   ContextTable, Errors, Events, ReplayingSubInstancesModal, SavingModal,
   TasksTable,
@@ -107,11 +108,17 @@ function validateRanges(ranges) {
   }).filter(e => e !== null);
 }
 
+function generateNewPortId(prefix="", suffix="") {
+  const now = (new Date()).toISOString().slice(0,19).replace(/-/g,"").replace(/T/g,"").replace(/:/g,"")
+  return `${prefix}${now}MTNBSGNP${suffix}`
+}
+
 const emptyRequest = {
   ranges: [{ from: '', to: '' }],
   donor: '',
   change_addr_installation_porting_id: '',
   isB2B: false,
+  crdc_id: generateNewPortId(),
   service_type: 'GEOGRAPHIC',
   routing_info: '',
   subscriber_data: {
@@ -186,6 +193,19 @@ export function NPPortInRequest(props) {
             <option value="MOBILE">MOBILE</option>
             <option value="GEOGRAPHIC">GEOGRAPHIC</option>
           </FormControl>
+        </Col>
+      </FormGroup>
+
+      <FormGroup>
+        <Col componentClass={ControlLabel} sm={2}>
+          <FormattedMessage id="port-id" defaultMessage="Port ID" />
+        </Col>
+
+        <Col sm={9}>
+          <FormControl
+            type="text"
+            value={request.crdc_id}
+            onChange={e => setRequest(update(request, { $merge: { crdc_id: e.target.value } }))} />
         </Col>
       </FormGroup>
 
@@ -1010,6 +1030,9 @@ function RequestTable(props) {
                   );
                 })
               }
+              <tr><th><FormattedMessage id="external-id" defaultMessage="External id" /></th><td colSpan={rangeNbCols}>{req.external_id}</td></tr>
+              <tr><th><FormattedMessage id="label" defaultMessage="Label" /></th><td colSpan={rangeNbCols}>{req.label}</td></tr>
+              <tr><th><FormattedMessage id="contact-email" defaultMessage="Contact email" /></th><td colSpan={rangeNbCols}>{req.contact_email}</td></tr>
             </tbody>
           </Table>
         </Panel.Body>
@@ -1345,9 +1368,9 @@ export class NPTransaction extends Component {
           return
         }
         switch (error.response.status) {
-          case 404: error_msg = <FormattedMessage id="unknown-transaction" defaultMessage="Unknown transaction." />; break;
-          case 401: error_msg = <FormattedMessage id="not-allowed-transaction" defaultMessage="You are not allowed to see this transaction." />; break;
-          default: error_msg = <FormattedMessage id="unknown-error" defaultMessage="Unknown error: {status}" values={{ status: error.response.status }} />;
+          case 404: error_msg = "Unknown transaction."; break;
+          case 403: error_msg = "You are not allowed to see this transaction."; break;
+          default: error_msg = `Unknown error: ${error.response.status}`;
         }
         this.setState({ error: new Error(error_msg) });
       });
@@ -1639,6 +1662,16 @@ export class NPTransaction extends Component {
               }
               <Panel header="Context">
                 <ContextTable context={tx.context} />
+              </Panel>
+            </Col>
+            <Col xs={12} sm={12} md={12} lg={12}>
+              <Panel>
+                <Panel.Heading>
+                  <Panel.Title><FormattedMessage id="attachments" defaultMessage="Attachments" /></Panel.Title>
+                </Panel.Heading>
+                <Panel.Body>
+                  <Attachments txId={tx.id}/>
+                </Panel.Body>
               </Panel>
             </Col>
             <Col xs={12} sm={12} md={12} lg={12}>

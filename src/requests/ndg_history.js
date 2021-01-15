@@ -64,7 +64,12 @@ export class NdgHistory extends Search {
         }],
     }});
 
-    render() {
+    componentDidMount() {
+      super.componentDidMount();
+      document.title = "NDG history";
+    }
+
+  render() {
         const {filter_criteria, resources, sorting_spec, pagination} = this.state;
         return (
             <div>

@@ -888,7 +888,10 @@ function fetchActions(onLoading, onSuccess) {
 export function BulkActions(props) {
     const [actions, setActions] = useState([]);
     const fetchActions_ = () => {fetchActions(() => setActions([]), setActions)};
-    useEffect(fetchActions_, []);
+    useEffect(() => {
+      fetchActions_();
+      document.title = "Bulk actions"
+    }, []);
 
     return (
         <div>

@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, {useState, useEffect, useRef, useLayoutEffect} from 'react';
 import ReactDOM from 'react-dom';
 import {Redirect} from "react-router";
-// import draw_editor, {addNode, getDefinition, updateGraphModel} from "./editor";
 import {fetch_post, fetch_get, fetch_delete, fetch_put, NotificationsManager} from "../utils";
 
 import Col from 'react-bootstrap/lib/Col';
@@ -19,6 +18,7 @@ import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 import {LinkContainer} from "react-router-bootstrap";
 import Panel from "react-bootstrap/lib/Panel";
 import Modal from "react-bootstrap/lib/Modal";
+import Alert from "react-bootstrap/lib/Alert";
 import Form from "react-bootstrap/lib/Form";
 import FormGroup from "react-bootstrap/lib/FormGroup";
 import ControlLabel from "react-bootstrap/lib/ControlLabel";
@@ -27,7 +27,7 @@ import InputGroup from "react-bootstrap/lib/InputGroup";
 import InputGroupButton from "react-bootstrap/lib/InputGroupButton";
 import {DeleteConfirmButton} from "../utils/deleteConfirm";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChartBar } from "@fortawesome/free-solid-svg-icons";
+import {faChartBar, faSpinner} from "@fortawesome/free-solid-svg-icons";
 import {Link} from "react-router-dom";
 import {SimulatorPanel} from "./simulator";
 import Checkbox from "react-bootstrap/lib/Checkbox";
@@ -88,12 +88,6 @@ function fetchCells(onSuccess) {
         .catch(console.error);
 }
 
-function fetchEntities(onSuccess) {
-    fetch_get('/api/v01/entities')
-        .then(data => onSuccess(data.entities))
-        .catch(console.error);
-}
-
 export function fetchActivities(onSuccess) {
     fetch_get('/api/v01/activities')
         .then(data => onSuccess(data.activities))
@@ -126,6 +120,7 @@ function saveActivity(activity, cb) {
         {
             'name': activity.name,
             'definition': activity.definition,
+            'description': activity.description,
         }
     )
     .then(r => r.json())
@@ -226,10 +221,16 @@ function SearchBar(props) {
 export function Activities(props) {
     const [activities, setActivities] = useState([]);
     const [showNew, setShowNew] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [filter, setFilter] = useState("");
 
     useEffect(() => {
-        fetchActivities(setActivities);
+        setLoading(true);
+        fetchActivities(a => {
+            setActivities(a);
+            setLoading(false);
+        });
+        document.title = "Activities";
     }, []);
 
     return (
@@ -252,6 +253,10 @@ export function Activities(props) {
                             </tr>
                         </thead>
                         <tbody>
+                        {
+                            loading &&
+                                <tr><td colSpan={4}><FontAwesomeIcon icon={faSpinner} aria-hidden="true" style={{'fontSize': '24px'}} spin /></td></tr>
+                        }
                         {
                             activities
                                 .filter(a => filter.length === 0 || a.name.includes(filter))
@@ -377,8 +382,60 @@ function ActivityStatsModal(props) {
 }
 
 
+function NewNameModal(props) {
+    const {show, activity, onHide} = props;
+    const [name, setName] = useState("");
+
+    useEffect(() => {
+      !show && setName("");
+    }, [show]);
+
+    const duplicateName = activity && Object.keys(activity.definition.cells).includes(name);
+    const validName = name && name.length !== 0 && (!activity || !duplicateName);
+
+    return (
+        <Modal show={show} onHide={() => onHide(null)} bsSize={"large"}>
+            <Modal.Header closeButton>
+                <Modal.Title>New cell</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <Form onSubmit={e => {e.preventDefault(); onHide(name);}} horizontal>
+                    <FormGroup validationState={duplicateName?"error":null}>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="name" defaultMessage="Name" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <FormControl
+                                autoFocus
+                                componentClass="input"
+                                value={name}
+                                onChange={e => setName(e.target.value)}/>
+                          { duplicateName &&
+                            <HelpBlock>Duplicate name in the workflow</HelpBlock>
+                          }
+                        </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                      <Col smOffset={2} sm={10}>
+                          <Button disabled={!validName} type={"submit"} >
+                              Save
+                          </Button>
+                      </Col>
+                    </FormGroup>
+                </Form>
+            </Modal.Body>
+        </Modal>
+    )
+}
+
+const miscDefs = {
+  entity: {original_name: "entity", params: [{"name": "events", "nature": "outputs"}], outputs: []},
+}
+
 function NewCellModal(props)  {
-    const {show, onHide, cells, entities, activity} = props;
+    const {show, onHide, cells, activity} = props;
     const [name, setName] = useState("");
     const [definition, setDefinition] = useState({});
     const [staticParams, setStaticParams] = useState({});
@@ -465,18 +522,13 @@ function NewCellModal(props)  {
                                 value={definition.original_name || definition.name}
                                 onChange={e => {
                                   const cellDef = cells.find(c => c.original_name === e.target.value);
-                                  setDefinition(cellDef?cellDef:entities.find(ent => ent.name === e.target.value))
+                                  setDefinition(cellDef?cellDef:miscDefs[e.target.value])
                                 }}>
                                 <option value=""/>
-                              {
-                                entities && entities.length !== 0 &&
-                                  <optgroup label="Entities">
-                                    {
-                                      entities.map(e => <option value={e.name}>{e.name}</option>)
-                                    }
-                                  </optgroup>
-                              }
-                              {
+                                <optgroup label="Misc.">
+                                  <option value={"entity"}>Entity</option>
+                                </optgroup>
+                                {
                                 Object.entries(cells
                                   .sort((a, b) => a.category.localeCompare(b.category))
                                   .reduce((o, item) => {
@@ -493,8 +545,7 @@ function NewCellModal(props)  {
                                     </optgroup>
                                     ))
                                   })
-                              }
-
+                                }
                             </FormControl>
                             {
                                 definition && definition.doc && <HelpBlock>{definition.doc}</HelpBlock>
@@ -508,7 +559,7 @@ function NewCellModal(props)  {
                       <Col smOffset={2} sm={10}>
                           <Button
                             onClick={() => {
-                              onHide({def:definition, name:name, params:staticParams, isEntity:definition.original_name === undefined, customOutputs: customOutputs});
+                              onHide({def:definition, name:name, params:staticParams, customOutputs: customOutputs});
                             }}
                             disabled={!validName || invalidParams.length !== 0}
                           >
@@ -633,7 +684,7 @@ function OutputsTable(props) {
 
 
 export function EditCellModal(props) {
-    const {show, cell, cells, entities, activity, onHide, readOnly = false} = props;
+    const {show, cell, cells, activity, onHide, readOnly = false} = props;
     const [staticParams, setStaticParams] = useState({});
     const [outputs, setOutputs] = useState([]);
 
@@ -643,7 +694,7 @@ export function EditCellModal(props) {
 
     let cellDef = cells && cells.find(c => c.name === originalName);
     if(!cellDef) {
-      cellDef = entities && entities.find(c => c.name === originalName);
+      cellDef = miscDefs[originalName];
     }
 
     useEffect(() => {
@@ -788,7 +839,6 @@ export function EditCellModal(props) {
                         name: cell.value.getAttribute("label"),
                         originalName: originalName,
                         params: staticParams,
-                        isEntity: entities && entities.find(c => c.name === originalName) !== undefined,
                         outputs: outputs.filter(o => o.visible).map(o => o.value),
                       });
                     }}
@@ -804,9 +854,74 @@ export function EditCellModal(props) {
     )
 }
 
+function EditDescriptionModal({show, value, onChange, onHide}) {
+    return (
+      <Modal show={show} onHide={() => onHide(false)} bsSize="large">
+        <Modal.Header closeButton>
+          <Modal.Title>Description</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form horizontal>
+            <FormGroup>
+              <Col sm={12}>
+                <FormControl componentClass="textarea"
+                 value={value || ""}
+                 rows={15}
+                 placeholder={"Description or website"}
+                 autoFocus
+                 onChange={onChange} />
+             </Col>
+            </FormGroup>
+            <FormGroup>
+              <Col sm={12}>
+                <Button onClick={() => onHide(true)} bsStyle={"primary"}>
+                  Save
+                </Button>
+              </Col>
+            </FormGroup>
+          </Form>
+        </Modal.Body>
+      </Modal>
+    )
+}
+
+function compareActivitiesDef(a, b) {
+  return (b.definition &&
+    (
+      typeof b.definition === "string" &&
+        JSON.stringify(JSON.parse(a.definition)) !== JSON.stringify(JSON.parse(b.definition)) ||
+      typeof b.definition === "object" &&
+        JSON.stringify(JSON.parse(a.definition)) !== JSON.stringify(b.definition)
+    )
+  )
+}
+
+const DefaultDescriptionStyle = {
+    height: 50,
+    overflowY: 'hidden',
+    textOverflow: 'ellipsis'
+};
+
+const ExpandedDescriptionStyle= {
+    textOverflow: 'ellipsis'
+};
+
+
+function useWindowSize() {
+  const [size, setSize] = useState([0, 0]);
+  useLayoutEffect(() => {
+    function updateSize() {
+      setSize([window.innerWidth, window.innerHeight]);
+    }
+    window.addEventListener('resize', updateSize);
+    updateSize();
+    return () => window.removeEventListener('resize', updateSize);
+  }, []);
+  return size;
+}
+
 
 export function ActivityEditor(props) {
-    const [entities, setEntities] = useState([]);
     const [cells, setCells] = useState([]);
     const [configuration, setConfiguration] = useState({});
     const [currentActivity, setCurrentActivity] = useState(null);
@@ -814,12 +929,18 @@ export function ActivityEditor(props) {
     const [showStats, setShowStats] = useState(false);
     const [editor, setEditor] = useState(null);
     const [newCell, showNewCell] = useState(false);
+    const [newName, showNewName] = useState(false);
     const [editedCell, setEditedCell] = useState(undefined);
+    const [alertNewVersion, setAlertNewVersion] = useState(false);
+    const [showEditDescription, setShowEditDescription] = useState(false);
+    const [description, setDescription] = useState("");
+    const [descriptionStyle, setDescriptionStyle] = useState(DefaultDescriptionStyle);
+    const [width, height] = useWindowSize();
 
     useEffect(() => {
         fetchConfiguration(setConfiguration);
         fetchCells(setCells);
-        fetchEntities((setEntities));
+        document.title = "Editor";
     }, []);
 
     const editorRef = useRef(null);
@@ -854,31 +975,80 @@ export function ActivityEditor(props) {
             {
               configuration: configuration,
               cells: cells,
-              entities: entities,
             }
           );
           e.getDefinition = function(titleNode) { return editor.getDefinition(this, titleNode); }
           setEditor(e);
         })
-    }, [editorRef, toolbarRef, titleRef, currentActivity, newActivity, cells, entities]);
+    }, [editorRef, toolbarRef, titleRef, currentActivity, newActivity, cells]);
+
+    useEffect(() => {
+      // force the width of the container
+      if (editor && editorRef.current) {
+        const graph = editor.graph;
+        const container = ReactDOM.findDOMNode(editorRef.current);
+        graph.doResizeContainer(container.parentElement.getBoundingClientRect().width, 600);
+
+        // reset the graph start to adjust correctly the view afterwards
+        graph.view.setTranslate(0, 0);
+        // fit
+        var margin = 2;
+        var max = 1;
+
+        var bounds = graph.getGraphBounds();
+        var cw = graph.container.clientWidth - margin;
+        var ch = graph.container.clientHeight - margin;
+        var w = bounds.width / graph.view.scale;
+        var h = bounds.height / graph.view.scale;
+        var s = Math.min(max, Math.min(cw / w, ch / h));
+
+        graph.view.scaleAndTranslate(s,
+          (margin + cw - w * s) / (2 * s) - bounds.x / graph.view.scale,
+          (margin + ch - h * s) / (4 * s) - bounds.y / graph.view.scale
+        )
+      }
+    }, [height, width, editor, editorRef]);
 
     useEffect(() => {
         editor && editor.addAction('add_process', () =>
             showNewCell(true)
         );
+        editor && editor.addAction('clone_process', () => {
+            const cell = editor.graph.getSelectionCell();
+            if(cell) {
+              showNewName(true);
+            }
+        });
+
     }, [editor]);
 
     useEffect(() => {
-        if(props.match.params.activityId) {
+        const activityId = props.match.params.activityId;
+        if(activityId) {
             fetchActivity(
-                props.match.params.activityId,
+                activityId,
                 activity => {
                     setCurrentActivity(activity);
+                    setDescription(activity.description);
                     setNewActivity(false);
+                    document.title = `Editor - ${activity.name}`;
                 }
             );
         }
     }, [props.match.params.activityId]);
+
+    useEffect(() => {
+      const activityId = props.match.params.activityId;
+      const i = setInterval(() => {
+        fetchActivity(
+          activityId,
+          activity => {
+            setAlertNewVersion(compareActivitiesDef(activity, currentActivity))
+          }
+        )
+      }, 3000);
+      return () => clearInterval(i);
+    }, [props.match.params.activityId, currentActivity]);
 
     return (
         <>
@@ -890,6 +1060,38 @@ export function ActivityEditor(props) {
                 <Breadcrumb.Item active>{(currentActivity && currentActivity.name) || props.match.params.activityId}</Breadcrumb.Item>
             </Breadcrumb>
             <Row>
+              <Col sm={11}>
+                <p style={descriptionStyle}>
+                  { currentActivity && (currentActivity.description || "no description").split("\n").map(d => <div>{d}<br/></div>) }
+                </p>
+                {descriptionStyle.height ?
+                  <Button bsStyle={"link"} onClick={() => setDescriptionStyle(ExpandedDescriptionStyle)}>show
+                    all</Button> :
+                  <Button bsStyle={"link"} onClick={() => setDescriptionStyle(DefaultDescriptionStyle)}>show
+                    less</Button>
+                }
+              </Col>
+              <Col sm={1}>
+                <Button onClick={() => setShowEditDescription(true)}>Edit</Button>
+                <EditDescriptionModal
+                  show={showEditDescription}
+                  onChange={e => setDescription(e.target.value)}
+                  value={description}
+                  onHide={save =>
+                    save ? saveActivity(
+                      {id: currentActivity.id, description: description},
+                      () => {
+                        setCurrentActivity(a => update(a, {$merge: {description: description}}));
+                        setShowEditDescription(false);
+                      }
+                    ) :
+                      setShowEditDescription(false)
+                  }
+                />
+              </Col>
+            </Row>
+            <hr />
+            <Row>
                 <Col sm={2}>
                     <FormControl componentClass="input" placeholder="Name" ref={titleRef}/>
                 </Col>
@@ -900,7 +1102,13 @@ export function ActivityEditor(props) {
                     <Button onClick={() => setShowStats(true)}><FontAwesomeIcon icon={faChartBar} /></Button>
                 </Col>
             </Row>
-            <hr />
+            {
+              alertNewVersion &&
+                <Alert bsStyle={"danger"}>
+                  A new version has been saved in the meantime.<br/>
+                  Refresh to have the very last version.
+                </Alert>
+            }
             <Row>
                 <Col>
                     <div ref={editorRef} style={{overflow: 'hidden', backgroundImage: `url(${GridPic})`}} />
@@ -925,7 +1133,6 @@ export function ActivityEditor(props) {
             <NewCellModal
                 show={newCell}
                 cells={cells}
-                entities={entities}
                 activity={editor && editor.getDefinition().activity}
                 onHide={c => {
                   showNewCell(false);
@@ -936,31 +1143,47 @@ export function ActivityEditor(props) {
                     if(c.customOutputs) {
                       c_def.outputs = c.def.outputs.concat(c.customOutputs).reduce((u, i) => u.includes(i) ? u : [...u, i], []);
                     }
-                    import("./editor").then(e => e.addNode(editor, c_def, c.name, c.params, c.isEntity));
+                    import("./editor").then(e => e.addNode(editor, c_def, c.name, c.params));
                   }
                 }}
             />
+
+            <NewNameModal
+                show={newName}
+                activity={editor && editor.getDefinition().activity}
+                onHide={newName => import("./editor").then(e => {
+                    showNewName(false);
+                    if(!newName) return;
+                    const cell = editor.graph.getSelectionCell();
+                    const cDef = cells.find(c => c.original_name === cell.getAttribute("original_name"));
+                    if(cDef) {
+                        const c_def = JSON.parse(JSON.stringify(cDef));
+                        c_def.outputs = (cell.getAttribute('outputs') || "").split(",");
+                        const params = (cell.getAttribute('attrList') || "").split(",").reduce((xa, a) => {xa[a] = cell.getAttribute(a); return xa;}, {});
+                        e.addNode(editor, c_def, newName, params);
+                    }
+                })} />
 
             <EditCellModal
                 cell={editedCell}
                 show={editedCell !== undefined}
                 cells={cells}
-                entities={entities}
                 activity={editor && editor.getDefinition().activity}
                 onHide={c => {
                   setEditedCell(undefined);
                   if(c === null) return;
 
                   const activity = editor && editor.getDefinition().activity;
-                  if(!c.isEntity) {
-                    activity.definition.cells[c.name]["params"] = c.params;
-                  }
-                  if(c.outputs !== undefined) {
-                    if(!c.isEntity) {
-                      activity.definition.cells[c.name]["outputs"] = c.outputs;
-                    } else {
-                      const i = activity.definition.entities.findIndex(e => e.name === c.name);
+                  if(c.originalName === "entity") {
+                    const i = activity.definition.entities.findIndex(e => e.name === c.name)
+                    activity.definition.entities[i]["params"] = c.params;
+                    if(c.outputs !== undefined) {
                       activity.definition.entities[i]["outputs"] = c.outputs;
+                    }
+                  } else {
+                    activity.definition.cells[c.name]["params"] = c.params;
+                    if(c.outputs !== undefined) {
+                      activity.definition.cells[c.name]["outputs"] = c.outputs;
                     }
                   }
                   import("./editor").then(e => e.updateGraphModel(editor, activity, {clear: true, nofit: true}));

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, {useEffect, useRef, useState} from "react";
 import Button from "react-bootstrap/lib/Button";
 import Modal from "react-bootstrap/lib/Modal";
 import Form from "react-bootstrap/lib/Form";
@@ -22,8 +22,8 @@ export function ConfirmButton(props) {
           {title}
         </Modal.Header>
         <Modal.Body>
-          <Form>
-            <Button bsStyle="danger" onClick={e => { onConfirm(); setShow(false); }}>
+          <Form onSubmit={e => {e.preventDefault(); onConfirm(); setShow(false);}}>
+            <Button type="submit" bsStyle="danger" autoFocus>
               {action}
             </Button>
           </Form>

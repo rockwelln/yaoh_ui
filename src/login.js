@@ -220,6 +220,7 @@ export function LoginForm(props) {
                           type="text"
                           value={username}
                           onChange={e => setUsername(e.target.value)}
+                          autoFocus
                       />
                   </Col>
               </FormGroup>

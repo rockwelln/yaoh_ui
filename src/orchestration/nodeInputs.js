@@ -8,7 +8,11 @@ import Button from "react-bootstrap/lib/Button";
 import update from "immutability-helper";
 import {fetchActivities} from "./activity-editor";
 import {fetch_get} from "../utils";
-
+import {MentionExample} from "./templateEditor";
+import Creatable from 'react-select/creatable';
+import Select from "react-select";
+import InputGroup from "react-bootstrap/lib/InputGroup";
+import Glyphicon from "react-bootstrap/lib/Glyphicon";
 
 
 function BasicInput(props) {
@@ -40,16 +44,17 @@ function SessionHolderInput(props) {
     )
   }, []);
   return (
-    <FormControl
-        componentClass="select"
-        value={value}
-        onChange={e => onChange(e.target.value)}
-    >
-      <option value={""}/>
-      {
-        holders.map(h => <option value={h} key={h}>{h}</option>)
-      }
-    </FormControl>
+    <Creatable
+      value={{value: value, label: value}}
+      isClearable
+      isSearchable
+      name="session-holder"
+      onChange={(value, action) => {
+        if(["select-option", "create-option", "clear"].includes(action.action)) {
+          onChange(value && value.value);
+        }
+      }}
+      options={holders.map(h => ({value: h, label: h}))} />
   )
 }
 
@@ -79,21 +84,39 @@ function ActivityInput(props) {
   const [activities, setActivities] = useState([]);
 
   useEffect(() => {
-    fetchActivities(activities => setActivities(activities.map(a => a.name).sort((a, b) => a.localeCompare(b))))
+    fetchActivities(setActivities)
   }, []);
 
+  const activitiesOptions = activities.sort((a, b) => a.name.localeCompare(b.name)).map(a => ({value: a.name, label: a.name, id: a.id}));
+
   return (
-    <FormControl
-        componentClass="select"
-        value={value}
-        onChange={e => onChange(e.target.value)}
-    >
-      <option value={""}/>
-      {
-        activities
-          .map(a => <option value={a} key={a}>{a}</option>)
-      }
-    </FormControl>
+    <InputGroup>
+      <Select
+          className="basic-single"
+          classNamePrefix="select"
+          value={value && activitiesOptions.find(a => a.value === value)}
+          isClearable={true}
+          isSearchable={true}
+          name="activity"
+          onChange={(value, action) => {
+              if(["select-option", "clear"].includes(action.action)) {
+                onChange(value?value.value:"");
+              }
+          }}
+          options={activitiesOptions} />
+      <InputGroup.Button>
+          <Button
+              disabled={!value}
+              bsStyle="primary"
+              onClick={() => {
+                window.open(`/transactions/config/activities/editor/${activitiesOptions.find(a => a.value === value).id}`, '_blank').focus();
+              }}
+              style={{marginLeft: '5px'}}
+          >
+              <Glyphicon glyph="eye-open"/>
+          </Button>
+      </InputGroup.Button>
+    </InputGroup>
   )
 }
 
@@ -166,14 +189,44 @@ function ListInput(props) {
 
 function TextareaInput(props) {
   // todo can become a "list" of key (string) + value (jinja code)
-  const {rows, value, onChange} = props;
+  const {value, onChange, cells, rows} = props;
   return (
     <FormControl
-        componentClass="textarea"
-        rows={rows}
+        componentClass={MentionExample}
+        cells={cells}
         value={value}
-        onChange={e => onChange(e.target.value)}
+        onChange={onChange}
+        rows={rows}
     />
+  )
+}
+
+
+function ContextKey({value, onChange}) {
+  const invalidOutput = value && value.includes(" ");
+
+  let cleanupFlag = false;
+  let key = value;
+  if(value) {
+    try {
+      const o = JSON.parse(value);
+      cleanupFlag = o.cleanup;
+      key = o.key;
+    } catch (e) {
+      console.log("old processing for the context key", value, e);
+    }
+  }
+
+  return (
+    <>
+      <FormControl
+        style={{color: invalidOutput?"red":"black"}}
+        value={key}
+        onChange={e => onChange(JSON.stringify({key: e.target.value, cleanup: cleanupFlag}))} />
+      <Checkbox checked={cleanupFlag} onChange={e => onChange(JSON.stringify({key: key, cleanup: e.target.checked}))}>
+        Delete key on workflow ending
+      </Checkbox>
+    </>
   )
 }
 
@@ -261,10 +314,10 @@ function TimerInput(props) {
 
 
 function BoolInput(props) {
-  const {value, onChange} = props;
+  const {value, defaultChecked, onChange} = props;
   return (
     <Checkbox
-      checked={value === "true"}
+      checked={value !== undefined?value === "true":defaultChecked}
       onChange={e => onChange(e.target.checked?"true":"false")} />
   )
 }
@@ -466,9 +519,6 @@ export function Param2Input({param, activity, cells, value, onChange}) {
     case 'user_profile':
       i = <UserProfileInput value={value} onChange={e => onChange(e)} />
       break;
-    case 'user_properties':
-      i = <TextareaInput rows={4} value={value} onChange={e => onChange(e)} />
-      break;
     case 'timer':
       i = <TimerInput cells={activity.definition.cells} cellsDef={cells} value={value} onChange={e => onChange(e)} />
       break;
@@ -476,17 +526,17 @@ export function Param2Input({param, activity, cells, value, onChange}) {
       i = <ListInput options={param.values} value={value} onChange={e => onChange(e)} />
       break;
     case 'jinja':
-      i = <TextareaInput rows={4} value={value} onChange={e => onChange(e)} />
-      break;
     case 'python':
+    case 'python_bool':
+    case 'user_properties':
     case 'json':
-      i = <TextareaInput rows={10} value={value} onChange={e => onChange(e)} />
+      i = <TextareaInput rows={10} value={value} onChange={e => onChange(e)} cells={activity.definition.cells} />
       break;
     case 'jsonschema_form_fields':
       i = <JsonSchemaFormFields value={value} onChange={e => onChange(e)} />
       break;
     case 'bool':
-      i = <BoolInput value={value} onChange={e => onChange(e)} />
+      i = <BoolInput value={value} defaultChecked={param.default} onChange={e => onChange(e)} />
       break;
     case 'python_switch':
       i = <SwitchOutputs
@@ -498,13 +548,16 @@ export function Param2Input({param, activity, cells, value, onChange}) {
     case 'outputs':
       i = <DynamicOutputs
         value={value}
-        regexp={param.regexp || param.schema.items.pattern}
+        regexp={param.regexp || (param.schema && param.schema.items.pattern)}
         onChange={(e, outputs) => {
           onChange(e, outputs);
         }} />
       break;
     case 'http_headers':
       i = <HttpHeaders value={value} onChange={e => onChange(e)} />
+      break;
+    case 'context_key':
+      i = <ContextKey value={value} onChange={e => onChange(e)} />
       break;
     default:
       i = <BasicInput value={value} onChange={e => onChange(e.target.value)} />

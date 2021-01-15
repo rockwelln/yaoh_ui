@@ -31,6 +31,9 @@ import {useDropzone} from "react-dropzone";
 import {JSON_TRANS_OPTIONS_SAMPLE} from "../system/bulk_actions";
 import Select from "react-select";
 import {SearchBar} from "../utils/datatable";
+import InputGroup from "react-bootstrap/lib/InputGroup";
+import {faSpinner} from "@fortawesome/free-solid-svg-icons";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 
 const CUSTOM_ROUTE_PREFIX = "https://<target>/api/v01/custom";
 const JSON_SCHEMA_SAMPLE = (
@@ -276,7 +279,7 @@ function NewCustomRoute(props) {
                         <Col smOffset={2} sm={10}>
                             <HelpBlock>
                                 <FormattedMessage id="custom-route-help" defaultMessage="The final endpoint will be: " />
-                                {`${CUSTOM_ROUTE_PREFIX}${route.route || ''}`}
+                                {`${route.route && route.route.startsWith("/api/v01/p")?'https://<target>':CUSTOM_ROUTE_PREFIX}${route.route || ''}`}
                             </HelpBlock>
                         </Col>
                     </FormGroup>
@@ -434,6 +437,11 @@ function UpdateCustomRouteModal(props) {
 
     const localEntry = update(entry, {$merge: diffEntry});
     let validUpdateSchema = null;
+
+    const r = localEntry.route;
+    const validRoute = !r || r.length<5 ? null : (
+         ["..", "?", "&"].map(c => r.indexOf(c)).filter(i => i !== -1).length !== 0
+    )  || r[0] !== "/" ? "error" : "success";
     if(diffEntry.schema) {
         try {
             JSON.parse(diffEntry.schema);
@@ -462,17 +470,46 @@ function UpdateCustomRouteModal(props) {
             </Modal.Header>
             <Modal.Body>
                 <Form horizontal>
-                    <StaticControl label={<FormattedMessage id='route' defaultMessage='Route'/>} value={entry.route}/>
+                    <FormGroup validationState={validRoute}>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="route" defaultMessage="Route" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="input"
+                                value={localEntry.route}
+                                placeholder="ex: /clients/{client_id:\d+}/addresses"
+                                onChange={e => setDiffEntry(update(diffEntry, {$merge: {route: e.target.value}}))}/>
+                        </Col>
+                    </FormGroup>
+
                     <FormGroup>
                         <Col smOffset={2} sm={10}>
                             <HelpBlock>
                                 <FormattedMessage id="custom-route-help" defaultMessage="The final endpoint will be: " />
-                                {`${CUSTOM_ROUTE_PREFIX}${entry.route || ''}`}
+                                {`${entry.route && entry.route.startsWith("/api/v01/p")?'https://<target>':CUSTOM_ROUTE_PREFIX}${entry.route || ''}`}
                             </HelpBlock>
                         </Col>
                     </FormGroup>
 
-                    <StaticControl label={<FormattedMessage id='method' defaultMessage='Method'/>} value={entry.method}/>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="method" defaultMessage="Method" />
+                        </Col>
+
+                        <Col sm={2}>
+                            <FormControl
+                                componentClass="select"
+                                value={localEntry.method}
+                                onChange={e => setDiffEntry(update(diffEntry, {$merge: {method: e.target.value}}))}>
+                                <option value="get">get</option>
+                                <option value="post">post</option>
+                                <option value="put">put</option>
+                                <option value="delete">delete</option>
+                            </FormControl>
+                        </Col>
+                    </FormGroup>
 
                     <FormGroup validationState={validUpdateSchema}>
                          <Col componentClass={ControlLabel} sm={2}>
@@ -753,12 +790,17 @@ function CustomRoutes(props) {
     const [showUpdateModal, setShowUpdateModal] = useState(undefined);
     const [showNew, setShowNew] = useState(false);
     const [showImport, setShowImport] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [key, setKey] = useState(0);
     const [filter, setFilter] = useState("");
 
     useEffect(() => {
+        setLoading(true);
         fetchActivities(setActivities);
-        fetchCustomRoutes(setCustomRoutes);
+        fetchCustomRoutes(r => {
+          setCustomRoutes(r)
+          setLoading(false)
+        });
     }, []);
 
     const activitiesOptions = activities.sort((a, b) => a.name.localeCompare(b.name)).map(a => ({value: a.id, label: a.name}));
@@ -784,6 +826,10 @@ function CustomRoutes(props) {
                     </thead>
                     <tbody>
                     {
+                      loading &&
+                        <tr><td colSpan={7}><FontAwesomeIcon icon={faSpinner} aria-hidden="true" style={{'fontSize': '24px'}} spin /></td></tr>
+                    }
+                    {
                         customRoutes
                             .sort((a, b) => a.route_id - b.route_id)
                             .filter(r => !filter || r.route.includes(filter) || ((activities.find(a => a.id === r.activity_id) || {}).name || "").includes(filter))
@@ -793,19 +839,34 @@ function CustomRoutes(props) {
                                     <td>{ route.method }</td>
                                     <td>{ route.route }</td>
                                     <td>
-                                        <Select
-                                            className="basic-single"
-                                            classNamePrefix="select"
-                                            value={route.activity_id && activitiesOptions.find(a => a.value === route.activity_id)}
-                                            isClearable={true}
-                                            isSearchable={true}
-                                            name="activity"
-                                            onChange={(value, action) => {
-                                                if(["select-option", "clear"].includes(action.action)) {
-                                                  updateCustomRouteActivity(route.route_id, value && value.value, () => fetchCustomRoutes(setCustomRoutes));
-                                                }
-                                            }}
-                                            options={activitiesOptions} />
+                                        <InputGroup>
+                                            <Select
+                                                className="basic-single"
+                                                classNamePrefix="select"
+                                                value={route.activity_id && activitiesOptions.find(a => a.value === route.activity_id)}
+                                                isClearable={true}
+                                                isSearchable={true}
+                                                name="activity"
+                                                onChange={(value, action) => {
+                                                    if(["select-option", "clear"].includes(action.action)) {
+                                                      updateCustomRouteActivity(route.route_id, value && value.value, () => fetchCustomRoutes(setCustomRoutes));
+                                                    }
+                                                }}
+                                                options={activitiesOptions} />
+                                            <InputGroup.Button>
+                                                <Button
+                                                    disabled={route.activity_id === null}
+                                                    bsStyle="primary"
+                                                    onClick={() => {
+                                                        let win = window.open(`/transactions/config/activities/editor/${route.activity_id}`, '_blank');
+                                                        win.focus();
+                                                    }}
+                                                    style={{marginLeft: '5px'}}
+                                                >
+                                                    <Glyphicon glyph="eye-open"/>
+                                                </Button>
+                                            </InputGroup.Button>
+                                        </InputGroup>
                                     </td>
                                     <td>
                                         <Checkbox
@@ -892,13 +953,16 @@ function CustomRoutes(props) {
     )
 }
 
-export const StartupEvents = () => (
+export function StartupEvents() {
+  useEffect(() => {document.title = "Startup events"}, []);
+  return (
     <div>
-        <Breadcrumb>
-            <Breadcrumb.Item active><FormattedMessage id="orchestration" defaultMessage="Orchestration"/></Breadcrumb.Item>
-            <Breadcrumb.Item active><FormattedMessage id="startup-events" defaultMessage="Startup events"/></Breadcrumb.Item>
-        </Breadcrumb>
-        <DedicatedEvents />
-        <CustomRoutes />
+      <Breadcrumb>
+        <Breadcrumb.Item active><FormattedMessage id="orchestration" defaultMessage="Orchestration"/></Breadcrumb.Item>
+        <Breadcrumb.Item active><FormattedMessage id="startup-events" defaultMessage="Startup events"/></Breadcrumb.Item>
+      </Breadcrumb>
+      <DedicatedEvents/>
+      <CustomRoutes/>
     </div>
-);
+  )
+};

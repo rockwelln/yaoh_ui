@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useEffect} from "react";
 
 import Col from "react-bootstrap/lib/Col";
 import Row from "react-bootstrap/lib/Row";
@@ -10,6 +10,9 @@ import Title from "../../common/Title";
 import "./styles.css";
 
 const TenantComponent = props => {
+  useEffect(() => {
+    document.title = "Provisioning";
+  })
   return (
     <React.Fragment>
       <Row className={"margin-bottom-4"}>

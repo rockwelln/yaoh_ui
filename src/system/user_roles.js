@@ -144,6 +144,7 @@ export function UserRoles(props) {
 
     useEffect(() => {
         fetchRoles(setRoles);
+        document.title = "Roles";
     }, []);
 
     return (

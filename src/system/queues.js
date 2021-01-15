@@ -66,6 +66,7 @@ export default function LocalQueues(props) {
     const [queues, setQueues] = useState([]);
 
     useEffect(() => {
+        document.title = "Queues";
         const i = setInterval(() => fetch_get("/api/v01/system/queues")
             .then(data => setQueues(data.queues))
             .catch(error => NotificationsManager.error(<FormattedMessage id="fail-fetch-queues" defaultMessage="Fail to fetch queues"/>, error)), 1000);
