@@ -391,6 +391,11 @@ function provisioningDefaultRoutes(ui_profile) {
             }
             exact
         />
+        <Route
+            component={() => <FormattedMessage
+                id="notFound"
+                defaultMessage="Sorry, this page doesn't exist (yet)!" />}
+        />
       </Switch>
     </Provider>
     )
@@ -570,6 +575,11 @@ function provisioningPraRoutes(ui_profile) {
                 )
             }
             exact
+        />
+        <Route
+            component={() => <FormattedMessage
+                id="notFound"
+                defaultMessage="Sorry, this page doesn't exist (yet)!" />}
         />
       </Switch>
       </Provider>

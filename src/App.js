@@ -628,7 +628,7 @@ class App extends Component {
         this.state = {
             user_info: undefined,
             error_msg: undefined,
-            provisioningRoutes: [],
+            provisioningRoutes: <Route path="/provisioning" component={Loading} />,
             health: {},
         };
         this._notificationSystem = React.createRef();
@@ -1206,8 +1206,11 @@ class App extends Component {
                         {/*================ Provisioning UI routes ==============*/
                             provisioningRoutes
                         }
-
-                        <Route component={NotFound} />
+                        <Route
+                            component={() => <FormattedMessage
+                                id="notFound"
+                                defaultMessage="Sorry, this page doesn't exist (yet)!" />}
+                        />
                     </Switch>
                   </Suspense>
                 </Col>
