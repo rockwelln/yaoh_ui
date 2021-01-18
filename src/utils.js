@@ -50,11 +50,15 @@ class AuthService {
 
     loadJwtTokens(accessToken, refreshToken) {
         // createCookie("auth_token", accessToken, 1, "/");
-        localStorage.setItem("auth_token", accessToken);
-        if(refreshToken) {
+        if(accessToken) {
+          localStorage.setItem("auth_token", accessToken);
+          if (refreshToken) {
             localStorage.setItem("refreshToken", refreshToken);
+          }
+          console.log("jwt token updated!");
+        } else {
+          console.error("jwt tokens were about to be updated with empty values!");
         }
-        console.log("jwt token updated!");
     }
 
     loadJwtTokensFromLocation() {
@@ -101,10 +105,13 @@ class AuthService {
                 console.error(e);
                 console.log("let's fetch a new token")
               }
-            }
-            if(!payload || payload["exp"] < Math.floor((Date.now() / 1000) + SAFE_GUARD_DELAY)) {
-                return this.fetchNewAccessToken()
-            }
+          }
+          if(!payload || payload["exp"] < Math.floor((Date.now() / 1000) + SAFE_GUARD_DELAY)) {
+              return this.fetchNewAccessToken()
+          }
+        }
+        if(token === null) {
+          console.log("HEY! the token is NULL", token, refreshToken);
         }
         return Promise.resolve(token);
     }
@@ -284,21 +291,26 @@ export function parseJSON(response) {
   return response.json()
 }
 
-export function fetch_get(url, token) {
+export async function fetch_get(url, token) {
     // const token_ = AuthServiceManager.getToken();
     const full_url = url.href || url.startsWith('http') ?url:API_URL_PREFIX + url;
-    return AuthServiceManager.getValidToken()
-        .then(
-            token_ => fetch(full_url, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                    'Authorization': `Bearer ${token_}`
-                }
-            })
-        )
-        .then(checkStatus)
-        .then(parseJSON)
+    let resp;
+    for(let i=0; i<2; i++) {
+      const token_ = await AuthServiceManager.getValidToken();
+      resp = await fetch(full_url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token_}`
+        }
+      })
+
+      if (resp.status !== 401) {
+        break;
+      }
+    }
+    const s = await checkStatus(resp)
+    return await parseJSON(s);
 }
 
 export function fetch_put(url, body, token) {
