@@ -643,6 +643,29 @@ export function MentionExample({cells, value, onChange, ...props}) {
     [caretP, value]
   )
 
+  const getOptions = (p, value) => {
+    const s = value.slice(0, p);
+    const match = /([a-z]+)\.[^\\.]*$/.exec(s);
+    if(match) {
+      switch(match[1]) {
+        case 'request':
+          return requestAttributes;
+        case 'context':
+          return contextVars
+            .map(v => ({id: v, display: v}))
+            .reduce((p, c) => {
+              if(p.find(e => e.id === c.id) === undefined) {
+                p.push(c)
+              }
+              return p
+            }, []);
+        default:
+          break;
+      }
+    }
+    return [];
+  }
+
   return (
     <>
       <ReactTextareaAutocomplete
@@ -666,33 +689,15 @@ export function MentionExample({cells, value, onChange, ...props}) {
             component: Item,
             output: (item, trigger) => ({text: `| ${item.display}`, caretPosition: "end"}),
           },
-          "context.": {
+          ".": {
             dataProvider: token => {
-              return contextVars
-                .map(v => ({id: v, display: v}))
-                .reduce((p, c) => {
-                  if(p.find(e => e.id === c.id) === undefined) {
-                    p.push(c)
-                  }
-                  return p
-                }, [])
-                .map(a => ({id: `context.${a.id}`, display: `context.${a.display}`}))
-                .filter(a => a.display.includes(token))
+              return getOptions(caretP, value)
+                .filter(f => f.display.includes(token))
                 .slice(0, 5);
             },
             component: Item,
-            output: (item, trigger) => `${item.display}`,
+            output: (item, trigger) => ({text: `.${item.display}`, caretPosition: "end"}),
           },
-          "request.": {
-            dataProvider: token => {
-              return requestAttributes
-                .map(a => ({id: `request.${a.id}`, display: `request.${a.display}`}))
-                .filter(a => a.display.includes(token))
-                .slice(0, 5);
-            },
-            component: Item,
-            output: (item, trigger) => `${item.display}`,
-          }
         }}
         {...props}
         />
