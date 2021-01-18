@@ -88,6 +88,61 @@ class Details extends Component {
                 />
               </Col>
             </FormGroup>
+            {this.props.group.sync && (
+              <React.Fragment>
+                <FormGroup controlId="LDAP">
+                  <Col
+                    componentClass={ControlLabel}
+                    md={3}
+                    className={"text-left"}
+                  >
+                    External LDAP
+                  </Col>
+                  <Col md={9}>
+                    <FormControl
+                      type="text"
+                      placeholder="LDAP"
+                      disabled
+                      defaultValue={this.props.group.sync.ldap}
+                    />
+                  </Col>
+                </FormGroup>
+                <FormGroup controlId="Tenant OU">
+                  <Col
+                    componentClass={ControlLabel}
+                    md={3}
+                    className={"text-left"}
+                  >
+                    Tenant OU
+                  </Col>
+                  <Col md={9}>
+                    <FormControl
+                      type="text"
+                      placeholder="Tenant OU"
+                      disabled
+                      defaultValue={this.props.tenant.sync.ou}
+                    />
+                  </Col>
+                </FormGroup>
+                <FormGroup controlId="Group OU">
+                  <Col
+                    componentClass={ControlLabel}
+                    md={3}
+                    className={"text-left"}
+                  >
+                    Group OU
+                  </Col>
+                  <Col md={9}>
+                    <FormControl
+                      type="text"
+                      placeholder="Group OU"
+                      disabled
+                      defaultValue={this.props.group.sync.ou}
+                    />
+                  </Col>
+                </FormGroup>
+              </React.Fragment>
+            )}
             <FormGroup controlId="groupName">
               <Col componentClass={ControlLabel} md={3} className={"text-left"}>
                 Name
@@ -102,6 +157,7 @@ class Details extends Component {
                       group: { ...this.state.group, groupName: e.target.value }
                     });
                   }}
+                  disabled={this.props.group.sync}
                 />
               </Col>
             </FormGroup>
@@ -314,6 +370,7 @@ const mapDispatchToProps = {
 
 const mapStateToProps = state => ({
   group: state.group,
+  tenant: state.tenant,
   fullListGroupNumber: state.fullListGroupNumber
 });
 

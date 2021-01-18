@@ -13,7 +13,7 @@ class Group extends Component {
     const { group, onReload } = this.props;
     const { showDelete } = this.state;
     return (
-      <tr className={"table-cell"}>
+      <tr>
         <td>
           <Link
             to={`/provisioning/${this.props.match.params.gwName}/tenants/${group.tenantId}/groups/${group.groupId}`}
@@ -23,23 +23,27 @@ class Group extends Component {
         </td>
         <td>{group.groupName}</td>
         <td>{group.userLimit}</td>
-        <td>
-          <ButtonToolbar>
-            <Glyphicon
-              glyph="glyphicon glyphicon-remove"
-              onClick={() => this.setState({ showDelete: true })}
+        {group.sync ? (
+          <td className="text-align-center">Sync</td>
+        ) : (
+          <td className="text-align-center">
+            <ButtonToolbar>
+              <Glyphicon
+                glyph="glyphicon glyphicon-remove"
+                onClick={() => this.setState({ showDelete: true })}
+              />
+            </ButtonToolbar>
+            <DeleteModal
+              groupId={group.groupId}
+              show={showDelete}
+              onClose={e => {
+                onReload && onReload();
+                this.setState({ showDelete: false });
+              }}
+              {...this.props}
             />
-          </ButtonToolbar>
-          <DeleteModal
-            groupId={group.groupId}
-            show={showDelete}
-            onClose={e => {
-              onReload && onReload();
-              this.setState({ showDelete: false });
-            }}
-            {...this.props}
-          />
-        </td>
+          </td>
+        )}
       </tr>
     );
   }

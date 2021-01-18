@@ -130,6 +130,64 @@ class Details extends Component {
         <Form horizontal className={"margin-1"}>
           <FormGroup controlId="Details">
             <ControlLabel className={"margin-1"}>DETAILS</ControlLabel>
+            {this.props.user.sync && (
+              <React.Fragment>
+                <FormGroup
+                  controlId="External LDAP"
+                  validationState={emailIsValid}
+                >
+                  <Col
+                    componentClass={ControlLabel}
+                    md={3}
+                    className={"text-left"}
+                  >
+                    External LDAP
+                  </Col>
+                  <Col md={9}>
+                    <FormControl
+                      type="text"
+                      placeholder="External LDAP"
+                      defaultValue={this.props.user.sync.ldap}
+                      disabled
+                    />
+                  </Col>
+                </FormGroup>
+                <FormGroup controlId="Tenant OU" validationState={emailIsValid}>
+                  <Col
+                    componentClass={ControlLabel}
+                    md={3}
+                    className={"text-left"}
+                  >
+                    Tenant OU
+                  </Col>
+                  <Col md={9}>
+                    <FormControl
+                      type="text"
+                      placeholder="Tenant OU"
+                      defaultValue={this.props.user.sync.ou}
+                      disabled
+                    />
+                  </Col>
+                </FormGroup>
+                <FormGroup controlId="User DN" validationState={emailIsValid}>
+                  <Col
+                    componentClass={ControlLabel}
+                    md={3}
+                    className={"text-left"}
+                  >
+                    User DN
+                  </Col>
+                  <Col md={9}>
+                    <FormControl
+                      type="text"
+                      placeholder="User DN"
+                      defaultValue={this.props.user.sync.dn}
+                      disabled
+                    />
+                  </Col>
+                </FormGroup>
+              </React.Fragment>
+            )}
             <FormGroup controlId="userEmail" validationState={emailIsValid}>
               <Col componentClass={ControlLabel} md={3} className={"text-left"}>
                 Email
@@ -145,6 +203,7 @@ class Details extends Component {
                       emailIsValid: null
                     })
                   }
+                  disabled={this.props.user.sync}
                 />
                 {emailIsValid && <HelpBlock>Invalid email</HelpBlock>}
               </Col>
@@ -164,6 +223,7 @@ class Details extends Component {
                       firstNameError: null
                     })
                   }
+                  disabled={this.props.user.sync}
                 />
                 {firstNameError && <HelpBlock>Field is required</HelpBlock>}
               </Col>
@@ -183,6 +243,7 @@ class Details extends Component {
                       lastNameError: null
                     })
                   }
+                  disabled={this.props.user.sync}
                 />
                 {lastNameError && <HelpBlock>Field is required</HelpBlock>}
               </Col>
@@ -269,51 +330,66 @@ class Details extends Component {
                 </FormControl>
               </Col>
             </FormGroup>
-            <FormGroup controlId="password" validationState={passwordsNotMatch}>
-              <Col componentClass={ControlLabel} md={3} className={"text-left"}>
-                Password
-              </Col>
-              <Col md={9}>
-                <FormControl
-                  type="password"
-                  placeholder="Password"
-                  defaultValue={password}
-                  onChange={e =>
-                    this.setState({
-                      password: e.target.value,
-                      passwordsNotMatch: null
-                    })
-                  }
-                />
-                {passwordsNotMatch && (
-                  <HelpBlock>Passwords do not match</HelpBlock>
-                )}
-              </Col>
-            </FormGroup>
-            <FormGroup
-              controlId="confirmPassword"
-              validationState={passwordsNotMatch}
-            >
-              <Col componentClass={ControlLabel} md={3} className={"text-left"}>
-                Confirm password
-              </Col>
-              <Col md={9}>
-                <FormControl
-                  type="password"
-                  placeholder="Confirm password"
-                  defaultValue={confirmPassword}
-                  onChange={e =>
-                    this.setState({
-                      confirmPassword: e.target.value,
-                      passwordsNotMatch: null
-                    })
-                  }
-                />
-                {passwordsNotMatch && (
-                  <HelpBlock>Passwords do not match</HelpBlock>
-                )}
-              </Col>
-            </FormGroup>
+            {!this.props.user.sync && (
+              <React.Fragment>
+                <FormGroup
+                  controlId="password"
+                  validationState={passwordsNotMatch}
+                >
+                  <Col
+                    componentClass={ControlLabel}
+                    md={3}
+                    className={"text-left"}
+                  >
+                    Password
+                  </Col>
+                  <Col md={9}>
+                    <FormControl
+                      type="password"
+                      placeholder="Password"
+                      defaultValue={password}
+                      onChange={e =>
+                        this.setState({
+                          password: e.target.value,
+                          passwordsNotMatch: null
+                        })
+                      }
+                    />
+                    {passwordsNotMatch && (
+                      <HelpBlock>Passwords do not match</HelpBlock>
+                    )}
+                  </Col>
+                </FormGroup>
+                <FormGroup
+                  controlId="confirmPassword"
+                  validationState={passwordsNotMatch}
+                >
+                  <Col
+                    componentClass={ControlLabel}
+                    md={3}
+                    className={"text-left"}
+                  >
+                    Confirm password
+                  </Col>
+                  <Col md={9}>
+                    <FormControl
+                      type="password"
+                      placeholder="Confirm password"
+                      defaultValue={confirmPassword}
+                      onChange={e =>
+                        this.setState({
+                          confirmPassword: e.target.value,
+                          passwordsNotMatch: null
+                        })
+                      }
+                    />
+                    {passwordsNotMatch && (
+                      <HelpBlock>Passwords do not match</HelpBlock>
+                    )}
+                  </Col>
+                </FormGroup>
+              </React.Fragment>
+            )}
             {this.props.user.trunkEndpoint && (
               <Row>
                 <Col mdOffset={3} md={9}>
@@ -548,19 +624,6 @@ class Details extends Component {
                 </Col>
               </Row>
             )}
-            <Col mdOffset={3} md={9}>
-              {updateMassage && (
-                <HelpBlock
-                  bsClass={`${
-                    updateMassage === "Loading..."
-                      ? "color-info"
-                      : "color-success"
-                  }`}
-                >
-                  {updateMassage}
-                </HelpBlock>
-              )}
-            </Col>
           </FormGroup>
           <Row>
             <Col md={12} className={"padding-0"}>
