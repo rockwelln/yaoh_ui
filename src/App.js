@@ -576,6 +576,12 @@ const DemoWatermark = () => (
     </>
 );
 
+function addDays(base, nbDays) {
+  var date = new Date(base.valueOf());
+  date.setDate(date.getDate() + nbDays);
+  return date;
+}
+
 const LicenseAlert = () => {
   const [health, setHealth] = useState({});
 
@@ -588,7 +594,7 @@ const LicenseAlert = () => {
   const validUntil = health.valid_until && new Date(health.valid_until);
   const watermark = health.demo ? <DemoWatermark/> : <div/>;
 
-  if(validUntil < new Date().addDays(30) && validUntil >= new Date()) {
+  if(validUntil < addDays(new Date(), 30) && validUntil >= new Date()) {
     return (
       <Alert bsStyle="warning">This instance run a {health.demo?'demo ':''}license which will expire soon ({ validUntil.toLocaleString() }) - Take contact with support@netaxis.be before it's too late.
       </Alert>
@@ -753,7 +759,7 @@ class App extends Component {
     }
 
     render() {
-        const {database_status, error_msg, user_info, provisioningRoutes, health} = this.state;
+        const {database_status, error_msg, user_info, provisioningRoutes} = this.state;
         const is_reset_password = window.location.pathname.substr(0, RESET_PASSWORD_PREFIX.length) === RESET_PASSWORD_PREFIX;
         const standby_alert = database_status && !database_status.is_master && (
             <Alert bsStyle="danger">

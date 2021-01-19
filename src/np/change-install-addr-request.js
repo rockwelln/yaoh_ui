@@ -1,7 +1,6 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState} from 'react';
 import { fetch_post, NotificationsManager } from "../utils";
 import { RangeInput } from "./utils";
-import { fetchOperators } from "./data/operator_mgm";
 
 import Panel from 'react-bootstrap/lib/Panel';
 import Form from 'react-bootstrap/lib/Form';

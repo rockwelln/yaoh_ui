@@ -27,12 +27,14 @@ import InputGroup from "react-bootstrap/lib/InputGroup";
 import InputGroupButton from "react-bootstrap/lib/InputGroupButton";
 import {DeleteConfirmButton} from "../utils/deleteConfirm";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {faChartBar, faSpinner} from "@fortawesome/free-solid-svg-icons";
+import {faArrowDown, faArrowUp, faChartBar, faCopy, faSpinner} from "@fortawesome/free-solid-svg-icons";
 import {Link} from "react-router-dom";
 import {SimulatorPanel} from "./simulator";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 import {fetchConfiguration, Param2Input} from "./nodeInputs";
 import Ajv from "ajv";
+import Select from "react-select";
+import ButtonGroup from "react-bootstrap/lib/ButtonGroup";
 
 
 const NEW_ACTIVITY = {
@@ -71,7 +73,6 @@ function isValid(p, v) {
             break;
     }
     if(p.schema && v) {
-        console.log(v);
         const ajv = Ajv();
         const v_ = ajv.validate(p.schema, p.nature === "outputs"?v.split(","):v);
         if(!v_) {
@@ -139,6 +140,25 @@ function fetchActivityStats(id, onSuccess) {
         .then(resp => onSuccess(resp))
         .catch(error => {
             NotificationsManager.error("Failed to fetch statistics", error.message);
+        });
+}
+
+function fetchActivityVersions(id, onSuccess) {
+    fetch_get(`/api/v01/activities/${id}/versions`)
+        .then(resp => onSuccess(resp.activity_versions))
+        .catch(error => {
+            NotificationsManager.error("Failed to fetch versions", error.message);
+        });
+}
+
+function activateVersion(id, versionId, onSuccess) {
+    fetch_put(`/api/v01/activities/${id}/versions/${versionId}/activate`)
+        .then(resp => {
+          NotificationsManager.success(`Version activated`)
+          onSuccess && onSuccess()
+        })
+        .catch(error => {
+            NotificationsManager.error(`Failed to activate the version ${versionId}`, error.message);
         });
 }
 
@@ -223,13 +243,18 @@ export function Activities(props) {
     const [showNew, setShowNew] = useState(false);
     const [loading, setLoading] = useState(false);
     const [filter, setFilter] = useState("");
+    const [duplicateActivity, setDuplicateActivity] = useState();
+
+    const loadActivities = () => {
+      setLoading(true);
+      fetchActivities(a => {
+          setActivities(a);
+          setLoading(false);
+      });
+    }
 
     useEffect(() => {
-        setLoading(true);
-        fetchActivities(a => {
-            setActivities(a);
-            setLoading(false);
-        });
+        loadActivities();
         document.title = "Activities";
     }, []);
 
@@ -247,7 +272,7 @@ export function Activities(props) {
                         <thead>
                             <tr>
                                 <th>Name</th>
-                                <th>Status</th>
+                                <th>Version</th>
                                 <th>Created on</th>
                                 <th/>
                             </tr>
@@ -264,21 +289,26 @@ export function Activities(props) {
                                 .map(a => (
                                     <tr key={a.id}>
                                         <td>{a.name}</td>
-                                        <td>{a.status}</td>
+                                        <td>{a.version_label || WORKING_VERSION_LABEL}</td>
                                         <td>{a.created_on}</td>
 
                                         <td>
                                             <ButtonToolbar>
                                                 <LinkContainer to={`/transactions/config/activities/editor/${a.id}`}>
-                                                    <Button bsStyle="primary"
-                                                            style={{marginLeft: '5px', marginRight: '5px'}}>
+                                                    <Button bsStyle="primary">
                                                         <Glyphicon glyph="pencil"/>
                                                     </Button>
                                                 </LinkContainer>
                                                 <DeleteConfirmButton
                                                     resourceName={a.name}
-                                                    style={{marginLeft: '5px', marginRight: '5px'}}
+                                                    style={{marginLeft: '5px'}}
                                                     onConfirm={() => deleteActivity(a.id, () => fetchActivities(setActivities))} />
+                                                <Button
+                                                  bsStyle="primary"
+                                                  style={{marginLeft: '5px'}}
+                                                  onClick={() => setDuplicateActivity(a.id)}>
+                                                    <FontAwesomeIcon icon={faCopy}/>
+                                                </Button>
                                             </ButtonToolbar>
                                         </td>
                                     </tr>
@@ -287,6 +317,21 @@ export function Activities(props) {
                         }
                         </tbody>
                     </Table>
+                    <NewNameModal
+                        show={duplicateActivity !== undefined}
+                        isValidName={name => !activities.map(a => a.name).includes(name)}
+                        title={"Duplicate"}
+                        onHide={name => {
+                            fetchActivity(duplicateActivity, a => {
+                              a.name = name;
+                              delete a.id;
+                              a.definition = JSON.parse(a.definition);
+                              saveActivity(a, () => {
+                                setDuplicateActivity(undefined);
+                                loadActivities();
+                              });
+                            })
+                        }} />
                 </Panel.Body>
             </Panel>
 
@@ -383,20 +428,20 @@ function ActivityStatsModal(props) {
 
 
 function NewNameModal(props) {
-    const {show, activity, onHide} = props;
+    const {show, title, onHide, isValidName} = props;
     const [name, setName] = useState("");
 
     useEffect(() => {
       !show && setName("");
     }, [show]);
 
-    const duplicateName = activity && Object.keys(activity.definition.cells).includes(name);
-    const validName = name && name.length !== 0 && (!activity || !duplicateName);
+    const duplicateName = !isValidName(name);
+    const validName = name && name.length !== 0 && !duplicateName;
 
     return (
         <Modal show={show} onHide={() => onHide(null)} bsSize={"large"}>
             <Modal.Header closeButton>
-                <Modal.Title>New cell</Modal.Title>
+                <Modal.Title>{title}</Modal.Title>
             </Modal.Header>
             <Modal.Body>
                 <Form onSubmit={e => {e.preventDefault(); onHide(name);}} horizontal>
@@ -412,7 +457,7 @@ function NewNameModal(props) {
                                 value={name}
                                 onChange={e => setName(e.target.value)}/>
                           { duplicateName &&
-                            <HelpBlock>Duplicate name in the workflow</HelpBlock>
+                            <HelpBlock>Duplicate name</HelpBlock>
                           }
                         </Col>
                     </FormGroup>
@@ -885,6 +930,68 @@ function EditDescriptionModal({show, value, onChange, onHide}) {
     )
 }
 
+function commitVersion(id, label, onSuccess) {
+  fetch_post(`/api/v01/activities/${id}/versions`, {label: label})
+    .then(onSuccess)
+    .catch(error => NotificationsManager.error("Failed to commit.", error.message))
+}
+
+function CommitVersionModal({show, onHide, id}) {
+  const [label, setLabel] = useState("");
+
+  return (
+    <Modal show={show} onHide={() => onHide(false)}>
+      <Modal.Header closeButton>
+        <Modal.Title>Commit</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Form onSubmit={e => {
+          e.preventDefault();
+          commitVersion(id, label, () => onHide(true))
+        }} horizontal>
+          <Alert bsStyle={"info"}>
+            You are about to commit the current working version of this workflow.<br/>
+            When committed, this version cannot be modified anymore.
+          </Alert>
+          <FormGroup>
+            <Col sm={12}>
+                <FormControl
+                  componentClass="input"
+                  value={label}
+                  placeholder={"Some reference"}
+                  autoFocus
+                  onChange={e => setLabel(e.target.value)} />
+            </Col>
+          </FormGroup>
+          <FormGroup>
+            <Col sm={12}>
+              <Button
+                disabled={!label.length}
+                type={"submit"}
+                bsStyle={"primary"}>
+                Commit
+              </Button>
+            </Col>
+          </FormGroup>
+        </Form>
+      </Modal.Body>
+    </Modal>
+  )
+}
+
+function downloadDefinition(activity) {
+  let element = document.createElement('a');
+  element.setAttribute('href', 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(activity.definition, null, 2)));
+  element.setAttribute('download', `${activity.name}.json`);
+
+  element.style.display = 'none';
+  document.body.appendChild(element);
+
+  element.click();
+
+  document.body.removeChild(element);
+}
+
 function compareActivitiesDef(a, b) {
   return (b.definition &&
     (
@@ -897,7 +1004,7 @@ function compareActivitiesDef(a, b) {
 }
 
 const DefaultDescriptionStyle = {
-    height: 50,
+    height: 25,
     overflowY: 'hidden',
     textOverflow: 'ellipsis'
 };
@@ -907,7 +1014,7 @@ const ExpandedDescriptionStyle= {
 };
 
 
-function useWindowSize() {
+export function useWindowSize() {
   const [size, setSize] = useState([0, 0]);
   useLayoutEffect(() => {
     function updateSize() {
@@ -921,6 +1028,8 @@ function useWindowSize() {
 }
 
 
+const WORKING_VERSION_LABEL = "*working*";
+
 export function ActivityEditor(props) {
     const [cells, setCells] = useState([]);
     const [configuration, setConfiguration] = useState({});
@@ -933,8 +1042,11 @@ export function ActivityEditor(props) {
     const [editedCell, setEditedCell] = useState(undefined);
     const [alertNewVersion, setAlertNewVersion] = useState(false);
     const [showEditDescription, setShowEditDescription] = useState(false);
+    const [showCommit, setShowCommit] = useState(false);
     const [description, setDescription] = useState("");
     const [descriptionStyle, setDescriptionStyle] = useState(DefaultDescriptionStyle);
+    const [versionId, setVersionId] = useState();
+    const [versions, setVersions] = useState([]);
     const [width, height] = useWindowSize();
 
     useEffect(() => {
@@ -944,32 +1056,20 @@ export function ActivityEditor(props) {
     }, []);
 
     const editorRef = useRef(null);
-    const toolbarRef = useRef(null);
     const titleRef = useRef(null);
+    const activityId = props.match.params.activityId;
 
     useEffect(() => {
-        // (container, handlers, placeholders, props)
         import("./editor").then(editor => {
           if(editorRef.current === null) return;
+
           const e = editor.default(
             ReactDOM.findDOMNode(editorRef.current),
-            newActivity ? NEW_ACTIVITY : currentActivity,
+            // newActivity ? NEW_ACTIVITY : currentActivity,
             {
-              get: fetchActivity,
-              onSave: (activity, onSuccess) => saveActivity(
-                activity,
-                p => {
-                  onSuccess(p);
-                  activity.id = p.id;
-                  setCurrentActivity(activity);
-                  setNewActivity(false);
-                }
-              ),
               onEdit: cell => setEditedCell(cell),
-              // onDelete: () => deleteActivity(currentActivity.id, () => setNewActivity(true)),
             },
             {
-              toolbar: ReactDOM.findDOMNode(toolbarRef.current),
               title: ReactDOM.findDOMNode(titleRef.current),
             },
             {
@@ -977,35 +1077,20 @@ export function ActivityEditor(props) {
               cells: cells,
             }
           );
-          e.getDefinition = function(titleNode) { return editor.getDefinition(this, titleNode); }
+          e.getDefinition = function(titleNode) {
+            const r = editor.getDefinition(this, titleNode);
+            Object.keys(r.activity.definition.cells).map(c => delete r.activity.definition.cells[c].name);
+            return r;
+          }
+          currentActivity && editor.updateGraphModel(e, currentActivity, {title: ReactDOM.findDOMNode(titleRef.current)});
           setEditor(e);
         })
-    }, [editorRef, toolbarRef, titleRef, currentActivity, newActivity, cells]);
+    }, [editorRef, titleRef, currentActivity, newActivity, cells]);
 
     useEffect(() => {
       // force the width of the container
       if (editor && editorRef.current) {
-        const graph = editor.graph;
-        const container = ReactDOM.findDOMNode(editorRef.current);
-        graph.doResizeContainer(container.parentElement.getBoundingClientRect().width, 600);
-
-        // reset the graph start to adjust correctly the view afterwards
-        graph.view.setTranslate(0, 0);
-        // fit
-        var margin = 2;
-        var max = 1;
-
-        var bounds = graph.getGraphBounds();
-        var cw = graph.container.clientWidth - margin;
-        var ch = graph.container.clientHeight - margin;
-        var w = bounds.width / graph.view.scale;
-        var h = bounds.height / graph.view.scale;
-        var s = Math.min(max, Math.min(cw / w, ch / h));
-
-        graph.view.scaleAndTranslate(s,
-          (margin + cw - w * s) / (2 * s) - bounds.x / graph.view.scale,
-          (margin + ch - h * s) / (4 * s) - bounds.y / graph.view.scale
-        )
+        import("./editor").then(e => e.fitEditor(editor.graph, ReactDOM.findDOMNode(editorRef.current)));
       }
     }, [height, width, editor, editorRef]);
 
@@ -1023,7 +1108,6 @@ export function ActivityEditor(props) {
     }, [editor]);
 
     useEffect(() => {
-        const activityId = props.match.params.activityId;
         if(activityId) {
             fetchActivity(
                 activityId,
@@ -1034,21 +1118,69 @@ export function ActivityEditor(props) {
                     document.title = `Editor - ${activity.name}`;
                 }
             );
+            fetchActivityVersions(activityId, r => { setVersions(r); setVersionId((r.find(v => v.active) || {}).id); })
         }
-    }, [props.match.params.activityId]);
+    }, [activityId]);
 
     useEffect(() => {
-      const activityId = props.match.params.activityId;
-      const i = setInterval(() => {
-        fetchActivity(
-          activityId,
-          activity => {
-            setAlertNewVersion(compareActivitiesDef(activity, currentActivity))
-          }
-        )
-      }, 3000);
-      return () => clearInterval(i);
-    }, [props.match.params.activityId, currentActivity]);
+      if(versionId) {
+        fetchActivityVersions(activityId, r => {
+          setVersions(r);
+          const v = r.find(v => v.id === versionId);
+          setNewActivity(false);
+          setCurrentActivity(a => ({...a, definition: v.definition, working: v.label === null}));
+        })
+      }
+    }, [versionId]);
+
+    const versionsOptions = versions.map(ov => {
+      const v = Object.assign({}, ov);
+      v.value = v.label || "";
+      if(v.label === null) {v.label = WORKING_VERSION_LABEL; v.working=true;}
+      if(v.active) {v.label = <i>{`${v.label} (active)`}</i>;}
+      return v;
+    });
+    const currentVersion = versionsOptions.find(v => v.id === versionId);
+    const canCommit = currentVersion && !currentVersion.value;
+    const canSave = currentActivity && currentActivity.working;
+
+    useEffect(() => {
+      if(currentVersion && currentVersion.working) {
+        const i = setInterval(() => {
+          fetchActivityVersions(activityId, r => {
+            const v = r.find(v => v.id === currentVersion.id);
+            setAlertNewVersion(compareActivitiesDef(v, currentVersion));
+          })
+        }, 3000);
+        return () => clearInterval(i);
+      }
+    }, [activityId, currentVersion]);
+
+    const save = () => {
+      const r = editor.getDefinition(ReactDOM.findDOMNode(titleRef.current).value);
+      if(!r.hasAStart) {
+          alert("the workflow need a `start`");
+          return false;
+      }
+      const {activity} = r;
+      if(activity.name.length === 0) {
+        alert("The workflow need a name");
+        return false;
+      }
+      Object.keys(activity.definition.cells).map(c => delete activity.definition.cells[c].name);
+      activity.id = currentActivity.id;
+      saveActivity(
+        activity,
+        resp => {
+          editor.graph.getDefaultParent().originalActivity = activity;
+          activity.id = resp.id;
+          setCurrentActivity(activity);
+          setNewActivity(false);
+          fetchActivityVersions(activityId, setVersions);
+        }
+      )
+      return true;
+    }
 
     return (
         <>
@@ -1057,12 +1189,14 @@ export function ActivityEditor(props) {
                 <LinkContainer to={`/transactions/config/activities/editor`}>
                     <Breadcrumb.Item><FormattedMessage id="activity-editor" defaultMessage="Activities"/></Breadcrumb.Item>
                 </LinkContainer>
-                <Breadcrumb.Item active>{(currentActivity && currentActivity.name) || props.match.params.activityId}</Breadcrumb.Item>
+                <Breadcrumb.Item style={{textTransform: "none"}} active>
+                  {(currentActivity && currentActivity.name) || activityId}
+                </Breadcrumb.Item>
             </Breadcrumb>
             <Row>
               <Col sm={11}>
                 <p style={descriptionStyle}>
-                  { currentActivity && (currentActivity.description || "no description").split("\n").map(d => <div>{d}<br/></div>) }
+                  { currentActivity && (currentActivity.description || "no description").split("\n").map(d => <>{d}<br/></>) }
                 </p>
                 {descriptionStyle.height ?
                   <Button bsStyle={"link"} onClick={() => setDescriptionStyle(ExpandedDescriptionStyle)}>show
@@ -1092,15 +1226,78 @@ export function ActivityEditor(props) {
             </Row>
             <hr />
             <Row>
-                <Col sm={2}>
+                <Col sm={3}>
                     <FormControl componentClass="input" placeholder="Name" ref={titleRef}/>
                 </Col>
-                <Col sm={7}>
-                    <div ref={toolbarRef} />
+                <Col md={8}>
+                    <ButtonToolbar>
+                        <ButtonGroup>
+                            <Button onClick={() => save()} disabled={!canSave}>Save</Button>
+                        </ButtonGroup>
+                        <ButtonGroup style={{paddingLeft: '1rem'}}>
+                            <Button onClick={() => editor && editor.execute("add_process")} disabled={!canSave}>+</Button>
+                            <Button onClick={() => editor && editor.execute("clone_process")} disabled={!canSave}>🐑</Button>
+                            <Button onClick={() => editor && editor.execute("delete")} disabled={!canSave}>✘</Button>
+                        </ButtonGroup>
+                        <ButtonGroup style={{paddingLeft: '1rem'}}>
+                            <Button onClick={() => editor && editor.execute("undo")} disabled={!canSave}>⤾</Button>
+                            <Button onClick={() => editor && editor.execute("redo")} disabled={!canSave}>⤿</Button>
+                        </ButtonGroup>
+                        <ButtonGroup style={{paddingLeft: '1rem'}}>
+                            <Button onClick={() => editor && editor.execute("zoomIn")}>🔍 +</Button>
+                            <Button onClick={() => editor && editor.execute("zoomOut")}>🔍 -</Button>
+                        </ButtonGroup>
+                        <ButtonGroup style={{paddingLeft: '1rem'}}>
+                            <Button onClick={() => editor && editor.execute("fit")}>fit</Button>
+                            <Button onClick={() => editor && editor.execute("show")}>👓</Button>
+                            <Button onClick={() => editor && editor.execute("showDefinition")}>txt</Button>
+                            <Button onClick={() => {
+                              editor && downloadDefinition(editor.getDefinition(ReactDOM.findDOMNode(titleRef.current).value).activity);
+                            }}>
+                              <FontAwesomeIcon icon={faArrowDown} />
+                            </Button>
+                            <Button onClick={() => editor && editor.execute("upload_definition")} disabled={!canSave}>
+                              <FontAwesomeIcon icon={faArrowUp} />
+                            </Button>
+                            <Button onClick={() => setShowStats(true)}><FontAwesomeIcon icon={faChartBar} /></Button>
+                        </ButtonGroup>
+                    </ButtonToolbar>
                 </Col>
-                <Col sm={2}>
-                    <Button onClick={() => setShowStats(true)}><FontAwesomeIcon icon={faChartBar} /></Button>
-                </Col>
+            </Row>
+            <Row>
+                <Col sm={3}>
+                    <Select
+                      className="basic-single"
+                      classNamePrefix="select"
+                      value={currentVersion}
+                      isSearchable={true}
+                      name="activity-version"
+                      onChange={(value, action) => {
+                          if(["select-option"].includes(action.action)) {
+                            if(compareActivitiesDef(currentVersion, editor.getDefinition().activity)) {
+                              if(window.confirm("You have pending / unsaved changes, do you want to lose them?")) {
+                                setVersionId(value.id);
+                              }
+                            } else {
+                              setVersionId(value.id);
+                            }
+                          }
+                      }}
+                      options={versionsOptions} />
+              </Col>
+              <Col md={8}>
+                <Button disabled={!canCommit} onClick={() => {
+                  save() && setShowCommit(true)
+                }}>Commit</Button>
+                <Button
+                  disabled={!currentVersion || currentVersion.active}
+                  onClick={() => activateVersion(currentActivity.id, versionId, () => {
+                    fetchActivityVersions(activityId, r => {
+                      setVersions(r);
+                      setVersionId((r.find(v => v.active) || {}).id);
+                    });
+                  })}>Activate</Button>
+              </Col>
             </Row>
             {
               alertNewVersion &&
@@ -1110,8 +1307,8 @@ export function ActivityEditor(props) {
                 </Alert>
             }
             <Row>
-                <Col>
-                    <div ref={editorRef} style={{overflow: 'hidden', backgroundImage: `url(${GridPic})`}} />
+                <Col sm={12}>
+                    <div ref={editorRef} style={{backgroundImage: `url(${GridPic})`}} />
                 </Col>
             </Row>
             <hr />
@@ -1125,10 +1322,21 @@ export function ActivityEditor(props) {
                 </Col>
             </Row>
 
+            <CommitVersionModal
+                show={showCommit}
+                onHide={c => {
+                  c && fetchActivityVersions(activityId, r => {
+                    setVersions(r);
+                    setVersionId((r.find(v => v.active) || {}).id);
+                  });
+                  setShowCommit(false);
+                }}
+                id={activityId} />
+
             <ActivityStatsModal
                 show={showStats}
                 onHide={() => setShowStats(false)}
-                id={props.match.params.activityId} />
+                id={activityId} />
 
             <NewCellModal
                 show={newCell}
@@ -1150,7 +1358,8 @@ export function ActivityEditor(props) {
 
             <NewNameModal
                 show={newName}
-                activity={editor && editor.getDefinition().activity}
+                title={"New cell"}
+                isValidName={name => editor && !Object.keys(editor.getDefinition().activity.definition.cells).includes(name)}
                 onHide={newName => import("./editor").then(e => {
                     showNewName(false);
                     if(!newName) return;

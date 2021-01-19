@@ -207,43 +207,6 @@ export function addNode(editor, def, name, paramsFields) {
 }
 
 
-function saveActivity(editor, title, saveHandler) {
-    if(title.length === 0) {
-        alert("The workflow need a name");
-        return;
-    }
-    const r = getDefinition(editor, title);
-    if(!r.hasAStart) {
-        alert("the workflow need a `start`");
-        return;
-    }
-    Object.keys(r.activity.definition.cells).map(c => delete r.activity.definition.cells[c].name);
-
-    saveHandler(r.activity, () => {
-        // update the original activity stored *if* everything went well.
-        editor.graph.getDefaultParent().originalActivity = r.activity;
-    });
-}
-
-
-function downloadDefinition(editor, title) {
-    const r = getDefinition(editor, title);
-    const text = JSON.stringify(r.activity.definition, null, 2);
-    const filename = `${r.activity.name}.json`;
-
-    let element = document.createElement('a');
-    element.setAttribute('href', 'data:application/json;charset=utf-8,' + encodeURIComponent(text));
-    element.setAttribute('download', filename);
-
-    element.style.display = 'none';
-    document.body.appendChild(element);
-
-    element.click();
-
-    document.body.removeChild(element);
-}
-
-
 function new_editor() {
     let editor = new mxEditor();
     let graph = editor.graph;
@@ -445,93 +408,25 @@ export function updateGraphModel(editor, activity, options) {
     }
 
     if(options && options.nofit) return;
+
     // fit and center the graph (see: https://jgraph.github.io/mxgraph/docs/js-api/files/view/mxGraph-js.html#mxGraph.fit)
-    var margin = 2;
-    var max = 1;
-
-    // reset the graph start to adjust correctly the view afterwards
-    graph.view.setTranslate(0, 0);
-
-    var bounds = graph.getGraphBounds();
-    var cw = graph.container.clientWidth - margin;
-    var ch = graph.container.clientHeight - margin;
-    var w = bounds.width / graph.view.scale;
-    var h = bounds.height / graph.view.scale;
-    var s = Math.min(max, Math.min(cw / w, ch / h));
-
-    graph.view.scaleAndTranslate(s,
-      (margin + cw - w * s) / (2 * s) - bounds.x / graph.view.scale,
-      (margin + ch - h * s) / (4 * s) - bounds.y / graph.view.scale
-      /*originally: (margin + ch - h * s) / (2 * s) - bounds.y / graph.view.scale*/);
+    fitEditor(graph);
 }
 
 
 function setup_toolbar(editor, container, spacer, handlers, props) {
-    const {cells, activityId} = props;
-    const {onSave, onDelete} = handlers;
-
-    if(onSave !== undefined) {
-        addToolbarButton(editor, container, 'export', 'Save');
-    }
-    if(onDelete !== undefined) {
-        addToolbarButton(editor, container, null, 'Delete', null, false, e => onDelete());
-    }
-    if(onSave !== undefined || onDelete !== undefined) {
-        container.appendChild(spacer.cloneNode(true));
-    }
-    if(cells !== undefined) {
-        addToolbarButton(editor, container, 'add_process', '+', null, false, null, 'add a process');
-        container.appendChild(spacer.cloneNode(true));
-    }
-    if(cells !== undefined) {
-        addToolbarButton(editor, container, 'clone_process', '🐑', null, false, null, 'clone a process');
-        container.appendChild(spacer.cloneNode(true));
-    }
-    if(onSave !== undefined) {
-        addToolbarButton(editor, container, 'delete', '✘', null, false, null, 'delete an element');
-        container.appendChild(spacer.cloneNode(true));
-        addToolbarButton(editor, container, 'undo', '⤾');
-        addToolbarButton(editor, container, 'redo', '⤿');
-        container.appendChild(spacer.cloneNode(true));
-        // devnote: not needed to be able to print out outside the editor (for now)
-        // addToolbarButton(editor, toolbar, 'print', '🖨');
-        container.appendChild(spacer.cloneNode(true));
-    }
+    const {activityId} = props;
     addToolbarButton(editor, container, 'zoomIn', '🔍 +', null, false, null, 'zoom in');
     addToolbarButton(editor, container, 'zoomOut', '🔍 -', null, false, null, 'zoom out');
-    if(onSave !== undefined) {
-        // devnote: not needed to be able to fit ++ outside the editor (for now)
-        addToolbarButton(editor, container, 'actualSize', '1:1', null, false, null, 'actual size');
-        addToolbarButton(editor, container, 'fit', 'Fit');
-    }
     addToolbarButton(editor, container, 'show', '👓');
     addToolbarButton(editor, container, 'showDefinition', 'txt');
-    if(onSave === undefined) {
-        addToolbarButton(editor, container, null, 'def', null, false, () => {
-            var win = window.open(`/transactions/config/activities/editor/${activityId}`, '_blank');
-            win.focus();
-        });
-    }
-    if(onSave !== undefined) {
-        container.appendChild(spacer.cloneNode(true));
-        const saveElt = document.createElement('span');
-        saveElt.className = 'glyphicon glyphicon-save';
-        addToolbarButton(editor, container, 'download_definition', '', saveElt, false, null, 'download the definition');
-        const openElt = document.createElement('span');
-        openElt.className = 'glyphicon glyphicon-open';
-        addToolbarButton(editor, container, 'upload_definition', '', openElt, false, null, 'upload a definition');
-    }
+    activityId && addToolbarButton(editor, container, null, 'def', null, false, () => {
+        window.open(`/transactions/config/activities/editor/${activityId}`, '_blank').focus();
+    });
 }
 
 
 function setup_actions(editor, title, spacer, handlers, modal, props) {
-    editor.addAction('export', (editor, cell) => saveActivity(editor, title.value, handlers.onSave));
-    /*
-    editor.addAction('add_process', (editor, cell) => {
-        newCell(props.cells, editor.graph.getModel().cells, modal, editor, spacer, props.entities, props);
-    });
-     */
-    editor.addAction('download_definition', editor => downloadDefinition(editor, title.value));
     editor.addAction('upload_definition', (editor, cell) => {
         if (typeof window.FileReader !== 'function') {
           alert("The file API isn't supported on this browser yet.");
@@ -552,7 +447,29 @@ function setup_actions(editor, title, spacer, handlers, modal, props) {
     });
 }
 
-export default function draw_editor(container, activity, handlers, placeholders, props) {
+export function fitEditor(graph, container, height=600) {
+  container && graph.doResizeContainer(container.parentElement.getBoundingClientRect().width, height);
+
+  // reset the graph start to adjust correctly the view afterwards
+  graph.view.setTranslate(0, 0);
+  // fit
+  var margin = 2;
+  var max = 1;
+
+  var bounds = graph.getGraphBounds();
+  var cw = graph.container.clientWidth - margin;
+  var ch = graph.container.clientHeight - margin;
+  var w = bounds.width / graph.view.scale;
+  var h = bounds.height / graph.view.scale;
+  var s = Math.min(max, Math.min(cw / w, ch / h));
+
+  graph.view.scaleAndTranslate(s,
+    (margin + cw - w * s) / (2 * s) - bounds.x / graph.view.scale,
+    (margin + ch - h * s) / (4 * s) - bounds.y / graph.view.scale
+  )
+}
+
+export default function draw_editor(container, handlers, placeholders, props) {
     console.log("rendering editor");
     let {toolbar, title} = placeholders;
 
@@ -665,13 +582,13 @@ export default function draw_editor(container, activity, handlers, placeholders,
         setup_toolbar(editor, toolbar, spacer, handlers, props);
     }
 
-    if(activity.id) {
-        console.log('getting data');
-        handlers.get(activity.id, a => updateGraphModel(editor, activity, {title: title}));
-    } else {
-        console.log('new activity');
-        updateGraphModel(editor, activity, {title: title});
-    }
+    // if(activity.id) {
+    //     console.log('getting data');
+    //     // handlers.get(activity.id, a => updateGraphModel(editor, activity, {title: title}));
+    // } else {
+    //     console.log('new activity');
+    //     // updateGraphModel(editor, activity, {title: title});
+    // }
     return editor;
 }
 

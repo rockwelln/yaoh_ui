@@ -1,4 +1,4 @@
-import React, {Component, useState, useEffect} from 'react';
+import React, {Component, useState, useEffect, useRef} from 'react';
 import ReactDOM from 'react-dom';
 
 import Alert from 'react-bootstrap/lib/Alert';
@@ -47,20 +47,18 @@ import {ApioDatatable, Pagination} from "../utils/datatable";
 
 import 'react-datepicker/dist/react-datepicker.css';
 import GridPic from "../orchestration/grid.gif";
-// import draw_editor from "../orchestration/editor";
 import update from 'immutability-helper';
 import {StaticControl} from "../utils/common";
 import {access_levels, isAllowed, modules, pages} from "../utils/user";
 import {TimerActions} from "./timers";
 import {fetchRoles} from "../system/user_roles";
 import {LinkContainer} from "react-router-bootstrap";
-import {EditCellModal} from "../orchestration/activity-editor";
+import {EditCellModal, useWindowSize} from "../orchestration/activity-editor";
 import {SavedFiltersFormGroup} from "../utils/searchFilters";
-import ManualActionsBox, {ManualActionInputForm} from "../dashboard/manualActions";
+import {ManualActionInputForm} from "../dashboard/manualActions";
 import {useDropzone} from "react-dropzone";
 import {DeleteConfirmButton} from "../utils/deleteConfirm";
 
-export const DATE_FORMAT = 'DD/MM/YYYY HH:mm:ss';
 const SUB_REQUESTS_PAGE_SIZE = 25;
 
 const workableDefinition = (definition, states) => {
@@ -105,91 +103,78 @@ const pp_as_json = (s) => {
     }
 };
 
-export class TransactionFlow extends Component {
-    constructor(props, context) {
-        super(props, context);
-        this.state = {
-          editedCell: undefined,
-        };
-        this.flowGraphRef = React.createRef();
-        this.toolbarRef = React.createRef();
-        this._renderGrid = this._renderGrid.bind(this);
-        this._refreshGrid = this._refreshGrid.bind(this);
-    }
 
-    _renderGrid() {
-        const {definition, states, activityId} = this.props;
-        import ("../orchestration/editor").then(editor => {
-            editor.default(
-                ReactDOM.findDOMNode(this.flowGraphRef.current),
-                {definition: workableDefinition(JSON.parse(definition), states)},
-                {
-                  onEdit: cell => this.setState({editedCell: cell}),
-                },
-                {
-                    toolbar: ReactDOM.findDOMNode(this.toolbarRef.current),
-                },
-                {
-                    readOnly: true,
-                    height: 300,
-                    activityId: activityId,
-                }
-            )
-        })
-    }
+export function TransactionFlow({definition, states, activityId}) {
+  const [editedCell, setEditedCell] = useState();
+  const [editor, setEditor] = useState(null);
+  const [prevStates, setPrevStates] = useState(null);
+  const [width, height] = useWindowSize();
+  const flowGraphRef = useRef(null);
+  const toolbarRef = useRef(null);
 
-    _refreshGrid(force) {
-        const width = this.flowGraphRef.current?ReactDOM.findDOMNode(this.flowGraphRef.current).getBoundingClientRect().width:null;
-        if(!width) return;
-        if(width !== this.state.eltWidth || force) {
-            console.log("resized-2", width, this.state.elWidth);
-            this.setState({eltWidth: width});
-            width !== 0 && this._renderGrid();
-        }
-    }
+  const clientWidth = flowGraphRef.current?ReactDOM.findDOMNode(flowGraphRef.current).getBoundingClientRect().width:null;
 
-    componentDidMount() {
-        this._refreshGrid(true);
-    }
+  useEffect(() => {
+    if(!clientWidth) return;
 
-    shouldComponentUpdate(nextProps, nextState, nextContext) {
-        const width = this.flowGraphRef.current?ReactDOM.findDOMNode(this.flowGraphRef.current).getBoundingClientRect().width:null;
-        // if resized
-        if(width && width !== this.state.eltWidth){
-            return true;
-        }
-        // if there is a new task
-        if(!this.props.states){
-            return true;
-        }
-        // if a task status changed or the edited cell
-        const nextStates = nextProps.states
-          .reduce((states, s) => {states.add(`${s.cell_id}/${s.status}`); return states;}, new Set());
-        const statesChanges = this.props.states.filter(
-            s => !nextStates.has(`${s.cell_id}/${s.status}`)
+    import ("../orchestration/editor").then(e => {
+        if(flowGraphRef.current === null) return;
+        const ed = e.default(
+            ReactDOM.findDOMNode(flowGraphRef.current),
+            {
+                onEdit: cell => setEditedCell(cell),
+            },
+            {
+                toolbar: ReactDOM.findDOMNode(toolbarRef.current),
+            },
+            {
+                readOnly: true,
+                height: 300,
+                activityId: activityId,
+            }
         )
-        return (
-            statesChanges.length !== 0 || nextState.editedCell !== this.state.editedCell
-        );
-    }
+        e.updateGraphModel(ed, { definition: workableDefinition(JSON.parse(definition), states) }, {clear: true});
+        setEditor(ed);
+    })
+  }, [flowGraphRef, toolbarRef, clientWidth]);
 
-    componentDidUpdate(prevProps, prevState) {
-        this._refreshGrid();
-    }
+  useEffect(() => {
+    if(!editor) return;
 
-    render() {
-        return (
-            <div>
-                <div ref={this.toolbarRef} style={{position: 'absolute', zIndex: '100'}} />
-                <div ref={this.flowGraphRef} style={{overflow: 'hidden', backgroundImage: `url(${GridPic})`}} />
-                <EditCellModal
-                  show={this.state.editedCell !== undefined}
-                  cell={this.state.editedCell}
-                  onHide={() => this.setState({editedCell: undefined})}
-                  readOnly />
-            </div>
-        );
-    }
+    // devnote: compare the states after removing duplicates (if any) (to find out if there is a real change)
+    const currentStates = states.reduce((o, c) => {o[c.cell_id] = c;return o;}, {});
+    const prevStates_ = prevStates && prevStates.reduce((o, c) => {o[c.cell_id] = c;return o;}, {});
+    if(prevStates && JSON.stringify(currentStates) === JSON.stringify(prevStates_)) return;
+
+    console.log("refresh for states!!");
+
+    import ("../orchestration/editor").then(editorScript => {
+        editorScript.updateGraphModel(editor, { definition: workableDefinition(JSON.parse(definition), Object.values(currentStates)) }, {clear: true});
+    })
+    setPrevStates(states);
+  }, [editor, states, definition]);
+
+  useEffect(() => {
+      // force the width of the container
+      if (editor && flowGraphRef.current) {
+        import ("../orchestration/editor").then(e => {
+          e.fitEditor(editor.graph, ReactDOM.findDOMNode(flowGraphRef.current), 300)
+        })
+      }
+    }, [height, width, editor, flowGraphRef.current]);
+
+  return (
+    <div>
+      <div ref={toolbarRef} style={{position: 'absolute', zIndex: '100'}} />
+      <div ref={flowGraphRef} style={{backgroundImage: `url(${GridPic})`}} />
+
+      <EditCellModal
+        show={editedCell !== undefined}
+        cell={editedCell}
+        onHide={() => setEditedCell(undefined)}
+        readOnly />
+    </div>
+  )
 }
 
 
