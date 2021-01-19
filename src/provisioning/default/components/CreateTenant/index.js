@@ -7,6 +7,7 @@ import Limits from "./Limits";
 import Admin from "./Admin";
 import Created from "./Created";
 import Parameters from "./Parameters";
+import AddPhoneNumbers from "../AddPhoneNumberTenant/Steps";
 
 import Col from "react-bootstrap/lib/Col";
 import Row from "react-bootstrap/lib/Row";
@@ -51,6 +52,14 @@ export class CreateTenant extends Component {
       case "Limits": {
         return <Limits />;
       }
+      case "PhoneNumbers": {
+        return (
+          <AddPhoneNumbers
+            isAddTenantWizard
+            createatedTenantId={this.props.createdTenant.tenantId}
+          />
+        );
+      }
       case "Admin": {
         return <Admin />;
       }
@@ -63,13 +72,11 @@ export class CreateTenant extends Component {
   };
 }
 
-const mapStateToProps = state => ({
-  createTenantStep: state.createTenantStep
+const mapStateToProps = (state) => ({
+  createTenantStep: state.createTenantStep,
+  createdTenant: state.createdTenant,
 });
 
 const mapDispatchToProps = {};
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(CreateTenant);
+export default connect(mapStateToProps, mapDispatchToProps)(CreateTenant);

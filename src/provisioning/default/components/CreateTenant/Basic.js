@@ -28,7 +28,7 @@ import {
   fetchGetExistingBackends,
   changeBackendOfTenant,
   fetchGetTenantOU,
-  changeDetailsOfTenant
+  changeDetailsOfTenant,
 } from "../../store/actions";
 
 export class Basic extends Component {
@@ -38,7 +38,7 @@ export class Basic extends Component {
     domainError: "",
     isDefault: true,
     turnOnSyncLDAP: false,
-    overwriteID: false
+    overwriteID: false,
   };
 
   render() {
@@ -102,9 +102,9 @@ export class Basic extends Component {
                 <div>
                   <Checkbox
                     checked={this.state.turnOnSyncLDAP}
-                    onChange={e => {
+                    onChange={(e) => {
                       this.setState({
-                        turnOnSyncLDAP: e.target.checked
+                        turnOnSyncLDAP: e.target.checked,
                       });
                       if (e.target.checked) {
                         this.props.changeBackendOfTenant(
@@ -130,12 +130,12 @@ export class Basic extends Component {
                         <FormControl
                           componentClass="select"
                           value={this.props.createTenant.sync.ldap}
-                          onChange={e => {
+                          onChange={(e) => {
                             this.props.changeBackendOfTenant(e.target.value);
                             this.props.fetchGetTenantOU(e.target.value);
                           }}
                         >
-                          {this.props.ldapBackends.map(el => (
+                          {this.props.ldapBackends.map((el) => (
                             <option key={el} value={el}>
                               {el}
                             </option>
@@ -149,11 +149,11 @@ export class Basic extends Component {
                         <FormControl
                           componentClass="select"
                           value={this.props.createTenant.sync.ou}
-                          onChange={e =>
+                          onChange={(e) =>
                             this.props.changeDetailsOfTenant(e.target.value)
                           }
                         >
-                          {this.props.tenantOU.map(el => (
+                          {this.props.tenantOU.map((el) => (
                             <option key={el.id} value={el.id}>
                               {el.id}
                             </option>
@@ -182,7 +182,7 @@ export class Basic extends Component {
                   <Checkbox
                     className={"margin-top-0"}
                     checked={this.state.overwriteID}
-                    onChange={e =>
+                    onChange={(e) =>
                       this.setState({ overwriteID: e.target.checked })
                     }
                   >
@@ -193,7 +193,7 @@ export class Basic extends Component {
                     placeholder="Tenant ID"
                     defaultValue={this.props.createTenant.tenantId}
                     disabled={!this.state.overwriteID}
-                    onChange={e => {
+                    onChange={(e) => {
                       this.props.changeIdOfTenant(e.target.value);
                       this.setState({ errorMessage: "" });
                     }}
@@ -209,7 +209,7 @@ export class Basic extends Component {
                     type="text"
                     placeholder="Tenant name"
                     defaultValue={this.props.createTenant.name}
-                    onChange={e => {
+                    onChange={(e) => {
                       this.props.changeNameOfTenant(e.target.value);
                       this.setState({ errorMessage: "" });
                     }}
@@ -228,7 +228,7 @@ export class Basic extends Component {
                       onClick={() => {
                         this.props.changeDomainOfTenant("");
                         this.setState({
-                          isDefault: !this.state.isDefault
+                          isDefault: !this.state.isDefault,
                         });
                       }}
                     >
@@ -243,7 +243,7 @@ export class Basic extends Component {
                         checked={!this.state.isDefault}
                         onClick={() =>
                           this.setState({
-                            isDefault: !this.state.isDefault
+                            isDefault: !this.state.isDefault,
                           })
                         }
                       >
@@ -256,7 +256,7 @@ export class Basic extends Component {
                         placeholder="Domain"
                         disabled={this.state.isDefault}
                         defaultValue={this.props.createTenant.defaultDomain}
-                        onChange={e => {
+                        onChange={(e) => {
                           this.validateDomain(e.target.value);
                           this.setState({ errorMessage: "" });
                         }}
@@ -285,7 +285,7 @@ export class Basic extends Component {
                 >
                   <div
                     style={{
-                      fontFamily: `"Ubuntu, Helvetica Neue",Helvetica,Arial,sans-serif`
+                      fontFamily: `"Ubuntu, Helvetica Neue",Helvetica,Arial,sans-serif`,
                     }}
                   >
                     Add address
@@ -300,7 +300,7 @@ export class Basic extends Component {
                 >
                   <div
                     style={{
-                      fontFamily: `"Helvetica Neue",Helvetica,Arial,sans-serif`
+                      fontFamily: `"Helvetica Neue",Helvetica,Arial,sans-serif`,
                     }}
                   >
                     Hide
@@ -320,7 +320,7 @@ export class Basic extends Component {
                     type="text"
                     placeholder="Street"
                     defaultValue={this.props.createTenant.address.addressLine1}
-                    onChange={e =>
+                    onChange={(e) =>
                       this.props.changeAddressOfTenant(e.target.value)
                     }
                   />
@@ -332,7 +332,9 @@ export class Basic extends Component {
                     type="text"
                     placeholder="ZIP"
                     defaultValue={this.props.createTenant.address.postalCode}
-                    onChange={e => this.props.changeZIPOfTenant(e.target.value)}
+                    onChange={(e) =>
+                      this.props.changeZIPOfTenant(e.target.value)
+                    }
                   />
                 </Col>
                 <Col md={6}>
@@ -340,7 +342,7 @@ export class Basic extends Component {
                     type="text"
                     placeholder="City"
                     defaultValue={this.props.createTenant.address.city}
-                    onChange={e =>
+                    onChange={(e) =>
                       this.props.changeCityOfTenant(e.target.value)
                     }
                   />
@@ -383,7 +385,7 @@ export class Basic extends Component {
     );
   }
 
-  changeTenantType = value => {
+  changeTenantType = (value) => {
     this.props.changeTypeOfTenant(value);
     if (
       this.props.createTenant.type !== "Enterprise" &&
@@ -403,12 +405,12 @@ export class Basic extends Component {
     this.props.changeStepOfCreateTenant("Template");
   };
 
-  validateDomain = value => {
+  validateDomain = (value) => {
     if (value.length < 2 || value.length > 80 || value.includes("@")) {
       this.props.changeDomainOfTenant(value);
       this.setState({
         domainError:
-          "Domain length must be from 2 to 80 characters and not contain the @ symbol"
+          "Domain length must be from 2 to 80 characters and not contain the @ symbol",
       });
       return;
     }
@@ -417,14 +419,14 @@ export class Basic extends Component {
   };
 
   showHideMore = () => {
-    this.setState(prevState => ({ showHideMore: !prevState.showHideMore }));
+    this.setState((prevState) => ({ showHideMore: !prevState.showHideMore }));
   };
 }
 
-const mapStateToProps = state => ({
+const mapStateToProps = (state) => ({
   createTenant: state.createTenant,
   ldapBackends: state.ldapBackends,
-  tenantOU: state.tenantOU
+  tenantOU: state.tenantOU,
 });
 
 const mapDispatchToProps = {
@@ -440,12 +442,7 @@ const mapDispatchToProps = {
   fetchGetExistingBackends,
   changeBackendOfTenant,
   fetchGetTenantOU,
-  changeDetailsOfTenant
+  changeDetailsOfTenant,
 };
 
-export default withRouter(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(Basic)
-);
+export default withRouter(connect(mapStateToProps, mapDispatchToProps)(Basic));

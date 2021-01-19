@@ -15,7 +15,7 @@ import {
   fetchPostAddPhoneNumbersToTenant,
   fetchPostAssignPhoneNumbersToGroup,
   fetchPostAddMobileNumbersToTenant,
-  fetchPostAddMobileNumbersToGroup
+  fetchPostAddMobileNumbersToGroup,
 } from "../../store/actions";
 
 import OkTab from "./Tabs/OK";
@@ -25,7 +25,7 @@ import { getRange } from "../expandRangeOfPhoneNumber";
 
 export class Basic extends Component {
   state = {
-    buttomNameAdd: "ADD"
+    buttomNameAdd: "ADD",
   };
   render() {
     return (
@@ -36,7 +36,7 @@ export class Basic extends Component {
             <Col md={12}>
               <div className={"header"}>
                 Add phone numbers
-                <Link
+                {/* <Link
                   to={`/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}`}
                 >
                   {this.props.isGroupPage ? null : (
@@ -47,7 +47,7 @@ export class Basic extends Component {
                       Cancel
                     </Button>
                   )}
-                </Link>
+                </Link> */}
               </div>
             </Col>
           </Row>
@@ -126,7 +126,7 @@ export class Basic extends Component {
         } else {
           let range = getRange(phone.start, phone.end);
           range &&
-            range.map(phone =>
+            range.map((phone) =>
               accamulator.numbers.push({ phoneNumber: phone })
             );
         }
@@ -144,14 +144,14 @@ export class Basic extends Component {
             this.props.match.params.groupId,
             mobileData
           )
-          .then(res => {
+          .then((res) => {
             if (res) {
               this.props.changeStepOfAddPhoneTenant("Info");
             }
           })
           .then(() =>
             this.setState({
-              buttomNameAdd: "ADD"
+              buttomNameAdd: "ADD",
             })
           )
       : this.props
@@ -160,12 +160,12 @@ export class Basic extends Component {
             this.props.match.params.groupId,
             data
           )
-          .then(res =>
+          .then((res) =>
             res === "success"
               ? this.props.changeStepOfAddPhoneTenant("Info")
               : this.setState({
                   errorMessage: "Failed assign numbers",
-                  buttomNameAdd: "ADD"
+                  buttomNameAdd: "ADD",
                 })
           );
   };
@@ -180,7 +180,7 @@ export class Basic extends Component {
         } else {
           let range = getRange(phone.start, phone.end);
           range &&
-            range.map(phone =>
+            range.map((phone) =>
               accamulator.numbers.push({ phoneNumber: phone })
             );
         }
@@ -198,38 +198,40 @@ export class Basic extends Component {
               this.props.match.params.tenantId,
               mobileData
             )
-            .then(res => {
+            .then((res) => {
               if (res) {
                 this.props.changeStepOfAddPhoneTenant("Info");
               }
             })
             .then(() =>
               this.setState({
-                buttomNameAdd: "ADD"
+                buttomNameAdd: "ADD",
               })
             )
         : this.props
             .fetchPostAddPhoneNumbersToTenant(
-              this.props.match.params.tenantId,
+              this.props.isAddTenantWizard
+                ? this.props.createatedTenantId
+                : this.props.match.params.tenantId,
               data
             )
-            .then(res => {
+            .then((res) => {
               if (res) {
                 this.props.changeStepOfAddPhoneTenant("Info");
               }
             })
             .then(() =>
               this.setState({
-                buttomNameAdd: "ADD"
+                buttomNameAdd: "ADD",
               })
             );
     });
   };
 }
 
-const mapStateToProps = state => ({
+const mapStateToProps = (state) => ({
   addPhoneTenantStep: state.addPhoneTenantStep,
-  validatedNumbersTenant: state.validatedNumbersTenant
+  validatedNumbersTenant: state.validatedNumbersTenant,
 });
 
 const mapDispatchToProps = {
@@ -238,12 +240,7 @@ const mapDispatchToProps = {
   fetchPostAddPhoneNumbersToTenant,
   fetchPostAssignPhoneNumbersToGroup,
   fetchPostAddMobileNumbersToTenant,
-  fetchPostAddMobileNumbersToGroup
+  fetchPostAddMobileNumbersToGroup,
 };
 
-export default withRouter(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(Basic)
-);
+export default withRouter(connect(mapStateToProps, mapDispatchToProps)(Basic));
