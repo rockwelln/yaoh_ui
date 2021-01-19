@@ -660,7 +660,7 @@ class App extends Component {
                 }
             })
             .catch(error => {
-                if(error.response !== undefined && error.response.status === 401) {  // unauthorized
+                if(error.response !== undefined && (error.response.status === 401 || error.response.status === 403)) {  // unauthorized
                     this.logout()
                 } else {
                     console.error("fetch user profile error", error)
