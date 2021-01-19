@@ -58,23 +58,24 @@ export class Info extends Component {
         <Row className={"margin-1"}>
           <div className="button-row">
             <div className="pull-right">
-              {this.props.isAddTenantWizard && (
+              {this.props.isAddTenantWizard ? (
                 <Button
                   onClick={() => this.props.changeStepOfCreateTenant("Admin")}
                   className={"btn-primary"}
                 >
                   Next
                 </Button>
+              ) : (
+                <Link
+                  to={`${
+                    this.props.isGroupPage
+                      ? `/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}/groups/${this.props.match.params.groupId}`
+                      : `/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}`
+                  }`}
+                >
+                  <Button className={"btn-primary margin-left-1"}>OK</Button>
+                </Link>
               )}
-              <Link
-                to={`${
-                  this.props.isGroupPage
-                    ? `/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}/groups/${this.props.match.params.groupId}`
-                    : `/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}`
-                }`}
-              >
-                <Button className={"btn-primary margin-left-1"}>OK</Button>
-              </Link>
             </div>
           </div>
         </Row>
