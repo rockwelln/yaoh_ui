@@ -767,6 +767,16 @@ export const showHideAdditionalServicesTenant = data => ({
   data
 });
 
+export const showHideAdditionalUserServicesTenant = data => ({
+  type: actionType.SHOW_HIDE_ADDITIONAL_USER_SERVICES_TENANT,
+  data
+});
+
+export const showHideAdditionalUserServicesGroup = data => ({
+  type: actionType.SHOW_HIDE_ADDITIONAL_USER_SERVICES_GROUP,
+  data
+});
+
 export const showHideAdditionalServiceGroup = data => ({
   type: actionType.SHOW_HIDE_ADDITIONAL_SERVICES_GROUP,
   data
@@ -2570,8 +2580,8 @@ export function fetchPutUpdateGroupServicesByGroupId(tenantId, groupId, data) {
         dispatch(putUpdateGroupServicesByGroupId(data));
         NotificationsManager.success(
           <FormattedMessage
-            id="group-services-successfully-updated"
-            defaultMessage="Group services successfully updated"
+            id="services-successfully-updated"
+            defaultMessage="Services successfully updated"
           />,
           "Updated"
         );
@@ -2784,7 +2794,7 @@ export function fetchPutUpdateGroupServicesByTenantId(tenantId, data) {
         NotificationsManager.success(
           <FormattedMessage
             id="group-services-successfully-updated"
-            defaultMessage="Group services successfully updated"
+            defaultMessage="Services successfully updated"
           />,
           "Updated"
         );
@@ -2794,7 +2804,7 @@ export function fetchPutUpdateGroupServicesByTenantId(tenantId, data) {
         NotificationsManager.error(
           <FormattedMessage
             id="update-group-services-failed"
-            defaultMessage="Failed to update group services!"
+            defaultMessage="Failed to update services!"
           />,
           error.message
         )
