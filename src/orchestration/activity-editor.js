@@ -322,6 +322,10 @@ export function Activities(props) {
                         isValidName={name => !activities.map(a => a.name).includes(name)}
                         title={"Duplicate"}
                         onHide={name => {
+                            if(!name) {
+                              setDuplicateActivity(undefined);
+                              return;
+                            }
                             fetchActivity(duplicateActivity, a => {
                               a.name = name;
                               delete a.id;
