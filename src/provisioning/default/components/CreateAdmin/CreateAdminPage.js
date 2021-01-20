@@ -19,10 +19,14 @@ import {
   fetchGetGroupById,
   fetchGetTenantById,
   clearErrorMassage,
-  fetchGetLanguages
+  fetchGetLanguages,
+  fetchGetTenantPasswordRules,
+  fetchGetGroupPasswordRules,
 } from "../../store/actions";
 
 import Loading from "../../common/Loading";
+
+import { passwordValidator } from "../passwordValidator";
 
 class CreateAdmin extends Component {
   state = {
@@ -32,24 +36,37 @@ class CreateAdmin extends Component {
       lastName: "",
       language: "English",
       password: "",
-      emailAddress: ""
+      emailAddress: "",
     },
     passwordConfirmation: "",
     passwordNotMatch: null,
     requiredEmail: null,
     isLoading: true,
     isLoadingLang: true,
-    userIdError: null
+    isLoadingPassRules: true,
+    userIdError: null,
+    passwordError: null,
+    textPasswordError: "",
   };
 
   componentDidMount() {
+    this.props.match.params.groupId
+      ? this.props
+          .fetchGetGroupPasswordRules(
+            this.props.match.params.tenantId,
+            this.props.match.params.groupId
+          )
+          .then(() => this.setState({ isLoadingPassRules: false }))
+      : this.props
+          .fetchGetTenantPasswordRules(this.props.match.params.tenantId)
+          .then(() => this.setState({ isLoadingPassRules: false }));
     this.props.fetchGetLanguages().then(() =>
       this.setState({
         isLoadingLang: false,
         createAdminData: {
           ...this.state.createAdminData,
-          language: this.props.languages.defaultLangue
-        }
+          language: this.props.languages.defaultLangue,
+        },
       })
     );
     this.props.match.params.groupId
@@ -83,10 +100,13 @@ class CreateAdmin extends Component {
       passwordNotMatch,
       isLoading,
       isLoadingLang,
-      requiredEmail
+      requiredEmail,
+      isLoadingPassRules,
+      passwordError,
+      textPasswordError,
     } = this.state;
 
-    if (isLoading || isLoadingLang) {
+    if (isLoading || isLoadingLang || isLoadingPassRules) {
       return <Loading />;
     }
 
@@ -118,12 +138,13 @@ class CreateAdmin extends Component {
                           placeholder="User name"
                           defaultValue={createAdminData.userId}
                           autoComplete="new-username"
-                          onChange={e => {
+                          onChange={(e) => {
                             this.setState({
                               createAdminData: {
                                 ...this.state.createAdminData,
-                                userId: e.target.value
-                              }
+                                userId: e.target.value,
+                              },
+                              userIdError: null,
                             });
                             this.props.clearErrorMassage();
                           }}
@@ -154,13 +175,13 @@ class CreateAdmin extends Component {
                         type="email"
                         placeholder="Email"
                         defaultValue={createAdminData.emailAddress}
-                        onChange={e => {
+                        onChange={(e) => {
                           this.setState({
                             createAdminData: {
                               ...this.state.createAdminData,
-                              emailAddress: e.target.value
+                              emailAddress: e.target.value,
                             },
-                            requiredEmail: null
+                            requiredEmail: null,
                           });
                           this.props.clearErrorMassage();
                         }}
@@ -183,12 +204,12 @@ class CreateAdmin extends Component {
                         type="text"
                         placeholder="First name"
                         defaultValue={createAdminData.firstName}
-                        onChange={e => {
+                        onChange={(e) => {
                           this.setState({
                             createAdminData: {
                               ...this.state.createAdminData,
-                              firstName: e.target.value
-                            }
+                              firstName: e.target.value,
+                            },
                           });
                           this.props.clearErrorMassage();
                         }}
@@ -208,12 +229,12 @@ class CreateAdmin extends Component {
                         type="text"
                         placeholder="Last name"
                         defaultValue={createAdminData.lastName}
-                        onChange={e => {
+                        onChange={(e) => {
                           this.setState({
                             createAdminData: {
                               ...this.state.createAdminData,
-                              lastName: e.target.value
-                            }
+                              lastName: e.target.value,
+                            },
                           });
                           this.props.clearErrorMassage();
                         }}
@@ -232,16 +253,16 @@ class CreateAdmin extends Component {
                       <FormControl
                         componentClass="select"
                         defaultValue={createAdminData.language}
-                        onChange={e =>
+                        onChange={(e) =>
                           this.setState({
                             createAdminData: {
                               ...this.state.createAdminData,
-                              language: e.target.value
-                            }
+                              language: e.target.value,
+                            },
                           })
                         }
                       >
-                        {this.props.languages.availableLanguages.map(lang => (
+                        {this.props.languages.availableLanguages.map((lang) => (
                           <option key={`${lang.locale}`} value={lang.name}>
                             {lang.name}
                           </option>
@@ -251,7 +272,7 @@ class CreateAdmin extends Component {
                   </FormGroup>
                   <FormGroup
                     controlId="passwordGroupAdmin"
-                    validationState={passwordNotMatch}
+                    validationState={passwordNotMatch || passwordError}
                   >
                     <Col
                       componentClass={ControlLabel}
@@ -266,17 +287,21 @@ class CreateAdmin extends Component {
                         placeholder="Password"
                         autoComplete="new-password"
                         defaultValue={createAdminData.password}
-                        onChange={e => {
+                        onChange={(e) => {
                           this.setState({
                             createAdminData: {
                               ...this.state.createAdminData,
-                              password: e.target.value
+                              password: e.target.value,
                             },
-                            passwordNotMatch: null
+                            passwordNotMatch: null,
+                            passwordError: null,
                           });
                           this.props.clearErrorMassage();
                         }}
                       />
+                      {passwordError && (
+                        <HelpBlock>{textPasswordError}</HelpBlock>
+                      )}
                     </Col>
                   </FormGroup>
                   <FormGroup
@@ -296,10 +321,10 @@ class CreateAdmin extends Component {
                         placeholder="Password confirmation"
                         autoComplete="new-password"
                         defaultValue={passwordConfirmation}
-                        onChange={e => {
+                        onChange={(e) => {
                           this.setState({
                             passwordConfirmation: e.target.value,
-                            passwordNotMatch: null
+                            passwordNotMatch: null,
                           });
                           this.props.clearErrorMassage();
                         }}
@@ -345,6 +370,26 @@ class CreateAdmin extends Component {
       this.setState({ requiredEmail: "error" });
       return;
     }
+    if (
+      createAdminData.password &&
+      passwordValidator(
+        createAdminData.password,
+        this.props.match.params.groupId
+          ? this.props.groupPasswordRules
+          : this.props.tenantPasswordRules
+      )
+    ) {
+      this.setState({
+        passwordError: "error",
+        textPasswordError: passwordValidator(
+          createAdminData.password,
+          this.props.match.params.groupId
+            ? this.props.groupPasswordRules
+            : this.props.tenantPasswordRules
+        ),
+      });
+      return;
+    }
     if (createAdminData.password !== passwordConfirmation) {
       this.setState({ passwordNotMatch: "error" });
       return;
@@ -362,12 +407,14 @@ class CreateAdmin extends Component {
   };
 }
 
-const mapStateToProps = state => ({
+const mapStateToProps = (state) => ({
   groupDefaultDomain: state.group.defaultDomain,
   tenantDefaultDomain: state.tenant.defaultDomain,
   errorMassage: state.errorMassage,
   shouldRedirect: state.shouldRedirect,
-  languages: state.languages
+  languages: state.languages,
+  tenantPasswordRules: state.tenantPasswordRules,
+  groupPasswordRules: state.groupPasswordRules,
 });
 
 const mapDispatchToProps = {
@@ -376,12 +423,11 @@ const mapDispatchToProps = {
   fetchGetGroupById,
   fetchGetTenantById,
   clearErrorMassage,
-  fetchGetLanguages
+  fetchGetLanguages,
+  fetchGetTenantPasswordRules,
+  fetchGetGroupPasswordRules,
 };
 
 export default withRouter(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(CreateAdmin)
+  connect(mapStateToProps, mapDispatchToProps)(CreateAdmin)
 );
