@@ -441,7 +441,7 @@ class UpdateTimer extends React.Component {
 function deleteCronTimer(id, onSuccess) {
     fetch_delete(`/api/v01/timers/cron/${id}`)
         .then(() => {
-            NotificationsManager.success(<FormattedMessage id="cron-timer-delete-failed" defaultMessage="Timer deleted!" />);
+            NotificationsManager.success(<FormattedMessage id="cron-timer-deleted" defaultMessage="Timer deleted!" />);
             onSuccess && onSuccess();
         })
         .catch(error => NotificationsManager.error(

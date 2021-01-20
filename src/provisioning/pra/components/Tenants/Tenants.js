@@ -182,7 +182,7 @@ class Tenants extends Component {
                       <tr>
                         <th>
                           <FormattedMessage
-                            id="tenant-id"
+                            id="enterprise-id"
                             defaultMessage="Enterprise id"
                           />
                           <Glyphicon
@@ -192,7 +192,7 @@ class Tenants extends Component {
                         </th>
                         <th>
                           <FormattedMessage
-                            id="tenant-id"
+                            id="enterprise-name"
                             defaultMessage="Enterprise name"
                           />
                           <Glyphicon

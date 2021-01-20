@@ -814,7 +814,7 @@ class Action extends React.Component {
                                         value={localAction.header_1 || ""}
                                         onChange={e => this.setState({diffAction: update(diffAction, {$merge: {header_1: e.target.value}})})}/>
                                     <HelpBlock>
-                                        <FormattedMessage id="bulk-action-header" defaultMessage="Custom header in form 'NAME=value'"/>
+                                        <FormattedMessage id="bulk-action-header" defaultMessage="Custom header in form 'NAME=value' (ex: Authorization={user_token})"/>
                                     </HelpBlock>
                                 </Col>
                             </FormGroup>,
@@ -830,7 +830,7 @@ class Action extends React.Component {
                                         value={localAction.header_2 || ""}
                                         onChange={e => this.setState({diffAction: update(diffAction, {$merge: {header_2: e.target.value}})})}/>
                                     <HelpBlock>
-                                        <FormattedMessage id="bulk-action-header" defaultMessage="Custom header in form 'NAME=value'"/>
+                                        <FormattedMessage id="bulk-action-header" defaultMessage="Custom header in form 'NAME=value' (ex: Authorization={user_token})"/>
                                     </HelpBlock>
                                 </Col>
                             </FormGroup>,
@@ -846,7 +846,7 @@ class Action extends React.Component {
                                         value={localAction.header_3 || ""}
                                         onChange={e => this.setState({diffAction: update(diffAction, {$merge: {header_3: e.target.value}})})}/>
                                     <HelpBlock>
-                                        <FormattedMessage id="bulk-action-header" defaultMessage="Custom header in form 'NAME=value'"/>
+                                        <FormattedMessage id="bulk-action-header" defaultMessage="Custom header in form 'NAME=value' (ex: Authorization={user_token})"/>
                                     </HelpBlock>
                                 </Col>
                             </FormGroup>,

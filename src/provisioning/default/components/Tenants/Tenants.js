@@ -169,7 +169,7 @@ class Tenants extends Component {
                       <tr>
                         <th style={{ width: "24%" }}>
                           <FormattedMessage
-                            id="tenant-id"
+                            id="id"
                             defaultMessage="ID"
                           />
                           <Glyphicon

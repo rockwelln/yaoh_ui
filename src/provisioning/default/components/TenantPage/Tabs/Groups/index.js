@@ -139,7 +139,7 @@ export class GroupsTab extends Component {
                   <thead>
                     <tr>
                       <th style={{ width: "32%" }}>
-                        <FormattedMessage id="tenant-id" defaultMessage="ID" />
+                        <FormattedMessage id="id" defaultMessage="ID" />
                         <Glyphicon
                           glyph="glyphicon glyphicon-sort"
                           onClick={this.sortByID}

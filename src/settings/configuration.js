@@ -47,7 +47,7 @@ function saveConfiguration(entry, onSuccess) {
     )
     .catch(error => {
         NotificationsManager.error(
-          <FormattedMessage id="fetch-config-fail" defaultMessage="Update configuration failed"/>,
+          <FormattedMessage id="fetch-put-config-fail" defaultMessage="Update configuration failed"/>,
           error.message
         )
       }
@@ -2033,7 +2033,7 @@ export default function Configuration(props) {
         </Tab>
       </Tabs>
       <Button onClick={() => saveConfiguration(config.content)}>
-        <FormattedMessage id='save' defaultMessage='save'/>
+        <FormattedMessage id='save' defaultMessage='Save'/>
       </Button>
       <br/>
       <FormattedMessage id='id' defaultMessage='ID'/>{`: ${config.config_id}`}<br/>

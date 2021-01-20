@@ -177,9 +177,9 @@ export class NdgHistory extends Search {
                         <ApioDatatable
                             sorting_spec={sorting_spec}
                             headers={[
-                                {title: <FormattedMessage id="tenant-id" defaultMessage="tenant id" />, field: 'tenant_id', sortable: true},
-                                {title: <FormattedMessage id="site-id" defaultMessage="site id" />, field: 'site_id', sortable: true},
-                                {title: <FormattedMessage id="ndg" defaultMessage="ndg" />, field: 'ndg', sortable: true},
+                                {title: <FormattedMessage id="tenant-id-lower" defaultMessage="tenant id" />, field: 'tenant_id', sortable: true},
+                                {title: <FormattedMessage id="site-id-lower" defaultMessage="site id" />, field: 'site_id', sortable: true},
+                                {title: <FormattedMessage id="ndg-lower" defaultMessage="ndg" />, field: 'ndg', sortable: true},
                                 {title: <FormattedMessage id="ndguserid" defaultMessage="ndgUserId" />, field: 'ndg_user_id', sortable: true},
                                 {title: <FormattedMessage id="request" defaultMessage="Request id" />, render: n => (
                                     <Link to={`/transactions/${n.instance_id}`}>I{n.instance_id}</Link>

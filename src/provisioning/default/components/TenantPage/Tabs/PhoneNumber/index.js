@@ -222,7 +222,7 @@ export class PhoneNumbersTab extends Component {
                       <th style={{ width: "5%" }} />
                       <th style={{ width: "30%" }}>
                         <FormattedMessage
-                          id="tenant-id"
+                          id="range-start"
                           defaultMessage="Range start"
                         />
                         <Glyphicon

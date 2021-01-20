@@ -201,7 +201,7 @@ class UpdateNumberPortingModal extends Component {
 
             <FormGroup controlId="serviceType">
               <Col componentClass={ControlLabel} sm={2}>
-                <FormattedMessage id="service-type" defaultMessage="Serivce type" />
+                <FormattedMessage id="service-type" defaultMessage="Service type" />
               </Col>
 
               <Col sm={9}>

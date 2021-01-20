@@ -320,7 +320,7 @@ export class PhoneNumbersTab extends Component {
                     </React.Fragment>
                     <th>
                       <FormattedMessage
-                        id="tenant-id"
+                        id="range-start"
                         defaultMessage="Range start"
                       />
                       <Glyphicon

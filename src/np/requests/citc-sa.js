@@ -76,7 +76,7 @@ function newRequest(request, onSuccess, onError) {
           </div>
       });
       NotificationsManager.error(
-        <FormattedMessage id="create-portin-failed" defaultMessage="Error on number ownership" />,
+        <FormattedMessage id="create" defaultMessage="Error on number ownership" />,
         <FormattedMessage id="number-ownership-mismatch" defaultMessage="Some number(s) doesn't belong to the donor (encoding error?)" />
       );
       return;
@@ -1226,7 +1226,7 @@ export function SyncMessagesDetails(props) {
         <th><FormattedMessage id="time" defaultMessage="Time" /></th>
         <th><FormattedMessage id="protocol" defaultMessage="Protocol" /></th>
         <th><FormattedMessage id="type" defaultMessage="Type" /></th>
-        <th><FormattedMessage id="id" defaultMessage="Id" /></th>
+        <th><FormattedMessage id="id" defaultMessage="ID" /></th>
         <th><FormattedMessage id="content" defaultMessage="Content" /></th>
       </tr>
       </thead>

@@ -152,7 +152,7 @@ export class PhoneNumbersTab extends Component {
                       "add-mobile-phone" ? (
                         <th>
                           <FormattedMessage
-                            id="tenant-id"
+                            id="phone-number"
                             defaultMessage="Phone number"
                           />
                           <Glyphicon
@@ -164,7 +164,7 @@ export class PhoneNumbersTab extends Component {
                         <React.Fragment>
                           <th width="40%">
                             <FormattedMessage
-                              id="tenant-id"
+                              id="range-start"
                               defaultMessage="Range start"
                             />
                             <Glyphicon

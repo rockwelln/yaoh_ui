@@ -147,7 +147,7 @@ export class CategoryPage extends Component {
                       <tr>
                         <th style={{ width: "20%" }}>
                           <FormattedMessage
-                            id="tenant-id"
+                            id="name"
                             defaultMessage="Name"
                           />
                           <Glyphicon

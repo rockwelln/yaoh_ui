@@ -181,7 +181,7 @@ export class Services extends Component {
                     <tr>
                       <th style={{ width: "85%" }}>
                         <FormattedMessage
-                          id="tenant-id"
+                          id="service"
                           defaultMessage="Service"
                         />
                         <Glyphicon

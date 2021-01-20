@@ -279,7 +279,7 @@ const SyncMessagesDetails = ({data}) => (
                 <th><FormattedMessage id="time" defaultMessage="Time" /></th>
                 <th><FormattedMessage id="protocol" defaultMessage="Protocol" /></th>
                 <th><FormattedMessage id="type" defaultMessage="Type" /></th>
-                <th><FormattedMessage id="id" defaultMessage="Id" /></th>
+                <th><FormattedMessage id="id" defaultMessage="ID" /></th>
                 <th><FormattedMessage id="content" defaultMessage="Content" /></th>
             </tr>
         </thead>
@@ -651,7 +651,7 @@ const ExternalCallbacks = ({callbacks, tasks}) => (
     <Table condensed>
         <thead>
             <tr>
-                <th><FormattedMessage id="id" defaultMessage="id" /></th>
+                <th><FormattedMessage id="id" defaultMessage="ID" /></th>
                 <th><FormattedMessage id="entity" defaultMessage="Entity" /></th>
                 <th><FormattedMessage id="external-id" defaultMessage="External id" /></th>
                 <th><FormattedMessage id="task" defaultMessage="Task" /></th>
@@ -715,7 +715,7 @@ const SubRequest = ({req, tasks, colOffset, onRollback, onReplay}) => {
             <td>
                 <Link to={`/transactions/${instance_.id}`}>{request.label}</Link>{' '}
                 {
-                    instance_.errors !== 0 && <Badge style={{backgroundColor: '#ff0808'}}>{instance_.errors}{' '}<FormattedMessage id="errors" defaultMessage="error(s)"/></Badge>
+                    instance_.errors !== 0 && <Badge style={{backgroundColor: '#ff0808'}}>{instance_.errors}{' '}<FormattedMessage id="error-s" defaultMessage="error(s)"/></Badge>
                 }
             </td>
             <td style={{width: '30%'}}>
@@ -2310,7 +2310,7 @@ export class Request extends Component {
                 <Breadcrumb>
                     <Breadcrumb.Item active><FormattedMessage id="Requests" defaultMessage="Requests"/></Breadcrumb.Item>
                     <LinkContainer to={`/transactions/list`}>
-                        <Breadcrumb.Item><FormattedMessage id="requests" defaultMessage="requests"/></Breadcrumb.Item>
+                        <Breadcrumb.Item><FormattedMessage id="requests" defaultMessage="Requests"/></Breadcrumb.Item>
                     </LinkContainer>
                     <Breadcrumb.Item active>{request.request_id}</Breadcrumb.Item>
                 </Breadcrumb>

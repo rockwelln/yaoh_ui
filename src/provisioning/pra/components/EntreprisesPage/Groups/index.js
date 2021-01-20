@@ -147,7 +147,7 @@ export class GroupsTab extends Component {
                     <tr>
                       <th>
                         <FormattedMessage
-                          id="tenant-id"
+                          id="site-id"
                           defaultMessage="Site ID"
                         />
                         <Glyphicon
@@ -167,7 +167,7 @@ export class GroupsTab extends Component {
                       </th>
                       <th>
                         <FormattedMessage
-                          id="tenant-id"
+                          id="product"
                           defaultMessage="Product"
                         />
                         <Glyphicon
@@ -177,7 +177,7 @@ export class GroupsTab extends Component {
                       </th>
                       <th>
                         <FormattedMessage
-                          id="tenant-id"
+                          id="access"
                           defaultMessage="Access"
                         />
                         <Glyphicon
@@ -187,7 +187,7 @@ export class GroupsTab extends Component {
                       </th>
                       <th>
                         <FormattedMessage
-                          id="tenant-id"
+                          id="virtual"
                           defaultMessage="Virtual"
                         />
                         <Glyphicon
@@ -197,7 +197,7 @@ export class GroupsTab extends Component {
                       </th>
                       <th>
                         <FormattedMessage
-                          id="tenant-id"
+                          id="number-of-channels"
                           defaultMessage="Number of channels"
                         />
                         <Glyphicon

@@ -151,7 +151,7 @@ function GatewayTab({name, onEditUrl, info, remainingSecs}) {
                 <tbody>
                     <tr>
                         <th style={{width: "10%"}}>
-                            <FormattedMessage id='gateway-url' defaultMessage='gateway url'/>
+                            <FormattedMessage id='gateway-url-lower' defaultMessage='gateway url'/>
                         </th>
                         <td style={{width: "80%"}}>
                             {info.url}{' '}

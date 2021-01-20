@@ -770,7 +770,8 @@ function UpdateSyncConfirmCheckbox(props) {
           <p>
              <FormattedMessage
                  id="update-sync-warning"
-                 defaultMessage={`You are about to change the output of the endpoint ${resourceName} !`}/>
+                 defaultMessage="You are about to change the output of the endpoint {resourceName} !"
+                 values={{resourceName: resourceName}}/>
           </p>
           <Form>
             <Button bsStyle="primary" onClick={e => { onConfirm(!checked); setShow(false); }}>
@@ -817,7 +818,7 @@ function CustomRoutes(props) {
                     <tr>
                         <th>#</th>
                         <th style={{ width: "5em" }}><FormattedMessage id="method" defaultMessage="Method" /></th>
-                        <th><FormattedMessage id="route" defaultMessage="Route (prefix: {prefix})" values={{prefix: CUSTOM_ROUTE_PREFIX}} /></th>
+                        <th><FormattedMessage id="route-prefix" defaultMessage="Route (prefix: {prefix})" values={{prefix: CUSTOM_ROUTE_PREFIX}} /></th>
                         <th style={{ minWidth: "22em" }}><FormattedMessage id="activity" defaultMessage="Activity" /></th>
                         <th style={{ width: "2em" }}><FormattedMessage id="enabled" defaultMessage="Enabled" /></th>
                         <th style={{ width: "2em" }}><FormattedMessage id="sync" defaultMessage="Sync" /></th>

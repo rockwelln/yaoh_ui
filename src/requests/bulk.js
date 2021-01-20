@@ -58,7 +58,7 @@ class NewBulk extends Component {
         fetch_get('/api/v01/bulks/actions')
             .then(d => !this.cancelLoad && this.setState({actions: d.actions}))
             .catch(error => NotificationsManager.error(
-                <FormattedMessage id="fetch-actions-failed" defaultMessage="Failed to fetch actions"/>,
+                <FormattedMessage id="fetch-actions-failed" defaultMessage="Failed to fetch bulk actions"/>,
                 error.message
             ))
     }
@@ -341,7 +341,7 @@ const BulkResult = ({result, colOffset}) => {
             {
                 result.instance && result.instance.errors !== 0 &&
                 <Badge style={{backgroundColor: '#ff0808'}}>
-                    {result.instance.errors}{' '}<FormattedMessage id="errors" defaultMessage="error(s)"/>
+                    {result.instance.errors}{' '}<FormattedMessage id="error-s" defaultMessage="error(s)"/>
                 </Badge>
             }
             </td>

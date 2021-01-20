@@ -9,6 +9,7 @@
     "@fortawesome/react-fontawesome": "^0.1.14",
     "@webscopeio/react-textarea-autocomplete": "^4.7.3",
     "ajv": "^6.12.5",
+    "babel-polyfill": "^6.26.0",
     "chart.js": "^2.9.4",
     "color-hash": "^1.0.3",
     "core-js": "^3.7.0",
@@ -49,7 +50,9 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "docs": "markdown-folder-to-html docs/admin; markdown-folder-to-html docs/user_guide",
-    "build-docs": "npm run docs; rm -rf public/static/docs/; mkdir -p public/static/docs; mv docs/_* public/static/docs/"
+    "build-docs": "npm run docs; rm -rf public/static/docs/; mkdir -p public/static/docs; mv docs/_* public/static/docs/",
+    "extract": "formatjs extract",
+    "compile": "formatjs compile"
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -61,11 +64,16 @@
     "not op_mini all"
   ],
   "devDependencies": {
-    "babel-plugin-react-intl": "^7.5.28",
-    "babel-preset-react": "^6.24.1",
-    "babel-preset-stage-0": "^6.24.1",
+    "@babel/cli": "^7.12.10",
+    "@babel/core": "^7.12.3",
+    "@babel/plugin-proposal-class-properties": "^7.12.1",
+    "@babel/preset-react": "^7.12.5",
+    "@formatjs/cli": "^3.0.1",
+    "babel-plugin-formatjs": "^9.0.1",
+    "babel-plugin-react-intl": "^8.2.25",
+    "babel-preset-react-app": "^9.1.2",
     "markdown-folder-to-html": "^2.4.0",
-    "react-intl-po": "^2.2.2",
+    "react-intl-po": "2.2.2",
     "source-map-explorer": "^2.5.2"
   },
   "proxy": "http://127.0.0.1:5000"

@@ -141,7 +141,7 @@ export class Admins extends Component {
                     <tr>
                       <th style={{ width: "24%" }}>
                         <FormattedMessage
-                          id="tenant-id"
+                          id="user-id"
                           defaultMessage="User ID"
                         />
                         <Glyphicon
