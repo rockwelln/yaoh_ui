@@ -589,7 +589,11 @@ export class Limits extends Component {
               <div class="pull-right">
                 <Button
                   onClick={() =>
-                    this.props.changeStepOfCreateTenant("PhoneNumbers")
+                    this.props.changeStepOfCreateTenant(
+                      this.props.selfcareUrl.modules.nims
+                        ? "Admin"
+                        : "PhoneNumbers"
+                    )
                   }
                   className={"btn-primary"}
                 >
