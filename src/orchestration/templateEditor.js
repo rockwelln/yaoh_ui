@@ -601,10 +601,18 @@ export function MentionExample({cells, value, onChange, ...props}) {
 
   useEffect(() => {
     setContextVars(cells && Object.values(cells).reduce((o, options) => {
+        let v = null;
         if(options.original_name === "context_setter") {
-          o.push(options.params.key)
+          v = options.params.key;
         } else if(options.params && options.params.output_context_key) {
-          o.push(options.params.output_context_key)
+          v = options.params.output_context_key;
+        }
+        if(v) {
+          if(v && v[0] === "{") {
+            o.push(JSON.parse(v).key)
+          } else {
+            o.push(v)
+          }
         }
         return o;
       }, [])
