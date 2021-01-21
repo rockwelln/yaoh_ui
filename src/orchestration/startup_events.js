@@ -16,6 +16,7 @@ import {
 } from "../utils";
 import FormGroup from "react-bootstrap/lib/FormGroup";
 import Col from "react-bootstrap/lib/Col";
+import Row from "react-bootstrap/lib/Row";
 import Form from "react-bootstrap/lib/Form";
 import HelpBlock from "react-bootstrap/lib/HelpBlock";
 import ControlLabel from "react-bootstrap/lib/ControlLabel";
@@ -782,9 +783,344 @@ function UpdateSyncConfirmCheckbox(props) {
     </>
   )
 }
+/*
+
+function CustomRouteGroup({group, loading, activities, routes}) {
+  return (
+      <Panel style={{ minWidth: "min-content" }}>
+          <Panel.Heading>
+              <Panel.Title>
+                {
+                  group || <FormattedMessage id="custom-routes" defaultMessage="Custom routes" />
+                }
+              </Panel.Title>
+          </Panel.Heading>
+          <Panel.Body>
+              <Table>
+                  <thead>
+                  <tr>
+                      <th></th>
+                      <th style={{ width: "5em" }}><FormattedMessage id="method" defaultMessage="Method" /></th>
+                      <th><FormattedMessage id="route" defaultMessage="Route (prefix: {prefix})" values={{prefix: CUSTOM_ROUTE_PREFIX}} /></th>
+                      <th style={{ minWidth: "22em" }}><FormattedMessage id="activity" defaultMessage="Activity" /></th>
+                      <th style={{ width: "2em" }}><FormattedMessage id="enabled" defaultMessage="Enabled" /></th>
+                      <th style={{ width: "2em" }}><FormattedMessage id="sync" defaultMessage="Sync" /></th>
+                      <th style={{ minWidth: "15em" }}/>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  {
+                    loading &&
+                      <tr><td colSpan={7}><FontAwesomeIcon icon={faSpinner} aria-hidden="true" style={{'fontSize': '24px'}} spin /></td></tr>
+                  }
+                  {
+                      routes
+                          .sort((a, b) => a.route_id - b.route_id)
+                          .filter(r => !filter || r.route.includes(filter) || ((activities.find(a => a.id === r.activity_id) || {}).name || "").includes(filter))
+                          .map((route, i) => (
+                              <tr key={i}>
+                                  <td>{ route.route_id }</td>
+                                  <td>{ route.method }</td>
+                                  <td>{ route.route }</td>
+                                  <td>
+                                      <InputGroup>
+                                          <Select
+                                              className="basic-single"
+                                              classNamePrefix="select"
+                                              value={route.activity_id && activitiesOptions.find(a => a.value === route.activity_id)}
+                                              isClearable={true}
+                                              isSearchable={true}
+                                              name="activity"
+                                              onChange={(value, action) => {
+                                                  if(["select-option", "clear"].includes(action.action)) {
+                                                    updateCustomRouteActivity(route.route_id, value && value.value, () => fetchCustomRoutes(setCustomRoutes));
+                                                  }
+                                              }}
+                                              options={activitiesOptions} />
+                                          <InputGroup.Button>
+                                              <Button
+                                                  disabled={route.activity_id === null}
+                                                  bsStyle="primary"
+                                                  onClick={() => {
+                                                      let win = window.open(`/transactions/config/activities/editor/${route.activity_id}`, '_blank');
+                                                      win.focus();
+                                                  }}
+                                                  style={{marginLeft: '5px'}}
+                                              >
+                                                  <Glyphicon glyph="eye-open"/>
+                                              </Button>
+                                          </InputGroup.Button>
+                                      </InputGroup>
+                                  </td>
+                                  <td>
+                                      <Checkbox
+                                          checked={route.enabled}
+                                          onChange={e => e.preventDefault()}
+                                          onClick={e => {
+                                              e.preventDefault();
+                                              updateCustomRouteEnabled(route.route_id, e.target.checked, () => fetchCustomRoutes(setCustomRoutes));
+                                          }} />
+                                  </td>
+                                  <td>
+                                      <UpdateSyncConfirmCheckbox
+                                          resourceName={route.route}
+                                          checked={route.sync}
+                                          onConfirm={checked => updateCustomRouteSync(route.route_id, checked, () => fetchCustomRoutes(setCustomRoutes))} />
+                                  </td>
+                                  <td>
+                                      <ButtonToolbar>
+                                          <Button
+                                              onClick={() => setShowUpdateModal(Object.assign({}, route))}
+                                              bsStyle="primary"
+                                              style={{marginLeft: '5px', marginRight: '5px'}} >
+                                              <Glyphicon glyph="pencil"/>
+                                          </Button>
+                                          <DeleteConfirmButton
+                                              resourceName={`${route.method} ${route.route}`}
+                                              style={{marginLeft: '5px', marginRight: '5px'}}
+                                              onConfirm={() => deleteCustomRoute(route.route_id, () => fetchCustomRoutes(setCustomRoutes))} />
+                                          <Button
+                                              bsStyle="primary"
+                                              onClick={() => {
+                                                AuthServiceManager.getValidToken().then(token => {
+                                                    window.location=`${API_URL_PREFIX}/api/v01/custom_routes/${route.route_id}/export?auth_token=${token}`
+                                                  })
+                                              }}
+                                              style={{marginLeft: '5px', marginRight: '5px'}} >
+                                              <Glyphicon glyph="save"/>
+                                          </Button>
+                                      </ButtonToolbar>
+                                  </td>
+                              </tr>
+                          ))
+                  }
+                  </tbody>
+              </Table>
+
+              <UpdateCustomRouteModal
+                  show={showUpdateModal !== undefined}
+                  entry={showUpdateModal || {}}
+                  onHide={c => {
+                      setShowUpdateModal(undefined);
+                      c && fetchCustomRoutes(setCustomRoutes);
+                  }} />
+
+          </Panel.Body>
+      </Panel>
+    )
+}*/
 
 
-function CustomRoutes(props) {
+function CustomRoutesGroup({routes, group, activities, onChange}) {
+  const [showUpdateModal, setShowUpdateModal] = useState(undefined);
+  const activitiesOptions = activities.sort((a, b) => a.name.localeCompare(b.name)).map(a => ({value: a.id, label: a.name}));
+  return (
+    <Panel style={{ minWidth: "min-content" }}>
+      <Panel.Heading>
+          <Panel.Title>
+            {group || <FormattedMessage id="custom-routes" defaultMessage="Custom routes" />}
+          </Panel.Title>
+      </Panel.Heading>
+      <Panel.Body>
+        <Table>
+          <thead>
+            <tr>
+                <th/>
+                <th style={{ width: "5em" }}><FormattedMessage id="method" defaultMessage="Method" /></th>
+                <th><FormattedMessage id="route" defaultMessage="Route (prefix: {prefix})" values={{prefix: CUSTOM_ROUTE_PREFIX}} /></th>
+                <th style={{ minWidth: "22em" }}><FormattedMessage id="activity" defaultMessage="Activity" /></th>
+                <th style={{ width: "2em" }}><FormattedMessage id="enabled" defaultMessage="Enabled" /></th>
+                <th style={{ width: "2em" }}><FormattedMessage id="sync" defaultMessage="Sync" /></th>
+                <th style={{ minWidth: "15em" }}/>
+            </tr>
+          </thead>
+          <tbody>
+          {
+            routes.map((route, i) => (
+              <tr key={i}>
+                <td><Glyphicon glyph={"menu-hamburger"}/></td>
+                <td>{ route.method }</td>
+                <td>{ route.route }</td>
+                <td>
+                  <InputGroup>
+                      <Select
+                          className="basic-single"
+                          classNamePrefix="select"
+                          value={route.activity_id && activitiesOptions.find(a => a.value === route.activity_id)}
+                          isClearable={true}
+                          isSearchable={true}
+                          name="activity"
+                          onChange={(value, action) => {
+                              if(["select-option", "clear"].includes(action.action)) {
+                                updateCustomRouteActivity(route.route_id, value && value.value, () => onChange());
+                              }
+                          }}
+                          options={activitiesOptions} />
+                      <InputGroup.Button>
+                          <Button
+                              disabled={route.activity_id === null}
+                              bsStyle="primary"
+                              onClick={() => {
+                                  let win = window.open(`/transactions/config/activities/editor/${route.activity_id}`, '_blank');
+                                  win.focus();
+                              }}
+                              style={{marginLeft: '5px'}}
+                          >
+                              <Glyphicon glyph="eye-open"/>
+                          </Button>
+                      </InputGroup.Button>
+                  </InputGroup>
+                </td>
+                <td>
+                  <Checkbox
+                    checked={route.enabled}
+                    onChange={e => e.preventDefault()}
+                    onClick={e => {
+                        e.preventDefault();
+                        updateCustomRouteEnabled(route.route_id, e.target.checked, () => onChange());
+                    }} />
+                </td>
+                <td>
+                  <UpdateSyncConfirmCheckbox
+                    resourceName={route.route}
+                    checked={route.sync}
+                    onConfirm={checked => updateCustomRouteSync(route.route_id, checked, () => onChange())} />
+                </td>
+                <td>
+                  <ButtonToolbar>
+                    <Button
+                      onClick={() => setShowUpdateModal(Object.assign({}, route))}
+                      bsStyle="primary"
+                      style={{marginLeft: '5px', marginRight: '5px'}} >
+                      <Glyphicon glyph="pencil"/>
+                    </Button>
+                    <DeleteConfirmButton
+                      resourceName={`${route.method} ${route.route}`}
+                      style={{marginLeft: '5px', marginRight: '5px'}}
+                      onConfirm={() => deleteCustomRoute(route.route_id, () => onChange())} />
+                    <Button
+                      bsStyle="primary"
+                      onClick={() => {
+                        AuthServiceManager.getValidToken().then(token => {
+                            window.location=`${API_URL_PREFIX}/api/v01/custom_routes/${route.route_id}/export?auth_token=${token}`
+                          })
+                      }}
+                      style={{marginLeft: '5px', marginRight: '5px'}} >
+                      <Glyphicon glyph="save"/>
+                    </Button>
+                  </ButtonToolbar>
+                </td>
+              </tr>
+            ))
+          }
+          </tbody>
+        </Table>
+        <UpdateCustomRouteModal
+          show={showUpdateModal !== undefined}
+          entry={showUpdateModal || {}}
+          onHide={c => {
+              setShowUpdateModal(undefined);
+              c && onChange();
+          }} />
+      </Panel.Body>
+    </Panel>
+  )
+}
+
+function CustomRoutes() {
+  const [activities, setActivities] = useState([]);
+  const [customRoutes, setCustomRoutes] = useState([]);
+  const [showNew, setShowNew] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [key, setKey] = useState(0);
+  const [filter, setFilter] = useState("");
+
+  useEffect(() => {
+      setLoading(true);
+      fetchActivities(setActivities);
+      fetchCustomRoutes(r => {
+        setCustomRoutes(r)
+        setLoading(false)
+      });
+  }, []);
+
+  const routePerGroups = customRoutes
+    .sort((a, b) => a.route_id - b.route_id)
+    .filter(r => !filter || r.route.includes(filter) || ((activities.find(a => a.id === r.activity_id) || {}).name || "").includes(filter))
+    .reduce((o, r) => {
+      (o[r["group"] || "Custom routes"] = o[r["group"] || "Custom routes"] || []).push(r);
+      return o;
+    }, {});
+
+  return (
+    <>
+      {
+        loading &&
+          <Panel>
+            <Panel.Body>
+              <FontAwesomeIcon icon={faSpinner} aria-hidden="true" style={{'fontSize': '24px'}} spin />
+            </Panel.Body>
+          </Panel>
+      }
+
+      <Panel>
+        <Panel.Body>
+          <Row>
+            <Col sm={6}>
+              <ButtonToolbar>
+                  <Button bsStyle="primary" onClick={() => setShowNew(true)}>
+                      <FormattedMessage id="new-route" defaultMessage="New route" />
+                  </Button>
+                  <Button bsStyle="primary" onClick={() => setShowImport(true)}>
+                      <FormattedMessage id="import" defaultMessage="Import" />
+                  </Button>
+              </ButtonToolbar>
+            </Col>
+            <Col sm={6}>
+              <SearchBar filter={filter} onChange={setFilter} size={8} />
+            </Col>
+          </Row>
+        </Panel.Body>
+      </Panel>
+
+      {
+        !loading && Object.entries(routePerGroups).map(([group, routes]) =>
+          <CustomRoutesGroup
+            activities={activities}
+            onChange={() => fetchCustomRoutes(setCustomRoutes)}
+            routes={routes}
+            group={group}
+            />
+        )
+      }
+
+      <NewCustomRoute
+          show={showNew}
+          onHide={c => {
+              setShowNew(false);
+              c && fetchCustomRoutes(setCustomRoutes);
+          }} />
+
+      <ImportCustomRouteModal
+          show={showImport}
+          key={key}
+          onHide={c => {
+              setKey(k => k+1);
+              setShowImport(false);
+              if(c) {
+                fetchActivities(setActivities);
+                fetchCustomRoutes(setCustomRoutes);
+              }
+          }} />
+    </>
+  )
+}
+
+
+
+/*
+function CustomRoutesGroup(props) {
     const [activities, setActivities] = useState([]);
     const [customRoutes, setCustomRoutes] = useState([]);
     const [showUpdateModal, setShowUpdateModal] = useState(undefined);
@@ -804,6 +1140,10 @@ function CustomRoutes(props) {
     }, []);
 
     const activitiesOptions = activities.sort((a, b) => a.name.localeCompare(b.name)).map(a => ({value: a.id, label: a.name}));
+    const routePerGroups = customRoutes.reduce((r, o) => {
+      (o[r.group] = o[r.group] || []).push(r);
+      return o;
+    }, {});
 
     return (
         <Panel style={{ minWidth: "min-content" }}>
@@ -815,7 +1155,7 @@ function CustomRoutes(props) {
                 <Table>
                     <thead>
                     <tr>
-                        <th>#</th>
+                        <th></th>
                         <th style={{ width: "5em" }}><FormattedMessage id="method" defaultMessage="Method" /></th>
                         <th><FormattedMessage id="route" defaultMessage="Route (prefix: {prefix})" values={{prefix: CUSTOM_ROUTE_PREFIX}} /></th>
                         <th style={{ minWidth: "22em" }}><FormattedMessage id="activity" defaultMessage="Activity" /></th>
@@ -953,6 +1293,8 @@ function CustomRoutes(props) {
     )
 }
 
+ */
+
 export function StartupEvents() {
   useEffect(() => {document.title = "Startup events"}, []);
   return (
@@ -965,4 +1307,4 @@ export function StartupEvents() {
       <CustomRoutes/>
     </div>
   )
-};
+}
