@@ -35,6 +35,7 @@ import {SearchBar} from "../utils/datatable";
 import InputGroup from "react-bootstrap/lib/InputGroup";
 import {faSpinner} from "@fortawesome/free-solid-svg-icons";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import Creatable from "react-select/creatable";
 
 const CUSTOM_ROUTE_PREFIX = "https://<target>/api/v01/custom";
 const JSON_SCHEMA_SAMPLE = (
@@ -429,7 +430,7 @@ function NewCustomRoute(props) {
 
 
 function UpdateCustomRouteModal(props) {
-    const {show, entry, onHide} = props;
+    const {show, entry, onHide, groups} = props;
     const [diffEntry, setDiffEntry] = useState({});
 
     useEffect(() => {
@@ -509,6 +510,26 @@ function UpdateCustomRouteModal(props) {
                                 <option value="put">put</option>
                                 <option value="delete">delete</option>
                             </FormControl>
+                        </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="group" defaultMessage="Group" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <Creatable
+                              value={{value: localEntry.group, label: localEntry.group || "*unassigned*"}}
+                              isClearable
+                              isSearchable
+                              name="groups"
+                              onChange={(value, action) => {
+                                if(["select-option", "create-option", "clear"].includes(action.action)) {
+                                  setDiffEntry(update(diffEntry, {$merge: {group: value ? value.value: null}}));
+                                }
+                              }}
+                              options={groups.map(g => ({value: g, label: g}))} />
                         </Col>
                     </FormGroup>
 
@@ -911,7 +932,7 @@ function CustomRouteGroup({group, loading, activities, routes}) {
 }*/
 
 
-function CustomRoutesGroup({routes, group, activities, onChange}) {
+function CustomRoutesGroup({routes, group, activities, groups, onChange}) {
   const [showUpdateModal, setShowUpdateModal] = useState(undefined);
   const activitiesOptions = activities.sort((a, b) => a.name.localeCompare(b.name)).map(a => ({value: a.id, label: a.name}));
   return (
@@ -922,7 +943,14 @@ function CustomRoutesGroup({routes, group, activities, onChange}) {
           </Panel.Title>
       </Panel.Heading>
       <Panel.Body>
-        <Table>
+        <Table
+          onDrop={e => {
+            e.preventDefault()
+            const data = JSON.parse(e.dataTransfer.getData("custom-route"));
+            console.log("drop", group, data.route_id)
+            updateCustomRoute(data.route_id, {"group": group}, () => onChange());
+          }}
+        >
           <thead>
             <tr>
                 <th/>
@@ -937,7 +965,13 @@ function CustomRoutesGroup({routes, group, activities, onChange}) {
           <tbody>
           {
             routes.map((route, i) => (
-              <tr key={i}>
+              <tr
+                key={i}
+                draggable
+                onDragStart={e => {
+                  e.dataTransfer.setData("custom-route", JSON.stringify(route));
+                }}
+                >
                 <td><Glyphicon glyph={"menu-hamburger"}/></td>
                 <td>{ route.method }</td>
                 <td>{ route.route }</td>
@@ -1018,6 +1052,7 @@ function CustomRoutesGroup({routes, group, activities, onChange}) {
         <UpdateCustomRouteModal
           show={showUpdateModal !== undefined}
           entry={showUpdateModal || {}}
+          groups={groups}
           onHide={c => {
               setShowUpdateModal(undefined);
               c && onChange();
@@ -1049,7 +1084,7 @@ function CustomRoutes() {
     .sort((a, b) => a.route_id - b.route_id)
     .filter(r => !filter || r.route.includes(filter) || ((activities.find(a => a.id === r.activity_id) || {}).name || "").includes(filter))
     .reduce((o, r) => {
-      (o[r["group"] || "Custom routes"] = o[r["group"] || "Custom routes"] || []).push(r);
+      (o[r["group"] || ""] = o[r["group"] || ""] || []).push(r);
       return o;
     }, {});
 
@@ -1085,12 +1120,13 @@ function CustomRoutes() {
       </Panel>
 
       {
-        !loading && Object.entries(routePerGroups).map(([group, routes]) =>
+        !loading && Object.entries(routePerGroups).sort((a, b) => a[0].localeCompare(b[0])).map(([group, routes]) =>
           <CustomRoutesGroup
             activities={activities}
             onChange={() => fetchCustomRoutes(setCustomRoutes)}
             routes={routes}
             group={group}
+            groups={Object.keys(routePerGroups)}
             />
         )
       }
