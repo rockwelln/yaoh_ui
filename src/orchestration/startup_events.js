@@ -169,7 +169,7 @@ function DedicatedEvents(props) {
 }
 
 const isObject = value => value && typeof value === 'object' && value.constructor === Object;
-const newRoute = {method: "get", sync: false, enabled:true, route: "", schema: null, support_bulk: false, bulk_options: null};
+const newRoute = {method: "get", sync: false, enabled:true, route: "", schema: null, support_bulk: false, bulk_options: null, group: null};
 
 
 function updateCustomRoute(routeId, entry, onSuccess) {
@@ -224,8 +224,7 @@ function createCustomRoute(route, onSuccess) {
         ));
 }
 
-function NewCustomRoute(props) {
-    const {show, onHide} = props;
+function NewCustomRoute({show, onHide, groups}) {
     const [route, setRoute] = useState(newRoute);
 
     useEffect(() => {
@@ -301,6 +300,26 @@ function NewCustomRoute(props) {
                                 <option value="put">put</option>
                                 <option value="delete">delete</option>
                             </FormControl>
+                        </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="group" defaultMessage="Group" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <Creatable
+                              value={{value: route.group, label: route.group || "*unassigned*"}}
+                              isClearable
+                              isSearchable
+                              name="groups"
+                              onChange={(value, action) => {
+                                if(["select-option", "create-option", "clear"].includes(action.action)) {
+                                  setRoute(update(route, {$merge: {group: value ? value.value: null}}));
+                                }
+                              }}
+                              options={groups.map(g => ({value: g, label: g}))} />
                         </Col>
                     </FormGroup>
 
@@ -1133,6 +1152,7 @@ function CustomRoutes() {
 
       <NewCustomRoute
           show={showNew}
+          groups={Object.keys(routePerGroups)}
           onHide={c => {
               setShowNew(false);
               c && fetchCustomRoutes(setCustomRoutes);
