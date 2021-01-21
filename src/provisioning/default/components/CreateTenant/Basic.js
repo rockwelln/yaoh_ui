@@ -115,6 +115,7 @@ export class Basic extends Component {
                       } else {
                         this.props.changeNameOfTenant("");
                         this.props.changeBackendOfTenant("");
+                        this.props.changeDetailsOfTenant("");
                       }
                     }}
                     className={"margin-top-0"}
