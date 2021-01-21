@@ -535,7 +535,7 @@ export function Param2Input({param, activity, cells, value, onChange}) {
     case 'jsonschema_form_fields':
       i = <JsonSchemaFormFields value={value} onChange={e => onChange(e)} />
       break;
-    case 'bool':
+    case 'boolean':
       i = <BoolInput value={value} defaultChecked={param.default} onChange={e => onChange(e)} />
       break;
     case 'python_switch':
