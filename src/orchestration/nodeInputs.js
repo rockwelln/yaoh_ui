@@ -317,7 +317,7 @@ function BoolInput(props) {
   const {value, defaultChecked, onChange} = props;
   return (
     <Checkbox
-      checked={value !== undefined?value === "true":defaultChecked}
+      checked={(value !== undefined && value !== "")?value === "true":defaultChecked}
       onChange={e => onChange(e.target.checked?"true":"false")} />
   )
 }
