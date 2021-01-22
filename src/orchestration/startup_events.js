@@ -923,14 +923,15 @@ function CustomRoutesGroup({routes, group, activities, groups, onChange}) {
           <tbody>
           {
             routes.map((route, i) => (
-              <tr
-                key={i}
-                draggable
-                onDragStart={e => {
-                  e.dataTransfer.setData("custom-route", JSON.stringify(route));
-                }}
+              <tr key={i}>
+                <td
+                  draggable
+                  onDragStart={e => {
+                    e.dataTransfer.setData("custom-route", JSON.stringify(route));
+                  }}
                 >
-                <td><Glyphicon glyph={"menu-hamburger"}/></td>
+                  <Glyphicon glyph={"menu-hamburger"}/>
+                </td>
                 <td>{ route.method }</td>
                 <td>{ route.route }</td>
                 <td>
