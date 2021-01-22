@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback} from 'react';
+import React, {useState, useEffect} from 'react';
 import Panel from 'react-bootstrap/lib/Panel';
 import Table from 'react-bootstrap/lib/Table';
 import Button from 'react-bootstrap/lib/Button';
@@ -16,6 +16,7 @@ import {
 } from "../utils";
 import FormGroup from "react-bootstrap/lib/FormGroup";
 import Col from "react-bootstrap/lib/Col";
+import Row from "react-bootstrap/lib/Row";
 import Form from "react-bootstrap/lib/Form";
 import HelpBlock from "react-bootstrap/lib/HelpBlock";
 import ControlLabel from "react-bootstrap/lib/ControlLabel";
@@ -24,7 +25,6 @@ import update from 'immutability-helper';
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 import Alert from "react-bootstrap/lib/Alert";
-import {StaticControl} from "../utils/common";
 import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
 import {DeleteConfirmButton} from "../utils/deleteConfirm";
 import {useDropzone} from "react-dropzone";
@@ -32,8 +32,9 @@ import {JSON_TRANS_OPTIONS_SAMPLE} from "../system/bulk_actions";
 import Select from "react-select";
 import {SearchBar} from "../utils/datatable";
 import InputGroup from "react-bootstrap/lib/InputGroup";
-import {faSpinner} from "@fortawesome/free-solid-svg-icons";
+import {faEdit, faSpinner} from "@fortawesome/free-solid-svg-icons";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import Creatable from "react-select/creatable";
 
 const CUSTOM_ROUTE_PREFIX = "https://<target>/api/v01/custom";
 const JSON_SCHEMA_SAMPLE = (
@@ -113,6 +114,20 @@ function updateHandler(e, eventName, onSuccess) {
         ));
 }
 
+function updateGroupName(oldName, newName, onSuccess) {
+  fetch_put(`/api/v01/custom_routes/groups/${oldName}`, {name: newName})
+      .then(() => {
+          NotificationsManager.success(
+              <FormattedMessage id="update-group-done" defaultMessage="Group saved!"/>,
+          );
+          onSuccess();
+      })
+      .catch(error => NotificationsManager.error(
+          <FormattedMessage id="update-group-failed" defaultMessage="Failed to update startup events"/>,
+          error.message,
+      ));
+}
+
 function DedicatedEvents(props) {
     const [activities, setActivities] = useState([]);
     const [events, setEvents] = useState([]);
@@ -167,7 +182,7 @@ function DedicatedEvents(props) {
 }
 
 const isObject = value => value && typeof value === 'object' && value.constructor === Object;
-const newRoute = {method: "get", sync: false, enabled:true, route: "", schema: null, support_bulk: false, bulk_options: null};
+const newRoute = {method: "get", sync: false, enabled:true, route: "", schema: null, support_bulk: false, bulk_options: null, group: null};
 
 
 function updateCustomRoute(routeId, entry, onSuccess) {
@@ -222,8 +237,7 @@ function createCustomRoute(route, onSuccess) {
         ));
 }
 
-function NewCustomRoute(props) {
-    const {show, onHide} = props;
+function NewCustomRoute({show, onHide, groups}) {
     const [route, setRoute] = useState(newRoute);
 
     useEffect(() => {
@@ -299,6 +313,26 @@ function NewCustomRoute(props) {
                                 <option value="put">put</option>
                                 <option value="delete">delete</option>
                             </FormControl>
+                        </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="group" defaultMessage="Group" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <Creatable
+                              value={{value: route.group, label: route.group || "*unassigned*"}}
+                              isClearable
+                              isSearchable
+                              name="groups"
+                              onChange={(value, action) => {
+                                if(["select-option", "create-option", "clear"].includes(action.action)) {
+                                  setRoute(update(route, {$merge: {group: value ? value.value: null}}));
+                                }
+                              }}
+                              options={groups.map(g => ({value: g, label: g}))} />
                         </Col>
                     </FormGroup>
 
@@ -428,7 +462,7 @@ function NewCustomRoute(props) {
 
 
 function UpdateCustomRouteModal(props) {
-    const {show, entry, onHide} = props;
+    const {show, entry, onHide, groups} = props;
     const [diffEntry, setDiffEntry] = useState({});
 
     useEffect(() => {
@@ -508,6 +542,26 @@ function UpdateCustomRouteModal(props) {
                                 <option value="put">put</option>
                                 <option value="delete">delete</option>
                             </FormControl>
+                        </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="group" defaultMessage="Group" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <Creatable
+                              value={{value: localEntry.group, label: localEntry.group || "*unassigned*"}}
+                              isClearable
+                              isSearchable
+                              name="groups"
+                              onChange={(value, action) => {
+                                if(["select-option", "create-option", "clear"].includes(action.action)) {
+                                  setDiffEntry(update(diffEntry, {$merge: {group: value ? value.value: null}}));
+                                }
+                              }}
+                              options={groups.map(g => ({value: g, label: g}))} />
                         </Col>
                     </FormGroup>
 
@@ -784,173 +838,285 @@ function UpdateSyncConfirmCheckbox(props) {
 }
 
 
-function CustomRoutes(props) {
-    const [activities, setActivities] = useState([]);
-    const [customRoutes, setCustomRoutes] = useState([]);
-    const [showUpdateModal, setShowUpdateModal] = useState(undefined);
-    const [showNew, setShowNew] = useState(false);
-    const [showImport, setShowImport] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [key, setKey] = useState(0);
-    const [filter, setFilter] = useState("");
+function RenameGroupModal({show, onHide, group}) {
+  const [name, setName] = useState(group);
+  return (
+    <Modal show={show} onHide={() => onHide(false)}>
+      <Modal.Header closeButton>
+        <Modal.Title>
+          <FormattedMessage
+              id="rename-group"
+              defaultMessage="Rename group" /> {group}
+        </Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Form onSubmit={e => {e.preventDefault(); updateGroupName(group, name, () => onHide(true));}}>
+          <FormGroup>
+            <Col smOffset={2} sm={9}>
+                <FormControl
+                  componentClass="input"
+                  value={name}
+                  placeholder="new name"
+                  onChange={e => setName(e.target.value)}/>
+            </Col>
+          </FormGroup>
+          <Button bsStyle="primary" type="submit" disabled={!name}>
+            Update
+          </Button>
+        </Form>
+      </Modal.Body>
+    </Modal>
+  )
+}
 
-    useEffect(() => {
-        setLoading(true);
-        fetchActivities(setActivities);
-        fetchCustomRoutes(r => {
-          setCustomRoutes(r)
-          setLoading(false)
-        });
-    }, []);
 
-    const activitiesOptions = activities.sort((a, b) => a.name.localeCompare(b.name)).map(a => ({value: a.id, label: a.name}));
+function CustomRoutesGroup({routes, group, activities, groups, onChange}) {
+  const [showUpdateModal, setShowUpdateModal] = useState(undefined);
+  const [showRename, setShowRename] = useState(false);
+  const activitiesOptions = activities.sort((a, b) => a.name.localeCompare(b.name)).map(a => ({value: a.id, label: a.name}));
+  return (
+    <Panel style={{ minWidth: "min-content" }}>
+      <Panel.Heading>
+          <Panel.Title>
+            {group || <FormattedMessage id="custom-routes" defaultMessage="Custom routes" />}
+            {' '}
+            {group &&
+            <Button bsSize={"xsmall"} bsStyle={"primary"} title={"rename"} onClick={() => setShowRename(true)}>
+              <FontAwesomeIcon icon={faEdit}/>
+            </Button>
+            }
+            {' '}
+            {group &&
+            <Button
+              bsSize={"xsmall"}
+              bsStyle={"primary"}
+              title={"download"}
+              onClick={() =>
+                AuthServiceManager.getValidToken()
+                  .then(token => window.location = `${API_URL_PREFIX}/api/v01/custom_routes/groups/${group}/export?auth_token=${token}`)
+              }>
+              <Glyphicon glyph="save"/>
+            </Button>
+            }
+          </Panel.Title>
+      </Panel.Heading>
+      <Panel.Body>
+        <Table
+          onDrop={e => {
+            e.preventDefault()
+            const data = JSON.parse(e.dataTransfer.getData("custom-route"));
+            console.log("drop", group, data.route_id)
+            updateCustomRoute(data.route_id, {"group": group}, () => onChange());
+          }}
+        >
+          <thead>
+            <tr>
+                <th/>
+                <th style={{ width: "5em" }}><FormattedMessage id="method" defaultMessage="Method" /></th>
+                <th><FormattedMessage id="route" defaultMessage="Route (prefix: {prefix})" values={{prefix: CUSTOM_ROUTE_PREFIX}} /></th>
+                <th style={{ minWidth: "22em" }}><FormattedMessage id="activity" defaultMessage="Activity" /></th>
+                <th style={{ width: "2em" }}><FormattedMessage id="enabled" defaultMessage="Enabled" /></th>
+                <th style={{ width: "2em" }}><FormattedMessage id="sync" defaultMessage="Sync" /></th>
+                <th style={{ minWidth: "15em" }}/>
+            </tr>
+          </thead>
+          <tbody>
+          {
+            routes.map((route, i) => (
+              <tr
+                key={i}
+                draggable
+                onDragStart={e => {
+                  e.dataTransfer.setData("custom-route", JSON.stringify(route));
+                }}
+                >
+                <td><Glyphicon glyph={"menu-hamburger"}/></td>
+                <td>{ route.method }</td>
+                <td>{ route.route }</td>
+                <td>
+                  <InputGroup>
+                      <Select
+                          className="basic-single"
+                          classNamePrefix="select"
+                          value={route.activity_id && activitiesOptions.find(a => a.value === route.activity_id)}
+                          isClearable={true}
+                          isSearchable={true}
+                          name="activity"
+                          onChange={(value, action) => {
+                              if(["select-option", "clear"].includes(action.action)) {
+                                updateCustomRouteActivity(route.route_id, value && value.value, () => onChange());
+                              }
+                          }}
+                          options={activitiesOptions} />
+                      <InputGroup.Button>
+                          <Button
+                              disabled={route.activity_id === null}
+                              bsStyle="primary"
+                              onClick={() => {
+                                  let win = window.open(`/transactions/config/activities/editor/${route.activity_id}`, '_blank');
+                                  win.focus();
+                              }}
+                              style={{marginLeft: '5px'}}
+                          >
+                              <Glyphicon glyph="eye-open"/>
+                          </Button>
+                      </InputGroup.Button>
+                  </InputGroup>
+                </td>
+                <td>
+                  <Checkbox
+                    checked={route.enabled}
+                    onChange={e => e.preventDefault()}
+                    onClick={e => {
+                        e.preventDefault();
+                        updateCustomRouteEnabled(route.route_id, e.target.checked, () => onChange());
+                    }} />
+                </td>
+                <td>
+                  <UpdateSyncConfirmCheckbox
+                    resourceName={route.route}
+                    checked={route.sync}
+                    onConfirm={checked => updateCustomRouteSync(route.route_id, checked, () => onChange())} />
+                </td>
+                <td>
+                  <ButtonToolbar>
+                    <Button
+                      onClick={() => setShowUpdateModal(Object.assign({}, route))}
+                      bsStyle="primary"
+                      style={{marginLeft: '5px', marginRight: '5px'}} >
+                      <Glyphicon glyph="pencil"/>
+                    </Button>
+                    <DeleteConfirmButton
+                      resourceName={`${route.method} ${route.route}`}
+                      style={{marginLeft: '5px', marginRight: '5px'}}
+                      onConfirm={() => deleteCustomRoute(route.route_id, () => onChange())} />
+                    <Button
+                      bsStyle="primary"
+                      onClick={() => {
+                        AuthServiceManager.getValidToken().then(token => {
+                            window.location=`${API_URL_PREFIX}/api/v01/custom_routes/${route.route_id}/export?auth_token=${token}`
+                          })
+                      }}
+                      style={{marginLeft: '5px', marginRight: '5px'}} >
+                      <Glyphicon glyph="save"/>
+                    </Button>
+                  </ButtonToolbar>
+                </td>
+              </tr>
+            ))
+          }
+          </tbody>
+        </Table>
+        <UpdateCustomRouteModal
+          show={showUpdateModal !== undefined}
+          entry={showUpdateModal || {}}
+          groups={groups}
+          onHide={c => {
+              setShowUpdateModal(undefined);
+              c && onChange();
+          }} />
+        <RenameGroupModal
+          show={showRename}
+          group={group}
+          onHide={r => {
+            setShowRename(false);
+            r && onChange();
+          }} />
+      </Panel.Body>
+    </Panel>
+  )
+}
 
-    return (
-        <Panel style={{ minWidth: "min-content" }}>
-            <Panel.Heading>
-                <Panel.Title><FormattedMessage id="custom-routes" defaultMessage="Custom routes" /></Panel.Title>
-            </Panel.Heading>
+function CustomRoutes() {
+  const [activities, setActivities] = useState([]);
+  const [customRoutes, setCustomRoutes] = useState([]);
+  const [showNew, setShowNew] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [key, setKey] = useState(0);
+  const [filter, setFilter] = useState("");
+
+  useEffect(() => {
+      setLoading(true);
+      fetchActivities(setActivities);
+      fetchCustomRoutes(r => {
+        setCustomRoutes(r)
+        setLoading(false)
+      });
+  }, []);
+
+  const routePerGroups = customRoutes
+    .sort((a, b) => a.route_id - b.route_id)
+    .filter(r => !filter || r.route.includes(filter) || ((activities.find(a => a.id === r.activity_id) || {}).name || "").includes(filter))
+    .reduce((o, r) => {
+      (o[r["group"] || ""] = o[r["group"] || ""] || []).push(r);
+      return o;
+    }, {});
+
+  return (
+    <>
+      {
+        loading &&
+          <Panel>
             <Panel.Body>
-                <SearchBar filter={filter} onChange={setFilter} />
-                <Table>
-                    <thead>
-                    <tr>
-                        <th>#</th>
-                        <th style={{ width: "5em" }}><FormattedMessage id="method" defaultMessage="Method" /></th>
-                        <th><FormattedMessage id="route" defaultMessage="Route (prefix: {prefix})" values={{prefix: CUSTOM_ROUTE_PREFIX}} /></th>
-                        <th style={{ minWidth: "22em" }}><FormattedMessage id="activity" defaultMessage="Activity" /></th>
-                        <th style={{ width: "2em" }}><FormattedMessage id="enabled" defaultMessage="Enabled" /></th>
-                        <th style={{ width: "2em" }}><FormattedMessage id="sync" defaultMessage="Sync" /></th>
-                        <th style={{ minWidth: "15em" }}/>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {
-                      loading &&
-                        <tr><td colSpan={7}><FontAwesomeIcon icon={faSpinner} aria-hidden="true" style={{'fontSize': '24px'}} spin /></td></tr>
-                    }
-                    {
-                        customRoutes
-                            .sort((a, b) => a.route_id - b.route_id)
-                            .filter(r => !filter || r.route.includes(filter) || ((activities.find(a => a.id === r.activity_id) || {}).name || "").includes(filter))
-                            .map((route, i) => (
-                                <tr key={i}>
-                                    <td>{ route.route_id }</td>
-                                    <td>{ route.method }</td>
-                                    <td>{ route.route }</td>
-                                    <td>
-                                        <InputGroup>
-                                            <Select
-                                                className="basic-single"
-                                                classNamePrefix="select"
-                                                value={route.activity_id && activitiesOptions.find(a => a.value === route.activity_id)}
-                                                isClearable={true}
-                                                isSearchable={true}
-                                                name="activity"
-                                                onChange={(value, action) => {
-                                                    if(["select-option", "clear"].includes(action.action)) {
-                                                      updateCustomRouteActivity(route.route_id, value && value.value, () => fetchCustomRoutes(setCustomRoutes));
-                                                    }
-                                                }}
-                                                options={activitiesOptions} />
-                                            <InputGroup.Button>
-                                                <Button
-                                                    disabled={route.activity_id === null}
-                                                    bsStyle="primary"
-                                                    onClick={() => {
-                                                        let win = window.open(`/transactions/config/activities/editor/${route.activity_id}`, '_blank');
-                                                        win.focus();
-                                                    }}
-                                                    style={{marginLeft: '5px'}}
-                                                >
-                                                    <Glyphicon glyph="eye-open"/>
-                                                </Button>
-                                            </InputGroup.Button>
-                                        </InputGroup>
-                                    </td>
-                                    <td>
-                                        <Checkbox
-                                            checked={route.enabled}
-                                            onChange={e => e.preventDefault()}
-                                            onClick={e => {
-                                                e.preventDefault();
-                                                updateCustomRouteEnabled(route.route_id, e.target.checked, () => fetchCustomRoutes(setCustomRoutes));
-                                            }} />
-                                    </td>
-                                    <td>
-                                        <UpdateSyncConfirmCheckbox
-                                            resourceName={route.route}
-                                            checked={route.sync}
-                                            onConfirm={checked => updateCustomRouteSync(route.route_id, checked, () => fetchCustomRoutes(setCustomRoutes))} />
-                                    </td>
-                                    <td>
-                                        <ButtonToolbar>
-                                            <Button
-                                                onClick={() => setShowUpdateModal(Object.assign({}, route))}
-                                                bsStyle="primary"
-                                                style={{marginLeft: '5px', marginRight: '5px'}} >
-                                                <Glyphicon glyph="pencil"/>
-                                            </Button>
-                                            <DeleteConfirmButton
-                                                resourceName={`${route.method} ${route.route}`}
-                                                style={{marginLeft: '5px', marginRight: '5px'}}
-                                                onConfirm={() => deleteCustomRoute(route.route_id, () => fetchCustomRoutes(setCustomRoutes))} />
-                                            <Button
-                                                bsStyle="primary"
-                                                onClick={() => {
-                                                  AuthServiceManager.getValidToken().then(token => {
-                                                      window.location=`${API_URL_PREFIX}/api/v01/custom_routes/${route.route_id}/export?auth_token=${token}`
-                                                    })
-                                                }}
-                                                style={{marginLeft: '5px', marginRight: '5px'}} >
-                                                <Glyphicon glyph="save"/>
-                                            </Button>
-                                        </ButtonToolbar>
-                                    </td>
-                                </tr>
-                            ))
-                    }
-                    </tbody>
-                </Table>
-                <ButtonToolbar>
-                    <Button bsStyle="primary" onClick={() => setShowNew(true)}>
-                        <FormattedMessage id="new-route" defaultMessage="New route" />
-                    </Button>
-                    <Button bsStyle="primary" onClick={() => setShowImport(true)}>
-                        <FormattedMessage id="import" defaultMessage="Import" />
-                    </Button>
-                </ButtonToolbar>
-
-                <NewCustomRoute
-                    show={showNew}
-                    onHide={c => {
-                        setShowNew(false);
-                        c && fetchCustomRoutes(setCustomRoutes);
-                    }} />
-
-                <UpdateCustomRouteModal
-                    show={showUpdateModal !== undefined}
-                    entry={showUpdateModal || {}}
-                    onHide={c => {
-                        setShowUpdateModal(undefined);
-                        c && fetchCustomRoutes(setCustomRoutes);
-                    }} />
-
-                <ImportCustomRouteModal
-                    show={showImport}
-                    key={key}
-                    onHide={c => {
-                        setKey(k => k+1);
-                        setShowImport(false);
-                        if(c) {
-                          fetchActivities(setActivities);
-                          fetchCustomRoutes(setCustomRoutes);
-                        }
-                    }} />
-
+              <FontAwesomeIcon icon={faSpinner} aria-hidden="true" style={{'fontSize': '24px'}} spin />
             </Panel.Body>
-        </Panel>
-    )
+          </Panel>
+      }
+
+      <Panel>
+        <Panel.Body>
+          <Row>
+            <Col sm={6}>
+              <ButtonToolbar>
+                  <Button bsStyle="primary" onClick={() => setShowNew(true)}>
+                      <FormattedMessage id="new-route" defaultMessage="New route" />
+                  </Button>
+                  <Button bsStyle="primary" onClick={() => setShowImport(true)}>
+                      <FormattedMessage id="import" defaultMessage="Import" />
+                  </Button>
+              </ButtonToolbar>
+            </Col>
+            <Col sm={6}>
+              <SearchBar filter={filter} onChange={setFilter} size={8} />
+            </Col>
+          </Row>
+        </Panel.Body>
+      </Panel>
+
+      {
+        !loading && Object.entries(routePerGroups).sort((a, b) => a[0].localeCompare(b[0])).map(([group, routes]) =>
+          <CustomRoutesGroup
+            activities={activities}
+            onChange={() => fetchCustomRoutes(setCustomRoutes)}
+            routes={routes}
+            group={group}
+            groups={Object.keys(routePerGroups)}
+            />
+        )
+      }
+
+      <NewCustomRoute
+          show={showNew}
+          groups={Object.keys(routePerGroups)}
+          onHide={c => {
+              setShowNew(false);
+              c && fetchCustomRoutes(setCustomRoutes);
+          }} />
+
+      <ImportCustomRouteModal
+          show={showImport}
+          key={key}
+          onHide={c => {
+              setKey(k => k+1);
+              setShowImport(false);
+              if(c) {
+                fetchActivities(setActivities);
+                fetchCustomRoutes(setCustomRoutes);
+              }
+          }} />
+    </>
+  )
 }
 
 export function StartupEvents() {
@@ -965,4 +1131,4 @@ export function StartupEvents() {
       <CustomRoutes/>
     </div>
   )
-};
+}
