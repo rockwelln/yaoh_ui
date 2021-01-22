@@ -515,7 +515,7 @@ export default function draw_editor(container, handlers, placeholders, props) {
         if(cell.getAttribute('original_name', '') === 'start' || cell.getAttribute('original_name', '') === 'end')
             return cell.getAttribute('label', '');
         else if(cell.getAttribute('original_name', '') === 'sync_outputs'){
-            return "<div style='transform: rotate(45deg)'>+</div>";
+            return "<div style='transform: scale(var(--scale)) rotate(45deg)'>+</div>";
         }
         else if(cell.getAttribute('original_name', '') === 'or_outputs'){
             return "<div style='font-size: 10rem; margin-top: -1.5rem'>&cir;</div>";

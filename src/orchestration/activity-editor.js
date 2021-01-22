@@ -1257,13 +1257,15 @@ export function ActivityEditor(props) {
                             <Button onClick={() => editor && editor.execute("showDefinition")} title={"show definition"}>txt</Button>
                             <Button onClick={() => {
                               editor && downloadDefinition(editor.getDefinition(ReactDOM.findDOMNode(titleRef.current).value).activity);
-                            }}>
+                            }} title={"download definition"}>
                               <FontAwesomeIcon icon={faArrowDown} />
                             </Button>
-                            <Button onClick={() => editor && editor.execute("upload_definition")} disabled={!canSave}>
+                            <Button onClick={() => editor && editor.execute("upload_definition")} disabled={!canSave} title={"upload definition"}>
                               <FontAwesomeIcon icon={faArrowUp} />
                             </Button>
-                            <Button onClick={() => setShowStats(true)}><FontAwesomeIcon icon={faChartBar} /></Button>
+                            <Button onClick={() => setShowStats(true)} title={"show stats"}>
+                              <FontAwesomeIcon icon={faChartBar} />
+                            </Button>
                         </ButtonGroup>
                     </ButtonToolbar>
                 </Col>
