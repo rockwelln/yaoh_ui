@@ -32,7 +32,7 @@ import {JSON_TRANS_OPTIONS_SAMPLE} from "../system/bulk_actions";
 import Select from "react-select";
 import {SearchBar} from "../utils/datatable";
 import InputGroup from "react-bootstrap/lib/InputGroup";
-import {faSpinner} from "@fortawesome/free-solid-svg-icons";
+import {faEdit, faSpinner} from "@fortawesome/free-solid-svg-icons";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import Creatable from "react-select/creatable";
 
@@ -112,6 +112,20 @@ function updateHandler(e, eventName, onSuccess) {
             <FormattedMessage id="update-startup-event-failed" defaultMessage="Failed to update startup event"/>,
             error.message,
         ));
+}
+
+function updateGroupName(oldName, newName, onSuccess) {
+  fetch_put(`/api/v01/custom_routes/groups/${oldName}`, {name: newName})
+      .then(() => {
+          NotificationsManager.success(
+              <FormattedMessage id="update-group-done" defaultMessage="Group saved!"/>,
+          );
+          onSuccess();
+      })
+      .catch(error => NotificationsManager.error(
+          <FormattedMessage id="update-group-failed" defaultMessage="Failed to update startup events"/>,
+          error.message,
+      ));
 }
 
 function DedicatedEvents(props) {
@@ -824,14 +838,66 @@ function UpdateSyncConfirmCheckbox(props) {
 }
 
 
+function RenameGroupModal({show, onHide, group}) {
+  const [name, setName] = useState(group);
+  return (
+    <Modal show={show} onHide={() => onHide(false)}>
+      <Modal.Header closeButton>
+        <Modal.Title>
+          <FormattedMessage
+              id="rename-group"
+              defaultMessage="Rename group" /> {group}
+        </Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Form onSubmit={e => {e.preventDefault(); updateGroupName(group, name, () => onHide(true));}}>
+          <FormGroup>
+            <Col smOffset={2} sm={9}>
+                <FormControl
+                  componentClass="input"
+                  value={name}
+                  placeholder="new name"
+                  onChange={e => setName(e.target.value)}/>
+            </Col>
+          </FormGroup>
+          <Button bsStyle="primary" type="submit" disabled={!name}>
+            Update
+          </Button>
+        </Form>
+      </Modal.Body>
+    </Modal>
+  )
+}
+
+
 function CustomRoutesGroup({routes, group, activities, groups, onChange}) {
   const [showUpdateModal, setShowUpdateModal] = useState(undefined);
+  const [showRename, setShowRename] = useState(false);
   const activitiesOptions = activities.sort((a, b) => a.name.localeCompare(b.name)).map(a => ({value: a.id, label: a.name}));
   return (
     <Panel style={{ minWidth: "min-content" }}>
       <Panel.Heading>
           <Panel.Title>
             {group || <FormattedMessage id="custom-routes" defaultMessage="Custom routes" />}
+            {' '}
+            {group &&
+            <Button bsSize={"xsmall"} bsStyle={"primary"} title={"rename"} onClick={() => setShowRename(true)}>
+              <FontAwesomeIcon icon={faEdit}/>
+            </Button>
+            }
+            {' '}
+            {group &&
+            <Button
+              bsSize={"xsmall"}
+              bsStyle={"primary"}
+              title={"download"}
+              onClick={() =>
+                AuthServiceManager.getValidToken()
+                  .then(token => window.location = `${API_URL_PREFIX}/api/v01/custom_routes/groups/${group}/export?auth_token=${token}`)
+              }>
+              <Glyphicon glyph="save"/>
+            </Button>
+            }
           </Panel.Title>
       </Panel.Heading>
       <Panel.Body>
@@ -948,6 +1014,13 @@ function CustomRoutesGroup({routes, group, activities, groups, onChange}) {
           onHide={c => {
               setShowUpdateModal(undefined);
               c && onChange();
+          }} />
+        <RenameGroupModal
+          show={showRename}
+          group={group}
+          onHide={r => {
+            setShowRename(false);
+            r && onChange();
           }} />
       </Panel.Body>
     </Panel>
