@@ -1239,22 +1239,22 @@ export function ActivityEditor(props) {
                             <Button onClick={() => save()} disabled={!canSave}>Save</Button>
                         </ButtonGroup>
                         <ButtonGroup style={{paddingLeft: '1rem'}}>
-                            <Button onClick={() => editor && editor.execute("add_process")} disabled={!canSave}>+</Button>
-                            <Button onClick={() => editor && editor.execute("clone_process")} disabled={!canSave}>🐑</Button>
-                            <Button onClick={() => editor && editor.execute("delete")} disabled={!canSave}>✘</Button>
+                            <Button onClick={() => editor && editor.execute("add_process")} disabled={!canSave} title={"add a node"}>+</Button>
+                            <Button onClick={() => editor && editor.execute("clone_process")} disabled={!canSave} title={"clone a node"}>🐑</Button>
+                            <Button onClick={() => editor && editor.execute("delete")} disabled={!canSave} title={"delete"}>✘</Button>
                         </ButtonGroup>
                         <ButtonGroup style={{paddingLeft: '1rem'}}>
-                            <Button onClick={() => editor && editor.execute("undo")} disabled={!canSave}>⤾</Button>
-                            <Button onClick={() => editor && editor.execute("redo")} disabled={!canSave}>⤿</Button>
+                            <Button onClick={() => editor && editor.execute("undo")} disabled={!canSave} title={"undo"}>⤾</Button>
+                            <Button onClick={() => editor && editor.execute("redo")} disabled={!canSave} title={"redo"}>⤿</Button>
                         </ButtonGroup>
                         <ButtonGroup style={{paddingLeft: '1rem'}}>
-                            <Button onClick={() => editor && editor.execute("zoomIn")}>🔍 +</Button>
-                            <Button onClick={() => editor && editor.execute("zoomOut")}>🔍 -</Button>
+                            <Button onClick={() => editor && editor.execute("zoomIn")} title={"zoom in"}>🔍 +</Button>
+                            <Button onClick={() => editor && editor.execute("zoomOut")} title={"zoom out"}>🔍 -</Button>
                         </ButtonGroup>
                         <ButtonGroup style={{paddingLeft: '1rem'}}>
                             <Button onClick={() => editor && editor.execute("fit")}>fit</Button>
-                            <Button onClick={() => editor && editor.execute("show")}>👓</Button>
-                            <Button onClick={() => editor && editor.execute("showDefinition")}>txt</Button>
+                            <Button onClick={() => editor && editor.execute("show")} title={"show"}>👓</Button>
+                            <Button onClick={() => editor && editor.execute("showDefinition")} title={"show definition"}>txt</Button>
                             <Button onClick={() => {
                               editor && downloadDefinition(editor.getDefinition(ReactDOM.findDOMNode(titleRef.current).value).activity);
                             }}>
