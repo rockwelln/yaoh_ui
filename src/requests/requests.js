@@ -2651,7 +2651,7 @@ export class Requests extends Component{
         url.searchParams.append('filter', JSON.stringify(filter_spec));
         // paging
         if(paging_spec !== undefined) {
-            url.searchParams.append('paging', JSON.stringify(paging_spec));
+            url.searchParams.append('paging', JSON.stringify({...paging_spec, "preflight": "1"}));
         }
         //sorting
         if(sorting_spec !== undefined) {
@@ -2684,7 +2684,7 @@ export class Requests extends Component{
         //reset collection
         this.setState({requests: undefined, selected_reqs: []});
 
-        fetch_get(url, this.props.auth_token)
+        fetch_get(url)
             .then(data => {
                 if(this.cancelLoad) return;
                 // devnote: save in the history the search.
@@ -2724,6 +2724,12 @@ export class Requests extends Component{
                      export_url: export_url.href,
                      close_instances_url: close_instances_url,
                 });
+                url.pathname += "_count"
+                fetch_get(url)
+                  .then(d => this.setState({
+                    pagination: update(this.state.pagination, {$merge: {total_results: d.count, num_pages: Math.ceil(d.count / data.pagination[1])}})
+                  }))
+                  .catch(console.error)
             })
             .catch(error => !this.cancelLoad && this.setState({error: error}));
     }
