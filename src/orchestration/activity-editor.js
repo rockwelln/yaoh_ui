@@ -735,10 +735,10 @@ function OutputsTable(props) {
 export function EditCellModal(props) {
     const {show, cell, cells, activity, onHide, readOnly = false} = props;
     const [staticParams, setStaticParams] = useState({});
+    const [name, setName] = useState("");
     const [outputs, setOutputs] = useState([]);
 
     const originalName = cell && cell.value.getAttribute('original_name');
-    const name = cell && cell.value.getAttribute('label');
     const attrsStr = cell && cell.value.getAttribute('attrList');
 
     let cellDef = cells && cells.find(c => c.name === originalName);
@@ -754,6 +754,9 @@ export function EditCellModal(props) {
     }, [show]);
     useEffect(() => {
       if(cell) {
+        if(cell.value.getAttribute('label')) {
+          setName(cell.value.getAttribute('label'));
+        }
         if(cell.value.getAttribute("attrList")) {
           setStaticParams(cell.value.getAttribute('attrList').split(",").reduce((o, a) => {
             o[a] = cell.value.getAttribute(a);
@@ -790,7 +793,7 @@ export function EditCellModal(props) {
 
     const usedRows = activity && activity.definition.transitions.map(t => t[0]).reduce((o, e) => {
       const [task, output] = e.split(".");
-      if(task === name) {
+      if(task === cell.value.getAttribute('label')) {
         o.push(output);
       }
       return o;
@@ -848,6 +851,18 @@ export function EditCellModal(props) {
           <Form horizontal>
             <FormGroup>
                 <Col componentClass={ControlLabel} sm={2}>
+                    <FormattedMessage id="new-name" defaultMessage="New name" />
+                </Col>
+
+                <Col sm={9}>
+                    <FormControl
+                        componentClass="input"
+                        value={name}
+                        onChange={e => setName(e.target.value)} />
+                </Col>
+            </FormGroup>
+            <FormGroup>
+                <Col componentClass={ControlLabel} sm={2}>
                     <FormattedMessage id="implementation" defaultMessage="Implementation" />
                 </Col>
 
@@ -885,7 +900,8 @@ export function EditCellModal(props) {
                     disabled={invalidParams.length !== 0}
                     onClick={() => {
                       onHide({
-                        name: cell.value.getAttribute("label"),
+                        name: name,
+                        oldName: cell.value.getAttribute('label'),
                         originalName: originalName,
                         params: staticParams,
                         outputs: outputs.filter(o => o.visible).map(o => o.value),
@@ -1390,16 +1406,39 @@ export function ActivityEditor(props) {
 
                   const activity = editor && editor.getDefinition().activity;
                   if(c.originalName === "entity") {
-                    const i = activity.definition.entities.findIndex(e => e.name === c.name)
+                    const i = activity.definition.entities.findIndex(e => e.name === c.oldName)
                     activity.definition.entities[i]["params"] = c.params;
                     if(c.outputs !== undefined) {
                       activity.definition.entities[i]["outputs"] = c.outputs;
                     }
                   } else {
-                    activity.definition.cells[c.name]["params"] = c.params;
+                    activity.definition.cells[c.oldName]["params"] = c.params;
                     if(c.outputs !== undefined) {
-                      activity.definition.cells[c.name]["outputs"] = c.outputs;
+                      activity.definition.cells[c.oldName]["outputs"] = c.outputs;
                     }
+                  }
+                  if(c.name !== c.oldName) {
+                    console.log("cell name has changed", c.name, c.oldName);
+                    if(c.originalName === "entity") {
+                      activity.definition.entities.push(c);
+                      const i = activity.definition.entities.findIndex(e => e.name === c.oldName);
+                      activity.definition.entities.splice(i, 1);
+                    } else {
+                      activity.definition.cells[c.name] = activity.definition.cells[c.oldName];
+                      delete activity.definition.cells[c.oldName];
+                    }
+                    // adapt transitions
+                    activity.definition.transitions = activity.definition.transitions.map(([s, d, extra]) => {
+                      if(d === c.oldName) {
+                        d = c.name;
+                      }
+                      const i = s.lastIndexOf(".");
+                      const n = s.substring(0, i)
+                      if(n === c.oldName) {
+                        s = c.name + s.substring(i)
+                      }
+                      return [s, d, extra];
+                    })
                   }
                   import("./editor").then(e => e.updateGraphModel(editor, activity, {clear: true, nofit: true}));
                 }} />
