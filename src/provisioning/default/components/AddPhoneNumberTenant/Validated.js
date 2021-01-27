@@ -68,7 +68,7 @@ export class Basic extends Component {
               eventKey={0}
               title={`OK (${this.props.validatedNumbersTenant.ok.length})`}
             >
-              <OkTab />
+              <OkTab toBasic={() => this.toBasic()} />
             </Tab>
             <Tab
               eventKey={1}
