@@ -26,15 +26,17 @@ import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 import Alert from "react-bootstrap/lib/Alert";
 import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
+import SplitButton from "react-bootstrap/lib/SplitButton";
 import {DeleteConfirmButton} from "../utils/deleteConfirm";
 import {useDropzone} from "react-dropzone";
 import {JSON_TRANS_OPTIONS_SAMPLE} from "../system/bulk_actions";
 import Select from "react-select";
 import {SearchBar} from "../utils/datatable";
 import InputGroup from "react-bootstrap/lib/InputGroup";
-import {faEdit, faSpinner} from "@fortawesome/free-solid-svg-icons";
+import {faDownload, faEdit, faSpinner} from "@fortawesome/free-solid-svg-icons";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import Creatable from "react-select/creatable";
+import MenuItem from "react-bootstrap/lib/MenuItem";
 
 const CUSTOM_ROUTE_PREFIX = "https://<target>/api/v01/custom";
 const JSON_SCHEMA_SAMPLE = (
@@ -881,22 +883,30 @@ function CustomRoutesGroup({routes, group, activities, groups, onChange}) {
             {group || <FormattedMessage id="custom-routes" defaultMessage="Custom routes" />}
             {' '}
             {group &&
-            <Button bsSize={"xsmall"} bsStyle={"primary"} title={"rename"} onClick={() => setShowRename(true)}>
+            <Button bsSize={"small"} bsStyle={"primary"} title={"rename"} onClick={() => setShowRename(true)}>
               <FontAwesomeIcon icon={faEdit}/>
             </Button>
             }
             {' '}
             {group &&
-            <Button
-              bsSize={"xsmall"}
-              bsStyle={"primary"}
-              title={"download"}
+            <SplitButton
+              bsStyle="primary"
+              bsSize="small"
+              title={<FontAwesomeIcon icon={faDownload}/>}
               onClick={() =>
                 AuthServiceManager.getValidToken()
                   .then(token => window.location = `${API_URL_PREFIX}/api/v01/custom_routes/groups/${group}/export?auth_token=${token}`)
               }>
-              <Glyphicon glyph="save"/>
-            </Button>
+              <MenuItem
+                onClick={() =>
+                  AuthServiceManager.getValidToken()
+                    .then(token => window.location = `${API_URL_PREFIX}/api/v01/custom_routes/groups/${group}/export?compat=1&auth_token=${token}`)
+                }>
+                <FormattedMessage
+                  id="compatible"
+                  defaultMessage="Compatible version (<0.18)" />
+              </MenuItem>
+            </SplitButton>
             }
           </Panel.Title>
       </Panel.Heading>
@@ -991,16 +1001,24 @@ function CustomRoutesGroup({routes, group, activities, groups, onChange}) {
                       resourceName={`${route.method} ${route.route}`}
                       style={{marginLeft: '5px', marginRight: '5px'}}
                       onConfirm={() => deleteCustomRoute(route.route_id, () => onChange())} />
-                    <Button
+                    <SplitButton
                       bsStyle="primary"
+                      title={<FontAwesomeIcon icon={faDownload}/>}
                       onClick={() => {
                         AuthServiceManager.getValidToken().then(token => {
                             window.location=`${API_URL_PREFIX}/api/v01/custom_routes/${route.route_id}/export?auth_token=${token}`
                           })
-                      }}
-                      style={{marginLeft: '5px', marginRight: '5px'}} >
-                      <Glyphicon glyph="save"/>
-                    </Button>
+                      }}>
+                      <MenuItem
+                        onClick={() =>
+                          AuthServiceManager.getValidToken()
+                            .then(token => window.location = `${API_URL_PREFIX}/api/v01/custom_routes/${route.route_id}/export?compat=1&auth_token=${token}`)
+                        }>
+                        <FormattedMessage
+                          id="compatible"
+                          defaultMessage="Compatible version" />
+                      </MenuItem>
+                    </SplitButton>
                   </ButtonToolbar>
                 </td>
               </tr>
