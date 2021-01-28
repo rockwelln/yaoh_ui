@@ -182,7 +182,7 @@ export function addNode(editor, def, name, paramsFields) {
                 v10.geometry.offset = new mxPoint(-5, -5);
                 break;
             default:
-                v = graph.insertVertex(parent, null, node, 0, 0, min_cell_height(c, name), baseY + (20 * c.outputs.length) + 15, cls);
+                v = graph.insertVertex(parent, null, node, c.x, c.y, min_cell_height(c, name), baseY + (20 * c.outputs.length) + 15, cls);
                 v.setConnectable(false);
 
                 v10 = graph.insertVertex(v, null, document.createElement('Target'), 0, 0, 10, 10, 'port;target;spacingLeft=18', true);

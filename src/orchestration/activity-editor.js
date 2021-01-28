@@ -1391,6 +1391,8 @@ export function ActivityEditor(props) {
                     if(cDef) {
                         const c_def = JSON.parse(JSON.stringify(cDef));
                         c_def.outputs = (cell.getAttribute('outputs') || "").split(",");
+                        c_def.x = cell.geometry.x + 10;
+                        c_def.y = cell.geometry.y + 10;
                         const params = (cell.getAttribute('attrList') || "").split(",").reduce((xa, a) => {xa[a] = cell.getAttribute(a); return xa;}, {});
                         e.addNode(editor, c_def, newName, params);
                     }
