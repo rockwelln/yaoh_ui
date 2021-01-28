@@ -543,7 +543,10 @@ function NewCellModal(props)  {
                 <Modal.Title>New cell</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                <Form horizontal>
+                <Form onSubmit={e => {
+                  e.preventDefault();
+                  onHide({def:definition, name:name, params:staticParams, customOutputs: customOutputs});
+                }} horizontal>
                     <FormGroup validationState={duplicateName?"error":null}>
                         <Col componentClass={ControlLabel} sm={2}>
                             <FormattedMessage id="name" defaultMessage="Name" />
@@ -607,9 +610,7 @@ function NewCellModal(props)  {
                     <FormGroup>
                       <Col smOffset={2} sm={10}>
                           <Button
-                            onClick={() => {
-                              onHide({def:definition, name:name, params:staticParams, customOutputs: customOutputs});
-                            }}
+                            type="submit"
                             disabled={!validName || invalidParams.length !== 0}
                           >
                               Save
