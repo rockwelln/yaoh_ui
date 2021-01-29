@@ -943,7 +943,7 @@ function CustomRoutesGroup({routes, group, activities, groups, onChange}) {
                   <Glyphicon glyph={"menu-hamburger"}/>
                 </td>
                 <td>{ route.method }</td>
-                <td>{ route.route }</td>
+                <td style={{overflowWrap: "anywhere"}}>{ route.route }</td>
                 <td>
                   <InputGroup>
                       <Select
