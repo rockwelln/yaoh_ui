@@ -166,7 +166,7 @@ export function TransactionFlow({definition, states, activityId}) {
   return (
     <div>
       <div ref={toolbarRef} style={{position: 'absolute', zIndex: '100'}} />
-      <div ref={flowGraphRef} style={{backgroundImage: `url(${GridPic})`}} />
+      <div ref={flowGraphRef} style={{overflow: 'hidden', backgroundImage: `url(${GridPic})`}} />
 
       <EditCellModal
         show={editedCell !== undefined}

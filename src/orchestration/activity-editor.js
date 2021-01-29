@@ -1331,7 +1331,7 @@ export function ActivityEditor(props) {
             }
             <Row>
                 <Col sm={12}>
-                    <div ref={editorRef} style={{backgroundImage: `url(${GridPic})`}} />
+                    <div ref={editorRef} style={{overflow: 'hidden', backgroundImage: `url(${GridPic})`}} />
                 </Col>
             </Row>
             <hr />
