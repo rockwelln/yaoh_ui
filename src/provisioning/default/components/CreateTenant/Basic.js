@@ -30,6 +30,7 @@ import {
   fetchGetTenantOU,
   changeDetailsOfTenant,
   fetchGetSelfcareURL,
+  getTenantOU,
 } from "../../store/actions";
 import Loading from "../../common/Loading";
 
@@ -134,6 +135,7 @@ export class Basic extends Component {
                         this.props.changeNameOfTenant("");
                         this.props.changeBackendOfTenant("");
                         this.props.changeDetailsOfTenant("");
+                        this.props.getTenantOU({ tenants: [] });
                       }
                     }}
                     className={"margin-top-0"}
@@ -210,7 +212,7 @@ export class Basic extends Component {
                   type="text"
                   placeholder="Tenant ID"
                   defaultValue={this.props.createTenant.tenantId}
-                  disabled={!this.state.overwriteID}
+                  disabled={this.state.overwriteID}
                   onChange={(e) => {
                     this.props.changeIdOfTenant(e.target.value);
                     this.setState({ errorMessage: "" });
@@ -467,6 +469,7 @@ const mapDispatchToProps = {
   changeBackendOfTenant,
   fetchGetTenantOU,
   changeDetailsOfTenant,
+  getTenantOU,
 };
 
 export default withRouter(connect(mapStateToProps, mapDispatchToProps)(Basic));
