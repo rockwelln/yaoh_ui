@@ -1,7 +1,15 @@
 import React, {useState, useEffect, useRef, useLayoutEffect} from 'react';
 import ReactDOM from 'react-dom';
 import {Redirect} from "react-router";
-import {fetch_post, fetch_get, fetch_delete, fetch_put, NotificationsManager} from "../utils";
+import {
+  fetch_post,
+  fetch_get,
+  fetch_delete,
+  fetch_put,
+  NotificationsManager,
+  AuthServiceManager,
+  API_URL_PREFIX
+} from "../utils";
 
 import Col from 'react-bootstrap/lib/Col';
 import Row from 'react-bootstrap/lib/Row';
@@ -25,9 +33,11 @@ import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import update from "immutability-helper";
 import InputGroup from "react-bootstrap/lib/InputGroup";
 import InputGroupButton from "react-bootstrap/lib/InputGroupButton";
+import SplitButton from "react-bootstrap/lib/SplitButton";
+import MenuItem from "react-bootstrap/lib/MenuItem";
 import {DeleteConfirmButton} from "../utils/deleteConfirm";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {faArrowDown, faArrowUp, faChartBar, faCopy, faSpinner} from "@fortawesome/free-solid-svg-icons";
+import {faArrowDown, faArrowUp, faChartBar, faCopy, faDownload, faSpinner} from "@fortawesome/free-solid-svg-icons";
 import {Link} from "react-router-dom";
 import {SimulatorPanel} from "./simulator";
 import Checkbox from "react-bootstrap/lib/Checkbox";
@@ -160,6 +170,18 @@ function activateVersion(id, versionId, onSuccess) {
         .catch(error => {
             NotificationsManager.error(`Failed to activate the version ${versionId}`, error.message);
         });
+}
+
+function downloadActivity(id, definitionOnly) {
+    AuthServiceManager
+      .getValidToken()
+      .then(token => window.location = `${API_URL_PREFIX}/api/v01/activities/${id}/export?def_only=${definitionOnly?1:0}&auth_token=${token}`)
+}
+
+function downloadActivityVersions(id) {
+    AuthServiceManager
+      .getValidToken()
+      .then(token => window.location = `${API_URL_PREFIX}/api/v01/activities/${id}/versions/export?auth_token=${token}`)
 }
 
 function NewActivity(props) {
@@ -309,6 +331,24 @@ export function Activities(props) {
                                                   onClick={() => setDuplicateActivity(a.id)}>
                                                     <FontAwesomeIcon icon={faCopy}/>
                                                 </Button>
+
+                                                <SplitButton
+                                                  bsStyle="primary"
+                                                  title={<FontAwesomeIcon icon={faDownload}/>}
+                                                  onClick={() => downloadActivity(a.id)}>
+                                                    <MenuItem
+                                                      onClick={() => downloadActivityVersions(a.id)}>
+                                                      <FormattedMessage
+                                                        id="all-versions"
+                                                        defaultMessage="All versions" />
+                                                    </MenuItem>
+                                                    <MenuItem
+                                                      onClick={() => downloadActivity(a.id, true)}>
+                                                      <FormattedMessage
+                                                        id="definition-only"
+                                                        defaultMessage="Def. only (compat. <0.18)" />
+                                                    </MenuItem>
+                                                </SplitButton>
                                             </ButtonToolbar>
                                         </td>
                                     </tr>
