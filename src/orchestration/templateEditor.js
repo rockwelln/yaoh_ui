@@ -575,6 +575,8 @@ Hello, World!`}
 
 const requestAttributes = [
   { id: "body", display: "body" },
+  { id: "url", display: "url" },
+  { id: "match_info", display: "match_info" },
 ]
 
 const Item = ({ entity: { id, display, help }, selected }) => {
