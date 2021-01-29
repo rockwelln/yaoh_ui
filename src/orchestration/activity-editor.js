@@ -1163,7 +1163,7 @@ export function ActivityEditor(props) {
     });
     const currentVersion = versionsOptions.find(v => v.id === versionId);
     const canCommit = currentVersion && !currentVersion.value;
-    const canSave = currentActivity && currentActivity.working;
+    const canSave = canCommit;
 
     useEffect(() => {
       if(currentVersion && currentVersion.working) {
