@@ -18,7 +18,7 @@ export class Details extends Component {
     accessDevice: null,
     disableButton: false,
     sipAuthenticationPassword: "",
-    showDevice: false
+    showDevice: false,
   };
 
   componentDidMount() {
@@ -28,7 +28,7 @@ export class Details extends Component {
         : "",
       accessDevice: this.props.trunkGroup.accessDevice
         ? this.props.trunkGroup.accessDevice.name
-        : ""
+        : "",
     });
   }
 
@@ -44,10 +44,10 @@ export class Details extends Component {
               <FormControl
                 componentClass="select"
                 value={this.state.pilotUserId}
-                onChange={e => this.setState({ pilotUserId: e.target.value })}
+                onChange={(e) => this.setState({ pilotUserId: e.target.value })}
               >
                 <option value={""}>None</option>
-                {this.props.trunkGroupUsers.map(user => (
+                {this.props.trunkGroupUsers.map((user) => (
                   <option key={user.userId} value={user.userId}>
                     {user.userId}
                   </option>
@@ -118,7 +118,7 @@ export class Details extends Component {
     const { pilotUserId, accessDevice, sipAuthenticationPassword } = this.state;
 
     const data = {
-      pilotUserId
+      pilotUserId,
     };
 
     const clearData = removeEmpty(data);
@@ -129,23 +129,20 @@ export class Details extends Component {
           this.props.match.params.tenantId,
           this.props.match.params.groupId,
           this.props.match.params.trunkGroupName,
-          clearData
+          data
         )
         .then(() => this.setState({ disableButton: false }))
     );
   };
 }
 
-const mapStateToProps = state => ({
+const mapStateToProps = (state) => ({
   trunkGroup: state.trunkGroup,
-  trunkGroupUsers: state.trunkGroupUsers
+  trunkGroupUsers: state.trunkGroupUsers,
 });
 
 const mapDispatchToProps = { fetchPutUpdateTrunkGroup };
 
 export default withRouter(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(Details)
+  connect(mapStateToProps, mapDispatchToProps)(Details)
 );
