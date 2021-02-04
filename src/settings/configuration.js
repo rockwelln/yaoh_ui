@@ -970,6 +970,19 @@ function NewSsoModal(props) {
             </Col>
           </FormGroup>
 
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="default_user_is_system" defaultMessage="Default is-system flag"/>
+            </Col>
+
+            <Col sm={9}>
+              <Checkbox
+                checked={entry.default_user_is_system}
+                readOnly={!entry.auto_create_user}
+                onChange={e => setEntry(update(entry, {$merge: {default_user_is_system: e.target.checked}}))}/>
+            </Col>
+          </FormGroup>
+
           <hr />
 
           {authenticationParams}
@@ -1785,6 +1798,19 @@ function SSOPanel(props) {
                           value={p.default_user_ui_profile}
                           readOnly={!p.auto_create_user}
                           onChange={e => onChange(update(sso, {[i]: {$merge: {default_user_ui_profile: e.target.value}}}))}/>
+                      </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                      <Col componentClass={ControlLabel} sm={2}>
+                        <FormattedMessage id="default_user_is_system" defaultMessage="Default is-system flag"/>
+                      </Col>
+
+                      <Col sm={9}>
+                        <Checkbox
+                          checked={p.default_user_is_system}
+                          readOnly={!p.auto_create_user}
+                          onChange={e => onChange(update(sso, {[i]: {$merge: {default_user_is_system: e.target.checked}}}))}/>
                       </Col>
                     </FormGroup>
 
