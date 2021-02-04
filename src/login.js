@@ -182,23 +182,28 @@ export function LoginForm(props) {
     const [loading, setLoading] = useState(false);
     const [loginResp, setLoginResp] = useState(null);
 
-    const {onLogin, supportSaml, supportOidc} = props;
+    const {onLogin, sso} = props;
 
     useEffect(() => {setError(undefined);}, [username, password]);
 
     return (
         <>
-          { supportSaml && <Col smOffset={1} sm={10}>
+          { sso && sso.length > 0 && <Col smOffset={1} sm={10}>
               <ButtonGroup vertical block>
-                <Button
-                  onClick={() => {
-                    setError(undefined);
-                    // 1. fetch the login request signed (relayState => window.location.href, to return to the same page)
-                    fetch_get(`/api/v01/auth/saml/loginRequest?loc=${window.location.href}`, {method: "get"})
-                      .then(r => { window.location = r.url })
-                      .catch(e => setError(e))
-                  }}
-                  bsStyle="primary">Login with my company account</Button>
+                {
+                  sso.map(provider => {
+                    return <Button
+                        key={provider.name}
+                        onClick={() => {
+                          setError(undefined);
+                          // 1. fetch the login request signed (loc => window.location.href, to return to the same page)
+                          fetch_get(`/api/v01/auth/${provider.protocol}/loginRequest?name=${provider.name}&loc=${window.location.href}`)
+                            .then(r => {window.location = r.url})
+                            .catch(e => setError(e))
+                        }}
+                        bsStyle="primary">Login with {provider.name.charAt(0).toUpperCase() + provider.name.slice(1)}</Button>
+                  })
+                }
               </ButtonGroup>
               <hr/>
             </Col>
