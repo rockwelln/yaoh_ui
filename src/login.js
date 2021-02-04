@@ -197,7 +197,7 @@ export function LoginForm(props) {
                         onClick={() => {
                           setError(undefined);
                           // 1. fetch the login request signed (loc => window.location.href, to return to the same page)
-                          fetch_get(`/api/v01/auth/${provider.protocol}/loginRequest?name=${provider.name}&loc=${window.location.href}`)
+                          fetch_get(`/api/v01/auth/${provider.protocol}/loginRequest?name=${provider.name}&state=${window.location.href}`)
                             .then(r => {window.location = r.url})
                             .catch(e => setError(e))
                         }}

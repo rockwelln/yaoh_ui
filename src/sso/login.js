@@ -20,8 +20,8 @@ export function AuthCallback(props) {
           .then(parseJSON)
           .then(r => {
             props.onLogin(r);
-            if(r.redirect_to) {
-              window.location = r.redirect_to || "/";
+            if(r.state) {
+              window.location = r.state || "/";
             } else {
               window.location = "/";
             }
