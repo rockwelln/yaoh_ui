@@ -196,7 +196,7 @@ export class Basic extends Component {
             </Row>
             <Row className={"margin-1"}>
               <Col componentClass={ControlLabel} md={3}>
-                ID
+                ID{!this.state.overwriteID && "\u002a"}
               </Col>
               <Col md={9}>
                 <Checkbox
@@ -387,7 +387,11 @@ export class Basic extends Component {
                 <Button
                   className={"btn-primary"}
                   onClick={this.nextStep}
-                  disabled={!this.props.createTenant.type}
+                  disabled={
+                    !this.props.createTenant.type ||
+                    (!this.state.overwriteID &&
+                      !this.props.createTenant.tenantId)
+                  }
                 >
                   <Glyphicon glyph="glyphicon glyphicon-ok"></Glyphicon>
                   &nbsp; Next
