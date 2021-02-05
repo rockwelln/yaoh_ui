@@ -675,11 +675,21 @@ class App extends Component {
                 if (!this.state.database_status || data.is_master !== this.state.database_status.is_master) {
                    this.setState({database_status: data})
                 }
+            })
+            .catch(console.error);
+    }
+
+    getPlatformDetails() {
+        fetch_get('/api/v01/system/configuration/public')
+            .then(data => {
+                if (data.auth && data.auth.SSO) {
+                    this.setState({SSO: data.auth.SSO});
+                }
                 if (data.modules) {
                     UiFlavourService.updateFlavourFromModules(data.modules);
                     document.title = UiFlavourService.getWindowTitle();
-                    this.setState({supportSaml: data.modules.includes("saml")});
-                    this.setState({supportOidc: data.modules.includes("oidc")});
+                    // this.setState({supportSaml: data.modules.includes("saml")});
+                    // this.setState({supportOidc: data.modules.includes("oidc")});
                 }
             })
             .catch(console.error);
@@ -692,11 +702,14 @@ class App extends Component {
     }
 
     componentDidMount() {
-        this.getDatabaseStatus();
-        getCookie('auth_sso') === '1' && !sso_auth_service.isLoggedIn() && sso_auth_service.signinSilent();
+        if(!window.location.href.includes("/auth-callback/")){
+          this.getDatabaseStatus();
+          this.getPlatformDetails();
+          getCookie('auth_sso') === '1' && !sso_auth_service.isLoggedIn() && sso_auth_service.signinSilent();
+        }
     }
 
-  updateToken(token, sso_auth) {
+    updateToken(token, sso_auth) {
       const {user_info} = this.state;
         AuthServiceManager.loadApiToken(token);
         user_info.modules && supportedModule(modules.provisioning, user_info.modules) && ProvProxiesManager.fetchConfiguration().then(() => this.setState({proxy_fetch: true})).catch(console.log);
@@ -717,6 +730,7 @@ class App extends Component {
         localStorage.removeItem("userProfile");
         removeCookie("auth_sso");
         sso_auth_service.removeUser(); // .then(() => this.props.onLanguageUpdate(undefined));
+        window.location.reload();
     }
 
     ssoTokenToLocalToken(user) {
@@ -784,8 +798,20 @@ class App extends Component {
         if(!authenticated || error_msg !== undefined) {
             return (
                 <Router>
+                    <NotificationSystem ref={this._notificationSystem}/>
                     <Switch>
-                        <Route path="/auth-callback" component={AuthCallback} exact/>
+                        <Route
+                            path="/auth-callback/:name"
+                            component={props =>
+                                <AuthCallback
+                                    onLogin={r => {
+                                        if (r.access_token) {
+                                          this.updateTokens(r.access_token, r.refresh_token);
+                                        }
+                                    }}
+                                    {...props} />
+                            }
+                            exact/>
                         <Route path="/auth-silent-callback" component={AuthSilentCallback} exact/>
                         <Route path="/" exact>
                             <Redirect to="/dashboard" />
@@ -808,8 +834,7 @@ class App extends Component {
                                     logo={UiFlavourService.isApio() ? apio_logo : null}
                                     standby_alert={standby_alert} >
                                     <LoginForm
-                                        supportSaml={this.state.supportSaml}
-                                        supportOidc={this.state.supportOidc}
+                                        sso={this.state.SSO}
                                         onLogin={r => {
                                             if(r.access_token) {
                                                 this.updateTokens(r.access_token, r.refresh_token);

@@ -1,28 +1,50 @@
-import React, {Component} from "react";
+import React, {Component, useEffect} from "react";
 import {Redirect} from 'react-router-dom';
-import Button from "react-bootstrap/lib/Button";
-
-import {FormattedMessage} from "react-intl";
 import {sso_auth_service} from "./auth_service";
 import loading from "../loading.gif";
+import {NotificationsManager, parseJSON} from "../utils";
 
-
-export class LoginOpenIdConnect extends Component {
-    static onLoginButtonClick() {
-        sso_auth_service.startAuthentication();
-    }
-
-    render() {
-        return (
-            <Button bsStyle="primary" size="lg" block onClick={LoginOpenIdConnect.onLoginButtonClick}>
-                <FormattedMessage id="login-openid" defaultMessage="Login with OpenID Connect"/>
-            </Button>
-        )
-    }
-}
 
 // const local_base_url = `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}`;
-export class AuthCallback extends Component {
+export function AuthCallback(props) {
+    const name = props.match.params.name;
+    useEffect(() => {
+        fetch(`/api/v01/auth/login_${name}${window.location.search}`, {method: "post"})
+          .then(r => {
+            if (r.status >= 200 && r.status < 300) {
+                return r
+            } else if (r.status === 401) {
+                throw new Error(r.statusText);
+            }
+          })
+          .then(parseJSON)
+          .then(r => {
+            props.onLogin(r);
+            if(r.state) {
+              window.location = r.state || "/";
+            } else {
+              window.location = "/";
+            }
+          })
+          .catch(error => {
+              NotificationsManager.error("Failed to authenticate you", error.message);
+              setTimeout(() => window.location = "/", 3000);
+          })
+    }, []);
+
+    return (
+        <div style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)'
+        }}>
+            <img src={loading} width="200" height="200" alt="authenticating..." />
+        </div>
+    )
+}
+
+export class AuthCallback_ extends Component {
     constructor(props) {
         super(props);
         this.state = {redirect: false};
