@@ -4,787 +4,802 @@ import {
   fetch_put,
   fetch_post,
   ProvProxiesManager,
-  NotificationsManager
+  NotificationsManager,
 } from "../../../utils";
 import * as actionType from "./constants";
 import { FormattedMessage } from "react-intl";
 import React from "react";
 import { get } from "../components/get";
 
-export const getTenants = data => ({
+export const getTenants = (data) => ({
   type: actionType.GET_TENANTS,
-  data
+  data,
 });
 
-export const getTenantById = data => ({
+export const getTenantById = (data) => ({
   type: actionType.GET_TENANT,
-  data
+  data,
 });
 
-export const getGroupsByTenantId = data => ({
+export const getGroupsByTenantId = (data) => ({
   type: actionType.GET_GROUPS,
-  data
+  data,
 });
 
-export const getPhoneNumbersByTenantId = data => ({
+export const getPhoneNumbersByTenantId = (data) => ({
   type: actionType.GET_PHONE_NUMBERS,
-  data
+  data,
 });
 
-export const getAdminsByTenantId = data => ({
+export const getAdminsByTenantId = (data) => ({
   type: actionType.GET_ADMINS_TENANT,
-  data
+  data,
 });
 
-export const getGroupById = data => ({
+export const getGroupById = (data) => ({
   type: actionType.GET_GROUP,
-  data
+  data,
 });
 
-export const getUsersByGroupId = data => ({
+export const getUsersByGroupId = (data) => ({
   type: actionType.GET_USERS,
-  data
+  data,
 });
 
-export const getPhoneNumbersByGroupId = data => ({
+export const getPhoneNumbersByGroupId = (data) => ({
   type: actionType.GET_PHONE_NUMBERS_BY_GROUP_ID,
-  data
+  data,
 });
 
-export const getLicensesByGroupId = data => ({
+export const getLicensesByGroupId = (data) => ({
   type: actionType.GET_LICENSES_BY_GROUP_ID,
-  data
+  data,
 });
 
-export const getDevicesByGroupId = data => ({
+export const getDevicesByGroupId = (data) => ({
   type: actionType.GET_DEVICES_BY_GROUP_ID,
-  data
+  data,
 });
 
-export const getUserByName = data => ({
+export const getUserByName = (data) => ({
   type: actionType.GET_USER,
-  data
+  data,
 });
 
-export const getTrunkByGroupID = data => ({
+export const getTrunkByGroupID = (data) => ({
   type: actionType.GET_TRUNK_BY_GROUP_ID,
-  data
+  data,
 });
 
-export const getAvailableNumbersByGroupID = data => ({
+export const getAvailableNumbersByGroupID = (data) => ({
   type: actionType.GET_AVAILABLE_NUMBERS_BY_GROUP_ID,
-  data
+  data,
 });
 
-export const getAdminsByGroupId = data => ({
+export const getAdminsByGroupId = (data) => ({
   type: actionType.GET_ADMINS_GROUP,
-  data
+  data,
 });
 
-export const getGroupAdminByAdminId = data => ({
+export const getGroupAdminByAdminId = (data) => ({
   type: actionType.GET_GROUP_ADMIN_BY_ADMIN_ID,
-  data
+  data,
 });
 
-export const getTenantAdminByAdminId = data => ({
+export const getTenantAdminByAdminId = (data) => ({
   type: actionType.GET_TENANT_ADMIN_BY_ADMIN_ID,
-  data
+  data,
 });
 
-export const getUserServicesByUserId = data => ({
+export const getUserServicesByUserId = (data) => ({
   type: actionType.GET_USER_SERVICES_BY_USER_ID,
-  data
+  data,
 });
 
-export const getTamplatesOfTenant = data => ({
+export const getTamplatesOfTenant = (data) => ({
   type: actionType.GET_TEMPLATES_OF_TENANT,
-  data
+  data,
 });
 
-export const getAccessDeviceByName = data => ({
+export const getAccessDeviceByName = (data) => ({
   type: actionType.GET_ACCESS_DEVICE_BY_NAME,
-  data
+  data,
 });
 
-export const getTamplatesOfGroup = data => ({
+export const getTamplatesOfGroup = (data) => ({
   type: actionType.GET_TEMPLATES_OF_GROUP,
-  data
+  data,
 });
 
-export const getCategoriesOfTemplate = data => ({
+export const getCategoriesOfTemplate = (data) => ({
   type: actionType.GET_CATEGORIES_OF_TEMPLATE,
-  data
+  data,
 });
 
-export const getCategoryByName = data => ({
+export const getCategoryByName = (data) => ({
   type: actionType.GET_CATEGORY_BY_NAME,
-  data
+  data,
 });
 
-export const getTrunksGroupsByGroup = data => ({
+export const getTrunksGroupsByGroup = (data) => ({
   type: actionType.GET_TRUNKS_GROUPS_BY_GROUP,
-  data
+  data,
 });
 
-export const getTrunkGroupByName = data => ({
+export const getTrunkGroupByName = (data) => ({
   type: actionType.GET_TRUNK_GROUP_BY_NAME,
-  data
+  data,
 });
 
-export const getPhoneTypes = data => ({
+export const getPhoneTypes = (data) => ({
   type: actionType.GET_PHONE_TYPES,
-  data
+  data,
 });
 
-export const getPhoneTypesDetails = data => ({
+export const getPhoneTypesDetails = (data) => ({
   type: actionType.GET_PHONE_TYPES_DETAILS,
-  data
+  data,
 });
 
-export const getUsersByTrunkGroup = data => ({
+export const getUsersByTrunkGroup = (data) => ({
   type: actionType.GET_USERS_BY_TRUNK_GROUP,
-  data
+  data,
 });
 
-export const getBackupByTrunkGroup = data => ({
+export const getBackupByTrunkGroup = (data) => ({
   type: actionType.GET_BACKUP_BY_TRUNK_GROUP,
-  data
+  data,
 });
 
-export const getTemplateDetails = data => ({
+export const getTemplateDetails = (data) => ({
   type: actionType.GET_TEMPLATE_DETAILS,
-  data
+  data,
 });
 
-export const getApplications = data => ({
+export const getApplications = (data) => ({
   type: actionType.GET_APPLICATIONS,
-  data
+  data,
 });
 
-export const getKeysByApplication = data => ({
+export const getKeysByApplication = (data) => ({
   type: actionType.GET_KEYS_BY_APPLICATIONS,
-  data
+  data,
 });
 
-export const getValueOfKey = data => ({
+export const getValueOfKey = (data) => ({
   type: actionType.GET_VALUE_OF_KEY,
-  data
+  data,
 });
 
-export const getTrunksGroupsByGroupFail = data => ({
+export const getTrunksGroupsByGroupFail = (data) => ({
   type: actionType.GET_TRUNKS_GROUPS_BY_GROUP_FAIL,
-  data
+  data,
 });
 
-export const getLocalUsers = data => ({
+export const getLocalUsers = (data) => ({
   type: actionType.GET_LOCAL_USERS,
-  data
+  data,
 });
 
-export const getLocalUser = data => ({
+export const getLocalUser = (data) => ({
   type: actionType.GET_LOCAL_USER,
-  data
+  data,
 });
 
-export const getSearchUsers = data => ({
+export const getSearchUsers = (data) => ({
   type: actionType.GET_SEARCH_USERS,
-  data
+  data,
 });
 
-export const getSearchGroups = data => ({
+export const getSearchGroups = (data) => ({
   type: actionType.GET_SEARCH_GROUPS,
-  data
+  data,
 });
 
-export const getAvailableNumbersByTenantID = data => ({
+export const getAvailableNumbersByTenantID = (data) => ({
   type: actionType.GET_AVAILABLE_NUMBERS_BY_TENANT_ID,
-  data
+  data,
 });
 
-export const getLanguages = data => ({
+export const getLanguages = (data) => ({
   type: actionType.GET_LANGUAGES,
-  data
+  data,
 });
 
-export const getTenantLicenses = data => ({
+export const getTenantLicenses = (data) => ({
   type: actionType.GET_TENANT_LICENSES,
-  data
+  data,
 });
 
-export const getTrunkByTenantID = data => ({
+export const getTrunkByTenantID = (data) => ({
   type: actionType.GET_TRUNK_BY_TENANT_ID,
-  data
+  data,
 });
 
-export const getDevice = data => ({
+export const getDevice = (data) => ({
   type: actionType.GET_DEVICE,
-  data
+  data,
 });
 
-export const getTrunkGroupByTenant = data => ({
+export const getTrunkGroupByTenant = (data) => ({
   type: actionType.GET_TENANT_TRUNK_GROUP,
-  data
+  data,
 });
 
-export const getTenantServicePack = data => ({
+export const getTenantServicePack = (data) => ({
   type: actionType.GET_TENANT_SERVICE_PACK,
-  data
+  data,
 });
 
-export const getTenantGroupService = data => ({
+export const getTenantGroupService = (data) => ({
   type: actionType.GET_TENANT_GROUP_SERIVCE,
-  data
+  data,
 });
 
-export const getTrunkGroupTemplates = data => ({
+export const getTrunkGroupTemplates = (data) => ({
   type: actionType.GET_TRUNK_GROUP_TEMPLATES,
-  data
+  data,
 });
 
-export const getTrunkGroupTemplate = data => ({
+export const getTrunkGroupTemplate = (data) => ({
   type: actionType.GET_TRUNK_GROUP_TEMPLATE,
-  data
+  data,
 });
 
-export const getSelfcareURL = data => ({
+export const getSelfcareURL = (data) => ({
   type: actionType.GET_SELFCARE_URL,
-  data
+  data,
 });
 
-export const getTimezones = data => ({
+export const getTimezones = (data) => ({
   type: actionType.GET_TIMEZONES,
-  data
+  data,
 });
 
-export const getGlobalSearchNumbers = data => ({
+export const getGlobalSearchNumbers = (data) => ({
   type: actionType.GET_GLOBAL_SEARCH_NUMBERS,
-  data
+  data,
 });
 
-export const getBWKSLicenses = data => ({
+export const getBWKSLicenses = (data) => ({
   type: actionType.GET_BWKS_LICENSES,
-  data
+  data,
 });
 
-export const getMobileNumbersForTenant = data => ({
+export const getMobileNumbersForTenant = (data) => ({
   type: actionType.GET_MOBILE_NUMBERS_FOR_TENANT,
-  data
+  data,
 });
 
-export const getMobileNumbersForGroup = data => ({
+export const getMobileNumbersForGroup = (data) => ({
   type: actionType.GET_MOBILE_NUMBERS_FOR_GROUP,
-  data
+  data,
 });
 
-export const getExistingBackends = data => ({
+export const getExistingBackends = (data) => ({
   type: actionType.GET_EXISTING_BACKENDS,
-  data
+  data,
 });
 
-export const getTenantOU = data => ({
+export const getTenantOU = (data) => ({
   type: actionType.GET_TENANT_OU,
-  data
+  data,
 });
 
-export const getListOfRoutingProfiles = data => ({
+export const getListOfRoutingProfiles = (data) => ({
   type: actionType.GET_LIST_OF_ROUTING_PROFILES,
-  data
+  data,
 });
 
-export const getTenantRoutingProfile = data => ({
+export const getTenantRoutingProfile = (data) => ({
   type: actionType.GET_TENANT_ROUTING_PROFILE,
-  data
+  data,
 });
 
-export const getTenantVoiceMessaging = data => ({
+export const getTenantVoiceMessaging = (data) => ({
   type: actionType.GET_TENANT_VOICE_MESSAGING,
-  data
+  data,
 });
 
-export const getTenantSuspensionStatus = data => ({
+export const getTenantSuspensionStatus = (data) => ({
   type: actionType.GET_TENANT_SUSPENSION_STATUS,
-  data
+  data,
 });
 
-export const getSuspensionOptions = data => ({
+export const getSuspensionOptions = (data) => ({
   type: actionType.GET_SUSPENSION_OPTIONS,
-  data
+  data,
 });
 
-export const getGroupSuspensionStatus = data => ({
+export const getGroupSuspensionStatus = (data) => ({
   type: actionType.GET_GROUP_SUSPENSION_STATUS,
-  data
+  data,
 });
 
-export const getTenantPasswordRules = data => ({
+export const getTenantPasswordRules = (data) => ({
   type: actionType.GET_TENANT_PASSWORD_RULES,
-  data
+  data,
 });
 
-export const getTenantEntitlements = data => ({
+export const getGroupPasswordRules = (data) => ({
+  type: actionType.GET_GROUP_PASSWORD_RULES,
+  data,
+});
+
+export const getTenantEntitlements = (data) => ({
   type: actionType.GET_TENANT_ENTITLEMENTS,
-  data
+  data,
 });
 
-export const getEntitlementTypes = data => ({
+export const getEntitlementTypes = (data) => ({
   type: actionType.GET_ENTITLEMENT_TYPES,
-  data
+  data,
 });
 
-export const postCreateGroupAdmin = data => ({
+export const postCreateGroupAdmin = (data) => ({
   type: actionType.POST_CREATE_GROUP_ADMIN,
-  data
+  data,
 });
 
-export const postCreateGroupAdminError = error => ({
+export const postCreateGroupAdminError = (error) => ({
   type: actionType.POST_CREATE_GROUP_ADMIN_ERROR,
-  error
+  error,
 });
 
-export const postCreateTenantAdmin = data => ({
+export const postCreateTenantAdmin = (data) => ({
   type: actionType.POST_CREATE_TENANT_ADMIN,
-  data
+  data,
 });
 
-export const postCreateTenantAdminError = error => ({
+export const postCreateTenantAdminError = (error) => ({
   type: actionType.POST_CREATE_TENANT_ADMIN_ERROR,
-  error
+  error,
 });
 
 export const postAssignUserServices = () => ({
-  type: actionType.POST_ASSIGN_USER_SERVICES
+  type: actionType.POST_ASSIGN_USER_SERVICES,
 });
 
 export const postAssignUserServicePacks = () => ({
-  type: actionType.POST_ASSIGN_USER_SERVICE_PACKS
+  type: actionType.POST_ASSIGN_USER_SERVICE_PACKS,
 });
 
-export const postCreateTenant = data => ({
+export const postCreateTenant = (data) => ({
   type: actionType.POST_CREATE_TENANT,
-  data
+  data,
 });
 
-export const postCreateGroup = data => ({
+export const postCreateGroup = (data) => ({
   type: actionType.POST_CREATE_GROUP,
-  data
+  data,
 });
 
-export const postAddPhoneNumbersToTenant = data => ({
+export const postAddPhoneNumbersToTenant = (data) => ({
   type: actionType.POST_ADD_PHONE_NUMBERS_TO_TENANT,
-  data
+  data,
 });
 
-export const postCreateUserToGroup = data => ({
+export const postCreateUserToGroup = (data) => ({
   type: actionType.POST_CREATE_USER_TO_GROUP,
-  data
+  data,
 });
 
-export const postAddGroupServicesToGroup = data => ({
+export const postAddGroupServicesToGroup = (data) => ({
   type: actionType.POST_ADD_GROUP_SERVICES_TO_GROUP,
-  data
+  data,
 });
 
-export const postAddKeyToApplication = data => ({
+export const postAddKeyToApplication = (data) => ({
   type: actionType.POST_ADD_KEY_TO_APPLICATION,
-  data
+  data,
 });
 
-export const postCreateLocalUser = data => ({
+export const postCreateLocalUser = (data) => ({
   type: actionType.POST_CREATE_LOCAL_USER,
-  data
+  data,
 });
 
-export const postAssignPhoneNumbersToGroup = data => ({
+export const postAssignPhoneNumbersToGroup = (data) => ({
   type: actionType.POST_ASSIGN_PHONE_NUMBERS_TO_GROUP,
-  data
+  data,
 });
 
-export const postCreateTrunkGroup = data => ({
+export const postCreateTrunkGroup = (data) => ({
   type: actionType.POST_CREATE_TRUNK_GROUP,
-  data
+  data,
 });
 
 export const postCreateDeviceInGroup = () => ({
-  type: actionType.POST_CREATE_DEVICE_IN_GROUP
+  type: actionType.POST_CREATE_DEVICE_IN_GROUP,
 });
 
 export const postCreateTrunkGroupUser = () => ({
-  type: actionType.POST_CREATE_TRUNK_GROUP_USER
+  type: actionType.POST_CREATE_TRUNK_GROUP_USER,
 });
 
-export const postAddMobileNumberToTenant = data => ({
+export const postAddMobileNumberToTenant = (data) => ({
   type: actionType.POST_ADD_MOBILE_NUMBER_TO_TENANT,
-  data
+  data,
 });
 
-export const postAddMobileNumberToGroup = data => ({
+export const postAddMobileNumberToGroup = (data) => ({
   type: actionType.POST_ADD_MOBILE_NUMBER_TO_GROUP,
-  data
+  data,
 });
 
 export const postCreateTemplate = () => ({
-  type: actionType.POST_CREATE_TEMPLATE
+  type: actionType.POST_CREATE_TEMPLATE,
 });
 
 export const postAddEntitlementToTenant = () => ({
-  type: actionType.POST_ADD_ENTITLEMENTS_TO_TENANT
+  type: actionType.POST_ADD_ENTITLEMENTS_TO_TENANT,
 });
 
-export const putUpdateUser = data => ({
+export const putUpdateUser = (data) => ({
   type: actionType.PUT_UPDATE_USER,
-  data
+  data,
 });
 
-export const putUpdateGroupDetails = data => ({
+export const putUpdateGroupDetails = (data) => ({
   type: actionType.PUT_UPDATE_GROUP_DETAILS,
-  data
+  data,
 });
 
-export const putUpdateGroupAdmin = data => ({
+export const putUpdateGroupAdmin = (data) => ({
   type: actionType.PUT_UPDATE_GROUP_ADMIN,
-  data
+  data,
 });
 
-export const putUpdateTenantAdmin = data => ({
+export const putUpdateTenantAdmin = (data) => ({
   type: actionType.PUT_UPDATE_TENANT_ADMIN,
-  data
+  data,
 });
 
-export const putUpdateTrunkByGroupId = data => ({
+export const putUpdateTrunkByGroupId = (data) => ({
   type: actionType.PUT_UPDATE_TRUNK_BY_GROUP_ID,
-  data
+  data,
 });
 
-export const putUpdateTrunkByGroupIdError = data => ({
+export const putUpdateTrunkByGroupIdError = (data) => ({
   type: actionType.PUT_UPDATE_TRUNK_BY_GROUP_ID_ERROR,
-  data
+  data,
 });
 
-export const putUpdateServicePacksByGroupId = data => ({
+export const putUpdateServicePacksByGroupId = (data) => ({
   type: actionType.PUT_UPDATE_SERVICE_PACKS_BY_GROUP_ID,
-  data
+  data,
 });
 
-export const putUpdateGroupServicesByGroupId = data => ({
+export const putUpdateGroupServicesByGroupId = (data) => ({
   type: actionType.PUT_UPDATE_GROUP_SERVICES_BY_GROUP_ID,
-  data
+  data,
 });
 
-export const putUpdateTenantDetails = data => ({
+export const putUpdateTenantDetails = (data) => ({
   type: actionType.PUT_UPDATE_TENANT_DETAILS,
-  data
+  data,
 });
 
-export const putUpdateKey = data => ({
+export const putUpdateKey = (data) => ({
   type: actionType.PUT_UPDATE_KEY,
-  data
+  data,
 });
 
-export const putUpdateTrunkGroup = data => ({
+export const putUpdateTrunkGroup = (data) => ({
   type: actionType.PUT_UPDATE_TRUNK_GROUP,
-  data
+  data,
 });
 
-export const putUpdateBackupByTrunkGtoup = data => ({
+export const putUpdateBackupByTrunkGtoup = (data) => ({
   type: actionType.PUT_UPDATE_BACKUP_BY_TRUNK_GROUP,
-  data
+  data,
 });
 
-export const putUpdateLocalUser = data => ({
+export const putUpdateLocalUser = (data) => ({
   type: actionType.PUT_UPDATE_LOCAL_USER,
-  data
+  data,
 });
 
-export const putUpdateTrunkByTenantId = data => ({
+export const putUpdateTrunkByTenantId = (data) => ({
   type: actionType.PUT_UPDATE_TRUNK_BY_TENANT_ID,
-  data
+  data,
 });
 
-export const putUpdateGroupServicesByTenantId = data => ({
+export const putUpdateGroupServicesByTenantId = (data) => ({
   type: actionType.PUT_UPDATE_GROUP_SERVICES_BY_TENANT_ID,
-  data
+  data,
 });
 
-export const putUpdateDevice = data => ({
+export const putUpdateDevice = (data) => ({
   type: actionType.PUT_UPDATE_DEVICE,
-  data
+  data,
 });
 
 export const putUpdateTenantServicePacks = () => ({
-  type: actionType.PUT_UPDATE_TENANT_SERVICE_PACKS
+  type: actionType.PUT_UPDATE_TENANT_SERVICE_PACKS,
 });
 
-export const putUpdateTemplate = data => ({
+export const putUpdateTemplate = (data) => ({
   type: actionType.PUT_UPDATE_TEMPLATE,
-  data
+  data,
 });
 
-export const putUpdateTenantRoutingProfile = data => ({
+export const putUpdateTenantRoutingProfile = (data) => ({
   type: actionType.PUT_UPDATE_TENANT_ROUTING_PROFILE,
-  data
+  data,
 });
 
-export const putUpdateTenantVoiceMessaging = data => ({
+export const putUpdateTenantVoiceMessaging = (data) => ({
   type: actionType.PUT_UPDATE_TENANT_VOICE_MESSAGING,
-  data
+  data,
 });
 
-export const putUpdateTenantSuspensionStatus = data => ({
+export const putUpdateTenantSuspensionStatus = (data) => ({
   type: actionType.PUT_UPDATE_TENANT_SUSPENSION_STATUS,
-  data
+  data,
 });
 
-export const putUpdateGroupSuspensionStatus = data => ({
+export const putUpdateGroupSuspensionStatus = (data) => ({
   type: actionType.PUT_UPDATE_GROUP_SUSPENSION_STATUS,
-  data
+  data,
 });
 
-export const putUpdateTenantEntitlement = data => ({
+export const putUpdateTenantEntitlement = (data) => ({
   type: actionType.PUT_UPDATE_TENANT_ENTITLEMENT,
-  data
+  data,
 });
 
-export const deleteTenant = data => ({
+export const deleteTenant = (data) => ({
   type: actionType.DELETE_TENANT,
-  data
+  data,
 });
 
 export const deleteTenantAdmin = () => ({
-  type: actionType.DELETE_TENANT_ADMIN
+  type: actionType.DELETE_TENANT_ADMIN,
 });
 
 export const deleteGroupDevice = () => ({
-  type: actionType.DELETE_GROUP_DEVICE
+  type: actionType.DELETE_GROUP_DEVICE,
 });
 
 export const deleteGroupAdmin = () => ({
-  type: actionType.DELETE_GROUP_ADMIN
+  type: actionType.DELETE_GROUP_ADMIN,
 });
 
 export const deleteAssignUserServices = () => ({
-  type: actionType.DELETE_DEASSIGN_USER_SERVICES
+  type: actionType.DELETE_DEASSIGN_USER_SERVICES,
 });
 
 export const deleteAssignUserServicePacks = () => ({
-  type: actionType.DELETE_DEASSIGN_USER_SERVICE_PACKS
+  type: actionType.DELETE_DEASSIGN_USER_SERVICE_PACKS,
 });
 
 export const deletePhoneFromTenant = () => ({
-  type: actionType.DELETE_PHONE_FROM_TENANT
+  type: actionType.DELETE_PHONE_FROM_TENANT,
 });
 
 export const deleteUserFromGroup = () => ({
-  type: actionType.DELETE_USER_FROM_GROUP
+  type: actionType.DELETE_USER_FROM_GROUP,
 });
 
-export const deleteGroupFromTenant = data => ({
+export const deleteGroupFromTenant = (data) => ({
   type: actionType.DELETE_GROUP_FROM_TENANT,
-  data
+  data,
 });
 
-export const deleteTrunkGroup = data => ({
+export const deleteTrunkGroup = (data) => ({
   type: actionType.DELETE_TRUNK_GROUP,
-  data
+  data,
 });
 
-export const deleteKey = data => ({
+export const deleteKey = (data) => ({
   type: actionType.DELETE_KEY,
-  data
+  data,
 });
 
-export const deleteLocalUser = data => ({
+export const deleteLocalUser = (data) => ({
   type: actionType.DELETE_LOCAL_USER,
-  data
+  data,
 });
 
-export const deletePhoneFromGroup = data => ({
+export const deletePhoneFromGroup = (data) => ({
   type: actionType.DELETE_PHONE_FROM_GROUP,
-  data
+  data,
 });
 
 export const deleteTrunkGroupFromTenant = () => ({
-  type: actionType.DELETE_TRUNK_GROUP_FROM_TENANT
+  type: actionType.DELETE_TRUNK_GROUP_FROM_TENANT,
 });
 
 export const deleteMobileNumberFromTenant = () => ({
-  type: actionType.DELETE_MOBILE_NUMBER_FROM_TENANT
+  type: actionType.DELETE_MOBILE_NUMBER_FROM_TENANT,
 });
 
 export const deleteMobileNumberFromGroup = () => ({
-  type: actionType.DELETE_MOBILE_NUMBER_FROM_GROUP
+  type: actionType.DELETE_MOBILE_NUMBER_FROM_GROUP,
 });
 
 export const deleteTemplate = () => ({
-  type: actionType.DELETE_TEMPLATE
+  type: actionType.DELETE_TEMPLATE,
 });
 
 export const deleteEntitlementFromTenant = () => ({
-  type: actionType.DELETE_ENTITLEMENT_FROM_TENANT
+  type: actionType.DELETE_ENTITLEMENT_FROM_TENANT,
 });
 
 export const clearErrorMassage = () => ({
-  type: actionType.CLEAR_ERROR_MASSAGE
+  type: actionType.CLEAR_ERROR_MASSAGE,
 });
 
-export const changeStepOfCreateTenant = data => ({
+export const changeStepOfCreateTenant = (data) => ({
   type: actionType.CHANGE_STEP_OF_CREATE_TENANT,
-  data
+  data,
 });
 
-export const changeTypeOfTenant = data => ({
+export const changeTypeOfTenant = (data) => ({
   type: actionType.CHANGE_TYPE_OF_TENANT,
-  data
+  data,
 });
 
-export const changeIdOfTenant = data => ({
+export const changeIdOfTenant = (data) => ({
   type: actionType.CHANGE_ID_OF_TENANT,
-  data
+  data,
 });
 
-export const changeNameOfTenant = data => ({
+export const changeNameOfTenant = (data) => ({
   type: actionType.CHANGE_NAME_OF_TENANT,
-  data
+  data,
 });
 
-export const changeAddressOfTenant = data => ({
+export const changeAddressOfTenant = (data) => ({
   type: actionType.CHANGE_ADDRESS_OF_TENANT,
-  data
+  data,
 });
 
-export const changeZIPOfTenant = data => ({
+export const changeZIPOfTenant = (data) => ({
   type: actionType.CHANGE_ZIP_OF_TENANT,
-  data
+  data,
 });
 
-export const changeCityOfTenant = data => ({
+export const changeCityOfTenant = (data) => ({
   type: actionType.CHANGE_CITY_OF_TENANT,
-  data
+  data,
 });
 
-export const changeTemplateOfTenant = data => ({
+export const changeTemplateOfTenant = (data) => ({
   type: actionType.CHANGE_TAMPLATE_OF_TENANT,
-  data
+  data,
 });
 
 export const refuseCreateTenant = () => ({
-  type: actionType.REFUSE_CREATE_TENANT
+  type: actionType.REFUSE_CREATE_TENANT,
 });
 
-export const changeDomainOfTenant = data => ({
+export const changeDomainOfTenant = (data) => ({
   type: actionType.CHANGE_DOMAIN_OF_TENANT,
-  data
+  data,
 });
 
-export const changeBackendOfTenant = data => ({
+export const changeBackendOfTenant = (data) => ({
   type: actionType.CHANGE_BACKEND_OF_TENANT,
-  data
+  data,
 });
 
-export const changeDetailsOfTenant = data => ({
+export const changeDetailsOfTenant = (data) => ({
   type: actionType.CHANGE_DETAILS_OF_TENANT,
-  data
+  data,
 });
 
 export const refuseCreateGroup = () => ({
-  type: actionType.REFUSE_CREATE_GROUP
+  type: actionType.REFUSE_CREATE_GROUP,
 });
 
-export const changeIdOfGroup = data => ({
+export const changeIdOfGroup = (data) => ({
   type: actionType.CHANGE_ID_OF_GROUP,
-  data
+  data,
 });
 
-export const changeTimeZoneOfGroup = data => ({
+export const changeTimeZoneOfGroup = (data) => ({
   type: actionType.CHANGE_TIME_ZONE_OF_GROUP,
-  data
+  data,
 });
 
-export const changeNameOfGroup = data => ({
+export const changeNameOfGroup = (data) => ({
   type: actionType.CHANGE_NAME_OF_GROUP,
-  data
+  data,
 });
 
-export const changeDomainOfGroup = data => ({
+export const changeDomainOfGroup = (data) => ({
   type: actionType.CHANGE_DOMAIN_OF_GROUP,
-  data
+  data,
 });
 
-export const changeUserLimitOfGroup = data => ({
+export const changeUserLimitOfGroup = (data) => ({
   type: actionType.CHANGE_USER_LIMIT_OF_GROUP,
-  data
+  data,
 });
 
-export const changeAddressOfGroup = data => ({
+export const changeAddressOfGroup = (data) => ({
   type: actionType.CHANGE_ADDRESS_OF_GROUP,
-  data
+  data,
 });
 
-export const changeZIPOfGroup = data => ({
+export const changeZIPOfGroup = (data) => ({
   type: actionType.CHANGE_ZIP_OF_GROUP,
-  data
+  data,
 });
 
-export const changeCityOfGroup = data => ({
+export const changeCityOfGroup = (data) => ({
   type: actionType.CHANGE_CITY_OF_GROUP,
-  data
+  data,
 });
 
-export const changeStepOfCreateGroup = data => ({
+export const changeStepOfCreateGroup = (data) => ({
   type: actionType.CHANGE_STEP_OF_CREATE_GROUP,
-  data
+  data,
 });
 
-export const changeTemplateOfGroup = data => ({
+export const changeTemplateOfGroup = (data) => ({
   type: actionType.CHANGE_TAMPLATE_OF_GROUP,
-  data
+  data,
 });
 
-export const changeStepOfAddPhoneTenant = data => ({
+export const changeStepOfAddPhoneTenant = (data) => ({
   type: actionType.CHANGE_STEP_OF_ADD_PHONE_TENANT,
-  data
+  data,
 });
 
 export const refuseAddPhoneToTenant = () => ({
-  type: actionType.REFUSE_ADD_PHONE_TO_TENANT
+  type: actionType.REFUSE_ADD_PHONE_TO_TENANT,
 });
 
-export const saveValidatedNumbersTenant = data => ({
+export const saveValidatedNumbersTenant = (data) => ({
   type: actionType.SAVE_VALIDATED_NUMBERS_TENANT,
-  data
+  data,
 });
 
-export const removeSuccesfulValidPhoneTenant = data => ({
+export const removeSuccesfulValidPhoneTenant = (data) => ({
   type: actionType.REMOVE_SUCCESFUL_VALID_PHONE_TENANT,
-  data
+  data,
 });
 
 export const trunkNotAuthorisedTenant = () => ({
-  type: actionType.TRUNK_NOT_AUTHORISED_TENANT
+  type: actionType.TRUNK_NOT_AUTHORISED_TENANT,
 });
 
-export const showHideAdditionalServicesTenant = data => ({
+export const showHideAdditionalServicesTenant = (data) => ({
   type: actionType.SHOW_HIDE_ADDITIONAL_SERVICES_TENANT,
-  data
+  data,
 });
 
-export const showHideAdditionalServiceGroup = data => ({
+export const showHideAdditionalUserServicesTenant = (data) => ({
+  type: actionType.SHOW_HIDE_ADDITIONAL_USER_SERVICES_TENANT,
+  data,
+});
+
+export const showHideAdditionalUserServicesGroup = (data) => ({
+  type: actionType.SHOW_HIDE_ADDITIONAL_USER_SERVICES_GROUP,
+  data,
+});
+
+export const showHideAdditionalServiceGroup = (data) => ({
   type: actionType.SHOW_HIDE_ADDITIONAL_SERVICES_GROUP,
-  data
+  data,
 });
 
 export const trunkNotAuthorisedGroup = () => ({
-  type: actionType.TRUNK_NOT_AUTHORISED_GROUP
+  type: actionType.TRUNK_NOT_AUTHORISED_GROUP,
 });
 
 export const clearSearchNumber = () => ({
-  type: actionType.CLEAR_SEARCH_NUMBER
+  type: actionType.CLEAR_SEARCH_NUMBER,
 });
 
 export function fetchGetTenants(cancelLoad) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(`${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/`)
-      .then(data => !cancelLoad && dispatch(getTenants(data)))
-      .catch(error =>
+      .then((data) => !cancelLoad && dispatch(getTenants(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-tenants-failed"
@@ -797,12 +812,12 @@ export function fetchGetTenants(cancelLoad) {
 }
 
 export function fetchGetTenantById(Id) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${Id}`
     )
-      .then(data => dispatch(getTenantById(data)))
-      .catch(error =>
+      .then((data) => dispatch(getTenantById(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-tenant-failed"
@@ -815,12 +830,12 @@ export function fetchGetTenantById(Id) {
 }
 
 export function fetchGetGroupsByTenantId(Id) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${Id}/groups`
     )
-      .then(data => dispatch(getGroupsByTenantId(data)))
-      .catch(error =>
+      .then((data) => dispatch(getGroupsByTenantId(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-groups-failed"
@@ -833,12 +848,12 @@ export function fetchGetGroupsByTenantId(Id) {
 }
 
 export function fetchGetPhoneNumbersByTenantId(Id) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${Id}/numbers`
     )
-      .then(data => dispatch(getPhoneNumbersByTenantId(data)))
-      .catch(error =>
+      .then((data) => dispatch(getPhoneNumbersByTenantId(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-numbers-failed"
@@ -851,12 +866,12 @@ export function fetchGetPhoneNumbersByTenantId(Id) {
 }
 
 export function fetchGetAdminsByTenantId(Id) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${Id}/admins`
     )
-      .then(data => dispatch(getAdminsByTenantId(data)))
-      .catch(error =>
+      .then((data) => dispatch(getAdminsByTenantId(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-admins-failed"
@@ -869,12 +884,12 @@ export function fetchGetAdminsByTenantId(Id) {
 }
 
 export function fetchGetGroupById(tenantId, groupId) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}`
     )
-      .then(data => dispatch(getGroupById(data)))
-      .catch(error =>
+      .then((data) => dispatch(getGroupById(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-group-failed"
@@ -887,12 +902,12 @@ export function fetchGetGroupById(tenantId, groupId) {
 }
 
 export function fetchGetUsersByGroupId(tenantId, groupId) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/users`
     )
-      .then(data => dispatch(getUsersByGroupId(data)))
-      .catch(error => {
+      .then((data) => dispatch(getUsersByGroupId(data)))
+      .catch((error) => {
         dispatch(getUsersByGroupId({ users: [] }));
         NotificationsManager.error(
           <FormattedMessage
@@ -906,12 +921,12 @@ export function fetchGetUsersByGroupId(tenantId, groupId) {
 }
 
 export function fetchGetPhoneNumbersByGroupId(tenantId, groupId) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/numbers?assignement=true`
     )
-      .then(data => dispatch(getPhoneNumbersByGroupId(data)))
-      .catch(error =>
+      .then((data) => dispatch(getPhoneNumbersByGroupId(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-numbers-failed"
@@ -924,12 +939,12 @@ export function fetchGetPhoneNumbersByGroupId(tenantId, groupId) {
 }
 
 export function fetchGetLicensesByGroupId(tenantId, groupId) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/licenses`
     )
-      .then(data => dispatch(getLicensesByGroupId(data)))
-      .catch(error =>
+      .then((data) => dispatch(getLicensesByGroupId(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-licenses-failed"
@@ -942,12 +957,12 @@ export function fetchGetLicensesByGroupId(tenantId, groupId) {
 }
 
 export function fetchGetDevicesByGroupId(tenantId, groupId) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/access_devices`
     )
-      .then(data => dispatch(getDevicesByGroupId(data)))
-      .catch(error =>
+      .then((data) => dispatch(getDevicesByGroupId(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-devices-failed"
@@ -960,12 +975,12 @@ export function fetchGetDevicesByGroupId(tenantId, groupId) {
 }
 
 export function fetchGetAdminsByGroupId(tenantId, groupId) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/admins`
     )
-      .then(data => dispatch(getAdminsByGroupId(data)))
-      .catch(error =>
+      .then((data) => dispatch(getAdminsByGroupId(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-group-admins-failed"
@@ -978,12 +993,12 @@ export function fetchGetAdminsByGroupId(tenantId, groupId) {
 }
 
 export function fetchGetUserByName(tenantId, groupId, userName) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/users/${userName}`
     )
-      .then(data => dispatch(getUserByName(data)))
-      .catch(error =>
+      .then((data) => dispatch(getUserByName(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-user-failed"
@@ -996,12 +1011,12 @@ export function fetchGetUserByName(tenantId, groupId, userName) {
 }
 
 export function fetchGetTrunkByGroupID(tenantId, groupId) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/features/trunk_groups`
     )
-      .then(data => dispatch(getTrunkByGroupID(data)))
-      .catch(error => {
+      .then((data) => dispatch(getTrunkByGroupID(data)))
+      .catch((error) => {
         error.response.status === 404
           ? dispatch(getTrunksGroupsByGroupFail())
           : NotificationsManager.error(
@@ -1016,12 +1031,12 @@ export function fetchGetTrunkByGroupID(tenantId, groupId) {
 }
 
 export function fetchGetAvailableNumbersByGroupId(tenantId, groupId) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/numbers?available=true`
     )
-      .then(data => dispatch(getAvailableNumbersByGroupID(data)))
-      .catch(error =>
+      .then((data) => dispatch(getAvailableNumbersByGroupID(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-avail-numbers-failed"
@@ -1034,12 +1049,12 @@ export function fetchGetAvailableNumbersByGroupId(tenantId, groupId) {
 }
 
 export function fetchGetGroupAdminByAdminId(tenantId, groupId, adminId) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/admins/${adminId}`
     )
-      .then(data => dispatch(getGroupAdminByAdminId(data)))
-      .catch(error =>
+      .then((data) => dispatch(getGroupAdminByAdminId(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-admin-failed"
@@ -1052,12 +1067,12 @@ export function fetchGetGroupAdminByAdminId(tenantId, groupId, adminId) {
 }
 
 export function fetchGetTenantAdminByAdminId(tenantId, adminId) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/admins/${adminId}`
     )
-      .then(data => dispatch(getTenantAdminByAdminId(data)))
-      .catch(error =>
+      .then((data) => dispatch(getTenantAdminByAdminId(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-admin-failed"
@@ -1070,12 +1085,12 @@ export function fetchGetTenantAdminByAdminId(tenantId, adminId) {
 }
 
 export function fetchGetUserServicesByUserId(tenantId, groupId, userId) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/users/${userId}/services?assignementStatus=true&summary=true`
     )
-      .then(data => dispatch(getUserServicesByUserId(data)))
-      .catch(error =>
+      .then((data) => dispatch(getUserServicesByUserId(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-user-services-failed"
@@ -1088,12 +1103,12 @@ export function fetchGetUserServicesByUserId(tenantId, groupId, userId) {
 }
 
 export function fetchGetTamplatesOfTenant() {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/templates/categories/tenant/`
     )
-      .then(data => dispatch(getTamplatesOfTenant(data)))
-      .catch(error =>
+      .then((data) => dispatch(getTamplatesOfTenant(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-tenant-tamplates-failed"
@@ -1106,12 +1121,12 @@ export function fetchGetTamplatesOfTenant() {
 }
 
 export function fetchGetAccessDeviceByName(tenantId, groupId, deviceName) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/access_devices/${deviceName}`
     )
-      .then(data => dispatch(getAccessDeviceByName(data)))
-      .catch(error =>
+      .then((data) => dispatch(getAccessDeviceByName(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-access-device-failed"
@@ -1124,12 +1139,12 @@ export function fetchGetAccessDeviceByName(tenantId, groupId, deviceName) {
 }
 
 export function fetchGetTamplatesOfGroup() {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/templates/categories/group/`
     )
-      .then(data => dispatch(getTamplatesOfGroup(data)))
-      .catch(error =>
+      .then((data) => dispatch(getTamplatesOfGroup(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-tenant-templates-failed"
@@ -1142,12 +1157,12 @@ export function fetchGetTamplatesOfGroup() {
 }
 
 export function fetchGetCategoriesOfTemplate() {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/templates/categories/`
     )
-      .then(data => dispatch(getCategoriesOfTemplate(data)))
-      .catch(error =>
+      .then((data) => dispatch(getCategoriesOfTemplate(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-categories-of-tamplates-failed"
@@ -1160,12 +1175,12 @@ export function fetchGetCategoriesOfTemplate() {
 }
 
 export function fetchGetCategoryByName(category) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/templates/categories/${category}`
     )
-      .then(data => dispatch(getCategoryByName(data)))
-      .catch(error => {
+      .then((data) => dispatch(getCategoryByName(data)))
+      .catch((error) => {
         getCategoryByName({ templates: [] });
         NotificationsManager.error(
           <FormattedMessage
@@ -1179,12 +1194,12 @@ export function fetchGetCategoryByName(category) {
 }
 
 export function fetchGetTrunkGroupByName(tenantId, groupId, trunkGroupName) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/services/trunk_groups/${trunkGroupName}/`
     )
-      .then(data => dispatch(getTrunkGroupByName(data)))
-      .catch(error =>
+      .then((data) => dispatch(getTrunkGroupByName(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-trunk-group-failed"
@@ -1197,12 +1212,12 @@ export function fetchGetTrunkGroupByName(tenantId, groupId, trunkGroupName) {
 }
 
 export function fetchGetUsersByTrunkGroup(tenantId, groupId, trunkGroupName) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/services/trunk_users/${trunkGroupName}/`
     )
-      .then(data => dispatch(getUsersByTrunkGroup(data)))
-      .catch(error =>
+      .then((data) => dispatch(getUsersByTrunkGroup(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-users-failed"
@@ -1215,13 +1230,13 @@ export function fetchGetUsersByTrunkGroup(tenantId, groupId, trunkGroupName) {
 }
 /////////
 export function fetchGetTrunksGroupsByGroup(tenantId, groupId) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/services/trunk_groups/`
     )
-      .then(data => dispatch(getTrunksGroupsByGroup(data)))
-      .catch(error => {
-        if (error.response.status === 404) {
+      .then((data) => dispatch(getTrunksGroupsByGroup(data)))
+      .catch((error) => {
+        if (error.response && error.response.status === 404) {
           dispatch(trunkNotAuthorisedGroup());
           return;
         }
@@ -1237,12 +1252,12 @@ export function fetchGetTrunksGroupsByGroup(tenantId, groupId) {
 }
 
 export function fetchGetBackupByTrunkGroup(tenantId, groupId, trunkGroupName) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/services/trunk_groups/${trunkGroupName}/backup`
     )
-      .then(data => dispatch(getBackupByTrunkGroup(data)))
-      .catch(error =>
+      .then((data) => dispatch(getBackupByTrunkGroup(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-backup-by-trunk-groups-failed"
@@ -1255,12 +1270,12 @@ export function fetchGetBackupByTrunkGroup(tenantId, groupId, trunkGroupName) {
 }
 
 export function fetchGetTemplateDetails(category, template) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/templates/categories/${category}/templates/${template}`
     )
-      .then(data => dispatch(getTemplateDetails(data)))
-      .catch(error =>
+      .then((data) => dispatch(getTemplateDetails(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-template-details-failed"
@@ -1273,12 +1288,12 @@ export function fetchGetTemplateDetails(category, template) {
 }
 
 export function fetchGetPhoneTypes() {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/phone_types/`
     )
-      .then(data => dispatch(getPhoneTypes(data)))
-      .catch(error =>
+      .then((data) => dispatch(getPhoneTypes(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-phone-types-failed"
@@ -1291,12 +1306,12 @@ export function fetchGetPhoneTypes() {
 }
 
 export function fetchGetPhoneTypesDetails(name) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/phone_types/${name}`
     )
-      .then(data => dispatch(getPhoneTypesDetails(data)))
-      .catch(error =>
+      .then((data) => dispatch(getPhoneTypesDetails(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-phone-types-failed"
@@ -1309,12 +1324,12 @@ export function fetchGetPhoneTypesDetails(name) {
 }
 
 export function fetchGetApplications() {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/applications/`
     )
-      .then(data => dispatch(getApplications(data)))
-      .catch(error =>
+      .then((data) => dispatch(getApplications(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-applications-failed"
@@ -1327,12 +1342,12 @@ export function fetchGetApplications() {
 }
 
 export function fetchGetKeysByApplication(appName) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/applications/${appName}`
     )
-      .then(data => dispatch(getKeysByApplication(data)))
-      .catch(error =>
+      .then((data) => dispatch(getKeysByApplication(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-applications-keys-failed"
@@ -1345,12 +1360,12 @@ export function fetchGetKeysByApplication(appName) {
 }
 
 export function fetchGetValueOfKey(appName, keyName) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/applications/${appName}/${keyName}`
     )
-      .then(data => dispatch(getValueOfKey(data)))
-      .catch(error =>
+      .then((data) => dispatch(getValueOfKey(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-key-value-failed"
@@ -1363,12 +1378,12 @@ export function fetchGetValueOfKey(appName, keyName) {
 }
 
 export function fetchGetLocalUsers() {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/local/apio_users/`
     )
-      .then(data => dispatch(getLocalUsers(data)))
-      .catch(error =>
+      .then((data) => dispatch(getLocalUsers(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-local-users-failed"
@@ -1381,12 +1396,12 @@ export function fetchGetLocalUsers() {
 }
 
 export function fetchGetSearchUsers(data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/search/users?${data}`
     )
-      .then(data => dispatch(getSearchUsers(data)))
-      .catch(error =>
+      .then((data) => dispatch(getSearchUsers(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="search-users-failed"
@@ -1399,12 +1414,12 @@ export function fetchGetSearchUsers(data) {
 }
 
 export function fetchGetSearchGroups(data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/search/groups?${data}`
     )
-      .then(data => dispatch(getSearchGroups(data)))
-      .catch(error =>
+      .then((data) => dispatch(getSearchGroups(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="search-groups-failed"
@@ -1417,12 +1432,12 @@ export function fetchGetSearchGroups(data) {
 }
 
 export function fetchGetAvailableNumbersByTenantID(tenantId) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/numbers?available=true`
     )
-      .then(data => dispatch(getAvailableNumbersByTenantID(data)))
-      .catch(error =>
+      .then((data) => dispatch(getAvailableNumbersByTenantID(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-phone-numbers-failed"
@@ -1435,12 +1450,12 @@ export function fetchGetAvailableNumbersByTenantID(tenantId) {
 }
 
 export function fetchGetLocalUser(username) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/local/apio_users/${username}`
     )
-      .then(data => dispatch(getLocalUser(data)))
-      .catch(error =>
+      .then((data) => dispatch(getLocalUser(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-local-user-failed"
@@ -1453,12 +1468,12 @@ export function fetchGetLocalUser(username) {
 }
 
 export function fetchGetLanguages() {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/system/languages`
     )
-      .then(data => dispatch(getLanguages(data)))
-      .catch(error =>
+      .then((data) => dispatch(getLanguages(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-languages-failed"
@@ -1471,12 +1486,12 @@ export function fetchGetLanguages() {
 }
 
 export function fetchGetTenantLicenses(tenantId) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/licenses?includeServicePacks=true`
     )
-      .then(data => dispatch(getTenantLicenses(data)))
-      .catch(error =>
+      .then((data) => dispatch(getTenantLicenses(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-licenses-failed"
@@ -1489,12 +1504,12 @@ export function fetchGetTenantLicenses(tenantId) {
 }
 
 export function fetchGetTrunkByTenantID(tenantId) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/features/trunk_groups/`
     )
-      .then(data => dispatch(getTrunkByTenantID(data)))
-      .catch(error => {
+      .then((data) => dispatch(getTrunkByTenantID(data)))
+      .catch((error) => {
         if (error.response.status === 404) {
           dispatch(trunkNotAuthorisedTenant());
           return;
@@ -1511,12 +1526,12 @@ export function fetchGetTrunkByTenantID(tenantId) {
 }
 
 export function fetchGetDevice(tenantId, groupId, deviceName) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/access_devices/${deviceName}`
     )
-      .then(data => dispatch(getDevice(data)))
-      .catch(error =>
+      .then((data) => dispatch(getDevice(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-device-failed"
@@ -1529,12 +1544,12 @@ export function fetchGetDevice(tenantId, groupId, deviceName) {
 }
 
 export function fetchGetTrunkGroupByTenant(tenantId) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/services/trunk_groups/`
     )
-      .then(data => dispatch(getTrunkGroupByTenant(data)))
-      .catch(error => {
+      .then((data) => dispatch(getTrunkGroupByTenant(data)))
+      .catch((error) => {
         if (error.response.status === 404) {
           dispatch(trunkNotAuthorisedTenant());
           return;
@@ -1551,12 +1566,12 @@ export function fetchGetTrunkGroupByTenant(tenantId) {
 }
 
 export function fetchGetTenantServicePack(tenantId, servicePackName) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/service_packs/${servicePackName}/`
     )
-      .then(data => dispatch(getTenantServicePack(data)))
-      .catch(error => {
+      .then((data) => dispatch(getTenantServicePack(data)))
+      .catch((error) => {
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-service-pack-failed"
@@ -1569,14 +1584,14 @@ export function fetchGetTenantServicePack(tenantId, servicePackName) {
 }
 
 export function fetchGetTenantGroupService(tenantId, groupServiceName) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/licenses/`
     )
-      .then(data =>
+      .then((data) =>
         dispatch(getTenantGroupService({ ...data, groupServiceName }))
       )
-      .catch(error => {
+      .catch((error) => {
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-group-service-failed"
@@ -1589,12 +1604,12 @@ export function fetchGetTenantGroupService(tenantId, groupServiceName) {
 }
 
 export function fetchGetTrunkGroupTemplates() {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/templates/categories/trunk_group/`
     )
-      .then(data => dispatch(getTrunkGroupTemplates(data)))
-      .catch(error => {
+      .then((data) => dispatch(getTrunkGroupTemplates(data)))
+      .catch((error) => {
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-trunk-group-templates-failed"
@@ -1607,12 +1622,12 @@ export function fetchGetTrunkGroupTemplates() {
 }
 
 export function fetchGetTrunkGroupTemplate(trunkGroupName) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/templates/categories/trunk_group/templates/${trunkGroupName}`
     )
-      .then(data => dispatch(getTrunkGroupTemplate(data)))
-      .catch(error => {
+      .then((data) => dispatch(getTrunkGroupTemplate(data)))
+      .catch((error) => {
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-trunk-group-template-failed"
@@ -1625,24 +1640,24 @@ export function fetchGetTrunkGroupTemplate(trunkGroupName) {
 }
 
 export function fetchGetSelfcareURL() {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/applications/prov_gui/config`
     )
-      .then(data => dispatch(getSelfcareURL(data)))
-      .catch(error => {
+      .then((data) => dispatch(getSelfcareURL(data)))
+      .catch((error) => {
         console.error(error.message);
       });
   };
 }
 
 export function fetchGetTimezones() {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/system/timezones`
     )
-      .then(data => dispatch(getTimezones(data)))
-      .catch(error => {
+      .then((data) => dispatch(getTimezones(data)))
+      .catch((error) => {
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-timezones-failed"
@@ -1655,12 +1670,12 @@ export function fetchGetTimezones() {
 }
 
 export function fetchGetGlobalSearchNumbers(number) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/search/numbers/usages/${number}`
     )
-      .then(data => dispatch(getGlobalSearchNumbers(data)))
-      .catch(error => {
+      .then((data) => dispatch(getGlobalSearchNumbers(data)))
+      .catch((error) => {
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-number-failed"
@@ -1673,12 +1688,12 @@ export function fetchGetGlobalSearchNumbers(number) {
 }
 
 export function fetchGetBWKSLicenses() {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/system/licensing/`
     )
-      .then(data => dispatch(getBWKSLicenses(data)))
-      .catch(error => {
+      .then((data) => dispatch(getBWKSLicenses(data)))
+      .catch((error) => {
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-bwks-licenses-failed"
@@ -1691,12 +1706,12 @@ export function fetchGetBWKSLicenses() {
 }
 
 export function fetchGetMobileNumbersForTenant(tenantId) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/mobile_numbers?available=true&assignement=true`
     )
-      .then(data => dispatch(getMobileNumbersForTenant(data)))
-      .catch(error => {
+      .then((data) => dispatch(getMobileNumbersForTenant(data)))
+      .catch((error) => {
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-numbers-failed"
@@ -1709,12 +1724,12 @@ export function fetchGetMobileNumbersForTenant(tenantId) {
 }
 
 export function fetchGetMobileNumbersForGroup(tenantId, groupId) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/mobile_numbers?available=true&assignement=true`
     )
-      .then(data => dispatch(getMobileNumbersForGroup(data)))
-      .catch(error => {
+      .then((data) => dispatch(getMobileNumbersForGroup(data)))
+      .catch((error) => {
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-numbers-failed"
@@ -1727,26 +1742,26 @@ export function fetchGetMobileNumbersForGroup(tenantId, groupId) {
 }
 
 export function fetchGetExistingBackends() {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/ldap/backends/`
     )
-      .then(data => dispatch(getExistingBackends(data)))
-      .catch(error => {
+      .then((data) => dispatch(getExistingBackends(data)))
+      .catch((error) => {
         console.error(error);
       });
   };
 }
 
 export function fetchGetTenantOU(backend) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/ldap/${backend}/tenants?custom_filter=not_in_bwks`
     )
-      .then(data => dispatch(getTenantOU(data)))
-      .catch(error => {
+      .then((data) => dispatch(getTenantOU(data)))
+      .catch((error) => {
         const data = {
-          tenants: []
+          tenants: [],
         };
         dispatch(getTenantOU(data));
         NotificationsManager.error(
@@ -1761,12 +1776,12 @@ export function fetchGetTenantOU(backend) {
 }
 
 export function fetchGetListOfRoutingProfiles() {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/system/routing_profiles/`
     )
-      .then(data => dispatch(getListOfRoutingProfiles(data)))
-      .catch(error => {
+      .then((data) => dispatch(getListOfRoutingProfiles(data)))
+      .catch((error) => {
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-routing-profiles-failed"
@@ -1779,12 +1794,12 @@ export function fetchGetListOfRoutingProfiles() {
 }
 
 export function fetchGetTenantRoutingProfile(tenantId) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/routing_profile/`
     )
-      .then(data => dispatch(getTenantRoutingProfile(data)))
-      .catch(error => {
+      .then((data) => dispatch(getTenantRoutingProfile(data)))
+      .catch((error) => {
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-routing-profile-failed"
@@ -1797,12 +1812,12 @@ export function fetchGetTenantRoutingProfile(tenantId) {
 }
 
 export function fetchGetTenantSuspensionStatus(tenantId) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/properties/suspension/`
     )
-      .then(data => dispatch(getTenantSuspensionStatus(data)))
-      .catch(error => {
+      .then((data) => dispatch(getTenantSuspensionStatus(data)))
+      .catch((error) => {
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-suspension-status-failed"
@@ -1815,12 +1830,12 @@ export function fetchGetTenantSuspensionStatus(tenantId) {
 }
 
 export function fetchGetSuspensionOptions() {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/templates/categories/group_intercept`
     )
-      .then(data => dispatch(getSuspensionOptions(data)))
-      .catch(error => {
+      .then((data) => dispatch(getSuspensionOptions(data)))
+      .catch((error) => {
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-suspension-options-failed"
@@ -1833,12 +1848,12 @@ export function fetchGetSuspensionOptions() {
 }
 
 export function fetchGetGroupSuspensionStatus(tenantId, groupId) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/properties/suspension/`
     )
-      .then(data => dispatch(getGroupSuspensionStatus(data)))
-      .catch(error => {
+      .then((data) => dispatch(getGroupSuspensionStatus(data)))
+      .catch((error) => {
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-suspension-status-failed"
@@ -1851,12 +1866,12 @@ export function fetchGetGroupSuspensionStatus(tenantId, groupId) {
 }
 
 export function fetchGetTenantVoiceMessaging(tenantId) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/services/voice_messaging/`
     )
-      .then(data => dispatch(getTenantVoiceMessaging(data)))
-      .catch(error => {
+      .then((data) => dispatch(getTenantVoiceMessaging(data)))
+      .catch((error) => {
         if (error.response.status === 404) {
           dispatch(getTenantVoiceMessaging({}));
           return;
@@ -1873,12 +1888,30 @@ export function fetchGetTenantVoiceMessaging(tenantId) {
 }
 
 export function fetchGetTenantPasswordRules(tenantId) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/password_rules/`
     )
-      .then(data => dispatch(getTenantPasswordRules(data)))
-      .catch(error => {
+      .then((data) => dispatch(getTenantPasswordRules(data)))
+      .catch((error) => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-password-rules-failed"
+            defaultMessage="Failed to fetch password rules"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchGetGroupPasswordRules(tenantId, groupId) {
+  return function (dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/password_rules/`
+    )
+      .then((data) => dispatch(getGroupPasswordRules(data)))
+      .catch((error) => {
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-password-rules-failed"
@@ -1891,12 +1924,12 @@ export function fetchGetTenantPasswordRules(tenantId) {
 }
 
 export function fetchGetTenantEntitlements(tenantId) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/number_inventory/entitlements/`
     )
-      .then(data => dispatch(getTenantEntitlements(data)))
-      .catch(error => {
+      .then((data) => dispatch(getTenantEntitlements(data)))
+      .catch((error) => {
         console.log(error.response);
         if (error.response.status === 404) {
           dispatch(getTenantEntitlements({ entitlements: [] }));
@@ -1915,12 +1948,12 @@ export function fetchGetTenantEntitlements(tenantId) {
 }
 
 export function fetchGetEntitlementTypes() {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/number_inventory/entitlement_types/`
     )
-      .then(data => dispatch(getEntitlementTypes(data)))
-      .catch(error => {
+      .then((data) => dispatch(getEntitlementTypes(data)))
+      .catch((error) => {
         //dispatch(getTenantEntitlements({ entitlements: [] }));
         NotificationsManager.error(
           <FormattedMessage
@@ -1934,14 +1967,14 @@ export function fetchGetEntitlementTypes() {
 }
 
 export function fetchPostCreateGroupAdmin(tenantId, groupId, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_post(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/admins/`,
       data
     )
-      .then(resp => resp.json())
-      .then(data => dispatch(postCreateGroupAdmin(data)))
-      .catch(error => {
+      .then((resp) => resp.json())
+      .then((data) => dispatch(postCreateGroupAdmin(data)))
+      .catch((error) => {
         if (error.response && error.response.status === 400) {
           return dispatch(postCreateGroupAdminError(error));
         } else {
@@ -1958,14 +1991,14 @@ export function fetchPostCreateGroupAdmin(tenantId, groupId, data) {
 }
 
 export function fetchPostCreateTenantAdmin(tenantId, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_post(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/admins/`,
       data
     )
-      .then(resp => resp.json())
-      .then(data => dispatch(postCreateTenantAdmin(data)))
-      .catch(error => {
+      .then((resp) => resp.json())
+      .then((data) => dispatch(postCreateTenantAdmin(data)))
+      .catch((error) => {
         if (error.response && error.response.status === 400) {
           return dispatch(postCreateTenantAdminError(error));
         } else {
@@ -1982,14 +2015,14 @@ export function fetchPostCreateTenantAdmin(tenantId, data) {
 }
 
 export function fetchPostAssignUserServices(tenantId, groupId, userName, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_post(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/users/${userName}/services/`,
       data
     )
-      .then(resp => resp.json())
-      .then(data => dispatch(postAssignUserServices(data)))
-      .catch(error => {
+      .then((resp) => resp.json())
+      .then((data) => dispatch(postAssignUserServices(data)))
+      .catch((error) => {
         NotificationsManager.error(
           <FormattedMessage
             id="failed-to-assign-services"
@@ -2007,14 +2040,14 @@ export function fetchPostAssignUserServicePacks(
   userName,
   data
 ) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_post(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/users/${userName}/services/`,
       data
     )
-      .then(resp => resp.json())
-      .then(data => dispatch(postAssignUserServicePacks(data)))
-      .catch(error => {
+      .then((resp) => resp.json())
+      .then((data) => dispatch(postAssignUserServicePacks(data)))
+      .catch((error) => {
         NotificationsManager.error(
           <FormattedMessage
             id="failed-to-assign-service-packs"
@@ -2027,14 +2060,14 @@ export function fetchPostAssignUserServicePacks(
 }
 
 export function fetchPostCreateTenant(data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_post(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/`,
       data
     )
-      .then(resp => resp.json())
-      .then(data => dispatch(postCreateTenant(data)))
-      .catch(error => {
+      .then((resp) => resp.json())
+      .then((data) => dispatch(postCreateTenant(data)))
+      .catch((error) => {
         NotificationsManager.error(
           <FormattedMessage
             id="failed-to-create-tenant"
@@ -2047,14 +2080,14 @@ export function fetchPostCreateTenant(data) {
 }
 
 export function fetchPostCreateGroup(tenantId, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_post(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/`,
       data
     )
-      .then(res => res.json())
-      .then(data => dispatch(postCreateGroup(data)))
-      .catch(error => {
+      .then((res) => res.json())
+      .then((data) => dispatch(postCreateGroup(data)))
+      .catch((error) => {
         NotificationsManager.error(
           <FormattedMessage
             id="failed-to-create-group"
@@ -2067,14 +2100,14 @@ export function fetchPostCreateGroup(tenantId, data) {
 }
 
 export function fetchPostAddPhoneNumbersToTenant(tenantId, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_post(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/numbers/`,
       data
     )
-      .then(res => res.json())
-      .then(data => dispatch(postAddPhoneNumbersToTenant(data)))
-      .catch(error => {
+      .then((res) => res.json())
+      .then((data) => dispatch(postAddPhoneNumbersToTenant(data)))
+      .catch((error) => {
         NotificationsManager.error(
           <FormattedMessage
             id="failed-to-add-phone-numbers"
@@ -2087,14 +2120,14 @@ export function fetchPostAddPhoneNumbersToTenant(tenantId, data) {
 }
 
 export function fetchPostAddMobileNumbersToTenant(tenantId, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_post(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/mobile_numbers/`,
       data
     )
-      .then(res => res.json())
-      .then(data => dispatch(postAddMobileNumberToTenant(data)))
-      .catch(error => {
+      .then((res) => res.json())
+      .then((data) => dispatch(postAddMobileNumberToTenant(data)))
+      .catch((error) => {
         NotificationsManager.error(
           <FormattedMessage
             id="failed-to-add-phone-numbers"
@@ -2107,14 +2140,14 @@ export function fetchPostAddMobileNumbersToTenant(tenantId, data) {
 }
 
 export function fetchPostAddMobileNumbersToGroup(tenantId, groupId, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_post(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/mobile_numbers/`,
       data
     )
-      .then(res => res.json())
-      .then(data => dispatch(postAddMobileNumberToGroup(data)))
-      .catch(error => {
+      .then((res) => res.json())
+      .then((data) => dispatch(postAddMobileNumberToGroup(data)))
+      .catch((error) => {
         NotificationsManager.error(
           <FormattedMessage
             id="failed-to-add-phone-numbers"
@@ -2127,18 +2160,18 @@ export function fetchPostAddMobileNumbersToGroup(tenantId, groupId, data) {
 }
 
 export function fetchPostCreateUserToGroup(tenantId, groupId, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_post(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/users/`,
       data
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         dispatch(postCreateUserToGroup(data));
         console.log(121);
         return "success";
       })
-      .catch(error => {
+      .catch((error) => {
         NotificationsManager.error(
           <FormattedMessage
             id="failed-create-user"
@@ -2151,14 +2184,14 @@ export function fetchPostCreateUserToGroup(tenantId, groupId, data) {
 }
 
 export function fetchPostAddGroupServicesToGroup(tenantId, groupId, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_post(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/services/`,
       data
     )
-      .then(res => res.json())
-      .then(data => dispatch(postAddGroupServicesToGroup(data)))
-      .catch(error => {
+      .then((res) => res.json())
+      .then((data) => dispatch(postAddGroupServicesToGroup(data)))
+      .catch((error) => {
         NotificationsManager.error(
           <FormattedMessage
             id="failed-add-group-services"
@@ -2171,14 +2204,14 @@ export function fetchPostAddGroupServicesToGroup(tenantId, groupId, data) {
 }
 
 export function fetchPostAddKeyToApplication(appName, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_post(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/applications/${appName}/`,
       data
     )
-      .then(res => res.json())
-      .then(data => dispatch(postAddKeyToApplication(data)))
-      .catch(error => {
+      .then((res) => res.json())
+      .then((data) => dispatch(postAddKeyToApplication(data)))
+      .catch((error) => {
         NotificationsManager.error(
           <FormattedMessage
             id="failed-add-key"
@@ -2191,14 +2224,14 @@ export function fetchPostAddKeyToApplication(appName, data) {
 }
 
 export function fetchPostCreateLocalUser(data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_post(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/local/apio_users/`,
       data
     )
-      .then(res => res.json())
-      .then(data => dispatch(postCreateLocalUser(data)))
-      .catch(error =>
+      .then((res) => res.json())
+      .then((data) => dispatch(postCreateLocalUser(data)))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="failed-create-local-user"
@@ -2211,17 +2244,17 @@ export function fetchPostCreateLocalUser(data) {
 }
 
 export function fetchPostAssignPhoneNumbersToGroup(tenantId, groupId, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_post(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/numbers/`,
       data
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         dispatch(postAssignPhoneNumbersToGroup(data));
         return "success";
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="failed-to-add-phone-numbers"
@@ -2234,17 +2267,17 @@ export function fetchPostAssignPhoneNumbersToGroup(tenantId, groupId, data) {
 }
 
 export function fetchPostCreateTrunkGroup(tenantId, groupId, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_post(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/services/trunk_groups/`,
       data
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         dispatch(postCreateTrunkGroup(data));
         return "success";
       })
-      .catch(error => {
+      .catch((error) => {
         NotificationsManager.error(
           <FormattedMessage
             id="failed-to-create-trunk-group"
@@ -2257,17 +2290,17 @@ export function fetchPostCreateTrunkGroup(tenantId, groupId, data) {
 }
 
 export function fetchPostDeviceInGroup(tenantId, groupId, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_post(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/access_devices/`,
       data
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         dispatch(postCreateDeviceInGroup());
         return "success";
       })
-      .catch(error => {
+      .catch((error) => {
         NotificationsManager.error(
           <FormattedMessage
             id="failed-to-create-trunk-group"
@@ -2285,12 +2318,12 @@ export function fetchPostCreateTrunkGroupUser(
   trunkGroupId,
   data
 ) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_post(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/services/trunk_groups/${trunkGroupId}/numbers/`,
       data
     )
-      .then(res => res.json())
+      .then((res) => res.json())
       .then(() => {
         dispatch(postCreateTrunkGroupUser());
         NotificationsManager.success(
@@ -2302,7 +2335,7 @@ export function fetchPostCreateTrunkGroupUser(
         );
         return "success";
       })
-      .catch(error => {
+      .catch((error) => {
         NotificationsManager.error(
           <FormattedMessage
             id="failed-to-create-trunk-group-user"
@@ -2315,12 +2348,12 @@ export function fetchPostCreateTrunkGroupUser(
 }
 
 export function fetchPostCreateTemplate(category, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_post(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/templates/categories/${category}/templates/`,
       data
     )
-      .then(res => res.json())
+      .then((res) => res.json())
       .then(() => {
         dispatch(postCreateTemplate());
         NotificationsManager.success(
@@ -2332,7 +2365,7 @@ export function fetchPostCreateTemplate(category, data) {
         );
         return "success";
       })
-      .catch(error => {
+      .catch((error) => {
         NotificationsManager.error(
           <FormattedMessage
             id="failed-to-create-template"
@@ -2345,12 +2378,12 @@ export function fetchPostCreateTemplate(category, data) {
 }
 
 export function fetchPostAddEntitlementToTenant(tenantId, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_post(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/number_inventory/entitlements/`,
       data
     )
-      .then(res => res.json())
+      .then((res) => res.json())
       .then(() => {
         dispatch(postAddEntitlementToTenant());
         NotificationsManager.success(
@@ -2362,7 +2395,7 @@ export function fetchPostAddEntitlementToTenant(tenantId, data) {
         );
         return "success";
       })
-      .catch(error => {
+      .catch((error) => {
         NotificationsManager.error(
           <FormattedMessage
             id="failed-to-add-entitlements"
@@ -2375,13 +2408,13 @@ export function fetchPostAddEntitlementToTenant(tenantId, data) {
 }
 
 export function fetchPutUpdateUser(tenantId, groupId, userName, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_put(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/users/${userName}/`,
       data
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         dispatch(putUpdateUser(data));
         NotificationsManager.success(
           <FormattedMessage
@@ -2391,7 +2424,7 @@ export function fetchPutUpdateUser(tenantId, groupId, userName, data) {
           "Updated"
         );
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="update-user-failed"
@@ -2404,13 +2437,13 @@ export function fetchPutUpdateUser(tenantId, groupId, userName, data) {
 }
 
 export function fetchPutUpdateGroupDetails(tenantId, groupId, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_put(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/`,
       data
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         dispatch(putUpdateGroupDetails(data));
         NotificationsManager.success(
           <FormattedMessage
@@ -2420,7 +2453,7 @@ export function fetchPutUpdateGroupDetails(tenantId, groupId, data) {
           "Updated"
         );
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="update-group-failed"
@@ -2433,13 +2466,13 @@ export function fetchPutUpdateGroupDetails(tenantId, groupId, data) {
 }
 
 export function fetchPutUpdateGroupAdmin(tenantId, groupId, adminId, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_put(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/admins/${adminId}/`,
       data
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         dispatch(putUpdateGroupAdmin(data));
         NotificationsManager.success(
           <FormattedMessage
@@ -2449,7 +2482,7 @@ export function fetchPutUpdateGroupAdmin(tenantId, groupId, adminId, data) {
           "Updated"
         );
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="update-group-admin-failed"
@@ -2462,13 +2495,13 @@ export function fetchPutUpdateGroupAdmin(tenantId, groupId, adminId, data) {
 }
 
 export function fetchPutUpdateTenantAdmin(tenantId, adminId, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_put(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/admins/${adminId}/`,
       data
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         dispatch(putUpdateTenantAdmin(data));
         NotificationsManager.success(
           <FormattedMessage
@@ -2478,7 +2511,7 @@ export function fetchPutUpdateTenantAdmin(tenantId, adminId, data) {
           "Updated"
         );
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="update-tenant-admin-failed"
@@ -2491,13 +2524,13 @@ export function fetchPutUpdateTenantAdmin(tenantId, adminId, data) {
 }
 
 export function fetchPutUpdateTrunkByGroupId(tenantId, groupId, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_put(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/features/trunk_groups/`,
       data
     )
-      .then(resp => resp.json())
-      .then(data => {
+      .then((resp) => resp.json())
+      .then((data) => {
         dispatch(putUpdateTrunkByGroupId(data));
         NotificationsManager.success(
           <FormattedMessage
@@ -2507,7 +2540,7 @@ export function fetchPutUpdateTrunkByGroupId(tenantId, groupId, data) {
           "Updated"
         );
       })
-      .catch(error => {
+      .catch((error) => {
         if (error.response && error.response.status === 400) {
           NotificationsManager.error(
             <FormattedMessage
@@ -2530,13 +2563,13 @@ export function fetchPutUpdateTrunkByGroupId(tenantId, groupId, data) {
 }
 
 export function fetchPutUpdateServicePacksByGroupId(tenantId, groupId, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_put(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/licenses/`,
       data
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         dispatch(putUpdateServicePacksByGroupId(data));
         NotificationsManager.success(
           <FormattedMessage
@@ -2547,7 +2580,7 @@ export function fetchPutUpdateServicePacksByGroupId(tenantId, groupId, data) {
         );
         return "updated";
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="update-service-packs-failed"
@@ -2560,23 +2593,23 @@ export function fetchPutUpdateServicePacksByGroupId(tenantId, groupId, data) {
 }
 
 export function fetchPutUpdateGroupServicesByGroupId(tenantId, groupId, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_put(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/licenses/`,
       data
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         dispatch(putUpdateGroupServicesByGroupId(data));
         NotificationsManager.success(
           <FormattedMessage
-            id="group-services-successfully-updated"
-            defaultMessage="Group services successfully updated"
+            id="services-successfully-updated"
+            defaultMessage="Services successfully updated"
           />,
           "Updated"
         );
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="update-services-failed"
@@ -2589,13 +2622,13 @@ export function fetchPutUpdateGroupServicesByGroupId(tenantId, groupId, data) {
 }
 
 export function fetchPutUpdateTenantDetails(tenantId, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_put(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/`,
       data
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         dispatch(putUpdateTenantDetails(data));
         NotificationsManager.success(
           <FormattedMessage
@@ -2605,7 +2638,7 @@ export function fetchPutUpdateTenantDetails(tenantId, data) {
           "Updated"
         );
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="update-tenant-details-failed"
@@ -2618,13 +2651,13 @@ export function fetchPutUpdateTenantDetails(tenantId, data) {
 }
 
 export function fetchPutUpdateKey(appName, keyName, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_put(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/applications/${appName}/${keyName}/`,
       data
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         dispatch(putUpdateKey(data));
         NotificationsManager.success(
           <FormattedMessage
@@ -2634,7 +2667,7 @@ export function fetchPutUpdateKey(appName, keyName, data) {
           "Updated"
         );
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="update-kay-failed"
@@ -2652,13 +2685,13 @@ export function fetchPutUpdateBackupByTrunkGtoup(
   trunkGroupName,
   data
 ) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_put(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/services/trunk_groups/${trunkGroupName}/backup`,
       data
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         NotificationsManager.success(
           <FormattedMessage
             id="successfulUpdateGroupBackupUpdate"
@@ -2668,7 +2701,7 @@ export function fetchPutUpdateBackupByTrunkGtoup(
         );
         dispatch(putUpdateBackupByTrunkGtoup(data));
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="update-trunk-group-backup-failed"
@@ -2681,13 +2714,13 @@ export function fetchPutUpdateBackupByTrunkGtoup(
 }
 
 export function fetchPutUpdateLocalUser(username, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_put(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/local/apio_users/${username}/`,
       data
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         dispatch(putUpdateLocalUser(data));
         NotificationsManager.success(
           <FormattedMessage
@@ -2697,7 +2730,7 @@ export function fetchPutUpdateLocalUser(username, data) {
           "Updated"
         );
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="update-local-user-failed"
@@ -2715,13 +2748,13 @@ export function fetchPutUpdateTrunkGroup(
   trunkGroupName,
   data
 ) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_put(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/services/trunk_groups/${trunkGroupName}/`,
       data
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         NotificationsManager.success(
           <FormattedMessage
             id="successfulTrunkGroupUpdate"
@@ -2731,7 +2764,7 @@ export function fetchPutUpdateTrunkGroup(
         );
         dispatch(putUpdateTrunkGroup(data));
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="update-trunk-group-failed"
@@ -2744,13 +2777,13 @@ export function fetchPutUpdateTrunkGroup(
 }
 
 export function fetchPutUpdateTrunkByTenantId(tenantId, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_put(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/features/trunk_groups/`,
       data
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         dispatch(putUpdateTrunkByTenantId(data));
         NotificationsManager.success(
           <FormattedMessage
@@ -2760,7 +2793,7 @@ export function fetchPutUpdateTrunkByTenantId(tenantId, data) {
           "Updated"
         );
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="update-trunk-failed"
@@ -2773,28 +2806,28 @@ export function fetchPutUpdateTrunkByTenantId(tenantId, data) {
 }
 
 export function fetchPutUpdateGroupServicesByTenantId(tenantId, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_put(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/licenses/`,
       data
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         dispatch(putUpdateGroupServicesByTenantId(data));
         NotificationsManager.success(
           <FormattedMessage
             id="group-services-successfully-updated"
-            defaultMessage="Group services successfully updated"
+            defaultMessage="Services successfully updated"
           />,
           "Updated"
         );
         return "updated";
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="update-group-services-failed"
-            defaultMessage="Failed to update group services!"
+            defaultMessage="Failed to update services!"
           />,
           error.message
         )
@@ -2803,13 +2836,13 @@ export function fetchPutUpdateGroupServicesByTenantId(tenantId, data) {
 }
 
 export function fetchPutUpdateDevice(tenantId, groupId, deviceName, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_put(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/access_devices/${deviceName}/`,
       data
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         dispatch(putUpdateDevice(data));
         NotificationsManager.success(
           <FormattedMessage
@@ -2820,7 +2853,7 @@ export function fetchPutUpdateDevice(tenantId, groupId, deviceName, data) {
         );
         return "success";
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="update-device-failed"
@@ -2833,12 +2866,12 @@ export function fetchPutUpdateDevice(tenantId, groupId, deviceName, data) {
 }
 
 export function fetchPutUpdateTenantServicePacks(tenantId, servicePack, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_put(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/service_packs/${servicePack}/`,
       data
     )
-      .then(res => res.json())
+      .then((res) => res.json())
       .then(() => {
         dispatch(putUpdateTenantServicePacks());
         NotificationsManager.success(
@@ -2849,7 +2882,7 @@ export function fetchPutUpdateTenantServicePacks(tenantId, servicePack, data) {
           "Updated"
         );
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="update-service-packs-failed"
@@ -2862,13 +2895,13 @@ export function fetchPutUpdateTenantServicePacks(tenantId, servicePack, data) {
 }
 
 export function fetchPutUpdateTemplate(instanceName, templateName, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_put(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/templates/categories/${instanceName}/templates/${templateName}/`,
       data
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         dispatch(putUpdateTemplate(data));
         NotificationsManager.success(
           <FormattedMessage
@@ -2878,7 +2911,7 @@ export function fetchPutUpdateTemplate(instanceName, templateName, data) {
           "Updated"
         );
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="update-template-failed"
@@ -2891,13 +2924,13 @@ export function fetchPutUpdateTemplate(instanceName, templateName, data) {
 }
 
 export function fetchPutUpdateTenantRoutingProfile(tenantId, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_put(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/routing_profile/`,
       data
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         dispatch(putUpdateTenantRoutingProfile(data));
         NotificationsManager.success(
           <FormattedMessage
@@ -2907,7 +2940,7 @@ export function fetchPutUpdateTenantRoutingProfile(tenantId, data) {
           "Updated"
         );
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="update-routing-profile-failed"
@@ -2920,13 +2953,13 @@ export function fetchPutUpdateTenantRoutingProfile(tenantId, data) {
 }
 
 export function fetchPutUpdateTenantVoiceMessaging(tenantId, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_put(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/services/voice_messaging/`,
       data
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         dispatch(putUpdateTenantVoiceMessaging(data));
         NotificationsManager.success(
           <FormattedMessage
@@ -2936,7 +2969,7 @@ export function fetchPutUpdateTenantVoiceMessaging(tenantId, data) {
           "Updated"
         );
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="voice-messaging-profile-failed"
@@ -2949,13 +2982,13 @@ export function fetchPutUpdateTenantVoiceMessaging(tenantId, data) {
 }
 
 export function fetchPutUpdateTenantSuspensionStatus(tenantId, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_put(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/properties/suspension/`,
       data
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         dispatch(putUpdateTenantVoiceMessaging(data));
         NotificationsManager.success(
           <FormattedMessage
@@ -2965,7 +2998,7 @@ export function fetchPutUpdateTenantSuspensionStatus(tenantId, data) {
           "Updated"
         );
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="suspension-status-profile-failed"
@@ -2978,13 +3011,13 @@ export function fetchPutUpdateTenantSuspensionStatus(tenantId, data) {
 }
 
 export function fetchPutUpdateGroupSuspensionStatus(tenantId, groupId, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_put(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/properties/suspension/`,
       data
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         dispatch(putUpdateGroupSuspensionStatus(data));
         NotificationsManager.success(
           <FormattedMessage
@@ -2994,7 +3027,7 @@ export function fetchPutUpdateGroupSuspensionStatus(tenantId, groupId, data) {
           "Updated"
         );
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="suspension-status-profile-failed"
@@ -3011,12 +3044,12 @@ export function fetchPutUpdateTenantEntitlements(
   entitlementId,
   data
 ) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_put(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/number_inventory/entitlements/${entitlementId}`,
       data
     )
-      .then(res => res.json())
+      .then((res) => res.json())
       .then(() => {
         dispatch(putUpdateTenantEntitlement());
         NotificationsManager.success(
@@ -3027,7 +3060,7 @@ export function fetchPutUpdateTenantEntitlements(
           "Updated"
         );
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="entitlement-update-failed"
@@ -3040,16 +3073,16 @@ export function fetchPutUpdateTenantEntitlements(
 }
 
 export function fetchDeleteTenant(ID) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_delete(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${ID}`
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         dispatch(deleteTenant(data));
         return "deleted";
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="delete-tenant-failed"
@@ -3062,15 +3095,15 @@ export function fetchDeleteTenant(ID) {
 }
 
 export function fetchDeleteTenantAdmin(tenantId, adminId) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_delete(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/admins/${adminId}`
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         dispatch(deleteTenantAdmin());
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="delete-tenant-admin-failed"
@@ -3083,13 +3116,13 @@ export function fetchDeleteTenantAdmin(tenantId, adminId) {
 }
 
 export function fetchDeleteGroupDevice(tenantId, groupId, deviceName) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_delete(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/access_devices/${deviceName}`
     )
-      .then(res => res.json())
-      .then(data => dispatch(deleteGroupDevice()))
-      .catch(error =>
+      .then((res) => res.json())
+      .then((data) => dispatch(deleteGroupDevice()))
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="delete-group-device-failed"
@@ -3102,15 +3135,15 @@ export function fetchDeleteGroupDevice(tenantId, groupId, deviceName) {
 }
 
 export function fetchDeleteGroupAdmin(tenantId, groupId, adminId) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_delete(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/admins/${adminId}`
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         dispatch(deleteGroupAdmin());
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="delete-group-admin-failed"
@@ -3128,16 +3161,16 @@ export function fetchDeleteAssignUserServices(
   userName,
   data
 ) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_delete(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/users/${userName}/services/`,
       data
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         dispatch(deleteAssignUserServices());
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="failed-deassign-user-services"
@@ -3155,16 +3188,16 @@ export function fetchDeleteAssignUserServicePacks(
   userName,
   data
 ) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_delete(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/users/${userName}/services/`,
       data
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         dispatch(deleteAssignUserServicePacks());
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="failed-deassign-user-services"
@@ -3177,16 +3210,16 @@ export function fetchDeleteAssignUserServicePacks(
 }
 
 export function fetchDeletePhoneFromTenant(tenantId, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_delete(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/numbers/`,
       data
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         dispatch(deletePhoneFromTenant());
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="failed-to-delete-number"
@@ -3199,16 +3232,16 @@ export function fetchDeletePhoneFromTenant(tenantId, data) {
 }
 
 export function fetchDeleteUserFromGroup(tenantId, groupId, userName) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_delete(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/users/${userName}/`
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         dispatch(deleteUserFromGroup());
         return "deleted";
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="failed-to-delete-user"
@@ -3221,16 +3254,16 @@ export function fetchDeleteUserFromGroup(tenantId, groupId, userName) {
 }
 
 export function fetchDeleteGroupFromTenant(tenantId, groupId) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_delete(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/`
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         dispatch(deleteGroupFromTenant(data));
         return "deleted";
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="failed-to-delete-group"
@@ -3243,16 +3276,16 @@ export function fetchDeleteGroupFromTenant(tenantId, groupId) {
 }
 
 export function fetchDeleteTrunkGroup(tenantId, groupId, trunkName) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_delete(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/services/trunk_groups/${trunkName}`
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         dispatch(deleteTrunkGroup(data));
         return "deleted";
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="failed-to-delete-trunk-group"
@@ -3265,16 +3298,16 @@ export function fetchDeleteTrunkGroup(tenantId, groupId, trunkName) {
 }
 
 export function fetchDeleteKey(appName, keyName) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_delete(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/applications/${appName}/${keyName}`
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         dispatch(deleteKey(data));
         return "deleted";
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="failed-to-delete-key"
@@ -3287,16 +3320,16 @@ export function fetchDeleteKey(appName, keyName) {
 }
 
 export function fetchDeleteLocalUser(username) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_delete(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/local/apio_users/${username}`
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         dispatch(deleteLocalUser(data));
         return "deleted";
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="failed-to-delete-user"
@@ -3309,16 +3342,16 @@ export function fetchDeleteLocalUser(username) {
 }
 
 export function fetchDeletePhoneFromGroup(tenantId, groupId, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_delete(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/numbers/`,
       data
     )
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         dispatch(deletePhoneFromGroup(data));
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="failed-to-delete-user"
@@ -3331,15 +3364,15 @@ export function fetchDeletePhoneFromGroup(tenantId, groupId, data) {
 }
 
 export function fetchDeleteTrunkGroupFromTenant(tenantId, trunkName) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_delete(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/services/trunk_groups/${trunkName}`
     )
-      .then(res => res.json())
+      .then((res) => res.json())
       .then(() => {
         dispatch(deleteTrunkGroupFromTenant());
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="failed-to-delete-trunk-group"
@@ -3352,16 +3385,16 @@ export function fetchDeleteTrunkGroupFromTenant(tenantId, trunkName) {
 }
 
 export function fetchDeleteMobileNumberFromTenant(tenantId, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_delete(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/mobile_numbers/`,
       data
     )
-      .then(res => res.json())
+      .then((res) => res.json())
       .then(() => {
         dispatch(deleteMobileNumberFromTenant());
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="failed-to-delete-mobile-number"
@@ -3374,16 +3407,16 @@ export function fetchDeleteMobileNumberFromTenant(tenantId, data) {
 }
 
 export function fetchDeleteMobileNumberFromGroup(tenantId, groupId, data) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_delete(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/mobile_numbers/`,
       data
     )
-      .then(res => res.json())
+      .then((res) => res.json())
       .then(() => {
         dispatch(deleteMobileNumberFromGroup());
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="failed-to-delete-mobile-number"
@@ -3396,15 +3429,15 @@ export function fetchDeleteMobileNumberFromGroup(tenantId, groupId, data) {
 }
 
 export function fetchDeleteTemplate(category, templateName) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_delete(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/templates/categories/${category}/templates/${templateName}/`
     )
-      .then(res => res.json())
+      .then((res) => res.json())
       .then(() => {
         dispatch(deleteTemplate());
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="failed-to-delete-template"
@@ -3417,15 +3450,15 @@ export function fetchDeleteTemplate(category, templateName) {
 }
 
 export function fetchDeleteEntitlementFromTenant(tenantId, entitlementId) {
-  return function(dispatch) {
+  return function (dispatch) {
     return fetch_delete(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/number_inventory/entitlements/${entitlementId}`
     )
-      .then(res => res.json())
+      .then((res) => res.json())
       .then(() => {
         dispatch(deleteEntitlementFromTenant());
       })
-      .catch(error =>
+      .catch((error) =>
         NotificationsManager.error(
           <FormattedMessage
             id="failed-to-delete-entitlement"

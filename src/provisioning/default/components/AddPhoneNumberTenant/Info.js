@@ -15,12 +15,13 @@ import Rejected from "./Tabs/Rejected";
 
 import {
   fetchPostAssignPhoneNumbersToGroup,
-  changeStepOfAddPhoneTenant
+  changeStepOfAddPhoneTenant,
+  changeStepOfCreateTenant,
 } from "../../store/actions";
 
 export class Info extends Component {
   state = {
-    addButton: "Add to group"
+    addButton: "Add to group",
   };
   render() {
     return (
@@ -57,20 +58,24 @@ export class Info extends Component {
         <Row className={"margin-1"}>
           <div className="button-row">
             <div className="pull-right">
-              <Link
-                to={`${
-                  this.props.isGroupPage
-                    ? `/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}/groups/${this.props.match.params.groupId}`
-                    : `/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}`
-                }`}
-              >
+              {this.props.isAddTenantWizard ? (
                 <Button
-                  onClick={this.addPhoneNumbers}
+                  onClick={() => this.props.changeStepOfCreateTenant("Admin")}
                   className={"btn-primary"}
                 >
-                  OK
+                  Next
                 </Button>
-              </Link>
+              ) : (
+                <Link
+                  to={`${
+                    this.props.isGroupPage
+                      ? `/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}/groups/${this.props.match.params.groupId}`
+                      : `/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}`
+                  }`}
+                >
+                  <Button className={"btn-primary margin-left-1"}>OK</Button>
+                </Link>
+              )}
             </div>
           </div>
         </Row>
@@ -79,18 +84,14 @@ export class Info extends Component {
   }
 }
 
-const mapStateToProps = state => ({
-  addedNumbersToTenant: state.addedNumbersToTenant
+const mapStateToProps = (state) => ({
+  addedNumbersToTenant: state.addedNumbersToTenant,
 });
 
 const mapDispatchToProps = {
   fetchPostAssignPhoneNumbersToGroup,
-  changeStepOfAddPhoneTenant
+  changeStepOfAddPhoneTenant,
+  changeStepOfCreateTenant,
 };
 
-export default withRouter(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(Info)
-);
+export default withRouter(connect(mapStateToProps, mapDispatchToProps)(Info));

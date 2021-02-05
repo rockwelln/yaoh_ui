@@ -16,10 +16,10 @@ export class OkTab extends Component {
   state = {
     searchValue: "",
     successfulValidated: [],
-    sortedBy: ""
+    sortedBy: "",
   };
 
-  getValidatedNumbers = sortedBy => {
+  getValidatedNumbers = (sortedBy) => {
     this.setState({
       successfulValidated: this.props.validatedNumbersTenant.ok.sort((a, b) => {
         switch (sortedBy) {
@@ -43,7 +43,7 @@ export class OkTab extends Component {
         }
         return true;
       }),
-      sortedBy: sortedBy ? sortedBy : "line"
+      sortedBy: sortedBy ? sortedBy : "line",
     });
   };
 
@@ -76,15 +76,15 @@ export class OkTab extends Component {
                 id="search_placeholder"
                 defaultMessage="phonenumber or type"
               >
-                {placeholder => (
+                {(placeholder) => (
                   <FormControl
                     type="text"
                     value={this.state.searchValue}
                     placeholder={placeholder}
-                    onChange={e =>
+                    onChange={(e) =>
                       this.setState(
                         {
-                          searchValue: e.target.value
+                          searchValue: e.target.value,
                         },
                         () => this.filterBySearchValue()
                       )
@@ -98,6 +98,7 @@ export class OkTab extends Component {
             <Glyphicon
               className={"x-large"}
               glyph="glyphicon glyphicon-plus-sign"
+              onClick={this.props.toBasic}
             />
           </Col>
         </Row>
@@ -144,7 +145,7 @@ export class OkTab extends Component {
               {/**TABLE BODY */}
 
               <tbody>
-                {successfulValidated.map(phone => (
+                {successfulValidated.map((phone) => (
                   <Phone key={phone.line} phone={phone} />
                 ))}
               </tbody>
@@ -160,13 +161,13 @@ export class OkTab extends Component {
     const { searchValue } = this.state;
     const SearchArray = this.props.validatedNumbersTenant.ok
       .filter(
-        phone =>
+        (phone) =>
           phone.start.toLowerCase().includes(searchValue.toLowerCase()) ||
           (phone.end &&
             phone.end.toLowerCase().includes(searchValue.toLowerCase())) ||
           phone.type.toLowerCase().includes(searchValue.toLowerCase())
       )
-      .map(phone => phone);
+      .map((phone) => phone);
     this.setState({ successfulValidated: SearchArray });
   };
 
@@ -232,13 +233,10 @@ export class OkTab extends Component {
   };
 }
 
-const mapStateToProps = state => ({
-  validatedNumbersTenant: state.validatedNumbersTenant
+const mapStateToProps = (state) => ({
+  validatedNumbersTenant: state.validatedNumbersTenant,
 });
 
 const mapDispatchToProps = {};
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(OkTab);
+export default connect(mapStateToProps, mapDispatchToProps)(OkTab);

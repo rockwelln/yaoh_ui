@@ -13,14 +13,15 @@ import Radio from "react-bootstrap/lib/Radio";
 import {
   changeStepOfAddPhoneTenant,
   saveValidatedNumbersTenant,
-  refuseAddPhoneToTenant
+  refuseAddPhoneToTenant,
+  changeStepOfCreateTenant,
 } from "../../store/actions";
 import { parseNumbersString } from "../parsePhoneNumbers";
 
 export class Basic extends Component {
   state = {
     inputPhones: "",
-    isLocalFormat: false
+    isLocalFormat: false,
   };
   render() {
     return (
@@ -31,7 +32,7 @@ export class Basic extends Component {
             <Col md={12}>
               <div className={"header"}>
                 Add phone numbers
-                <Link
+                {/* <Link
                   to={`/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}`}
                 >
                   {this.props.isGroupPage ? null : (
@@ -42,7 +43,7 @@ export class Basic extends Component {
                       Cancel
                     </Button>
                   )}
-                </Link>
+                </Link> */}
               </div>
             </Col>
           </Row>
@@ -83,7 +84,7 @@ export class Basic extends Component {
                     checked={!this.state.isLocalFormat}
                     onClick={() =>
                       this.setState({
-                        isLocalFormat: !this.state.isLocalFormat
+                        isLocalFormat: !this.state.isLocalFormat,
                       })
                     }
                   >
@@ -94,7 +95,7 @@ export class Basic extends Component {
                     checked={this.state.isLocalFormat}
                     onClick={() =>
                       this.setState({
-                        isLocalFormat: !this.state.isLocalFormat
+                        isLocalFormat: !this.state.isLocalFormat,
                       })
                     }
                   >
@@ -107,7 +108,9 @@ export class Basic extends Component {
                 <FormControl
                   componentClass="textarea"
                   rows={20}
-                  onChange={e => this.setState({ inputPhones: e.target.value })}
+                  onChange={(e) =>
+                    this.setState({ inputPhones: e.target.value })
+                  }
                 />
               </FormGroup>
             </Col>
@@ -116,7 +119,17 @@ export class Basic extends Component {
           <Row className={"margin-1"}>
             <div className="button-row">
               <div className="pull-right">
-                <Button onClick={this.nextStep} className={"btn-primary"}>
+                {this.props.isAddTenantWizard && (
+                  <Button
+                    onClick={() => this.props.changeStepOfCreateTenant("Admin")}
+                  >
+                    Skip
+                  </Button>
+                )}
+                <Button
+                  onClick={this.nextStep}
+                  className={"btn-primary margin-left-1"}
+                >
                   Validate
                 </Button>
               </div>
@@ -137,19 +150,15 @@ export class Basic extends Component {
   };
 }
 
-const mapStateToProps = state => ({
-  addPhoneTenantStep: state.addPhoneTenantStep
+const mapStateToProps = (state) => ({
+  addPhoneTenantStep: state.addPhoneTenantStep,
 });
 
 const mapDispatchToProps = {
   changeStepOfAddPhoneTenant,
   saveValidatedNumbersTenant,
-  refuseAddPhoneToTenant
+  refuseAddPhoneToTenant,
+  changeStepOfCreateTenant,
 };
 
-export default withRouter(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(Basic)
-);
+export default withRouter(connect(mapStateToProps, mapDispatchToProps)(Basic));

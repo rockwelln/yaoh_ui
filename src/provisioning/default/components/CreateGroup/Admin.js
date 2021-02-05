@@ -19,8 +19,12 @@ import { FormattedMessage } from "react-intl";
 import {
   refuseCreateGroup,
   fetchPostCreateGroupAdmin,
-  changeStepOfCreateGroup
+  changeStepOfCreateGroup,
+  fetchGetGroupPasswordRules,
 } from "../../store/actions";
+
+import { passwordValidator } from "../passwordValidator";
+import Loading from "../../common/Loading";
 
 export class Admin extends Component {
   state = {
@@ -30,7 +34,7 @@ export class Admin extends Component {
       lastName: "",
       language: "English",
       password: "",
-      emailAddress: ""
+      emailAddress: "",
     },
     passwordConfirmation: "",
     passwordNotMatch: null,
@@ -38,10 +42,25 @@ export class Admin extends Component {
     passwordLenthError: null,
     emptyFieldError: "",
     creating: false,
-    requiredEmail: null
+    requiredEmail: null,
+    passwordError: null,
+    textPasswordError: "",
   };
 
+  componentDidMount() {
+    this.props
+      .fetchGetGroupPasswordRules(
+        this.props.match.params.tenantId,
+        this.props.createdGroup.groupId
+      )
+      .then(() => this.setState({ isLoadingPassRules: false }));
+  }
+
   render() {
+    if (this.state.isLoadingPassRules) {
+      return <Loading />;
+    }
+
     return (
       <React.Fragment>
         {/* PANEL HEADER */}
@@ -89,13 +108,13 @@ export class Admin extends Component {
                     type="text"
                     placeholder="Admin ID"
                     defaultValue={this.state.createAdminData.userId}
-                    onChange={e => {
+                    onChange={(e) => {
                       this.clearErrors();
                       this.setState({
                         createAdminData: {
                           ...this.state.createAdminData,
-                          userId: e.target.value
-                        }
+                          userId: e.target.value,
+                        },
                       });
                     }}
                   />
@@ -123,13 +142,13 @@ export class Admin extends Component {
                   type="email"
                   placeholder="Email"
                   defaultValue={this.state.createAdminData.emailAddress}
-                  onChange={e => {
+                  onChange={(e) => {
                     this.setState({
                       createAdminData: {
                         ...this.state.createAdminData,
-                        emailAddress: e.target.value
+                        emailAddress: e.target.value,
                       },
-                      requiredEmail: null
+                      requiredEmail: null,
                     });
                   }}
                 />
@@ -150,13 +169,13 @@ export class Admin extends Component {
                 type="text"
                 placeholder="First Name"
                 defaultValue={this.state.createAdminData.firstName}
-                onChange={e => {
+                onChange={(e) => {
                   this.clearErrors();
                   this.setState({
                     createAdminData: {
                       ...this.state.createAdminData,
-                      firstName: e.target.value
-                    }
+                      firstName: e.target.value,
+                    },
                   });
                 }}
               />
@@ -166,13 +185,13 @@ export class Admin extends Component {
                 type="text"
                 placeholder="Last Name"
                 defaultValue={this.state.createAdminData.lastName}
-                onChange={e => {
+                onChange={(e) => {
                   this.clearErrors();
                   this.setState({
                     createAdminData: {
                       ...this.state.createAdminData,
-                      lastName: e.target.value
-                    }
+                      lastName: e.target.value,
+                    },
                   });
                 }}
               />
@@ -184,7 +203,7 @@ export class Admin extends Component {
             <FormGroup
               controlId="passwordGroupAdmin"
               validationState={
-                this.state.passwordNotMatch || this.state.passwordLenthError
+                this.state.passwordNotMatch || this.state.passwordError
               }
             >
               <Col componentClass={ControlLabel} md={2} className={"text-left"}>
@@ -196,20 +215,19 @@ export class Admin extends Component {
                   placeholder="Password"
                   autoComplete="new-password"
                   defaultValue={this.state.createAdminData.password}
-                  onChange={e => {
+                  onChange={(e) => {
                     this.clearErrors();
                     this.setState({
                       createAdminData: {
                         ...this.state.createAdminData,
-                        password: e.target.value
-                      }
+                        password: e.target.value,
+                      },
+                      passwordError: null,
                     });
                   }}
                 />
-                {this.state.passwordLenthError && (
-                  <HelpBlock>
-                    Must be greater than 6 and less than 80 characters
-                  </HelpBlock>
+                {this.state.passwordError && (
+                  <HelpBlock>{this.state.textPasswordError}</HelpBlock>
                 )}
               </Col>
             </FormGroup>
@@ -230,7 +248,7 @@ export class Admin extends Component {
                   placeholder="Password confirmation"
                   autoComplete="new-password"
                   defaultValue={this.state.passwordConfirmation}
-                  onChange={e => {
+                  onChange={(e) => {
                     this.clearErrors();
                     this.setState({ passwordConfirmation: e.target.value });
                   }}
@@ -278,7 +296,7 @@ export class Admin extends Component {
       passwordNotMatch: null,
       userIdError: null,
       passwordLenthError: null,
-      emptyFieldError: ""
+      emptyFieldError: "",
     });
   };
 
@@ -292,8 +310,17 @@ export class Admin extends Component {
       this.setState({ requiredEmail: "error" });
       return;
     }
-    if (createAdminData.password.length < 6) {
-      this.setState({ passwordLenthError: "error" });
+    if (
+      createAdminData.password &&
+      passwordValidator(createAdminData.password, this.props.groupPasswordRules)
+    ) {
+      this.setState({
+        passwordError: "error",
+        textPasswordError: passwordValidator(
+          createAdminData.password,
+          this.props.groupPasswordRules
+        ),
+      });
       return;
     }
     if (createAdminData.password !== passwordConfirmation) {
@@ -322,20 +349,17 @@ export class Admin extends Component {
   };
 }
 
-const mapStateToProps = state => ({
+const mapStateToProps = (state) => ({
   createdTenant: state.createdTenant,
-  createdGroup: state.createdGroup
+  createdGroup: state.createdGroup,
+  groupPasswordRules: state.groupPasswordRules,
 });
 
 const mapDispatchToProps = {
   fetchPostCreateGroupAdmin,
   changeStepOfCreateGroup,
-  refuseCreateGroup
+  refuseCreateGroup,
+  fetchGetGroupPasswordRules,
 };
 
-export default withRouter(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(Admin)
-);
+export default withRouter(connect(mapStateToProps, mapDispatchToProps)(Admin));

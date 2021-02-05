@@ -14,7 +14,7 @@ import {
   changeStepOfCreateTenant,
   refuseCreateTenant,
   fetchGetTenantEntitlements,
-  fetchGetSelfcareURL
+  fetchGetSelfcareURL,
 } from "../../store/actions";
 
 import Panel from "react-bootstrap/lib/Panel";
@@ -58,7 +58,7 @@ export class Limits extends Component {
     showAddEntitlements: false,
     editEntitlement: undefined,
     deleteEntitlement: undefined,
-    isLoadingSCURL: true
+    isLoadingSCURL: true,
   };
 
   fetchData() {
@@ -67,7 +67,7 @@ export class Limits extends Component {
         isLoading: true,
         isLoadingTrunk: true,
         isLoadingSCURL: true,
-        isLoadingEntitlements: true
+        isLoadingEntitlements: true,
       },
       () => {
         this.props
@@ -77,7 +77,7 @@ export class Limits extends Component {
               {
                 isLoading: false,
                 groupServices: this.props.tenantLicenses.groups,
-                servicePacks: this.props.tenantServicePacks
+                servicePacks: this.props.tenantServicePacks,
               },
               () =>
                 this.props.showHideAdditionalServicesTenant(this.state.showMore)
@@ -88,7 +88,7 @@ export class Limits extends Component {
           .then(() => {
             this.setState({
               trunkGroups: this.props.tenantTrunkGroups,
-              isLoadingTrunk: false
+              isLoadingTrunk: false,
             });
           });
 
@@ -122,7 +122,7 @@ export class Limits extends Component {
       editGroupServices,
       indexOfService,
       isLoadingEntitlements,
-      isLoadingSCURL
+      isLoadingSCURL,
     } = this.state;
 
     if (
@@ -197,7 +197,7 @@ export class Limits extends Component {
                                         className={"edit-pencil"}
                                         onClick={() =>
                                           this.setState({
-                                            editTrunkLicenses: true
+                                            editTrunkLicenses: true,
                                           })
                                         }
                                       />
@@ -233,7 +233,7 @@ export class Limits extends Component {
                                         className={"edit-pencil"}
                                         onClick={() =>
                                           this.setState({
-                                            editMaxBursting: true
+                                            editMaxBursting: true,
                                           })
                                         }
                                       />
@@ -446,7 +446,7 @@ export class Limits extends Component {
                                   </tr>
                                 </thead>
                                 <tbody>
-                                  {this.props.tenantEntitlements.map(el => (
+                                  {this.props.tenantEntitlements.map((el) => (
                                     <tr key={el.id}>
                                       <td>{el.name}</td>
                                       <td>{el.counter ? el.counter : 0}</td>
@@ -457,7 +457,7 @@ export class Limits extends Component {
                                           className={"edit-pencil"}
                                           onClick={() =>
                                             this.setState({
-                                              editEntitlement: el
+                                              editEntitlement: el,
                                             })
                                           }
                                         />
@@ -467,7 +467,7 @@ export class Limits extends Component {
                                           <ButtonToolbar
                                             onClick={() =>
                                               this.setState({
-                                                deleteEntitlement: el
+                                                deleteEntitlement: el,
                                               })
                                             }
                                           >
@@ -588,7 +588,13 @@ export class Limits extends Component {
             <div class="button-row">
               <div class="pull-right">
                 <Button
-                  onClick={() => this.props.changeStepOfCreateTenant("Admin")}
+                  onClick={() =>
+                    this.props.changeStepOfCreateTenant(
+                      this.props.selfcareUrl.modules.nims
+                        ? "Admin"
+                        : "PhoneNumbers"
+                    )
+                  }
                   className={"btn-primary"}
                 >
                   <Glyphicon glyph="glyphicon glyphicon-forward" />
@@ -611,56 +617,56 @@ export class Limits extends Component {
     );
   }
 
-  showEditSericePacks = index => {
+  showEditSericePacks = (index) => {
     this.setState({ indexOfService: index }, () =>
       this.setState({ editServicePacks: true })
     );
   };
 
-  showEditGroupServices = index => {
+  showEditGroupServices = (index) => {
     this.setState({ indexOfService: index }, () =>
       this.setState({ editGroupServices: true })
     );
   };
 
   changeMaxBurstingInfinity = () => {
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       trunkGroups: {
         ...prevState.trunkGroups,
         burstingMaxActiveCalls: {
           ...prevState.trunkGroups.burstingMaxActiveCalls,
-          unlimited: !prevState.trunkGroups.burstingMaxActiveCalls.unlimited
-        }
-      }
+          unlimited: !prevState.trunkGroups.burstingMaxActiveCalls.unlimited,
+        },
+      },
     }));
   };
 
-  changeMaxBurstingValue = value => {
-    this.setState(prevState => ({
+  changeMaxBurstingValue = (value) => {
+    this.setState((prevState) => ({
       trunkGroups: {
         ...prevState.trunkGroups,
         burstingMaxActiveCalls: {
           ...prevState.trunkGroups.burstingMaxActiveCalls,
-          maximum: Number(value)
-        }
-      }
+          maximum: Number(value),
+        },
+      },
     }));
   };
 
-  showHideAdditionalServices = status => {
+  showHideAdditionalServices = (status) => {
     this.setState({ showMore: status });
     this.props.showHideAdditionalServicesTenant(status);
   };
 
-  changeTrunkingLicenses = value => {
-    this.setState(prevState => ({
+  changeTrunkingLicenses = (value) => {
+    this.setState((prevState) => ({
       trunkGroups: {
         ...prevState.trunkGroups,
         maxActiveCalls: {
           ...prevState.trunkGroups.maxActiveCalls,
-          maximum: Number(value)
-        }
-      }
+          maximum: Number(value),
+        },
+      },
     }));
   };
 
@@ -669,74 +675,74 @@ export class Limits extends Component {
     this.fetchData();
   };
 
-  changeServicePacksUnlimeted = checked => {
-    this.setState(prevState => ({
+  changeServicePacksUnlimeted = (checked) => {
+    this.setState((prevState) => ({
       servicePacks: [
         ...prevState.servicePacks.slice(0, this.state.indexOfService),
         {
           ...prevState.servicePacks[this.state.indexOfService],
           allocated: {
             ...prevState.servicePacks[this.state.indexOfService].allocated,
-            unlimited: checked
-          }
+            unlimited: checked,
+          },
         },
-        ...prevState.servicePacks.slice(this.state.indexOfService + 1)
-      ]
+        ...prevState.servicePacks.slice(this.state.indexOfService + 1),
+      ],
     }));
   };
 
-  changeServicePacksMaximum = max => {
-    this.setState(prevState => ({
+  changeServicePacksMaximum = (max) => {
+    this.setState((prevState) => ({
       servicePacks: [
         ...prevState.servicePacks.slice(0, this.state.indexOfService),
         {
           ...prevState.servicePacks[this.state.indexOfService],
           allocated: {
             ...prevState.servicePacks[this.state.indexOfService].allocated,
-            maximum: Number(max)
-          }
+            maximum: Number(max),
+          },
         },
-        ...prevState.servicePacks.slice(this.state.indexOfService + 1)
-      ]
+        ...prevState.servicePacks.slice(this.state.indexOfService + 1),
+      ],
     }));
   };
 
-  changeGroupServicesUnlimeted = checked => {
-    this.setState(prevState => ({
+  changeGroupServicesUnlimeted = (checked) => {
+    this.setState((prevState) => ({
       groupServices: [
         ...prevState.groupServices.slice(0, this.state.indexOfService),
         {
           ...prevState.groupServices[this.state.indexOfService],
           allocated: {
             ...prevState.groupServices[this.state.indexOfService].allocated,
-            unlimited: checked
-          }
+            unlimited: checked,
+          },
         },
-        ...prevState.groupServices.slice(this.state.indexOfService + 1)
-      ]
+        ...prevState.groupServices.slice(this.state.indexOfService + 1),
+      ],
     }));
   };
 
-  changeGroupServicesMaximum = max => {
-    this.setState(prevState => ({
+  changeGroupServicesMaximum = (max) => {
+    this.setState((prevState) => ({
       groupServices: [
         ...prevState.groupServices.slice(0, this.state.indexOfService),
         {
           ...prevState.groupServices[this.state.indexOfService],
           allocated: {
             ...prevState.groupServices[this.state.indexOfService].allocated,
-            maximum: Number(max)
-          }
+            maximum: Number(max),
+          },
         },
-        ...prevState.groupServices.slice(this.state.indexOfService + 1)
-      ]
+        ...prevState.groupServices.slice(this.state.indexOfService + 1),
+      ],
     }));
   };
 
   updateTrunkCapacity = () => {
     const data = {
       maxActiveCalls: this.state.trunkGroups.maxActiveCalls,
-      burstingMaxActiveCalls: this.state.trunkGroups.burstingMaxActiveCalls
+      burstingMaxActiveCalls: this.state.trunkGroups.burstingMaxActiveCalls,
     };
     this.props
       .fetchPutUpdateTrunkByTenantId(this.props.createdTenant.tenantId, data)
@@ -747,7 +753,7 @@ export class Limits extends Component {
 
   updateGroupServices = () => {
     const data = {
-      groupServices: this.state.groupServices
+      groupServices: this.state.groupServices,
     };
 
     // const authorisedServices = {
@@ -771,8 +777,8 @@ export class Limits extends Component {
       .then(() => this.setState({ editGroupServices: false }));
   };
 
-  updateServicePacks = name => {
-    const pack = this.state.servicePacks.find(el => el.name === name);
+  updateServicePacks = (name) => {
+    const pack = this.state.servicePacks.find((el) => el.name === name);
     this.props
       .fetchPutUpdateTenantServicePacks(
         this.props.createdTenant.tenantId,
@@ -784,7 +790,7 @@ export class Limits extends Component {
   };
 }
 
-const mapStateToProps = state => ({
+const mapStateToProps = (state) => ({
   createdTenant: state.createdTenant,
   tenantLicenses: state.tenantLicenses,
   tenantTrunkGroups: state.tenantTrunkGroups,
@@ -792,7 +798,7 @@ const mapStateToProps = state => ({
   userServices: state.userServicesTenant,
   isAuthorisedTrunkTenant: state.isAuthorisedTrunkTenant,
   selfcareUrl: state.selfcareUrl,
-  tenantEntitlements: state.tenantEntitlements
+  tenantEntitlements: state.tenantEntitlements,
 });
 
 const mapDispatchToProps = {
@@ -805,12 +811,7 @@ const mapDispatchToProps = {
   changeStepOfCreateTenant,
   refuseCreateTenant,
   fetchGetTenantEntitlements,
-  fetchGetSelfcareURL
+  fetchGetSelfcareURL,
 };
 
-export default withRouter(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(Limits)
-);
+export default withRouter(connect(mapStateToProps, mapDispatchToProps)(Limits));

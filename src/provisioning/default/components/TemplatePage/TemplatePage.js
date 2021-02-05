@@ -49,7 +49,7 @@ export class TemplatePage extends Component {
                 onClick={() =>
                   this.setState({
                     isEdit: false,
-                    templateData: this.props.templateDetails.data
+                    templateData: JSON.stringify(this.props.templateDetails.data, null, 2)
                   })
                 }
               >

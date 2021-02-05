@@ -9,13 +9,29 @@ export class Steps extends Component {
   render() {
     switch (this.props.addPhoneTenantStep) {
       case "Basic": {
-        return <Basic isGroupPage={this.props.isGroupPage} />;
+        return (
+          <Basic
+            isGroupPage={this.props.isGroupPage}
+            isAddTenantWizard={this.props.isAddTenantWizard}
+          />
+        );
       }
       case "Validated": {
-        return <Validated isGroupPage={this.props.isGroupPage} />;
+        return (
+          <Validated
+            isGroupPage={this.props.isGroupPage}
+            isAddTenantWizard={this.props.isAddTenantWizard}
+            createatedTenantId={this.props.createatedTenantId}
+          />
+        );
       }
       case "Info": {
-        return <Info isGroupPage={this.props.isGroupPage} />;
+        return (
+          <Info
+            isGroupPage={this.props.isGroupPage}
+            isAddTenantWizard={this.props.isAddTenantWizard}
+          />
+        );
       }
       default:
         return <Basic isGroupPage={this.props.isGroupPage} />;
@@ -23,13 +39,10 @@ export class Steps extends Component {
   }
 }
 
-const mapStateToProps = state => ({
-  addPhoneTenantStep: state.addPhoneTenantStep
+const mapStateToProps = (state) => ({
+  addPhoneTenantStep: state.addPhoneTenantStep,
 });
 
 const mapDispatchToProps = {};
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(Steps);
+export default connect(mapStateToProps, mapDispatchToProps)(Steps);
