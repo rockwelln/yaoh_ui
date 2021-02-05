@@ -202,9 +202,12 @@ export class Basic extends Component {
                 <Checkbox
                   className={"margin-top-0"}
                   checked={this.state.overwriteID}
-                  onChange={(e) =>
-                    this.setState({ overwriteID: e.target.checked })
-                  }
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      this.props.changeIdOfTenant("");
+                    }
+                    this.setState({ overwriteID: e.target.checked });
+                  }}
                 >
                   Auto-generate Tenant ID
                 </Checkbox>
