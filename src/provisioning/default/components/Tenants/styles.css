@@ -328,7 +328,6 @@ textarea {
 .template-text-area {
   width: 100%;
   height: 100vh;
-  height: -webkit-fill-available;
 }
 
 .sync-group {
