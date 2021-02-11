@@ -49,6 +49,7 @@ import Badge from "react-bootstrap/lib/Badge";
 import {StaticControl} from "../../utils/common";
 import {SyncMessagesDetails, SyncMessagesFlow} from "./citc-sa";
 import moment from "moment";
+import {ManualActionInputForm} from "../../dashboard/manualActions";
 
 export const DEFAULT_RECIPIENT = "MTNBSGNP";
 export const rejection_codes = [];
@@ -1551,7 +1552,7 @@ export class NPTransaction extends Component {
   }
 
   render() {
-    const { sending, error, tx, request, activeTab, manualActions, events, logs, replaying, messages, messageShown } = this.state;
+    const { sending, error, tx, request, activeTab, manualActions, events, logs, replaying, messages, messageShown, showActionForm } = this.state;
     const {user_info} = this.props;
     let alerts = [];
     error && alerts.push(
@@ -1570,23 +1571,35 @@ export class NPTransaction extends Component {
           .filter(a => !a.output && user_info.roles.find(ur => ur.id === a.role_id))
           .map(a => alerts.push(
               <Alert bsStyle="warning" key={`request-action-${a.id}`}>
-                Action required for {user_info.roles.find(ur => ur.id === a.role_id).name}<br/>
-                {a.description} <br/>
-                <ButtonToolbar>
-                  {
-                    a.possible_outputs.split(",").map(o => (
-                      <Button
-                        onClick={() => {
-                          triggerManualAction(tx.id, a.id, o, () => this.fetchTxDetails(false));
-                        }}
-                        disabled={disabledAction(a, o, request)}
-                        key={`action-output-${o}`}
-                      >
-                        {o}
-                      </Button>
-                    ))
-                  }
-                </ButtonToolbar>
+                  Action required for {user_info.roles.find(ur => ur.id === a.role_id).name}<br/>
+                  {a.description} <br/>
+                  <ButtonToolbar>
+                      {
+                      a.possible_outputs.split(",").map(o => (
+                          <Button
+                              onClick={
+                                  () => {
+                                      !a.input_form ?
+                                        triggerManualAction(tx.id, a.id, o, undefined, () => this.fetchTxDetails(false)) :
+                                        this.setState({showActionForm: [a, o]})
+                                  }}>
+                              {o}
+                          </Button>
+                      ))
+                      }
+                  </ButtonToolbar>
+                  <ManualActionInputForm
+                      show={showActionForm !== undefined}
+                      action={showActionForm ? showActionForm[0]: {}}
+                      output={showActionForm && showActionForm[1]}
+                      onHide={() => this.setState({showActionForm: undefined})}
+                      onTrigger={(a, output, values) => {
+                          triggerManualAction(tx.id, a.id, output, values, () => {
+                              this.setState({showActionForm: undefined});
+                              this.fetchTxDetails(false);
+                          })
+                      }}
+                      />
               </Alert>
           ))
     }
