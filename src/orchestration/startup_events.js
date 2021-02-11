@@ -37,6 +37,7 @@ import {faDownload, faEdit, faSpinner} from "@fortawesome/free-solid-svg-icons";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import Creatable from "react-select/creatable";
 import MenuItem from "react-bootstrap/lib/MenuItem";
+import {WORKING_VERSION_LABEL} from "./activity-editor";
 
 const CUSTOM_ROUTE_PREFIX = "https://<target>/api/v01/custom";
 const JSON_SCHEMA_SAMPLE = (
@@ -875,7 +876,9 @@ function RenameGroupModal({show, onHide, group}) {
 function CustomRoutesGroup({routes, group, activities, groups, onChange}) {
   const [showUpdateModal, setShowUpdateModal] = useState(undefined);
   const [showRename, setShowRename] = useState(false);
-  const activitiesOptions = activities.sort((a, b) => a.name.localeCompare(b.name)).map(a => ({value: a.id, label: a.name}));
+  const activitiesOptions = activities
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map(a => ({value: a.id, label: `${a.name} (${a.version_label === null?WORKING_VERSION_LABEL:a.version_label})`}));
   return (
     <Panel style={{ minWidth: "min-content" }}>
       <Panel.Heading>

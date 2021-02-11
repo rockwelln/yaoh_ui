@@ -1090,7 +1090,7 @@ export function useWindowSize() {
 }
 
 
-const WORKING_VERSION_LABEL = "*working*";
+export const WORKING_VERSION_LABEL = "*working*";
 
 export function ActivityEditor(props) {
     const [cells, setCells] = useState([]);
