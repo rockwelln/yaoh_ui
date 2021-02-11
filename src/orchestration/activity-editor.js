@@ -860,6 +860,7 @@ export function EditCellModal(props) {
                 cells={cells}
                 activity={activity}
                 value={staticParams[n]}
+                readOnly={readOnly}
                 onChange={(e, outputs) => {
                   if(readOnly) return;
 
@@ -1443,6 +1444,7 @@ export function ActivityEditor(props) {
                 show={editedCell !== undefined}
                 cells={cells}
                 activity={editor && editor.getDefinition().activity}
+                readOnly={!canSave}
                 onHide={c => {
                   setEditedCell(undefined);
                   if(c === null) return;
