@@ -61,6 +61,8 @@ export class Basic extends Component {
       return <Loading />;
     }
 
+    console.log(this.props.createTenant);
+
     return (
       <React.Fragment>
         <div className={"panel-heading"}>
@@ -214,7 +216,7 @@ export class Basic extends Component {
                 <FormControl
                   type="text"
                   placeholder="Tenant ID"
-                  defaultValue={this.props.createTenant.tenantId}
+                  value={this.props.createTenant.tenantId}
                   disabled={this.state.overwriteID}
                   onChange={(e) => {
                     this.props.changeIdOfTenant(e.target.value);
