@@ -61,8 +61,6 @@ export class Basic extends Component {
       return <Loading />;
     }
 
-    console.log(this.props.createTenant);
-
     return (
       <React.Fragment>
         <div className={"panel-heading"}>
