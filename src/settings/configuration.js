@@ -850,6 +850,12 @@ function NewSsoModal(props) {
           params={entry.parameters}
           onChange={e => setEntry(update(entry, {$merge: {parameters: e}}))}/>
       break;
+    case "webseal":
+      authenticationParams =
+        <WebSealParameters
+          params={entry.parameters}
+          onChange={e => setEntry(update(entry, {$merge: {parameters: e}}))}/>
+      break;
   }
 
   let authorisationParams;
@@ -901,6 +907,7 @@ function NewSsoModal(props) {
                 <option value=""/>
                 <option value="oidc">Open IDConnect</option>
                 <option value="saml">SAML</option>
+                <option value="webseal">WebSeal</option>
               </FormControl>
             </Col>
           </FormGroup>
@@ -1015,6 +1022,44 @@ function NewSsoModal(props) {
         <Button onClick={() => onHide(undefined)}><FormattedMessage id="cancel" defaultMessage="Cancel"/></Button>
       </Modal.Footer>
     </Modal>
+  )
+}
+
+function WebSealParameters({params, onChange}) {
+  return (
+    <>
+      <FormGroup>
+        <Col componentClass={ControlLabel} sm={2}>
+          <FormattedMessage id="http-header" defaultMessage="HTTP header with client IP"/>
+        </Col>
+
+        <Col sm={9}>
+          <FormControl
+            componentClass="input"
+            value={params.ip_http_header}
+            onChange={e => onChange(update(params, {$merge: {ip_http_header: e.target.value || null}}))}/>
+            <HelpBlock>
+              Used to fetch the (webseal) client IP address when the instance is behind some reverse proxy.
+              (e.g X-Real-IP)
+            </HelpBlock>
+        </Col>
+      </FormGroup>
+      <FormGroup>
+        <Col componentClass={ControlLabel} sm={2}>
+          <FormattedMessage id="trusted-ips" defaultMessage="Trusted source IPs"/>
+        </Col>
+
+        <Col sm={9}>
+          <FormControl
+            componentClass="input"
+            value={params.trusted_ips}
+            onChange={e => onChange(update(params, {$merge: {trusted_ips: e.target.value || null}}))}/>
+            <HelpBlock>
+              Comma separated IP's of the webseal instances.
+            </HelpBlock>
+        </Col>
+      </FormGroup>
+    </>
   )
 }
 
@@ -1684,6 +1729,12 @@ function SSOPanel(props) {
                       params={p.parameters}
                       onChange={e => onChange(update(sso, {[i]: {$merge: {parameters: e}}}))}/>
                   break;
+                case "webseal":
+                  authenticationParams =
+                    <WebSealParameters
+                      params={p.parameters}
+                      onChange={e => onChange(update(sso, {[i]: {$merge: {parameters: e}}}))}/>
+                  break;
               }
               let authorisationParams;
               switch((p.authorisation_handler || {}).name) {
@@ -1726,6 +1777,7 @@ function SSOPanel(props) {
                           <option value=""/>
                           <option value="oidc">Open IDConnect</option>
                           <option value="saml">SAML</option>
+                          <option value="webseal">WebSeal</option>
                         </FormControl>
                       </Col>
                     </FormGroup>
