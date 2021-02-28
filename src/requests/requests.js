@@ -603,7 +603,7 @@ export function triggerManualAction(transactionId, actionId, output, formValues,
         .catch(error => NotificationsManager.error("Failed to trigger the action", error.message))
 }
 
-function ManualActions(props) {
+export function ManualActions(props) {
     const {actions, tasks} = props;
     const [roles, setRoles] = useState([]);
 
@@ -619,6 +619,7 @@ function ManualActions(props) {
                     <th>role</th>
                     <th>task</th>
                     <th>answer</th>
+                    <th>handled by</th>
                     <th>description</th>
                 </tr>
             </thead>
@@ -630,15 +631,29 @@ function ManualActions(props) {
                     (a, i) => {
                         const task = ((tasks && tasks.find(t => t.id === a.created_by_task_id)) || {}).cell_id;
                         const role = ((roles && roles.find(r => r.id === a.role_id)) || {}).name;
-                        return (
+                        let resp = [
                             <tr key={i}>
                                 <td>{a.id}</td>
                                 <td>{role || "?"}</td>
                                 <td>{task || "?"}</td>
                                 <td>{a.output || "waiting"}</td>
+                                <td>{a.handled_by_username || "-"}</td>
                                 <td>{a.description}</td>
                             </tr>
-                        );
+                        ];
+                        if(a.form_values) {
+                          resp.push(
+                            <tr key={`output-${i}`}>
+                              <td/>
+                              <td colSpan={5}>
+                                <pre>
+                                  {JSON.stringify(a.form_values, null, 2)}
+                                </pre>
+                              </td>
+                            </tr>
+                          )
+                        }
+                        return resp;
                     }
                 )
             }

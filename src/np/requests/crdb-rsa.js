@@ -35,7 +35,7 @@ import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 import {
   Attachments,
   Comments,
-  ContextTable, Errors, Events, ReplayingSubInstancesModal, SavingModal,
+  ContextTable, Errors, Events, ManualActions, ReplayingSubInstancesModal, SavingModal,
   TasksTable,
   TransactionFlow,
   triggerManualAction,
@@ -138,6 +138,7 @@ export function NPPortInRequest(props) {
   const [rangeError, setRangeError] = useState(undefined);
 
   useEffect(() => {
+    document.title = "New port-in";
     fetchOperators(null, setOperators);
     fetchRoutes(setRoutes);
   }, []);
@@ -1121,6 +1122,7 @@ export class NPDisconnectRequest extends Component {
 
     this.cancelLoad = false;
     this.onSubmit = this.onSubmit.bind(this);
+    document.title = "New Disconnect"
   }
 
   componentDidMount() {
@@ -1337,7 +1339,10 @@ export class NPTransaction extends Component {
         this.setState({ tx: data });
 
         fetch_get(`/api/v01/npact/np_requests/${data.original_request_id}`, this.props.auth_token)
-          .then(data => !this.cancelLoad && this.setState({ request: data }))
+          .then(data => {
+            !this.cancelLoad && this.setState({ request: data });
+            document.title = `Request ${data.crdc_id}`;
+          })
           .catch(error => !this.cancelLoad && this.setState({ error: error }));
 
         fetch_get(`/api/v01/transactions/${txId}/manual_actions`)
@@ -1765,6 +1770,19 @@ export class NPTransaction extends Component {
                   <Errors errors={tx.errors} user_info={this.props.user_info}/>
                 </Panel.Body>
               </Panel>
+            }
+
+            {
+                manualActions.length !== 0 && (
+                    <Panel defaultExpanded={false}>
+                        <Panel.Heading>
+                            <Panel.Title toggle><FormattedMessage id="manual-actions" defaultMessage="Manual actions" /></Panel.Title>
+                        </Panel.Heading>
+                        <Panel.Body collapsible>
+                            <ManualActions actions={manualActions} tasks={tx.tasks}/>
+                        </Panel.Body>
+                    </Panel>
+                )
             }
 
             {

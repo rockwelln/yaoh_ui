@@ -16,6 +16,8 @@ import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import Form from "react-bootstrap/lib/Form";
 import update from "immutability-helper";
 import FormControl from "react-bootstrap/lib/FormControl";
+import Checkbox from "react-bootstrap/lib/Checkbox";
+import Ajv from "ajv";
 
 
 function fetchManualActions(onSuccess) {
@@ -71,6 +73,19 @@ function ManualActionsModal(props) {
     )
 }
 
+function ManualActionInput({type, value, onChange}) {
+  switch(type) {
+    case "boolean":
+      return <Checkbox
+        checked={value}
+        onChange={e => onChange(e.target.checked)} />
+    default:
+      return <FormControl
+        componentClass="input"
+        value={value}
+        onChange={e => onChange(e.target.value)} />
+  }
+}
 
 export function ManualActionInputForm(props) {
     const {onTrigger, show, action, output, onHide} = props;
@@ -81,6 +96,9 @@ export function ManualActionInputForm(props) {
       input_form = JSON.parse(action.input_form)
     } catch(e) {}
 
+    let ajv = Ajv({allErrors: true});
+    const validInputs = input_form?ajv.validate(input_form, values):true;
+    console.log(ajv.errors, input_form, values)
     return (
         <Modal show={show} onHide={onHide} dialogClassName='large-modal'>
             <Modal.Header closeButton>
@@ -96,16 +114,16 @@ export function ManualActionInputForm(props) {
                             return (
                                 <FormGroup>
                                     <Col componentClass={ControlLabel} sm={2}>
-                                        {key}{ v.required && v.required.includes(key) && " *" }
+                                        {key}{ input_form.required && input_form.required.includes(key) && " *" }
                                     </Col>
 
                                     <Col sm={9}>
                                         {
-                                            <FormControl
-                                                componentClass="input"
+                                            <ManualActionInput
+                                                type={v.type}
                                                 value={values[key]}
-                                                onChange={e => setValues(
-                                                    update(values,{$merge: {[key] : e.target.value}})
+                                                onChange={v => setValues(
+                                                    update(values,{$merge: {[key] : v}})
                                                 )} />
                                         }
                                     </Col>
@@ -115,7 +133,7 @@ export function ManualActionInputForm(props) {
                     }
                     <FormGroup>
                         <Col smOffset={2} sm={9}>
-                            <Button onClick={() => onTrigger(action, output, values)}>
+                            <Button onClick={() => onTrigger(action, output, values)} disabled={!validInputs}>
                               {output}
                             </Button>
                         </Col>

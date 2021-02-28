@@ -434,12 +434,13 @@ function SwitchOutputs(props) {
 function JsonSchemaFormFields(props) {
   const {value, onChange} = props;
 
-  const [newField, setNewField] = useState(["", "string"]);
+  const [newField, setNewField] = useState(["", {type: "string", minLength: 1}, false]);
   let fields = {
     "$schema": "http://json-schema.org/schema#",
     type: "object",
     properties: {},
     additionalProperties: false,
+    required: [],
   };
   try {
     fields = JSON.parse(value);
@@ -448,8 +449,16 @@ function JsonSchemaFormFields(props) {
   }
 
   const addNewField = () => {
-    onChange(JSON.stringify(update(fields, {properties: {$merge: {[newField[0]]: {type: newField[1]}}}})))
-    setNewField(["", "string"]);
+    if(newField[2]) {
+      if(fields.required) {
+        onChange(JSON.stringify(update(fields, {properties: {$merge: {[newField[0]]: newField[1]}}, required: {$push: [newField[0]]}})))
+      } else {
+        onChange(JSON.stringify(update(fields, {properties: {$merge: {[newField[0]]: newField[1]}}, required: {$set: [newField[0]]}})))
+      }
+    } else {
+      onChange(JSON.stringify(update(fields, {properties: {$merge: {[newField[0]]: newField[1]}}})))
+    }
+    setNewField(["", {type: "string", minLength: 1}, false]);
   }
 
   return (
@@ -463,12 +472,29 @@ function JsonSchemaFormFields(props) {
               <FormControl
                 componentClass="select"
                 value={props.type}
-                onChange={e => onChange(JSON.stringify(update(fields, {properties: {[name]: {$merge: {type: e.target.value}}}})))}>
-                   <option value="string">string</option>
+                onChange={e => {
+                  let prop = {};
+                  switch(e.target.value) {
+                    case "string":
+                      prop = {type: e.target.value, minLength: 1};
+                      break;
+                    case "boolean":
+                      prop = {type: e.target.value, enum: [true]};
+                      break;
+                  }
+                  onChange(JSON.stringify(update(fields, {properties: {[name]: {$merge: prop}}})))
+                }}>
+                    <option value="string">string</option>
+                    <option value="boolean">boolean</option>
               </FormControl>
             </td>
+            <td>{fields.required && fields.required.includes(name)?"*":""}</td>
             <td><Button onClick={() => {
-              onChange(JSON.stringify(update(fields, {properties: {$unset: [name]}})))
+              if(fields.required && fields.required.includes(name)) {
+                onChange(JSON.stringify(update(fields, {properties: {$unset: [name]}, required: {$splice: [[fields.required.findIndex(e => e===name), 1]]}})))
+              } else {
+                onChange(JSON.stringify(update(fields, {properties: {$unset: [name]}})))
+              }
             }}>{"-"}</Button></td>
           </tr>)
       }
@@ -483,9 +509,28 @@ function JsonSchemaFormFields(props) {
             <FormControl
               componentClass="select"
               value={newField[1]}
-              onChange={e => setNewField(update(newField, {$merge: {[1]: e.target.value}}))} >
+              onChange={e => {
+                let prop = {};
+                  switch(e.target.value) {
+                  case "string":
+                    prop = {type: e.target.value, minLength: 1};
+                    break;
+                  case "boolean":
+                    prop = {type: e.target.value, enum: [true]};
+                    break;
+                }
+                setNewField(update(newField, {$merge: {[1]: prop}}))
+              }} >
                 <option value="string">string</option>
+                <option value="boolean">boolean</option>
             </FormControl>
+          </td>
+          <td style={{width: "40%"}}>
+            <Checkbox
+              checked={newField[2]}
+              onChange={e => setNewField(update(newField, {$merge: {[2]: e.target.checked}}))} >
+                Required?
+            </Checkbox>
           </td>
           <td>
             <Button
