@@ -22,7 +22,7 @@ import {
   fetchGetTenantById,
   fetchGetGroupById,
   fetchGetUserByName,
-  fetchGetSelfcareURL
+  fetchGetSelfcareURL,
 } from "../../store/actions";
 
 class TenantPage extends Component {
@@ -33,7 +33,7 @@ class TenantPage extends Component {
     showDelete: false,
     isLoadingSCURL: true,
     activeKey: 0,
-    refreshTab: ""
+    refreshTab: "",
   };
 
   fetchRequsts = () => {
@@ -77,7 +77,7 @@ class TenantPage extends Component {
       isLoadingGroup,
       isLoadingUser,
       showDelete,
-      isLoadingSCURL
+      isLoadingSCURL,
     } = this.state;
 
     if (isLoadingTenant || isLoadingGroup || isLoadingUser || isLoadingSCURL) {
@@ -92,10 +92,12 @@ class TenantPage extends Component {
               ${user.firstName ? user.firstName : ""} 
               ${user.lastName ? user.lastName : ""}
               (${this.props.match.params.userName})`}
-              <Glyphicon
-                glyph="glyphicon glyphicon-trash"
-                onClick={() => this.setState({ showDelete: true })}
-              />
+              {user.sync ? null : (
+                <Glyphicon
+                  glyph="glyphicon glyphicon-trash"
+                  onClick={() => this.setState({ showDelete: true })}
+                />
+              )}
               <DeleteModal
                 userId={this.props.match.params.userName}
                 show={showDelete}
@@ -156,7 +158,7 @@ class TenantPage extends Component {
     );
   }
 
-  changeTab = key => {
+  changeTab = (key) => {
     let refreshTab = "";
     switch (key) {
       case 0:
@@ -182,19 +184,16 @@ const mapDispatchToProps = {
   fetchGetTenantById,
   fetchGetGroupById,
   fetchGetUserByName,
-  fetchGetSelfcareURL
+  fetchGetSelfcareURL,
 };
 
-const mapStateToProps = state => ({
+const mapStateToProps = (state) => ({
   tenant: state.tenant,
   group: state.group,
   user: state.user,
-  selfcareUrl: state.selfcareUrl
+  selfcareUrl: state.selfcareUrl,
 });
 
 export default withRouter(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(TenantPage)
+  connect(mapStateToProps, mapDispatchToProps)(TenantPage)
 );
