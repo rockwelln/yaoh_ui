@@ -323,6 +323,7 @@ export default class SearchRange extends Search {
   });
 
   componentDidMount() {
+    document.title = "Ranges";
     this._refresh();
     fetchOperators(undefined, operators => this.setState({ operators: operators }));
   }

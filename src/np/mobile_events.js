@@ -25,6 +25,7 @@ class MobileEventsActions extends Component {
   constructor(props) {
     super(props);
     this.state = {};
+    document.title = "Mobile events";
   }
 
   render() {

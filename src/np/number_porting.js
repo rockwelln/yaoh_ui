@@ -548,6 +548,7 @@ export default class SearchPortingCases extends Search {
   });
 
   componentDidMount() {
+    document.title = "NP Database";
     this._refresh();
     fetchOperators(undefined, operators => this.setState({ operators: operators }));
   }

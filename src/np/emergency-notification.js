@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {fetch_post, NotificationsManager} from "../utils";
 import Panel from "react-bootstrap/lib/Panel";
 import {FormattedMessage} from "react-intl";
@@ -36,6 +36,8 @@ export function NPEmergencyNotificationRequest(props) {
     const [redirect, setRedirect] = useState(undefined);
 
     const validForm = reasonText.length !== 0 && reasonCode.length !== 0;
+
+    useEffect(() => {document.title = "Emergency not."}, []);
 
     return (
     <Panel>

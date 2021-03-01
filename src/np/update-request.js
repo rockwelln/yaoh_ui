@@ -26,6 +26,7 @@ export class NPUpdateRequest extends Component {
 
     this.cancelLoad = false;
     this.onSubmit = this.onSubmit.bind(this);
+    document.title = "Update request";
   }
 
   componentDidMount() {
