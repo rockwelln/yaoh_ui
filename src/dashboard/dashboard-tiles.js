@@ -32,7 +32,7 @@ export const TileHeader = ({children}) => (
 
 export const ErrorCasesTile = ({count, total}) => (
     <Link to={{pathname: "/transactions/list", search: queryString.stringify({
-            filter: JSON.stringify(update(errorCriteria, {$merge: activeCriteria}))
+            q: JSON.stringify(update(errorCriteria, {$merge: activeCriteria}))
         })}}>
         <Tile className="error">
             <TileHeader>

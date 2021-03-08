@@ -53,11 +53,18 @@ import {access_levels, isAllowed, modules, pages} from "../utils/user";
 import {TimerActions} from "./timers";
 import {fetchRoles} from "../system/user_roles";
 import {LinkContainer} from "react-router-bootstrap";
-import {EditCellModal, useWindowSize} from "../orchestration/activity-editor";
+import {EditCellModal, fetchActivities, useWindowSize} from "../orchestration/activity-editor";
 import {SavedFiltersFormGroup} from "../utils/searchFilters";
 import {ManualActionInputForm} from "../dashboard/manualActions";
 import {useDropzone} from "react-dropzone";
 import {DeleteConfirmButton} from "../utils/deleteConfirm";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import {faSort, faSortDown, faSortUp} from "@fortawesome/free-solid-svg-icons";
+import Select from "react-select";
+import {fetchBulks} from "./bulk";
+import Nanobar from "nanobar";
+import {SplitButton} from "react-bootstrap";
+import MenuItem from "react-bootstrap/lib/MenuItem";
 
 const SUB_REQUESTS_PAGE_SIZE = 25;
 
@@ -2269,7 +2276,7 @@ export class Request extends Component {
     }
 
     fetchDetails() {
-        fetch_get(`/api/v01/apio/requests/${this.props.match.params.reqId}`)
+        fetch_get(`/api/v02/apio/requests/${this.props.match.params.reqId}`)
             .then(data => !this.cancelLoad && this.setState({request: data.request}))
             .catch(error =>
                 !this.cancelLoad && this.props.notifications.addNotification({
@@ -2407,9 +2414,7 @@ export class Request extends Component {
 }
 
 
-export const errorCriteria = {
-    task_status: {model: 'tasks', value: 'ERROR', op: 'eq'}
-};
+export const errorCriteria = {cnt_tasks_in_error: { value: 1, op: 'ge' }};
 
 
 const callbackErrorCriteria = {
@@ -2437,14 +2442,707 @@ export const activeCriteria = {
 };
 
 
-export const needActionCriteria = {
-    action_status: {model: 'tasks', value: 'WAIT', op: 'eq'}
-};
+export const needActionCriteria = {role_id: {op: "is_not_null", value: null}, status: {op: "eq", value: 'ACTIVE'}}
 
 
 const AutoRefreshTime = 10;
 
-export class Requests extends Component{
+const defaultPaging = {
+  page_number: 1,
+  page_size: 50,
+}
+
+const defaultSorting = ["-request_id"]
+const defaultCriteria = {
+  activity_id: { value: '', op: 'eq' },
+  tenant_id: { value: '', op: 'eq' },
+  site_id: { value: '', op: 'eq' },
+  number: { value: '', op: 'like' },
+  status: { value: '', op: 'eq' },
+  kind: { value: '', op: 'eq' },
+  created_on: { value: '', op: 'ge' },
+  request_status: { value: '', op: 'eq' },
+  label: { value: '', op: 'eq' },
+  owner: { value: '', op: 'eq' },
+  bulk_id: { value: '', op: 'eq' },
+  // proxied_method: { value: '', op: 'eq' },
+  // proxied_url: { value: '', op: 'eq' },
+  // proxied_status: { value: '', op: 'eq' },
+  // proxy_gateway_host: { value: '', op: 'eq' },
+  role_id: { value: '', op: 'eq' },
+  cnt_tasks_in_error: { value: '', op: 'eq' },
+  action_status: undefined,
+  end_task_status: undefined,
+};
+
+function spec2filter(s) {
+  switch(s.op) {
+    case "eq":
+    case "==":
+      return s.value;
+    case "ne":
+      return {"$neq": s.value}
+    case "gt":
+      return {"$gt": s.value}
+    case "ge":
+      return {"$gte": s.value}
+    case "lt":
+      return {"$lt": s.value}
+    case "le":
+      return {"$lte": s.value}
+    case "like":
+      return {"$like": s.value}
+    case "is_not_null":
+      return {"$neq": null}
+    case "is_null":
+      return null
+  }
+}
+
+function criteria2params(c) {
+  return Object.entries(c)
+    .filter(([name, s]) =>
+      s && (
+        s.value && s.op ||
+        s.or || s.and || s.op === 'is_null' ||
+        s.op === 'is_not_null' || typeof(s.value) === 'boolean'
+      )
+    ).reduce((o, [name, s]) => {
+      switch(name) {
+        case "number":
+          o["numbers"] = {"$like": "%" + s.value + "%"}
+          break;
+        case "role_id":
+          switch(s.op) {
+            case "eq":
+              o["roles"] = {"$like": "%." + s.value + ".%"}
+              break;
+            case "is_null":
+              o["roles"] = "";
+              break;
+            case "is_not_null":
+              o["roles"] = {"$neq": ""}
+              break;
+            default:
+              o["roles"] = spec2filter(s);
+              break;
+          }
+          break;
+        default:
+          o[name] = spec2filter(s);
+      }
+      return o
+    }, {})
+}
+
+function searchRequests(criteria, cols, onSuccess, onError, pagingSpec, sortingSpec, format) {
+  const url = new URL(`${API_URL_PREFIX}/api/v02/apio/requests`);
+  const searchStr = encodeURI(
+    JSON.stringify({
+      filter: criteria2params(criteria),
+      limit: pagingSpec.page_size,
+      offset: (pagingSpec.page_number - 1) * pagingSpec.page_size,
+      sort: sortingSpec,
+    })
+  )
+  url.searchParams.append(
+    'q',
+    searchStr,
+  )
+  //cols
+  // if (cols !== undefined) {
+  //   url.searchParams.append('cols', JSON.stringify(cols));
+  // }
+  //formatting
+  if (format !== undefined) {
+    url.searchParams.append('as', format);
+    AuthServiceManager.getValidToken().then(token => {
+      window.location=`${url}&auth_token=${token}`
+    })
+    onError && onError();
+    return
+  }
+  fetch_get(url)
+    .then(e => onSuccess(e, searchStr))
+    .catch(error => {
+      NotificationsManager.error("failed to search requests", error.message);
+      onError && onError();
+    });
+}
+
+function criteriaFromParams(params, defaults) {
+  const p = queryString.parse(params);
+  let custom_params = {filter:{}};
+  if (p.q !== undefined) {
+      try {
+          custom_params = JSON.parse(p.q);
+      } catch (e) {
+        console.error(e)
+      }
+  }
+  return update(
+      defaults,
+      {$merge: custom_params}
+  );
+}
+
+const hiddenCols = ["label", "request_id", "instance_id", "kind", "request_created_on"];
+
+export function Requests({user_info, history, location}) {
+  const [collection, setCollection] = useState({requests: [], total_count: 0, limit: 0, offset: 0});
+  const [sortingSpec, setSortingSpec] = useState(defaultSorting);
+  const [criteria, setCriteria] = useState(criteriaFromParams(location.search, defaultCriteria));
+  const [pageSize, setPagesize] = useState(defaultPaging.page_size);
+  const [roles, setRoles] = useState([]);
+  const [bulks, setBulks] = useState([]);
+
+  const [cols, setCols] = useState([]);
+  const [activities, setActivities] = useState([]);
+
+  document.title = "Requests";
+
+  const proxy_activated = user_info.modules && user_info.modules.includes(modules.proxy);
+  const manualActions = user_info.modules && user_info.modules.includes(modules.manualActions);
+
+  const refresh_ = (paging, sorting, format) => {
+    const bar = Nanobar();
+    bar.go(20);
+    const relevantCrit = Object.entries(criteria)
+    .filter(([name, s]) =>
+      s && (
+        s.value && s.op ||
+        s.or || s.and || s.op === 'is_null' ||
+        s.op === 'is_not_null' || typeof(s.value) === 'boolean'
+      )
+    ).reduce((p, c) => {
+      p[c[0]] = c[1];
+      return p;
+    }, {})
+    bar.go(40);
+    searchRequests(
+      relevantCrit,
+      cols,
+      recs => {
+        bar.go(80);
+        setCollection(recs);
+        sorting && setSortingSpec(sorting);
+        history.push(location.pathname + `?q=${JSON.stringify(relevantCrit)}`);
+        bar.go(100);
+      },
+      () => {
+        bar.go(100);
+      },
+      update(defaultPaging, {$merge: paging || {}}),
+      sorting || sortingSpec,
+      format,
+    )
+  }
+
+  const sortingDirection = field => sortingSpec.find(s => s.substring(1) === field)
+  const renderSortIcon = field => {
+    const e = sortingDirection(field);
+    return <FontAwesomeIcon icon={e === undefined ? faSort : e[0] === "-" ? faSortDown : faSortUp} />
+  };
+
+  useEffect(() => {
+    refresh_();
+    fetchActivities(setActivities);
+    fetchRoles(setRoles);
+    fetchBulks(null, setBulks)
+  }, []);
+
+  const bulkOptions = bulks;
+  const invalidCreatedOn = criteria.created_on.value.length !== 0 && !moment(criteria.created_on.value).isValid();
+
+  return (
+    <>
+      <Breadcrumb>
+        <Breadcrumb.Item active>Requests</Breadcrumb.Item>
+        <Breadcrumb.Item active>Requests</Breadcrumb.Item>
+      </Breadcrumb>
+
+      <Panel defaultExpanded={false} >
+          <Panel.Heading>
+              <Panel.Title toggle>
+                  <FormattedMessage id="search" defaultMessage="Search" /> <Glyphicon glyph="search" />
+                {
+                  // TODO add auto refresh
+                }
+              </Panel.Title>
+          </Panel.Heading>
+          <Panel.Body collapsible>
+              <Form horizontal>
+                <SavedFiltersFormGroup
+                  onChange={filter => {
+                      if(filter && filter.value.filter) {
+                        setCriteria(update(
+                            defaultCriteria,
+                            {$merge: filter.value.filter}
+                        ))
+                      }
+                  }}
+                  currentFilter={() => criteria}
+                  entity={"request"}
+                  />
+
+                <FormGroup>
+                    <Col componentClass={ControlLabel} sm={2}>
+                        <FormattedMessage id="bulk-label" defaultMessage="Bulk label" />
+                    </Col>
+
+                    <Col smOffset={1} sm={8}>
+                      <Select
+                        className="basic-single"
+                          classNamePrefix="select"
+                          value={criteria.bulk_id.value && bulkOptions.find(a => a.bulk_id === criteria.bulk_id.value)}
+                          isClearable={true}
+                          isSearchable={true}
+                          name="bulk"
+                          onChange={(value, action) => {
+                              if(["select-option", "clear"].includes(action.action)) {
+                                setCriteria(update(criteria, {bulk_id: {$merge: {value: value.bulk_id}}}));
+                              }
+                          }}
+                          options={bulkOptions} />
+                    </Col>
+                </FormGroup>
+
+                <FormGroup>
+                    <Col componentClass={ControlLabel} sm={2}>
+                        <FormattedMessage id="workflow" defaultMessage="Workflow" />
+                    </Col>
+
+                    <Col sm={1}>
+                        <FormControl
+                            componentClass="select"
+                            value={criteria.activity_id.op}
+                            onChange={e => setCriteria(
+                              update(criteria,
+                                    {activity_id: {$merge: {op: e.target.value}}})
+                            )}>
+                            <option value="eq">==</option>
+                            <option value="ne">!=</option>
+                            <FormattedMessage id="proxy-none" defaultMessage="proxied (none)" >
+                                {
+                                    message => <option value="is_null">{message}</option>
+                                }
+                            </FormattedMessage>
+                            <FormattedMessage id="not proxy" defaultMessage="not proxied (any)" >
+                                {
+                                    message => <option value="is_not_null">{message}</option>
+                                }
+                            </FormattedMessage>
+                        </FormControl>
+                    </Col>
+
+                    <Col sm={8}>
+                        <FormControl
+                            componentClass="select"
+                            disabled={["is_null", "is_not_null"].includes(criteria.activity_id.op)}
+                            value={criteria.activity_id.value}
+                            onChange={e => setCriteria(
+                              update(criteria,
+                                    {activity_id: {$merge: {value: e.target.value && parseInt(e.target.value, 10)}}})
+                            )}>
+                            <option value='' />
+                            {
+                                activities && activities.sort((a, b) => a.name.localeCompare(b.name)).map(
+                                    a => <option value={a.id} key={a.id}>{a.name}</option>
+                                )
+                            }
+                        </FormControl>
+                    </Col>
+                </FormGroup>
+
+                  <FormGroup>
+                      <Col componentClass={ControlLabel} sm={2}>
+                          <FormattedMessage id="workflow-status" defaultMessage="Workflow status" />
+                      </Col>
+
+                      <Col sm={1}>
+                          <FormControl
+                              componentClass="select"
+                              value={criteria.status.op}
+                              onChange={e => setCriteria(
+                                update(criteria,
+                                      {status: {$merge: {op: e.target.value}}})
+                              )}>
+                              <option value="eq">==</option>
+                              <option value="ne">!=</option>
+                          </FormControl>
+                      </Col>
+
+                      <Col sm={8}>
+                          <FormControl componentClass="select" value={criteria.status.value}
+                              onChange={e => setCriteria(
+                                update(criteria,
+                                      {status: {$merge: {value: e.target.value}}})
+                              )}>
+                              <option value='' />
+                              <option value="ACTIVE">ACTIVE</option>
+                              <option value="CLOSED_IN_ERROR">CLOSED_IN_ERROR</option>
+                              <option value="CLOSED_IN_SUCCESS">CLOSED_IN_SUCCESS</option>
+                          </FormControl>
+                      </Col>
+                  </FormGroup>
+
+                  <FormGroup>
+                      <Col componentClass={ControlLabel} sm={2}>
+                          <FormattedMessage id="request-status" defaultMessage="Request status" />
+                      </Col>
+
+                      <Col sm={1}>
+                          <FormControl
+                              componentClass="select"
+                              value={criteria.request_status.op}
+                              onChange={e => setCriteria(
+                                update(criteria,
+                                      {request_status: {$merge: {op: e.target.value}}})
+                              )}>
+                              <option value="eq">==</option>
+                              <option value="ne">!=</option>
+                          </FormControl>
+                      </Col>
+
+                      <Col sm={8}>
+                          <FormControl componentClass="select" value={criteria.request_status.value}
+                              onChange={e => setCriteria(
+                                update(criteria,
+                                      {request_status: {$merge: {value: e.target.value}}})
+                              )}>
+                              <option value='' />
+                              <option value="ACTIVE">ACTIVE</option>
+                              <option value="FAILED">FAILED</option>
+                          </FormControl>
+                      </Col>
+                  </FormGroup>
+
+                  <FormGroup>
+                      <Col componentClass={ControlLabel} sm={2}>
+                          <FormattedMessage id="tenant-id" defaultMessage="Tenant ID" />
+                      </Col>
+
+                      <Col sm={1}>
+                          <FormControl
+                              componentClass="select"
+                              value={criteria.tenant_id.op}
+                              onChange={e => setCriteria(update(criteria,
+                                      {tenant_id: {$merge: {op: e.target.value}}})
+                              )}>
+                              <option value="eq">==</option>
+                              <option value="ne">!=</option>
+                          </FormControl>
+                      </Col>
+
+                      <Col sm={8}>
+                          <FormControl componentClass="input" value={criteria.tenant_id.value}
+                              onChange={e => setCriteria(update(criteria,
+                                      {tenant_id: {$merge: {value: e.target.value}}})
+                              )} />
+                      </Col>
+                  </FormGroup>
+
+                  <FormGroup>
+                      <Col componentClass={ControlLabel} sm={2}>
+                          <FormattedMessage id="site-id" defaultMessage="Site ID" />
+                      </Col>
+
+                      <Col sm={1}>
+                          <FormControl
+                              componentClass="select"
+                              value={criteria.site_id.op}
+                              onChange={e => setCriteria(update(criteria,
+                                      {site_id: {$merge: {op: e.target.value}}})
+                              )}>
+                              <option value="eq">==</option>
+                              <option value="ne">!=</option>
+                          </FormControl>
+                      </Col>
+
+                      <Col sm={8}>
+                          <FormControl componentClass="input" value={criteria.site_id.value}
+                              onChange={e => setCriteria(update(criteria,
+                                      {site_id: {$merge: {value: e.target.value}}})
+                              )} />
+                      </Col>
+                  </FormGroup>
+
+                  <FormGroup>
+                      <Col componentClass={ControlLabel} sm={2}>
+                          <FormattedMessage id="number" defaultMessage="Number" />
+                      </Col>
+
+                      <Col sm={1}>
+                          <FormControl componentClass="select" value="like" readOnly>
+                              <option value="like">like</option>
+                          </FormControl>
+                      </Col>
+
+                      <Col sm={8}>
+                          <FormControl componentClass="input" value={criteria.number.value}
+                              onChange={e => setCriteria(update(criteria,
+                                      {number: {$merge: {value: e.target.value}}})
+                              )} />
+                      </Col>
+                  </FormGroup>
+
+                  {
+                    manualActions &&
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="pending-action-role" defaultMessage="Pending action role" />
+                            </Col>
+
+                            <Col sm={1}>
+                                <FormControl
+                                    componentClass="select"
+                                    value={criteria.role_id.op}
+                                    onChange={e => setCriteria(update(criteria,
+                                            { role_id: { $merge: { op: e.target.value } } })
+                                    )}>
+                                    <option value="eq">==</option>
+                                    <option value="is_not_null">*any*</option>
+                                    <option value="is_null">*none*</option>
+                                </FormControl>
+                            </Col>
+
+                            <Col sm={8}>
+                                <FormControl
+                                    componentClass="select"
+                                    disabled={criteria.role_id.op === "is_not_null"}
+                                    value={criteria.role_id.value}
+                                    onChange={e => setCriteria(update(criteria,
+                                            { role_id: { $merge: { value: e.target.value && parseInt(e.target.value, 10) } } })
+                                    )} >
+                                    <option value=""/>
+                                    {
+                                        roles.map(r => <option key={`role-${r.id}`} value={r.id}>{r.name}</option>)
+                                    }
+                                </FormControl>
+                            </Col>
+                        </FormGroup>
+                  }
+
+                {
+                  proxy_activated &&
+                  <>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="owner" defaultMessage="Owner" />
+                        </Col>
+
+                        <Col sm={1}>
+                            <FormControl
+                                componentClass="select"
+                                value={criteria.owner.op}
+                                onChange={e => setCriteria(
+                                  update(criteria,
+                                        { owner: { $merge: { op: e.target.value } } })
+                                )}>
+                                <option value="eq">==</option>
+                                <option value="ne">!=</option>
+                            </FormControl>
+                        </Col>
+
+                        <Col sm={8}>
+                            <FormControl componentClass="input" value={criteria.owner.value}
+                                onChange={e => setCriteria(
+                                  update(criteria,
+                                        { owner: { $merge: { value: e.target.value } } })
+                                )} />
+                        </Col>
+                    </FormGroup>
+                  </>
+                }
+
+                  <FormGroup validationState={invalidCreatedOn ? "error" : null}>
+                      <Col componentClass={ControlLabel} sm={2}>
+                          <FormattedMessage id="created-on" defaultMessage="Created on" />
+                      </Col>
+
+                      <Col sm={1}>
+                          <FormControl
+                              componentClass="select"
+                              value={criteria.created_on.op}
+                              onChange={e => setCriteria(
+                                update(criteria,
+                                      {created_on: {$merge: {op: e.target.value}}})
+                              )}>
+                              <option value="gt">&gt;</option>
+                              <option value="ge">&gt;=</option>
+                              <option value="lt">&lt;</option>
+                              <option value="le">&lt;=</option>
+                          </FormControl>
+                      </Col>
+
+                      <Col sm={8}>
+                          <DatePicker
+                              className="form-control"
+                              selected={criteria.created_on.value.length !== 0?userLocalizeUtcDate(moment(criteria.created_on.value), user_info).toDate():null}
+                              onChange={d => {
+                                  setCriteria(
+                                    update(
+                                          criteria,
+                                          {created_on: {$merge: {value: d || ""}}})
+                                  )
+                              }}
+                              dateFormat="dd/MM/yyyy HH:mm"
+                              showTimeSelect
+                              timeFormat="HH:mm"
+                              timeIntervals={60}/>
+                      </Col>
+                  </FormGroup>
+
+                <FormGroup>
+                    <Col componentClass={ControlLabel} sm={2}>
+                        <FormattedMessage id="flags" defaultMessage="Flags" />
+                    </Col>
+
+                    <Col smOffset={1} sm={8}>
+                        <Checkbox
+                            checked={criteria.cnt_tasks_in_error && criteria.cnt_tasks_in_error.op === "ge"}
+                            onChange={e => (
+                                e.target.checked ?
+                                    setCriteria(update(criteria, {$merge: errorCriteria})) :
+                                    setCriteria(update(criteria,{cnt_tasks_in_error: {$set: { value: '', op: 'eq' }}}))
+                            )} >
+                            <FormattedMessage id="with-errors" defaultMessage="With errors" />
+                        </Checkbox>
+                    </Col>
+                </FormGroup>
+
+                  <FormGroup>
+                      <Col smOffset={1} sm={1}>
+                          <SplitButton
+                            bsStyle="info"
+                            title={<FormattedMessage id="search" defaultMessage="Search" />}
+                            onClick={() => refresh_({page_number: 1})} >
+                              <MenuItem
+                                onClick={() => refresh_({page_number: 1}, null, "csv")}>
+                                <FormattedMessage id="csv" defaultMessage="CSV (max: 1000)" />
+                              </MenuItem>
+                          </SplitButton>
+                      </Col>
+                  </FormGroup>
+              </Form>
+          </Panel.Body>
+      </Panel>
+
+      <Panel>
+        <Panel.Body>
+          <Pagination
+            num_pages={Math.ceil(collection.total_count / pageSize)}
+            page_number={Math.floor(collection.offset / pageSize) + 1}
+            onChange={p => refresh_(p)}
+            total_results={collection.total_count}
+            />
+          <Table>
+            <thead>
+              <tr>
+                <th>#</th>
+                {
+                  collection && collection.requests.length > 0 && Object.keys(collection.requests[0]).filter(name => !hiddenCols.includes(name)).map(k => {
+                    let colDef = null;
+                    switch(k) {
+                      case "created_on":
+                        colDef = {sortable: true, title: "Created on"}
+                        break;
+                      case "activity_id":
+                        colDef = {sortable: false, title: "Workflow"}
+                        break;
+                      case "instance_status":
+                        colDef = {sortable: true, title: "Wf. status"}
+                        break;
+                      case "tenant_id":
+                        colDef = {sortable: false, title: "Tenant"}
+                        break;
+                      case "site_id":
+                        colDef = {sortable: false, title: "Group"}
+                        break;
+                      case "numbers":
+                        colDef = {sortable: false, title: "User(s)"}
+                        break;
+                      case "status":
+                        colDef = {sortable: true, title: "Status"}
+                        break;
+                      case "owner":
+                        colDef = {sortable: false, title: "Owner"}
+                        break;
+                      default:
+                        colDef = {sortable: false}
+                        break;
+                    }
+
+                    return (
+                      <th
+                        key={`head-${k}`}
+                        onClick={() => {
+                          if(colDef.sortable) {
+                            const e = sortingDirection(k)
+                            const dir = !e || e[0] === "+" ? "-" : "+";
+                            refresh_(null, [`${dir}${k}`])
+                          }
+                        }}
+                      >
+                        {colDef.title || k}
+                        {colDef.sortable && <span className="pull-right">{renderSortIcon(k)}</span>}
+                      </th>
+                    )
+                  })
+                }
+              </tr>
+            </thead>
+            <tbody>
+            {
+              collection && collection.requests.map((r, i) =>
+                <>
+                  <tr key={`request-${i}`}>
+                    <td>
+                      {
+                        r.instance_id ?
+                          <Link to={`/transactions/${r.instance_id}`}>I{r.instance_id}</Link> :
+                          <Link to={`/requests/${r.request_id}`}>R{r.request_id}</Link>
+                      }
+                    </td>
+                    {
+                      Object.entries(r).filter(([name]) => !hiddenCols.includes(name)).map(
+                        ([field, value], j) =>
+                          <td key={`${i}${j}`}>
+                            {
+                              ["created_on", "request_created_on"].includes(field) ?
+                                userLocalizeUtcDate(moment.utc(value || r["request_created_on"]), user_info).format() :
+                              ["activity_id"].includes(field) && activities && activities.find(a => a.id === value) ?
+                                activities.find(a => a.id === value).name:
+                                value
+                            }
+                          </td>
+                      )
+                    }
+                  </tr>
+                  <tr>
+                    <td style={{border: "0px none", padding: "0px"}}/>
+                    <td
+                      colSpan={Object.keys(r).length - 2}
+                      style={{border: "0px none", padding: "0px"}}><p style={{color: "#777"}}>{r.label}</p></td>
+                  </tr>
+                </>
+              )
+            }
+            </tbody>
+          </Table>
+          <Pagination
+            num_pages={Math.ceil(collection.total_count / pageSize)}
+            page_number={Math.floor(collection.offset / pageSize) + 1}
+            onChange={p => refresh_(p)}
+            total_results={collection.total_count}
+            />
+        </Panel.Body>
+      </Panel>
+    </>
+  )
+}
+
+export class __Requests extends Component{
     constructor(props) {
         super(props);
         this.cancelLoad = false;

@@ -200,7 +200,7 @@ export function ManualActionsTile(props) {
     return (
       <Link to={{
         pathname: "/transactions/list", search: queryString.stringify({
-          filter: JSON.stringify(needActionCriteria)
+          q: JSON.stringify(needActionCriteria)
         })
       }}>
         <Tile className="warning">

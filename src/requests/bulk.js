@@ -609,9 +609,9 @@ function fetchActions(onSuccess) {
 }
 
 
-function fetchHistory(pagination, onSuccess) {
+export function fetchBulks(pagination, onSuccess) {
     const url = new URL(API_URL_PREFIX + "/api/v01/bulks");
-    url.searchParams.append("paging", JSON.stringify(pagination));
+    pagination && url.searchParams.append("paging", JSON.stringify(pagination));
     fetch_get(url)
         .then(d => onSuccess(
             d.bulks,
@@ -643,11 +643,11 @@ export function Bulks(props) {
     useEffect(() => {
         document.title = "Bulks";
         fetchActions(setActions);
-        fetchHistory(pagination, setBulksWithPage);
+        fetchBulks(pagination, setBulksWithPage);
     }, []);
 
     useEffect(() => {
-        fetchHistory(pagination, setBulks);
+        fetchBulks(pagination, setBulks);
     }, [pagination]);
 
     useEffect(() => {
@@ -666,10 +666,10 @@ export function Bulks(props) {
                 <Breadcrumb.Item active><FormattedMessage id="bulk" defaultMessage="Bulk"/></Breadcrumb.Item>
             </Breadcrumb>
 
-            <NewBulk onChange={() => fetchHistory(pagination, setBulksWithPage)} />
+            <NewBulk onChange={() => fetchBulks(pagination, setBulksWithPage)} />
             <BulkHistory
                 bulks={bulks}
-                onDelete={() => fetchHistory(pagination, setBulksWithPage)}
+                onDelete={() => fetchBulks(pagination, setBulksWithPage)}
                 pagination={pagination}
                 onPagination={e => setPagination(update(pagination, {$merge: e}))}
                 userInfo={props.userInfo}

@@ -171,3 +171,9 @@ ul.tree > li:last-child {
   overflow-wrap: normal;
   overflow-x: scroll;
 }
+
+.nanobar .bar {
+    background: #007fee;
+    border-radius: 4px;
+    height: 4px;
+  }
