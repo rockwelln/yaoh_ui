@@ -37,7 +37,7 @@ import {faDownload, faEdit, faSpinner} from "@fortawesome/free-solid-svg-icons";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import Creatable from "react-select/creatable";
 import MenuItem from "react-bootstrap/lib/MenuItem";
-import {WORKING_VERSION_LABEL} from "./activity-editor";
+import {NewActivity, WORKING_VERSION_LABEL} from "./activity-editor";
 
 const CUSTOM_ROUTE_PREFIX = "https://<target>/api/v01/custom";
 const JSON_SCHEMA_SAMPLE = (
@@ -876,6 +876,7 @@ function RenameGroupModal({show, onHide, group}) {
 function CustomRoutesGroup({routes, group, activities, groups, onChange}) {
   const [showUpdateModal, setShowUpdateModal] = useState(undefined);
   const [showRename, setShowRename] = useState(false);
+  const [showNewActivity, setShowNewActivity] = useState(undefined);
   const activitiesOptions = activities
     .sort((a, b) => a.name.localeCompare(b.name))
     .map(a => ({value: a.id, label: `${a.name} (${a.version_label === null?WORKING_VERSION_LABEL:a.version_label})`}));
@@ -963,17 +964,25 @@ function CustomRoutesGroup({routes, group, activities, groups, onChange}) {
                           }}
                           options={activitiesOptions} />
                       <InputGroup.Button>
+                        { route.activity_id !== null ?
                           <Button
-                              disabled={route.activity_id === null}
-                              bsStyle="primary"
-                              onClick={() => {
-                                  let win = window.open(`/transactions/config/activities/editor/${route.activity_id}`, '_blank');
-                                  win.focus();
-                              }}
-                              style={{marginLeft: '5px'}}
+                            bsStyle="primary"
+                            onClick={() => {
+                              let win = window.open(`/transactions/config/activities/editor/${route.activity_id}`, '_blank');
+                              win.focus();
+                            }}
+                            style={{marginLeft: '5px'}}
                           >
-                              <Glyphicon glyph="eye-open"/>
+                            <Glyphicon glyph="eye-open"/>
+                          </Button> :
+                          <Button
+                            bsStyle="primary"
+                            onClick={() => setShowNewActivity(route.route_id)}
+                            style={{marginLeft: '5px'}}
+                          >
+                            <Glyphicon glyph="file"/>
                           </Button>
+                        }
                       </InputGroup.Button>
                   </InputGroup>
                 </td>
@@ -1029,6 +1038,12 @@ function CustomRoutesGroup({routes, group, activities, groups, onChange}) {
           }
           </tbody>
         </Table>
+        <NewActivity
+          show={showNewActivity !== undefined}
+          onClose={() => {setShowNewActivity(undefined);}}
+          onCreated={id => {
+            updateCustomRouteActivity(showNewActivity, id, () => onChange());
+          }} />
         <UpdateCustomRouteModal
           show={showUpdateModal !== undefined}
           entry={showUpdateModal || {}}

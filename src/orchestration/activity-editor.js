@@ -184,8 +184,8 @@ function downloadActivityVersions(id) {
       .then(token => window.location = `${API_URL_PREFIX}/api/v01/activities/${id}/versions/export?auth_token=${token}`)
 }
 
-function NewActivity(props) {
-    const {show, onClose} = props;
+export function NewActivity(props) {
+    const {show, onClose, onCreated} = props;
     const [newActivity, setNewActivity] = useState(NEW_ACTIVITY);
     const [redirect, setRedirect] = useState(null);
 
@@ -215,7 +215,10 @@ function NewActivity(props) {
                                     type="submit"
                                     onClick={e => {
                                         e.preventDefault();
-                                        saveActivity(newActivity, a => setRedirect(a.id));
+                                        saveActivity(newActivity, a => {
+                                          setRedirect(a.id);
+                                          onCreated && onCreated(a.id);
+                                        });
                                     }}
                                     disabled={!newActivity.name || newActivity.name.length === 0}
                                     bsStyle="primary">
