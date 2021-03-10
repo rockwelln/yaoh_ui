@@ -939,7 +939,7 @@ class App extends Component {
                         <Route path="/transactions/config/activities/editor"
                                component={props => (
                                    isAllowed(ui_profile, pages.requests_workflow_editor) ?
-                                       <Activities /> :
+                                       <Activities user_info={user_info} /> :
                                        <NotAllowed/>
                                )}
                                exact />
