@@ -3235,7 +3235,7 @@ export class __Requests extends Component{
     }
 
     _load_activities() {
-        fetch_get('/api/v01/activities')
+        fetch_get('/api/v02/activities')
             .then(data => !this.cancelLoad && this.setState({activities: data.activities}))
             .catch(error => console.error(error))
     }
@@ -4249,7 +4249,7 @@ export class CustomRequests extends Component{
     }
 
     _load_activities() {
-        fetch_get('/api/v01/activities', this.props.auth_token)
+        fetch_get('/api/v02/activities')
             .then(data => !this.cancelLoad && this.setState({activities: data.activities}))
             .catch(error => console.error(error))
     }

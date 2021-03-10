@@ -100,7 +100,7 @@ function fetchCells(onSuccess) {
 }
 
 export function fetchActivities(onSuccess) {
-    fetch_get('/api/v01/activities')
+    fetch_get('/api/v02/activities')
         .then(data => onSuccess(data.activities))
         .catch(console.error);
 }

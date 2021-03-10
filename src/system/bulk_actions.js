@@ -118,7 +118,7 @@ class NewAction extends React.Component {
     }
 
     fetchActivities() {
-        fetch_get('/api/v01/activities')
+        fetch_get('/api/v02/activities')
             .then(data => !this.cancelLoad && this.setState({activities: data.activities}))
             .catch(error => NotificationsManager.error(
                 <FormattedMessage id="fetch-activities-failed" defaultMessage="Failed to fetch activities"/>,
@@ -509,7 +509,7 @@ class Action extends React.Component {
     };
 
     fetchActivities() {
-        fetch_get('/api/v01/activities')
+        fetch_get('/api/v02/activities')
             .then(data => !this.cancelLoad && this.setState({activities: data.activities}))
             .catch(error => NotificationsManager.error(
                 <FormattedMessage id="fetch-activities-failed" defaultMessage="Failed to fetch activities"/>,

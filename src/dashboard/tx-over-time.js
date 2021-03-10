@@ -51,7 +51,7 @@ export default class TransactionsOverTime extends Component {
     loadActivityNames() {
         if(this.cancelLoad) return;
 
-        fetch_get('/api/v01/activities', this.props.auth_token)
+        fetch_get('/api/v02/activities')
         .then(data => !this.cancelLoad && this.setState({
             names: data.activities.reduce((rv, a) => {rv[a.id] = a.name; return rv;}, {})
         }))
