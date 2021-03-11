@@ -8,7 +8,10 @@ import Glyphicon from "react-bootstrap/lib/Glyphicon";
 
 import Loading from "../../common/Loading";
 
-import { fetchGetTrunkGroupByName } from "../../store/actions";
+import {
+  fetchGetTrunkGroupByName,
+  fetchGetSelfcareURL,
+} from "../../store/actions";
 
 import Users from "./Tabs/Users";
 import Backup from "./Tabs/Backup";
@@ -25,8 +28,9 @@ import DeleteModal from "./DeleteModal";
 class TrunkGroupPage extends Component {
   state = {
     isLoading: true,
+    isLoadingConfig: true,
     showDelete: false,
-    activeKey: 0
+    activeKey: 0,
   };
 
   fetchTrunk() {
@@ -37,6 +41,9 @@ class TrunkGroupPage extends Component {
         this.props.match.params.trunkGroupName
       )
       .then(() => this.setState({ isLoading: false }));
+    this.props
+      .fetchGetSelfcareURL()
+      .then(() => this.setState({ isLoadingConfig: false }));
   }
 
   componentDidMount() {
@@ -54,9 +61,9 @@ class TrunkGroupPage extends Component {
 
   render() {
     const { isLoading } = this.state;
-    // if (isLoading) {
-    //   return <Loading />;
-    // }
+    if (this.state.isLoadingConfig) {
+      return <Loading />;
+    }
     return (
       <React.Fragment>
         <div className={"panel-heading"}>
@@ -84,16 +91,16 @@ class TrunkGroupPage extends Component {
           <Tabs
             activeKey={this.state.activeKey}
             id="tenant_tabs"
-            onSelect={key => {
+            onSelect={(key) => {
               this.setState({ isLoading: true, activeKey: key }, () =>
                 this.fetchTrunk()
               );
             }}
           >
-            <Tab eventKey={0} title="Details">
+            <Tab eventKey={0} title="Pilot">
               {isLoading ? <Loading /> : <Details />}
             </Tab>
-            <Tab eventKey={9} title="Authentication">
+            <Tab eventKey={9} title="Access details">
               {isLoading ? <Loading /> : <Authentication />}
             </Tab>
 
@@ -128,15 +135,12 @@ class TrunkGroupPage extends Component {
   }
 }
 
-const mapDispatchToProps = { fetchGetTrunkGroupByName };
+const mapDispatchToProps = { fetchGetTrunkGroupByName, fetchGetSelfcareURL };
 
-const mapStateToProps = state => ({
-  trunkGroup: state.trunkGroup
+const mapStateToProps = (state) => ({
+  trunkGroup: state.trunkGroup,
 });
 
 export default withRouter(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(TrunkGroupPage)
+  connect(mapStateToProps, mapDispatchToProps)(TrunkGroupPage)
 );

@@ -11,13 +11,15 @@ import Button from "react-bootstrap/lib/Button";
 import { fetchPutUpdateTrunkGroup } from "../../../../store/actions";
 
 import { removeEmpty } from "../../../remuveEmptyInObject";
+import DevicePage from "../../../DevicePage";
 
 export class Authentication extends Component {
   state = {
     requireAuthentication: false,
     sipAuthenticationUserName: null,
     sipAuthenticationPassword: null,
-    disableButton: false
+    accessDevice: null,
+    disableButton: false,
   };
 
   componentDidMount() {
@@ -30,25 +32,30 @@ export class Authentication extends Component {
         : "",
       sipAuthenticationPassword: this.props.trunkGroup.sipAuthenticationPassword
         ? this.props.trunkGroup.sipAuthenticationPassword
-        : ""
+        : "",
+      accessDevice: this.props.trunkGroup.accessDevice
+        ? this.props.trunkGroup.accessDevice.name
+        : "",
     });
   }
 
   render() {
+    console.log(this.props.trunkingConfig);
+
     return (
       <React.Fragment>
         <Row className={"margin-top-1"}>
           <Col md={12}>
             <Checkbox
               checked={this.state.requireAuthentication}
-              onChange={e => {
+              onChange={(e) => {
                 if (e.target.checked) {
                   this.setState({ requireAuthentication: e.target.checked });
                 } else {
                   this.setState({
                     requireAuthentication: e.target.checked,
                     sipAuthenticationUserName: "",
-                    sipAuthenticationPassword: ""
+                    sipAuthenticationPassword: "",
                   });
                 }
               }}
@@ -68,9 +75,9 @@ export class Authentication extends Component {
                 type="text"
                 value={this.state.sipAuthenticationUserName}
                 disabled={!this.state.requireAuthentication}
-                onChange={e => {
+                onChange={(e) => {
                   this.setState({
-                    sipAuthenticationUserName: e.target.value
+                    sipAuthenticationUserName: e.target.value,
                   });
                 }}
               />
@@ -86,15 +93,36 @@ export class Authentication extends Component {
                 type="password"
                 value={this.state.sipAuthenticationPassword}
                 disabled={!this.state.requireAuthentication}
-                onChange={e => {
+                onChange={(e) => {
                   this.setState({
-                    sipAuthenticationPassword: e.target.value
+                    sipAuthenticationPassword: e.target.value,
                   });
                 }}
               />
             </div>
           </Col>
         </Row>
+        <Row className={"margin-top-1"}>
+          <Col md={12} className={"flex align-items-center"}>
+            <div className={"margin-right-1 flex flex-basis-16"}>
+              Access device
+            </div>
+            <div className={"margin-right-1"}>{this.state.accessDevice}</div>
+            <Button
+              className={"btn-primary"}
+              onClick={() => this.setState({ showDevice: true })}
+            >
+              Edit
+            </Button>
+          </Col>
+        </Row>
+        {this.state.showDevice && (
+          <DevicePage
+            isOpen={this.state.showDevice}
+            deviceName={this.state.accessDevice}
+            handleHide={() => this.setState({ showDevice: false })}
+          />
+        )}
         <Row className={"margin-top-1"}>
           <Col md={12}>
             <div className="button-row">
@@ -124,7 +152,7 @@ export class Authentication extends Component {
     const {
       requireAuthentication,
       sipAuthenticationUserName,
-      sipAuthenticationPassword
+      sipAuthenticationPassword,
     } = this.state;
 
     const data = {
@@ -132,7 +160,7 @@ export class Authentication extends Component {
       sipAuthenticationUserName:
         sipAuthenticationUserName && sipAuthenticationUserName,
       sipAuthenticationPassword:
-        sipAuthenticationPassword && sipAuthenticationPassword
+        sipAuthenticationPassword && sipAuthenticationPassword,
     };
 
     const clearData = removeEmpty(data);
@@ -150,16 +178,14 @@ export class Authentication extends Component {
   };
 }
 
-const mapStateToProps = state => ({
+const mapStateToProps = (state) => ({
   trunkGroup: state.trunkGroup,
-  trunkGroupUsers: state.trunkGroupUsers
+  trunkGroupUsers: state.trunkGroupUsers,
+  trunkingConfig: state.selfcareUrl.trunking,
 });
 
 const mapDispatchToProps = { fetchPutUpdateTrunkGroup };
 
 export default withRouter(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(Authentication)
+  connect(mapStateToProps, mapDispatchToProps)(Authentication)
 );
