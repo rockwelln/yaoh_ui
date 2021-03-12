@@ -8,10 +8,7 @@ import Glyphicon from "react-bootstrap/lib/Glyphicon";
 
 import Loading from "../../common/Loading";
 
-import {
-  fetchGetTrunkGroupByName,
-  fetchGetSelfcareURL,
-} from "../../store/actions";
+import { fetchGetTrunkGroupByName } from "../../store/actions";
 
 import Users from "./Tabs/Users";
 import Backup from "./Tabs/Backup";
@@ -41,9 +38,6 @@ class TrunkGroupPage extends Component {
         this.props.match.params.trunkGroupName
       )
       .then(() => this.setState({ isLoading: false }));
-    this.props
-      .fetchGetSelfcareURL()
-      .then(() => this.setState({ isLoadingConfig: false }));
   }
 
   componentDidMount() {
@@ -61,9 +55,6 @@ class TrunkGroupPage extends Component {
 
   render() {
     const { isLoading } = this.state;
-    if (this.state.isLoadingConfig) {
-      return <Loading />;
-    }
     return (
       <React.Fragment>
         <div className={"panel-heading"}>
@@ -103,7 +94,6 @@ class TrunkGroupPage extends Component {
             <Tab eventKey={9} title="Access details">
               {isLoading ? <Loading /> : <Authentication />}
             </Tab>
-
             <Tab eventKey={1} title="DIDs">
               {isLoading ? <Loading /> : <Users />}
             </Tab>
@@ -135,7 +125,7 @@ class TrunkGroupPage extends Component {
   }
 }
 
-const mapDispatchToProps = { fetchGetTrunkGroupByName, fetchGetSelfcareURL };
+const mapDispatchToProps = { fetchGetTrunkGroupByName };
 
 const mapStateToProps = (state) => ({
   trunkGroup: state.trunkGroup,

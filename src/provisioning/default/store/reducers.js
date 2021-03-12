@@ -145,6 +145,7 @@ const initialState = {
   limitedUserServicesTenant: {},
   limitedUserServicesGroup: {},
   groupPasswordRules: {},
+  trunkGroupAccessInfo: {},
 };
 
 function mainReducer(state = initialState, action) {
@@ -813,6 +814,12 @@ function mainReducer(state = initialState, action) {
         groupPasswordRules: action.data,
       };
     }
+    case actionType.GET_TRUNK_GROUP_ACCESS_INFO: {
+      return {
+        ...state,
+        trunkGroupAccessInfo: action.data,
+      };
+    }
     case actionType.POST_CREATE_GROUP_ADMIN: {
       return {
         ...state,
@@ -1099,6 +1106,11 @@ function mainReducer(state = initialState, action) {
       };
     }
     case actionType.PUT_UPDATE_TENANT_ENTITLEMENT: {
+      return {
+        ...state,
+      };
+    }
+    case actionType.PUT_UPDATE_TRUNK_GROUP_ACCESS_INFO: {
       return {
         ...state,
       };
