@@ -47,6 +47,8 @@ export default function TemplatePlayground() {
   const [output, setOutput] = useState(emptyResponse);
   const [error, setError] = useState(undefined);
 
+  document.title = "Template playground"
+
   let validContext = true
   if(context.length !== 0) {
       try{
