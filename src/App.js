@@ -19,7 +19,7 @@ import NotificationSystem from 'react-notification-system';
 
 import {FormattedMessage} from 'react-intl';
 
-import AsyncApioHelp from './async-apio-help';
+import AsyncApioHelp from './help/async-apio-help';
 import Dashboard from './dashboard';
 import {CustomRequests, Request, Requests, Transaction} from './requests/requests';
 import Timers from './requests/timers';
@@ -79,6 +79,7 @@ import SearchMVNO from "./np/mvno_mgm";
 import {LoginPage, LoginForm} from "./login";
 import {RESET_PASSWORD_PREFIX, ResetPasswordRequestForm, ResetPasswordForm} from "./reset_password";
 import {NPEmergencyNotificationRequest} from "./np/emergency-notification";
+import TemplatePlayground from "./help/templatePlayground";
 
 const ListProvisioningGateways=React.lazy(() => import("./provisioning/ListProvisioningGateways"))
 
@@ -876,6 +877,11 @@ class App extends Component {
                         <Route path="/help"
                                component={props => (
                                    <AsyncApioHelp {...props} />
+                               )}
+                               exact />
+                        <Route path="/help/template-playground"
+                               component={props => (
+                                   <TemplatePlayground {...props} />
                                )}
                                exact />
                         <Route path="/dashboard"

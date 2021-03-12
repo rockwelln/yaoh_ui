@@ -1,7 +1,8 @@
 import React, {useEffect, useState} from 'react';
 import Table from 'react-bootstrap/lib/Table';
 import {FormattedMessage} from 'react-intl';
-import {fetch_get, STATIC_URL_PREFIX} from './utils';
+import {fetch_get, STATIC_URL_PREFIX} from '../utils';
+import {Link} from "react-router-dom";
 
 const HELP_DOCUMENTS = [
     // {url: `${STATIC_URL_PREFIX}/static/docs/high_level_api_guide/index.html`, title: 'High Level API Guide', version: '0.1', summary: ''},
@@ -43,7 +44,25 @@ export default function AsynApioHelp() {
             }
             </tbody>
         </Table>
-        <hr style={{marginTop: "150px"}} />
+        <Table>
+            <thead>
+                <tr>
+                    <th style={{width: "200px"}}><FormattedMessage id="tools" defaultMessage="Tools"/></th>
+                    <th><FormattedMessage id="summary" defaultMessage="Summary"/></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                      <Link to={"/help/template-playground"}>
+                        <FormattedMessage id="template-playground" defaultMessage="Template playground"/>
+                      </Link>
+                    </td>
+                    <td>The template playground is a webservice that runs on the API server. The service receives a template and a context, runs inside a sandbox, then returns the output.</td>
+                </tr>
+            </tbody>
+        </Table>
+        <hr style={{marginTop: "100px"}} />
         <Table>
             <thead>
                 <tr>
@@ -52,10 +71,6 @@ export default function AsynApioHelp() {
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>ui</td>
-                    <td>yaoh_ui_version</td>
-                </tr>
             {
                 packages && Object.keys(packages).map((p, i) => (
                     <tr key={i}>
