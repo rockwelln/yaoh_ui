@@ -1113,6 +1113,7 @@ function mainReducer(state = initialState, action) {
     case actionType.PUT_UPDATE_TRUNK_GROUP_ACCESS_INFO: {
       return {
         ...state,
+        trunkGroupAccessInfo: action.data,
       };
     }
     case actionType.DELETE_TENANT: {

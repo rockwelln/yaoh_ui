@@ -34,19 +34,41 @@ export class Authentication extends Component {
     isLoadingAccessInfo: true,
   };
 
-  componentDidMount() {
-    this.props
-      .fetchGetSelfcareURL()
-      .then(() =>
-        this.setState({ isLoadingConfig: false, ...this.props.trunkingConfig })
-      );
+  getAccessInfo = () => {
     this.props
       .fetchGetTrunkGroupAccessInfo(
         this.props.match.params.tenantId,
         this.props.match.params.groupId,
         this.props.match.params.trunkGroupName
       )
-      .then(() => this.setState({ isLoadingAccessInfo: false }));
+      .then(() => {
+        const newAccessData = JSON.parse(
+          JSON.stringify(this.state.access_data)
+        );
+        Object.keys(this.props.trunkGroupAccessInfo).forEach((key) => {
+          const index = this.state.access_data.findIndex(
+            (el) => el.name === key
+          );
+          newAccessData[index].value = this.props.trunkGroupAccessInfo[key];
+        });
+
+        this.setState({
+          isLoadingAccessInfo: false,
+          access_data: newAccessData,
+        });
+      });
+  };
+
+  componentDidMount() {
+    this.props
+      .fetchGetSelfcareURL()
+      .then(() =>
+        this.setState(
+          { isLoadingConfig: false, ...this.props.trunkingConfig },
+          () => this.getAccessInfo()
+        )
+      );
+
     this.setState({
       requireAuthentication: this.props.trunkGroup.requireAuthentication
         ? this.props.trunkGroup.requireAuthentication
@@ -103,7 +125,9 @@ export class Authentication extends Component {
         </Row>
         <Row className={"margin-top-1 margin-left-3"}>
           <Col md={12} className={"flex align-items-center"}>
-            <div className={"margin-right-1 flex flex-basis-16"}>Username</div>
+            <div className={"margin-right-1 flex flex-basis-16"}>
+              Username{this.state.requireAuthentication && "*"}
+            </div>
             <div>
               <FormControl
                 autoComplete={false}
@@ -121,7 +145,9 @@ export class Authentication extends Component {
         </Row>
         <Row className={"margin-top-1 margin-left-3"}>
           <Col md={12} className={"flex align-items-center"}>
-            <div className={"margin-right-1 flex flex-basis-16"}>Password</div>
+            <div className={"margin-right-1 flex flex-basis-16"}>
+              Password{this.state.requireAuthentication && "*"}
+            </div>
             <div>
               <FormControl
                 autoComplete="new-password"
@@ -143,7 +169,7 @@ export class Authentication extends Component {
         <Row className={"margin-top-1 margin-left-3"}>
           <Col md={12} className={"flex align-items-center"}>
             <div className={"margin-right-1 flex flex-basis-16"}>
-              Confirm password
+              Confirm password{this.state.requireAuthentication && "*"}
             </div>
             <div>
               <FormControl
@@ -250,7 +276,8 @@ export class Authentication extends Component {
                   disabled={
                     this.state.disableButton ||
                     this.getButtonStatusByAuthentication() ||
-                    this.state.passwordsNotMatch
+                    this.state.passwordsNotMatch ||
+                    this.getButtonStatusByAccessInfo()
                   }
                 >
                   Update
@@ -273,6 +300,23 @@ export class Authentication extends Component {
     } else {
       return false;
     }
+  };
+
+  getButtonStatusByAccessInfo = () => {
+    if (this.state.requireAuthentication) {
+      if (this.state.authentication_accessInfo === "mandatory") {
+        return !this.state.access_data
+          .filter((el) => el.mandatory)
+          .every((el) => el.value);
+      }
+    } else {
+      if (this.state.noAuthentication_accessInfo === "mandatory") {
+        return !this.state.access_data
+          .filter((el) => el.mandatory)
+          .every((el) => el.value);
+      }
+    }
+    return false;
   };
 
   getRequiredIcon = (isMandatory) => {
@@ -323,17 +367,9 @@ export class Authentication extends Component {
       sipAuthenticationPassword,
     };
 
-    const accesInfoData = {
-      primaryAddress: this.state.access_data[0].value,
-      primaryPort: this.state.access_data[1].value,
-    };
-
-    this.props.fetchPutUpdateTrunkGroupAccessInfo(
-      this.props.match.params.tenantId,
-      this.props.match.params.groupId,
-      this.props.match.params.trunkGroupName,
-      accesInfoData
-    );
+    const accesInfoData = this.state.access_data.reduce((acc, data) => {
+      return { ...acc, [data.name]: data?.value || "" };
+    }, {});
 
     this.setState({ disableButton: true }, () =>
       this.props
@@ -343,7 +379,25 @@ export class Authentication extends Component {
           this.props.match.params.trunkGroupName,
           data
         )
-        .then(() => this.setState({ disableButton: false }))
+        .then(() => {
+          if (
+            (this.state.requireAuthentication &&
+              this.state.authentication_accessInfo !== "forbidden") ||
+            (!this.state.requireAuthentication &&
+              this.state.noAuthentication_accessInfo !== "forbidden")
+          ) {
+            this.props
+              .fetchPutUpdateTrunkGroupAccessInfo(
+                this.props.match.params.tenantId,
+                this.props.match.params.groupId,
+                this.props.match.params.trunkGroupName,
+                accesInfoData
+              )
+              .then(() => this.setState({ disableButton: false }));
+          } else {
+            this.setState({ disableButton: false });
+          }
+        })
     );
   };
 }
@@ -352,6 +406,7 @@ const mapStateToProps = (state) => ({
   trunkGroup: state.trunkGroup,
   trunkGroupUsers: state.trunkGroupUsers,
   trunkingConfig: state.selfcareUrl.trunking,
+  trunkGroupAccessInfo: state.trunkGroupAccessInfo,
 });
 
 const mapDispatchToProps = {
