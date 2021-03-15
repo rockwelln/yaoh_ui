@@ -58,7 +58,7 @@ function updateProfile(profile_id, data, onSuccess) {
         }, {}
     );
     data_.api_rules = data.api_rules.map(r => Object.keys(r).reduce((a, b) => {
-            if(["method", "url", "allowed"].includes(b)) {
+            if(["method", "url", "allowed", "name"].includes(b)) {
                 a[b] = r[b];
             }
             return a;
@@ -145,9 +145,9 @@ function UploadFileModal(props) {
     )
 }
 
+const new_profile = {name: "", available: true, see_own_instances:true, see_others_instances: false, api_rules: []};
 
 function NewProfile(props) {
-    const new_profile = {name: "", available: true, see_own_instances:true, see_others_instances: false, api_rules: []};
     const [show, setShow] = useState(false);
     const [profile, setProfile] = useState(new_profile);
 
@@ -220,6 +220,7 @@ function NewProfile(props) {
                                             <th><FormattedMessage id="method" defaultMessage="method" /></th>
                                             <th>url</th>
                                             <th><FormattedMessage id="allowed" defaultMessage="allowed" /></th>
+                                            <th><FormattedMessage id="name" defaultMessage="name" /></th>
                                             <th/>
                                         </tr>
                                     </thead>
@@ -247,6 +248,11 @@ function NewProfile(props) {
                                                     <Checkbox
                                                         checked={r.allowed}
                                                         onChange={e => setProfile(update(profile, {api_rules: {[i]: {$merge: {allowed: e.target.checked}}}}))} />
+                                                </td>
+                                                <td>
+                                                    <FormControl componentClass="input"
+                                                        value={r.name}
+                                                        onChange={e => setProfile(update(profile, {api_rules: {[i]: {$merge: {name: e.target.value}}}}))} />
                                                 </td>
                                                 <td><Button bsStyle="danger" onClick={() => setProfile(update(profile, {api_rules: {$splice: [[i, 1]]}}))}><Glyphicon glyph="remove-sign"/></Button></td>
                                             </tr>
@@ -358,6 +364,7 @@ function UpdateProfile(props) {
                                         <th><FormattedMessage id="method" defaultMessage="method" /></th>
                                         <th>url</th>
                                         <th><FormattedMessage id="allowed" defaultMessage="allowed" /></th>
+                                        <th><FormattedMessage id="name" defaultMessage="name" /></th>
                                         <th/>
                                     </tr>
                                 </thead>
@@ -385,6 +392,11 @@ function UpdateProfile(props) {
                                                 <Checkbox
                                                     checked={r.allowed}
                                                     onChange={e => setProfile(update(profile, {api_rules: {[i]: {$merge: {allowed: e.target.checked}}}}))} />
+                                            </td>
+                                            <td>
+                                                <FormControl componentClass="input"
+                                                    value={r.name}
+                                                    onChange={e => setProfile(update(profile, {api_rules: {[i]: {$merge: {name: e.target.value}}}}))} />
                                             </td>
                                             <td><Button bsStyle="danger" onClick={() => setProfile(update(profile, {api_rules: {$splice: [[i, 1]]}}))}><Glyphicon glyph="remove-sign"/></Button></td>
                                         </tr>
@@ -464,14 +476,6 @@ export default function UserProfiles() {
                 <Breadcrumb.Item active><FormattedMessage id="profiles" defaultMessage="Profiles"/></Breadcrumb.Item>
             </Breadcrumb>
 
-            {
-                profiles.sort(
-                    (a, b) => a.id - b.id
-                ).map(
-                    (p, i) => <UpdateProfile profile={p} onDelete={refresh} onUpdate={refresh} key={i}/>
-                )
-            }
-
             <Panel>
                 <Panel.Body>
                     <ButtonToolbar>
@@ -479,6 +483,14 @@ export default function UserProfiles() {
                     </ButtonToolbar>
                 </Panel.Body>
             </Panel>
+
+            {
+                profiles.sort(
+                    (a, b) => a.id - b.id
+                ).map(
+                    (p, i) => <UpdateProfile profile={p} onDelete={refresh} onUpdate={refresh} key={i}/>
+                )
+            }
         </div>
     )
 }
