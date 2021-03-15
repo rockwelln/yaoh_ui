@@ -146,7 +146,15 @@ export const ApioDatatable = ({sorting_spec, headers, pagination, data, labels, 
     return (
         <div>
             {
-                onSearch && <SearchBar filter={filter} onSearch={onSearch} onChange={onFilterChange} />
+                onSearch ?
+                  <SearchBar filter={filter} onSearch={onSearch} onChange={onFilterChange} /> :
+                  pagination &&
+                    <Pagination
+                        onChange={onPagination}
+                        page_number={pagination.page_number}
+                        num_pages={pagination.num_pages}
+                        total_results={pagination.total_results}
+                    />
             }
             <Table style={{tableLayout: 'fixed'}}>
                 <thead>
