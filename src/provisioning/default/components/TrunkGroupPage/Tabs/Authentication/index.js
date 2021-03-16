@@ -86,8 +86,6 @@ export class Authentication extends Component {
   }
 
   render() {
-    console.log(this.state);
-
     if (this.state.isLoadingConfig || this.state.isLoadingAccessInfo) {
       return <Loading />;
     }
