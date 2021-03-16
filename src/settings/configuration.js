@@ -8,7 +8,7 @@ import Tab from "react-bootstrap/lib/Tab";
 
 import {FormattedMessage} from 'react-intl';
 
-import {fetch_get, fetch_put, NotificationsManager, userLocalizeUtcDate} from "../utils";
+import {fetch_get, fetch_post, fetch_put, NotificationsManager, userLocalizeUtcDate} from "../utils";
 import update from 'immutability-helper';
 //import Ajv from 'ajv';
 import {Panel} from "react-bootstrap";
@@ -2003,6 +2003,68 @@ function loadLicense(value, onSuccess) {
       .then(onSuccess)
 }
 
+function generateLicense(details, onSuccess) {
+    return fetch_post("/api/v01/system/configuration/license", details)
+      .then(r => r.json())
+      .then(r => onSuccess(r.license))
+      .catch(e => NotificationsManager.error("Failed to generate a new license", e.message))
+}
+
+function LicenseGenerator({onNewLicense}) {
+    const [key, setKey] = useState("");
+    const [customerName, setCustomerName] = useState("");
+    const [days, setDays] = useState(365);
+
+    return (
+      <>
+        <FormGroup>
+          <Col componentClass={ControlLabel} sm={2}>
+            <FormattedMessage id="validity" defaultMessage="Validity (days)"/>
+          </Col>
+          <Col sm={9}>
+            <FormControl
+              componentClass="input"
+              value={days}
+              onChange={e => setDays(parseInt(e.target.value ? e.target.value: "0", 10))}/>
+          </Col>
+        </FormGroup>
+        <FormGroup>
+          <Col componentClass={ControlLabel} sm={2}>
+            <FormattedMessage id="customer-name" defaultMessage="Customer name"/>
+          </Col>
+          <Col sm={9}>
+            <FormControl
+              componentClass="input"
+              value={customerName}
+              onChange={e => setCustomerName(e.target.value)}/>
+          </Col>
+        </FormGroup>
+        <FormGroup>
+          <Col componentClass={ControlLabel} sm={2}>
+            <FormattedMessage id="license key" defaultMessage="License key"/>
+          </Col>
+          <Col sm={9}>
+            <FormControl
+              componentClass="textarea"
+              rows={10}
+              value={key}
+              onChange={e => setKey(e.target.value)}/>
+              <hr/>
+            <Button
+              onClick={() => {
+                generateLicense({key: key, customer: customerName, days: days}, license => {
+                  onNewLicense && onNewLicense(license);
+                })
+              }}
+              bsStyle="secondary" >
+              Generate
+            </Button>
+          </Col>
+        </FormGroup>
+      </>
+    )
+}
+
 function LicensePanel(props) {
     const [newLicense, setNewLicense] = useState("");
     const [newDetails, setNewDetails] = useState(null);
@@ -2048,6 +2110,10 @@ function LicensePanel(props) {
               </Button>
             </Col>
           </FormGroup>
+          {
+            current.customer_name && current.customer_name.startsWith("netaxis") &&
+              <LicenseGenerator onNewLicense={setNewLicense} />
+          }
         </Form>
       </Panel.Body>
     </Panel>
