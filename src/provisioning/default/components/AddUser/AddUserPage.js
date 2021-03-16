@@ -14,13 +14,16 @@ import Button from "react-bootstrap/lib/Button";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import InputGroup from "react-bootstrap/lib/InputGroup";
 
+import { passwordValidator } from "../passwordValidator";
+
 import {
   fetchGetCategoryByName,
   fetchPostCreateUserToGroup,
   fetchGetGroupById,
   fetchGetAvailableNumbersByGroupId,
   fetchGetLanguages,
-  fetchGetTenantById
+  fetchGetTenantById,
+  fetchGetGroupPasswordRules,
 } from "../../store/actions";
 import { removeEmpty } from "../remuveEmptyInObject";
 
@@ -50,16 +53,23 @@ export class AddUserPage extends Component {
     phoneNumber: "",
     isLoadingLanguages: true,
     isLoadingTenant: true,
-    overrideId: false
+    overrideId: false,
+    isLoadingPassRules: true,
   };
 
   componentDidMount = () => {
     this.props.fetchGetLanguages().then(() =>
       this.setState({
         language: this.props.languages.defaultLangue,
-        isLoadingLanguages: false
+        isLoadingLanguages: false,
       })
     );
+    this.props
+      .fetchGetGroupPasswordRules(
+        this.props.match.params.tenantId,
+        this.props.match.params.groupId
+      )
+      .then(() => this.setState({ isLoadingPassRules: false }));
     this.props.fetchGetTenantById(this.props.match.params.tenantId).then(() => {
       this.setState({ isLoadingTenant: false });
     });
@@ -100,14 +110,16 @@ export class AddUserPage extends Component {
       templateName,
       buttonName,
       isLoadingLanguages,
-      isLoadingTenant
+      isLoadingTenant,
+      isLoadingPassRules,
     } = this.state;
 
     if (
       isLoadingGroup ||
       isLoadingTemplates ||
       isLoadingLanguages ||
-      isLoadingTenant
+      isLoadingTenant ||
+      isLoadingPassRules
     ) {
       return <Loading />;
     }
@@ -131,9 +143,9 @@ export class AddUserPage extends Component {
                     <Col md={12}>
                       <Checkbox
                         checked={this.state.overrideId}
-                        onChange={e =>
+                        onChange={(e) =>
                           this.setState({
-                            overrideId: e.target.checked
+                            overrideId: e.target.checked,
                           })
                         }
                       >
@@ -160,10 +172,10 @@ export class AddUserPage extends Component {
                             placeholder="User ID"
                             autoComplete="new-userId"
                             defaultValue={userId}
-                            onChange={e =>
+                            onChange={(e) =>
                               this.setState({
                                 userId: e.target.value,
-                                userIdError: null
+                                userIdError: null,
                               })
                             }
                           />
@@ -193,10 +205,10 @@ export class AddUserPage extends Component {
                         type="email"
                         placeholder="Email"
                         defaultValue={emailAddress}
-                        onChange={e =>
+                        onChange={(e) =>
                           this.setState({
                             emailAddress: e.target.value,
-                            emailIsValid: null
+                            emailIsValid: null,
                           })
                         }
                       />
@@ -219,10 +231,10 @@ export class AddUserPage extends Component {
                         type="text"
                         placeholder="First Name"
                         defaultValue={firstName}
-                        onChange={e =>
+                        onChange={(e) =>
                           this.setState({
                             firstName: e.target.value,
-                            firstNameError: null
+                            firstNameError: null,
                           })
                         }
                       />
@@ -247,10 +259,10 @@ export class AddUserPage extends Component {
                         type="text"
                         placeholder="Last Name"
                         defaultValue={lastName}
-                        onChange={e =>
+                        onChange={(e) =>
                           this.setState({
                             lastName: e.target.value,
-                            lastNameError: null
+                            lastNameError: null,
                           })
                         }
                       />
@@ -263,9 +275,9 @@ export class AddUserPage extends Component {
                     <Col mdOffset={3} md={9}>
                       <Checkbox
                         checked={this.state.useSameName}
-                        onChange={e =>
+                        onChange={(e) =>
                           this.setState({
-                            useSameName: e.target.checked
+                            useSameName: e.target.checked,
                           })
                         }
                       >
@@ -288,9 +300,9 @@ export class AddUserPage extends Component {
                             type="text"
                             placeholder="CLI First Name"
                             defaultValue={cliFirstName}
-                            onChange={e =>
+                            onChange={(e) =>
                               this.setState({
-                                cliFirstName: e.target.value
+                                cliFirstName: e.target.value,
                               })
                             }
                           />
@@ -309,9 +321,9 @@ export class AddUserPage extends Component {
                             type="text"
                             placeholder="CLI Last Name"
                             defaultValue={cliLastName}
-                            onChange={e =>
+                            onChange={(e) =>
                               this.setState({
-                                cliLastName: e.target.value
+                                cliLastName: e.target.value,
                               })
                             }
                           />
@@ -336,17 +348,16 @@ export class AddUserPage extends Component {
                         placeholder="Password"
                         autoComplete="new-password"
                         defaultValue={password}
-                        onChange={e =>
+                        onChange={(e) =>
                           this.setState({
                             password: e.target.value,
-                            passwordError: null
+                            passwordError: null,
+                            textPasswordError: "",
                           })
                         }
                       />
                       {passwordError && (
-                        <HelpBlock>
-                          Field is required and min length 6 characters
-                        </HelpBlock>
+                        <HelpBlock>{this.state.textPasswordError}</HelpBlock>
                       )}
                     </Col>
                   </FormGroup>
@@ -395,16 +406,16 @@ export class AddUserPage extends Component {
                         componentClass="select"
                         placeholder="Template"
                         defaultValue={templateName}
-                        onChange={e =>
+                        onChange={(e) =>
                           this.setState({
-                            templateName: e.target.value
+                            templateName: e.target.value,
                           })
                         }
                       >
                         <option key={"none"} value="">
                           none
                         </option>
-                        {this.props.category.templates.map(template => (
+                        {this.props.category.templates.map((template) => (
                           <option
                             key={`${template.name}`}
                             value={template.name}
@@ -427,13 +438,13 @@ export class AddUserPage extends Component {
                       <FormControl
                         componentClass="select"
                         defaultValue={language}
-                        onChange={e =>
+                        onChange={(e) =>
                           this.setState({
-                            language: e.target.value
+                            language: e.target.value,
                           })
                         }
                       >
-                        {this.props.languages.availableLanguages.map(lang => (
+                        {this.props.languages.availableLanguages.map((lang) => (
                           <option key={`${lang.locale}`} value={lang.name}>
                             {lang.name}
                           </option>
@@ -466,12 +477,12 @@ export class AddUserPage extends Component {
       </React.Fragment>
     );
   }
-  validateEmail = elementValue => {
+  validateEmail = (elementValue) => {
     var emailPattern = /^([0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*@([0-9a-zA-Z][-\w]*[0-9a-zA-Z]\.)+[a-zA-Z]{2,9})$/;
     return emailPattern.test(elementValue);
   };
 
-  addUser = e => {
+  addUser = (e) => {
     e.preventDefault();
     const {
       useSameName,
@@ -484,7 +495,7 @@ export class AddUserPage extends Component {
       userId,
       password,
       language,
-      overrideId
+      overrideId,
       //phoneNumber
     } = this.state;
 
@@ -506,8 +517,17 @@ export class AddUserPage extends Component {
       this.setState({ lastNameError: "error" });
       return;
     }
-    if (!this.props.tenant.sync && (!password || password.length < 6)) {
-      this.setState({ passwordError: "error" });
+    if (
+      !this.props.tenant.sync &&
+      passwordValidator(password, this.props.groupPasswordRules)
+    ) {
+      this.setState({
+        passwordError: "error",
+        textPasswordError: passwordValidator(
+          password,
+          this.props.groupPasswordRules
+        ),
+      });
       return;
     }
 
@@ -529,9 +549,9 @@ export class AddUserPage extends Component {
             this.props.match.params.trunkGroupName &&
             this.props.match.params.trunkGroupName,
           linePort: `${userId}@${this.props.group.defaultDomain}`,
-          isPilotUser: false
-        }
-      }
+          isPilotUser: false,
+        },
+      },
       //phoneNumber
     };
 
@@ -544,7 +564,7 @@ export class AddUserPage extends Component {
           this.props.match.params.groupId,
           clearData
         )
-        .then(res => {
+        .then((res) => {
           this.setState({ buttonName: "Create" }, () =>
             res === "success"
               ? this.props.match.params.trunkGroupName
@@ -561,13 +581,14 @@ export class AddUserPage extends Component {
   };
 }
 
-const mapStateToProps = state => ({
+const mapStateToProps = (state) => ({
   category: state.category,
   group: state.group,
   createdUserInGroup: state.createdUserInGroup,
   availableNumbers: state.availableNumbers,
   languages: state.languages,
-  tenant: state.tenant
+  tenant: state.tenant,
+  groupPasswordRules: state.groupPasswordRules,
 });
 
 const mapDispatchToProps = {
@@ -576,12 +597,10 @@ const mapDispatchToProps = {
   fetchGetGroupById,
   fetchGetAvailableNumbersByGroupId,
   fetchGetLanguages,
-  fetchGetTenantById
+  fetchGetTenantById,
+  fetchGetGroupPasswordRules,
 };
 
 export default withRouter(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(AddUserPage)
+  connect(mapStateToProps, mapDispatchToProps)(AddUserPage)
 );
