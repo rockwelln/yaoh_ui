@@ -8,7 +8,7 @@ import {
   fetch_put,
   NotificationsManager,
   AuthServiceManager,
-  API_URL_PREFIX, userLocalizeUtcDate
+  API_URL_PREFIX, userLocalizeUtcDate, downloadJson
 } from "../utils";
 
 import Col from 'react-bootstrap/lib/Col';
@@ -1046,16 +1046,7 @@ function CommitVersionModal({show, onHide, id}) {
 }
 
 function downloadDefinition(activity) {
-  let element = document.createElement('a');
-  element.setAttribute('href', 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(activity.definition, null, 2)));
-  element.setAttribute('download', `${activity.name}.json`);
-
-  element.style.display = 'none';
-  document.body.appendChild(element);
-
-  element.click();
-
-  document.body.removeChild(element);
+  downloadJson(activity.name, activity.definition);
 }
 
 function compareActivitiesDef(a, b) {

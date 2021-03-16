@@ -6,7 +6,6 @@ import Row from "react-bootstrap/lib/Row";
 import Col from "react-bootstrap/lib/Col";
 import FormControl from "react-bootstrap/lib/FormControl";
 import Button from "react-bootstrap/lib/Button";
-import update from "immutability-helper";
 import InputGroupButton from "react-bootstrap/lib/InputGroupButton";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import InputGroup from "react-bootstrap/lib/InputGroup";
@@ -14,7 +13,7 @@ import Form from "react-bootstrap/lib/Form";
 import {fetch_get, fetch_post, NotificationsManager} from "../utils";
 import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 
-function fetchInstanceContext(instanceId, onSuccess) {
+export function fetchInstanceContext(instanceId, onSuccess) {
   fetch_get(`/api/v01/transactions/${instanceId}/template_context`)
     .then(r => onSuccess(r))
     .catch(e => NotificationsManager.error(
