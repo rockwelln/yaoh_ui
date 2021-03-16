@@ -246,15 +246,17 @@ export class Authentication extends Component {
         <Row className={"margin-top-1 margin-left-3"}>
           <Col md={12} className={"flex align-items-center"}>
             <div className={"margin-right-1 flex flex-basis-16"}>
-              Access device
+              Access device:
             </div>
             <div className={"margin-right-1"}>{this.state.accessDevice}</div>
-            <Button
-              className={"btn-primary"}
-              onClick={() => this.setState({ showDevice: true })}
-            >
-              Edit
-            </Button>
+            {!this.state.accessDevice && (
+              <Button
+                className={"btn-primary"}
+                onClick={() => this.setState({ showDevice: true })}
+              >
+                Edit
+              </Button>
+            )}
           </Col>
         </Row>
         {this.state.showDevice && (
