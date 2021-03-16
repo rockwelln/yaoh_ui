@@ -26,7 +26,7 @@ import update from 'immutability-helper';
 import {fetch_post, fetch_get, fetch_delete, fetch_put, NotificationsManager} from "../utils";
 import {ApioDatatable} from "../utils/datatable";
 import { LinkContainer } from 'react-router-bootstrap';
-import {INTERNAL_HELP_LINKS} from "../async-apio-help";
+import {INTERNAL_HELP_LINKS} from "../help/async-apio-help";
 import {Search, StaticControl} from "../utils/common";
 import {CallbackHandler} from "./callbacks";
 import {get_ui_profiles} from "../utils/user";
