@@ -75,11 +75,19 @@ export class Capacity extends Component {
             <div className={"margin-right-1 flex flex-basis-33"}>
               Maximum number of simultaenous calls
             </div>
-            <div>
+            <div className={"flex flex-basis-33"}>
               <FormControl
                 type="number"
                 value={this.state.maxActiveCalls}
+                max={this.props.groupTrunkGroupInfo.maxActiveCalls}
+                min={0}
                 onChange={(e) => {
+                  if (
+                    this.props.groupTrunkGroupInfo.maxActiveCalls <
+                    e.target.value
+                  ) {
+                    return;
+                  }
                   this.setState({
                     maxActiveCalls: Number(e.target.value),
                   });
@@ -93,10 +101,12 @@ export class Capacity extends Component {
             <div className={"margin-right-1 flex flex-basis-33"}>
               Maximum number of ongoing incoming calls
             </div>
-            <div>
+            <div className={"flex flex-basis-33"}>
               <FormControl
                 type="number"
                 value={this.state.maxIncomingCalls}
+                max={this.props.groupTrunkGroupInfo.maxActiveCalls}
+                min={0}
                 onChange={(e) => {
                   this.setState({
                     maxIncomingCalls: Number(e.target.value),
@@ -111,10 +121,12 @@ export class Capacity extends Component {
             <div className={"margin-right-1 flex flex-basis-33"}>
               Maximum number of ongoing outgoing calls
             </div>
-            <div>
+            <div className={"flex flex-basis-33"}>
               <FormControl
                 type="number"
                 value={this.state.maxOutgoingCalls}
+                max={this.props.groupTrunkGroupInfo.maxActiveCalls}
+                min={0}
                 onChange={(e) => {
                   this.setState({
                     maxOutgoingCalls: Number(e.target.value),
@@ -148,10 +160,18 @@ export class Capacity extends Component {
                 <div className={"margin-right-1 flex flex-basis-33"}>
                   Maximum amount of simultaneous calls in bursting*
                 </div>
-                <div>
+                <div className={"flex flex-basis-33"}>
                   <FormControl
                     type="number"
                     value={this.state.burstingMaxActiveCalls}
+                    max={
+                      this.props.groupTrunkGroupInfo.burstingMaxActiveCalls
+                        .unlimited
+                        ? null
+                        : this.props.groupTrunkGroupInfo.burstingMaxActiveCalls
+                            .maximum
+                    }
+                    min={0}
                     onChange={(e) => {
                       this.setState({
                         burstingMaxActiveCalls: Number(e.target.value),
@@ -166,10 +186,18 @@ export class Capacity extends Component {
                 <div className={"margin-right-1 flex flex-basis-33"}>
                   Maximum amount of ongoing incoming calls in bursting
                 </div>
-                <div>
+                <div className={"flex flex-basis-33"}>
                   <FormControl
                     type="number"
                     value={this.state.burstingMaxIncomingCalls}
+                    max={
+                      this.props.groupTrunkGroupInfo.burstingMaxActiveCalls
+                        .unlimited
+                        ? null
+                        : this.props.groupTrunkGroupInfo.burstingMaxActiveCalls
+                            .maximum
+                    }
+                    min={0}
                     onChange={(e) => {
                       this.setState({
                         burstingMaxIncomingCalls: Number(e.target.value),
@@ -184,10 +212,18 @@ export class Capacity extends Component {
                 <div className={"margin-right-1 flex flex-basis-33"}>
                   Maximum amount of ongoing outgoing calls in bursting
                 </div>
-                <div>
+                <div className={"flex flex-basis-33"}>
                   <FormControl
                     type="number"
                     value={this.state.burstingMaxOutgoingCalls}
+                    max={
+                      this.props.groupTrunkGroupInfo.burstingMaxActiveCalls
+                        .unlimited
+                        ? null
+                        : this.props.groupTrunkGroupInfo.burstingMaxActiveCalls
+                            .maximum
+                    }
+                    min={0}
                     onChange={(e) => {
                       this.setState({
                         burstingMaxOutgoingCalls: Number(e.target.value),
