@@ -1983,13 +1983,18 @@ export function fetchGetTrunkGroupAccessInfo(tenantId, groupId, trunkGroupId) {
     )
       .then((data) => dispatch(getTrunkGroupAccessInfo(data)))
       .catch((error) => {
-        NotificationsManager.error(
-          <FormattedMessage
-            id="fetch-trunk-group-access-info-failed"
-            defaultMessage="Failed to fetch trunkg group access info"
-          />,
-          error.message
-        );
+        if (error.response.status === 404) {
+          dispatch(getTrunkGroupAccessInfo({}));
+        } else {
+          dispatch(getTrunkGroupAccessInfo({}));
+          NotificationsManager.error(
+            <FormattedMessage
+              id="fetch-trunk-group-access-info-failed"
+              defaultMessage="Failed to fetch trunkg group access info"
+            />,
+            error.message
+          );
+        }
       });
   };
 }
