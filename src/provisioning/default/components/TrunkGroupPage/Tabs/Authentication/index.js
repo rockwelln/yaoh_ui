@@ -16,7 +16,6 @@ import {
   fetchPutUpdateTrunkGroupAccessInfo,
 } from "../../../../store/actions";
 
-import { removeEmpty } from "../../../remuveEmptyInObject";
 import DevicePage from "../../../DevicePage";
 import Loading from "../../../../common/Loading";
 
@@ -32,6 +31,7 @@ export class Authentication extends Component {
     isLoadingConfig: true,
     access_data: [],
     isLoadingAccessInfo: true,
+    disableAccessInfoButton: false,
   };
 
   getAccessInfo = () => {
@@ -198,6 +198,26 @@ export class Authentication extends Component {
             </Col>
           </Row>
         )}
+        <Row className={"margin-top-1"}>
+          <Col md={12}>
+            <div className="button-row">
+              <div className="pull-right">
+                <Button
+                  className={"btn-primary"}
+                  onClick={this.update}
+                  disabled={
+                    this.state.disableButton ||
+                    this.getButtonStatusByAuthentication() ||
+                    this.state.passwordsNotMatch //||
+                    //this.getButtonStatusByAccessInfo()
+                  }
+                >
+                  Update
+                </Button>
+              </div>
+            </div>
+          </Col>
+        </Row>
         {this.isShowAccessInformation() && (
           <>
             <Row className={"margin-top-1"}>
@@ -234,6 +254,26 @@ export class Authentication extends Component {
                 </Col>
               </Row>
             ))}
+            <Row className={"margin-top-1"}>
+              <Col md={12}>
+                <div className="button-row">
+                  <div className="pull-right">
+                    <Button
+                      className={"btn-primary"}
+                      onClick={this.updateAccessInfo}
+                      disabled={
+                        this.state.disableAccessInfoButton ||
+                        //this.getButtonStatusByAuthentication() ||
+                        //this.state.passwordsNotMatch ||
+                        this.getButtonStatusByAccessInfo()
+                      }
+                    >
+                      Update
+                    </Button>
+                  </div>
+                </div>
+              </Col>
+            </Row>
           </>
         )}
         <Row className={"margin-top-1"}>
@@ -266,29 +306,26 @@ export class Authentication extends Component {
             handleHide={() => this.setState({ showDevice: false })}
           />
         )}
-        <Row className={"margin-top-1"}>
-          <Col md={12}>
-            <div className="button-row">
-              <div className="pull-right">
-                <Button
-                  className={"btn-primary"}
-                  onClick={this.update}
-                  disabled={
-                    this.state.disableButton ||
-                    this.getButtonStatusByAuthentication() ||
-                    this.state.passwordsNotMatch ||
-                    this.getButtonStatusByAccessInfo()
-                  }
-                >
-                  Update
-                </Button>
-              </div>
-            </div>
-          </Col>
-        </Row>
       </React.Fragment>
     );
   }
+
+  updateAccessInfo = () => {
+    const accesInfoData = this.state.access_data.reduce((acc, data) => {
+      return { ...acc, [data.name]: data?.value || "" };
+    }, {});
+
+    this.setState({ disableAccessInfoButton: true }, () =>
+      this.props
+        .fetchPutUpdateTrunkGroupAccessInfo(
+          this.props.match.params.tenantId,
+          this.props.match.params.groupId,
+          this.props.match.params.trunkGroupName,
+          accesInfoData
+        )
+        .then(() => this.setState({ disableAccessInfoButton: false }))
+    );
+  };
 
   getButtonStatusByAuthentication = () => {
     if (this.state.requireAuthentication) {
@@ -367,10 +404,6 @@ export class Authentication extends Component {
       sipAuthenticationPassword,
     };
 
-    const accesInfoData = this.state.access_data.reduce((acc, data) => {
-      return { ...acc, [data.name]: data?.value || "" };
-    }, {});
-
     this.setState({ disableButton: true }, () =>
       this.props
         .fetchPutUpdateTrunkGroup(
@@ -380,23 +413,23 @@ export class Authentication extends Component {
           data
         )
         .then(() => {
-          if (
-            (this.state.requireAuthentication &&
-              this.state.authentication_accessInfo !== "forbidden") ||
-            (!this.state.requireAuthentication &&
-              this.state.noAuthentication_accessInfo !== "forbidden")
-          ) {
-            this.props
-              .fetchPutUpdateTrunkGroupAccessInfo(
-                this.props.match.params.tenantId,
-                this.props.match.params.groupId,
-                this.props.match.params.trunkGroupName,
-                accesInfoData
-              )
-              .then(() => this.setState({ disableButton: false }));
-          } else {
-            this.setState({ disableButton: false });
-          }
+          // if (
+          //   (this.state.requireAuthentication &&
+          //     this.state.authentication_accessInfo !== "forbidden") ||
+          //   (!this.state.requireAuthentication &&
+          //     this.state.noAuthentication_accessInfo !== "forbidden")
+          // ) {
+          //   this.props
+          //     .fetchPutUpdateTrunkGroupAccessInfo(
+          //       this.props.match.params.tenantId,
+          //       this.props.match.params.groupId,
+          //       this.props.match.params.trunkGroupName,
+          //       accesInfoData
+          //     )
+          //     .then(() => this.setState({ disableButton: false }));
+          // } else {
+          this.setState({ disableButton: false });
+          //}
         })
     );
   };
