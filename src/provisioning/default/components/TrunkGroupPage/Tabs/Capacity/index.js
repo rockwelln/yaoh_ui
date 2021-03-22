@@ -7,6 +7,8 @@ import Row from "react-bootstrap/lib/Row";
 import Col from "react-bootstrap/lib/Col";
 import FormControl from "react-bootstrap/lib/FormControl";
 import Button from "react-bootstrap/lib/Button";
+import OverlayTrigger from "react-bootstrap/lib/OverlayTrigger";
+import Tooltip from "react-bootstrap/lib/Tooltip";
 
 import {
   fetchPutUpdateTrunkGroup,
@@ -137,20 +139,37 @@ export class Capacity extends Component {
           </Col>
         </Row>
         <Row>
-          <Col md={12}>
-            <Checkbox
-              checked={this.state.enableBursting}
-              onChange={(e) => {
-                this.setState({ enableBursting: e.target.checked });
-              }}
-              disabled={
+          <Col md={12} className={"flex align-items-center"}>
+            <OverlayTrigger
+              placement="top"
+              overlay={
                 !this.props.groupTrunkGroupInfo?.burstingMaxActiveCalls
                   .unlimited &&
-                !this.props.groupTrunkGroupInfo?.burstingMaxActiveCalls.maximum
+                !this.props.groupTrunkGroupInfo?.burstingMaxActiveCalls
+                  .maximum ? (
+                  <Tooltip id="tooltip">
+                    No bursting capacity available for this group
+                  </Tooltip>
+                ) : (
+                  <div />
+                )
               }
             >
-              Allow bursting
-            </Checkbox>
+              <Checkbox
+                checked={this.state.enableBursting}
+                onChange={(e) => {
+                  this.setState({ enableBursting: e.target.checked });
+                }}
+                disabled={
+                  !this.props.groupTrunkGroupInfo?.burstingMaxActiveCalls
+                    .unlimited &&
+                  !this.props.groupTrunkGroupInfo?.burstingMaxActiveCalls
+                    .maximum
+                }
+              >
+                Allow bursting
+              </Checkbox>
+            </OverlayTrigger>
           </Col>
         </Row>
         {this.state.enableBursting && (
