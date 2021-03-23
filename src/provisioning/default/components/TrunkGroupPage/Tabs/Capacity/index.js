@@ -75,7 +75,7 @@ export class Capacity extends Component {
         <Row className={"margin-top-1"}>
           <Col md={12} className={"flex align-items-center"}>
             <div className={"margin-right-1 flex flex-basis-33"}>
-              Maximum number of simultaenous calls
+              Maximum number of simultaneous calls
             </div>
             <div className={"flex flex-basis-33"}>
               <FormControl
