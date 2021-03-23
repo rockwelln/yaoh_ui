@@ -68,8 +68,6 @@ export class Capacity extends Component {
       return <Loading />;
     }
 
-    console.log(this.props.groupTrunkGroupInfo);
-
     return (
       <React.Fragment>
         <Row className={"margin-top-1"}>
