@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {memo, useCallback, useEffect, useState} from 'react';
 
 import Tab from 'react-bootstrap/lib/Tab';
 import Badge from 'react-bootstrap/lib/Badge';
@@ -73,7 +73,15 @@ function GatewayConfig({name}) {
 }
 
 
-const connected_badge = (connected) => (
+const ReachableBadge = (reachable) => (
+    <Badge bsClass={reachable?"label label-success":"label label-danger"}>
+    {
+        reachable?<FormattedMessage id='reachable'/>:<FormattedMessage id='unreachable'/>
+    }
+    </Badge>
+)
+
+const ConnectionBadge = (connected) => (
     <Badge bsClass={connected?"label label-success":"label label-danger"}>
     {
         connected?<FormattedMessage id='connected'/>:<FormattedMessage id='disconnected'/>
@@ -81,16 +89,37 @@ const connected_badge = (connected) => (
     </Badge>
 )
 
-const active_badge = (active) => (
-    active === undefined?
+const ActiveBadge = (active) => (
+    active === undefined || active === null?
     '':active?
     <Badge bsClass="label label-success"><FormattedMessage id='active'/></Badge>:
     <Badge bsClass="label label-danger"><FormattedMessage id='inactive'/></Badge>
 )
 
+const ClientSituation = ({info, name}) => {
+    const endpointColor = info.check && !info.connected?"red":info.check && !info.warning?"green":"orange";
+    return (
+        <ul className="list-inline" style={{marginTop: "10px"}}>
+            <li>
+                <Glyphicon glyph="map-marker" style={{fontSize: "500%", color: "green", display: "block", textAlign: "center"}} />
+                <FormattedMessage id="apio-async" defaultMessage="APIO Async"/>
+            </li>
+            <li style={{paddingLeft: "5%", paddingRight: "5%"}}>
+                <span>
+                    <Glyphicon glyph="arrow-right" style={{fontSize: "200%", color: "grey"}} />
+                </span>
+            </li>
+            <li>
+                <Glyphicon glyph="tasks" style={{fontSize: "500%", color: endpointColor, display: "block", textAlign: "center"}} />
+                {name}
+            </li>
+        </ul>
+    );
+}
+
 const GatewaySituation = ({info, name}) => {
-    const gatewayColor = !info.gateway_connected?"red":info.active?"green":"orange";
-    const endpointColor = gatewayColor !== "green"?"inherit":info.connected?"green":"red";
+    const gatewayColor = info.check && !info.connected?"red":info.check && info.active !== false?"green":"orange";
+    const endpointColor = gatewayColor !== "green"?"inherit":info.response && info.response.connected?"green":"red";
     return (
         <ul className="list-inline" style={{marginTop: "10px"}}>
             <li>
@@ -145,7 +174,12 @@ function GatewayTab({name, onEditUrl, info, remainingSecs}) {
                     {' '}{remainingSecs} secs
                 </p>
 
-                <GatewaySituation name={name} info={info} />
+                {
+                  info.is_gateway ?
+                    <GatewaySituation name={name} info={info} /> :
+                    <ClientSituation name={name} info={info} />
+                }
+
             </div>
             <br/>
             <Table>
@@ -156,8 +190,9 @@ function GatewayTab({name, onEditUrl, info, remainingSecs}) {
                         </th>
                         <td style={{width: "80%"}}>
                             {info.url}{' '}
-                            {connected_badge(info.connected)}{' '}
-                            {info.connected && active_badge(info.active)}
+                            {info.check && ReachableBadge(info.reachable)}{' '}
+                            {info.check && ConnectionBadge(info.connected)}{' '}
+                            {info.check && info.connected && ActiveBadge(info.active)}
                         </td>
                         <th style={{width: "10%"}}>
                             <Button bsStyle="primary" onClick={() => setShowEditUrl(true)}>
@@ -208,6 +243,12 @@ function GatewayTab({name, onEditUrl, info, remainingSecs}) {
                     }}><FormattedMessage id="cancel" defaultMessage="Cancel" /></Button>
                 </Modal.Footer>
             </Modal>
+            {info.warning && (
+                <Alert bsStyle="warning">
+                    <Glyphicon glyph="warning-sign" />
+                    {' '}{info.warning}
+                </Alert>
+            )}
             {info.error && (
                 <Alert bsStyle="danger">
                     <Glyphicon glyph="remove-circle" />
@@ -257,6 +298,9 @@ export default function Gateways(props) {
     }, []);
 
     const { hash } = useLocation();
+    const onSelect = useCallback(newKey => {
+      props.history.push("/system/gateways#" + newKey);
+    }, []);
 
     return (
         <div>
@@ -264,7 +308,9 @@ export default function Gateways(props) {
                 <Breadcrumb.Item active><FormattedMessage id="system" defaultMessage="System"/></Breadcrumb.Item>
                 <Breadcrumb.Item active><FormattedMessage id="gateways" defaultMessage="Gateways"/></Breadcrumb.Item>
             </Breadcrumb>
-            <Tabs defaultActiveKey={hash ? hash.substring(1) : Object.keys(gateways)[0]} id="gateways-tabs">
+            <Tabs
+              onSelect={onSelect}
+              defaultActiveKey={hash ? hash.substring(1) : Object.keys(gateways)[0]} id="gateways-tabs">
             {
                 Object.keys(gateways).map((g, i) => (
                     <Tab eventKey={g} title={g} key={g}>

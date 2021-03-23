@@ -94,7 +94,7 @@ export default function Dashboard(props) {
                     isManual && <ManualActionsTile />
                 }
                 {
-                    Object.keys(gateways).slice(0, 5).map(k => <GatewaysStatusTile key={k} label={k} status={gateways[k]} />)
+                    Object.keys(gateways).slice(0, 4).map(k => <GatewaysStatusTile key={k} label={k} status={gateways[k]} />)
                 }
             </Row>
             <Row>

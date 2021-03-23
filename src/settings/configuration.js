@@ -296,22 +296,22 @@ function NewGatewayModal(props) {
   )
 }
 
-function GatewaysPanel(props) {
-  const {onChange, gateways} = props;
+function ClientsPanel(props) {
+  const {onChange, clients} = props;
   const [showNew, setShowNew] = useState(false);
 
   return (
     <>
       <HelpBlock>
-        This panel contains information about gateways. And allow to configure their monitoring and
+        This panel contains information about HTTP clients. And allow to configure their monitoring and
         if their session is available to the workflows.
       </HelpBlock>
       {
         Object
-          .keys(gateways)
+          .keys(clients)
           .sort((a, b) => a.localeCompare(b))
           .map(g => {
-            const gateway = gateways[g];
+            const client = clients[g];
             return (
               <Panel key={`gw-${g}`}>
                 <Panel.Heading>
@@ -327,8 +327,8 @@ function GatewaysPanel(props) {
                       <Col sm={9}>
                         <FormControl
                           componentClass="input"
-                          value={gateway.url}
-                          onChange={e => onChange(update(gateways, {[g]: {$merge: {url: e.target.value}}}))}/>
+                          value={client.url}
+                          onChange={e => onChange(update(clients, {[g]: {$merge: {url: e.target.value}}}))}/>
                         <HelpBlock>
                           URL with the '/' at end to reach the gateway
                         </HelpBlock>
@@ -343,8 +343,8 @@ function GatewaysPanel(props) {
                       <Col sm={9}>
                         <FormControl
                           componentClass="input"
-                          value={gateway.timeout}
-                          onChange={e => onChange(update(gateways, {[g]: {$merge: {timeout: e.target.value && parseInt(e.target.value)}}}))}/>
+                          value={client.timeout}
+                          onChange={e => onChange(update(clients, {[g]: {$merge: {timeout: e.target.value && parseInt(e.target.value)}}}))}/>
                         <HelpBlock>
                           Timeout in seconds for the connection
                         </HelpBlock>
@@ -358,12 +358,12 @@ function GatewaysPanel(props) {
 
                       <Col sm={9}>
                         <Checkbox
-                          checked={gateway.check}
-                          onChange={e => onChange(update(gateways, {[g]: {$merge: {check: e.target.checked}}}))
+                          checked={client.check}
+                          onChange={e => onChange(update(clients, {[g]: {$merge: {check: e.target.checked}}}))
                           }
                         />
                         <HelpBlock>
-                          Monitor the status of the gateway and present it to the dashboard.
+                          Monitor the status of the client and present it to the dashboard.
                           (The gateway has to support some protocols to be integrated properly)
                         </HelpBlock>
                       </Col>
@@ -378,8 +378,8 @@ function GatewaysPanel(props) {
                         <FormControl
                           componentClass="input"
                           placeHolder="/health"
-                          value={gateway.check_url}
-                          onChange={e => onChange(update(gateways, {[g]: {$merge: {check_url: e.target.value || undefined}}}))}/>
+                          value={client.check_url}
+                          onChange={e => onChange(update(clients, {[g]: {$merge: {check_url: e.target.value || undefined}}}))}/>
                       </Col>
                     </FormGroup>
 
@@ -391,8 +391,8 @@ function GatewaysPanel(props) {
                       <Col sm={9}>
                         <FormControl
                           componentClass="input"
-                          value={gateway.session_holder}
-                          onChange={e => onChange(update(gateways, {[g]: {$merge: {session_holder: e.target.value}}}))}/>
+                          value={client.session_holder}
+                          onChange={e => onChange(update(clients, {[g]: {$merge: {session_holder: e.target.value}}}))}/>
                         <HelpBlock>
                           A session holder is a name letting workflows getting a prepared session (with auto-login
                           etc...)
@@ -411,8 +411,8 @@ function GatewaysPanel(props) {
                       <Col sm={9}>
                         <FormControl
                           componentClass="select"
-                          value={gateway.auth || "default"}
-                          onChange={e => onChange(update(gateways, {[g]: {$merge: {auth: e.target.value}}}))}>
+                          value={client.auth || "default"}
+                          onChange={e => onChange(update(clients, {[g]: {$merge: {auth: e.target.value}}}))}>
                             <option value="default">default</option>
                             <option value="oauth2">oauth2</option>
                             <option value="basic">basic</option>
@@ -423,7 +423,7 @@ function GatewaysPanel(props) {
                     </FormGroup>
 
                     {
-                      gateway.auth !== "hawk" &&
+                      client.auth !== "hawk" &&
                         <>
                           <FormGroup>
                             <Col componentClass={ControlLabel} sm={2}>
@@ -433,9 +433,9 @@ function GatewaysPanel(props) {
                             <Col sm={9}>
                               <FormControl
                                 componentClass="input"
-                                value={gateway.login_url}
+                                value={client.login_url}
                                 placeholder="/auth/login"
-                                onChange={e => onChange(update(gateways, {[g]: {$merge: {login_url: e.target.value}}}))}/>
+                                onChange={e => onChange(update(clients, {[g]: {$merge: {login_url: e.target.value}}}))}/>
                               <HelpBlock>
                                 Ignored for basic auth.
                               </HelpBlock>
@@ -450,8 +450,8 @@ function GatewaysPanel(props) {
                             <Col sm={9}>
                               <FormControl
                                 componentClass="input"
-                                value={gateway.username}
-                                onChange={e => onChange(update(gateways, {[g]: {$merge: {username: e.target.value}}}))}/>
+                                value={client.username}
+                                onChange={e => onChange(update(clients, {[g]: {$merge: {username: e.target.value}}}))}/>
                                 <HelpBlock>
                                   Empty the username to disable the authentication
                                 </HelpBlock>
@@ -466,8 +466,8 @@ function GatewaysPanel(props) {
                             <Col sm={9}>
                               <FormControl
                                 componentClass="input"
-                                value={gateway.password}
-                                onChange={e => onChange(update(gateways, {[g]: {$merge: {password: e.target.value}}}))}/>
+                                value={client.password}
+                                onChange={e => onChange(update(clients, {[g]: {$merge: {password: e.target.value}}}))}/>
 
                             </Col>
                           </FormGroup>
@@ -475,7 +475,7 @@ function GatewaysPanel(props) {
                     }
 
                     {
-                      gateway.auth === "oauth2" &&
+                      client.auth === "oauth2" &&
                       <>
                         <FormGroup>
                           <Col componentClass={ControlLabel} sm={2}>
@@ -485,8 +485,8 @@ function GatewaysPanel(props) {
                           <Col sm={9}>
                             <FormControl
                               componentClass="input"
-                              value={gateway.client_id}
-                              onChange={e => onChange(update(gateways, {[g]: {$merge: {client_id: e.target.value}}}))}/>
+                              value={client.client_id}
+                              onChange={e => onChange(update(clients, {[g]: {$merge: {client_id: e.target.value}}}))}/>
 
                           </Col>
                         </FormGroup>
@@ -498,8 +498,8 @@ function GatewaysPanel(props) {
                           <Col sm={9}>
                             <FormControl
                               componentClass="input"
-                              value={gateway.client_secret}
-                              onChange={e => onChange(update(gateways, {[g]: {$merge: {client_secret: e.target.value}}}))}/>
+                              value={client.client_secret}
+                              onChange={e => onChange(update(clients, {[g]: {$merge: {client_secret: e.target.value}}}))}/>
 
                           </Col>
                         </FormGroup>
@@ -507,7 +507,7 @@ function GatewaysPanel(props) {
                     }
 
                     {
-                      gateway.auth === "hawk" &&
+                      client.auth === "hawk" &&
                       <>
                         <FormGroup>
                           <Col componentClass={ControlLabel} sm={2}>
@@ -517,8 +517,8 @@ function GatewaysPanel(props) {
                           <Col sm={9}>
                             <FormControl
                               componentClass="input"
-                              value={gateway.id}
-                              onChange={e => onChange(update(gateways, {[g]: {$merge: {id: e.target.value}}}))}/>
+                              value={client.id}
+                              onChange={e => onChange(update(clients, {[g]: {$merge: {id: e.target.value}}}))}/>
 
                           </Col>
                         </FormGroup>
@@ -530,8 +530,8 @@ function GatewaysPanel(props) {
                           <Col sm={9}>
                             <FormControl
                               componentClass="input"
-                              value={gateway.key}
-                              onChange={e => onChange(update(gateways, {[g]: {$merge: {key: e.target.value}}}))}/>
+                              value={client.key}
+                              onChange={e => onChange(update(clients, {[g]: {$merge: {key: e.target.value}}}))}/>
 
                           </Col>
                         </FormGroup>
@@ -544,7 +544,7 @@ function GatewaysPanel(props) {
                           <Col sm={9}>
                             <FormControl
                               componentClass="input"
-                              value={gateway.algorithm || "sha256"}
+                              value={client.algorithm || "sha256"}
                               disabled
                               />
                           </Col>
@@ -555,7 +555,7 @@ function GatewaysPanel(props) {
                     <FormGroup>
                       <Col smOffset={2} sm={9}>
                         <ButtonToolbar>
-                          <Button bsStyle="danger" onClick={() => onChange(update(gateways, {$unset: [g]}))}>
+                          <Button bsStyle="danger" onClick={() => onChange(update(clients, {$unset: [g]}))}>
                             <FormattedMessage id="delete" defaultMessage="Delete"/>
                           </Button>
                         </ButtonToolbar>
@@ -583,7 +583,7 @@ function GatewaysPanel(props) {
               if (newEntry !== undefined) {
                 const name = newEntry.name;
                 delete newEntry.name;
-                onChange(update(gateways, {[name]: {$set: newEntry}}))
+                onChange(update(clients, {[name]: {$set: newEntry}}))
               }
             }}
           />
@@ -2599,7 +2599,7 @@ function ProvisioningPanels(props) {
             onHide={newEntry => {
               setShowNew(false);
               if (newEntry !== undefined) {
-                onChange(update(prov, {gateways: {$push: [newEntry]}}))
+                onChange(update(prov, {clients: {$push: [newEntry]}}))
               }
             }}
           />
@@ -2634,10 +2634,10 @@ export default function Configuration(props) {
                                                   defaultMessage="Configuration"/></Breadcrumb.Item>
       </Breadcrumb>
       <Tabs defaultActiveKey={1} onSelect={key => setActiveKey(key)} id="config-tabs">
-        <Tab eventKey={1} title="Gateways">
-          <GatewaysPanel
-            gateways={config.content.gateways}
-            onChange={v => setConfig(update(config, {content: {gateways: {$set: v}}}))}/>
+        <Tab eventKey={1} title="HTTP Clients">
+          <ClientsPanel
+            clients={config.content.clients}
+            onChange={v => setConfig(update(config, {content: {clients: {$set: v}}}))}/>
         </Tab>
         <Tab eventKey={2} title="Gui">
           <GuiForm
