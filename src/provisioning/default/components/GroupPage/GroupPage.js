@@ -27,7 +27,7 @@ import {
   fetchGetSelfcareURL,
   fetchGetGroupSuspensionStatus,
   fetchPutUpdateGroupSuspensionStatus,
-  fetchGetTenantPasswordRules
+  fetchGetTenantPasswordRules,
 } from "../../store/actions";
 
 import DeleteModal from "./DeleteModal";
@@ -42,7 +42,7 @@ class TenantPage extends Component {
     refreshTab: "",
     isLoadingSS: true,
     showSuspensionStatusModal: false,
-    isLoadingTPP: true
+    isLoadingTPP: true,
   };
 
   fetchTennant = () => {
@@ -52,7 +52,7 @@ class TenantPage extends Component {
         isLoadingGroup: true,
         isLoadingSCURL: true,
         isLoadingSS: true,
-        isLoadingTPP: true
+        isLoadingTPP: true,
       },
       () => {
         this.props
@@ -75,7 +75,10 @@ class TenantPage extends Component {
           .fetchGetSelfcareURL()
           .then(() => this.setState({ isLoadingSCURL: false }));
         this.props
-          .fetchGetGroupSuspensionStatus(this.props.match.params.tenantId)
+          .fetchGetGroupSuspensionStatus(
+            this.props.match.params.tenantId,
+            this.props.match.params.groupId
+          )
           .then(() => this.setState({ isLoadingSS: false }));
       }
     );
@@ -99,7 +102,7 @@ class TenantPage extends Component {
       showDelete,
       isLoadingSCURL,
       isLoadingSS,
-      isLoadingTPP
+      isLoadingTPP,
     } = this.state;
 
     if (
@@ -256,9 +259,9 @@ class TenantPage extends Component {
     );
   }
 
-  updateSuspensionStatus = status => {
+  updateSuspensionStatus = (status) => {
     const data = {
-      suspensionStatus: status
+      suspensionStatus: status,
     };
     this.setState({ showSuspensionStatusModal: false });
     this.props
@@ -270,7 +273,7 @@ class TenantPage extends Component {
       .then(() => this.fetchTennant());
   };
 
-  changeTab = key => {
+  changeTab = (key) => {
     let refreshTab = "";
     switch (key) {
       case 0:
@@ -311,22 +314,19 @@ const mapDispatchToProps = {
   fetchGetSelfcareURL,
   fetchGetGroupSuspensionStatus,
   fetchPutUpdateGroupSuspensionStatus,
-  fetchGetTenantPasswordRules
+  fetchGetTenantPasswordRules,
 };
 
-const mapStateToProps = state => ({
+const mapStateToProps = (state) => ({
   tenant: state.tenant,
   group: state.group,
   fetchTrunksGroupsFail: state.fetchTrunksGroupsFail,
   trunkGroupNotAuthorisedGroup: state.trunkGroupNotAuthorisedGroup,
   selfcareUrl: state.selfcareUrl,
   groupSuspensionStatus: state.groupSuspensionStatus,
-  tenantPasswordRules: state.tenantPasswordRules
+  tenantPasswordRules: state.tenantPasswordRules,
 });
 
 export default withRouter(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(TenantPage)
+  connect(mapStateToProps, mapDispatchToProps)(TenantPage)
 );

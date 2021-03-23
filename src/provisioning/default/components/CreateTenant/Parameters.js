@@ -23,7 +23,7 @@ import {
   fetchPutUpdateTenantDetails,
   fetchPutUpdateTenantRoutingProfile,
   fetchPutUpdateTenantVoiceMessaging,
-  fetchGetTenantVoiceMessaging
+  fetchGetTenantVoiceMessaging,
 } from "../../store/actions";
 
 export class TenantParameters extends Component {
@@ -39,7 +39,7 @@ export class TenantParameters extends Component {
     systemDefaultMD: true,
     systemDefaultPPL: true,
     skipNextButtonName: "Skip",
-    isLoadingVM: true
+    isLoadingVM: true,
   };
 
   componentDidMount() {
@@ -64,67 +64,69 @@ export class TenantParameters extends Component {
           </Row>
         </div>
         <div class="panel-body">
-          <Row>
-            <Col md={12} className={"flex-row"}>
-              <div className={"width-100p"}>
-                <Checkbox
-                  className={"margin-top-0"}
-                  checked={this.state.useCustomRouting}
-                  onChange={e => {
-                    if (e.target.checked) {
-                      this.setState({
-                        useCustomRouting: e.target.checked,
-                        selectedRoutingProfile: this.props
-                          .listOfRoutingProfiles[0]
-                      });
-                    } else {
-                      this.setState({
-                        useCustomRouting: e.target.checked,
-                        selectedRoutingProfile: ""
-                      });
-                    }
-                  }}
-                >
-                  Use custom routing profile
-                </Checkbox>
-                {this.state.useCustomRouting && (
-                  <React.Fragment>
-                    <div className="flex space-between align-items-center margin-bottom-1">
-                      <div className="nowrap margin-right-1 width-50p">
-                        Routing profile
-                      </div>
-                      <FormControl
-                        componentClass="select"
-                        value={this.state.selectedRoutingProfile}
-                        onChange={e => {
-                          this.setState({
-                            selectedRoutingProfile: e.target.value
-                          });
-                        }}
-                      >
-                        {this.props.listOfRoutingProfiles.map(el => (
-                          <option key={el} value={el}>
-                            {el}
-                          </option>
-                        ))}
-                      </FormControl>
-                    </div>
-                    <div class="button-row margin-right-0">
-                      <div className="pull-right">
-                        <Button
-                          className={"btn-primary"}
-                          onClick={this.saveRoutingProfile}
-                          disabled={!this.state.selectedRoutingProfile}
+          {this.props.createdTenant.type === "Enterprise" && (
+            <Row>
+              <Col md={12} className={"flex-row"}>
+                <div className={"width-100p"}>
+                  <Checkbox
+                    className={"margin-top-0"}
+                    checked={this.state.useCustomRouting}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        this.setState({
+                          useCustomRouting: e.target.checked,
+                          selectedRoutingProfile: this.props
+                            .listOfRoutingProfiles[0],
+                        });
+                      } else {
+                        this.setState({
+                          useCustomRouting: e.target.checked,
+                          selectedRoutingProfile: "",
+                        });
+                      }
+                    }}
+                  >
+                    Use custom routing profile
+                  </Checkbox>
+                  {this.state.useCustomRouting && (
+                    <React.Fragment>
+                      <div className="flex space-between align-items-center margin-bottom-1">
+                        <div className="nowrap margin-right-1 width-50p">
+                          Routing profile
+                        </div>
+                        <FormControl
+                          componentClass="select"
+                          value={this.state.selectedRoutingProfile}
+                          onChange={(e) => {
+                            this.setState({
+                              selectedRoutingProfile: e.target.value,
+                            });
+                          }}
                         >
-                          Save
-                        </Button>
+                          {this.props.listOfRoutingProfiles.map((el) => (
+                            <option key={el} value={el}>
+                              {el}
+                            </option>
+                          ))}
+                        </FormControl>
                       </div>
-                    </div>
-                  </React.Fragment>
-                )}
-              </div>
-            </Col>
-          </Row>
+                      <div class="button-row margin-right-0">
+                        <div className="pull-right">
+                          <Button
+                            className={"btn-primary"}
+                            onClick={this.saveRoutingProfile}
+                            disabled={!this.state.selectedRoutingProfile}
+                          >
+                            Save
+                          </Button>
+                        </div>
+                      </div>
+                    </React.Fragment>
+                  )}
+                </div>
+              </Col>
+            </Row>
+          )}
           {Object.keys(this.props.tenantVoiceMessaging).length ? (
             <Row>
               <Col md={12}>
@@ -137,7 +139,7 @@ export class TenantParameters extends Component {
                   >
                     <div
                       style={{
-                        fontFamily: `"Ubuntu, Helvetica Neue",Helvetica,Arial,sans-serif`
+                        fontFamily: `"Ubuntu, Helvetica Neue",Helvetica,Arial,sans-serif`,
                       }}
                     >
                       &nbsp; Show voice messaging settings
@@ -152,7 +154,7 @@ export class TenantParameters extends Component {
                   >
                     <div
                       style={{
-                        fontFamily: `"Helvetica Neue",Helvetica,Arial,sans-serif`
+                        fontFamily: `"Helvetica Neue",Helvetica,Arial,sans-serif`,
                       }}
                     >
                       &nbsp; Hide voice messaging settings
@@ -170,9 +172,9 @@ export class TenantParameters extends Component {
                         </div>
                         <Checkbox
                           checked={!this.state.systemDefaultMN}
-                          onChange={e =>
+                          onChange={(e) =>
                             this.setState({
-                              systemDefaultMN: !e.target.checked
+                              systemDefaultMN: !e.target.checked,
                             })
                           }
                         />
@@ -180,9 +182,9 @@ export class TenantParameters extends Component {
                           type="text"
                           placeholder="Voicemail Notification"
                           value={this.state.voiceMessageNotification}
-                          onChange={e =>
+                          onChange={(e) =>
                             this.setState({
-                              voiceMessageNotification: e.target.value
+                              voiceMessageNotification: e.target.value,
                             })
                           }
                           disabled={this.state.systemDefaultMN}
@@ -194,9 +196,9 @@ export class TenantParameters extends Component {
                         </div>
                         <Checkbox
                           checked={!this.state.systemDefaultMD}
-                          onChange={e =>
+                          onChange={(e) =>
                             this.setState({
-                              systemDefaultMD: !e.target.checked
+                              systemDefaultMD: !e.target.checked,
                             })
                           }
                         />
@@ -204,9 +206,9 @@ export class TenantParameters extends Component {
                           type="text"
                           placeholder="Voicemail Delivery"
                           value={this.state.voiceMessageDelivery}
-                          onChange={e =>
+                          onChange={(e) =>
                             this.setState({
-                              voiceMessageDelivery: e.target.value
+                              voiceMessageDelivery: e.target.value,
                             })
                           }
                           disabled={this.state.systemDefaultMD}
@@ -218,9 +220,9 @@ export class TenantParameters extends Component {
                         </div>
                         <Checkbox
                           checked={!this.state.systemDefaultPPL}
-                          onChange={e =>
+                          onChange={(e) =>
                             this.setState({
-                              systemDefaultPPL: !e.target.checked
+                              systemDefaultPPL: !e.target.checked,
                             })
                           }
                         />
@@ -228,9 +230,9 @@ export class TenantParameters extends Component {
                           type="text"
                           placeholder="Voice portal passcode lockout"
                           value={this.state.voicePortalPasscodeLockout}
-                          onChange={e =>
+                          onChange={(e) =>
                             this.setState({
-                              voicePortalPasscodeLockout: e.target.value
+                              voicePortalPasscodeLockout: e.target.value,
                             })
                           }
                           disabled={this.state.systemDefaultPPL}
@@ -285,8 +287,8 @@ export class TenantParameters extends Component {
   }
 
   showHideMore = () => {
-    this.setState(prevState => ({
-      enabledVoiceMessagingSettings: !prevState.enabledVoiceMessagingSettings
+    this.setState((prevState) => ({
+      enabledVoiceMessagingSettings: !prevState.enabledVoiceMessagingSettings,
     }));
   };
 
@@ -294,16 +296,16 @@ export class TenantParameters extends Component {
     const data = {
       voiceMessageDelivery: {
         fromAddress: this.state.voiceMessageDelivery,
-        systemDefault: this.state.systemDefaultMD
+        systemDefault: this.state.systemDefaultMD,
       },
       voiceMessageNotification: {
         fromAddress: this.state.voiceMessageNotification,
-        systemDefault: this.state.systemDefaultMN
+        systemDefault: this.state.systemDefaultMN,
       },
       voicePortalPasscodeLockout: {
         fromAddress: this.state.voicePortalPasscodeLockout,
-        systemDefault: this.state.systemDefaultPPL
-      }
+        systemDefault: this.state.systemDefaultPPL,
+      },
     };
     const clearData = removeEmpty(data);
     this.props
@@ -317,14 +319,14 @@ export class TenantParameters extends Component {
   saveRoutingProfile = () => {
     this.props
       .fetchPutUpdateTenantDetails(this.props.createdTenant.tenantId, {
-        useCustomRoutingProfile: true
+        useCustomRoutingProfile: true,
       })
       .then(() => {
         this.props
           .fetchPutUpdateTenantRoutingProfile(
             this.props.createdTenant.tenantId,
             {
-              routingProfile: this.state.selectedRoutingProfile
+              routingProfile: this.state.selectedRoutingProfile,
             }
           )
           .then(() => this.setState({ skipNextButtonName: "Next" }));
@@ -336,10 +338,10 @@ export class TenantParameters extends Component {
   };
 }
 
-const mapStateToProps = state => ({
+const mapStateToProps = (state) => ({
   createdTenant: state.createdTenant,
   listOfRoutingProfiles: state.listOfRoutingProfiles,
-  tenantVoiceMessaging: state.tenantVoiceMessaging
+  tenantVoiceMessaging: state.tenantVoiceMessaging,
 });
 
 const mapDispatchToProps = {
@@ -349,12 +351,9 @@ const mapDispatchToProps = {
   fetchPutUpdateTenantDetails,
   fetchPutUpdateTenantRoutingProfile,
   fetchPutUpdateTenantVoiceMessaging,
-  fetchGetTenantVoiceMessaging
+  fetchGetTenantVoiceMessaging,
 };
 
 export default withRouter(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(TenantParameters)
+  connect(mapStateToProps, mapDispatchToProps)(TenantParameters)
 );

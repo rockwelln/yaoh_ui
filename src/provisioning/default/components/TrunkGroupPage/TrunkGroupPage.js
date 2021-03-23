@@ -25,8 +25,9 @@ import DeleteModal from "./DeleteModal";
 class TrunkGroupPage extends Component {
   state = {
     isLoading: true,
+    isLoadingConfig: true,
     showDelete: false,
-    activeKey: 0
+    activeKey: 0,
   };
 
   fetchTrunk() {
@@ -54,9 +55,6 @@ class TrunkGroupPage extends Component {
 
   render() {
     const { isLoading } = this.state;
-    // if (isLoading) {
-    //   return <Loading />;
-    // }
     return (
       <React.Fragment>
         <div className={"panel-heading"}>
@@ -84,19 +82,18 @@ class TrunkGroupPage extends Component {
           <Tabs
             activeKey={this.state.activeKey}
             id="tenant_tabs"
-            onSelect={key => {
+            onSelect={(key) => {
               this.setState({ isLoading: true, activeKey: key }, () =>
                 this.fetchTrunk()
               );
             }}
           >
-            <Tab eventKey={0} title="Details">
+            <Tab eventKey={0} title="Pilot">
               {isLoading ? <Loading /> : <Details />}
             </Tab>
-            <Tab eventKey={9} title="Authentication">
+            <Tab eventKey={9} title="Access details">
               {isLoading ? <Loading /> : <Authentication />}
             </Tab>
-
             <Tab eventKey={1} title="DIDs">
               {isLoading ? <Loading /> : <Users />}
             </Tab>
@@ -130,13 +127,10 @@ class TrunkGroupPage extends Component {
 
 const mapDispatchToProps = { fetchGetTrunkGroupByName };
 
-const mapStateToProps = state => ({
-  trunkGroup: state.trunkGroup
+const mapStateToProps = (state) => ({
+  trunkGroup: state.trunkGroup,
 });
 
 export default withRouter(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(TrunkGroupPage)
+  connect(mapStateToProps, mapDispatchToProps)(TrunkGroupPage)
 );

@@ -23,7 +23,7 @@ import {
   fetchGetTenantRoutingProfile,
   fetchPutUpdateTenantRoutingProfile,
   fetchGetTenantVoiceMessaging,
-  fetchPutUpdateTenantVoiceMessaging
+  fetchPutUpdateTenantVoiceMessaging,
 } from "../../../../store/actions";
 
 class Details extends Component {
@@ -42,7 +42,7 @@ class Details extends Component {
 
     voiceMessageDelivery: "",
     voiceMessageNotification: "",
-    voicePortalPasscodeLockout: ""
+    voicePortalPasscodeLockout: "",
   };
 
   fetchReq = () => {
@@ -51,7 +51,7 @@ class Details extends Component {
         isLoading: true,
         isLoadingRoutingProfile: true,
         isLoadingVM: true,
-        isLoadingListRoutingProfile: true
+        isLoadingListRoutingProfile: true,
       },
       () => {
         this.props
@@ -63,18 +63,20 @@ class Details extends Component {
             addressInformation: this.props.tenant.addressInformation
               ? this.props.tenant.addressInformation
               : {},
-            isLoading: false
+            isLoading: false,
           })
         );
-        this.props
-          .fetchGetTenantRoutingProfile(this.props.tenantId)
-          .then(() => {
-            this.setState({
-              isLoadingRoutingProfile: false,
-              tenantRoutingProfile: this.props.tenantRoutingProfile,
-              useCustomRoutingProfile: !!this.props.tenantRoutingProfile
-            });
-          });
+        this.props.tenant.type === "Enterprise"
+          ? this.props
+              .fetchGetTenantRoutingProfile(this.props.tenantId)
+              .then(() => {
+                this.setState({
+                  isLoadingRoutingProfile: false,
+                  tenantRoutingProfile: this.props.tenantRoutingProfile,
+                  useCustomRoutingProfile: !!this.props.tenantRoutingProfile,
+                });
+              })
+          : this.setState({ isLoadingRoutingProfile: false });
         this.props
           .fetchGetTenantVoiceMessaging(this.props.tenantId)
           .then(() => {
@@ -161,7 +163,7 @@ class Details extends Component {
                             this.props.tenant.sync.status === "MUST_BE_SYNCED"
                           : false
                       }
-                      onChange={e => {
+                      onChange={(e) => {
                         if (e.target.checked) {
                           this.setState({ syncStatus: "MUST_BE_SYNCED" });
                         } else {
@@ -194,7 +196,7 @@ class Details extends Component {
                   type="text"
                   placeholder="Tenant name"
                   defaultValue={this.state.tenant.name}
-                  onChange={e => {
+                  onChange={(e) => {
                     this.setState({ tenantName: e.target.value });
                   }}
                   disabled={this.state.tenant.sync}
@@ -210,24 +212,12 @@ class Details extends Component {
                   type="text"
                   placeholder="Tenant name"
                   defaultValue={this.state.tenant.defaultDomain}
-                  onChange={e => {
+                  onChange={(e) => {
                     this.setState({ defaultDomain: e.target.value });
                   }}
                 />
               </Col>
             </FormGroup>
-            {/* <FormGroup controlId="useTenantLanguages">
-              <Col mdOffset={3} md={9}>
-                <Checkbox
-                  defaultChecked={this.state.tenant.useTenantLanguages}
-                  onChange={e =>
-                    this.setState({ useTenantLanguages: e.target.checked })
-                  }
-                >
-                  Use tenant languages
-                </Checkbox>
-              </Col>
-            </FormGroup> */}
             <FormGroup controlId="tentantStreet">
               <Col componentClass={ControlLabel} md={3}>
                 Addess
@@ -237,12 +227,12 @@ class Details extends Component {
                   type="text"
                   placeholder="Street"
                   value={this.state.addressInformation.addressLine1}
-                  onChange={e =>
+                  onChange={(e) =>
                     this.setState({
                       addressInformation: {
                         ...this.state.addressInformation,
-                        addressLine1: e.target.value
-                      }
+                        addressLine1: e.target.value,
+                      },
                     })
                   }
                 />
@@ -254,12 +244,12 @@ class Details extends Component {
                   type="text"
                   placeholder="ZIP"
                   value={this.state.addressInformation.postalCode}
-                  onChange={e =>
+                  onChange={(e) =>
                     this.setState({
                       addressInformation: {
                         ...this.state.addressInformation,
-                        postalCode: e.target.value
-                      }
+                        postalCode: e.target.value,
+                      },
                     })
                   }
                 />
@@ -269,12 +259,12 @@ class Details extends Component {
                   type="text"
                   placeholder="City"
                   value={this.state.addressInformation.city}
-                  onChange={e =>
+                  onChange={(e) =>
                     this.setState({
                       addressInformation: {
                         ...this.state.addressInformation,
-                        city: e.target.value
-                      }
+                        city: e.target.value,
+                      },
                     })
                   }
                 />
@@ -292,87 +282,90 @@ class Details extends Component {
                 </div>
               </Col>
             </FormGroup>
-            <FormGroup controlId="useCustomRoutingProfile">
-              <Col mdOffset={3} md={9}>
-                <Checkbox
-                  checked={this.state.useCustomRoutingProfile}
-                  onChange={e => {
-                    if (!e.target.checked) {
-                      this.setState({
-                        useCustomRoutingProfile: e.target.checked,
-                        tenantRoutingProfile: ""
-                      });
-                    } else {
-                      this.setState({
-                        useCustomRoutingProfile: e.target.checked
-                      });
-                    }
-                  }}
-                >
-                  Use custom routing profile
-                </Checkbox>
-              </Col>
-            </FormGroup>
-            {this.state.useCustomRoutingProfile &&
-              this.props.tenant.type === "Enterprise" && (
-                <FormGroup controlId="routingProfile">
-                  <Col componentClass={ControlLabel} md={3}>
-                    Routing profile
-                  </Col>
-                  <Col md={9}>
-                    <FormControl
-                      componentClass="select"
-                      value={this.state.tenantRoutingProfile}
-                      onChange={e => {
-                        this.setState({
-                          tenantRoutingProfile: e.target.value
-                        });
+            {this.props.tenant.type === "Enterprise" && (
+              <>
+                <FormGroup controlId="useCustomRoutingProfile">
+                  <Col mdOffset={3} md={9}>
+                    <Checkbox
+                      checked={this.state.useCustomRoutingProfile}
+                      onChange={(e) => {
+                        if (!e.target.checked) {
+                          this.setState({
+                            useCustomRoutingProfile: e.target.checked,
+                            tenantRoutingProfile: "",
+                          });
+                        } else {
+                          this.setState({
+                            useCustomRoutingProfile: e.target.checked,
+                          });
+                        }
                       }}
                     >
-                      {!this.state.tenantRoutingProfile && (
-                        <option key={"null"} value={""}>
-                          {""}
-                        </option>
-                      )}
-                      {this.props.listOfRoutingProfiles.map(el => (
-                        <option key={el} value={el}>
-                          {el}
-                        </option>
-                      ))}
-                    </FormControl>
-                  </Col>
-                  <Col md={12}>
-                    <div class="button-row margin-right-0">
-                      <div className="pull-right">
-                        <Button
-                          className={"btn-primary"}
-                          onClick={this.saveRoutingProfile}
-                        >
-                          Save
-                        </Button>
-                      </div>
-                    </div>
+                      Use custom routing profile
+                    </Checkbox>
                   </Col>
                 </FormGroup>
-              )}
-            {((this.state.tenantRoutingProfile !==
-              this.props.tenantRoutingProfile &&
-              !this.state.useCustomRoutingProfile) ||
-              this.props.tenant.type === "ServiceProvider") && (
-              <FormGroup>
-                <Col md={12}>
-                  <div class="button-row margin-right-0">
-                    <div className="pull-right">
-                      <Button
-                        className={"btn-primary"}
-                        onClick={this.saveRoutingProfile}
+                {this.state.useCustomRoutingProfile && (
+                  <FormGroup controlId="routingProfile">
+                    <Col componentClass={ControlLabel} md={3}>
+                      Routing profile
+                    </Col>
+                    <Col md={9}>
+                      <FormControl
+                        componentClass="select"
+                        value={this.state.tenantRoutingProfile}
+                        onChange={(e) => {
+                          this.setState({
+                            tenantRoutingProfile: e.target.value,
+                          });
+                        }}
                       >
-                        Save
-                      </Button>
-                    </div>
-                  </div>
-                </Col>
-              </FormGroup>
+                        {!this.state.tenantRoutingProfile && (
+                          <option key={"null"} value={""}>
+                            {""}
+                          </option>
+                        )}
+                        {this.props.listOfRoutingProfiles.map((el) => (
+                          <option key={el} value={el}>
+                            {el}
+                          </option>
+                        ))}
+                      </FormControl>
+                    </Col>
+                    <Col md={12}>
+                      <div class="button-row margin-right-0">
+                        <div className="pull-right">
+                          <Button
+                            className={"btn-primary"}
+                            onClick={this.saveRoutingProfile}
+                          >
+                            Save
+                          </Button>
+                        </div>
+                      </div>
+                    </Col>
+                  </FormGroup>
+                )}
+                {((this.state.tenantRoutingProfile !==
+                  this.props.tenantRoutingProfile &&
+                  !this.state.useCustomRoutingProfile) ||
+                  this.props.tenant.type === "ServiceProvider") && (
+                  <FormGroup>
+                    <Col md={12}>
+                      <div class="button-row margin-right-0">
+                        <div className="pull-right">
+                          <Button
+                            className={"btn-primary"}
+                            onClick={this.saveRoutingProfile}
+                          >
+                            Save
+                          </Button>
+                        </div>
+                      </div>
+                    </Col>
+                  </FormGroup>
+                )}
+              </>
             )}
             {Object.keys(this.props.tenantVoiceMessaging).length ? (
               <React.Fragment>
@@ -387,7 +380,7 @@ class Details extends Component {
                       >
                         <div
                           style={{
-                            fontFamily: `"Ubuntu, Helvetica Neue",Helvetica,Arial,sans-serif`
+                            fontFamily: `"Ubuntu, Helvetica Neue",Helvetica,Arial,sans-serif`,
                           }}
                         >
                           &nbsp; Show voice messaging settings
@@ -402,7 +395,7 @@ class Details extends Component {
                       >
                         <div
                           style={{
-                            fontFamily: `"Helvetica Neue",Helvetica,Arial,sans-serif`
+                            fontFamily: `"Helvetica Neue",Helvetica,Arial,sans-serif`,
                           }}
                         >
                           &nbsp; Hide voice messaging settings
@@ -424,9 +417,9 @@ class Details extends Component {
                       <Col md={9} className={"flex"}>
                         <Checkbox
                           checked={!this.state.systemDefaultMN}
-                          onChange={e =>
+                          onChange={(e) =>
                             this.setState({
-                              systemDefaultMN: !e.target.checked
+                              systemDefaultMN: !e.target.checked,
                             })
                           }
                         />
@@ -434,9 +427,9 @@ class Details extends Component {
                           type="text"
                           placeholder="Voicemail Notification"
                           value={this.state.voiceMessageNotification}
-                          onChange={e =>
+                          onChange={(e) =>
                             this.setState({
-                              voiceMessageNotification: e.target.value
+                              voiceMessageNotification: e.target.value,
                             })
                           }
                           disabled={this.state.systemDefaultMN}
@@ -454,9 +447,9 @@ class Details extends Component {
                       <Col md={9} className={"flex"}>
                         <Checkbox
                           checked={!this.state.systemDefaultMD}
-                          onChange={e =>
+                          onChange={(e) =>
                             this.setState({
-                              systemDefaultMD: !e.target.checked
+                              systemDefaultMD: !e.target.checked,
                             })
                           }
                         />
@@ -464,9 +457,9 @@ class Details extends Component {
                           type="text"
                           placeholder="Voicemail Delivery"
                           value={this.state.voiceMessageDelivery}
-                          onChange={e =>
+                          onChange={(e) =>
                             this.setState({
-                              voiceMessageDelivery: e.target.value
+                              voiceMessageDelivery: e.target.value,
                             })
                           }
                           disabled={this.state.systemDefaultMD}
@@ -484,9 +477,9 @@ class Details extends Component {
                       <Col md={9} className={"flex"}>
                         <Checkbox
                           checked={!this.state.systemDefaultPPL}
-                          onChange={e =>
+                          onChange={(e) =>
                             this.setState({
-                              systemDefaultPPL: !e.target.checked
+                              systemDefaultPPL: !e.target.checked,
                             })
                           }
                         />
@@ -494,9 +487,9 @@ class Details extends Component {
                           type="text"
                           placeholder="Voice portal passcode lockout"
                           value={this.state.voicePortalPasscodeLockout}
-                          onChange={e =>
+                          onChange={(e) =>
                             this.setState({
-                              voicePortalPasscodeLockout: e.target.value
+                              voicePortalPasscodeLockout: e.target.value,
                             })
                           }
                           disabled={this.state.systemDefaultPPL}
@@ -572,13 +565,13 @@ class Details extends Component {
       )
         ? this.props.tenantVoiceMessaging.voicePortalPasscodeLockout
             .systemDefault
-        : true
+        : true,
     });
   };
 
   showHideMore = () => {
-    this.setState(prevState => ({
-      enabledVoiceMessagingSettings: !prevState.enabledVoiceMessagingSettings
+    this.setState((prevState) => ({
+      enabledVoiceMessagingSettings: !prevState.enabledVoiceMessagingSettings,
     }));
   };
 
@@ -589,7 +582,7 @@ class Details extends Component {
       //useTenantLanguages,
       useCustomRoutingProfile,
       addressInformation,
-      syncStatus
+      syncStatus,
     } = this.state;
 
     const data = {
@@ -609,8 +602,8 @@ class Details extends Component {
         : this.state.tenant.useCustomRoutingProfile,
       addressInformation,
       sync: {
-        status: syncStatus
-      }
+        status: syncStatus,
+      },
     };
     const clearData = removeEmpty(data);
 
@@ -623,14 +616,14 @@ class Details extends Component {
   saveRoutingProfile = () => {
     this.props
       .fetchPutUpdateTenantDetails(this.state.tenant.tenantId, {
-        useCustomRoutingProfile: true
+        useCustomRoutingProfile: true,
       })
       .then(() => {
         this.props.tenant.type === "Enterprise" &&
           this.props.fetchPutUpdateTenantRoutingProfile(
             this.state.tenant.tenantId,
             {
-              routingProfile: this.state.tenantRoutingProfile
+              routingProfile: this.state.tenantRoutingProfile,
             }
           );
       });
@@ -640,16 +633,16 @@ class Details extends Component {
     const data = {
       voiceMessageDelivery: {
         fromAddress: this.state.voiceMessageDelivery,
-        systemDefault: this.state.systemDefaultMD
+        systemDefault: this.state.systemDefaultMD,
       },
       voiceMessageNotification: {
         fromAddress: this.state.voiceMessageNotification,
-        systemDefault: this.state.systemDefaultMN
+        systemDefault: this.state.systemDefaultMN,
       },
       voicePortalPasscodeLockout: {
         fromAddress: this.state.voicePortalPasscodeLockout,
-        systemDefault: this.state.systemDefaultPPL
-      }
+        systemDefault: this.state.systemDefaultPPL,
+      },
     };
 
     const clearData = removeEmpty(data);
@@ -661,13 +654,13 @@ class Details extends Component {
   };
 }
 
-const mapStateToProps = state => ({
+const mapStateToProps = (state) => ({
   tenant: state.tenant,
   ldapBackends: state.ldapBackends,
   tenantOU: state.tenantOU,
   listOfRoutingProfiles: state.listOfRoutingProfiles,
   tenantRoutingProfile: state.tenantRoutingProfile,
-  tenantVoiceMessaging: state.tenantVoiceMessaging
+  tenantVoiceMessaging: state.tenantVoiceMessaging,
 });
 
 const mapDispatchToProps = {
@@ -677,10 +670,7 @@ const mapDispatchToProps = {
   fetchGetTenantRoutingProfile,
   fetchPutUpdateTenantRoutingProfile,
   fetchGetTenantVoiceMessaging,
-  fetchPutUpdateTenantVoiceMessaging
+  fetchPutUpdateTenantVoiceMessaging,
 };
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(Details);
+export default connect(mapStateToProps, mapDispatchToProps)(Details);
