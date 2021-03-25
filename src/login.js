@@ -9,7 +9,7 @@ import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 import Button from "react-bootstrap/lib/Button";
 import Form from "react-bootstrap/lib/Form";
 import {LinkContainer} from "react-router-bootstrap";
-import {API_URL_PREFIX, checkStatus, fetch_get, parseJSON} from "./utils";
+import {API_URL_PREFIX, fetch_get, parseJSON} from "./utils";
 import Row from "react-bootstrap/lib/Row";
 import Panel from "react-bootstrap/lib/Panel";
 import Modal from "react-bootstrap/lib/Modal";
@@ -98,6 +98,13 @@ function check2fa(code, payload, trust, onSuccess, onError) {
 }
 
 
+export function fetchPlatformDetails(onSuccess) {
+    fetch_get('/api/v01/system/configuration/public')
+        .then(data => onSuccess && onSuccess(data))
+        .catch(console.error);
+}
+
+
 function TwoFaModal(props) {
     const [code, setCode] = useState("");
     const [error, setError] = useState(undefined);
@@ -175,20 +182,25 @@ function TwoFaModal(props) {
 }
 
 
-export function LoginForm(props) {
+export function LoginForm({onLogin}) {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState(undefined);
     const [loading, setLoading] = useState(false);
     const [loginResp, setLoginResp] = useState(null);
+    const [sso, setSso] = useState([]);
 
-    const {onLogin, sso} = props;
+    useEffect(() => {
+      fetchPlatformDetails(data => {
+         data.auth && data.auth.SSO && setSso(data.auth.SSO)
+      })
+    }, []);
 
     useEffect(() => {setError(undefined);}, [username, password]);
 
     return (
         <>
-          { sso && sso.length > 0 && <Col smOffset={1} sm={10}>
+          { sso.length > 0 && <Col smOffset={1} sm={10}>
               <ButtonGroup vertical block>
                 {
                   sso.map(provider => {
