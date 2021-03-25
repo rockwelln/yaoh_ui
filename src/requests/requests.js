@@ -41,7 +41,7 @@ import {
   userLocalizeUtcDate,
   AuthServiceManager,
   fetch_post_raw,
-  fetch_delete,
+  fetch_delete, downloadJson,
 } from "../utils";
 import {ApioDatatable, Pagination} from "../utils/datatable";
 
@@ -65,6 +65,7 @@ import {fetchBulks} from "./bulk";
 import Nanobar from "nanobar";
 import {SplitButton} from "react-bootstrap";
 import MenuItem from "react-bootstrap/lib/MenuItem";
+import {fetchInstanceContext} from "../help/templatePlayground";
 
 const SUB_REQUESTS_PAGE_SIZE = 25;
 
@@ -2066,6 +2067,20 @@ export class Transaction extends Component {
                                                 }}
                                             >
                                                 <FormattedMessage id="request-as-csv" defaultMessage="Request as CSV"/>
+                                            </Button>
+                                    }
+                                    {
+                                        this.props.match.params.txId &&
+                                          user_info.is_system &&
+                                            <Button
+                                                onClick={() => {
+                                                    fetchInstanceContext(
+                                                      this.props.match.params.txId,
+                                                      c => downloadJson(`template_context_${this.props.match.params.txId}`, c)
+                                                    )
+                                                }}
+                                            >
+                                                <FormattedMessage id="context-as-json" defaultMessage="Context as JSON"/>
                                             </Button>
                                     }
                                     <Button onClick={() => this.setState({autoRefresh: !this.state.autoRefresh})} active={this.state.autoRefresh}>Auto-refresh</Button>

@@ -52,7 +52,7 @@ function gwStatus(status) {
     if(status === undefined || status.connected === undefined) return "?";
 
     if(status.connected) {
-        if(status.active || status.active === undefined) {
+        if(!status.is_gateway || status.active || status.active === null || status.active === undefined) {
             return <Glyphicon glyph="ok-circle"/>;
         } else {
             return <Glyphicon glyph="pause"/>;
@@ -63,7 +63,7 @@ function gwStatus(status) {
 }
 
 export const GatewaysStatusTile = ({status, label}) => (
-    <Link to="/system/gateways">
+    <Link to={`/system/gateways#${label}`}>
         <Tile className={(status === undefined || status.connected === undefined)?"warning":status.connected === true?"success":"error"}>
             <TileHeader>
                 <div className="count">{gwStatus(status)}</div>

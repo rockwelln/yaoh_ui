@@ -336,6 +336,11 @@ export const getEntitlementTypes = (data) => ({
   data,
 });
 
+export const getTrunkGroupAccessInfo = (data) => ({
+  type: actionType.GET_TRUNK_GROUP_ACCESS_INFO,
+  data,
+});
+
 export const postCreateGroupAdmin = (data) => ({
   type: actionType.POST_CREATE_GROUP_ADMIN,
   data,
@@ -546,6 +551,11 @@ export const putUpdateGroupSuspensionStatus = (data) => ({
 
 export const putUpdateTenantEntitlement = (data) => ({
   type: actionType.PUT_UPDATE_TENANT_ENTITLEMENT,
+  data,
+});
+
+export const putUpdateTrunkGroupAccessInfo = (data) => ({
+  type: actionType.PUT_UPDATE_TRUNK_GROUP_ACCESS_INFO,
   data,
 });
 
@@ -1966,6 +1976,29 @@ export function fetchGetEntitlementTypes() {
   };
 }
 
+export function fetchGetTrunkGroupAccessInfo(tenantId, groupId, trunkGroupId) {
+  return function (dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/services/trunk_groups/${trunkGroupId}/access_info/`
+    )
+      .then((data) => dispatch(getTrunkGroupAccessInfo(data)))
+      .catch((error) => {
+        if (error.response.status === 404) {
+          dispatch(getTrunkGroupAccessInfo({}));
+        } else {
+          dispatch(getTrunkGroupAccessInfo({}));
+          NotificationsManager.error(
+            <FormattedMessage
+              id="fetch-trunk-group-access-info-failed"
+              defaultMessage="Failed to fetch trunkg group access info"
+            />,
+            error.message
+          );
+        }
+      });
+  };
+}
+
 export function fetchPostCreateGroupAdmin(tenantId, groupId, data) {
   return function (dispatch) {
     return fetch_post(
@@ -2695,7 +2728,7 @@ export function fetchPutUpdateBackupByTrunkGtoup(
         NotificationsManager.success(
           <FormattedMessage
             id="successfulUpdateGroupBackupUpdate"
-            defaultMessage="Successful backup ipdate"
+            defaultMessage="Successful backup update"
           />,
           "Updated"
         );
@@ -2758,7 +2791,7 @@ export function fetchPutUpdateTrunkGroup(
         NotificationsManager.success(
           <FormattedMessage
             id="successfulTrunkGroupUpdate"
-            defaultMessage="Successful trunk group ipdate"
+            defaultMessage="Successful trunk group update"
           />,
           "Updated"
         );
@@ -3065,6 +3098,40 @@ export function fetchPutUpdateTenantEntitlements(
           <FormattedMessage
             id="entitlement-update-failed"
             defaultMessage="Failed to update entitlement!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchPutUpdateTrunkGroupAccessInfo(
+  tenantId,
+  groupId,
+  trunkGroupId,
+  data
+) {
+  return function (dispatch) {
+    return fetch_put(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/services/trunk_groups/${trunkGroupId}/access_info/`,
+      data
+    )
+      .then((res) => res.json())
+      .then(() => {
+        dispatch(putUpdateTrunkGroupAccessInfo());
+        NotificationsManager.success(
+          <FormattedMessage
+            id="trunk-group-access-info-successfully-updated"
+            defaultMessage="Trunk group access info successfully updated"
+          />,
+          "Updated"
+        );
+      })
+      .catch((error) =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="trunk-group-access-info-update-failed"
+            defaultMessage="Failed to update trunk group access info!"
           />,
           error.message
         )

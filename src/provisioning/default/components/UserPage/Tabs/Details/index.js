@@ -16,11 +16,14 @@ import Panel from "react-bootstrap/lib/Panel";
 import { Form } from "react-bootstrap";
 
 import Loading from "../../../../common/Loading";
+import { passwordValidator } from "../../../passwordValidator";
+
 import {
   fetchGetUserByName,
   fetchPutUpdateUser,
   fetchGetAccessDeviceByName,
-  fetchGetLanguages
+  fetchGetLanguages,
+  fetchGetGroupPasswordRules,
 } from "../../../../store/actions";
 
 class Details extends Component {
@@ -40,14 +43,23 @@ class Details extends Component {
     updateMassage: "",
     isLoadingLanguages: true,
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
+    isLoadingPassRules: true,
+    passwordError: null,
+    textPasswordError: "",
   };
 
   fetchRequest = () => {
+    this.props
+      .fetchGetGroupPasswordRules(
+        this.props.match.params.tenantId,
+        this.props.match.params.groupId
+      )
+      .then(() => this.setState({ isLoadingPassRules: false }));
     this.setState({ isLoadingLanguages: true, isLoading: true }, () => {
       this.props.fetchGetLanguages().then(() =>
         this.setState({
-          isLoadingLanguages: false
+          isLoadingLanguages: false,
         })
       );
       this.props
@@ -73,7 +85,7 @@ class Details extends Component {
                     cliLastName: this.props.user.cliLastName,
                     accessDevice: this.props.accessDevice,
                     language: this.props.user.language,
-                    isLoading: false
+                    isLoading: false,
                   })
                 )
             : this.setState({
@@ -83,7 +95,7 @@ class Details extends Component {
                 cliFirstName: this.props.user.cliFirstName,
                 cliLastName: this.props.user.cliLastName,
                 language: this.props.user.language,
-                isLoading: false
+                isLoading: false,
               });
         });
     });
@@ -114,14 +126,16 @@ class Details extends Component {
       emailIsValid,
       firstNameError,
       lastNameError,
-      updateMassage,
+      passwordError,
       isLoadingLanguages,
       password,
       confirmPassword,
-      passwordsNotMatch
+      passwordsNotMatch,
+      isLoadingPassRules,
+      textPasswordError,
     } = this.state;
 
-    if (isLoading || isLoadingLanguages) {
+    if (isLoading || isLoadingLanguages || isLoadingPassRules) {
       return <Loading />;
     }
 
@@ -197,10 +211,10 @@ class Details extends Component {
                   type="email"
                   placeholder="Email"
                   defaultValue={emailAddress}
-                  onChange={e =>
+                  onChange={(e) =>
                     this.setState({
                       emailAddress: e.target.value,
-                      emailIsValid: null
+                      emailIsValid: null,
                     })
                   }
                   disabled={this.props.user.sync}
@@ -217,10 +231,10 @@ class Details extends Component {
                   type="text"
                   placeholder="First Name"
                   defaultValue={firstName}
-                  onChange={e =>
+                  onChange={(e) =>
                     this.setState({
                       firstName: e.target.value,
-                      firstNameError: null
+                      firstNameError: null,
                     })
                   }
                   disabled={this.props.user.sync}
@@ -237,10 +251,10 @@ class Details extends Component {
                   type="text"
                   placeholder="Last Name"
                   defaultValue={lastName}
-                  onChange={e =>
+                  onChange={(e) =>
                     this.setState({
                       lastName: e.target.value,
-                      lastNameError: null
+                      lastNameError: null,
                     })
                   }
                   disabled={this.props.user.sync}
@@ -252,9 +266,9 @@ class Details extends Component {
               <Col mdOffset={3} md={9}>
                 <Checkbox
                   checked={this.state.useSameName}
-                  onChange={e =>
+                  onChange={(e) =>
                     this.setState({
-                      useSameName: e.target.checked
+                      useSameName: e.target.checked,
                     })
                   }
                 >
@@ -277,9 +291,9 @@ class Details extends Component {
                       type="text"
                       placeholder="CLI First Name"
                       defaultValue={cliFirstName}
-                      onChange={e =>
+                      onChange={(e) =>
                         this.setState({
-                          cliFirstName: e.target.value
+                          cliFirstName: e.target.value,
                         })
                       }
                     />
@@ -298,9 +312,9 @@ class Details extends Component {
                       type="text"
                       placeholder="CLI Last Name"
                       defaultValue={cliLastName}
-                      onChange={e =>
+                      onChange={(e) =>
                         this.setState({
-                          cliLastName: e.target.value
+                          cliLastName: e.target.value,
                         })
                       }
                     />
@@ -316,13 +330,13 @@ class Details extends Component {
                 <FormControl
                   componentClass="select"
                   defaultValue={language}
-                  onChange={e =>
+                  onChange={(e) =>
                     this.setState({
-                      language: e.target.value
+                      language: e.target.value,
                     })
                   }
                 >
-                  {this.props.languages.availableLanguages.map(lang => (
+                  {this.props.languages.availableLanguages.map((lang) => (
                     <option key={`${lang.locale}`} value={lang.name}>
                       {lang.name}
                     </option>
@@ -334,7 +348,7 @@ class Details extends Component {
               <React.Fragment>
                 <FormGroup
                   controlId="password"
-                  validationState={passwordsNotMatch}
+                  validationState={passwordsNotMatch || passwordError}
                 >
                   <Col
                     componentClass={ControlLabel}
@@ -348,15 +362,19 @@ class Details extends Component {
                       type="password"
                       placeholder="Password"
                       defaultValue={password}
-                      onChange={e =>
+                      onChange={(e) =>
                         this.setState({
                           password: e.target.value,
-                          passwordsNotMatch: null
+                          passwordsNotMatch: null,
+                          passwordError: null,
+                          textPasswordError: "",
                         })
                       }
                     />
-                    {passwordsNotMatch && (
-                      <HelpBlock>Passwords do not match</HelpBlock>
+                    {(passwordsNotMatch || passwordError) && (
+                      <HelpBlock>
+                        {textPasswordError || "Passwords do not match"}
+                      </HelpBlock>
                     )}
                   </Col>
                 </FormGroup>
@@ -376,10 +394,10 @@ class Details extends Component {
                       type="password"
                       placeholder="Confirm password"
                       defaultValue={confirmPassword}
-                      onChange={e =>
+                      onChange={(e) =>
                         this.setState({
                           confirmPassword: e.target.value,
-                          passwordsNotMatch: null
+                          passwordsNotMatch: null,
                         })
                       }
                     />
@@ -645,12 +663,12 @@ class Details extends Component {
     );
   }
 
-  validateEmail = elementValue => {
+  validateEmail = (elementValue) => {
     var emailPattern = /^([0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*@([0-9a-zA-Z][-\w]*[0-9a-zA-Z]\.)+[a-zA-Z]{2,9})$/;
     return emailPattern.test(elementValue);
   };
 
-  updateUser = e => {
+  updateUser = (e) => {
     e.preventDefault();
     const {
       useSameName,
@@ -661,7 +679,7 @@ class Details extends Component {
       cliLastName,
       language,
       password,
-      confirmPassword
+      confirmPassword,
     } = this.state;
 
     if (emailAddress) {
@@ -678,6 +696,16 @@ class Details extends Component {
       this.setState({ lastNameError: "error" });
       return;
     }
+    if (passwordValidator(password, this.props.groupPasswordRules)) {
+      this.setState({
+        passwordError: "error",
+        textPasswordError: passwordValidator(
+          password,
+          this.props.groupPasswordRules
+        ),
+      });
+      return;
+    }
     if (password !== confirmPassword) {
       this.setState({ passwordsNotMatch: "error" });
       return;
@@ -690,7 +718,7 @@ class Details extends Component {
       cliFirstName: useSameName ? firstName : cliFirstName,
       cliLastName: useSameName ? lastName : cliLastName,
       language,
-      password
+      password,
     };
 
     this.props.fetchPutUpdateUser(
@@ -706,18 +734,17 @@ const mapDispatchToProps = {
   fetchGetUserByName,
   fetchPutUpdateUser,
   fetchGetAccessDeviceByName,
-  fetchGetLanguages
+  fetchGetLanguages,
+  fetchGetGroupPasswordRules,
 };
 
-const mapStateToProps = state => ({
+const mapStateToProps = (state) => ({
   user: state.user,
   accessDevice: state.accessDevice,
-  languages: state.languages
+  languages: state.languages,
+  groupPasswordRules: state.groupPasswordRules,
 });
 
 export default withRouter(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(Details)
+  connect(mapStateToProps, mapDispatchToProps)(Details)
 );

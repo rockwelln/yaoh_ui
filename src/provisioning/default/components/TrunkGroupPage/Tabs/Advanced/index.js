@@ -18,7 +18,7 @@ export class Advanced extends Component {
     peeringDomain: null,
     routeToPeeringDomain: null,
     prefixEnabled: null,
-    prefix: null
+    prefix: null,
   };
 
   componentDidMount() {
@@ -32,24 +32,24 @@ export class Advanced extends Component {
       prefixEnabled: this.props.trunkGroup.prefixEnabled
         ? this.props.trunkGroup.prefixEnabled
         : "",
-      prefix: this.props.trunkGroup.prefix ? this.props.trunkGroup.prefix : ""
+      prefix: this.props.trunkGroup.prefix ? this.props.trunkGroup.prefix : "",
     });
   }
 
   render() {
     return (
-      <React.Fragment className={"margin-1"}>
+      <React.Fragment>
         <Row className={"margin-top-1"}>
           <Col md={12} className={"flex align-items-center"}>
             <Checkbox
               checked={this.state.routeToPeeringDomain}
-              onChange={e => {
+              onChange={(e) => {
                 if (e.target.checked) {
                   this.setState({ routeToPeeringDomain: e.target.checked });
                 } else {
                   this.setState({
                     routeToPeeringDomain: e.target.checked,
-                    peeringDomain: ""
+                    peeringDomain: "",
                   });
                 }
               }}
@@ -61,9 +61,9 @@ export class Advanced extends Component {
               type="text"
               value={this.state.peeringDomain}
               disabled={!this.state.routeToPeeringDomain}
-              onChange={e => {
+              onChange={(e) => {
                 this.setState({
-                  peeringDomain: e.target.value
+                  peeringDomain: e.target.value,
                 });
               }}
             />
@@ -73,13 +73,13 @@ export class Advanced extends Component {
           <Col md={12} className={"flex align-items-center"}>
             <Checkbox
               checked={this.state.prefixEnabled}
-              onChange={e => {
+              onChange={(e) => {
                 if (e.target.checked) {
                   this.setState({ prefixEnabled: e.target.checked });
                 } else {
                   this.setState({
                     prefixEnabled: e.target.checked,
-                    prefix: ""
+                    prefix: "",
                   });
                 }
               }}
@@ -91,9 +91,9 @@ export class Advanced extends Component {
               type="text"
               value={this.state.prefix}
               disabled={!this.state.prefixEnabled}
-              onChange={e => {
+              onChange={(e) => {
                 this.setState({
-                  prefix: e.target.value
+                  prefix: e.target.value,
                 });
               }}
             />
@@ -127,14 +127,14 @@ export class Advanced extends Component {
       peeringDomain,
       routeToPeeringDomain,
       prefixEnabled,
-      prefix
+      prefix,
     } = this.state;
 
     const data = {
       peeringDomain: peeringDomain && peeringDomain,
       routeToPeeringDomain: routeToPeeringDomain && routeToPeeringDomain,
       prefixEnabled: prefixEnabled && prefixEnabled,
-      prefix: prefix && prefix
+      prefix: prefix && prefix,
     };
 
     const clearData = removeEmpty(data);
@@ -152,15 +152,12 @@ export class Advanced extends Component {
   };
 }
 
-const mapStateToProps = state => ({
-  trunkGroup: state.trunkGroup
+const mapStateToProps = (state) => ({
+  trunkGroup: state.trunkGroup,
 });
 
 const mapDispatchToProps = { fetchPutUpdateTrunkGroup };
 
 export default withRouter(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(Advanced)
+  connect(mapStateToProps, mapDispatchToProps)(Advanced)
 );

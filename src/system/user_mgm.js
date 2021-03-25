@@ -26,7 +26,7 @@ import update from 'immutability-helper';
 import {fetch_post, fetch_get, fetch_delete, fetch_put, NotificationsManager} from "../utils";
 import {ApioDatatable} from "../utils/datatable";
 import { LinkContainer } from 'react-router-bootstrap';
-import {INTERNAL_HELP_LINKS} from "../async-apio-help";
+import {INTERNAL_HELP_LINKS} from "../help/async-apio-help";
 import {Search, StaticControl} from "../utils/common";
 import {CallbackHandler} from "./callbacks";
 import {get_ui_profiles} from "../utils/user";
@@ -1077,6 +1077,36 @@ export default class SearchUsers extends Search {
                     <Breadcrumb.Item active><FormattedMessage id="system" defaultMessage="System"/></Breadcrumb.Item>
                     <Breadcrumb.Item active><FormattedMessage id="users" defaultMessage="Users"/></Breadcrumb.Item>
                 </Breadcrumb>
+
+                <Panel>
+                    <Panel.Body>
+                        <ButtonToolbar>
+                            <Button bsStyle='primary' onClick={() => this.setState({showNew: true})}>
+                                <FormattedMessage id="add-user" defaultMessage="Add user" />
+                            </Button>
+                            <LinkContainer to={"/system/users/profiles"}>
+                                <Button bsStyle='primary'>
+                                    <FormattedMessage id="profiles" defaultMessage="Profiles"/>
+                                </Button>
+                            </LinkContainer>
+                            <LinkContainer to={"/system/users/roles"}>
+                                <Button bsStyle='primary'>
+                                    <FormattedMessage id="roles" defaultMessage="Roles"/>
+                                </Button>
+                            </LinkContainer>
+                            <LinkContainer to={"/system/users/audit"}>
+                                <Button bsStyle='danger'>
+                                    <FormattedMessage id="audit" defaultMessage="Audit"/>
+                                </Button>
+                            </LinkContainer>
+                        </ButtonToolbar>
+                        <NewUser
+                            show={showNew}
+                            onClose={() => {this._refresh(); this.setState({showNew: false});}}
+                            user_info={user_info} />
+                    </Panel.Body>
+                </Panel>
+
                 <Panel>
                     <Panel.Heading>
                         <Panel.Title><FormattedMessage id="users" defaultMessage="Users" /></Panel.Title>
@@ -1113,35 +1143,6 @@ export default class SearchUsers extends Search {
                             onFilterChange={this.onFilterChange}
                             onSearch={() => this._refresh()}
                         />
-                    </Panel.Body>
-                </Panel>
-
-                <Panel>
-                    <Panel.Body>
-                        <ButtonToolbar>
-                            <Button bsStyle='primary' onClick={() => this.setState({showNew: true})}>
-                                <FormattedMessage id="add-user" defaultMessage="Add user" />
-                            </Button>
-                            <LinkContainer to={"/system/users/profiles"}>
-                                <Button bsStyle='primary'>
-                                    <FormattedMessage id="profiles" defaultMessage="Profiles"/>
-                                </Button>
-                            </LinkContainer>
-                            <LinkContainer to={"/system/users/roles"}>
-                                <Button bsStyle='primary'>
-                                    <FormattedMessage id="roles" defaultMessage="Roles"/>
-                                </Button>
-                            </LinkContainer>
-                            <LinkContainer to={"/system/users/audit"}>
-                                <Button bsStyle='danger'>
-                                    <FormattedMessage id="audit" defaultMessage="Audit"/>
-                                </Button>
-                            </LinkContainer>
-                        </ButtonToolbar>
-                        <NewUser
-                            show={showNew}
-                            onClose={() => {this._refresh(); this.setState({showNew: false});}}
-                            user_info={user_info} />
                     </Panel.Body>
                 </Panel>
             </>

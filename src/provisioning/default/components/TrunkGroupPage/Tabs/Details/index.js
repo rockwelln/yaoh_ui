@@ -8,14 +8,10 @@ import FormControl from "react-bootstrap/lib/FormControl";
 import Button from "react-bootstrap/lib/Button";
 
 import { fetchPutUpdateTrunkGroup } from "../../../../store/actions";
-import { removeEmpty } from "../../../remuveEmptyInObject";
-
-import DevicePage from "../../../DevicePage";
 
 export class Details extends Component {
   state = {
     pilotUserId: null,
-    accessDevice: null,
     disableButton: false,
     sipAuthenticationPassword: "",
     showDevice: false,
@@ -25,10 +21,7 @@ export class Details extends Component {
     this.setState({
       pilotUserId: this.props.trunkGroup.pilotUserId
         ? this.props.trunkGroup.pilotUserId
-        : "",
-      accessDevice: this.props.trunkGroup.accessDevice
-        ? this.props.trunkGroup.accessDevice.name
-        : "",
+        : ""
     });
   }
 
@@ -57,46 +50,6 @@ export class Details extends Component {
           </Col>
         </Row>
         <Row className={"margin-top-1"}>
-          <Col md={12} className={"flex align-items-center"}>
-            <div className={"margin-right-1 flex flex-basis-16"}>
-              Access device
-            </div>
-            <div className={"margin-right-1"}>{this.state.accessDevice}</div>
-            <Button
-              className={"btn-primary"}
-              onClick={() => this.setState({ showDevice: true })}
-            >
-              Edit
-            </Button>
-          </Col>
-        </Row>
-        {this.state.showDevice && (
-          <DevicePage
-            isOpen={this.state.showDevice}
-            deviceName={this.state.accessDevice}
-            handleHide={() => this.setState({ showDevice: false })}
-          />
-        )}
-        {/* <Row className={"margin-top-1"}>
-          <Col md={12} className={"flex align-items-center"}>
-            <div className={"margin-right-1 flex flex-basis-16"}>
-              SIP password
-            </div>
-            <div>
-              <FormControl
-                autoComplete={false}
-                type="password"
-                value={this.state.sipAuthenticationPassword}
-                onChange={e => {
-                  this.setState({
-                    sipAuthenticationPassword: e.target.value
-                  });
-                }}
-              />
-            </div>
-          </Col>
-        </Row> */}
-        <Row className={"margin-top-1"}>
           <Col md={12}>
             <div className="button-row">
               <div className="pull-right">
@@ -115,13 +68,11 @@ export class Details extends Component {
     );
   }
   update = () => {
-    const { pilotUserId, accessDevice, sipAuthenticationPassword } = this.state;
+    const { pilotUserId } = this.state;
 
     const data = {
       pilotUserId,
     };
-
-    const clearData = removeEmpty(data);
 
     this.setState({ disableButton: true }, () =>
       this.props

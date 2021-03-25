@@ -8,7 +8,7 @@ import {
   fetch_put,
   NotificationsManager,
   AuthServiceManager,
-  API_URL_PREFIX
+  API_URL_PREFIX, userLocalizeUtcDate, downloadJson
 } from "../utils";
 
 import Col from 'react-bootstrap/lib/Col';
@@ -45,6 +45,7 @@ import {fetchConfiguration, Param2Input} from "./nodeInputs";
 import Ajv from "ajv";
 import Select from "react-select";
 import ButtonGroup from "react-bootstrap/lib/ButtonGroup";
+import moment from "moment";
 
 
 const NEW_ACTIVITY = {
@@ -105,7 +106,7 @@ export function fetchActivities(onSuccess) {
         .catch(console.error);
 }
 
-function fetchActivity(activityId, cb) {
+export function fetchActivity(activityId, cb) {
     fetch_get('/api/v01/activities/' + activityId)
         .then(data => cb(data.activity))
         .catch(console.error);
@@ -184,8 +185,8 @@ function downloadActivityVersions(id) {
       .then(token => window.location = `${API_URL_PREFIX}/api/v01/activities/${id}/versions/export?auth_token=${token}`)
 }
 
-function NewActivity(props) {
-    const {show, onClose} = props;
+export function NewActivity(props) {
+    const {show, onClose, onCreated} = props;
     const [newActivity, setNewActivity] = useState(NEW_ACTIVITY);
     const [redirect, setRedirect] = useState(null);
 
@@ -215,7 +216,10 @@ function NewActivity(props) {
                                     type="submit"
                                     onClick={e => {
                                         e.preventDefault();
-                                        saveActivity(newActivity, a => setRedirect(a.id));
+                                        saveActivity(newActivity, a => {
+                                          setRedirect(a.id);
+                                          onCreated && onCreated(a.id);
+                                        });
                                     }}
                                     disabled={!newActivity.name || newActivity.name.length === 0}
                                     bsStyle="primary">
@@ -260,7 +264,7 @@ function SearchBar(props) {
     )
 }
 
-export function Activities(props) {
+export function Activities({user_info}) {
     const [activities, setActivities] = useState([]);
     const [showNew, setShowNew] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -312,7 +316,7 @@ export function Activities(props) {
                                     <tr key={a.id}>
                                         <td>{a.name}</td>
                                         <td>{a.version_label || WORKING_VERSION_LABEL}</td>
-                                        <td>{a.created_on}</td>
+                                        <td>{userLocalizeUtcDate(moment.utc(a.created_on), user_info).format()}</td>
 
                                         <td>
                                             <ButtonToolbar>
@@ -553,6 +557,7 @@ function NewCellModal(props)  {
                 param={param}
                 cells={cells}
                 activity={activity}
+                staticParams={staticParams}
                 value={staticParams[n]}
                 onChange={(e, outputs) => {
                   setStaticParams(update(staticParams, {$merge: {[n]: e}}));
@@ -860,6 +865,7 @@ export function EditCellModal(props) {
                 cells={cells}
                 activity={activity}
                 value={staticParams[n]}
+                staticParams={staticParams}
                 readOnly={readOnly}
                 onChange={(e, outputs) => {
                   if(readOnly) return;
@@ -1042,16 +1048,7 @@ function CommitVersionModal({show, onHide, id}) {
 }
 
 function downloadDefinition(activity) {
-  let element = document.createElement('a');
-  element.setAttribute('href', 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(activity.definition, null, 2)));
-  element.setAttribute('download', `${activity.name}.json`);
-
-  element.style.display = 'none';
-  document.body.appendChild(element);
-
-  element.click();
-
-  document.body.removeChild(element);
+  downloadJson(activity.name, activity.definition);
 }
 
 function compareActivitiesDef(a, b) {

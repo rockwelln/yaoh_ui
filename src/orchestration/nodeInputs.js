@@ -6,13 +6,14 @@ import Checkbox from "react-bootstrap/lib/Checkbox";
 import Table from "react-bootstrap/lib/Table";
 import Button from "react-bootstrap/lib/Button";
 import update from "immutability-helper";
-import {fetchActivities} from "./activity-editor";
+import {fetchActivities, fetchActivity} from "./activity-editor";
 import {fetch_get} from "../utils";
 import {MentionExample} from "./templateEditor";
 import Creatable from 'react-select/creatable';
 import Select from "react-select";
 import InputGroup from "react-bootstrap/lib/InputGroup";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
+import HelpBlock from "react-bootstrap/lib/HelpBlock";
 
 
 function BasicInput(props) {
@@ -323,6 +324,68 @@ function BoolInput(props) {
 }
 
 
+function WorkflowEnds({value, onChange, workflow}) {
+  const [newOutput, setNewOutput] = useState("");
+  const [ends, setEnds] = useState([]);
+  const outputs = value ? value.split(",") : [];
+
+  useEffect(() => {
+    workflow && fetchActivities(activities => {
+      const a = activities.find(a => a.name === workflow);
+      a && fetchActivity(
+        a.id,
+        activity => setEnds(
+          Object.entries(JSON.parse(activity.definition).cells)
+            .filter(([_, c]) => c.original_name === "end")
+            .map(([name, _]) => name)
+        )
+      )
+    })
+  }, [workflow]);
+
+  return (
+    <>
+      <Table>
+        <tbody>
+        {
+          outputs.map(o =>
+            <tr key={o}>
+              <td>{o}</td>
+              <td><Button onClick={() => {
+                onChange(outputs.filter(output => output !== o).join(","), outputs.filter(output => output !== o))
+              }}>{"-"}</Button></td>
+            </tr>)
+        }
+        {
+          <tr>
+            <td style={{width: "100px"}}>
+              <FormControl
+                value={newOutput}
+                onChange={e => setNewOutput(e.target.value)} />
+              {" "}
+            </td>
+            <td>
+              <Button
+                onClick={() => {
+                  onChange([...outputs, newOutput].join(","), [...outputs, newOutput])
+                  setNewOutput("");
+                }}
+              >{"+"}</Button>
+            </td>
+          </tr>
+        }
+        </tbody>
+      </Table>
+      <HelpBlock>
+        The terminations are the "names" of the "end" nodes of the target workflow.<br/>
+        The workflow associated currently defines the following ends:
+        <p style={{color: "blue"}}>{ends.join(", ")}</p>
+      </HelpBlock>
+    </>
+  )
+}
+
+
 function DynamicOutputs(props) {
   const {value, onChange, regexp} = props;
   const [newOutput, setNewOutput] = useState("");
@@ -546,7 +609,7 @@ function JsonSchemaFormFields(props) {
 }
 
 
-export function Param2Input({param, activity, cells, value, onChange}) {
+export function Param2Input({param, activity, staticParams, cells, value, onChange}) {
   let i;
   switch(param.nature) {
     case 'session_holder':
@@ -575,6 +638,7 @@ export function Param2Input({param, activity, cells, value, onChange}) {
     case 'python_bool':
     case 'user_properties':
     case 'json':
+    case 'xml':
       i = <TextareaInput rows={10} value={value} onChange={e => onChange(e)} cells={activity.definition.cells} />
       break;
     case 'jsonschema_form_fields':
@@ -594,6 +658,14 @@ export function Param2Input({param, activity, cells, value, onChange}) {
       i = <DynamicOutputs
         value={value}
         regexp={param.regexp || (param.schema && param.schema.items.pattern)}
+        onChange={(e, outputs) => {
+          onChange(e, outputs);
+        }} />
+      break;
+    case 'workflow_ends':
+      i = <WorkflowEnds
+        value={value}
+        workflow={staticParams && staticParams[param.origin]}
         onChange={(e, outputs) => {
           onChange(e, outputs);
         }} />
