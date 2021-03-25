@@ -106,7 +106,7 @@ export function fetchActivities(onSuccess) {
         .catch(console.error);
 }
 
-function fetchActivity(activityId, cb) {
+export function fetchActivity(activityId, cb) {
     fetch_get('/api/v01/activities/' + activityId)
         .then(data => cb(data.activity))
         .catch(console.error);
@@ -557,6 +557,7 @@ function NewCellModal(props)  {
                 param={param}
                 cells={cells}
                 activity={activity}
+                staticParams={staticParams}
                 value={staticParams[n]}
                 onChange={(e, outputs) => {
                   setStaticParams(update(staticParams, {$merge: {[n]: e}}));
@@ -864,6 +865,7 @@ export function EditCellModal(props) {
                 cells={cells}
                 activity={activity}
                 value={staticParams[n]}
+                staticParams={staticParams}
                 readOnly={readOnly}
                 onChange={(e, outputs) => {
                   if(readOnly) return;
