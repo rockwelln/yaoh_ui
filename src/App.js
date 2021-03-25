@@ -708,8 +708,11 @@ class App extends Component {
     }
 
     shouldComponentUpdate(nextProps, nextState, nextContext) {
-        let needUpdate = (nextState.database_status && !nextState.database_status.is_master) || nextState.error_msg;
-        needUpdate = needUpdate || JSON.stringify(this.state.user_info) !== JSON.stringify(nextState.user_info);
+        const needUpdate = (nextState.database_status && !nextState.database_status.is_master) ||
+          this.state.error_msg !== nextState.error_msg ||
+          JSON.stringify(this.state.user_info) !== JSON.stringify(nextState.user_info) ||
+          this.state.proxy_fetch !== nextState.proxy_fetch;
+
         return needUpdate;
     }
 
