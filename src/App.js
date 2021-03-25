@@ -648,7 +648,7 @@ class App extends Component {
     }
 
     getUserInfo() {
-        fetch_get('/api/v01/system/users/local')
+        fetch_get('/api/v02/system/users/local')
             .then(data => {
                 this.setState({user_info: data});
                 localStorage.setItem("userProfile", data.ui_profile);
