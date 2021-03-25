@@ -28,7 +28,7 @@ import {
   needActionCriteria,
 } from "../requests/requests";
 import update from 'immutability-helper';
-import { is_admin} from "../utils/user";
+import {localUser} from "../utils/user";
 
 export const DATE_FORMAT = 'DD/MM/YYYY HH:mm:ss';
 
@@ -95,7 +95,7 @@ export class NPRequests extends Component {
     super(props);
     this.cancelLoad = false;
     this.state = {
-      filter_criteria: NPRequests.criteria_from_params(this.props.location.search, this.props.user_info.ui_profile),
+      filter_criteria: NPRequests.criteria_from_params(this.props.location.search),
       paging_info: {
         page_number: 1, page_size: 50
       },
@@ -115,7 +115,7 @@ export class NPRequests extends Component {
     this._refreshOperators = this._refreshOperators.bind(this);
   }
 
-  static default_criteria(ui_profile) {
+  static default_criteria() {
     return {
       kind: { model: 'NPRequest', value: '', op: 'eq' },
       number: { model: 'NPRequestRange', value: '', op: 'eq' },
@@ -129,12 +129,12 @@ export class NPRequests extends Component {
       created_on: { model: 'NPRequest', value: '', op: 'ge' },
       due_date: { model: 'NPRequest', value: '', op: 'ge' },
       b2b: { model: 'NPRequest', value: '', op: 'eq' },
-      task_status: is_admin(ui_profile) ? undefined : errorCriteria.task_status,
+      task_status: localUser.isSystem() ? undefined : errorCriteria.task_status,
       action_status: undefined,
     }
   }
 
-  static criteria_from_params(url_params, ui_profile) {
+  static criteria_from_params(url_params) {
     const params = queryString.parse(url_params);
     let custom_params = {};
     if (params.filter !== undefined) {
@@ -143,7 +143,7 @@ export class NPRequests extends Component {
       } catch (e) { console.error(e) }
     }
     return update(
-      NPRequests.default_criteria(ui_profile),
+      NPRequests.default_criteria(),
       { $merge: custom_params }
     );
   }
@@ -170,7 +170,7 @@ export class NPRequests extends Component {
     if (nextProps.location.pathname === this.props.location.pathname &&
       nextProps.location.search !== this.props.location.search) {
       this.setState({
-        filter_criteria: NPRequests.criteria_from_params(nextProps.location.search, nextProps.user_info.ui_profile)
+        filter_criteria: NPRequests.criteria_from_params(nextProps.location.search)
       });
     }
   }

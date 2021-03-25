@@ -143,7 +143,6 @@ export function LocalUserProfile({onUserInfoChanged}) {
     const user_info = userInfo;
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [profileName, setProfileName] = useState('');
     const [language, setLanguage] = useState(user_info.language);
     const [timezone, setTimezone] = useState(user_info.timezone);
 
@@ -157,11 +156,6 @@ export function LocalUserProfile({onUserInfoChanged}) {
     if(timezone !== user_info.timezone) {
         delta.timezone = timezone;
     }
-    useEffect(() => {
-        user_info.profile_id && fetch_get("/api/v01/system/user_profiles")
-            .then(data => setProfileName(data.profiles.find(p => p.id === user_info.profile_id).name))
-            .catch(console.error)
-    }, [user_info.profile_id]);
     useEffect(() => {
       fetchLocalUser(setUserInfo);
       document.title = "User";
@@ -191,7 +185,7 @@ export function LocalUserProfile({onUserInfoChanged}) {
                                         <FormattedMessage id="yes" defaultMessage="Yes" />:
                                         <FormattedMessage id="no" defaultMessage="No" />
                                 }/>
-                        <StaticControl label={<FormattedMessage id='profile' defaultMessage='Profile'/>} value={profileName}/>
+                        <StaticControl label={<FormattedMessage id='profile' defaultMessage='Profile'/>} value={user_info.profile && user_info.profile.name}/>
                         <StaticControl label={<FormattedMessage id='ui-profile' defaultMessage='UI Profile'/>} value={user_info.ui_profile}/>
                         <StaticControl label={<FormattedMessage id='registered-on' defaultMessage='Registered on'/>} value={user_info.registered_on}/>
                         <FormGroup>

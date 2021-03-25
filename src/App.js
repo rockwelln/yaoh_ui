@@ -49,7 +49,7 @@ import {
 } from "./utils";
 import Databases from "./system/databases_mgm";
 import {AuditLogs} from "./system/audit";
-import {getHomePage, isAllowed, limited_menu, modules, pages, supportedModule} from "./utils/user";
+import {accesses, limited_menu, localUser, modules, pages, supportedModule} from "./utils/user";
 import {NotAllowed} from "./utils/common";
 import {AuthCallback, AuthSilentCallback} from "./sso/login";
 
@@ -59,7 +59,6 @@ import apio_logo from "./images/logo.png";
 import loading from './loading.gif';
 import {sso_auth_service} from "./sso/auth_service";
 import {Webhooks} from "./system/webhooks";
-// import {ListProvisioningGateways, provisioningRoutes} from "./provisioning";
 import LogsManagement from "./system/logs";
 import UserProfiles from "./system/user_profiles";
 import Templates from "./system/templates";
@@ -121,7 +120,7 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
         </Navbar.Header>
         <Navbar.Collapse>
           <Nav>
-            {(!user_info.modules || user_info.modules.includes(modules.provisioning)) && isAllowed(user_info.ui_profile, pages.provisioning) &&
+            {(!user_info.modules || user_info.modules.includes(modules.provisioning)) && localUser.isAllowed(accesses.provisioning) &&
             <NavDropdown
               eventKey={4}
               title={
@@ -189,12 +188,14 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
         </Navbar.Header>
         <Navbar.Collapse>
           <Nav>
+            {localUser.isAllowed(accesses.dashboard) &&
             <ListItemLink to={"/dashboard"}>
               <Glyphicon glyph="dashboard"/> {' '}
               <FormattedMessage id="dashboard" defaultMessage="Dashboard"/>
             </ListItemLink>
+            }
 
-            {user_info.modules && supportedModule(modules.npact, user_info.modules) && isAllowed(user_info.ui_profile, pages.requests_nprequests) &&
+            {user_info.modules && supportedModule(modules.npact, user_info.modules) && localUser.isAllowed(accesses.requests) &&
             <NavDropdown title={
               <span>
                 <Glyphicon glyph="send"/> {' '}
@@ -253,7 +254,7 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
             </NavDropdown>
             }
 
-            {(!user_info.modules || !supportedModule(modules.npact, user_info.modules)) && isAllowed(user_info.ui_profile, pages.requests_nprequests) &&
+            {(!user_info.modules || !supportedModule(modules.npact, user_info.modules)) && localUser.isAllowed(accesses.requests) &&
             <NavDropdown title={
               <span>
                 <Glyphicon glyph="send"/> {' '}
@@ -280,7 +281,7 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
                 </LinkContainer>,
               ]
               }
-              {(!user_info.modules || user_info.modules.includes(modules.orange)) && isAllowed(user_info.ui_profile, pages.requests_ndg) &&
+              {(!user_info.modules || user_info.modules.includes(modules.orange)) && localUser.canSee(pages.requests_ndg) &&
               [
                 <MenuItem key="divider-1" divider/>,
                 <LinkContainer key="ndg-history" to={"/requests/ndg"}>
@@ -293,7 +294,7 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
             </NavDropdown>
             }
 
-            {(!user_info.modules || user_info.modules.includes(modules.bulk)) && isAllowed(user_info.ui_profile, pages.bulks) &&
+            {(!user_info.modules || user_info.modules.includes(modules.bulk)) && localUser.isAllowed(accesses.bulks) &&
             <NavDropdown title={
               <span>
                 <Glyphicon glyph="equalizer"/> {' '}
@@ -305,7 +306,7 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
                   <FormattedMessage id="bulk" defaultMessage="Bulk"/>
                 </MenuItem>
               </LinkContainer>
-              {isAllowed(user_info.ui_profile, pages.bulk_actions) && isAllowed(user_info.ui_profile, pages.system) &&
+              {localUser.isAllowed(accesses.bulks_actions) &&
               <LinkContainer to={"/system/bulk_actions"}>
                 <MenuItem>
                   <FormattedMessage id="bulk-actions" defaultMessage="Bulk actions"/>
@@ -315,7 +316,7 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
             </NavDropdown>
             }
 
-            {(!user_info.modules || user_info.modules.includes(modules.provisioning)) && isAllowed(user_info.ui_profile, pages.provisioning) &&
+            {(!user_info.modules || user_info.modules.includes(modules.provisioning)) && localUser.isAllowed(accesses.provisioning) &&
             <NavDropdown
               eventKey={4}
               title={
@@ -341,28 +342,28 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
             </NavDropdown>
             }
 
-            {(!user_info.modules || supportedModule(modules.npact, user_info.modules)) && isAllowed(user_info.ui_profile, pages.data) &&
+            {(!user_info.modules || supportedModule(modules.npact, user_info.modules)) && localUser.isAllowed(accesses.data) &&
             <NavDropdown eventKey={4} title={
               <span>
                 <Glyphicon glyph="hdd"/> {' '}
                 <FormattedMessage id="data" defaultMessage="Data"/>
               </span>
             } id="nav-system-data">
-              {isAllowed(user_info.ui_profile, pages.npact_operators) &&
+              {localUser.canSee(pages.npact_operators) &&
               <LinkContainer to={"/system/operators"}>
                 <MenuItem>
                   <FormattedMessage id="operators" defaultMessage="Operators"/>
                 </MenuItem>
               </LinkContainer>
               }
-              {isAllowed(user_info.ui_profile, pages.npact_ranges) &&
+              {localUser.canSee(pages.npact_ranges) &&
               <LinkContainer to={"/system/ranges"}>
                 <MenuItem>
                   <FormattedMessage id="ranges" defaultMessage="Ranges"/>
                 </MenuItem>
               </LinkContainer>
               }
-              {isAllowed(user_info.ui_profile, pages.npact_routing_info) &&
+              {localUser.canSee(pages.npact_routing_info) &&
               <LinkContainer to={"/system/routing_info"}>
                 <MenuItem>
                   <FormattedMessage id="routing-info" defaultMessage="Routing info"/>
@@ -370,21 +371,21 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
               </LinkContainer>
               }
               <MenuItem divider/>
-              {isAllowed(user_info.ui_profile, pages.npact_porting_cases) &&
+              {localUser.canSee(pages.npact_porting_cases) &&
               <LinkContainer to={"/system/porting_cases"}>
                 <MenuItem>
                   <FormattedMessage id="np-database" defaultMessage="NP database"/>
                 </MenuItem>
               </LinkContainer>
               }
-              {user_info.modules.includes(modules.npact_crdc) && isAllowed(user_info.ui_profile, pages.npact_mvno_numbers) &&
+              {user_info.modules.includes(modules.npact_crdc) && localUser.canSee(pages.npact_mvno_numbers) &&
               <LinkContainer to={"/system/mvno_numbers"}>
                 <MenuItem>
                   <FormattedMessage id="mvno-numbers" defaultMessage="MVNO Numbers"/>
                 </MenuItem>
               </LinkContainer>
               }
-              {user_info.modules.includes(modules.npact_crdc) && isAllowed(user_info.ui_profile, pages.npact_holidays) &&
+              {user_info.modules.includes(modules.npact_crdc) && localUser.canSee(pages.npact_holidays) &&
               <>
                 <MenuItem divider/>
                 <LinkContainer to={"/system/public_holidays"}>
@@ -397,21 +398,21 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
             </NavDropdown>
             }
 
-            {isAllowed(user_info.ui_profile, pages.system) &&
+            {localUser.isAllowed(accesses.settings) &&
             <NavDropdown eventKey={4} title={
               <span>
                 <Glyphicon glyph="signal"/> {' '}
                 <FormattedMessage id='settings' defaultMessage='Settings'/>
               </span>
             } id="nav-system-settings">
-              {isAllowed(user_info.ui_profile, pages.system_users) &&
+              {localUser.isAllowed(accesses.settings_users) &&
               <LinkContainer to={"/system/users"}>
                 <MenuItem>
                   <FormattedMessage id="users" defaultMessage="Users"/>
                 </MenuItem>
               </LinkContainer>
               }
-              {isAllowed(user_info.ui_profile, pages.system_config) &&
+              {localUser.isAllowed(accesses.settings_configuration)  &&
               [
                 <LinkContainer to={"/system/webhooks"} key="webhooks">
                   <MenuItem>
@@ -425,7 +426,7 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
                 </LinkContainer>
               ]
               }
-              {isAllowed(user_info.ui_profile, pages.system_gateways) &&
+              {localUser.canSee(pages.system_gateways) &&
               [
                 <MenuItem key="divider-2" divider/>,
                 <LinkContainer to={"/system/gateways"} key="gateways">
@@ -435,21 +436,21 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
                 </LinkContainer>
               ]
               }
-              {isAllowed(user_info.ui_profile, pages.system_databases) &&
+              {localUser.canSee(pages.system_databases) &&
               <LinkContainer to={"/system/databases"}>
                 <MenuItem>
                   <FormattedMessage id="databases" defaultMessage="Databases"/>
                 </MenuItem>
               </LinkContainer>
               }
-              {isAllowed(user_info.ui_profile, pages.system_queues) &&
+              {localUser.canSee(pages.system_queues) &&
               <LinkContainer to={"/system/queues"}>
                 <MenuItem>
                   <FormattedMessage id="queues" defaultMessage="Queues"/>
                 </MenuItem>
               </LinkContainer>
               }
-              {isAllowed(user_info.ui_profile, pages.system_reporting) &&
+              {localUser.canSee(pages.system_reporting) &&
               [
                 <MenuItem key="divider-3" divider/>,
                 <LinkContainer to={"/system/reporting"} key="reports">
@@ -459,7 +460,7 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
                 </LinkContainer>
               ]
               }
-              {isAllowed(user_info.ui_profile, pages.system_templates) &&
+              {localUser.canSee(pages.system_templates) &&
               [
                 <MenuItem key="divider-4" divider/>,
                 <LinkContainer to={"/system/templates"} key="templates">
@@ -469,7 +470,7 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
                 </LinkContainer>
               ]
               }
-              {isAllowed(user_info.ui_profile, pages.system_logs) &&
+              {localUser.canSee(pages.system_logs) &&
               [
                 <LinkContainer to={"/system/logs"} key="logs">
                   <MenuItem>
@@ -480,28 +481,28 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
               }
             </NavDropdown>
             }
-            {(!user_info.modules || user_info.modules.includes(modules.orchestration)) && isAllowed(user_info.ui_profile, pages.requests_startup_events) &&
+            {(!user_info.modules || user_info.modules.includes(modules.orchestration)) && localUser.isAllowed(accesses.orchestration) &&
             <NavDropdown eventKey={4} title={
               <span>
                 <Glyphicon glyph="cog"/> {' '}
                 <FormattedMessage id='orchestration' defaultMessage='Orchestration'/>
               </span>
             } id="nav-orch">
-              {isAllowed(user_info.ui_profile, pages.requests_startup_events) &&
+              {localUser.canSee(pages.requests_startup_events) &&
               <LinkContainer to={"/transactions/config/startup_events"}>
                 <MenuItem>
                   <FormattedMessage id="startup-events" defaultMessage="Startup Events"/>
                 </MenuItem>
               </LinkContainer>
               }
-              {isAllowed(user_info.ui_profile, pages.requests_workflow_editor) &&
+              {localUser.canSee(pages.requests_workflow_editor) &&
               <LinkContainer to={"/transactions/config/activities/editor"}>
                 <MenuItem>
                   <FormattedMessage id="editor" defaultMessage="Editor"/>
                 </MenuItem>
               </LinkContainer>
               }
-              {isAllowed(user_info.ui_profile, pages.requests_workflow_editor) &&
+              {localUser.canSee(pages.requests_workflow_editor) &&
               <LinkContainer to={"/transactions/config/cron_timers"}>
                 <MenuItem>
                   <FormattedMessage id="cron-timers" defaultMessage="Cron timers"/>
@@ -650,6 +651,7 @@ class App extends Component {
     getUserInfo() {
         fetch_get('/api/v01/system/users/local')
             .then(data => {
+                localUser.fromObject(data);
                 this.setState({user_info: data});
                 localStorage.setItem("userProfile", data.ui_profile);
 
@@ -852,9 +854,6 @@ class App extends Component {
             return <Loading/>
         }
 
-        const ui_profile = user_info.ui_profile;
-        const auth_token = AuthServiceManager.getToken();
-
         return (
           <Router>
             <div className="App">
@@ -867,8 +866,7 @@ class App extends Component {
                     <AsyncApioNavBar
                         user_info={user_info}
                         database_status={database_status}
-                        logoutUser={() => logoutUser().catch(console.error).then(this.logout)}
-                        auth_token={auth_token}/>
+                        logoutUser={() => logoutUser().catch(console.error).then(this.logout)}/>
                 </div>
 
                 <Col mdOffset={1} md={10}>
@@ -886,23 +884,22 @@ class App extends Component {
                                exact />
                         <Route path="/dashboard"
                                component={props => (
+                                   localUser.isAllowed(accesses.dashboard) ?
                                    <Dashboard
-                                       auth_token={auth_token}
                                        user_info={user_info}
                                        notifications={this._notificationSystem.current}
-                                       {...props} />
+                                       {...props} /> :
+                                   <NotAllowed/>
                                )}
                                exact />
                         <Route path="/transactions/list"
                                component={props => (
-                                   isAllowed(ui_profile, pages.requests_nprequests) ?
+                                   localUser.isAllowed(accesses.requests) ?
                                    (!user_info.modules || supportedModule(modules.npact, user_info.modules)) ?
                                     <NPRequests
-                                        auth_token={auth_token}
                                         user_info={user_info}
                                         {...props} /> :
                                     <Requests
-                                       auth_token={auth_token}
                                        user_info={user_info}
                                        {...props} /> :
                                    <NotAllowed/>
@@ -910,9 +907,8 @@ class App extends Component {
                                exact />
                         <Route path="/custom-transactions/list"
                                component={props => (
-                                   isAllowed(ui_profile, pages.requests_nprequests) ?
+                                   localUser.isAllowed(accesses.cron_requests) ?
                                    <CustomRequests
-                                       auth_token={auth_token}
                                        user_info={user_info}
                                        {...props} /> :
                                    <NotAllowed/>
@@ -920,14 +916,14 @@ class App extends Component {
                                exact />
                         <Route path="/transactions/timers"
                                component={props => (
-                                   isAllowed(ui_profile, pages.requests_nprequests) ?
+                                   localUser.isAllowed(accesses.requests) ?
                                    <Timers /> :
                                    <NotAllowed/>
                                )}
                                exact />
                         <Route path="/transactions/bulk"
                                component={props => (
-                                   isAllowed(ui_profile, pages.requests_nprequests) ?
+                                   localUser.isAllowed(accesses.bulks) ?
                                    <Bulks userInfo={user_info}/> :
                                    <NotAllowed/>
                                )}
@@ -935,7 +931,7 @@ class App extends Component {
 
                         <Route path="/transactions/config/startup_events"
                                component={props => (
-                                   isAllowed(ui_profile, pages.requests_startup_events) ?
+                                   localUser.isAllowed(accesses.orchestration) ?
                                        <StartupEvents
                                            notifications={this._notificationSystem.current}
                                            {...props} /> :
@@ -944,30 +940,29 @@ class App extends Component {
                                exact />
                         <Route path="/transactions/config/activities/editor"
                                component={props => (
-                                   isAllowed(ui_profile, pages.requests_workflow_editor) ?
+                                   localUser.isAllowed(accesses.orchestration) ?
                                        <Activities user_info={user_info} /> :
                                        <NotAllowed/>
                                )}
                                exact />
                         <Route path="/transactions/config/activities/editor/:activityId"
                                component={props => (
-                                   isAllowed(ui_profile, pages.requests_workflow_editor) ?
+                                   localUser.isAllowed(accesses.orchestration) ?
                                        <ActivityEditor {...props} /> :
                                        <NotAllowed/>
                                )}
                                exact />
                         <Route path="/transactions/config/cron_timers"
                                component={props => (
-                                   isAllowed(ui_profile, pages.requests_workflow_editor) ?
+                                   localUser.isAllowed(accesses.orchestration) ?
                                        <CronTimers /> :
                                        <NotAllowed/>
                                )}
                                exact />
                         <Route path="/requests/ndg"
                                component={props => (
-                                   isAllowed(ui_profile, pages.requests_ndg)?
+                                   localUser.canSee(pages.requests_ndg)?
                                        <NdgHistory
-                                           auth_token={auth_token}
                                            user_info={user_info}
                                            notifications={this._notificationSystem.current}
                                            {...props} /> :
@@ -976,9 +971,8 @@ class App extends Component {
                                exact />
                         <Route path="/requests/:reqId"
                                component={props => (
-                                   isAllowed(ui_profile, pages.requests_nprequests) ?
+                                   localUser.isAllowed(accesses.requests) ?
                                        <Request
-                                           auth_token={auth_token}
                                            user_info={user_info}
                                            notifications={this._notificationSystem.current}
                                            {...props} /> :
@@ -986,9 +980,8 @@ class App extends Component {
                                )} />
                         <Route path="/system/users"
                                component={props => (
-                                   isAllowed(ui_profile, pages.system_users) ?
+                                   localUser.isAllowed(accesses.settings_users) ?
                                        <UserManagement
-                                           auth_token={auth_token}
                                            user_info={user_info}
                                            notifications={this._notificationSystem.current}
                                            {...props} />:
@@ -997,7 +990,7 @@ class App extends Component {
                                exact />
                         <Route path="/system/users/audit"
                                component={props => (
-                                   isAllowed(ui_profile, pages.system_users) ?
+                                   localUser.isAllowed(accesses.settings_users) ?
                                        <AuditLogs
                                            user_info={user_info}
                                            notifications={this._notificationSystem.current} />:
@@ -1006,23 +999,22 @@ class App extends Component {
                                exact />
                         <Route path="/system/users/profiles"
                                component={props => (
-                                   isAllowed(ui_profile, pages.system_users) ?
+                                   localUser.isAllowed(accesses.settings_users) ?
                                        <UserProfiles />:
                                        <NotAllowed />
                                )}
                                exact />
                         <Route path="/system/users/roles"
                                component={props => (
-                                   isAllowed(ui_profile, pages.system_users) ?
+                                   localUser.isAllowed(accesses.settings_users) ?
                                        <UserRoles />:
                                        <NotAllowed />
                                )}
                                exact />
                         <Route path="/system/reporting"
                                component={props => (
-                                   isAllowed(ui_profile, pages.system_reporting)?
+                                   localUser.canSee(pages.system_reporting)?
                                        <Reporting
-                                           auth_token={auth_token}
                                            notifications={this._notificationSystem.current}
                                            {...props} />:
                                        <NotAllowed />
@@ -1030,19 +1022,15 @@ class App extends Component {
                                exact />
                         <Route path="/system/gateways"
                                component={props => (
-                                   isAllowed(ui_profile, pages.system_gateways) ?
-                                       <Gateways
-                                           auth_token={auth_token}
-                                           notifications={this._notificationSystem.current}
-                                           {...props} />:
+                                   localUser.canSee(pages.system_gateways) ?
+                                       <Gateways />:
                                        <NotAllowed />
                                )}
                                exact />
                         <Route path="/system/databases"
                                component={props => (
-                                   isAllowed(ui_profile, pages.system_databases) ?
+                                   localUser.canSee(pages.system_databases) ?
                                        <Databases
-                                           auth_token={auth_token}
                                            notifications={this._notificationSystem.current}
                                            {...props} />:
                                        <NotAllowed />
@@ -1050,28 +1038,28 @@ class App extends Component {
                                exact />
                         <Route path="/system/queues"
                                component={props => (
-                                   isAllowed(ui_profile, pages.system_queues) ?
+                                   localUser.canSee(pages.system_queues) ?
                                        <LocalQueues {...props} />:
                                        <NotAllowed />
                                )}
                                exact />
                         <Route path="/system/bulk_actions"
                                component={props => (
-                                   isAllowed(ui_profile, pages.bulk_actions) ?
+                                   localUser.isAllowed(accesses.bulks_actions) ?
                                        <BulkActions {...props} />:
                                        <NotAllowed />
                                )}
                                exact />
                         <Route path="/system/templates"
                                component={props => (
-                                   isAllowed(ui_profile, pages.system_templates) ?
+                                   localUser.canSee(pages.system_templates) ?
                                        <Templates />:
                                        <NotAllowed />
                                )}
                                exact />
                         <Route path="/system/logs"
                                component={props => (
-                                   isAllowed(ui_profile, pages.system_logs) ?
+                                   localUser.canSee(pages.system_logs) ?
                                        <LogsManagement />:
                                        <NotAllowed />
                                )}
@@ -1085,16 +1073,15 @@ class App extends Component {
                                exact />
                         <Route path="/system/config"
                                component={props => (
-                                   isAllowed(ui_profile, pages.system_config) ?
+                                   localUser.isAllowed(accesses.settings) ?
                                        <Configuration userInfo={user_info} />:
                                        <NotAllowed />
                                )}
                                exact />
                         <Route path="/system/webhooks"
                                component={props => (
-                                   isAllowed(ui_profile, pages.system_config) ?
+                                   localUser.isAllowed(accesses.settings) ?
                                        <Webhooks
-                                           auth_token={auth_token}
                                            user_info={user_info}
                                            notifications={this._notificationSystem.current}
                                            {...props} />:
@@ -1103,9 +1090,8 @@ class App extends Component {
                                exact />
                         <Route path="/system/public_holidays"
                                component={props => (
-                                   isAllowed(ui_profile, pages.npact_holidays)?
+                                   localUser.canSee(pages.npact_holidays)?
                                        <PublicHolidays
-                                           auth_token={auth_token}
                                            notifications={this._notificationSystem.current}
                                            {...props} />:
                                        <NotAllowed />
@@ -1113,9 +1099,8 @@ class App extends Component {
                                exact />
                         <Route path="/system/mvno_numbers"
                                component={props => (
-                                   isAllowed(ui_profile, pages.npact_mvno_numbers) ?
+                                   localUser.canSee(pages.npact_mvno_numbers) ?
                                        <SearchMVNO
-                                           auth_token={auth_token}
                                            user_info={user_info}
                                            notifications={this._notificationSystem.current}
                                            {...props} />:
@@ -1124,9 +1109,8 @@ class App extends Component {
                                exact />
                         <Route path="/system/porting_cases"
                                component={props => (
-                                   isAllowed(ui_profile, pages.npact_porting_cases) ?
+                                   localUser.canSee(pages.npact_porting_cases) ?
                                        <SearchPortingCases
-                                           auth_token={auth_token}
                                            user_info={user_info}
                                            notifications={this._notificationSystem.current}
                                            {...props} />:
@@ -1135,9 +1119,8 @@ class App extends Component {
                                exact />
                         <Route path="/system/operators"
                                component={props => (
-                                   isAllowed(ui_profile, pages.npact_operators) ?
+                                   localUser.canSee(pages.npact_operators) ?
                                        <OperatorManagement
-                                           auth_token={auth_token}
                                            user_info={user_info}
                                            notifications={this._notificationSystem.current}
                                            {...props} />:
@@ -1146,9 +1129,8 @@ class App extends Component {
                                exact />
                         <Route path="/system/ranges"
                                component={props => (
-                                   isAllowed(ui_profile, pages.npact_ranges) ?
+                                   localUser.canSee(pages.npact_ranges) ?
                                        <RangesManagement
-                                           auth_token={auth_token}
                                            user_info={user_info}
                                            notifications={this._notificationSystem.current}
                                            {...props} />:
@@ -1157,9 +1139,8 @@ class App extends Component {
                                exact />
                         <Route path="/system/routing_info"
                                component={props => (
-                                   isAllowed(ui_profile, pages.npact_routing_info) ?
+                                   localUser.canSee(pages.npact_routing_info) ?
                                        <RoutingInfoManagement
-                                           auth_token={auth_token}
                                            user_info={user_info}
                                            notifications={this._notificationSystem.current}
                                            {...props} />:
@@ -1168,15 +1149,14 @@ class App extends Component {
                                exact />
                         <Route path="/transactions/mobile_events"
                                component={props => (
-                                   isAllowed(ui_profile, pages.requests_nprequests) ?
-                                       <MobileEventsManagement auth_token={auth_token} {...props} /> :
+                                   localUser.isAllowed(accesses.requests) ?
+                                       <MobileEventsManagement {...props} /> :
                                        <NotAllowed/>
                                )} exact />
                         <Route path="/transactions/new_portin"
                                component={props => (
-                                   isAllowed(ui_profile, pages.requests_nprequests) ?
+                                   localUser.isAllowed(accesses.requests) ?
                                        <NPPortInRequest
-                                           auth_token={auth_token}
                                            notifications={this._notificationSystem}
                                            user_info={user_info}
                                            {...props} /> :
@@ -1185,16 +1165,15 @@ class App extends Component {
                                exact />
                         <Route path="/transactions/new_update"
                                component={props => (
-                                   isAllowed(ui_profile, pages.requests_nprequests) ?
-                                       <NPUpdateRequest auth_token={auth_token} {...props} /> :
+                                   localUser.isAllowed(accesses.requests) ?
+                                       <NPUpdateRequest {...props} /> :
                                        <NotAllowed/>
                                )}
                                exact />
                         <Route path="/transactions/new_disconnect"
                                component={props => (
-                                   isAllowed(ui_profile, pages.requests_nprequests) ?
+                                   localUser.isAllowed(accesses.requests) ?
                                        <NPDisconnectRequest
-                                           auth_token={auth_token}
                                            notifications={this._notificationSystem}
                                            user_info={user_info}
                                            {...props} /> :
@@ -1203,7 +1182,7 @@ class App extends Component {
                                exact />
                         <Route path="/transactions/new_install_address"
                                component={props => (
-                                   isAllowed(ui_profile, pages.requests_nprequests) ?
+                                   localUser.isAllowed(accesses.requests) ?
                                        <NPChangeInstallationAddressRequest
                                            {...props} /> :
                                        <NotAllowed/>
@@ -1211,22 +1190,20 @@ class App extends Component {
                                exact />
                         <Route path="/transactions/emergency_notification"
                                component={() => (
-                                    isAllowed(ui_profile, pages.requests_nprequests) ?
+                                    localUser.isAllowed(accesses.requests) ?
                                         <NPEmergencyNotificationRequest /> :
                                         <NotAllowed/>
                                )}
                                exact />
                         <Route path="/transactions/:txId"
                                component={props => (
-                                   isAllowed(ui_profile, pages.requests_nprequests) ?
+                                   localUser.isAllowed(accesses.requests) ?
                                    (!user_info.modules || supportedModule(modules.npact, user_info.modules)) ?
                                        <NPTransaction
-                                           auth_token={auth_token}
                                            user_info={user_info}
                                            notifications={this._notificationSystem}
                                            {...props} /> :
                                        <Transaction
-                                           auth_token={auth_token}
                                            user_info={user_info}
                                            notifications={this._notificationSystem.current}
                                            {...props} /> :
@@ -1234,7 +1211,7 @@ class App extends Component {
                                )} />
                         <Route path="/auth-silent-callback" component={AuthSilentCallback} exact/>
                         <Route path="/" exact>
-                            <Redirect to={getHomePage(ui_profile)} />
+                            <Redirect to={localUser.getHomePage()} />
                         </Route>
                         <Route path="/provisioning/list"
                                component={
