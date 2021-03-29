@@ -825,6 +825,7 @@ const default_sso = {
 const newSso = {
   name: "",
   enabled: false,
+  show_login: true,
   protocol: "oidc",
   extra_auth_rules: [],
   auto_create_user: false,
@@ -928,6 +929,18 @@ function NewSsoModal(props) {
               <Checkbox
                 checked={entry.enabled}
                 onChange={e => setEntry(update(entry, {$merge: {enabled: e.target.checked}}))}/>
+            </Col>
+          </FormGroup>
+
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="show-on-login" defaultMessage="Show on login page"/>
+            </Col>
+
+            <Col sm={9}>
+              <Checkbox
+                checked={entry.show_login}
+                onChange={e => setEntry(update(entry, {$merge: {show_login: e.target.checked}}))}/>
             </Col>
           </FormGroup>
 
@@ -1855,6 +1868,18 @@ function SSOPanel(props) {
                         <Checkbox
                           checked={p.enabled}
                           onChange={e => onChange(update(sso, {[i]: {$merge: {enabled: e.target.checked}}}))}/>
+                      </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                      <Col componentClass={ControlLabel} sm={2}>
+                        <FormattedMessage id="show-on-login" defaultMessage="Show on login page"/>
+                      </Col>
+
+                      <Col sm={9}>
+                        <Checkbox
+                          checked={p.show_login}
+                          onChange={e => onChange(update(sso, {[i]: {$merge: {show_login: e.target.checked}}}))}/>
                       </Col>
                     </FormGroup>
 
