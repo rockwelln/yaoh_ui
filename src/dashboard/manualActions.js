@@ -21,7 +21,7 @@ import Ajv from "ajv";
 
 
 function fetchManualActions(onSuccess) {
-    fetch_get("/api/v01/system/users/local/manual_actions?pending=1")
+    fetch_get("/api/v02/system/users/local/manual_actions?pending=1")
         .then(r => onSuccess(r.manual_actions_per_role))
         .catch(error => NotificationsManager.error("Failed to get manual actions", error.message))
 }
