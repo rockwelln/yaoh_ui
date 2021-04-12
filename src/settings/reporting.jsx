@@ -399,6 +399,15 @@ export class Reporting extends Component {
                     <Breadcrumb.Item active><FormattedMessage id="system" defaultMessage="System"/></Breadcrumb.Item>
                     <Breadcrumb.Item active><FormattedMessage id="reporting" defaultMessage="Reporting"/></Breadcrumb.Item>
                 </Breadcrumb>
+                <Panel>
+                    <Panel.Body>
+                        <ButtonToolbar>
+                            <NewReport
+                                onClose={() => this._refresh()}
+                                {...this.props} />
+                        </ButtonToolbar>
+                    </Panel.Body>
+                </Panel>
             {
                 reports.map(this.getReport)
             }
@@ -408,15 +417,6 @@ export class Reporting extends Component {
                 </Alert>
 
             }
-            <Panel>
-                <Panel.Body>
-                    <ButtonToolbar>
-                        <NewReport
-                            onClose={() => this._refresh()}
-                            {...this.props} />
-                    </ButtonToolbar>
-                </Panel.Body>
-            </Panel>
             </div>
         )
     }

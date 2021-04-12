@@ -900,6 +900,16 @@ export function BulkActions(props) {
                 <Breadcrumb.Item active><FormattedMessage id="bulk-actions" defaultMessage="Bulk actions"/></Breadcrumb.Item>
             </Breadcrumb>
 
+            <Panel>
+                <Panel.Body>
+                    <ButtonToolbar>
+                        <NewAction
+                            onClose={fetchActions_}
+                            {...props} />
+                    </ButtonToolbar>
+                </Panel.Body>
+            </Panel>
+
             { actions.length === 0 ?
                 <Alert bsStyle="info">
                     <FormattedMessage id="no-action" defaultMessage="No action defined"/>
@@ -914,15 +924,6 @@ export function BulkActions(props) {
                 )
             }
 
-            <Panel>
-                <Panel.Body>
-                    <ButtonToolbar>
-                        <NewAction
-                            onClose={fetchActions_}
-                            {...props} />
-                    </ButtonToolbar>
-                </Panel.Body>
-            </Panel>
         </div>
     )
 }

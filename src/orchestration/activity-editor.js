@@ -293,6 +293,20 @@ export function Activities({user_info}) {
 
             <Panel>
                 <Panel.Body>
+                    <ButtonToolbar>
+                        <Button bsStyle='primary' onClick={() => setShowNew(true)}>
+                            <FormattedMessage id="new" defaultMessage="New" />
+                        </Button>
+                    </ButtonToolbar>
+                    <NewActivity
+                        show={showNew}
+                        onClose={() => {setShowNew(false);}}
+                         />
+                </Panel.Body>
+            </Panel>
+
+            <Panel>
+                <Panel.Body>
                     <SearchBar onSearch={setFilter} />
                     <Table>
                         <thead>
@@ -380,20 +394,6 @@ export function Activities({user_info}) {
                               });
                             })
                         }} />
-                </Panel.Body>
-            </Panel>
-
-            <Panel>
-                <Panel.Body>
-                    <ButtonToolbar>
-                        <Button bsStyle='primary' onClick={() => setShowNew(true)}>
-                            <FormattedMessage id="new" defaultMessage="New" />
-                        </Button>
-                    </ButtonToolbar>
-                    <NewActivity
-                        show={showNew}
-                        onClose={() => {setShowNew(false);}}
-                         />
                 </Panel.Body>
             </Panel>
         </>

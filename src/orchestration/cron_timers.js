@@ -517,6 +517,14 @@ export default class CronTimers extends Search {
                 </Breadcrumb>
 
                 <Panel>
+                    <Panel.Body>
+                        <ButtonToolbar>
+                            <NewCronTimer onClose={() => this._refresh()} activities={activities} />
+                        </ButtonToolbar>
+                    </Panel.Body>
+                </Panel>
+
+                <Panel>
                     <Panel.Heading>
                         <Panel.Title><FormattedMessage id="cron-timers" defaultMessage="Cron timers" /></Panel.Title>
                     </Panel.Heading>
@@ -599,14 +607,6 @@ export default class CronTimers extends Search {
                             onSort={s => this._refresh(undefined, s)}
                             onPagination={p => this._refresh(p)}
                         />
-                    </Panel.Body>
-                </Panel>
-
-                <Panel>
-                    <Panel.Body>
-                        <ButtonToolbar>
-                            <NewCronTimer onClose={() => this._refresh()} activities={activities} />
-                        </ButtonToolbar>
                     </Panel.Body>
                 </Panel>
             </div>
