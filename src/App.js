@@ -650,14 +650,16 @@ class App extends Component {
     getUserInfo() {
         fetch_get('/api/v01/system/users/local')
             .then(data => {
-                this.setState({user_info: data});
                 localStorage.setItem("userProfile", data.ui_profile);
 
                 if(data.modules && supportedModule(modules.provisioning, data.modules)) {
                     import("./provisioning").then(prov => {
                       this.setState({provisioningRoutes: prov.provisioningRoutes(data.ui_profile)})
-                    });
-                    ProvProxiesManager.fetchConfiguration().then(() => this.setState({proxy_fetch: true})).catch(console.log);
+                    }).then(() => ProvProxiesManager.fetchConfiguration())
+                      .then(() => this.setState({proxy_fetch: true, user_info: data}))
+                      .catch(console.log);
+                } else {
+                    this.setState({user_info: data});
                 }
             })
             .catch(error => {
