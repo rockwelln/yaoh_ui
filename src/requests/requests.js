@@ -2824,7 +2824,7 @@ export class Requests extends Component{
                     <Breadcrumb.Item active><FormattedMessage id="requests" defaultMessage="Requests"/></Breadcrumb.Item>
                     <Breadcrumb.Item active><FormattedMessage id="requests" defaultMessage="Requests"/></Breadcrumb.Item>
                 </Breadcrumb>
-                <Panel defaultExpanded={false} >
+                <Panel defaultExpanded={true} >
                     <Panel.Heading>
                         <Panel.Title toggle>
                             <FormattedMessage id="search" defaultMessage="Search" /> <Glyphicon glyph="search" />
