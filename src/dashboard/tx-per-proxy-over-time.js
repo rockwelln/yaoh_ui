@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {Bar} from 'react-chartjs-2';
+import 'chartjs-adapter-moment';
 import Modal from 'react-bootstrap/lib/Modal';
 import Col from 'react-bootstrap/lib/Col';
 import Form from 'react-bootstrap/lib/Form';
@@ -78,7 +79,7 @@ export default function ProxyRequestsOverTime(props) {
                 }, {}
             )
         ),
-        backgroundColor: colorHash.hex(names[k] || k),
+        backgroundColor: colorHash.hex(names[k] || k || ""),
     }));
 
     const chartData = {
@@ -92,22 +93,21 @@ export default function ProxyRequestsOverTime(props) {
             intersect: false,
         },
         scales: {
-            xAxes: [{
+            x: {
                 stacked: true,
-                //distribution: 'series',
-                // barThickness: 5,
                 barPercentage: 0.1,
                 type: 'time',
                 time: {
                     unit: 'day',
-                    min: start,
-                    max: end || moment(),
                     minUnit: 'day',
                 },
-            }],
-            yAxes: [{
+                min: start,
+                max: end || moment(),
+
+            },
+            y: {
                 stacked: true
-            }]
+            }
         }
     };
     return (

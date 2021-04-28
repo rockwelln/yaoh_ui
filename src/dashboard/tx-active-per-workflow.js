@@ -61,17 +61,20 @@ export default class ActiveTransactionsPerWorkflow extends Component {
             labels: data.map(d => `${names[d.activity_id]}: ${d.counter}`),
             datasets: [{
                 data: data.map(d => d.counter),
-                backgroundColor: data.map(d => colorHash.hex(names[d.activity_id])),
+                backgroundColor: data.map(d => colorHash.hex(names[d.activity_id] || "")),
             }]
         };
         const chartOptions = {
             responsive: true,
-            legend: {
+            maintainAspectRatio: true,
+            plugins: {
+              legend: {
                 display: true,
-                position: 'left',
+                maxHeight: 100,
+              }
             },
             tooltips: {
-                enabled: false,
+                enabled: true,
             },
         };
 
@@ -79,7 +82,7 @@ export default class ActiveTransactionsPerWorkflow extends Component {
             <DashboardPanel
                 title={<FormattedMessage id='act-tx-workflow' defaultMessage='Active transactions / workflow'/>}
                 onShow={() => this.setState({showBig: true})} >
-                <Doughnut data={chartData} options={chartOptions}/>
+                <Doughnut data={chartData} options={chartOptions} />
                 <Modal show={this.state.showBig} onHide={onShowClose} dialogClassName='large-modal'>
                     <Modal.Header closeButton>
                         <Modal.Title>
