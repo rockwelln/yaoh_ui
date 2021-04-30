@@ -2453,7 +2453,8 @@ export const activeCriteria = {
 
 
 export const needActionCriteria = {
-    action_status: {model: 'tasks', value: 'WAIT', op: 'eq'}
+    // action_status: {model: 'tasks', value: 'WAIT', op: 'eq'}
+    role_id: { model: 'manual_actions', op: 'is_not_null', value: '' }
 };
 
 
