@@ -8,8 +8,8 @@ import Modal from "react-bootstrap/lib/Modal";
 import Button from "react-bootstrap/lib/Button";
 import {Link} from "react-router-dom";
 import queryString from "query-string";
-import {needActionCriteria} from "../requests/requests";
-import {Tile, TileHeader} from "./dashboard-tiles";
+import {activeCriteria, errorCriteria, needActionCriteria} from "../requests/requests";
+import {DashboardCard} from "./dashboard-tiles";
 import FormGroup from "react-bootstrap/lib/FormGroup";
 import Col from "react-bootstrap/lib/Col";
 import ControlLabel from "react-bootstrap/lib/ControlLabel";
@@ -186,7 +186,7 @@ export default function ManualActionsBox(props) {
     )
 }
 
-export function ManualActionsTile(props) {
+export function ManualActionsTile() {
     const [actions, setActions] = useState({});
 
     useEffect(() => {
@@ -199,16 +199,15 @@ export function ManualActionsTile(props) {
 
     return (
       <Link to={{
-        pathname: "/transactions/list", search: queryString.stringify({
-          filter: JSON.stringify(needActionCriteria)
-        })
-      }}>
-        <Tile className="warning">
-          <TileHeader>
-            <div className="count">{count}</div>
-            <div className="title"><FormattedMessage id="cases-need-actions" defaultMessage="Case(s) need actions" /></div>
-          </TileHeader>
-        </Tile>
+          pathname: "/transactions/list", search: queryString.stringify({
+            filter: JSON.stringify(update(needActionCriteria, {$merge: activeCriteria}))
+          })
+        }}>
+        <DashboardCard
+          className={"bg-sand-tempest"}
+          heading={"Need actions"}
+          subheading={"Waiting for manual actions"}
+          number={count} />
       </Link>
     )
 }

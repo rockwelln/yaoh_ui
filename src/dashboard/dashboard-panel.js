@@ -1,42 +1,45 @@
 import React from 'react';
 import Panel from 'react-bootstrap/lib/Panel';
 import Button from 'react-bootstrap/lib/Button';
-import Glyphicon from 'react-bootstrap/lib/Glyphicon';
+import {faCog, faExpandArrowsAlt} from "@fortawesome/free-solid-svg-icons";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 
 
 export const DashboardPanel = ({title, children, onSettings, onShow}) => (
-    <Panel>
+    <div className={"mb-3 card"}>
         {
             title && (
-                <Panel.Heading>
+                <div className={"card-header"}>
+                    <div className={"card-header-title"}>{title}</div>
+                    <ul className={"nav"}>
                     { onSettings &&
-                        <Button
+                        <li className={"nav-item"}>
+                          <Button
                             onClick={onSettings}
                             bsStyle="default"
                             bsSize="xsmall"
-                            className="pull-right"
-                        >
-                            <Glyphicon glyph="cog"/>
-                        </Button>
+                          >
+                              <FontAwesomeIcon icon={faCog}/>
+                          </Button>
+                        </li>
                     }
                     { onShow &&
+                      <li className={"nav-item"}>
                         <Button
                             onClick={onShow}
                             bsStyle="default"
                             bsSize="xsmall"
-                            className="pull-right"
                         >
-                            <Glyphicon glyph="resize-full"/>
+                            <FontAwesomeIcon icon={faExpandArrowsAlt} />
                         </Button>
-
+                      </li>
                     }
-
-                    <Panel.Title>{title}</Panel.Title>
-                </Panel.Heading>
+                    </ul>
+                </div>
             )
         }
         <Panel.Body>
             {children}
         </Panel.Body>
-    </Panel>
+    </div>
 );
