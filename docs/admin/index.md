@@ -21,7 +21,7 @@ This documentation is intended for users with admin privileges and technical kno
 * [User management](./user_management.html)
 * [Troubleshooting](./troubleshooting.html)
 * [Failover](./failover.html)
-* [Changelog] (./changelog.html)
+* [Changelog](./changelog.html)
 
 ## Contact
 
