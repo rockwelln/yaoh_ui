@@ -11,7 +11,6 @@ import { FormattedMessage } from 'react-intl';
 import update from 'immutability-helper';
 import { fetchOperators } from "../data/operator_mgm";
 import { fetchRoutes } from "../data/routing_info_mgm";
-import { RangeInput } from "../utils";
 import {
   NotificationsManager,
   fetch_get,
@@ -75,12 +74,14 @@ function newRequest(request, onSuccess, onError) {
   fetch_post(
     '/api/v01/npact/np_requests/port_in',
     {
+      crdc_id: request.crdc_id || undefined,
       ranges: request.ranges,
       recipient_id: request.recipient,
       service_type: request.service_type,
       port_req_form_id: request.port_req_form_id,
       routing_info: request.routing_info,
       subscriber_data: request.subscriber_data,
+      due_date: request.due_date,
       change_addr_installation_porting_id: request.change_addr_installation_porting_id,
     }
   )
@@ -100,6 +101,93 @@ function newRequest(request, onSuccess, onError) {
     });
 }
 
+export function RangeOrNumbersInput({ ranges, onChange, multipleRanges }) {
+  const rangeNumbers = (r) => {
+    if(r.to.length <= 0) return 1;
+    const t = parseInt(r.to, 10);
+    const f = parseInt(r.from, 10);
+    if (f > t) {
+      return "invalid";
+    }
+    return t - f;
+  }
+  return (
+    <>
+      <Table>
+        <thead>
+        <tr>
+          <th><FormattedMessage id="from" defaultMessage="From"/></th>
+          <th><FormattedMessage id="to" defaultMessage="To"/></th>
+          <th/>
+          <th/>
+        </tr>
+        </thead>
+        <tbody>
+        {
+          ranges.map((range, index) => {
+            return (
+              <tr key={index}>
+                <td>
+                  <FormControl value={range.from}
+                               onChange={e => (
+                                 (e.target.value === "" || /^\d+$/.test(e.target.value)) && onChange(update(ranges,
+                                   {[index]: {$merge: {from: e.target.value}}}
+                                 )))
+                               }/>
+                </td>
+                <td>
+                  <FormControl disabled={ranges.length > 1}
+                               value={range.to}
+                               onChange={e => (
+                                 (e.target.value === "" || /^\d+$/.test(e.target.value)) && onChange(update(ranges,
+                                   {[index]: {$merge: {to: e.target.value}}}
+                                 )))
+                               }/>
+                </td>
+                <td>
+                  {
+                    range.from.length > 0 && <FormattedMessage id="numbers" defaultMessage="{n} numbers" values={{n: rangeNumbers(range)}}/>
+                  }
+                </td>
+                {multipleRanges && ranges.length > 1 && (
+                  <td>
+                    <Button
+                      onClick={() => {
+                      onChange(update(ranges,
+                        {$splice: [[index, 1]]}
+                      ))
+                    }}>-</Button>
+                  </td>
+                )}
+              </tr>
+            )
+          })
+        }
+
+        {multipleRanges && (
+          <tr>
+            <td colSpan={4}>
+              <Button
+                disabled={ranges.length > 0 && ranges[0].to.length > 0 && ranges[0].from !== ranges[0].to}
+                onClick={() =>
+                  onChange(update(ranges, {$push: [{from: '', to: '', data_number: '', fax_number: ''}]}))
+                }>
+                +
+              </Button>
+            </td>
+          </tr>
+        )}
+        </tbody>
+      </Table>
+      <HelpBlock>
+        <FormattedMessage
+          id="range-one-number-note"
+          defaultMessage="CRDB accepts a set of numbers or a *single* number range."/>
+      </HelpBlock>
+    </>
+  )
+}
+
 function validateRanges(ranges) {
   return ranges.map((r, index) => {
     if (r.from.length === 0) return index;
@@ -111,7 +199,7 @@ function validateRanges(ranges) {
 
 function generateNewPortId(prefix="", suffix="") {
   const now = (new Date()).toISOString().slice(0,19).replace(/-/g,"").replace(/T/g,"").replace(/:/g,"")
-  return `${prefix}${now}MTNBSGNP${suffix}`
+  return `${prefix}${now}MTNBSGNP${suffix}_${Math.floor(Math.random()*10000)}`
 }
 
 const emptyRequest = {
@@ -127,9 +215,10 @@ const emptyRequest = {
     AccountNum: "",
     ProcessType: "Individual",
   },
+  due_date: moment.utc().add(1, "days").toISOString(),
 }
 
-export function NPPortInRequest(props) {
+export function NPPortInRequest({userInfo}) {
   const [operators, setOperators] = useState([]);
   const [routes, setRoutes] = useState([]);
   const [request, setRequest] = useState(emptyRequest);
@@ -159,6 +248,7 @@ export function NPPortInRequest(props) {
     validateRanges(request.ranges).length === 0 &&
     validRecipient === "success" &&
     request.routing_info !== "" &&
+    request.due_date && request.due_date !== "" &&
     request.subscriber_data.AccountNum.length !== 0 &&
     validManagedPerson !== "error" &&
     validManagedPhone !== "error" &&
@@ -230,7 +320,7 @@ export function NPPortInRequest(props) {
         </Col>
 
         <Col sm={9}>
-          <RangeInput
+          <RangeOrNumbersInput
             onChange={ranges => setRequest(update(request, { $merge: { ranges: ranges } }))}
             ranges={request.ranges}
             multipleRanges />
@@ -271,6 +361,26 @@ export function NPPortInRequest(props) {
               routes.filter(r => r.operator_id === request.recipient).map(o => <option key={o.routing_id} value={o.routing_id}>{o.routing_info}</option>)
             }
           </FormControl>
+        </Col>
+      </FormGroup>
+
+
+      <FormGroup>
+        <Col componentClass={ControlLabel} sm={2}>
+          <FormattedMessage id="port-date-time" defaultMessage="Port date time" />{"*"}
+        </Col>
+
+        <Col sm={9}>
+          <DatePicker
+            className="form-control"
+            selected={request.due_date ? userLocalizeUtcDate(moment.utc(request.due_date), userInfo).toDate() : null}
+            onChange={d => {
+              setRequest(update(request, {$merge: { due_date: d.toISOString() }}));
+            }}
+            dateFormat="yyyy-MM-dd HH:mm"
+            showTimeSelect
+            timeFormat="HH:mm"
+            timeIntervals={60} />
         </Col>
       </FormGroup>
 
@@ -1216,7 +1326,7 @@ export class NPDisconnectRequest extends Component {
               </Col>
 
               <Col sm={9}>
-                <RangeInput
+                <RangeOrNumbersInput
                   onChange={ranges => {
                     this.setState({ ranges: ranges });
                     this.resolveDonor(ranges[0].from);

@@ -25,7 +25,7 @@ export function NPTransaction(props) {
 export function NPPortInRequest(props) {
   const {user_info} = props
   if(user_info.modules.includes(modules.npact_crdb)) {
-    return <CrdbNPPortInRequest {...props} />
+    return <CrdbNPPortInRequest userInfo={user_info} />
   } else if(user_info.modules.includes(modules.npact_citc)) {
     return <CitcNPPortInRequest {...props} />
   } else {
