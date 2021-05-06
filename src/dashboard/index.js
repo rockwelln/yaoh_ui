@@ -76,7 +76,11 @@ export default function Dashboard(props) {
         <div>
             <Row>
               <Col xs={12} md={6} lg={3}>
-                <Link to={"/transactions/list"}>
+                <Link to={{
+                    pathname: "/transactions/list", search: queryString.stringify({
+                      filter: JSON.stringify(activeCriteria)
+                    })
+                  }}>
                   <DashboardCard
                     className={"bg-arielle-smile"}
                     heading={"Active workflows"}
