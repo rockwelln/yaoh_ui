@@ -723,15 +723,17 @@ class App extends Component {
   updateToken(token, sso_auth) {
       const {user_info} = this.state;
         AuthServiceManager.loadApiToken(token);
-        user_info.modules && supportedModule(modules.provisioning, user_info.modules) && ProvProxiesManager.fetchConfiguration().then(() => this.setState({proxy_fetch: true})).catch(console.log);
+        // user_info.modules && supportedModule(modules.provisioning, user_info.modules) && ProvProxiesManager.fetchConfiguration().then(() => this.setState({proxy_fetch: true})).catch(console.log);
         createCookie("auth_sso", sso_auth?'1':'0', 1, '/');  // maxAge = 24hours
-        this.setState({user_info: this.state.user_info});
+        // this.setState({user_info: this.state.user_info});
+        this.getUserInfo();
     }
 
     updateTokens(accessToken, refreshToken) {
         AuthServiceManager.loadJwtTokens(accessToken, refreshToken);
-        ProvProxiesManager.fetchConfiguration().then(() => this.setState({proxy_fetch: true})).catch(console.log);
-        this.setState({user_info: this.state.user_info});
+        // ProvProxiesManager.fetchConfiguration().then(() => this.setState({proxy_fetch: true})).catch(console.log);
+        // this.setState({user_info: this.state.user_info});
+        this.getUserInfo();
     }
 
     logout() {
