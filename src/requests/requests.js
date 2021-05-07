@@ -53,7 +53,7 @@ import {access_levels, isAllowed, modules, pages} from "../utils/user";
 import {TimerActions} from "./timers";
 import {fetchRoles} from "../system/user_roles";
 import {LinkContainer} from "react-router-bootstrap";
-import {EditCellModal, useWindowSize} from "../orchestration/activity-editor";
+import {EditCellModal, fetchCells, useWindowSize} from "../orchestration/activity-editor";
 import {SavedFiltersFormGroup} from "../utils/searchFilters";
 import {ManualActionInputForm} from "../dashboard/manualActions";
 import {useDropzone} from "react-dropzone";
@@ -107,6 +107,7 @@ const pp_as_json = (s) => {
 
 export function TransactionFlow({definition, states, activityId}) {
   const [editedCell, setEditedCell] = useState();
+  const [cells, setCells] = useState([]);
   const [editor, setEditor] = useState(null);
   const [prevStates, setPrevStates] = useState(null);
   const [width, height] = useWindowSize();
@@ -164,6 +165,10 @@ export function TransactionFlow({definition, states, activityId}) {
       }
     }, [height, width, editor, flowGraphRef.current]);
 
+  useEffect(() => {
+    fetchCells(setCells);
+  }, []);
+
   return (
     <div>
       <div ref={toolbarRef} style={{position: 'absolute', zIndex: '100'}} />
@@ -173,6 +178,8 @@ export function TransactionFlow({definition, states, activityId}) {
         show={editedCell !== undefined}
         cell={editedCell}
         onHide={() => setEditedCell(undefined)}
+        cells={cells}
+        activity={{definition: workableDefinition(JSON.parse(definition), [])}}
         readOnly />
     </div>
   )

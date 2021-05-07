@@ -94,7 +94,7 @@ function isValid(p, v) {
     return null;
 }
 
-function fetchCells(onSuccess) {
+export function fetchCells(onSuccess) {
     fetch_get('/api/v01/cells')
         .then(data => onSuccess(data.cells))
         .catch(console.error);
