@@ -28,7 +28,8 @@ import {
   needActionCriteria,
 } from "../requests/requests";
 import update from 'immutability-helper';
-import {localUser} from "../utils/user";
+import {localUser, modules} from "../utils/user";
+import {fetchRoles} from "../system/user_roles";
 
 export const DATE_FORMAT = 'DD/MM/YYYY HH:mm:ss';
 
@@ -103,7 +104,9 @@ export class NPRequests extends Component {
         model: 'NPRequest', field: 'created_on', direction: 'desc'
       }],
 
-      requests: [], operators: [],
+      requests: [],
+      operators: [],
+      roles: [],
       pagination: {
         page_number: 1,
         num_pages: 1,
@@ -129,6 +132,7 @@ export class NPRequests extends Component {
       created_on: { model: 'NPRequest', value: '', op: 'ge' },
       due_date: { model: 'NPRequest', value: '', op: 'ge' },
       b2b: { model: 'NPRequest', value: '', op: 'eq' },
+      role_id: { model: 'manual_actions', value: '', op: 'eq' },
       task_status: localUser.isSystem() ? undefined : errorCriteria.task_status,
       action_status: undefined,
     }
@@ -158,6 +162,7 @@ export class NPRequests extends Component {
 
   componentDidMount() {
     document.title = "Requests";
+    fetchRoles(roles => this.setState({roles: roles}));
     this._refreshOperators();
     this._refresh();
   }
@@ -227,6 +232,20 @@ export class NPRequests extends Component {
               op: op,
               value: value
             };
+          case 'role_id':
+            return { "and": [
+                {
+                    model: filter_criteria[f].model,
+                    field: f,
+                    op: filter_criteria[f].op,
+                    value: filter_criteria[f].value
+                },
+                {
+                    model: "manual_actions",
+                    field: "output",
+                    op: "is_null"
+                }
+            ]};
           case 'created_on':
           case 'due_date':
             return {
@@ -337,7 +356,8 @@ export class NPRequests extends Component {
   }
 
   render() {
-    const { filter_criteria, requests, operators, export_url } = this.state;
+    const { filter_criteria, requests, operators, export_url, roles } = this.state;
+    const { user_info } = this.props;
     requests && requests.forEach(r => {
       const donor = operators.find(o => o.id === r.nprequest.donor_id);
       const recipient = operators.find(o => o.id === r.nprequest.recipient_id);
@@ -346,6 +366,7 @@ export class NPRequests extends Component {
     });
     const invalid_created_on = filter_criteria.created_on.value.length !== 0 && !moment.utc(filter_criteria.created_on.value).isValid();
     const invalid_due_date = filter_criteria.due_date.value.length !== 0 && !moment.utc(filter_criteria.due_date.value).isValid();
+    const manualActions = user_info.modules && user_info.modules.includes(modules.manualActions);
 
     return (
       <div>
@@ -569,6 +590,45 @@ export class NPRequests extends Component {
                   </FormControl>
                 </Col>
               </FormGroup>
+
+              {
+                  manualActions &&
+                      <FormGroup>
+                          <Col componentClass={ControlLabel} sm={2}>
+                              <FormattedMessage id="pending-action-role" defaultMessage="Pending action role" />
+                          </Col>
+
+                          <Col sm={1}>
+                              <FormControl
+                                  componentClass="select"
+                                  value={filter_criteria.role_id.op}
+                                  onChange={e => this.setState({
+                                      filter_criteria: update(this.state.filter_criteria,
+                                          { role_id: { $merge: { op: e.target.value } } })
+                                  })}>
+                                  <option value="eq">==</option>
+                                  <option value="ne">!=</option>
+                                  <option value="is_not_null">*any*</option>
+                              </FormControl>
+                          </Col>
+
+                          <Col sm={8}>
+                              <FormControl
+                                  componentClass="select"
+                                  disabled={filter_criteria.role_id.op === "is_not_null"}
+                                  value={filter_criteria.role_id.value}
+                                  onChange={e => this.setState({
+                                      filter_criteria: update(filter_criteria,
+                                          { role_id: { $merge: { value: e.target.value && parseInt(e.target.value, 10) } } })
+                                  })} >
+                                  <option value=""/>
+                                  {
+                                      roles.map(r => <option key={`role-${r.id}`} value={r.id}>{r.name}</option>)
+                                  }
+                              </FormControl>
+                          </Col>
+                      </FormGroup>
+              }
 
               <FormGroup>
                 <Col componentClass={ControlLabel} sm={2}>
