@@ -199,7 +199,7 @@ function validateRanges(ranges) {
 
 function generateNewPortId(prefix="", suffix="") {
   const now = (new Date()).toISOString().slice(0,19).replace(/-/g,"").replace(/T/g,"").replace(/:/g,"")
-  return `${prefix}${now}MTNBSGNP${suffix}_${Math.floor(Math.random()*10000)}`
+  return `${prefix}${now}MTNBSGNP${suffix}${Math.floor(Math.random()*10000)}`
 }
 
 const emptyRequest = {
