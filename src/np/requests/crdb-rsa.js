@@ -1377,9 +1377,13 @@ function CrdbMessages(props) {
         console.error("failed to parse m.input: ", e, m.input);
         i = null;
       }
-      const match = /<NPCMessages>\s*<([^>]*)>/gm.exec(o.request);
+      const matchMessage = /<NPCMessages>\s*<([^>]*)>/gm.exec(o.request);
+      const matchMessageID = /<MessageID>(\d+)<\/MessageID>/gm.exec(o.request);
 
-      o.request && l.push({id: m.processing_trace_id, endpoint: "CRDB", summary: match?match[1]:"-", type:"request", created_on: m.created_on, raw: o.request});
+      const message = matchMessage?matchMessage[1]:"-";
+      const messageID = matchMessageID?matchMessageID[1]:"-";
+
+      o.request && l.push({id: m.processing_trace_id, endpoint: "CRDB", summary: `${message} (${messageID})`, type:"request", created_on: m.created_on, raw: o.request});
       o.response && l.push({id: m.processing_trace_id, endpoint: "APIO", summary: o.status, type: "response", created_on: m.created_on, status: m.status === 200 ? o.status : m.status, ...o.response});
       i && i.event && l.push({id: m.processing_trace_id, endpoint: "APIO", source: i.event.peer, type: "event", created_on: m.created_on, ...i.event});
       return l;
