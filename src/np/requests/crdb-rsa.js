@@ -1383,9 +1383,40 @@ function CrdbMessages(props) {
       const message = matchMessage?matchMessage[1]:"-";
       const messageID = matchMessageID?matchMessageID[1]:"-";
 
-      o.request && l.push({id: m.processing_trace_id, endpoint: "CRDB", summary: `${message} (${messageID})`, type:"request", created_on: m.created_on, raw: o.request});
-      o.response && l.push({id: m.processing_trace_id, endpoint: "APIO", summary: o.status, type: "response", created_on: m.created_on, status: m.status === 200 ? o.status : m.status, ...o.response});
-      i && i.event && l.push({id: m.processing_trace_id, endpoint: "APIO", source: i.event.peer, type: "event", created_on: m.created_on, ...i.event});
+      if(o.request) {
+        l.push({
+          id: m.processing_trace_id,
+          endpoint: "CRDB",
+          summary: `${message} (${messageID})`,
+          type: "request",
+          created_on: m.created_on,
+          raw: o.request
+        });
+      }
+      if(o.response) {
+        l.push({
+          id: m.processing_trace_id,
+          endpoint: "APIO",
+          summary: o.status,
+          type: "response",
+          created_on: m.created_on,
+          status: m.status === 200 ? o.status : m.status, ...o.response
+        });
+      }
+      if(i && i.event) {
+        const matchMessageID = /MessageID>(\d+)&/gm.exec(i.event.raw);
+        const messageID = matchMessageID?matchMessageID[1]:"-";
+
+        l.push({
+          id: m.processing_trace_id,
+          endpoint: "APIO",
+          source: i.event.peer,
+          type: "event",
+          created_on: m.created_on,
+          summary: `${i.event.summary} (${messageID})`,
+          // ...i.event
+        });
+      }
       return l;
     }, [])
     .sort((a, b) => a.id - b.id);
