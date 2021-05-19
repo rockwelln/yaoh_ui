@@ -35,7 +35,6 @@ import {access_levels, isAllowed, pages} from "../../utils/user";
 import {StaticControl} from "../../utils/common";
 import {
   Comments,
-  ContextTable,
   Errors,
   Events,
   ReplayingSubInstancesModal,
@@ -44,6 +43,7 @@ import {
   TxTable,
   pp_output,
 } from "../../requests/requests";
+import {ContextTable} from "../../requests/components";
 import moment from 'moment';
 import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
@@ -1098,9 +1098,9 @@ export function SyncMessagesFlow(props) {
       }
     });
 
-  const endpoints = ["APIO", ...new Set(data.map(getEndpoint).filter(n => n !== "APIO"))]
+  const endpoints = Array.from(new Set(["APIO", ...new Set(data.map(getEndpoint).filter(n => n !== "APIO")), ...new Set(data.map(getSource).filter(n => n !== "APIO"))]))
   const flowWidth = boundingRect.width - 240;
-  const endpointsHSpacing = flowWidth / (endpoints.length - 1);
+  const endpointsHSpacing = flowWidth / Math.max(endpoints.length - 1, 1);
   const messageWidth = m => Math.max(endpoints.indexOf(getEndpoint(m)), 0) * endpointsHSpacing;
   const sourceX = m => Math.max(endpoints.indexOf(getSource ? getSource(m) : ""), 0) * endpointsHSpacing;
   const vLineHeight = (data.length + 2) * vSpacing;

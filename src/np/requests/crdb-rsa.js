@@ -34,7 +34,7 @@ import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 import {
   Attachments,
   Comments,
-  ContextTable, Errors, Events, ManualActions, ReplayingSubInstancesModal, SavingModal,
+  Errors, Events, ManualActions, ReplayingSubInstancesModal, SavingModal,
   TasksTable,
   TransactionFlow,
   triggerManualAction,
@@ -49,6 +49,10 @@ import {StaticControl} from "../../utils/common";
 import {SyncMessagesDetails, SyncMessagesFlow} from "./citc-sa";
 import moment from "moment";
 import {ManualActionInputForm} from "../../dashboard/manualActions";
+import {ContextTable} from "../../requests/components";
+import {SubTransactionsPanel} from "../../requests/components";
+import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
+import {LinkContainer} from "react-router-bootstrap";
 
 export const DEFAULT_RECIPIENT = "MTNBSGNP";
 export const rejection_codes = [];
@@ -1383,8 +1387,8 @@ function CrdbMessages(props) {
       try {
         o = JSON.parse(m.output || "{}");
       } catch (e) {
-        console.error("failed to parse m.output: ", e, m.output);
-        o = {};
+        // console.error("failed to parse m.output: ", e, m.output);
+        o = {"message": m.output};
       }
       try {
         i = m.input ? JSON.parse(m.input) : null;
@@ -1400,7 +1404,7 @@ function CrdbMessages(props) {
 
       if(o.request) {
         l.push({
-          id: m.processing_trace_id,
+          id: `${m.processing_trace_id}-00`,
           endpoint: "CRDB",
           summary: `${message} (${messageID})`,
           type: "request",
@@ -1410,7 +1414,7 @@ function CrdbMessages(props) {
       }
       if(o.response) {
         l.push({
-          id: m.processing_trace_id,
+          id: `${m.processing_trace_id}-01`,
           endpoint: "APIO",
           summary: o.status,
           type: "response",
@@ -1423,26 +1427,50 @@ function CrdbMessages(props) {
         const messageID = matchMessageID?matchMessageID[1]:"-";
 
         l.push({
-          id: m.processing_trace_id,
+          id: `${m.processing_trace_id}-01`,
           endpoint: "APIO",
-          source: i.event.peer,
+          source: i.peer,
           type: "event",
           created_on: m.created_on,
           summary: `${i.event.summary} (${messageID})`,
+          raw: i.event.raw,
+          protocol: i.protocol || "",
           // ...i.event
+        });
+      }
+      if(i && i.method && i.url) {
+        l.push({
+          id: `${m.processing_trace_id}-01`,
+          endpoint: "?",
+          source: "APIO",
+          type: "call",
+          created_on: m.created_on,
+          summary: `${i.method.toUpperCase()} ${i.url}`,
+          protocol: "HTTP",
+          raw: m.input,
+        });
+        l.push({
+          id: `${m.processing_trace_id}-02`,
+          endpoint: "APIO",
+          source: "?",
+          type: "response",
+          created_on: m.created_on,
+          summary: m.status,
+          protocol: "HTTP",
+          raw: m.output,
         });
       }
       return l;
     }, [])
-    .sort((a, b) => a.id - b.id);
+    .sort((a, b) => a.id.localeCompare(b.id));
 
   return (
     <Tabs defaultActiveKey={1} id="syn-messages-flow">
       <Tab eventKey={1} title={<FormattedMessage id="flows" defaultMessage="Flows" />}>
         <SyncMessagesFlow
           data={listOfMessages}
-          getEndpoint={m => m.endpoint}
-          getSource={m => m.source ? m.source : m.endpoint === "APIO" ? "CRDB" : "APIO"}
+          getEndpoint={m => m.endpoint.toUpperCase()}
+          getSource={m => m.source ? m.source.toUpperCase() : m.endpoint === "APIO" ? "CRDB" : "APIO"}
           userInfo={userInfo}
         />
       </Tab>
@@ -1496,9 +1524,13 @@ export class NPTransaction extends Component {
           return;
         }
 
-        this.setState({ tx: data });
+        const diffState = { tx: data };
+        if(!this.state.tx && data.callback_task_id) {
+          diffState.activeTab = 2;
+        }
+        this.setState(diffState);
 
-        fetch_get(`/api/v01/npact/np_requests/${data.original_request_id}`, this.props.auth_token)
+        !data.callback_task_id && fetch_get(`/api/v01/npact/np_requests/${data.original_request_id}`, this.props.auth_token)
           .then(data => {
             !this.cancelLoad && this.setState({ request: data });
             document.title = `Request ${data.crdc_id}`;
@@ -1551,9 +1583,20 @@ export class NPTransaction extends Component {
     this.cancelLoad = true;
   }
 
-  componentWillReceiveProps() {
-    this.setState({ activeTab: 1 });
-    this.fetchTxDetails(false);
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    if(prevState.tx !== undefined && prevProps.match.params.txId !== this.props.match.params.txId) {
+      this.setState({
+        activeTab: 1,
+        tx: undefined,
+        request: undefined,
+        logs: [],
+        events: [],
+        externalCallbacks: [],
+        manualActions: [],
+        messages: [],
+      });
+      this.fetchTxDetails(false);
+    }
   }
 
   onReplay(activity_id, task_id) {
@@ -1805,7 +1848,21 @@ export class NPTransaction extends Component {
     }
 
     return (
-      <div>
+      <>
+        <Breadcrumb>
+          <Breadcrumb.Item active><FormattedMessage id="requests" defaultMessage="Requests"/></Breadcrumb.Item>
+          <LinkContainer to={`/transactions/list`}>
+            <Breadcrumb.Item><FormattedMessage id="apio-requests" defaultMessage="Ports"/></Breadcrumb.Item>
+          </LinkContainer>
+          {
+            tx.super_instance_chain && tx.super_instance_chain.map(sup_i => (
+              <LinkContainer to={`/transactions/${sup_i.id}`} key={`sup-${sup_i.id}`}>
+                <Breadcrumb.Item>{sup_i.id}</Breadcrumb.Item>
+              </LinkContainer>
+            ))
+          }
+          <Breadcrumb.Item active>{tx.id}</Breadcrumb.Item>
+        </Breadcrumb>
         {alerts}
         <Row>
           {can_act && tx.status === 'ACTIVE' && actions_required.map((a, i) => <div key={i}>{a}</div>)}
@@ -1921,6 +1978,14 @@ export class NPTransaction extends Component {
               )
             }
 
+            <SubTransactionsPanel
+              txId={tx.id}
+              tasks={tx.tasks}
+              onReplay={(aId, tId) => {
+                console.log("replay", aId, tId);
+              }}
+            />
+
             {tx.errors && tx.errors.length !== 0 &&
               <Panel bsStyle="danger">
                 <Panel.Heading>
@@ -1982,6 +2047,6 @@ export class NPTransaction extends Component {
         <ReplayingSubInstancesModal show={replaying}/>
         <SavingModal show={sending}/>
 
-      </div>)
+      </>)
   }
 }

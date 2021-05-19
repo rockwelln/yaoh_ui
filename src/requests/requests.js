@@ -59,6 +59,7 @@ import {ManualActionInputForm} from "../dashboard/manualActions";
 import {useDropzone} from "react-dropzone";
 import {DeleteConfirmButton} from "../utils/deleteConfirm";
 import {fetchInstanceContext} from "../help/templatePlayground";
+import {ContextTable} from "./components";
 
 const SUB_REQUESTS_PAGE_SIZE = 25;
 
@@ -1368,22 +1369,6 @@ export const TxTable = ({tx, request, userInfo}) => (
     </Table>
 );
 
-
-export const ContextTable = ({context}) => (
-    <Table style={{tableLayout: 'fixed'}}>
-        <tbody>
-        {
-            context.sort((a, b) => {
-                if(a.id < b.id) return 1;
-                if(a.id > b.id) return -1;
-                return 0;
-            }).map(c =>
-                <tr key={c.id}><th>{c.key}</th><td style={{wordWrap:'break-word'}}>{c.value}</td></tr>
-            )
-        }
-        </tbody>
-    </Table>
-);
 
 const Timers = ({timers, onUpdate}) => (
     <Table style={{tableLayout: 'fixed'}}>
