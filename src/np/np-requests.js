@@ -413,7 +413,20 @@ export class NPRequests extends Component {
                   <FormattedMessage id="kind" defaultMessage="Kind" />
                 </Col>
 
-                <Col smOffset={1} sm={8}>
+                <Col sm={1}>
+                  <FormControl
+                    componentClass="select"
+                    value={filter_criteria.kind.op}
+                    onChange={(e) => this.setState({
+                      filter_criteria: update(this.state.filter_criteria,
+                        { kind: { $merge: { op: e.target.value } } })
+                    })}>
+                    <option value="eq">==</option>
+                    <option value="ne">!=</option>
+                  </FormControl>
+                </Col>
+
+                <Col sm={8}>
                   <FormControl componentClass="select" value={filter_criteria.kind.value}
                     onChange={(e) => this.setState({
                       filter_criteria: update(this.state.filter_criteria,
@@ -424,6 +437,7 @@ export class NPRequests extends Component {
                     <option value="PortIn">PortIn</option>
                     <option value="PortOut">PortOut</option>
                     <option value="Update">Update</option>
+                    <option value="Broadcast">Broadcast</option>
                   </FormControl>
                 </Col>
               </FormGroup>
