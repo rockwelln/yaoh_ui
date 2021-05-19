@@ -1618,11 +1618,10 @@ export class Transaction extends Component {
                 let error_msg = undefined;
                 reload && setTimeout(() => this.fetchTxDetails(true), RELOAD_TX / 2);
                 if(error.response === undefined) {
-                    this.props.notifications.addNotification({
-                        title: <FormattedMessage id="fetch-tx-failed" defaultMessage="Fetch transaction failed!"/>,
-                        message: error.message,
-                        level: 'error'
-                    });
+                    NotificationsManager.error(
+                      <FormattedMessage id="fetch-tx-failed" defaultMessage="Fetch transaction failed!"/>,
+                      error.message
+                    );
                     return;
                 }
                 switch(error.response.status) {
@@ -1679,18 +1678,16 @@ export class Transaction extends Component {
                 } else {
                     this.fetchTxDetails(false);
                 }
-                this.props.notifications.addNotification({
-                        message: <FormattedMessage id="task-replayed" defaultMessage="Task replayed!"/>,
-                        level: 'success'
-                });
+                NotificationsManager.success(
+                  <FormattedMessage id="task-replayed" defaultMessage="Task replayed!"/>,
+                );
             })
             .catch(error => {
                 !this.cancelLoad && this.setState({replaying: false});
-                this.props.notifications.addNotification({
-                    title: <FormattedMessage id="task-replay-failed" defaultMessage="Task replay failed!"/>,
-                    message: error.message,
-                    level: 'error'
-                });
+                NotificationsManager.error(
+                    <FormattedMessage id="task-replay-failed" defaultMessage="Task replay failed!"/>,
+                    error.message,
+                );
             })
     }
 
@@ -1706,18 +1703,16 @@ export class Transaction extends Component {
                 } else {
                     this.fetchTxDetails(false);
                 }
-                this.props.notifications.addNotification({
-                        message: <FormattedMessage id="rollback-triggered" defaultMessage="{action} triggered!" values={{action: action}}/>,
-                        level: 'success'
-                });
+                NotificationsManager.success(
+                  <FormattedMessage id="rollback-triggered" defaultMessage="{action} triggered!" values={{action: action}}/>,
+                );
             })
             .catch(error => {
                 !this.cancelLoad && this.setState({replaying: false});
-                this.props.notifications.addNotification({
-                    title: <FormattedMessage id="rollback-failed" defaultMessage="{action} failed!" values={{action: action}}/>,
-                    message: error.message,
-                    level: 'error'
-                });
+                NotificationsManager.error(
+                  <FormattedMessage id="rollback-failed" defaultMessage="{action} failed!" values={{action: action}}/>,
+                  error.message
+                );
             })
     }
 
@@ -1813,32 +1808,28 @@ export class Transaction extends Component {
                         } else {
                             this.fetchTxDetails(false);
                         }
-                        this.props.notifications.addNotification({
-                            message: <FormattedMessage id="instance-status-changed" defaultMessage="Instance status updated!"/>,
-                            level: 'success'
-                        });
+                        NotificationsManager.success(
+                          <FormattedMessage id="instance-status-changed" defaultMessage="Instance status updated!"/>
+                        );
                     })
-                    .catch(error => this.props.notifications.addNotification({
-                            title: <FormattedMessage id="instance-update-failed" defaultMessage="Instance status update failed!"/>,
-                            message: error.message,
-                            level: 'error'
-                        })
+                    .catch(error => NotificationsManager.error(
+                        <FormattedMessage id="instance-update-failed" defaultMessage="Instance status update failed!"/>,
+                        error.message
+                      )
                     )
                 : this.fetchTxDetails(false)
             )
-            .catch(error => this.props.notifications.addNotification({
-                    title: <FormattedMessage id="instance-update-failed" defaultMessage="Instance status update failed!"/>,
-                    message: error.message,
-                    level: 'error'
-                })
+            .catch(error => NotificationsManager.error(
+                <FormattedMessage id="instance-update-failed" defaultMessage="Instance status update failed!"/>,
+                error.message
+              )
             )
     }
 
     caseUpdated() {
-        this.props.notifications.addNotification({
-            message: <FormattedMessage id="case-updated" defaultMessage="Case updated!"/>,
-            level: 'success'
-        });
+        NotificationsManager.success(
+            <FormattedMessage id="case-updated" defaultMessage="Case updated!"/>
+        );
         if(USE_WS) {
             this.websocket && this.websocket.send(JSON.stringify({"reload": true}));
         } else {
@@ -1847,11 +1838,10 @@ export class Transaction extends Component {
     }
 
     caseUpdateFailure(error) {
-        this.props.notifications.addNotification({
-            title: <FormattedMessage id="case-update-failure" defaultMessage="Case update failure!"/>,
-            message: error.message,
-            level: 'error'
-        });
+        NotificationsManager.error(
+            <FormattedMessage id="case-update-failure" defaultMessage="Case update failure!"/>,
+            error.message
+        );
     }
 
     onForceClose() {
@@ -2294,21 +2284,19 @@ export class Request extends Component {
         fetch_get(`/api/v01/apio/requests/${this.props.match.params.reqId}`)
             .then(data => !this.cancelLoad && this.setState({request: data.request}))
             .catch(error =>
-                !this.cancelLoad && this.props.notifications.addNotification({
-                    title: <FormattedMessage id="fetch-req-failed" defaultMessage="Fetch request failed!" />,
-                    message: error.message,
-                    level: 'error'
-                })
+                !this.cancelLoad && NotificationsManager.error(
+                    <FormattedMessage id="fetch-req-failed" defaultMessage="Fetch request failed!" />,
+                    error.message
+                )
             );
 
         fetch_get(`/api/v01/apio/requests/${this.props.match.params.reqId}/traces?details=1`)
             .then(data => !this.cancelLoad && this.setState({messages: data.traces}))
             .catch(error =>
-                !this.cancelLoad && this.props.notifications.addNotification({
-                    title: <FormattedMessage id="fetch-messages-failed" defaultMessage="Fetch request traces failed!" />,
-                    message: error.message,
-                    level: 'error'
-                })
+                !this.cancelLoad && NotificationsManager.error(
+                    <FormattedMessage id="fetch-messages-failed" defaultMessage="Fetch request traces failed!" />,
+                    error.message,
+                )
             );
     }
 
