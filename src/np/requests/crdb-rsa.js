@@ -741,6 +741,9 @@ const rejectionReasonCodes = [
   {"id": "SP029", "summary": "Account Number is not the account number used by the donor operator for the DN(s) or DN Range for which porting is requested."},
 ];
 
+const errorCodes = [...rejectionReasonCodes, ...abortReasonCodes];
+
+
 function CancelPortRequest(props) {
   const {show, onHide, instanceId, ranges} = props;
   const [reasonCode, setReasonCode] = useState("");
@@ -1043,7 +1046,19 @@ function RequestTable(props) {
                           </select>
                         </td>
                       :
-                        r.reject_code ? <td style={{ color: "red" }}>{r.reject_code}</td> : <td/>
+                        r.reject_code ?
+                          <td style={{ color: "red" }}>
+                            <OverlayTrigger
+                              trigger="hover"
+                              placement="right"
+                              overlay={
+                                <Popover id="popover-error-code-desc" title={r.reject_code}>
+                                  <p>{errorCodes.find(e => e.id === r.reject_code) && errorCodes.find(e => e.id === r.reject_code).summary}</p>
+                                </Popover>
+                              }>
+                              <p>{r.reject_code}</p>
+                            </OverlayTrigger>
+                          </td> : <td/>
                     }
                     <td/>
                   </tr>
