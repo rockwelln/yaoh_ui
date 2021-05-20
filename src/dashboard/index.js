@@ -11,7 +11,7 @@ import SuccessRateOverTime from './tx-success-rate-over-time';
 import ActiveTransactionsPerWorkflow from './tx-active-per-workflow';
 import ProxyRequestsOverTime from "./tx-per-proxy-over-time";
 import {GatewaysStatusTile, DashboardCard} from './dashboard-tiles';
-import ManualActionsBox, {ManualActionsTile} from "./manualActions";
+import ManualActionsBox, {ManualActionsTile, NPManualActionsBox} from "./manualActions";
 // import {TransactionsNeedApprovalTile} from "../np/dashboard_tiles";
 
 import './dashboard.css';
@@ -69,7 +69,11 @@ export default function Dashboard(props) {
     }
     statsPanels.push(<ActiveTransactionsPerWorkflow {...props} />);
     if(isManual) {
-        statsPanels.push(<ManualActionsBox {...props} />);
+        if(isNpact) {
+          statsPanels.push(<NPManualActionsBox/>);
+        } else {
+          statsPanels.push(<ManualActionsBox/>);
+        }
     }
 
     return (
