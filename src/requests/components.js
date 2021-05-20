@@ -63,8 +63,8 @@ function SubInstance({instance, tasks, onReplay}) {
         <td style={{width: '30%'}}>
             {
                 instance.status === "ACTIVE" && instance.tasks && instance.tasks.filter(t => t.status === 'ERROR').map(t =>
-                    <ButtonToolbar key={`subinst_act_${instance.id}_${t.task_id}`}>
-                        <Button bsStyle="primary" onClick={() => onReplay(instance.id, t.task_id)}><FormattedMessage id="replay" defaultMessage="Replay" /></Button>
+                    <ButtonToolbar key={`subinst_act_${instance.id}_${t.id}`}>
+                        <Button bsStyle="primary" onClick={() => onReplay(instance.id, t.id)}><FormattedMessage id="replay" defaultMessage="Replay" /></Button>
                     </ButtonToolbar>
                 ).pop()
             }
@@ -84,7 +84,7 @@ function SubInstancesTable({subinstances, tasks, onReplay}) {
       <tbody>
       {
         subinstances.map(
-          (instance, i) => <SubInstance key={`subinst-${i}`} instance={instance} tasks={tasks} />
+          (instance, i) => <SubInstance key={`subinst-${i}`} instance={instance} tasks={tasks} onReplay={onReplay} />
         )
       }
       </tbody>
@@ -155,13 +155,15 @@ export function SubTransactionsPanel({txId, tasks, onGlobalAction, onReplay, ref
           subinstances={instances}
           tasks={tasks}
           onReplay={(aId, tId) => {
+            const cb = onReplay && onReplay();
             replayTask(
               aId,
               tId,
               () => {
                 _refresh();
-                onReplay && onReplay();
+                cb && cb();
               },
+              () => cb && cb()
             )
           }}
         />

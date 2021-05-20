@@ -1981,8 +1981,9 @@ export class NPTransaction extends Component {
             <SubTransactionsPanel
               txId={tx.id}
               tasks={tx.tasks}
-              onReplay={(aId, tId) => {
-                console.log("replay", aId, tId);
+              onReplay={() => {
+                this.setState({replaying: true});
+                return () => this.setState({replaying: false});
               }}
             />
 
