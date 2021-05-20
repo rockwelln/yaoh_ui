@@ -1146,7 +1146,7 @@ export function SyncMessagesFlow(props) {
                   fill="#1f77b4"
                   fillOpacity={1}
                   className="message-label">
-                  {d.summary}
+                  {String(d.summary).substring(0, 30) + (String(d.summary).length > 30?"...":"")}
                 </text>
               )
             )
