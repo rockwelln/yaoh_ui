@@ -204,7 +204,8 @@ export class NPRequests extends Component {
         filter_criteria[f] &&
         (
           (filter_criteria[f].value && filter_criteria[f].op && (typeof(filter_criteria[f].value) !== "object" || filter_criteria[f].value.length !== 0)) ||
-          filter_criteria[f].or || filter_criteria[f].and || filter_criteria[f].op === 'is_null' || typeof (filter_criteria[f].value) === 'boolean'
+          filter_criteria[f].or || filter_criteria[f].and || filter_criteria[f].op === 'is_null' || filter_criteria[f].op === 'is_not_null' ||
+          typeof (filter_criteria[f].value) === 'boolean'
         )
       )
       .map(f => {

@@ -1655,7 +1655,7 @@ export class Transaction extends Component {
 
     onReplay(activity_id, task_id) {
         this.setState({replaying: true});
-        fetch_put(`/api/v01/transactions/${activity_id}/tasks/${task_id}`, {}, this.props.auth_token)
+        fetch_put(`/api/v01/transactions/${activity_id}/tasks/${task_id}`, {})
             .then(() => {
                 !this.cancelLoad && this.setState({replaying: false});
                 if(USE_WS) {
