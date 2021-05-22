@@ -1098,15 +1098,19 @@ export function SyncMessagesFlow(props) {
       }
     });
 
-  const endpoints = Array.from(new Set(["APIO", ...new Set(data.map(getEndpoint).filter(n => n !== "APIO")), ...new Set(data.map(getSource).filter(n => n !== "APIO"))]))
-  const flowWidth = boundingRect.width - 240;
+  const endpoints = Array.from(new Set(["APIO", ...data.map(getEndpoint).filter(n => n !== "APIO"), ...data.map(getSource).filter(n => n !== "APIO")]))
+  const flowWidth = boundingRect.width - 260;
   const endpointsHSpacing = flowWidth / Math.max(endpoints.length - 1, 1);
-  const messageWidth = m => Math.max(endpoints.indexOf(getEndpoint(m)), 0) * endpointsHSpacing;
-  const sourceX = m => Math.max(endpoints.indexOf(getSource ? getSource(m) : ""), 0) * endpointsHSpacing;
+  const messageWidth = m => {
+    return Math.max(endpoints.indexOf(getEndpoint(m)), 0) * endpointsHSpacing;
+  }
+  const sourceX = m => {
+    return Math.max(endpoints.indexOf(getSource ? getSource(m) : ""), 0) * endpointsHSpacing;
+  }
   const vLineHeight = (data.length + 2) * vSpacing;
 
   return (
-    <svg className="flow" width="100%" height={vLineHeight+75} ref={chartRef}>
+    <svg className="flow" width="100%" height={vLineHeight+15} ref={chartRef}>
       <marker id="end" viewBox="0 -5 10 10" refX="10" refY="0" markerWidth="8" markerHeight="8" orient="auto">
         <path d="M0,-5L10,0L0,5"/>
       </marker>
@@ -1141,12 +1145,12 @@ export function SyncMessagesFlow(props) {
                 <text
                   key={`data-text-${i}`}
                   textAnchor="middle"
-                  x={Math.abs(messageWidth(d) - sourceX(d)) / 2}
+                  x={Math.min(messageWidth(d), sourceX(d)) + Math.abs(messageWidth(d) - sourceX(d)) / 2}
                   y={(vSpacing * (i+1)) - 10}
                   fill="#1f77b4"
                   fillOpacity={1}
                   className="message-label">
-                  {String(d.summary).substring(0, 30) + (String(d.summary).length > 30?"...":"")}
+                  {String(d.summary).substring(0, 40) + (String(d.summary).length > 40?"...":"")}
                 </text>
               )
             )

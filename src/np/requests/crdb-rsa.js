@@ -1381,7 +1381,9 @@ export class NPDisconnectRequest extends Component {
 
 function CrdbMessages(props) {
   const {messages, userInfo} = props;
+  const [seeDetails, setSeeDetails] = useState(false);
   let listOfMessages = messages
+    .sort((a, b) => a.processing_trace_id - b.processing_trace_id)
     .reduce((l, m) => {
       var o, i;
       try {
@@ -1402,26 +1404,6 @@ function CrdbMessages(props) {
       const message = matchMessage?matchMessage[1]:"-";
       const messageID = matchMessageID?matchMessageID[1]:"-";
 
-      if(o.request) {
-        l.push({
-          id: `${m.processing_trace_id}-00`,
-          endpoint: "CRDB",
-          summary: `${message} (${messageID})`,
-          type: "request",
-          created_on: m.created_on,
-          raw: o.request
-        });
-      }
-      if(o.response) {
-        l.push({
-          id: `${m.processing_trace_id}-01`,
-          endpoint: "APIO",
-          summary: o.status,
-          type: "response",
-          created_on: m.created_on,
-          status: m.status === 200 ? o.status : m.status, ...o.response
-        });
-      }
       if(i && i.event) {
         const matchMessageID = /MessageID>(\d+)&/gm.exec(i.event.raw);
         const messageID = matchMessageID?matchMessageID[1]:"-";
@@ -1438,10 +1420,11 @@ function CrdbMessages(props) {
           // ...i.event
         });
       }
-      if(i && i.method && i.url) {
+
+      if((!o.response || seeDetails) && i && i.method && i.url) {
         l.push({
           id: `${m.processing_trace_id}-01`,
-          endpoint: "?",
+          endpoint: i.host || "?",
           source: "APIO",
           type: "call",
           created_on: m.created_on,
@@ -1452,7 +1435,7 @@ function CrdbMessages(props) {
         l.push({
           id: `${m.processing_trace_id}-02`,
           endpoint: "APIO",
-          source: "?",
+          source: i.host || "?",
           type: "response",
           created_on: m.created_on,
           summary: m.status,
@@ -1460,19 +1443,48 @@ function CrdbMessages(props) {
           raw: m.output,
         });
       }
+      if(o.request) {
+        l.push({
+          id: `${m.processing_trace_id}-00`,
+          endpoint: "CRDB",
+          source: (seeDetails && i && i.host)?i.host:"APIO",
+          summary: `${message} (${messageID})`,
+          type: "request",
+          created_on: m.created_on,
+          raw: o.request
+        });
+      }
+      if(o.response) {
+        l.push({
+          id: `${m.processing_trace_id}-01`,
+          endpoint: (seeDetails && i && i.host)?i.host:"APIO",
+          source: "CRDB",
+          summary: o.status,
+          type: "response",
+          created_on: m.created_on,
+          status: m.status === 200 ? o.status : m.status, ...o.response
+        });
+      }
       return l;
     }, [])
-    .sort((a, b) => a.id.localeCompare(b.id));
+    ;
 
   return (
     <Tabs defaultActiveKey={1} id="syn-messages-flow">
       <Tab eventKey={1} title={<FormattedMessage id="flows" defaultMessage="Flows" />}>
-        <SyncMessagesFlow
-          data={listOfMessages}
-          getEndpoint={m => m.endpoint.toUpperCase()}
-          getSource={m => m.source ? m.source.toUpperCase() : m.endpoint === "APIO" ? "CRDB" : "APIO"}
-          userInfo={userInfo}
-        />
+        <Row>
+          <SyncMessagesFlow
+            data={listOfMessages}
+            getEndpoint={m => m.endpoint.toUpperCase()}
+            getSource={m => m.source ? m.source.toUpperCase() : m.endpoint === "APIO" ? "CRDB" : "APIO"}
+            userInfo={userInfo}
+          />
+        </Row>
+        <Row style={{ textAlign: "center" }}>
+          <Checkbox checked={seeDetails} onChange={e => setSeeDetails(e.target.checked)}>
+            <i>See details</i>
+          </Checkbox>
+        </Row>
       </Tab>
       <Tab eventKey={2} title={<FormattedMessage id="messages" defaultMessage="Messages" />}>
         <SyncMessagesDetails data={listOfMessages} userInfo={userInfo} />
@@ -1600,14 +1612,41 @@ export class NPTransaction extends Component {
   }
 
   onReplay(activity_id, task_id) {
-    fetch_put(`/api/v01/transactions/${activity_id}/tasks/${task_id}`, {}, this.props.auth_token)
-      .then(() => NotificationsManager.success(
-        <FormattedMessage id="task-replayed" defaultMessage="Task replayed!" />,
-      ))
-      .catch(error => NotificationsManager.error(
-        <FormattedMessage id="task-replay-failed" defaultMessage="Task replay failed!" />,
-        error.message
-      ))
+    this.setState({replaying: true});
+    fetch_put(`/api/v01/transactions/${activity_id}/tasks/${task_id}`, {})
+      .then(() => {
+        !this.cancelLoad && this.setState({replaying: false});
+        NotificationsManager.success(
+          <FormattedMessage id="task-replayed" defaultMessage="Task replayed!" />,
+        )
+      })
+      .catch(error => {
+        !this.cancelLoad && this.setState({replaying: false});
+        NotificationsManager.error(
+          <FormattedMessage id="task-replay-failed" defaultMessage="Task replay failed!" />,
+          error.message
+        )
+      })
+  }
+
+  onRollback(activity_id, task_id, replay_behaviour) {
+    this.setState({replaying: true});
+    const meta = JSON.stringify({replay_behaviour: replay_behaviour});
+    fetch_put(`/api/v01/transactions/${activity_id}/tasks/${task_id}?meta=${meta}`, {})
+      .then(() => {
+        !this.cancelLoad && this.setState({replaying: false});
+        this.fetchTxDetails(false);
+        NotificationsManager.success(
+          <FormattedMessage id="rollback-triggered" defaultMessage="{action} triggered!" values={{action: replay_behaviour}}/>,
+        );
+      })
+      .catch(error => {
+        !this.cancelLoad && this.setState({replaying: false});
+        NotificationsManager.error(
+          <FormattedMessage id="rollback-failed" defaultMessage="{action} failed!" values={{action: replay_behaviour}}/>,
+          error.message
+        );
+      })
   }
 
   changeTxStatus(new_status) {
@@ -1945,9 +1984,10 @@ export class NPTransaction extends Component {
                 <TransactionFlow definition={tx.definition} states={tx.tasks} activityId={tx.activity_id} />
                 <TasksTable
                   tasks={tx.tasks}
-                  definition={tx.definition}
+                  definition={JSON.parse(tx.definition)}
                   onReplay={this.onReplay}
-                  user_can_replay={can_act && tx.status === 'ACTIVE'}
+                  onRollback={this.onRollback}
+                  user_can_replay={can_act && tx.status === 'ACTIVE' && !replaying}
                   tx_id={tx.id}
                   userInfo={user_info}
                 />
