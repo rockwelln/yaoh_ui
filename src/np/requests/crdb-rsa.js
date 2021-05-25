@@ -723,9 +723,11 @@ function abortPort(instanceId, ranges, reasonCode, onSuccess) {
 const cancelReasonCodes = [
   {"id": "SP001", "summary": "The MSISDN or DN/DN Range is not valid on the donor operator network."},
   {"id": "SP002", "summary": "The MSISDN or DN/DN Range is excluded from number portability."},
+  {"id": "SP003", "summary": "For a postpaid subscriber, the MSISDN, account number, and account holder id number do not match."},
   {"id": "SP004", "summary": "The classification of the account does not match."},
   {"id": "SP005", "summary": "Subscriber in suspension of outgoing or incoming calls due to failure to pay a bill"},
   {"id": "SP006", "summary": "MSISDN or DN/DN Range not valid on SP."},
+  {"id": "SP007", "summary": "MSISDN, Account Number, Corporate Registration Number do not match, or Port Request is unauthorized."},
   {"id": "SP008", "summary": "Port Request is for an inter-SP port; for this NO, inter-SP ports are handled outside the CRDB."},
   {"id": "SP009", "summary": "Other reasons."},
 ];
@@ -740,6 +742,7 @@ const abortReasonCodes = [
 
 const rejectionReasonCodes = [
   ...cancelReasonCodes,
+  {"id": "SP026", "summary": "Installation address is outside the geographic area associated with the DNs/DN Ranges specified in the request."},
   {"id": "SP027", "summary": "DN Range is not exclusively used by the operator requesting the port."},
   {"id": "SP028", "summary": "DN(s) or DN Range are excluded from porting under Regulation 3."},
   {"id": "SP029", "summary": "Account Number is not the account number used by the donor operator for the DN(s) or DN Range for which porting is requested."},
