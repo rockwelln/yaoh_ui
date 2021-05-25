@@ -895,7 +895,7 @@ export class NPRequests extends Component {
                   title: <FormattedMessage id="ranges" defaultMessage="Ranges" />, render: n => (
                     n.nprequest.ranges.map((r, key) => (
                       <span key={key}>
-                        {r.range_from}-{r.range_to}
+                        {r.range_from}-{r.range_to}{r.reject_code && <p style={{"color": "red"}}>{r.reject_code}</p>}
                         <br />
                       </span>
                     )
