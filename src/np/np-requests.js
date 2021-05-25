@@ -460,7 +460,7 @@ export class NPRequests extends Component {
                     isClearable
                     value={{value: filter_criteria.kind.value, label: filter_criteria.kind.value}}
                     name="kind"
-                    options={["Disconnect", "PortIn", "PortOut", "Update", "Broadcast"].map(k => ({value: k, label: k}))}
+                    options={["Disconnect", "PortIn", "PortOut", "Update", "Broadcast", "ChangeOfInstallationAddress"].map(k => ({value: k, label: k}))}
                     onChange={v => {
                       this.setState({
                         filter_criteria: update(this.state.filter_criteria,
