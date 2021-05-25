@@ -12,6 +12,7 @@ import Checkbox from 'react-bootstrap/lib/Checkbox';
 import Breadcrumb from 'react-bootstrap/lib/Breadcrumb';
 
 import Select from 'react-select';
+import AsyncSelect from 'react-select/async';
 import DatePicker from 'react-datepicker';
 import moment from 'moment';
 import { Link } from 'react-router-dom';
@@ -98,6 +99,12 @@ function fetchRequestStatuses(onSuccess) {
     .catch(error => console.error(error));
 }
 
+function fetchPendingActions(inputValue, onSuccess) {
+  return fetch_get(`/api/v01/manual_actions/search?q=${inputValue}`)
+    .then(d => onSuccess(d.actions.sort((a, b) => a.localeCompare(b)).map(a => ({label: a, value: a}))))
+    .catch(error => console.error(error));
+}
+
 export class NPRequests extends Component {
   constructor(props) {
     super(props);
@@ -141,6 +148,7 @@ export class NPRequests extends Component {
       due_date: { model: 'NPRequest', value: '', op: 'ge' },
       b2b: { model: 'NPRequest', value: '', op: 'eq' },
       role_id: { model: 'manual_actions', value: '', op: 'eq' },
+      action: { model: 'manual_actions', value: '', op: 'eq' },
       task_status: localUser.isSystem() ? undefined : errorCriteria.task_status,
       action_status: undefined,
     }
@@ -171,7 +179,7 @@ export class NPRequests extends Component {
   componentDidMount() {
     document.title = "Requests";
     fetchRoles(roles => this.setState({roles: roles}));
-    fetchRequestStatuses(s => this.setState({request_statuses: s}))
+    fetchRequestStatuses(s => this.setState({request_statuses: s}));
     this._refreshOperators();
     this._refresh();
   }
@@ -261,6 +269,20 @@ export class NPRequests extends Component {
                 }),
               )
             };
+          case 'action':
+            return { "and": [
+                {
+                    model: model,
+                    field: "description",
+                    op: op,
+                    value: value
+                },
+                {
+                    model: "manual_actions",
+                    field: "output",
+                    op: "is_null"
+                }
+            ]};
           case 'role_id':
             return { "and": [
                 {
@@ -651,6 +673,7 @@ export class NPRequests extends Component {
 
               {
                   manualActions &&
+                    <>
                       <FormGroup>
                           <Col componentClass={ControlLabel} sm={2}>
                               <FormattedMessage id="pending-action-role" defaultMessage="Pending action role" />
@@ -687,6 +710,45 @@ export class NPRequests extends Component {
                                 classNamePrefix="select" />
                           </Col>
                       </FormGroup>
+
+                      <FormGroup>
+                          <Col componentClass={ControlLabel} sm={2}>
+                              <FormattedMessage id="pending-action" defaultMessage="Pending action" />
+                          </Col>
+
+                          <Col sm={1}>
+                              <FormControl
+                                  componentClass="select"
+                                  value={filter_criteria.action.op}
+                                  onChange={e => this.setState({
+                                      filter_criteria: update(this.state.filter_criteria,
+                                          { action: { $merge: { op: e.target.value } } })
+                                  })}>
+                                  <option value="eq">==</option>
+                              </FormControl>
+                          </Col>
+
+                          <Col sm={8}>
+                              <AsyncSelect
+                                isClearable
+                                cacheOptions
+                                loadOptions={(inputValue, callback) => {
+                                  fetchPendingActions(inputValue, callback);
+                                }}
+                                defaultOptions
+                                value={{value: filter_criteria.action.value, label: filter_criteria.action.value}}
+                                onChange={v => {
+                                  this.setState({
+                                    filter_criteria: update(this.state.filter_criteria,
+                                      { action: { $merge: { value: v && v.value } } })
+                                  })
+                                }}
+                                name="manual-action"
+                                className="basic-select"
+                                classNamePrefix="select" />
+                          </Col>
+                      </FormGroup>
+                    </>
               }
 
               <FormGroup>
