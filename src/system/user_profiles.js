@@ -306,7 +306,7 @@ function NewProfile(props) {
                                 <Checkbox
                                   checked={hasAccess("cron_requests")}
                                   onChange={e => toggleAccess("cron_requests", e.target.checked)}>
-                                  cron requests
+                                  scheduled requests
                                 </Checkbox>
 
                                 <Checkbox
@@ -463,7 +463,7 @@ function UpdateProfile(props) {
                                       <Checkbox
                                         checked={hasAccess("cron_requests")}
                                         onChange={e => toggleAccess("cron_requests", e.target.checked)}>
-                                        cron requests
+                                        scheduled requests
                                       </Checkbox>
                                     </Checkbox>
 

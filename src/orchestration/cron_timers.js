@@ -135,7 +135,7 @@ class NewCronTimer extends React.Component {
 
                             <FormGroup validationState={validCronEntry}>
                                 <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="cron" defaultMessage="Cron entry" />
+                                    <FormattedMessage id="scheduler-entry" defaultMessage="Scheduler entry" />
                                 </Col>
 
                                 <Col sm={9}>
@@ -322,7 +322,7 @@ class UpdateTimer extends React.Component {
 
                             <FormGroup validationState={validCronEntry}>
                                 <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="cron" defaultMessage="Cron entry" />
+                                    <FormattedMessage id="scheduler-entry" defaultMessage="Scheduler entry" />
                                 </Col>
 
                                 <Col sm={9}>
@@ -441,11 +441,11 @@ class UpdateTimer extends React.Component {
 function deleteCronTimer(id, onSuccess) {
     fetch_delete(`/api/v01/timers/cron/${id}`)
         .then(() => {
-            NotificationsManager.success(<FormattedMessage id="cron-timer-delete-failed" defaultMessage="Timer deleted!" />);
+            NotificationsManager.success(<FormattedMessage id="timer-deleted" defaultMessage="Timer deleted!" />);
             onSuccess && onSuccess();
         })
         .catch(error => NotificationsManager.error(
-            <FormattedMessage id="cron-timer-delete-failed" defaultMessage="Timer delete failed!" />,
+            <FormattedMessage id="timer-delete-failed" defaultMessage="Timer delete failed!" />,
             error.message
     ))
 }
@@ -475,12 +475,12 @@ export default class CronTimers extends Search {
         fetch_put(`/api/v01/timers/cron/${timer_id}`, {activity_id: activity_id?parseInt(activity_id, 10): null})
             .then(() => {
                 NotificationsManager.success(
-                    <FormattedMessage id="update-cron-timer-done" defaultMessage="Cron timer saved!"/>
+                    <FormattedMessage id="update-schedule-done" defaultMessage="Schedule saved!"/>
                 );
                 this._refresh();
             })
             .catch(error => NotificationsManager.error(
-                <FormattedMessage id="update-cron-timer-failed" defaultMessage="Failed to update cron timer"/>,
+                <FormattedMessage id="update-schedule-failed" defaultMessage="Failed to update schedule"/>,
                 error.message
             ));
     }
@@ -489,18 +489,18 @@ export default class CronTimers extends Search {
         fetch_put(`/api/v01/timers/cron/${timer_id}`, {enabled: enabled})
             .then(() => {
                 NotificationsManager.success(
-                    <FormattedMessage id="update-cron-timer-done" defaultMessage="Cron timer saved!"/>
+                    <FormattedMessage id="update-schedule-done" defaultMessage="Schedule saved!"/>
                 );
                 this._refresh();
             })
             .catch(error => NotificationsManager.error(
-                <FormattedMessage id="update-cron-timer-failed" defaultMessage="Failed to update cron timer"/>,
+                <FormattedMessage id="update-schedule-failed" defaultMessage="Failed to update schedule"/>,
                 error.message
             ));
     }
 
     componentDidMount() {
-        document.title = "Cron";
+        document.title = "Scheduler";
         super.componentDidMount();
         this.fetchActivities();
     }
@@ -513,7 +513,7 @@ export default class CronTimers extends Search {
             <div>
                 <Breadcrumb>
                     <Breadcrumb.Item active><FormattedMessage id="orchestration" defaultMessage="Orchestration"/></Breadcrumb.Item>
-                    <Breadcrumb.Item active><FormattedMessage id="cron-timers" defaultMessage="Cron timers"/></Breadcrumb.Item>
+                    <Breadcrumb.Item active><FormattedMessage id="job-scheduler" defaultMessage="Job scheduler"/></Breadcrumb.Item>
                 </Breadcrumb>
 
                 <Panel>
@@ -526,7 +526,7 @@ export default class CronTimers extends Search {
 
                 <Panel>
                     <Panel.Heading>
-                        <Panel.Title><FormattedMessage id="cron-timers" defaultMessage="Cron timers" /></Panel.Title>
+                        <Panel.Title><FormattedMessage id="job-scheduler" defaultMessage="Job scheduler" /></Panel.Title>
                     </Panel.Heading>
                     <Panel.Body>
                         <ApioDatatable

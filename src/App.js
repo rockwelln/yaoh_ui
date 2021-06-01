@@ -271,7 +271,7 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
               [
                 <LinkContainer to={"/custom-transactions/list"} key="custom-requests">
                   <MenuItem>
-                    <FormattedMessage id="cron-requests" defaultMessage="Cron Requests"/>
+                    <FormattedMessage id="scheduled-jobs" defaultMessage="Scheduled jobs"/>
                   </MenuItem>
                 </LinkContainer>,
                 <LinkContainer to={"/transactions/timers"} key="timers">
@@ -505,7 +505,7 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
               {localUser.canSee(pages.requests_workflow_editor) &&
               <LinkContainer to={"/transactions/config/cron_timers"}>
                 <MenuItem>
-                  <FormattedMessage id="cron-timers" defaultMessage="Cron timers"/>
+                  <FormattedMessage id="job-scheduler" defaultMessage="Job scheduler"/>
                 </MenuItem>
               </LinkContainer>
               }
