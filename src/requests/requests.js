@@ -1655,7 +1655,8 @@ export class Transaction extends Component {
 
     onReplay(activity_id, task_id) {
         this.setState({replaying: true});
-        fetch_put(`/api/v01/transactions/${activity_id}/tasks/${task_id}`, {})
+        const {proxy_gateway_host} = this.state.request;
+        fetch_put(`/${proxy_gateway_host || "api/v01"}/transactions/${activity_id}/tasks/${task_id}`, {})
             .then(() => {
                 !this.cancelLoad && this.setState({replaying: false});
                 if(USE_WS) {
@@ -1678,9 +1679,10 @@ export class Transaction extends Component {
 
     onRollback(activity_id, task_id, replay_behaviour) {
         this.setState({replaying: true});
+        const {proxy_gateway_host} = this.state.request;
         const meta = JSON.stringify({replay_behaviour: replay_behaviour});
         const action = titleCase(replay_behaviour);
-        fetch_put(`/api/v01/transactions/${activity_id}/tasks/${task_id}?meta=${meta}`, {}, this.props.auth_token)
+        fetch_put(`/${proxy_gateway_host || "api/v01"}/transactions/${activity_id}/tasks/${task_id}?meta=${meta}`, {})
             .then(() => {
                 !this.cancelLoad && this.setState({replaying: false});
                 if(USE_WS) {
