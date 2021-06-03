@@ -304,3 +304,28 @@ ul.tree > li:last-child {
 .text-white {
     color: #fff !important;
 }
+
+.label {
+    display: inline;
+    padding: .2em .6em .3em;
+    font-size: 75%;
+    color: #fff;
+    border-radius: .25em;
+}
+
+.badge, .label {
+    text-align: center;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.alarm-info {
+    background-color: #CCC;
+}
+.alarm-major {
+  background-color: #FF7000;
+}
+.alarm-critical {
+  background-color: #FF3000;
+}
