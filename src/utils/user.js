@@ -1,3 +1,6 @@
+import {userLocalizeUtcDate} from "../utils";
+import moment from "moment";
+
 export const pages = Object.freeze({
     requests: 19,
     requests_nprequests: 0,
@@ -65,6 +68,7 @@ export const accesses = Object.freeze({
   data: "data",
   settings: "settings",
   settings_users: "settings.users",
+  settings_alarms: "settings.alarms",
   settings_configuration: "settings.configuration",
   orchestration: "orchestration",
 })
@@ -343,6 +347,10 @@ class LocalUser {
 
   canSee(page) {
     return this.user && isAllowed(this.user.ui_profile, page);
+  }
+
+  localizeUtcDate(m) {
+    return userLocalizeUtcDate(moment(m), this.user)
   }
 }
 

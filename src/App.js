@@ -79,6 +79,10 @@ import {LoginPage, LoginForm, fetchPlatformDetails} from "./login";
 import {RESET_PASSWORD_PREFIX, ResetPasswordRequestForm, ResetPasswordForm} from "./reset_password";
 import {NPEmergencyNotificationRequest} from "./np/emergency-notification";
 import TemplatePlayground from "./help/templatePlayground";
+import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
+import Button from "react-bootstrap/lib/Button";
+import AlarmManagement, {fetchAlarms} from "./system/alarms";
+import moment from "moment";
 
 const ListProvisioningGateways=React.lazy(() => import("./provisioning/ListProvisioningGateways"))
 
@@ -103,62 +107,447 @@ const Loading = () => (
     </div>
 );
 
-const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => {
-  if(limited_menu(user_info.ui_profile)) {
-    return (
-      <Navbar staticTop collapseOnSelect inverse>
-        <Navbar.Header>
-          <Navbar.Brand style={{color: '#ef0803', fontWeight: 'bold',}}>
-            <img src={apio_brand}
-                 width="38"
-                 height="42"
-                 className="d-inline-block align-top"
-                 style={{padding: 0}}
-                 alt="apio"/>
-          </Navbar.Brand>
-          <Navbar.Toggle/>
-        </Navbar.Header>
-        <Navbar.Collapse>
-          <Nav>
-            {(!user_info.modules || user_info.modules.includes(modules.provisioning)) && localUser.isAllowed(accesses.provisioning) &&
-            <NavDropdown
-              eventKey={4}
-              title={
-                <span>
-                  <Glyphicon glyph="hdd"/>{" "}
-                  <FormattedMessage
-                    id="provisioning"
-                    defaultMessage="Provisioning"
-                  />
-                </span>
-              }
-              id="nav-data-apio"
-            >
-              {
-                ProvProxiesManager.listProxies().map((p, i) =>
-                  <LinkContainer to={"/provisioning/" + p.id + "/tenants"} key={i}>
-                    <MenuItem>
-                      {p.name}
-                    </MenuItem>
-                  </LinkContainer>
-                )
-              }
-            </NavDropdown>
-            }
-          </Nav>
-          <Nav pullRight>
-            <NavDropdown title={<Glyphicon glyph="user"/>} id="nav-local-user">
-              <LinkContainer to={"/user/profile"}>
+const LimitedNavBar = ({user_info, logoutUser, database_status}) => (
+  <Navbar staticTop collapseOnSelect inverse>
+    <Navbar.Header>
+      <Navbar.Brand style={{color: '#ef0803', fontWeight: 'bold',}}>
+        <img src={apio_brand}
+             width="38"
+             height="42"
+             className="d-inline-block align-top"
+             style={{padding: 0}}
+             alt="apio"/>
+      </Navbar.Brand>
+      <Navbar.Toggle/>
+    </Navbar.Header>
+    <Navbar.Collapse>
+      <Nav>
+        {(!user_info.modules || user_info.modules.includes(modules.provisioning)) && localUser.isAllowed(accesses.provisioning) &&
+        <NavDropdown
+          eventKey={4}
+          title={
+            <span>
+              <Glyphicon glyph="hdd"/>{" "}
+              <FormattedMessage
+                id="provisioning"
+                defaultMessage="Provisioning"
+              />
+            </span>
+          }
+          id="nav-data-apio"
+        >
+          {
+            ProvProxiesManager.listProxies().map((p, i) =>
+              <LinkContainer to={"/provisioning/" + p.id + "/tenants"} key={i}>
                 <MenuItem>
-                  <FormattedMessage id="profile" defaultMessage="Profile"/>
+                  {p.name}
                 </MenuItem>
               </LinkContainer>
-              <MenuItem divider/>
-              <MenuItem onClick={logoutUser}>
-                <FormattedMessage id="logout" defaultMessage="Logout"/>
-              </MenuItem>
-            </NavDropdown>
+            )
+          }
+        </NavDropdown>
+        }
+      </Nav>
+      <Nav pullRight>
+        <NavDropdown title={<Glyphicon glyph="user"/>} id="nav-local-user">
+          <LinkContainer to={"/user/profile"}>
+            <MenuItem>
+              <FormattedMessage id="profile" defaultMessage="Profile"/>
+            </MenuItem>
+          </LinkContainer>
+          <MenuItem divider/>
+          <MenuItem onClick={logoutUser}>
+            <FormattedMessage id="logout" defaultMessage="Logout"/>
+          </MenuItem>
+        </NavDropdown>
 
+        <Navbar.Text
+          style={{
+            color: (database_status && database_status.env === 'TEST') ? '#ef0803' : '#777',
+            fontWeight: (database_status && database_status.env === 'TEST') ? 'bold' : 'normal',
+          }}>
+          {
+            (database_status && database_status.env) ? database_status.env : "unknown"
+          }
+        </Navbar.Text>
+      </Nav>
+    </Navbar.Collapse>
+  </Navbar>
+)
+
+
+function AsyncApioNavBar({user_info, logoutUser, database_status}){
+  const [alarms, setAlarms] = useState([]);
+
+  useEffect(() => {
+    fetchAlarms({field: "active", op: "eq", value: true}, null, null, null, a => setAlarms(a.alarms));
+    const handler = setInterval(() => fetchAlarms({field: "active", op: "eq", value: true}, null, null, null, a => setAlarms(a.alarms)), 5000);
+    return () => { clearInterval(handler) }
+  }, []);
+
+  return (
+    <Navbar staticTop collapseOnSelect inverse>
+      <Navbar.Header>
+        <Navbar.Brand style={{color: '#ef0803', fontWeight: 'bold',}}>
+          <img src={apio_brand}
+               width="38"
+               height="42"
+               className="d-inline-block align-top"
+               style={{padding: 0}}
+               alt="apio"/>
+        </Navbar.Brand>
+        <Navbar.Toggle/>
+      </Navbar.Header>
+      <Navbar.Collapse>
+        <Nav>
+          {localUser.isAllowed(accesses.dashboard) &&
+          <ListItemLink to={"/dashboard"}>
+            <Glyphicon glyph="dashboard"/> {' '}
+            <FormattedMessage id="dashboard" defaultMessage="Dashboard"/>
+          </ListItemLink>
+          }
+
+          {user_info.modules && supportedModule(modules.npact, user_info.modules) && localUser.isAllowed(accesses.requests) &&
+          <NavDropdown title={
+            <span>
+              <Glyphicon glyph="send"/> {' '}
+              <FormattedMessage id="requests" defaultMessage="Requests"/>
+            </span>
+          } id="nav-requests">
+
+            <LinkContainer to={"/transactions/new_portin"}>
+              <MenuItem>
+                <FormattedMessage id="new-port-in" defaultMessage="New Port-in"/>
+              </MenuItem>
+            </LinkContainer>
+            {supportedModule(modules.npact_crdc, user_info.modules) &&
+            <LinkContainer to={"/transactions/new_update"}>
+              <MenuItem>
+                <FormattedMessage id="new-update" defaultMessage="New Update"/>
+              </MenuItem>
+            </LinkContainer>
+            }
+            <LinkContainer to={"/transactions/new_disconnect"}>
+              <MenuItem>
+                <FormattedMessage id="new-disconnect" defaultMessage="New Disconnect"/>
+              </MenuItem>
+            </LinkContainer>
+            {supportedModule(modules.npact_crdb, user_info.modules) &&
+            <LinkContainer to={"/transactions/new_install_address"}>
+              <MenuItem>
+                <FormattedMessage id="new-addess" defaultMessage="New Address Change"/>
+              </MenuItem>
+            </LinkContainer>
+            }
+            {supportedModule(modules.npact_crdb, user_info.modules) &&
+            <LinkContainer to={"/transactions/emergency_notification"}>
+              <MenuItem>
+                <FormattedMessage id="emergency-notification" defaultMessage="New Emergency Notification"/>
+              </MenuItem>
+            </LinkContainer>
+            }
+
+            <MenuItem divider/>
+
+            {supportedModule(modules.npact_crdc, user_info.modules) &&
+            <LinkContainer to={"/transactions/mobile_events"}>
+              <MenuItem>
+                <FormattedMessage id="mobile-events" defaultMessage="Mobile Events"/>
+              </MenuItem>
+            </LinkContainer>
+            }
+
+            <LinkContainer to={"/transactions/list"}>
+              <MenuItem>
+                <FormattedMessage id="porting-requests" defaultMessage="Porting Requests"/>
+              </MenuItem>
+            </LinkContainer>
+
+          </NavDropdown>
+          }
+
+          {(!user_info.modules || !supportedModule(modules.npact, user_info.modules)) && localUser.isAllowed(accesses.requests) &&
+          <NavDropdown title={
+            <span>
+              <Glyphicon glyph="send"/> {' '}
+              <FormattedMessage id="requests" defaultMessage="Requests"/>
+            </span>
+          } id="nav-requests">
+
+            <LinkContainer to={"/transactions/list"}>
+              <MenuItem>
+                <FormattedMessage id="apio-requests" defaultMessage="APIO Requests"/>
+              </MenuItem>
+            </LinkContainer>
+            {(!user_info.modules || user_info.modules.includes(modules.orchestration)) &&
+            <>
+              <LinkContainer to={"/custom-transactions/list"} key="custom-requests">
+                <MenuItem>
+                  <FormattedMessage id="scheduled-jobs" defaultMessage="Scheduled jobs"/>
+                </MenuItem>
+              </LinkContainer>
+              <LinkContainer to={"/transactions/timers"} key="timers">
+                <MenuItem>
+                  <FormattedMessage id="timers" defaultMessage="Timers"/>
+                </MenuItem>
+              </LinkContainer>
+            </>
+            }
+            {(!user_info.modules || user_info.modules.includes(modules.orange)) && localUser.canSee(pages.requests_ndg) &&
+            <>
+              <MenuItem key="divider-1" divider/>,
+              <LinkContainer key="ndg-history" to={"/requests/ndg"}>
+                <MenuItem>
+                  <FormattedMessage id="ndg-history" defaultMessage="NDG history"/>
+                </MenuItem>
+              </LinkContainer>,
+            </>
+            }
+          </NavDropdown>
+          }
+
+          {(!user_info.modules || user_info.modules.includes(modules.bulk)) && localUser.isAllowed(accesses.bulks) &&
+          <NavDropdown title={
+            <span>
+              <Glyphicon glyph="equalizer"/> {' '}
+              <FormattedMessage id="bulks" defaultMessage="Bulks"/>
+            </span>
+          } id="nav-bulks">
+            <LinkContainer to={"/transactions/bulk"}>
+              <MenuItem>
+                <FormattedMessage id="bulk" defaultMessage="Bulk"/>
+              </MenuItem>
+            </LinkContainer>
+            {localUser.isAllowed(accesses.bulks_actions) &&
+            <LinkContainer to={"/system/bulk_actions"}>
+              <MenuItem>
+                <FormattedMessage id="bulk-actions" defaultMessage="Bulk actions"/>
+              </MenuItem>
+            </LinkContainer>
+            }
+          </NavDropdown>
+          }
+
+          {(!user_info.modules || user_info.modules.includes(modules.provisioning)) && localUser.isAllowed(accesses.provisioning) &&
+          <NavDropdown
+            eventKey={4}
+            title={
+              <span>
+                <Glyphicon glyph="hdd"/>{" "}
+                <FormattedMessage
+                  id="provisioning"
+                  defaultMessage="Provisioning"
+                />
+              </span>
+            }
+            id="nav-data-apio"
+          >
+            {
+              ProvProxiesManager.listProxies().map((p, i) =>
+                <LinkContainer to={"/provisioning/" + p.id + "/tenants"} key={i}>
+                  <MenuItem>
+                    {p.name}
+                  </MenuItem>
+                </LinkContainer>
+              )
+            }
+          </NavDropdown>
+          }
+
+          {(!user_info.modules || supportedModule(modules.npact, user_info.modules)) && localUser.isAllowed(accesses.data) &&
+          <NavDropdown eventKey={4} title={
+            <span>
+              <Glyphicon glyph="hdd"/> {' '}
+              <FormattedMessage id="data" defaultMessage="Data"/>
+            </span>
+          } id="nav-system-data">
+            {localUser.canSee(pages.npact_operators) &&
+            <LinkContainer to={"/system/operators"}>
+              <MenuItem>
+                <FormattedMessage id="operators" defaultMessage="Operators"/>
+              </MenuItem>
+            </LinkContainer>
+            }
+            {localUser.canSee(pages.npact_ranges) &&
+            <LinkContainer to={"/system/ranges"}>
+              <MenuItem>
+                <FormattedMessage id="ranges" defaultMessage="Ranges"/>
+              </MenuItem>
+            </LinkContainer>
+            }
+            {localUser.canSee(pages.npact_routing_info) &&
+            <LinkContainer to={"/system/routing_info"}>
+              <MenuItem>
+                <FormattedMessage id="routing-info" defaultMessage="Routing info"/>
+              </MenuItem>
+            </LinkContainer>
+            }
+            <MenuItem divider/>
+            {localUser.canSee(pages.npact_porting_cases) &&
+            <LinkContainer to={"/system/porting_cases"}>
+              <MenuItem>
+                <FormattedMessage id="np-database" defaultMessage="NP database"/>
+              </MenuItem>
+            </LinkContainer>
+            }
+            {user_info.modules.includes(modules.npact_crdc) && localUser.canSee(pages.npact_mvno_numbers) &&
+            <LinkContainer to={"/system/mvno_numbers"}>
+              <MenuItem>
+                <FormattedMessage id="mvno-numbers" defaultMessage="MVNO Numbers"/>
+              </MenuItem>
+            </LinkContainer>
+            }
+            {user_info.modules.includes(modules.npact_crdc) && localUser.canSee(pages.npact_holidays) &&
+            <>
+              <MenuItem divider/>
+              <LinkContainer to={"/system/public_holidays"}>
+                <MenuItem>
+                  <FormattedMessage id="public-holidays" defaultMessage="Public holidays"/>
+                </MenuItem>
+              </LinkContainer>
+            </>
+            }
+          </NavDropdown>
+          }
+
+          {localUser.isAllowed(accesses.settings) &&
+          <NavDropdown eventKey={4} title={
+            <span>
+              <Glyphicon glyph="signal"/> {' '}
+              <FormattedMessage id='settings' defaultMessage='Settings'/>
+            </span>
+          } id="nav-system-settings">
+            {localUser.isAllowed(accesses.settings_users) &&
+            <LinkContainer to={"/system/users"}>
+              <MenuItem>
+                <FormattedMessage id="users" defaultMessage="Users"/>
+              </MenuItem>
+            </LinkContainer>
+            }
+            {localUser.isAllowed(accesses.settings_configuration)  &&
+            <>
+              <LinkContainer to={"/system/webhooks"} key="webhooks">
+                <MenuItem>
+                  <FormattedMessage id="webhooks" defaultMessage="Webhooks"/>
+                </MenuItem>
+              </LinkContainer>
+              <LinkContainer to={"/system/config"} key={"configuration"}>
+                <MenuItem>
+                  <FormattedMessage id="configuration" defaultMessage="Configuration"/>
+                </MenuItem>
+              </LinkContainer>
+            </>
+            }
+            {localUser.canSee(pages.system_gateways) &&
+            <>
+              <MenuItem key="divider-2" divider/>
+              <LinkContainer to={"/system/gateways"} key="gateways">
+                <MenuItem>
+                  <FormattedMessage id="gateways" defaultMessage="Gateways"/>
+                </MenuItem>
+              </LinkContainer>
+            </>
+            }
+            {localUser.canSee(pages.system_databases) &&
+            <LinkContainer to={"/system/databases"}>
+              <MenuItem>
+                <FormattedMessage id="databases" defaultMessage="Databases"/>
+              </MenuItem>
+            </LinkContainer>
+            }
+            {localUser.canSee(pages.system_queues) &&
+            <LinkContainer to={"/system/queues"}>
+              <MenuItem>
+                <FormattedMessage id="queues" defaultMessage="Queues"/>
+              </MenuItem>
+            </LinkContainer>
+            }
+            {localUser.canSee(pages.system_reporting) &&
+            <>
+              <MenuItem key="divider-3" divider/>
+              <LinkContainer to={"/system/reporting"} key="reports">
+                <MenuItem>
+                  <FormattedMessage id="reporting" defaultMessage="Reporting"/>
+                </MenuItem>
+              </LinkContainer>
+            </>
+            }
+            {localUser.canSee(pages.system_templates) &&
+            <>
+              <MenuItem key="divider-4" divider/>
+              <LinkContainer to={"/system/templates"} key="templates">
+                <MenuItem>
+                  <FormattedMessage id="templates" defaultMessage="Templates"/>
+                </MenuItem>
+              </LinkContainer>
+            </>
+            }
+            {localUser.canSee(pages.system_logs) &&
+              <LinkContainer to={"/system/logs"} key="logs">
+                <MenuItem>
+                  <FormattedMessage id="logs" defaultMessage="Logs"/>
+                </MenuItem>
+              </LinkContainer>
+            }
+            {localUser.isAllowed(accesses.settings_alarms) &&
+              <LinkContainer to={"/system/alarms"} key="alarms">
+                <MenuItem>
+                  <FormattedMessage id="alarms" defaultMessage="Alarms"/>
+                </MenuItem>
+              </LinkContainer>
+            }
+          </NavDropdown>
+          }
+          {(!user_info.modules || user_info.modules.includes(modules.orchestration)) && localUser.isAllowed(accesses.orchestration) &&
+          <NavDropdown eventKey={4} title={
+            <span>
+              <Glyphicon glyph="cog"/> {' '}
+              <FormattedMessage id='orchestration' defaultMessage='Orchestration'/>
+            </span>
+          } id="nav-orch">
+            {localUser.canSee(pages.requests_startup_events) &&
+            <LinkContainer to={"/transactions/config/startup_events"}>
+              <MenuItem>
+                <FormattedMessage id="startup-events" defaultMessage="Startup Events"/>
+              </MenuItem>
+            </LinkContainer>
+            }
+            {localUser.canSee(pages.requests_workflow_editor) &&
+            <LinkContainer to={"/transactions/config/activities/editor"}>
+              <MenuItem>
+                <FormattedMessage id="editor" defaultMessage="Editor"/>
+              </MenuItem>
+            </LinkContainer>
+            }
+            {localUser.canSee(pages.requests_workflow_editor) &&
+            <LinkContainer to={"/transactions/config/cron_timers"}>
+              <MenuItem>
+                <FormattedMessage id="job-scheduler" defaultMessage="Job scheduler"/>
+              </MenuItem>
+            </LinkContainer>
+            }
+          </NavDropdown>
+          }
+
+        </Nav>
+        <Nav pullRight>
+          <NavDropdown title={<Glyphicon glyph="user"/>} id="nav-local-user">
+            <LinkContainer to={"/user/profile"}>
+              <MenuItem>
+                <FormattedMessage id="profile" defaultMessage="Profile"/>
+              </MenuItem>
+            </LinkContainer>
+            <MenuItem divider/>
+            <MenuItem onClick={logoutUser}>
+              <FormattedMessage id="logout" defaultMessage="Logout"/>
+            </MenuItem>
+          </NavDropdown>
+
+          <ListItemLink to={"/help"}>
+            <Glyphicon glyph="question-sign"/>
+          </ListItemLink>
+
+          {database_status && database_status.env === 'TEST' &&
             <Navbar.Text
               style={{
                 color: (database_status && database_status.env === 'TEST') ? '#ef0803' : '#777',
@@ -168,392 +557,47 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
                 (database_status && database_status.env) ? database_status.env : "unknown"
               }
             </Navbar.Text>
-          </Nav>
-        </Navbar.Collapse>
-      </Navbar>
-    );
-  } else {
-    return (
-      <Navbar staticTop collapseOnSelect inverse>
-        <Navbar.Header>
-          <Navbar.Brand style={{color: '#ef0803', fontWeight: 'bold',}}>
-            <img src={apio_brand}
-                 width="38"
-                 height="42"
-                 className="d-inline-block align-top"
-                 style={{padding: 0}}
-                 alt="apio"/>
-          </Navbar.Brand>
-          <Navbar.Toggle/>
-        </Navbar.Header>
-        <Navbar.Collapse>
-          <Nav>
-            {localUser.isAllowed(accesses.dashboard) &&
-            <ListItemLink to={"/dashboard"}>
-              <Glyphicon glyph="dashboard"/> {' '}
-              <FormattedMessage id="dashboard" defaultMessage="Dashboard"/>
-            </ListItemLink>
-            }
+          }
+          <Navbar.Text style={{marginTop: "8px", marginBottom: "5px"}}>
+            <ButtonToolbar>
+              <LinkContainer to={
+                `/system/alarms?filter=${JSON.stringify({
+                  active: {"value": true, "op": "eq"},
+                  level: {"value": "info", "op": "eq"}
+                })}&t=${moment.utc().unix()}`
+              }>
+                <Button>
+                  {alarms.filter(a => a.level === "info").length}
+                </Button>
+              </LinkContainer>
+              <LinkContainer to={
+                `/system/alarms?filter=${JSON.stringify({
+                  active: {"value": true, "op": "eq"},
+                  level: {"value": "major", "op": "eq"}
+                })}&t=${moment.utc().unix()}`
+              }>
+                <Button bsStyle="warning">
+                  {alarms.filter(a => a.level === "major").length}
+                </Button>
+              </LinkContainer>
+              <LinkContainer to={
+                `/system/alarms?filter=${JSON.stringify({
+                  active: {"value": true, "op": "eq"},
+                  level: {"value": "critical", "op": "eq"}
+                })}&t=${moment.utc().unix()}`
+              }>
+                <Button bsStyle="danger">
+                  {alarms.filter(a => a.level === "critical").length}
+                </Button>
+              </LinkContainer>
+            </ButtonToolbar>
+          </Navbar.Text>
+        </Nav>
+      </Navbar.Collapse>
+    </Navbar>
+  )
+}
 
-            {user_info.modules && supportedModule(modules.npact, user_info.modules) && localUser.isAllowed(accesses.requests) &&
-            <NavDropdown title={
-              <span>
-                <Glyphicon glyph="send"/> {' '}
-                <FormattedMessage id="requests" defaultMessage="Requests"/>
-              </span>
-            } id="nav-requests">
-
-              <LinkContainer to={"/transactions/new_portin"}>
-                <MenuItem>
-                  <FormattedMessage id="new-port-in" defaultMessage="New Port-in"/>
-                </MenuItem>
-              </LinkContainer>
-              {supportedModule(modules.npact_crdc, user_info.modules) &&
-              <LinkContainer to={"/transactions/new_update"}>
-                <MenuItem>
-                  <FormattedMessage id="new-update" defaultMessage="New Update"/>
-                </MenuItem>
-              </LinkContainer>
-              }
-              <LinkContainer to={"/transactions/new_disconnect"}>
-                <MenuItem>
-                  <FormattedMessage id="new-disconnect" defaultMessage="New Disconnect"/>
-                </MenuItem>
-              </LinkContainer>
-              {supportedModule(modules.npact_crdb, user_info.modules) &&
-              <LinkContainer to={"/transactions/new_install_address"}>
-                <MenuItem>
-                  <FormattedMessage id="new-addess" defaultMessage="New Address Change"/>
-                </MenuItem>
-              </LinkContainer>
-              }
-              {supportedModule(modules.npact_crdb, user_info.modules) &&
-              <LinkContainer to={"/transactions/emergency_notification"}>
-                <MenuItem>
-                  <FormattedMessage id="emergency-notification" defaultMessage="New Emergency Notification"/>
-                </MenuItem>
-              </LinkContainer>
-              }
-
-              <MenuItem divider/>
-
-              {supportedModule(modules.npact_crdc, user_info.modules) &&
-              <LinkContainer to={"/transactions/mobile_events"}>
-                <MenuItem>
-                  <FormattedMessage id="mobile-events" defaultMessage="Mobile Events"/>
-                </MenuItem>
-              </LinkContainer>
-              }
-
-              <LinkContainer to={"/transactions/list"}>
-                <MenuItem>
-                  <FormattedMessage id="porting-requests" defaultMessage="Porting Requests"/>
-                </MenuItem>
-              </LinkContainer>
-
-            </NavDropdown>
-            }
-
-            {(!user_info.modules || !supportedModule(modules.npact, user_info.modules)) && localUser.isAllowed(accesses.requests) &&
-            <NavDropdown title={
-              <span>
-                <Glyphicon glyph="send"/> {' '}
-                <FormattedMessage id="requests" defaultMessage="Requests"/>
-              </span>
-            } id="nav-requests">
-
-              <LinkContainer to={"/transactions/list"}>
-                <MenuItem>
-                  <FormattedMessage id="apio-requests" defaultMessage="APIO Requests"/>
-                </MenuItem>
-              </LinkContainer>
-              {(!user_info.modules || user_info.modules.includes(modules.orchestration)) &&
-              [
-                <LinkContainer to={"/custom-transactions/list"} key="custom-requests">
-                  <MenuItem>
-                    <FormattedMessage id="scheduled-jobs" defaultMessage="Scheduled jobs"/>
-                  </MenuItem>
-                </LinkContainer>,
-                <LinkContainer to={"/transactions/timers"} key="timers">
-                  <MenuItem>
-                    <FormattedMessage id="timers" defaultMessage="Timers"/>
-                  </MenuItem>
-                </LinkContainer>,
-              ]
-              }
-              {(!user_info.modules || user_info.modules.includes(modules.orange)) && localUser.canSee(pages.requests_ndg) &&
-              [
-                <MenuItem key="divider-1" divider/>,
-                <LinkContainer key="ndg-history" to={"/requests/ndg"}>
-                  <MenuItem>
-                    <FormattedMessage id="ndg-history" defaultMessage="NDG history"/>
-                  </MenuItem>
-                </LinkContainer>,
-              ]
-              }
-            </NavDropdown>
-            }
-
-            {(!user_info.modules || user_info.modules.includes(modules.bulk)) && localUser.isAllowed(accesses.bulks) &&
-            <NavDropdown title={
-              <span>
-                <Glyphicon glyph="equalizer"/> {' '}
-                <FormattedMessage id="bulks" defaultMessage="Bulks"/>
-              </span>
-            } id="nav-bulks">
-              <LinkContainer to={"/transactions/bulk"}>
-                <MenuItem>
-                  <FormattedMessage id="bulk" defaultMessage="Bulk"/>
-                </MenuItem>
-              </LinkContainer>
-              {localUser.isAllowed(accesses.bulks_actions) &&
-              <LinkContainer to={"/system/bulk_actions"}>
-                <MenuItem>
-                  <FormattedMessage id="bulk-actions" defaultMessage="Bulk actions"/>
-                </MenuItem>
-              </LinkContainer>
-              }
-            </NavDropdown>
-            }
-
-            {(!user_info.modules || user_info.modules.includes(modules.provisioning)) && localUser.isAllowed(accesses.provisioning) &&
-            <NavDropdown
-              eventKey={4}
-              title={
-                <span>
-                  <Glyphicon glyph="hdd"/>{" "}
-                  <FormattedMessage
-                    id="provisioning"
-                    defaultMessage="Provisioning"
-                  />
-                </span>
-              }
-              id="nav-data-apio"
-            >
-              {
-                ProvProxiesManager.listProxies().map((p, i) =>
-                  <LinkContainer to={"/provisioning/" + p.id + "/tenants"} key={i}>
-                    <MenuItem>
-                      {p.name}
-                    </MenuItem>
-                  </LinkContainer>
-                )
-              }
-            </NavDropdown>
-            }
-
-            {(!user_info.modules || supportedModule(modules.npact, user_info.modules)) && localUser.isAllowed(accesses.data) &&
-            <NavDropdown eventKey={4} title={
-              <span>
-                <Glyphicon glyph="hdd"/> {' '}
-                <FormattedMessage id="data" defaultMessage="Data"/>
-              </span>
-            } id="nav-system-data">
-              {localUser.canSee(pages.npact_operators) &&
-              <LinkContainer to={"/system/operators"}>
-                <MenuItem>
-                  <FormattedMessage id="operators" defaultMessage="Operators"/>
-                </MenuItem>
-              </LinkContainer>
-              }
-              {localUser.canSee(pages.npact_ranges) &&
-              <LinkContainer to={"/system/ranges"}>
-                <MenuItem>
-                  <FormattedMessage id="ranges" defaultMessage="Ranges"/>
-                </MenuItem>
-              </LinkContainer>
-              }
-              {localUser.canSee(pages.npact_routing_info) &&
-              <LinkContainer to={"/system/routing_info"}>
-                <MenuItem>
-                  <FormattedMessage id="routing-info" defaultMessage="Routing info"/>
-                </MenuItem>
-              </LinkContainer>
-              }
-              <MenuItem divider/>
-              {localUser.canSee(pages.npact_porting_cases) &&
-              <LinkContainer to={"/system/porting_cases"}>
-                <MenuItem>
-                  <FormattedMessage id="np-database" defaultMessage="NP database"/>
-                </MenuItem>
-              </LinkContainer>
-              }
-              {user_info.modules.includes(modules.npact_crdc) && localUser.canSee(pages.npact_mvno_numbers) &&
-              <LinkContainer to={"/system/mvno_numbers"}>
-                <MenuItem>
-                  <FormattedMessage id="mvno-numbers" defaultMessage="MVNO Numbers"/>
-                </MenuItem>
-              </LinkContainer>
-              }
-              {user_info.modules.includes(modules.npact_crdc) && localUser.canSee(pages.npact_holidays) &&
-              <>
-                <MenuItem divider/>
-                <LinkContainer to={"/system/public_holidays"}>
-                  <MenuItem>
-                    <FormattedMessage id="public-holidays" defaultMessage="Public holidays"/>
-                  </MenuItem>
-                </LinkContainer>
-              </>
-              }
-            </NavDropdown>
-            }
-
-            {localUser.isAllowed(accesses.settings) &&
-            <NavDropdown eventKey={4} title={
-              <span>
-                <Glyphicon glyph="signal"/> {' '}
-                <FormattedMessage id='settings' defaultMessage='Settings'/>
-              </span>
-            } id="nav-system-settings">
-              {localUser.isAllowed(accesses.settings_users) &&
-              <LinkContainer to={"/system/users"}>
-                <MenuItem>
-                  <FormattedMessage id="users" defaultMessage="Users"/>
-                </MenuItem>
-              </LinkContainer>
-              }
-              {localUser.isAllowed(accesses.settings_configuration)  &&
-              [
-                <LinkContainer to={"/system/webhooks"} key="webhooks">
-                  <MenuItem>
-                    <FormattedMessage id="webhooks" defaultMessage="Webhooks"/>
-                  </MenuItem>
-                </LinkContainer>,
-                <LinkContainer to={"/system/config"} key={"configuration"}>
-                  <MenuItem>
-                    <FormattedMessage id="configuration" defaultMessage="Configuration"/>
-                  </MenuItem>
-                </LinkContainer>
-              ]
-              }
-              {localUser.canSee(pages.system_gateways) &&
-              [
-                <MenuItem key="divider-2" divider/>,
-                <LinkContainer to={"/system/gateways"} key="gateways">
-                  <MenuItem>
-                    <FormattedMessage id="gateways" defaultMessage="Gateways"/>
-                  </MenuItem>
-                </LinkContainer>
-              ]
-              }
-              {localUser.canSee(pages.system_databases) &&
-              <LinkContainer to={"/system/databases"}>
-                <MenuItem>
-                  <FormattedMessage id="databases" defaultMessage="Databases"/>
-                </MenuItem>
-              </LinkContainer>
-              }
-              {localUser.canSee(pages.system_queues) &&
-              <LinkContainer to={"/system/queues"}>
-                <MenuItem>
-                  <FormattedMessage id="queues" defaultMessage="Queues"/>
-                </MenuItem>
-              </LinkContainer>
-              }
-              {localUser.canSee(pages.system_reporting) &&
-              [
-                <MenuItem key="divider-3" divider/>,
-                <LinkContainer to={"/system/reporting"} key="reports">
-                  <MenuItem>
-                    <FormattedMessage id="reporting" defaultMessage="Reporting"/>
-                  </MenuItem>
-                </LinkContainer>
-              ]
-              }
-              {localUser.canSee(pages.system_templates) &&
-              [
-                <MenuItem key="divider-4" divider/>,
-                <LinkContainer to={"/system/templates"} key="templates">
-                  <MenuItem>
-                    <FormattedMessage id="templates" defaultMessage="Templates"/>
-                  </MenuItem>
-                </LinkContainer>
-              ]
-              }
-              {localUser.canSee(pages.system_logs) &&
-              [
-                <LinkContainer to={"/system/logs"} key="logs">
-                  <MenuItem>
-                    <FormattedMessage id="logs" defaultMessage="Logs"/>
-                  </MenuItem>
-                </LinkContainer>
-              ]
-              }
-            </NavDropdown>
-            }
-            {(!user_info.modules || user_info.modules.includes(modules.orchestration)) && localUser.isAllowed(accesses.orchestration) &&
-            <NavDropdown eventKey={4} title={
-              <span>
-                <Glyphicon glyph="cog"/> {' '}
-                <FormattedMessage id='orchestration' defaultMessage='Orchestration'/>
-              </span>
-            } id="nav-orch">
-              {localUser.canSee(pages.requests_startup_events) &&
-              <LinkContainer to={"/transactions/config/startup_events"}>
-                <MenuItem>
-                  <FormattedMessage id="startup-events" defaultMessage="Startup Events"/>
-                </MenuItem>
-              </LinkContainer>
-              }
-              {localUser.canSee(pages.requests_workflow_editor) &&
-              <LinkContainer to={"/transactions/config/activities/editor"}>
-                <MenuItem>
-                  <FormattedMessage id="editor" defaultMessage="Editor"/>
-                </MenuItem>
-              </LinkContainer>
-              }
-              {localUser.canSee(pages.requests_workflow_editor) &&
-              <LinkContainer to={"/transactions/config/cron_timers"}>
-                <MenuItem>
-                  <FormattedMessage id="job-scheduler" defaultMessage="Job scheduler"/>
-                </MenuItem>
-              </LinkContainer>
-              }
-            </NavDropdown>
-            }
-
-          </Nav>
-          <Nav pullRight>
-            <NavDropdown title={<Glyphicon glyph="user"/>} id="nav-local-user">
-              <LinkContainer to={"/user/profile"}>
-                <MenuItem>
-                  <FormattedMessage id="profile" defaultMessage="Profile"/>
-                </MenuItem>
-              </LinkContainer>
-              <MenuItem divider/>
-              <MenuItem onClick={logoutUser}>
-                <FormattedMessage id="logout" defaultMessage="Logout"/>
-              </MenuItem>
-            </NavDropdown>
-
-            <ListItemLink to={"/help"}>
-              <Glyphicon glyph="question-sign"/>
-            </ListItemLink>
-
-            <Navbar.Text
-              style={{
-                color: (database_status && database_status.env === 'TEST') ? '#ef0803' : '#777',
-                fontWeight: (database_status && database_status.env === 'TEST') ? 'bold' : 'normal',
-              }}>
-              {
-                (database_status && database_status.env) ? database_status.env : "unknown"
-              }
-            </Navbar.Text>
-          </Nav>
-        </Navbar.Collapse>
-      </Navbar>
-    )
-  }
-};
-
-
-const NotFound = () => (
-    <div>
-        <FormattedMessage
-            id="app.route.notFound"
-            defaultMessage="Sorry, this page doesn't exist (yet)!" />
-    </div>
-);
 
 const DemoWatermark = () => (
     <>
@@ -873,10 +917,17 @@ class App extends Component {
                 }
                 <LicenseAlert />
                 <div className="App-header">
-                    <AsyncApioNavBar
+                  {
+                    limited_menu(user_info.ui_profile) ?
+                      <LimitedNavBar
+                        user_info={user_info}
+                        database_status={database_status}
+                        logoutUser={() => logoutUser().catch(console.error).then(this.logout)}/> :
+                      <AsyncApioNavBar
                         user_info={user_info}
                         database_status={database_status}
                         logoutUser={() => logoutUser().catch(console.error).then(this.logout)}/>
+                  }
                 </div>
 
                 <Col mdOffset={1} md={10}>
@@ -988,6 +1039,13 @@ class App extends Component {
                                            {...props} /> :
                                        <NotAllowed/>
                                )} />
+                        <Route path="/system/alarms"
+                               component={props => (
+                                   localUser.isAllowed(accesses.settings_alarms) ?
+                                       <AlarmManagement {...props} />:
+                                       <NotAllowed />
+                               )}
+                               exact />
                         <Route path="/system/users"
                                component={props => (
                                    localUser.isAllowed(accesses.settings_users) ?

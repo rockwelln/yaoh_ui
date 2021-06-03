@@ -348,6 +348,11 @@ function NewProfile(props) {
                                     onChange={e => toggleAccess("settings.configuration", e.target.checked)}>
                                     configuration
                                   </Checkbox>
+                                  <Checkbox
+                                    checked={hasAccess("settings.alarms")}
+                                    onChange={e => toggleAccess("settings.alarms", e.target.checked)}>
+                                    alarms
+                                  </Checkbox>
                                 </Checkbox>
                                 <Checkbox
                                   checked={hasAccess("orchestration")}
@@ -510,6 +515,11 @@ function UpdateProfile(props) {
                                         checked={hasAccess("settings.configuration")}
                                       onChange={e => toggleAccess("settings.configuration", e.target.checked)}>
                                         configuration
+                                      </Checkbox>
+                                      <Checkbox
+                                        checked={hasAccess("settings.alarms")}
+                                        onChange={e => toggleAccess("settings.alarms", e.target.checked)}>
+                                        alarms
                                       </Checkbox>
                                     </Checkbox>
                                     <Checkbox

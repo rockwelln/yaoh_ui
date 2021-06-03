@@ -20,7 +20,7 @@ import {Link} from "react-router-dom";
 import {activeCriteria, errorCriteria} from "../requests/requests";
 import queryString from 'query-string';
 import update from "immutability-helper";
-const REFRESH_CYCLE = 30;
+const REFRESH_CYCLE = 10;
 
 
 function fetch_gateways(onSuccess) {
