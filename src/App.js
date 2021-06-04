@@ -693,6 +693,7 @@ class App extends Component {
     }
 
     getUserInfo() {
+        this.setState({error_msg: undefined});
         fetch_get('/api/v01/system/users/local')
             .then(data => {
                 localUser.fromObject(data);
@@ -737,8 +738,8 @@ class App extends Component {
         })
     }
 
-    componentWillUpdate() {
-        if(this.isAuthenticated() && !this.state.user_info && AuthServiceManager.isAuthenticated()) {
+    componentWillUpdate(nextProps, nextState, nextContext) {
+        if(this.isAuthenticated() && !this.state.user_info && AuthServiceManager.isAuthenticated() && nextState.error_msg === undefined) {
             this.getUserInfo();
         }
     }
@@ -749,7 +750,7 @@ class App extends Component {
           this.getPlatformDetails();
           getCookie('auth_sso') === '1' && !sso_auth_service.isLoggedIn() && sso_auth_service.signinSilent();
 
-          if(this.isAuthenticated() && !this.state.user_info && AuthServiceManager.isAuthenticated()) {
+          if(this.isAuthenticated() && !this.state.user_info && AuthServiceManager.isAuthenticated() && this.state.error_msg === undefined) {
               this.getUserInfo();
           }
         }
@@ -764,7 +765,7 @@ class App extends Component {
         return needUpdate;
     }
 
-  updateToken(token, sso_auth) {
+    updateToken(token, sso_auth) {
       const {user_info} = this.state;
         AuthServiceManager.loadApiToken(token);
         // user_info.modules && supportedModule(modules.provisioning, user_info.modules) && ProvProxiesManager.fetchConfiguration().then(() => this.setState({proxy_fetch: true})).catch(console.log);
