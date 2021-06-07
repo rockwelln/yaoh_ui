@@ -87,6 +87,8 @@ function newRequest(request, onSuccess, onError) {
       subscriber_data: request.subscriber_data,
       due_date: request.due_date,
       change_addr_installation_porting_id: request.change_addr_installation_porting_id,
+      label: request.label,
+      contact_email: request.contact_email,
     }
   )
     .then(parseJSON)
@@ -261,7 +263,6 @@ export function NPPortInRequest({userInfo}) {
       (request.subscriber_data.RegNum !== undefined && request.subscriber_data.RegNum.length !== 0)
     )
   );
-  console.log("subs", request);
   return (
     <Form horizontal>
       <FormGroup>
@@ -662,6 +663,37 @@ export function NPPortInRequest({userInfo}) {
           </FormGroup>
         </>
       }
+      <FormGroup>
+        <Col componentClass={ControlLabel} sm={2}>
+          <FormattedMessage id="label-tenant-id" defaultMessage="Label (tenant id)" />
+        </Col>
+
+        <Col sm={9}>
+          <FormControl
+            type="text"
+            value={request.label}
+            onChange={e => setRequest(update(request, {
+              $merge: {label: e.target.value || undefined}
+            }))}
+          />
+        </Col>
+      </FormGroup>
+
+      <FormGroup>
+        <Col componentClass={ControlLabel} sm={2}>
+          <FormattedMessage id="contact-email" defaultMessage="Contact email" />
+        </Col>
+
+        <Col sm={9}>
+          <FormControl
+            type="text"
+            value={request.contact_email}
+            onChange={e => setRequest(update(request, {
+              $merge: {contact_email: e.target.value || undefined}
+            }))}
+          />
+        </Col>
+      </FormGroup>
 
       <FormGroup>
         <Col smOffset={2} sm={10}>
