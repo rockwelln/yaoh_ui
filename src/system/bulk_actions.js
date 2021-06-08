@@ -114,6 +114,7 @@ class NewAction extends React.Component {
             options: null,
             validation_schema: null,
             sample_input: null,
+            sequence_timeout: null,
         }
     }
 
@@ -165,7 +166,7 @@ class NewAction extends React.Component {
     }
 
     static filterFieldsOnType(action) {
-        let fields = ["name", "options", "validation_schema"];
+        let fields = ["name", "options", "validation_schema", "sequence_timeout", "sample_input"];
         switch(action.type) {
             case "url":
                 fields += ["url", "method", "header_1", "header_2", "header_3"];
@@ -351,6 +352,25 @@ class NewAction extends React.Component {
                                         } />
                                     <HelpBlock>
                                         <FormattedMessage id="bulk-input-sample" defaultMessage="Sample input available for future users of this bulk action."/>
+                                    </HelpBlock>
+                                </Col>
+                            </FormGroup>
+
+                            <FormGroup>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="sequence-timeout" defaultMessage="Sequence timeout" />
+                                </Col>
+
+                                <Col sm={9}>
+                                    <FormControl
+                                        componentClass="input"
+                                        value={action.sequence_timeout || ""}
+                                        onChange={e => {
+                                          (!e.target.value || !isNaN(e.target.value)) &&
+                                          this.setState({action: update(action, {$merge: {sequence_timeout: e.target.value ? parseFloat(e.target.value) : null}})})
+                                        }} />
+                                    <HelpBlock>
+                                        <FormattedMessage id="bulk-seq-timeout-sample" defaultMessage="timeout (in seconds) between entries when processed in sequence."/>
                                     </HelpBlock>
                                 </Col>
                             </FormGroup>
@@ -739,6 +759,25 @@ class Action extends React.Component {
                                     } />
                                 <HelpBlock>
                                     <FormattedMessage id="bulk-input-sample" defaultMessage="Sample input available for future users of this bulk action."/>
+                                </HelpBlock>
+                            </Col>
+                        </FormGroup>
+
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="sequence-timeout" defaultMessage="Sequence timeout" />
+                            </Col>
+
+                            <Col sm={9}>
+                                <FormControl
+                                    componentClass="input"
+                                    value={localAction.sequence_timeout || ""}
+                                    onChange={e => {
+                                      (!e.target.value || !isNaN(e.target.value)) &&
+                                      this.setState({diffAction: update(diffAction, {$merge: {sequence_timeout: e.target.value ? parseFloat(e.target.value) : null}})})
+                                    }} />
+                                <HelpBlock>
+                                    <FormattedMessage id="bulk-seq-timeout-sample" defaultMessage="timeout (in seconds) between entries when processed in sequence."/>
                                 </HelpBlock>
                             </Col>
                         </FormGroup>
