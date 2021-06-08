@@ -112,7 +112,7 @@ export function fetchActivity(activityId, cb) {
         .catch(console.error);
 }
 
-function deleteActivity(activityId, cb) {
+export function deleteActivity(activityId, cb) {
     fetch_delete(`/api/v01/activities/${activityId}`)
         .then(r => r.json())
         .then(data =>{
