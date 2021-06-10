@@ -3,14 +3,12 @@ import ReactJson from 'react-json-view';
 import Button from 'react-bootstrap/lib/Button';
 import Breadcrumb from 'react-bootstrap/lib/Breadcrumb';
 import Tabs from "react-bootstrap/lib/Tabs";
-import Alert from "react-bootstrap/lib/Alert";
 import Tab from "react-bootstrap/lib/Tab";
 
 import {FormattedMessage} from 'react-intl';
 
 import {fetch_get, fetch_post, fetch_put, NotificationsManager, userLocalizeUtcDate} from "../utils";
 import update from 'immutability-helper';
-//import Ajv from 'ajv';
 import {Panel} from "react-bootstrap";
 import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 import Form from "react-bootstrap/lib/Form";
@@ -27,6 +25,7 @@ import moment from 'moment';
 import {StaticControl} from "../utils/common";
 import Select from "react-select";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
+import Table from "react-bootstrap/lib/Table";
 
 
 function fetchConfiguration(onSuccess) {
@@ -140,6 +139,20 @@ function NewGatewayModal(props) {
               </HelpBlock>
             </Col>
           </FormGroup>
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="proxy" defaultMessage="Proxy"/>
+            </Col>
+
+            <Col sm={9}>
+              <FormControl
+                componentClass="input"
+                placeholder="http://proxy_host:8080/"
+                value={entry.proxies}
+                onChange={e => setEntry(update(entry, {$merge: {proxies: e.target.value}}))}/>
+            </Col>
+          </FormGroup>
+
           <hr/>
           <FormGroup>
             <Col componentClass={ControlLabel} sm={2}>
@@ -400,6 +413,20 @@ function GatewaysPanel(props) {
                           etc...)
                           to make some calls.
                         </HelpBlock>
+                      </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                      <Col componentClass={ControlLabel} sm={2}>
+                        <FormattedMessage id="proxy" defaultMessage="Proxy"/>
+                      </Col>
+
+                      <Col sm={9}>
+                        <FormControl
+                          componentClass="input"
+                          placeholder="http://proxy_host:8080/"
+                          value={gateway.proxies}
+                          onChange={e => onChange(update(gateways, {[g]: {$merge: {proxies: e.target.value}}}))}/>
                       </Col>
                     </FormGroup>
 
@@ -835,8 +862,7 @@ const newSso = {
   authorisation_handler: {},
 }
 
-function NewSsoModal(props) {
-  const {show, onHide} = props;
+function NewSsoModal({show, onHide, gateways}) {
   const [entry, setEntry] = useState(newSso);
 
   let authenticationParams;
@@ -863,6 +889,13 @@ function NewSsoModal(props) {
       authenticationParams =
         <SoapTokenParameters
           params={entry.parameters}
+          onChange={e => setEntry(update(entry, {$merge: {parameters: e}}))}/>
+      break;
+    case "broadsoft":
+      authenticationParams =
+        <BroadsoftIdpParameters
+          params={entry.parameters}
+          gateways={gateways}
           onChange={e => setEntry(update(entry, {$merge: {parameters: e}}))}/>
       break;
   }
@@ -918,6 +951,7 @@ function NewSsoModal(props) {
                 <option value="saml">SAML</option>
                 <option value="webseal">WebSeal</option>
                 <option value="soap-token">Soap Token</option>
+                <option value="broadsoft">Broadsoft</option>
               </FormControl>
             </Col>
           </FormGroup>
@@ -1091,6 +1125,112 @@ function SoapTokenParameters({params, onChange}) {
             <option value={""}>*none*</option>
             <option value={"sfr"}>SFR</option>
           </FormControl>
+        </Col>
+      </FormGroup>
+    </>
+  )
+}
+
+function ProxyGateways({value, gateways, onChange}) {
+  return (
+    <>
+    <Table>
+      <thead>
+        <tr>
+          <th><FormattedMessage id="proxy name" defaultMessage="proxy name" /></th>
+          <th><FormattedMessage id="gateway name" defaultMessage="gateway name" /></th>
+          <th />
+        </tr>
+      </thead>
+      <tbody>
+        {
+          Object.entries(value).map(([px, gw], i) => {
+            return (
+              <tr key={i}>
+                <td>
+                  <FormControl type="input"
+                    value={px}
+                    onChange={e => (
+                      onChange(update(value,
+                        { $merge: { [e.target.value]: gw }, $unset: [px] }
+                      )))
+                    } />
+                </td>
+                <td>
+                  <FormControl type="input"
+                    value={gw}
+                    onChange={e => (
+                      onChange(update(value,
+                        { $merge: { [px]: e.target.value } }
+                      )))
+                    } />
+                </td>
+                <td>
+                  <Button onClick={() => {
+                    onChange(update(value,
+                      { $unset: [px] }
+                    ))
+                  }}>-</Button>
+                </td>
+              </tr>
+            )
+          })
+        }
+        <tr>
+          <td colSpan={3}>
+            <Button
+              onClick={() => (
+                onChange(update(value,
+                  { $merge: { "": "" } }
+                ))
+              )}
+            >
+              +
+            </Button>
+          </td>
+        </tr>
+      </tbody>
+    </Table>
+    </>
+  )
+}
+
+function BroadsoftIdpParameters({params, gateways, onChange}) {
+  let v;
+  if(params.proxies instanceof Array) {
+    v = (
+      <Select
+        isClearable
+        isMulti
+        value={params.proxies.map(p => ({value: p, label: p}))}
+        options={Object.keys(gateways).map(g => ({value: g, label: g}))}
+        onChange={v => v && onChange(update(params, {$merge: {proxies: v.map(e => e.value)}}))}
+        clearValue={() => onChange(update(params, {$merge: {proxies: []}}))}
+      />
+    )
+  } else {
+    v = (
+      <ProxyGateways
+        value={params.proxies}
+        gateways={gateways}
+        onChange={prxs =>
+          onChange(update(params, {$merge: {proxies: prxs}}))
+        }
+      />
+    )
+  }
+  return (
+    <>
+      <FormGroup>
+        <Col componentClass={ControlLabel} sm={2}>
+          <FormattedMessage id="proxies" defaultMessage="Proxies"/>
+        </Col>
+
+        <Col sm={9}>
+          {v}
+          <HelpBlock>
+            Those proxy gateways are trusted and allowed to authenticate users.
+          </HelpBlock>
         </Col>
       </FormGroup>
     </>
@@ -1771,8 +1911,7 @@ function BsftAuthorisationParameters({params, onChange}) {
   )
 }
 
-function SSOPanel(props) {
-  const {sso, onChange} = props;
+function SSOPanel({sso, gateways, onChange}) {
   const [showNew, setShowNew] = useState(false);
 
   return (
@@ -1811,6 +1950,13 @@ function SSOPanel(props) {
                   authenticationParams =
                     <SoapTokenParameters
                       params={p.parameters}
+                      onChange={e => onChange(update(sso, {[i]: {$merge: {parameters: e}}}))}/>
+                  break;
+                case "broadsoft":
+                  authenticationParams =
+                    <BroadsoftIdpParameters
+                      params={p.parameters}
+                      gateways={gateways}
                       onChange={e => onChange(update(sso, {[i]: {$merge: {parameters: e}}}))}/>
                   break;
               }
@@ -1857,6 +2003,7 @@ function SSOPanel(props) {
                           <option value="saml">SAML</option>
                           <option value="webseal">WebSeal</option>
                           <option value="soap-token">Soap Token</option>
+                          <option value="broadsoft">Broadsoft</option>
                         </FormControl>
                       </Col>
                     </FormGroup>
@@ -2006,6 +2153,7 @@ function SSOPanel(props) {
           </ButtonToolbar>
           <NewSsoModal
             show={showNew}
+            gateways={gateways}
             onHide={newEntry => {
               setShowNew(false);
               if (newEntry !== undefined) {
@@ -2937,6 +3085,7 @@ export default function Configuration(props) {
         <Tab eventKey={8} title="SSO">
           <SSOPanel
             sso={config.content.SSO || []}
+            gateways={config.content.gateways}
             onChange={v => setConfig(update(config, {content: {SSO: {$set: v}}}))}
           />
         </Tab>
