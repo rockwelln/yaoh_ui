@@ -3102,6 +3102,7 @@ export default function Configuration(props) {
           {
             activeKey === 11 && config.content &&
             <ReactJson
+              name={null}
               src={config.content}
               onEdit={editConfig}
               onAdd={editConfig}

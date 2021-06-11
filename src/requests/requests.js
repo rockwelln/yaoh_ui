@@ -1409,7 +1409,7 @@ function RequestBody(props) {
     try {
         parsedContent = JSON.parse(content);
         if(parsedContent !== null && typeof parsedContent === "object") {
-            return <ReactJson src={parsedContent}/>
+            return <ReactJson name={null} src={parsedContent}/>
         }
     } catch (e) {
         console.error(e);
@@ -2015,7 +2015,7 @@ export class Transaction extends Component {
                                 {
                                     raw_event ?
                                       <RequestBody content={raw_event.content} /> :
-                                      (request && request.details) && <ReactJson src={request.details}/>
+                                      (request && request.details) && <ReactJson name={null} src={request.details}/>
                                 }
                                 </Panel.Body>
                             </Panel>
