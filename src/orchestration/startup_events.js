@@ -27,17 +27,16 @@ import Checkbox from "react-bootstrap/lib/Checkbox";
 import Alert from "react-bootstrap/lib/Alert";
 import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
 import SplitButton from "react-bootstrap/lib/SplitButton";
-import {DeleteConfirmButton} from "../utils/deleteConfirm";
 import {useDropzone} from "react-dropzone";
 import {JSON_TRANS_OPTIONS_SAMPLE} from "../system/bulk_actions";
 import Select from "react-select";
 import {SearchBar} from "../utils/datatable";
 import InputGroup from "react-bootstrap/lib/InputGroup";
-import {faDownload, faEdit, faSpinner} from "@fortawesome/free-solid-svg-icons";
+import {faDownload, faEdit, faSpinner, faTimes} from "@fortawesome/free-solid-svg-icons";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import Creatable from "react-select/creatable";
 import MenuItem from "react-bootstrap/lib/MenuItem";
-import {NewActivity, WORKING_VERSION_LABEL} from "./activity-editor";
+import {deleteActivity, NewActivity, WORKING_VERSION_LABEL} from "./activity-editor";
 
 const CUSTOM_ROUTE_PREFIX = "https://<target>/api/v01/custom";
 const JSON_SCHEMA_SAMPLE = (
@@ -873,6 +872,53 @@ function RenameGroupModal({show, onHide, group}) {
 }
 
 
+function DeleteConfirmButton({ resourceName, activity, onConfirm }) {
+  const [show, setShow] = useState(false);
+  const [deleteActivity, setDeleteActivity] = useState(false);
+
+  return (
+    <>
+      <Button
+        bsStyle="danger"
+        onClick={() => setShow(true)} >
+        <FontAwesomeIcon icon={faTimes} />
+      </Button>
+      <Modal show={show} onHide={() => setShow(false)} >
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm delete { (resourceName ? `of ${resourceName}` : "") }</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form onSubmit={e => {e.preventDefault(); onConfirm(deleteActivity); setShow(false);}}>
+            {activity &&
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                Options
+              </Col>
+              <Col sm={9}>
+                <Checkbox
+                  checked={deleteActivity}
+                  onChange={e => setDeleteActivity(e.target.checked)}>
+                  <FormattedMessage
+                    id="delete-activity"
+                    defaultMessage='Delete activity "{activity}" and its versions'
+                    values={{activity: activity}}/>
+                </Checkbox>
+              </Col>
+            </FormGroup>
+            }
+            <FormGroup>
+              <Button type="submit" bsStyle="danger" autoFocus>
+                Delete
+              </Button>
+            </FormGroup>
+          </Form>
+        </Modal.Body>
+      </Modal>
+    </>
+  )
+}
+
+
 function CustomRoutesGroup({routes, group, activities, groups, onChange}) {
   const [showUpdateModal, setShowUpdateModal] = useState(undefined);
   const [showRename, setShowRename] = useState(false);
@@ -1011,8 +1057,17 @@ function CustomRoutesGroup({routes, group, activities, groups, onChange}) {
                     </Button>
                     <DeleteConfirmButton
                       resourceName={`${route.method} ${route.route}`}
-                      style={{marginLeft: '5px', marginRight: '5px'}}
-                      onConfirm={() => deleteCustomRoute(route.route_id, () => onChange())} />
+                      activity={activities.find(a => a.id === route.activity_id)?.name}
+                      // style={{marginLeft: '5px', marginRight: '5px'}}
+                      onConfirm={activity => deleteCustomRoute(
+                        route.route_id,
+                        () => {
+                          if(activity) {
+                            deleteActivity(route.activity_id)
+                          }
+                          onChange()
+                        },
+                      )} />
                     <SplitButton
                       bsStyle="primary"
                       title={<FontAwesomeIcon icon={faDownload}/>}

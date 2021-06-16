@@ -49,7 +49,7 @@ import {
 } from "./utils";
 import Databases from "./system/databases_mgm";
 import {AuditLogs} from "./system/audit";
-import {getHomePage, isAllowed, limited_menu, modules, pages, supportedModule} from "./utils/user";
+import {accesses, limited_menu, localUser, modules, pages, supportedModule} from "./utils/user";
 import {NotAllowed} from "./utils/common";
 import {AuthCallback, AuthSilentCallback} from "./sso/login";
 
@@ -59,7 +59,6 @@ import apio_logo from "./images/logo.png";
 import loading from './loading.gif';
 import {sso_auth_service} from "./sso/auth_service";
 import {Webhooks} from "./system/webhooks";
-// import {ListProvisioningGateways, provisioningRoutes} from "./provisioning";
 import LogsManagement from "./system/logs";
 import UserProfiles from "./system/user_profiles";
 import Templates from "./system/templates";
@@ -80,6 +79,10 @@ import {LoginPage, LoginForm, fetchPlatformDetails} from "./login";
 import {RESET_PASSWORD_PREFIX, ResetPasswordRequestForm, ResetPasswordForm} from "./reset_password";
 import {NPEmergencyNotificationRequest} from "./np/emergency-notification";
 import TemplatePlayground from "./help/templatePlayground";
+import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
+import Button from "react-bootstrap/lib/Button";
+import AlarmManagement, {fetchAlarms} from "./system/alarms";
+import moment from "moment";
 
 const ListProvisioningGateways=React.lazy(() => import("./provisioning/ListProvisioningGateways"))
 
@@ -104,62 +107,447 @@ const Loading = () => (
     </div>
 );
 
-const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => {
-  if(limited_menu(user_info.ui_profile)) {
-    return (
-      <Navbar staticTop collapseOnSelect inverse>
-        <Navbar.Header>
-          <Navbar.Brand style={{color: '#ef0803', fontWeight: 'bold',}}>
-            <img src={apio_brand}
-                 width="38"
-                 height="42"
-                 className="d-inline-block align-top"
-                 style={{padding: 0}}
-                 alt="apio"/>
-          </Navbar.Brand>
-          <Navbar.Toggle/>
-        </Navbar.Header>
-        <Navbar.Collapse>
-          <Nav>
-            {(!user_info.modules || user_info.modules.includes(modules.provisioning)) && isAllowed(user_info.ui_profile, pages.provisioning) &&
-            <NavDropdown
-              eventKey={4}
-              title={
-                <span>
-                  <Glyphicon glyph="hdd"/>{" "}
-                  <FormattedMessage
-                    id="provisioning"
-                    defaultMessage="Provisioning"
-                  />
-                </span>
-              }
-              id="nav-data-apio"
-            >
-              {
-                ProvProxiesManager.listProxies().map((p, i) =>
-                  <LinkContainer to={"/provisioning/" + p.id + "/tenants"} key={i}>
-                    <MenuItem>
-                      {p.name}
-                    </MenuItem>
-                  </LinkContainer>
-                )
-              }
-            </NavDropdown>
-            }
-          </Nav>
-          <Nav pullRight>
-            <NavDropdown title={<Glyphicon glyph="user"/>} id="nav-local-user">
-              <LinkContainer to={"/user/profile"}>
+const LimitedNavBar = ({user_info, logoutUser, database_status}) => (
+  <Navbar staticTop collapseOnSelect inverse>
+    <Navbar.Header>
+      <Navbar.Brand style={{color: '#ef0803', fontWeight: 'bold',}}>
+        <img src={apio_brand}
+             width="38"
+             height="42"
+             className="d-inline-block align-top"
+             style={{padding: 0}}
+             alt="apio"/>
+      </Navbar.Brand>
+      <Navbar.Toggle/>
+    </Navbar.Header>
+    <Navbar.Collapse>
+      <Nav>
+        {(!user_info.modules || user_info.modules.includes(modules.provisioning)) && localUser.isAllowed(accesses.provisioning) &&
+        <NavDropdown
+          eventKey={4}
+          title={
+            <span>
+              <Glyphicon glyph="hdd"/>{" "}
+              <FormattedMessage
+                id="provisioning"
+                defaultMessage="Provisioning"
+              />
+            </span>
+          }
+          id="nav-data-apio"
+        >
+          {
+            ProvProxiesManager.listProxies().map((p, i) =>
+              <LinkContainer to={"/provisioning/" + p.id + "/tenants"} key={i}>
                 <MenuItem>
-                  <FormattedMessage id="profile" defaultMessage="Profile"/>
+                  {p.name}
                 </MenuItem>
               </LinkContainer>
-              <MenuItem divider/>
-              <MenuItem onClick={logoutUser}>
-                <FormattedMessage id="logout" defaultMessage="Logout"/>
-              </MenuItem>
-            </NavDropdown>
+            )
+          }
+        </NavDropdown>
+        }
+      </Nav>
+      <Nav pullRight>
+        <NavDropdown title={<Glyphicon glyph="user"/>} id="nav-local-user">
+          <LinkContainer to={"/user/profile"}>
+            <MenuItem>
+              <FormattedMessage id="profile" defaultMessage="Profile"/>
+            </MenuItem>
+          </LinkContainer>
+          <MenuItem divider/>
+          <MenuItem onClick={logoutUser}>
+            <FormattedMessage id="logout" defaultMessage="Logout"/>
+          </MenuItem>
+        </NavDropdown>
 
+        <Navbar.Text
+          style={{
+            color: (database_status && database_status.env === 'TEST') ? '#ef0803' : '#777',
+            fontWeight: (database_status && database_status.env === 'TEST') ? 'bold' : 'normal',
+          }}>
+          {
+            (database_status && database_status.env) ? database_status.env : "unknown"
+          }
+        </Navbar.Text>
+      </Nav>
+    </Navbar.Collapse>
+  </Navbar>
+)
+
+
+function AsyncApioNavBar({user_info, logoutUser, database_status}){
+  const [alarms, setAlarms] = useState([]);
+
+  useEffect(() => {
+    fetchAlarms({active: {op: "eq", value: true}}, null, null, null, a => setAlarms(a.alarms));
+    const handler = setInterval(() => fetchAlarms({active: {op: "eq", value: true}}, null, null, null, a => setAlarms(a.alarms)), 5000);
+    return () => { clearInterval(handler) }
+  }, []);
+
+  return (
+    <Navbar staticTop collapseOnSelect inverse>
+      <Navbar.Header>
+        <Navbar.Brand style={{color: '#ef0803', fontWeight: 'bold',}}>
+          <img src={apio_brand}
+               width="38"
+               height="42"
+               className="d-inline-block align-top"
+               style={{padding: 0}}
+               alt="apio"/>
+        </Navbar.Brand>
+        <Navbar.Toggle/>
+      </Navbar.Header>
+      <Navbar.Collapse>
+        <Nav>
+          {localUser.isAllowed(accesses.dashboard) &&
+          <ListItemLink to={"/dashboard"}>
+            <Glyphicon glyph="dashboard"/> {' '}
+            <FormattedMessage id="dashboard" defaultMessage="Dashboard"/>
+          </ListItemLink>
+          }
+
+          {user_info.modules && supportedModule(modules.npact, user_info.modules) && localUser.isAllowed(accesses.requests) &&
+          <NavDropdown title={
+            <span>
+              <Glyphicon glyph="send"/> {' '}
+              <FormattedMessage id="requests" defaultMessage="Requests"/>
+            </span>
+          } id="nav-requests">
+
+            <LinkContainer to={"/transactions/new_portin"}>
+              <MenuItem>
+                <FormattedMessage id="new-port-in" defaultMessage="New Port-in"/>
+              </MenuItem>
+            </LinkContainer>
+            {supportedModule(modules.npact_crdc, user_info.modules) &&
+            <LinkContainer to={"/transactions/new_update"}>
+              <MenuItem>
+                <FormattedMessage id="new-update" defaultMessage="New Update"/>
+              </MenuItem>
+            </LinkContainer>
+            }
+            <LinkContainer to={"/transactions/new_disconnect"}>
+              <MenuItem>
+                <FormattedMessage id="new-disconnect" defaultMessage="New Disconnect"/>
+              </MenuItem>
+            </LinkContainer>
+            {supportedModule(modules.npact_crdb, user_info.modules) &&
+            <LinkContainer to={"/transactions/new_install_address"}>
+              <MenuItem>
+                <FormattedMessage id="new-addess" defaultMessage="New Address Change"/>
+              </MenuItem>
+            </LinkContainer>
+            }
+            {supportedModule(modules.npact_crdb, user_info.modules) &&
+            <LinkContainer to={"/transactions/emergency_notification"}>
+              <MenuItem>
+                <FormattedMessage id="emergency-notification" defaultMessage="New Emergency Notification"/>
+              </MenuItem>
+            </LinkContainer>
+            }
+
+            <MenuItem divider/>
+
+            {supportedModule(modules.npact_crdc, user_info.modules) &&
+            <LinkContainer to={"/transactions/mobile_events"}>
+              <MenuItem>
+                <FormattedMessage id="mobile-events" defaultMessage="Mobile Events"/>
+              </MenuItem>
+            </LinkContainer>
+            }
+
+            <LinkContainer to={"/transactions/list"}>
+              <MenuItem>
+                <FormattedMessage id="porting-requests" defaultMessage="Porting Requests"/>
+              </MenuItem>
+            </LinkContainer>
+
+          </NavDropdown>
+          }
+
+          {(!user_info.modules || !supportedModule(modules.npact, user_info.modules)) && localUser.isAllowed(accesses.requests) &&
+          <NavDropdown title={
+            <span>
+              <Glyphicon glyph="send"/> {' '}
+              <FormattedMessage id="requests" defaultMessage="Requests"/>
+            </span>
+          } id="nav-requests">
+
+            <LinkContainer to={"/transactions/list"}>
+              <MenuItem>
+                <FormattedMessage id="apio-requests" defaultMessage="APIO Requests"/>
+              </MenuItem>
+            </LinkContainer>
+            {(!user_info.modules || user_info.modules.includes(modules.orchestration)) &&
+            <>
+              <LinkContainer to={"/custom-transactions/list"} key="custom-requests">
+                <MenuItem>
+                  <FormattedMessage id="scheduled-jobs" defaultMessage="Scheduled jobs"/>
+                </MenuItem>
+              </LinkContainer>
+              <LinkContainer to={"/transactions/timers"} key="timers">
+                <MenuItem>
+                  <FormattedMessage id="timers" defaultMessage="Timers"/>
+                </MenuItem>
+              </LinkContainer>
+            </>
+            }
+            {(!user_info.modules || user_info.modules.includes(modules.orange)) && localUser.canSee(pages.requests_ndg) &&
+            <>
+              <MenuItem key="divider-1" divider/>,
+              <LinkContainer key="ndg-history" to={"/requests/ndg"}>
+                <MenuItem>
+                  <FormattedMessage id="ndg-history" defaultMessage="NDG history"/>
+                </MenuItem>
+              </LinkContainer>,
+            </>
+            }
+          </NavDropdown>
+          }
+
+          {(!user_info.modules || user_info.modules.includes(modules.bulk)) && localUser.isAllowed(accesses.bulks) &&
+          <NavDropdown title={
+            <span>
+              <Glyphicon glyph="equalizer"/> {' '}
+              <FormattedMessage id="bulks" defaultMessage="Bulks"/>
+            </span>
+          } id="nav-bulks">
+            <LinkContainer to={"/transactions/bulk"}>
+              <MenuItem>
+                <FormattedMessage id="bulk" defaultMessage="Bulk"/>
+              </MenuItem>
+            </LinkContainer>
+            {localUser.isAllowed(accesses.bulks_actions) &&
+            <LinkContainer to={"/system/bulk_actions"}>
+              <MenuItem>
+                <FormattedMessage id="bulk-actions" defaultMessage="Bulk actions"/>
+              </MenuItem>
+            </LinkContainer>
+            }
+          </NavDropdown>
+          }
+
+          {(!user_info.modules || user_info.modules.includes(modules.provisioning)) && localUser.isAllowed(accesses.provisioning) &&
+          <NavDropdown
+            eventKey={4}
+            title={
+              <span>
+                <Glyphicon glyph="hdd"/>{" "}
+                <FormattedMessage
+                  id="provisioning"
+                  defaultMessage="Provisioning"
+                />
+              </span>
+            }
+            id="nav-data-apio"
+          >
+            {
+              ProvProxiesManager.listProxies().map((p, i) =>
+                <LinkContainer to={"/provisioning/" + p.id + "/tenants"} key={i}>
+                  <MenuItem>
+                    {p.name}
+                  </MenuItem>
+                </LinkContainer>
+              )
+            }
+          </NavDropdown>
+          }
+
+          {(!user_info.modules || supportedModule(modules.npact, user_info.modules)) && localUser.isAllowed(accesses.data) &&
+          <NavDropdown eventKey={4} title={
+            <span>
+              <Glyphicon glyph="hdd"/> {' '}
+              <FormattedMessage id="data" defaultMessage="Data"/>
+            </span>
+          } id="nav-system-data">
+            {localUser.canSee(pages.npact_operators) &&
+            <LinkContainer to={"/system/operators"}>
+              <MenuItem>
+                <FormattedMessage id="operators" defaultMessage="Operators"/>
+              </MenuItem>
+            </LinkContainer>
+            }
+            {localUser.canSee(pages.npact_ranges) &&
+            <LinkContainer to={"/system/ranges"}>
+              <MenuItem>
+                <FormattedMessage id="ranges" defaultMessage="Ranges"/>
+              </MenuItem>
+            </LinkContainer>
+            }
+            {localUser.canSee(pages.npact_routing_info) &&
+            <LinkContainer to={"/system/routing_info"}>
+              <MenuItem>
+                <FormattedMessage id="routing-info" defaultMessage="Routing info"/>
+              </MenuItem>
+            </LinkContainer>
+            }
+            <MenuItem divider/>
+            {localUser.canSee(pages.npact_porting_cases) &&
+            <LinkContainer to={"/system/porting_cases"}>
+              <MenuItem>
+                <FormattedMessage id="np-database" defaultMessage="NP database"/>
+              </MenuItem>
+            </LinkContainer>
+            }
+            {user_info.modules.includes(modules.npact_crdc) && localUser.canSee(pages.npact_mvno_numbers) &&
+            <LinkContainer to={"/system/mvno_numbers"}>
+              <MenuItem>
+                <FormattedMessage id="mvno-numbers" defaultMessage="MVNO Numbers"/>
+              </MenuItem>
+            </LinkContainer>
+            }
+            {user_info.modules.includes(modules.npact_crdc) && localUser.canSee(pages.npact_holidays) &&
+            <>
+              <MenuItem divider/>
+              <LinkContainer to={"/system/public_holidays"}>
+                <MenuItem>
+                  <FormattedMessage id="public-holidays" defaultMessage="Public holidays"/>
+                </MenuItem>
+              </LinkContainer>
+            </>
+            }
+          </NavDropdown>
+          }
+
+          {localUser.isAllowed(accesses.settings) &&
+          <NavDropdown eventKey={4} title={
+            <span>
+              <Glyphicon glyph="signal"/> {' '}
+              <FormattedMessage id='settings' defaultMessage='Settings'/>
+            </span>
+          } id="nav-system-settings">
+            {localUser.isAllowed(accesses.settings_users) &&
+            <LinkContainer to={"/system/users"}>
+              <MenuItem>
+                <FormattedMessage id="users" defaultMessage="Users"/>
+              </MenuItem>
+            </LinkContainer>
+            }
+            {localUser.isAllowed(accesses.settings_configuration)  &&
+            <>
+              <LinkContainer to={"/system/webhooks"} key="webhooks">
+                <MenuItem>
+                  <FormattedMessage id="webhooks" defaultMessage="Webhooks"/>
+                </MenuItem>
+              </LinkContainer>
+              <LinkContainer to={"/system/config"} key={"configuration"}>
+                <MenuItem>
+                  <FormattedMessage id="configuration" defaultMessage="Configuration"/>
+                </MenuItem>
+              </LinkContainer>
+            </>
+            }
+            {localUser.canSee(pages.system_gateways) &&
+            <>
+              <MenuItem key="divider-2" divider/>
+              <LinkContainer to={"/system/gateways"} key="gateways">
+                <MenuItem>
+                  <FormattedMessage id="gateways" defaultMessage="Gateways"/>
+                </MenuItem>
+              </LinkContainer>
+            </>
+            }
+            {localUser.canSee(pages.system_databases) &&
+            <LinkContainer to={"/system/databases"}>
+              <MenuItem>
+                <FormattedMessage id="databases" defaultMessage="Databases"/>
+              </MenuItem>
+            </LinkContainer>
+            }
+            {localUser.canSee(pages.system_queues) &&
+            <LinkContainer to={"/system/queues"}>
+              <MenuItem>
+                <FormattedMessage id="queues" defaultMessage="Queues"/>
+              </MenuItem>
+            </LinkContainer>
+            }
+            {localUser.canSee(pages.system_reporting) &&
+            <>
+              <MenuItem key="divider-3" divider/>
+              <LinkContainer to={"/system/reporting"} key="reports">
+                <MenuItem>
+                  <FormattedMessage id="reporting" defaultMessage="Reporting"/>
+                </MenuItem>
+              </LinkContainer>
+            </>
+            }
+            {localUser.canSee(pages.system_templates) &&
+            <>
+              <MenuItem key="divider-4" divider/>
+              <LinkContainer to={"/system/templates"} key="templates">
+                <MenuItem>
+                  <FormattedMessage id="templates" defaultMessage="Templates"/>
+                </MenuItem>
+              </LinkContainer>
+            </>
+            }
+            {localUser.canSee(pages.system_logs) &&
+              <LinkContainer to={"/system/logs"} key="logs">
+                <MenuItem>
+                  <FormattedMessage id="logs" defaultMessage="Logs"/>
+                </MenuItem>
+              </LinkContainer>
+            }
+            {localUser.isAllowed(accesses.settings_alarms) &&
+              <LinkContainer to={"/system/alarms"} key="alarms">
+                <MenuItem>
+                  <FormattedMessage id="alarms" defaultMessage="Alarms"/>
+                </MenuItem>
+              </LinkContainer>
+            }
+          </NavDropdown>
+          }
+          {(!user_info.modules || user_info.modules.includes(modules.orchestration)) && localUser.isAllowed(accesses.orchestration) &&
+          <NavDropdown eventKey={4} title={
+            <span>
+              <Glyphicon glyph="cog"/> {' '}
+              <FormattedMessage id='orchestration' defaultMessage='Orchestration'/>
+            </span>
+          } id="nav-orch">
+            {localUser.canSee(pages.requests_startup_events) &&
+            <LinkContainer to={"/transactions/config/startup_events"}>
+              <MenuItem>
+                <FormattedMessage id="startup-events" defaultMessage="Startup Events"/>
+              </MenuItem>
+            </LinkContainer>
+            }
+            {localUser.canSee(pages.requests_workflow_editor) &&
+            <LinkContainer to={"/transactions/config/activities/editor"}>
+              <MenuItem>
+                <FormattedMessage id="editor" defaultMessage="Editor"/>
+              </MenuItem>
+            </LinkContainer>
+            }
+            {localUser.canSee(pages.requests_workflow_editor) &&
+            <LinkContainer to={"/transactions/config/cron_timers"}>
+              <MenuItem>
+                <FormattedMessage id="job-scheduler" defaultMessage="Job scheduler"/>
+              </MenuItem>
+            </LinkContainer>
+            }
+          </NavDropdown>
+          }
+
+        </Nav>
+        <Nav pullRight>
+          <NavDropdown title={<Glyphicon glyph="user"/>} id="nav-local-user">
+            <LinkContainer to={"/user/profile"}>
+              <MenuItem>
+                <FormattedMessage id="profile" defaultMessage="Profile"/>
+              </MenuItem>
+            </LinkContainer>
+            <MenuItem divider/>
+            <MenuItem onClick={logoutUser}>
+              <FormattedMessage id="logout" defaultMessage="Logout"/>
+            </MenuItem>
+          </NavDropdown>
+
+          <ListItemLink to={"/help"}>
+            <Glyphicon glyph="question-sign"/>
+          </ListItemLink>
+
+          {database_status && database_status.env === 'TEST' &&
             <Navbar.Text
               style={{
                 color: (database_status && database_status.env === 'TEST') ? '#ef0803' : '#777',
@@ -169,390 +557,47 @@ const AsyncApioNavBar = ({user_info, logoutUser, database_status, ...props}) => 
                 (database_status && database_status.env) ? database_status.env : "unknown"
               }
             </Navbar.Text>
-          </Nav>
-        </Navbar.Collapse>
-      </Navbar>
-    );
-  } else {
-    return (
-      <Navbar staticTop collapseOnSelect inverse>
-        <Navbar.Header>
-          <Navbar.Brand style={{color: '#ef0803', fontWeight: 'bold',}}>
-            <img src={apio_brand}
-                 width="38"
-                 height="42"
-                 className="d-inline-block align-top"
-                 style={{padding: 0}}
-                 alt="apio"/>
-          </Navbar.Brand>
-          <Navbar.Toggle/>
-        </Navbar.Header>
-        <Navbar.Collapse>
-          <Nav>
-            <ListItemLink to={"/dashboard"}>
-              <Glyphicon glyph="dashboard"/> {' '}
-              <FormattedMessage id="dashboard" defaultMessage="Dashboard"/>
-            </ListItemLink>
+          }
+          <Navbar.Text style={{marginTop: "8px", marginBottom: "5px"}}>
+            <ButtonToolbar>
+              <LinkContainer to={
+                `/system/alarms?filter=${JSON.stringify({
+                  active: {"value": true, "op": "eq"},
+                  level: {"value": "info", "op": "eq"}
+                })}&t=${moment.utc().unix()}`
+              }>
+                <Button>
+                  {alarms.filter(a => a.level === "info").length}
+                </Button>
+              </LinkContainer>
+              <LinkContainer to={
+                `/system/alarms?filter=${JSON.stringify({
+                  active: {"value": true, "op": "eq"},
+                  level: {"value": "major", "op": "eq"}
+                })}&t=${moment.utc().unix()}`
+              }>
+                <Button bsStyle="warning">
+                  {alarms.filter(a => a.level === "major").length}
+                </Button>
+              </LinkContainer>
+              <LinkContainer to={
+                `/system/alarms?filter=${JSON.stringify({
+                  active: {"value": true, "op": "eq"},
+                  level: {"value": "critical", "op": "eq"}
+                })}&t=${moment.utc().unix()}`
+              }>
+                <Button bsStyle="danger">
+                  {alarms.filter(a => a.level === "critical").length}
+                </Button>
+              </LinkContainer>
+            </ButtonToolbar>
+          </Navbar.Text>
+        </Nav>
+      </Navbar.Collapse>
+    </Navbar>
+  )
+}
 
-            {user_info.modules && supportedModule(modules.npact, user_info.modules) && isAllowed(user_info.ui_profile, pages.requests_nprequests) &&
-            <NavDropdown title={
-              <span>
-                <Glyphicon glyph="send"/> {' '}
-                <FormattedMessage id="requests" defaultMessage="Requests"/>
-              </span>
-            } id="nav-requests">
-
-              <LinkContainer to={"/transactions/new_portin"}>
-                <MenuItem>
-                  <FormattedMessage id="new-port-in" defaultMessage="New Port-in"/>
-                </MenuItem>
-              </LinkContainer>
-              {supportedModule(modules.npact_crdc, user_info.modules) &&
-              <LinkContainer to={"/transactions/new_update"}>
-                <MenuItem>
-                  <FormattedMessage id="new-update" defaultMessage="New Update"/>
-                </MenuItem>
-              </LinkContainer>
-              }
-              <LinkContainer to={"/transactions/new_disconnect"}>
-                <MenuItem>
-                  <FormattedMessage id="new-disconnect" defaultMessage="New Disconnect"/>
-                </MenuItem>
-              </LinkContainer>
-              {supportedModule(modules.npact_crdb, user_info.modules) &&
-              <LinkContainer to={"/transactions/new_install_address"}>
-                <MenuItem>
-                  <FormattedMessage id="new-addess" defaultMessage="New Address Change"/>
-                </MenuItem>
-              </LinkContainer>
-              }
-              {supportedModule(modules.npact_crdb, user_info.modules) &&
-              <LinkContainer to={"/transactions/emergency_notification"}>
-                <MenuItem>
-                  <FormattedMessage id="emergency-notification" defaultMessage="New Emergency Notification"/>
-                </MenuItem>
-              </LinkContainer>
-              }
-
-              <MenuItem divider/>
-
-              {supportedModule(modules.npact_crdc, user_info.modules) &&
-              <LinkContainer to={"/transactions/mobile_events"}>
-                <MenuItem>
-                  <FormattedMessage id="mobile-events" defaultMessage="Mobile Events"/>
-                </MenuItem>
-              </LinkContainer>
-              }
-
-              <LinkContainer to={"/transactions/list"}>
-                <MenuItem>
-                  <FormattedMessage id="porting-requests" defaultMessage="Porting Requests"/>
-                </MenuItem>
-              </LinkContainer>
-
-            </NavDropdown>
-            }
-
-            {(!user_info.modules || !supportedModule(modules.npact, user_info.modules)) && isAllowed(user_info.ui_profile, pages.requests_nprequests) &&
-            <NavDropdown title={
-              <span>
-                <Glyphicon glyph="send"/> {' '}
-                <FormattedMessage id="requests" defaultMessage="Requests"/>
-              </span>
-            } id="nav-requests">
-
-              <LinkContainer to={"/transactions/list"}>
-                <MenuItem>
-                  <FormattedMessage id="apio-requests" defaultMessage="APIO Requests"/>
-                </MenuItem>
-              </LinkContainer>
-              {(!user_info.modules || user_info.modules.includes(modules.orchestration)) &&
-              [
-                <LinkContainer to={"/custom-transactions/list"} key="custom-requests">
-                  <MenuItem>
-                    <FormattedMessage id="cron-requests" defaultMessage="Cron Requests"/>
-                  </MenuItem>
-                </LinkContainer>,
-                <LinkContainer to={"/transactions/timers"} key="timers">
-                  <MenuItem>
-                    <FormattedMessage id="timers" defaultMessage="Timers"/>
-                  </MenuItem>
-                </LinkContainer>,
-              ]
-              }
-              {(!user_info.modules || user_info.modules.includes(modules.orange)) && isAllowed(user_info.ui_profile, pages.requests_ndg) &&
-              [
-                <MenuItem key="divider-1" divider/>,
-                <LinkContainer key="ndg-history" to={"/requests/ndg"}>
-                  <MenuItem>
-                    <FormattedMessage id="ndg-history" defaultMessage="NDG history"/>
-                  </MenuItem>
-                </LinkContainer>,
-              ]
-              }
-            </NavDropdown>
-            }
-
-            {(!user_info.modules || user_info.modules.includes(modules.bulk)) && isAllowed(user_info.ui_profile, pages.bulks) &&
-            <NavDropdown title={
-              <span>
-                <Glyphicon glyph="equalizer"/> {' '}
-                <FormattedMessage id="bulks" defaultMessage="Bulks"/>
-              </span>
-            } id="nav-bulks">
-              <LinkContainer to={"/transactions/bulk"}>
-                <MenuItem>
-                  <FormattedMessage id="bulk" defaultMessage="Bulk"/>
-                </MenuItem>
-              </LinkContainer>
-              {isAllowed(user_info.ui_profile, pages.bulk_actions) && isAllowed(user_info.ui_profile, pages.system) &&
-              <LinkContainer to={"/system/bulk_actions"}>
-                <MenuItem>
-                  <FormattedMessage id="bulk-actions" defaultMessage="Bulk actions"/>
-                </MenuItem>
-              </LinkContainer>
-              }
-            </NavDropdown>
-            }
-
-            {(!user_info.modules || user_info.modules.includes(modules.provisioning)) && isAllowed(user_info.ui_profile, pages.provisioning) &&
-            <NavDropdown
-              eventKey={4}
-              title={
-                <span>
-                  <Glyphicon glyph="hdd"/>{" "}
-                  <FormattedMessage
-                    id="provisioning"
-                    defaultMessage="Provisioning"
-                  />
-                </span>
-              }
-              id="nav-data-apio"
-            >
-              {
-                ProvProxiesManager.listProxies().map((p, i) =>
-                  <LinkContainer to={"/provisioning/" + p.id + "/tenants"} key={i}>
-                    <MenuItem>
-                      {p.name}
-                    </MenuItem>
-                  </LinkContainer>
-                )
-              }
-            </NavDropdown>
-            }
-
-            {(!user_info.modules || supportedModule(modules.npact, user_info.modules)) && isAllowed(user_info.ui_profile, pages.data) &&
-            <NavDropdown eventKey={4} title={
-              <span>
-                <Glyphicon glyph="hdd"/> {' '}
-                <FormattedMessage id="data" defaultMessage="Data"/>
-              </span>
-            } id="nav-system-data">
-              {isAllowed(user_info.ui_profile, pages.npact_operators) &&
-              <LinkContainer to={"/system/operators"}>
-                <MenuItem>
-                  <FormattedMessage id="operators" defaultMessage="Operators"/>
-                </MenuItem>
-              </LinkContainer>
-              }
-              {isAllowed(user_info.ui_profile, pages.npact_ranges) &&
-              <LinkContainer to={"/system/ranges"}>
-                <MenuItem>
-                  <FormattedMessage id="ranges" defaultMessage="Ranges"/>
-                </MenuItem>
-              </LinkContainer>
-              }
-              {isAllowed(user_info.ui_profile, pages.npact_routing_info) &&
-              <LinkContainer to={"/system/routing_info"}>
-                <MenuItem>
-                  <FormattedMessage id="routing-info" defaultMessage="Routing info"/>
-                </MenuItem>
-              </LinkContainer>
-              }
-              <MenuItem divider/>
-              {isAllowed(user_info.ui_profile, pages.npact_porting_cases) &&
-              <LinkContainer to={"/system/porting_cases"}>
-                <MenuItem>
-                  <FormattedMessage id="np-database" defaultMessage="NP database"/>
-                </MenuItem>
-              </LinkContainer>
-              }
-              {user_info.modules.includes(modules.npact_crdc) && isAllowed(user_info.ui_profile, pages.npact_mvno_numbers) &&
-              <LinkContainer to={"/system/mvno_numbers"}>
-                <MenuItem>
-                  <FormattedMessage id="mvno-numbers" defaultMessage="MVNO Numbers"/>
-                </MenuItem>
-              </LinkContainer>
-              }
-              {user_info.modules.includes(modules.npact_crdc) && isAllowed(user_info.ui_profile, pages.npact_holidays) &&
-              <>
-                <MenuItem divider/>
-                <LinkContainer to={"/system/public_holidays"}>
-                  <MenuItem>
-                    <FormattedMessage id="public-holidays" defaultMessage="Public holidays"/>
-                  </MenuItem>
-                </LinkContainer>
-              </>
-              }
-            </NavDropdown>
-            }
-
-            {isAllowed(user_info.ui_profile, pages.system) &&
-            <NavDropdown eventKey={4} title={
-              <span>
-                <Glyphicon glyph="signal"/> {' '}
-                <FormattedMessage id='settings' defaultMessage='Settings'/>
-              </span>
-            } id="nav-system-settings">
-              {isAllowed(user_info.ui_profile, pages.system_users) &&
-              <LinkContainer to={"/system/users"}>
-                <MenuItem>
-                  <FormattedMessage id="users" defaultMessage="Users"/>
-                </MenuItem>
-              </LinkContainer>
-              }
-              {isAllowed(user_info.ui_profile, pages.system_config) &&
-              [
-                <LinkContainer to={"/system/webhooks"} key="webhooks">
-                  <MenuItem>
-                    <FormattedMessage id="webhooks" defaultMessage="Webhooks"/>
-                  </MenuItem>
-                </LinkContainer>,
-                <LinkContainer to={"/system/config"} key={"configuration"}>
-                  <MenuItem>
-                    <FormattedMessage id="configuration" defaultMessage="Configuration"/>
-                  </MenuItem>
-                </LinkContainer>
-              ]
-              }
-              {isAllowed(user_info.ui_profile, pages.system_gateways) &&
-              [
-                <MenuItem key="divider-2" divider/>,
-                <LinkContainer to={"/system/gateways"} key="gateways">
-                  <MenuItem>
-                    <FormattedMessage id="gateways" defaultMessage="Gateways"/>
-                  </MenuItem>
-                </LinkContainer>
-              ]
-              }
-              {isAllowed(user_info.ui_profile, pages.system_databases) &&
-              <LinkContainer to={"/system/databases"}>
-                <MenuItem>
-                  <FormattedMessage id="databases" defaultMessage="Databases"/>
-                </MenuItem>
-              </LinkContainer>
-              }
-              {isAllowed(user_info.ui_profile, pages.system_queues) &&
-              <LinkContainer to={"/system/queues"}>
-                <MenuItem>
-                  <FormattedMessage id="queues" defaultMessage="Queues"/>
-                </MenuItem>
-              </LinkContainer>
-              }
-              {isAllowed(user_info.ui_profile, pages.system_reporting) &&
-              [
-                <MenuItem key="divider-3" divider/>,
-                <LinkContainer to={"/system/reporting"} key="reports">
-                  <MenuItem>
-                    <FormattedMessage id="reporting" defaultMessage="Reporting"/>
-                  </MenuItem>
-                </LinkContainer>
-              ]
-              }
-              {isAllowed(user_info.ui_profile, pages.system_templates) &&
-              [
-                <MenuItem key="divider-4" divider/>,
-                <LinkContainer to={"/system/templates"} key="templates">
-                  <MenuItem>
-                    <FormattedMessage id="templates" defaultMessage="Templates"/>
-                  </MenuItem>
-                </LinkContainer>
-              ]
-              }
-              {isAllowed(user_info.ui_profile, pages.system_logs) &&
-              [
-                <LinkContainer to={"/system/logs"} key="logs">
-                  <MenuItem>
-                    <FormattedMessage id="logs" defaultMessage="Logs"/>
-                  </MenuItem>
-                </LinkContainer>
-              ]
-              }
-            </NavDropdown>
-            }
-            {(!user_info.modules || user_info.modules.includes(modules.orchestration)) && isAllowed(user_info.ui_profile, pages.requests_startup_events) &&
-            <NavDropdown eventKey={4} title={
-              <span>
-                <Glyphicon glyph="cog"/> {' '}
-                <FormattedMessage id='orchestration' defaultMessage='Orchestration'/>
-              </span>
-            } id="nav-orch">
-              {isAllowed(user_info.ui_profile, pages.requests_startup_events) &&
-              <LinkContainer to={"/transactions/config/startup_events"}>
-                <MenuItem>
-                  <FormattedMessage id="startup-events" defaultMessage="Startup Events"/>
-                </MenuItem>
-              </LinkContainer>
-              }
-              {isAllowed(user_info.ui_profile, pages.requests_workflow_editor) &&
-              <LinkContainer to={"/transactions/config/activities/editor"}>
-                <MenuItem>
-                  <FormattedMessage id="editor" defaultMessage="Editor"/>
-                </MenuItem>
-              </LinkContainer>
-              }
-              {isAllowed(user_info.ui_profile, pages.requests_workflow_editor) &&
-              <LinkContainer to={"/transactions/config/cron_timers"}>
-                <MenuItem>
-                  <FormattedMessage id="cron-timers" defaultMessage="Cron timers"/>
-                </MenuItem>
-              </LinkContainer>
-              }
-            </NavDropdown>
-            }
-
-          </Nav>
-          <Nav pullRight>
-            <NavDropdown title={<Glyphicon glyph="user"/>} id="nav-local-user">
-              <LinkContainer to={"/user/profile"}>
-                <MenuItem>
-                  <FormattedMessage id="profile" defaultMessage="Profile"/>
-                </MenuItem>
-              </LinkContainer>
-              <MenuItem divider/>
-              <MenuItem onClick={logoutUser}>
-                <FormattedMessage id="logout" defaultMessage="Logout"/>
-              </MenuItem>
-            </NavDropdown>
-
-            <ListItemLink to={"/help"}>
-              <Glyphicon glyph="question-sign"/>
-            </ListItemLink>
-
-            <Navbar.Text
-              style={{
-                color: (database_status && database_status.env === 'TEST') ? '#ef0803' : '#777',
-                fontWeight: (database_status && database_status.env === 'TEST') ? 'bold' : 'normal',
-              }}>
-              {
-                (database_status && database_status.env) ? database_status.env : "unknown"
-              }
-            </Navbar.Text>
-          </Nav>
-        </Navbar.Collapse>
-      </Navbar>
-    )
-  }
-};
-
-
-const NotFound = () => (
-    <div>
-        <FormattedMessage
-            id="app.route.notFound"
-            defaultMessage="Sorry, this page doesn't exist (yet)!" />
-    </div>
-);
 
 const DemoWatermark = () => (
     <>
@@ -648,16 +693,20 @@ class App extends Component {
     }
 
     getUserInfo() {
+        this.setState({error_msg: undefined});
         fetch_get('/api/v02/system/users/local')
             .then(data => {
-                this.setState({user_info: data});
+                localUser.fromObject(data);
                 localStorage.setItem("userProfile", data.ui_profile);
 
                 if(data.modules && supportedModule(modules.provisioning, data.modules)) {
                     import("./provisioning").then(prov => {
                       this.setState({provisioningRoutes: prov.provisioningRoutes(data.ui_profile)})
-                    });
-                    ProvProxiesManager.fetchConfiguration().then(() => this.setState({proxy_fetch: true})).catch(console.log);
+                    }).then(() => ProvProxiesManager.fetchConfiguration())
+                      .then(() => this.setState({proxy_fetch: true, user_info: data}))
+                      .catch(console.log);
+                } else {
+                    this.setState({user_info: data});
                 }
             })
             .catch(error => {
@@ -689,8 +738,8 @@ class App extends Component {
         })
     }
 
-    componentWillUpdate() {
-        if(this.isAuthenticated() && !this.state.user_info && AuthServiceManager.isAuthenticated()) {
+    componentWillUpdate(nextProps, nextState, nextContext) {
+        if(this.isAuthenticated() && !this.state.user_info && AuthServiceManager.isAuthenticated() && nextState.error_msg === undefined) {
             this.getUserInfo();
         }
     }
@@ -701,7 +750,7 @@ class App extends Component {
           this.getPlatformDetails();
           getCookie('auth_sso') === '1' && !sso_auth_service.isLoggedIn() && sso_auth_service.signinSilent();
 
-          if(this.isAuthenticated() && !this.state.user_info && AuthServiceManager.isAuthenticated()) {
+          if(this.isAuthenticated() && !this.state.user_info && AuthServiceManager.isAuthenticated() && this.state.error_msg === undefined) {
               this.getUserInfo();
           }
         }
@@ -716,18 +765,20 @@ class App extends Component {
         return needUpdate;
     }
 
-  updateToken(token, sso_auth) {
+    updateToken(token, sso_auth) {
       const {user_info} = this.state;
         AuthServiceManager.loadApiToken(token);
-        user_info.modules && supportedModule(modules.provisioning, user_info.modules) && ProvProxiesManager.fetchConfiguration().then(() => this.setState({proxy_fetch: true})).catch(console.log);
+        // user_info.modules && supportedModule(modules.provisioning, user_info.modules) && ProvProxiesManager.fetchConfiguration().then(() => this.setState({proxy_fetch: true})).catch(console.log);
         createCookie("auth_sso", sso_auth?'1':'0', 1, '/');  // maxAge = 24hours
-        this.setState({user_info: this.state.user_info});
+        // this.setState({user_info: this.state.user_info});
+        this.getUserInfo();
     }
 
     updateTokens(accessToken, refreshToken) {
         AuthServiceManager.loadJwtTokens(accessToken, refreshToken);
-        ProvProxiesManager.fetchConfiguration().then(() => this.setState({proxy_fetch: true})).catch(console.log);
-        this.setState({user_info: this.state.user_info});
+        // ProvProxiesManager.fetchConfiguration().then(() => this.setState({proxy_fetch: true})).catch(console.log);
+        // this.setState({user_info: this.state.user_info});
+        this.getUserInfo();
     }
 
     logout() {
@@ -858,9 +909,6 @@ class App extends Component {
             return <Loading/>
         }
 
-        const ui_profile = user_info.ui_profile;
-        const auth_token = AuthServiceManager.getToken();
-
         return (
           <Router>
             <div className="App">
@@ -870,11 +918,17 @@ class App extends Component {
                 }
                 <LicenseAlert />
                 <div className="App-header">
-                    <AsyncApioNavBar
+                  {
+                    limited_menu(user_info.ui_profile) ?
+                      <LimitedNavBar
                         user_info={user_info}
                         database_status={database_status}
-                        logoutUser={() => logoutUser().catch(console.error).then(this.logout)}
-                        auth_token={auth_token}/>
+                        logoutUser={() => logoutUser().catch(console.error).then(this.logout)}/> :
+                      <AsyncApioNavBar
+                        user_info={user_info}
+                        database_status={database_status}
+                        logoutUser={() => logoutUser().catch(console.error).then(this.logout)}/>
+                  }
                 </div>
 
                 <Col mdOffset={1} md={10}>
@@ -892,23 +946,22 @@ class App extends Component {
                                exact />
                         <Route path="/dashboard"
                                component={props => (
+                                   localUser.isAllowed(accesses.dashboard) ?
                                    <Dashboard
-                                       auth_token={auth_token}
                                        user_info={user_info}
                                        notifications={this._notificationSystem.current}
-                                       {...props} />
+                                       {...props} /> :
+                                   <NotAllowed/>
                                )}
                                exact />
                         <Route path="/transactions/list"
                                component={props => (
-                                   isAllowed(ui_profile, pages.requests_nprequests) ?
+                                   localUser.isAllowed(accesses.requests) ?
                                    (!user_info.modules || supportedModule(modules.npact, user_info.modules)) ?
                                     <NPRequests
-                                        auth_token={auth_token}
                                         user_info={user_info}
                                         {...props} /> :
                                     <Requests
-                                       auth_token={auth_token}
                                        user_info={user_info}
                                        {...props} /> :
                                    <NotAllowed/>
@@ -916,9 +969,8 @@ class App extends Component {
                                exact />
                         <Route path="/custom-transactions/list"
                                component={props => (
-                                   isAllowed(ui_profile, pages.requests_nprequests) ?
+                                   localUser.isAllowed(accesses.cron_requests) ?
                                    <CustomRequests
-                                       auth_token={auth_token}
                                        user_info={user_info}
                                        {...props} /> :
                                    <NotAllowed/>
@@ -926,14 +978,14 @@ class App extends Component {
                                exact />
                         <Route path="/transactions/timers"
                                component={props => (
-                                   isAllowed(ui_profile, pages.requests_nprequests) ?
+                                   localUser.isAllowed(accesses.requests) ?
                                    <Timers /> :
                                    <NotAllowed/>
                                )}
                                exact />
                         <Route path="/transactions/bulk"
                                component={props => (
-                                   isAllowed(ui_profile, pages.requests_nprequests) ?
+                                   localUser.isAllowed(accesses.bulks) ?
                                    <Bulks userInfo={user_info}/> :
                                    <NotAllowed/>
                                )}
@@ -941,7 +993,7 @@ class App extends Component {
 
                         <Route path="/transactions/config/startup_events"
                                component={props => (
-                                   isAllowed(ui_profile, pages.requests_startup_events) ?
+                                   localUser.isAllowed(accesses.orchestration) ?
                                        <StartupEvents
                                            notifications={this._notificationSystem.current}
                                            {...props} /> :
@@ -950,30 +1002,29 @@ class App extends Component {
                                exact />
                         <Route path="/transactions/config/activities/editor"
                                component={props => (
-                                   isAllowed(ui_profile, pages.requests_workflow_editor) ?
+                                   localUser.isAllowed(accesses.orchestration) ?
                                        <Activities user_info={user_info} /> :
                                        <NotAllowed/>
                                )}
                                exact />
                         <Route path="/transactions/config/activities/editor/:activityId"
                                component={props => (
-                                   isAllowed(ui_profile, pages.requests_workflow_editor) ?
+                                   localUser.isAllowed(accesses.orchestration) ?
                                        <ActivityEditor {...props} /> :
                                        <NotAllowed/>
                                )}
                                exact />
                         <Route path="/transactions/config/cron_timers"
                                component={props => (
-                                   isAllowed(ui_profile, pages.requests_workflow_editor) ?
+                                   localUser.isAllowed(accesses.orchestration) ?
                                        <CronTimers /> :
                                        <NotAllowed/>
                                )}
                                exact />
                         <Route path="/requests/ndg"
                                component={props => (
-                                   isAllowed(ui_profile, pages.requests_ndg)?
+                                   localUser.canSee(pages.requests_ndg)?
                                        <NdgHistory
-                                           auth_token={auth_token}
                                            user_info={user_info}
                                            notifications={this._notificationSystem.current}
                                            {...props} /> :
@@ -982,19 +1033,24 @@ class App extends Component {
                                exact />
                         <Route path="/requests/:reqId"
                                component={props => (
-                                   isAllowed(ui_profile, pages.requests_nprequests) ?
+                                   localUser.isAllowed(accesses.requests) ?
                                        <Request
-                                           auth_token={auth_token}
                                            user_info={user_info}
                                            notifications={this._notificationSystem.current}
                                            {...props} /> :
                                        <NotAllowed/>
                                )} />
+                        <Route path="/system/alarms"
+                               component={props => (
+                                   localUser.isAllowed(accesses.settings_alarms) ?
+                                       <AlarmManagement {...props} />:
+                                       <NotAllowed />
+                               )}
+                               exact />
                         <Route path="/system/users"
                                component={props => (
-                                   isAllowed(ui_profile, pages.system_users) ?
+                                   localUser.isAllowed(accesses.settings_users) ?
                                        <UserManagement
-                                           auth_token={auth_token}
                                            user_info={user_info}
                                            notifications={this._notificationSystem.current}
                                            {...props} />:
@@ -1003,7 +1059,7 @@ class App extends Component {
                                exact />
                         <Route path="/system/users/audit"
                                component={props => (
-                                   isAllowed(ui_profile, pages.system_users) ?
+                                   localUser.isAllowed(accesses.settings_users) ?
                                        <AuditLogs
                                            user_info={user_info}
                                            notifications={this._notificationSystem.current} />:
@@ -1012,23 +1068,22 @@ class App extends Component {
                                exact />
                         <Route path="/system/users/profiles"
                                component={props => (
-                                   isAllowed(ui_profile, pages.system_users) ?
+                                   localUser.isAllowed(accesses.settings_users) ?
                                        <UserProfiles />:
                                        <NotAllowed />
                                )}
                                exact />
                         <Route path="/system/users/roles"
                                component={props => (
-                                   isAllowed(ui_profile, pages.system_users) ?
+                                   localUser.isAllowed(accesses.settings_users) ?
                                        <UserRoles />:
                                        <NotAllowed />
                                )}
                                exact />
                         <Route path="/system/reporting"
                                component={props => (
-                                   isAllowed(ui_profile, pages.system_reporting)?
+                                   localUser.canSee(pages.system_reporting)?
                                        <Reporting
-                                           auth_token={auth_token}
                                            notifications={this._notificationSystem.current}
                                            {...props} />:
                                        <NotAllowed />
@@ -1036,19 +1091,15 @@ class App extends Component {
                                exact />
                         <Route path="/system/gateways"
                                component={props => (
-                                   isAllowed(ui_profile, pages.system_gateways) ?
-                                       <Gateways
-                                           auth_token={auth_token}
-                                           notifications={this._notificationSystem.current}
-                                           {...props} />:
+                                   localUser.canSee(pages.system_gateways) ?
+                                       <Gateways />:
                                        <NotAllowed />
                                )}
                                exact />
                         <Route path="/system/databases"
                                component={props => (
-                                   isAllowed(ui_profile, pages.system_databases) ?
+                                   localUser.canSee(pages.system_databases) ?
                                        <Databases
-                                           auth_token={auth_token}
                                            notifications={this._notificationSystem.current}
                                            {...props} />:
                                        <NotAllowed />
@@ -1056,28 +1107,28 @@ class App extends Component {
                                exact />
                         <Route path="/system/queues"
                                component={props => (
-                                   isAllowed(ui_profile, pages.system_queues) ?
+                                   localUser.canSee(pages.system_queues) ?
                                        <LocalQueues {...props} />:
                                        <NotAllowed />
                                )}
                                exact />
                         <Route path="/system/bulk_actions"
                                component={props => (
-                                   isAllowed(ui_profile, pages.bulk_actions) ?
+                                   localUser.isAllowed(accesses.bulks_actions) ?
                                        <BulkActions {...props} />:
                                        <NotAllowed />
                                )}
                                exact />
                         <Route path="/system/templates"
                                component={props => (
-                                   isAllowed(ui_profile, pages.system_templates) ?
+                                   localUser.canSee(pages.system_templates) ?
                                        <Templates />:
                                        <NotAllowed />
                                )}
                                exact />
                         <Route path="/system/logs"
                                component={props => (
-                                   isAllowed(ui_profile, pages.system_logs) ?
+                                   localUser.canSee(pages.system_logs) ?
                                        <LogsManagement />:
                                        <NotAllowed />
                                )}
@@ -1091,16 +1142,15 @@ class App extends Component {
                                exact />
                         <Route path="/system/config"
                                component={props => (
-                                   isAllowed(ui_profile, pages.system_config) ?
+                                   localUser.isAllowed(accesses.settings) ?
                                        <Configuration userInfo={user_info} />:
                                        <NotAllowed />
                                )}
                                exact />
                         <Route path="/system/webhooks"
                                component={props => (
-                                   isAllowed(ui_profile, pages.system_config) ?
+                                   localUser.isAllowed(accesses.settings) ?
                                        <Webhooks
-                                           auth_token={auth_token}
                                            user_info={user_info}
                                            notifications={this._notificationSystem.current}
                                            {...props} />:
@@ -1109,9 +1159,8 @@ class App extends Component {
                                exact />
                         <Route path="/system/public_holidays"
                                component={props => (
-                                   isAllowed(ui_profile, pages.npact_holidays)?
+                                   localUser.canSee(pages.npact_holidays)?
                                        <PublicHolidays
-                                           auth_token={auth_token}
                                            notifications={this._notificationSystem.current}
                                            {...props} />:
                                        <NotAllowed />
@@ -1119,9 +1168,8 @@ class App extends Component {
                                exact />
                         <Route path="/system/mvno_numbers"
                                component={props => (
-                                   isAllowed(ui_profile, pages.npact_mvno_numbers) ?
+                                   localUser.canSee(pages.npact_mvno_numbers) ?
                                        <SearchMVNO
-                                           auth_token={auth_token}
                                            user_info={user_info}
                                            notifications={this._notificationSystem.current}
                                            {...props} />:
@@ -1130,9 +1178,8 @@ class App extends Component {
                                exact />
                         <Route path="/system/porting_cases"
                                component={props => (
-                                   isAllowed(ui_profile, pages.npact_porting_cases) ?
+                                   localUser.canSee(pages.npact_porting_cases) ?
                                        <SearchPortingCases
-                                           auth_token={auth_token}
                                            user_info={user_info}
                                            notifications={this._notificationSystem.current}
                                            {...props} />:
@@ -1141,9 +1188,8 @@ class App extends Component {
                                exact />
                         <Route path="/system/operators"
                                component={props => (
-                                   isAllowed(ui_profile, pages.npact_operators) ?
+                                   localUser.canSee(pages.npact_operators) ?
                                        <OperatorManagement
-                                           auth_token={auth_token}
                                            user_info={user_info}
                                            notifications={this._notificationSystem.current}
                                            {...props} />:
@@ -1152,9 +1198,8 @@ class App extends Component {
                                exact />
                         <Route path="/system/ranges"
                                component={props => (
-                                   isAllowed(ui_profile, pages.npact_ranges) ?
+                                   localUser.canSee(pages.npact_ranges) ?
                                        <RangesManagement
-                                           auth_token={auth_token}
                                            user_info={user_info}
                                            notifications={this._notificationSystem.current}
                                            {...props} />:
@@ -1163,9 +1208,8 @@ class App extends Component {
                                exact />
                         <Route path="/system/routing_info"
                                component={props => (
-                                   isAllowed(ui_profile, pages.npact_routing_info) ?
+                                   localUser.canSee(pages.npact_routing_info) ?
                                        <RoutingInfoManagement
-                                           auth_token={auth_token}
                                            user_info={user_info}
                                            notifications={this._notificationSystem.current}
                                            {...props} />:
@@ -1174,15 +1218,14 @@ class App extends Component {
                                exact />
                         <Route path="/transactions/mobile_events"
                                component={props => (
-                                   isAllowed(ui_profile, pages.requests_nprequests) ?
-                                       <MobileEventsManagement auth_token={auth_token} {...props} /> :
+                                   localUser.isAllowed(accesses.requests) ?
+                                       <MobileEventsManagement {...props} /> :
                                        <NotAllowed/>
                                )} exact />
                         <Route path="/transactions/new_portin"
                                component={props => (
-                                   isAllowed(ui_profile, pages.requests_nprequests) ?
+                                   localUser.isAllowed(accesses.requests) ?
                                        <NPPortInRequest
-                                           auth_token={auth_token}
                                            notifications={this._notificationSystem}
                                            user_info={user_info}
                                            {...props} /> :
@@ -1191,16 +1234,15 @@ class App extends Component {
                                exact />
                         <Route path="/transactions/new_update"
                                component={props => (
-                                   isAllowed(ui_profile, pages.requests_nprequests) ?
-                                       <NPUpdateRequest auth_token={auth_token} {...props} /> :
+                                   localUser.isAllowed(accesses.requests) ?
+                                       <NPUpdateRequest {...props} /> :
                                        <NotAllowed/>
                                )}
                                exact />
                         <Route path="/transactions/new_disconnect"
                                component={props => (
-                                   isAllowed(ui_profile, pages.requests_nprequests) ?
+                                   localUser.isAllowed(accesses.requests) ?
                                        <NPDisconnectRequest
-                                           auth_token={auth_token}
                                            notifications={this._notificationSystem}
                                            user_info={user_info}
                                            {...props} /> :
@@ -1209,7 +1251,7 @@ class App extends Component {
                                exact />
                         <Route path="/transactions/new_install_address"
                                component={props => (
-                                   isAllowed(ui_profile, pages.requests_nprequests) ?
+                                   localUser.isAllowed(accesses.requests) ?
                                        <NPChangeInstallationAddressRequest
                                            {...props} /> :
                                        <NotAllowed/>
@@ -1217,22 +1259,20 @@ class App extends Component {
                                exact />
                         <Route path="/transactions/emergency_notification"
                                component={() => (
-                                    isAllowed(ui_profile, pages.requests_nprequests) ?
+                                    localUser.isAllowed(accesses.requests) ?
                                         <NPEmergencyNotificationRequest /> :
                                         <NotAllowed/>
                                )}
                                exact />
                         <Route path="/transactions/:txId"
                                component={props => (
-                                   isAllowed(ui_profile, pages.requests_nprequests) ?
+                                   localUser.isAllowed(accesses.requests) ?
                                    (!user_info.modules || supportedModule(modules.npact, user_info.modules)) ?
                                        <NPTransaction
-                                           auth_token={auth_token}
                                            user_info={user_info}
                                            notifications={this._notificationSystem}
                                            {...props} /> :
                                        <Transaction
-                                           auth_token={auth_token}
                                            user_info={user_info}
                                            notifications={this._notificationSystem.current}
                                            {...props} /> :
@@ -1240,7 +1280,7 @@ class App extends Component {
                                )} />
                         <Route path="/auth-silent-callback" component={AuthSilentCallback} exact/>
                         <Route path="/" exact>
-                            <Redirect to={getHomePage(ui_profile)} />
+                            <Redirect to={localUser.getHomePage()} />
                         </Route>
                         <Route path="/provisioning/list"
                                component={

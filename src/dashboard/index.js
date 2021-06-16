@@ -10,13 +10,17 @@ import TransactionsOverTime from './tx-over-time';
 import SuccessRateOverTime from './tx-success-rate-over-time';
 import ActiveTransactionsPerWorkflow from './tx-active-per-workflow';
 import ProxyRequestsOverTime from "./tx-per-proxy-over-time";
-import {EmptyTile, GatewaysStatusTile, ErrorCasesTile} from './dashboard-tiles';
-import ManualActionsBox, {ManualActionsTile} from "./manualActions";
-import {TransactionsNeedApprovalTile} from "../np/dashboard_tiles";
+import {GatewaysStatusTile, DashboardCard} from './dashboard-tiles';
+import ManualActionsBox, {ManualActionsTile, NPManualActionsBox} from "./manualActions";
+// import {TransactionsNeedApprovalTile} from "../np/dashboard_tiles";
 
 import './dashboard.css';
 import {modules, supportedModule} from "../utils/user";
-const REFRESH_CYCLE = 30;
+import {Link} from "react-router-dom";
+import {activeCriteria, errorCriteria} from "../requests/requests";
+import queryString from 'query-string';
+import update from "immutability-helper";
+const REFRESH_CYCLE = 10;
 
 
 function fetch_gateways(onSuccess) {
@@ -36,21 +40,6 @@ function fetch_stats(isNpact, onSuccess) {
                 <FormattedMessage id="core-stats-fect-failed" defaultMessage="Failed to fetch statistics"/>,
                 error.message
         ));
-}
-
-
-function _buildPadding(nbTiles) {
-    const tilesPerRow = 6;
-
-    let padding = [];
-    if(nbTiles < tilesPerRow && (tilesPerRow - nbTiles) % 2) {
-        padding.push(<EmptyTile className='col-md-1-5'/>)
-    }
-    let i = Math.max(Math.floor((tilesPerRow - nbTiles) / 2), 0);
-    while(i--) {
-        padding.push(<EmptyTile />);
-    }
-    return padding;
 }
 
 export default function Dashboard(props) {
@@ -80,22 +69,48 @@ export default function Dashboard(props) {
     }
     statsPanels.push(<ActiveTransactionsPerWorkflow {...props} />);
     if(isManual) {
-        statsPanels.push(<ManualActionsBox {...props} />);
+        if(isNpact) {
+          statsPanels.push(<NPManualActionsBox/>);
+        } else {
+          statsPanels.push(<ManualActionsBox/>);
+        }
     }
 
     return (
         <div>
             <Row>
-                {
-                    _buildPadding((isNpact?2:1) + Object.keys(gateways).length)
-                }
-                <ErrorCasesTile count={stats.active_requests.with_errors} total={stats.active_requests.total}/>
-                {
-                    isManual && <ManualActionsTile />
-                }
-                {
-                    Object.keys(gateways).slice(0, 5).map(k => <GatewaysStatusTile key={k} label={k} status={gateways[k]} />)
-                }
+              <Col xs={12} md={6} lg={3}>
+                <Link to={{
+                    pathname: "/transactions/list", search: queryString.stringify({
+                      filter: JSON.stringify(activeCriteria)
+                    })
+                  }}>
+                  <DashboardCard
+                    className={"bg-arielle-smile"}
+                    heading={"Active workflows"}
+                    subheading={"Workflows currently open"}
+                    number={stats.active_requests.total} />
+                </Link>
+              </Col>
+              <Col xs={12} md={6} lg={3}>
+                <Link to={{
+                    pathname: "/transactions/list", search: queryString.stringify({
+                      filter: JSON.stringify(update(errorCriteria, {$merge: activeCriteria}))
+                    })
+                  }}>
+                  <DashboardCard
+                    className={"bg-alert-danger"}
+                    heading={"Errors"}
+                    subheading={"Workflows blocked"}
+                    number={stats.active_requests.with_errors} />
+                </Link>
+              </Col>
+              <Col xs={12} md={6} lg={3}>
+                { isManual && <ManualActionsTile /> }
+              </Col>
+              <Col xs={12} md={6} lg={3}>
+                <GatewaysStatusTile gateways={gateways} />
+              </Col>
             </Row>
             <Row>
                 {

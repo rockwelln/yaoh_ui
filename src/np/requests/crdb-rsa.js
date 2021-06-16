@@ -11,7 +11,6 @@ import { FormattedMessage } from 'react-intl';
 import update from 'immutability-helper';
 import { fetchOperators } from "../data/operator_mgm";
 import { fetchRoutes } from "../data/routing_info_mgm";
-import { RangeInput } from "../utils";
 import {
   NotificationsManager,
   fetch_get,
@@ -35,7 +34,7 @@ import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 import {
   Attachments,
   Comments,
-  ContextTable, Errors, Events, ManualActions, ReplayingSubInstancesModal, SavingModal,
+  Errors, Events, ManualActions, ReplayingSubInstancesModal, SavingModal,
   TasksTable,
   TransactionFlow,
   triggerManualAction,
@@ -50,6 +49,10 @@ import {StaticControl} from "../../utils/common";
 import {SyncMessagesDetails, SyncMessagesFlow} from "./citc-sa";
 import moment from "moment";
 import {ManualActionInputForm} from "../../dashboard/manualActions";
+import {ContextTable} from "../../requests/components";
+import {SubTransactionsPanel} from "../../requests/components";
+import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
+import {LinkContainer} from "react-router-bootstrap";
 
 export const DEFAULT_RECIPIENT = "MTNBSGNP";
 export const rejection_codes = [];
@@ -75,13 +78,17 @@ function newRequest(request, onSuccess, onError) {
   fetch_post(
     '/api/v01/npact/np_requests/port_in',
     {
+      crdc_id: request.crdc_id || undefined,
       ranges: request.ranges,
       recipient_id: request.recipient,
       service_type: request.service_type,
       port_req_form_id: request.port_req_form_id,
       routing_info: request.routing_info,
       subscriber_data: request.subscriber_data,
+      due_date: request.due_date,
       change_addr_installation_porting_id: request.change_addr_installation_porting_id,
+      label: request.label,
+      contact_email: request.contact_email,
     }
   )
     .then(parseJSON)
@@ -100,6 +107,93 @@ function newRequest(request, onSuccess, onError) {
     });
 }
 
+export function RangeOrNumbersInput({ ranges, onChange, multipleRanges }) {
+  const rangeNumbers = (r) => {
+    if(r.to.length <= 0) return 1;
+    const t = parseInt(r.to, 10);
+    const f = parseInt(r.from, 10);
+    if (f > t) {
+      return "invalid";
+    }
+    return t - f;
+  }
+  return (
+    <>
+      <Table>
+        <thead>
+        <tr>
+          <th><FormattedMessage id="from" defaultMessage="From"/></th>
+          <th><FormattedMessage id="to" defaultMessage="To"/></th>
+          <th/>
+          <th/>
+        </tr>
+        </thead>
+        <tbody>
+        {
+          ranges.map((range, index) => {
+            return (
+              <tr key={index}>
+                <td>
+                  <FormControl value={range.from}
+                               onChange={e => (
+                                 (e.target.value === "" || /^\d+$/.test(e.target.value)) && onChange(update(ranges,
+                                   {[index]: {$merge: {from: e.target.value}}}
+                                 )))
+                               }/>
+                </td>
+                <td>
+                  <FormControl disabled={ranges.length > 1}
+                               value={range.to}
+                               onChange={e => (
+                                 (e.target.value === "" || /^\d+$/.test(e.target.value)) && onChange(update(ranges,
+                                   {[index]: {$merge: {to: e.target.value}}}
+                                 )))
+                               }/>
+                </td>
+                <td>
+                  {
+                    range.from.length > 0 && <FormattedMessage id="numbers" defaultMessage="{n} numbers" values={{n: rangeNumbers(range)}}/>
+                  }
+                </td>
+                {multipleRanges && ranges.length > 1 && (
+                  <td>
+                    <Button
+                      onClick={() => {
+                      onChange(update(ranges,
+                        {$splice: [[index, 1]]}
+                      ))
+                    }}>-</Button>
+                  </td>
+                )}
+              </tr>
+            )
+          })
+        }
+
+        {multipleRanges && (
+          <tr>
+            <td colSpan={4}>
+              <Button
+                disabled={ranges.length > 0 && ranges[0].to.length > 0 && ranges[0].from !== ranges[0].to}
+                onClick={() =>
+                  onChange(update(ranges, {$push: [{from: '', to: '', data_number: '', fax_number: ''}]}))
+                }>
+                +
+              </Button>
+            </td>
+          </tr>
+        )}
+        </tbody>
+      </Table>
+      <HelpBlock>
+        <FormattedMessage
+          id="range-one-number-note"
+          defaultMessage="CRDB accepts a set of numbers or a *single* number range."/>
+      </HelpBlock>
+    </>
+  )
+}
+
 function validateRanges(ranges) {
   return ranges.map((r, index) => {
     if (r.from.length === 0) return index;
@@ -111,7 +205,7 @@ function validateRanges(ranges) {
 
 function generateNewPortId(prefix="", suffix="") {
   const now = (new Date()).toISOString().slice(0,19).replace(/-/g,"").replace(/T/g,"").replace(/:/g,"")
-  return `${prefix}${now}MTNBSGNP${suffix}`
+  return `${prefix}${now}MTNBSGNP${suffix}${Math.floor(Math.random()*10000)}`
 }
 
 const emptyRequest = {
@@ -127,9 +221,10 @@ const emptyRequest = {
     AccountNum: "",
     ProcessType: "Individual",
   },
+  due_date: moment.utc().add(1, "days").toISOString(),
 }
 
-export function NPPortInRequest(props) {
+export function NPPortInRequest({userInfo}) {
   const [operators, setOperators] = useState([]);
   const [routes, setRoutes] = useState([]);
   const [request, setRequest] = useState(emptyRequest);
@@ -159,6 +254,7 @@ export function NPPortInRequest(props) {
     validateRanges(request.ranges).length === 0 &&
     validRecipient === "success" &&
     request.routing_info !== "" &&
+    request.due_date && request.due_date !== "" &&
     request.subscriber_data.AccountNum.length !== 0 &&
     validManagedPerson !== "error" &&
     validManagedPhone !== "error" &&
@@ -167,7 +263,6 @@ export function NPPortInRequest(props) {
       (request.subscriber_data.RegNum !== undefined && request.subscriber_data.RegNum.length !== 0)
     )
   );
-  console.log("subs", request);
   return (
     <Form horizontal>
       <FormGroup>
@@ -230,7 +325,7 @@ export function NPPortInRequest(props) {
         </Col>
 
         <Col sm={9}>
-          <RangeInput
+          <RangeOrNumbersInput
             onChange={ranges => setRequest(update(request, { $merge: { ranges: ranges } }))}
             ranges={request.ranges}
             multipleRanges />
@@ -271,6 +366,26 @@ export function NPPortInRequest(props) {
               routes.filter(r => r.operator_id === request.recipient).map(o => <option key={o.routing_id} value={o.routing_id}>{o.routing_info}</option>)
             }
           </FormControl>
+        </Col>
+      </FormGroup>
+
+
+      <FormGroup>
+        <Col componentClass={ControlLabel} sm={2}>
+          <FormattedMessage id="port-date-time" defaultMessage="Port date time" />{"*"}
+        </Col>
+
+        <Col sm={9}>
+          <DatePicker
+            className="form-control"
+            selected={request.due_date ? userLocalizeUtcDate(moment.utc(request.due_date), userInfo).toDate() : null}
+            onChange={d => {
+              setRequest(update(request, {$merge: { due_date: d.toISOString() }}));
+            }}
+            dateFormat="yyyy-MM-dd HH:mm"
+            showTimeSelect
+            timeFormat="HH:mm"
+            timeIntervals={60} />
         </Col>
       </FormGroup>
 
@@ -548,6 +663,37 @@ export function NPPortInRequest(props) {
           </FormGroup>
         </>
       }
+      <FormGroup>
+        <Col componentClass={ControlLabel} sm={2}>
+          <FormattedMessage id="label-tenant-id" defaultMessage="Label (tenant id)" />
+        </Col>
+
+        <Col sm={9}>
+          <FormControl
+            type="text"
+            value={request.label}
+            onChange={e => setRequest(update(request, {
+              $merge: {label: e.target.value || undefined}
+            }))}
+          />
+        </Col>
+      </FormGroup>
+
+      <FormGroup>
+        <Col componentClass={ControlLabel} sm={2}>
+          <FormattedMessage id="contact-email" defaultMessage="Contact email" />
+        </Col>
+
+        <Col sm={9}>
+          <FormControl
+            type="text"
+            value={request.contact_email}
+            onChange={e => setRequest(update(request, {
+              $merge: {contact_email: e.target.value || undefined}
+            }))}
+          />
+        </Col>
+      </FormGroup>
 
       <FormGroup>
         <Col smOffset={2} sm={10}>
@@ -609,9 +755,11 @@ function abortPort(instanceId, ranges, reasonCode, onSuccess) {
 const cancelReasonCodes = [
   {"id": "SP001", "summary": "The MSISDN or DN/DN Range is not valid on the donor operator network."},
   {"id": "SP002", "summary": "The MSISDN or DN/DN Range is excluded from number portability."},
+  {"id": "SP003", "summary": "For a postpaid subscriber, the MSISDN, account number, and account holder id number do not match."},
   {"id": "SP004", "summary": "The classification of the account does not match."},
   {"id": "SP005", "summary": "Subscriber in suspension of outgoing or incoming calls due to failure to pay a bill"},
   {"id": "SP006", "summary": "MSISDN or DN/DN Range not valid on SP."},
+  {"id": "SP007", "summary": "MSISDN, Account Number, Corporate Registration Number do not match, or Port Request is unauthorized."},
   {"id": "SP008", "summary": "Port Request is for an inter-SP port; for this NO, inter-SP ports are handled outside the CRDB."},
   {"id": "SP009", "summary": "Other reasons."},
 ];
@@ -626,10 +774,14 @@ const abortReasonCodes = [
 
 const rejectionReasonCodes = [
   ...cancelReasonCodes,
+  {"id": "SP026", "summary": "Installation address is outside the geographic area associated with the DNs/DN Ranges specified in the request."},
   {"id": "SP027", "summary": "DN Range is not exclusively used by the operator requesting the port."},
   {"id": "SP028", "summary": "DN(s) or DN Range are excluded from porting under Regulation 3."},
   {"id": "SP029", "summary": "Account Number is not the account number used by the donor operator for the DN(s) or DN Range for which porting is requested."},
 ];
+
+const errorCodes = [...rejectionReasonCodes, ...abortReasonCodes];
+
 
 function CancelPortRequest(props) {
   const {show, onHide, instanceId, ranges} = props;
@@ -933,7 +1085,19 @@ function RequestTable(props) {
                           </select>
                         </td>
                       :
-                        r.reject_code ? <td style={{ color: "red" }}>{r.reject_code}</td> : <td/>
+                        r.reject_code ?
+                          <td style={{ color: "red" }}>
+                            <OverlayTrigger
+                              trigger="hover"
+                              placement="right"
+                              overlay={
+                                <Popover id="popover-error-code-desc" title={r.reject_code}>
+                                  <p>{errorCodes.find(e => e.id === r.reject_code) && errorCodes.find(e => e.id === r.reject_code).summary}</p>
+                                </Popover>
+                              }>
+                              <p>{r.reject_code}</p>
+                            </OverlayTrigger>
+                          </td> : <td/>
                     }
                     <td/>
                   </tr>
@@ -1216,7 +1380,7 @@ export class NPDisconnectRequest extends Component {
               </Col>
 
               <Col sm={9}>
-                <RangeInput
+                <RangeOrNumbersInput
                   onChange={ranges => {
                     this.setState({ ranges: ranges });
                     this.resolveDonor(ranges[0].from);
@@ -1252,14 +1416,16 @@ export class NPDisconnectRequest extends Component {
 
 function CrdbMessages(props) {
   const {messages, userInfo} = props;
+  const [seeDetails, setSeeDetails] = useState(false);
   let listOfMessages = messages
+    .sort((a, b) => a.processing_trace_id - b.processing_trace_id)
     .reduce((l, m) => {
       var o, i;
       try {
         o = JSON.parse(m.output || "{}");
       } catch (e) {
-        console.error("failed to parse m.output: ", e, m.output);
-        o = {};
+        // console.error("failed to parse m.output: ", e, m.output);
+        o = {"message": m.output};
       }
       try {
         i = m.input ? JSON.parse(m.input) : null;
@@ -1267,24 +1433,93 @@ function CrdbMessages(props) {
         console.error("failed to parse m.input: ", e, m.input);
         i = null;
       }
-      const match = /<NPCMessages>\s*<([^>]*)>/gm.exec(o.request);
+      const matchMessage = /<NPCMessages>\s*<([^>]*)>/gm.exec(o.request);
+      const matchMessageID = /<MessageID>(\d+)<\/MessageID>/gm.exec(o.request);
 
-      o.request && l.push({id: m.processing_trace_id, endpoint: "CRDB", summary: match?match[1]:"-", type:"request", created_on: m.created_on, raw: o.request});
-      o.response && l.push({id: m.processing_trace_id, endpoint: "APIO", summary: o.status, type: "response", created_on: m.created_on, status: m.status === 200 ? o.status : m.status, ...o.response});
-      i && i.event && l.push({id: m.processing_trace_id, endpoint: "APIO", source: i.event.peer, type: "event", created_on: m.created_on, ...i.event});
+      const message = matchMessage?matchMessage[1]:"-";
+      const messageID = matchMessageID?matchMessageID[1]:"-";
+
+      if(i && i.event) {
+        const matchMessageID = /MessageID>(\d+)&/gm.exec(i.event.raw);
+        const messageID = matchMessageID?matchMessageID[1]:"-";
+
+        l.push({
+          id: `${m.processing_trace_id}-01`,
+          endpoint: "APIO",
+          source: i.peer,
+          type: "event",
+          created_on: m.created_on,
+          summary: `${i.event.summary} (${messageID})`,
+          raw: i.event.raw,
+          protocol: i.protocol || "",
+          // ...i.event
+        });
+      }
+
+      if((!o.response || seeDetails) && i && i.method && i.url) {
+        l.push({
+          id: `${m.processing_trace_id}-01`,
+          endpoint: i.host || "?",
+          source: "APIO",
+          type: "call",
+          created_on: m.created_on,
+          summary: `${i.method.toUpperCase()} ${i.url}`,
+          protocol: "HTTP",
+          raw: m.input,
+        });
+        l.push({
+          id: `${m.processing_trace_id}-02`,
+          endpoint: "APIO",
+          source: i.host || "?",
+          type: "response",
+          created_on: m.created_on,
+          summary: m.status,
+          protocol: "HTTP",
+          raw: m.output,
+        });
+      }
+      if(o.request) {
+        l.push({
+          id: `${m.processing_trace_id}-00`,
+          endpoint: "CRDB",
+          source: (seeDetails && i && i.host)?i.host:"APIO",
+          summary: `${message} (${messageID})`,
+          type: "request",
+          created_on: m.created_on,
+          raw: o.request
+        });
+      }
+      if(o.response) {
+        l.push({
+          id: `${m.processing_trace_id}-01`,
+          endpoint: (seeDetails && i && i.host)?i.host:"APIO",
+          source: "CRDB",
+          summary: o.status,
+          type: "response",
+          created_on: m.created_on,
+          status: m.status === 200 ? o.status : m.status, ...o.response
+        });
+      }
       return l;
     }, [])
-    .sort((a, b) => a.id - b.id);
+    ;
 
   return (
     <Tabs defaultActiveKey={1} id="syn-messages-flow">
       <Tab eventKey={1} title={<FormattedMessage id="flows" defaultMessage="Flows" />}>
-        <SyncMessagesFlow
-          data={listOfMessages}
-          getEndpoint={m => m.endpoint}
-          getSource={m => m.source ? m.source : m.endpoint === "APIO" ? "CRDB" : "APIO"}
-          userInfo={userInfo}
-        />
+        <Row>
+          <SyncMessagesFlow
+            data={listOfMessages}
+            getEndpoint={m => m.endpoint.toUpperCase()}
+            getSource={m => m.source ? m.source.toUpperCase() : m.endpoint === "APIO" ? "CRDB" : "APIO"}
+            userInfo={userInfo}
+          />
+        </Row>
+        <Row style={{ textAlign: "center" }}>
+          <Checkbox checked={seeDetails} onChange={e => setSeeDetails(e.target.checked)}>
+            <i>See details</i>
+          </Checkbox>
+        </Row>
       </Tab>
       <Tab eventKey={2} title={<FormattedMessage id="messages" defaultMessage="Messages" />}>
         <SyncMessagesDetails data={listOfMessages} userInfo={userInfo} />
@@ -1336,9 +1571,13 @@ export class NPTransaction extends Component {
           return;
         }
 
-        this.setState({ tx: data });
+        const diffState = { tx: data };
+        if(!this.state.tx && data.callback_task_id) {
+          diffState.activeTab = 2;
+        }
+        this.setState(diffState);
 
-        fetch_get(`/api/v01/npact/np_requests/${data.original_request_id}`, this.props.auth_token)
+        !data.callback_task_id && fetch_get(`/api/v01/npact/np_requests/${data.original_request_id}`, this.props.auth_token)
           .then(data => {
             !this.cancelLoad && this.setState({ request: data });
             document.title = `Request ${data.crdc_id}`;
@@ -1391,20 +1630,58 @@ export class NPTransaction extends Component {
     this.cancelLoad = true;
   }
 
-  componentWillReceiveProps() {
-    this.setState({ activeTab: 1 });
-    this.fetchTxDetails(false);
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    if(prevState.tx !== undefined && prevProps.match.params.txId !== this.props.match.params.txId) {
+      this.setState({
+        activeTab: 1,
+        tx: undefined,
+        request: undefined,
+        logs: [],
+        events: [],
+        externalCallbacks: [],
+        manualActions: [],
+        messages: [],
+      });
+      this.fetchTxDetails(false);
+    }
   }
 
   onReplay(activity_id, task_id) {
-    fetch_put(`/api/v01/transactions/${activity_id}/tasks/${task_id}`, {}, this.props.auth_token)
-      .then(() => NotificationsManager.success(
-        <FormattedMessage id="task-replayed" defaultMessage="Task replayed!" />,
-      ))
-      .catch(error => NotificationsManager.error(
-        <FormattedMessage id="task-replay-failed" defaultMessage="Task replay failed!" />,
-        error.message
-      ))
+    this.setState({replaying: true});
+    fetch_put(`/api/v01/transactions/${activity_id}/tasks/${task_id}`, {})
+      .then(() => {
+        !this.cancelLoad && this.setState({replaying: false});
+        NotificationsManager.success(
+          <FormattedMessage id="task-replayed" defaultMessage="Task replayed!" />,
+        )
+      })
+      .catch(error => {
+        !this.cancelLoad && this.setState({replaying: false});
+        NotificationsManager.error(
+          <FormattedMessage id="task-replay-failed" defaultMessage="Task replay failed!" />,
+          error.message
+        )
+      })
+  }
+
+  onRollback(activity_id, task_id, replay_behaviour) {
+    this.setState({replaying: true});
+    const meta = JSON.stringify({replay_behaviour: replay_behaviour});
+    fetch_put(`/api/v01/transactions/${activity_id}/tasks/${task_id}?meta=${meta}`, {})
+      .then(() => {
+        !this.cancelLoad && this.setState({replaying: false});
+        this.fetchTxDetails(false);
+        NotificationsManager.success(
+          <FormattedMessage id="rollback-triggered" defaultMessage="{action} triggered!" values={{action: replay_behaviour}}/>,
+        );
+      })
+      .catch(error => {
+        !this.cancelLoad && this.setState({replaying: false});
+        NotificationsManager.error(
+          <FormattedMessage id="rollback-failed" defaultMessage="{action} failed!" values={{action: replay_behaviour}}/>,
+          error.message
+        );
+      })
   }
 
   changeTxStatus(new_status) {
@@ -1645,7 +1922,21 @@ export class NPTransaction extends Component {
     }
 
     return (
-      <div>
+      <>
+        <Breadcrumb>
+          <Breadcrumb.Item active><FormattedMessage id="requests" defaultMessage="Requests"/></Breadcrumb.Item>
+          <LinkContainer to={`/transactions/list`}>
+            <Breadcrumb.Item><FormattedMessage id="apio-requests" defaultMessage="Ports"/></Breadcrumb.Item>
+          </LinkContainer>
+          {
+            tx.super_instance_chain && tx.super_instance_chain.map(sup_i => (
+              <LinkContainer to={`/transactions/${sup_i.id}`} key={`sup-${sup_i.id}`}>
+                <Breadcrumb.Item>{sup_i.id}</Breadcrumb.Item>
+              </LinkContainer>
+            ))
+          }
+          <Breadcrumb.Item active>{tx.id}</Breadcrumb.Item>
+        </Breadcrumb>
         {alerts}
         <Row>
           {can_act && tx.status === 'ACTIVE' && actions_required.map((a, i) => <div key={i}>{a}</div>)}
@@ -1728,9 +2019,10 @@ export class NPTransaction extends Component {
                 <TransactionFlow definition={tx.definition} states={tx.tasks} activityId={tx.activity_id} />
                 <TasksTable
                   tasks={tx.tasks}
-                  definition={tx.definition}
+                  definition={JSON.parse(tx.definition)}
                   onReplay={this.onReplay}
-                  user_can_replay={can_act && tx.status === 'ACTIVE'}
+                  onRollback={this.onRollback}
+                  user_can_replay={can_act && tx.status === 'ACTIVE' && !replaying}
                   tx_id={tx.id}
                   userInfo={user_info}
                 />
@@ -1760,6 +2052,15 @@ export class NPTransaction extends Component {
                 </Panel>
               )
             }
+
+            <SubTransactionsPanel
+              txId={tx.id}
+              tasks={tx.tasks}
+              onReplay={() => {
+                this.setState({replaying: true});
+                return () => this.setState({replaying: false});
+              }}
+            />
 
             {tx.errors && tx.errors.length !== 0 &&
               <Panel bsStyle="danger">
@@ -1822,6 +2123,6 @@ export class NPTransaction extends Component {
         <ReplayingSubInstancesModal show={replaying}/>
         <SavingModal show={sending}/>
 
-      </div>)
+      </>)
   }
 }

@@ -53,7 +53,7 @@ import {access_levels, isAllowed, modules, pages} from "../utils/user";
 import {TimerActions} from "./timers";
 import {fetchRoles} from "../system/user_roles";
 import {LinkContainer} from "react-router-bootstrap";
-import {EditCellModal, fetchActivities, useWindowSize} from "../orchestration/activity-editor";
+import {EditCellModal, fetchActivities, fetchCells, useWindowSize} from "../orchestration/activity-editor";
 import {SavedFiltersFormGroup} from "../utils/searchFilters";
 import {ManualActionInputForm} from "../dashboard/manualActions";
 import {useDropzone} from "react-dropzone";
@@ -66,6 +66,7 @@ import Nanobar from "nanobar";
 import {SplitButton} from "react-bootstrap";
 import MenuItem from "react-bootstrap/lib/MenuItem";
 import {fetchInstanceContext} from "../help/templatePlayground";
+import {ContextTable} from "./components";
 
 const SUB_REQUESTS_PAGE_SIZE = 25;
 
@@ -114,6 +115,7 @@ const pp_as_json = (s) => {
 
 export function TransactionFlow({definition, states, activityId}) {
   const [editedCell, setEditedCell] = useState();
+  const [cells, setCells] = useState([]);
   const [editor, setEditor] = useState(null);
   const [prevStates, setPrevStates] = useState(null);
   const [width, height] = useWindowSize();
@@ -171,6 +173,10 @@ export function TransactionFlow({definition, states, activityId}) {
       }
     }, [height, width, editor, flowGraphRef.current]);
 
+  useEffect(() => {
+    fetchCells(setCells);
+  }, []);
+
   return (
     <div>
       <div ref={toolbarRef} style={{position: 'absolute', zIndex: '100'}} />
@@ -180,6 +186,8 @@ export function TransactionFlow({definition, states, activityId}) {
         show={editedCell !== undefined}
         cell={editedCell}
         onHide={() => setEditedCell(undefined)}
+        cells={cells}
+        activity={{definition: workableDefinition(JSON.parse(definition), [])}}
         readOnly />
     </div>
   )
@@ -1369,22 +1377,6 @@ export const TxTable = ({tx, request, userInfo}) => (
 );
 
 
-export const ContextTable = ({context}) => (
-    <Table style={{tableLayout: 'fixed'}}>
-        <tbody>
-        {
-            context.sort((a, b) => {
-                if(a.id < b.id) return 1;
-                if(a.id > b.id) return -1;
-                return 0;
-            }).map(c =>
-                <tr key={c.id}><th>{c.key}</th><td style={{wordWrap:'break-word'}}>{c.value}</td></tr>
-            )
-        }
-        </tbody>
-    </Table>
-);
-
 const Timers = ({timers, onUpdate}) => (
     <Table style={{tableLayout: 'fixed'}}>
         <thead>
@@ -1424,7 +1416,7 @@ function RequestBody(props) {
     try {
         parsedContent = JSON.parse(content);
         if(parsedContent !== null && typeof parsedContent === "object") {
-            return <ReactJson src={parsedContent}/>
+            return <ReactJson name={null} src={parsedContent}/>
         }
     } catch (e) {
         console.error(e);
@@ -1618,11 +1610,10 @@ export class Transaction extends Component {
                 let error_msg = undefined;
                 reload && setTimeout(() => this.fetchTxDetails(true), RELOAD_TX / 2);
                 if(error.response === undefined) {
-                    this.props.notifications.addNotification({
-                        title: <FormattedMessage id="fetch-tx-failed" defaultMessage="Fetch transaction failed!"/>,
-                        message: error.message,
-                        level: 'error'
-                    });
+                    NotificationsManager.error(
+                      <FormattedMessage id="fetch-tx-failed" defaultMessage="Fetch transaction failed!"/>,
+                      error.message
+                    );
                     return;
                 }
                 switch(error.response.status) {
@@ -1671,7 +1662,8 @@ export class Transaction extends Component {
 
     onReplay(activity_id, task_id) {
         this.setState({replaying: true});
-        fetch_put(`/api/v01/transactions/${activity_id}/tasks/${task_id}`, {}, this.props.auth_token)
+        const {proxy_gateway_host} = this.state.request;
+        fetch_put(`/${proxy_gateway_host || "api/v01"}/transactions/${activity_id}/tasks/${task_id}`, {})
             .then(() => {
                 !this.cancelLoad && this.setState({replaying: false});
                 if(USE_WS) {
@@ -1679,26 +1671,25 @@ export class Transaction extends Component {
                 } else {
                     this.fetchTxDetails(false);
                 }
-                this.props.notifications.addNotification({
-                        message: <FormattedMessage id="task-replayed" defaultMessage="Task replayed!"/>,
-                        level: 'success'
-                });
+                NotificationsManager.success(
+                  <FormattedMessage id="task-replayed" defaultMessage="Task replayed!"/>,
+                );
             })
             .catch(error => {
                 !this.cancelLoad && this.setState({replaying: false});
-                this.props.notifications.addNotification({
-                    title: <FormattedMessage id="task-replay-failed" defaultMessage="Task replay failed!"/>,
-                    message: error.message,
-                    level: 'error'
-                });
+                NotificationsManager.error(
+                    <FormattedMessage id="task-replay-failed" defaultMessage="Task replay failed!"/>,
+                    error.message,
+                );
             })
     }
 
     onRollback(activity_id, task_id, replay_behaviour) {
         this.setState({replaying: true});
+        const {proxy_gateway_host} = this.state.request;
         const meta = JSON.stringify({replay_behaviour: replay_behaviour});
         const action = titleCase(replay_behaviour);
-        fetch_put(`/api/v01/transactions/${activity_id}/tasks/${task_id}?meta=${meta}`, {}, this.props.auth_token)
+        fetch_put(`/${proxy_gateway_host || "api/v01"}/transactions/${activity_id}/tasks/${task_id}?meta=${meta}`, {})
             .then(() => {
                 !this.cancelLoad && this.setState({replaying: false});
                 if(USE_WS) {
@@ -1706,18 +1697,16 @@ export class Transaction extends Component {
                 } else {
                     this.fetchTxDetails(false);
                 }
-                this.props.notifications.addNotification({
-                        message: <FormattedMessage id="rollback-triggered" defaultMessage="{action} triggered!" values={{action: action}}/>,
-                        level: 'success'
-                });
+                NotificationsManager.success(
+                  <FormattedMessage id="rollback-triggered" defaultMessage="{action} triggered!" values={{action: action}}/>,
+                );
             })
             .catch(error => {
                 !this.cancelLoad && this.setState({replaying: false});
-                this.props.notifications.addNotification({
-                    title: <FormattedMessage id="rollback-failed" defaultMessage="{action} failed!" values={{action: action}}/>,
-                    message: error.message,
-                    level: 'error'
-                });
+                NotificationsManager.error(
+                  <FormattedMessage id="rollback-failed" defaultMessage="{action} failed!" values={{action: action}}/>,
+                  error.message
+                );
             })
     }
 
@@ -1813,32 +1802,28 @@ export class Transaction extends Component {
                         } else {
                             this.fetchTxDetails(false);
                         }
-                        this.props.notifications.addNotification({
-                            message: <FormattedMessage id="instance-status-changed" defaultMessage="Instance status updated!"/>,
-                            level: 'success'
-                        });
+                        NotificationsManager.success(
+                          <FormattedMessage id="instance-status-changed" defaultMessage="Instance status updated!"/>
+                        );
                     })
-                    .catch(error => this.props.notifications.addNotification({
-                            title: <FormattedMessage id="instance-update-failed" defaultMessage="Instance status update failed!"/>,
-                            message: error.message,
-                            level: 'error'
-                        })
+                    .catch(error => NotificationsManager.error(
+                        <FormattedMessage id="instance-update-failed" defaultMessage="Instance status update failed!"/>,
+                        error.message
+                      )
                     )
                 : this.fetchTxDetails(false)
             )
-            .catch(error => this.props.notifications.addNotification({
-                    title: <FormattedMessage id="instance-update-failed" defaultMessage="Instance status update failed!"/>,
-                    message: error.message,
-                    level: 'error'
-                })
+            .catch(error => NotificationsManager.error(
+                <FormattedMessage id="instance-update-failed" defaultMessage="Instance status update failed!"/>,
+                error.message
+              )
             )
     }
 
     caseUpdated() {
-        this.props.notifications.addNotification({
-            message: <FormattedMessage id="case-updated" defaultMessage="Case updated!"/>,
-            level: 'success'
-        });
+        NotificationsManager.success(
+            <FormattedMessage id="case-updated" defaultMessage="Case updated!"/>
+        );
         if(USE_WS) {
             this.websocket && this.websocket.send(JSON.stringify({"reload": true}));
         } else {
@@ -1847,11 +1832,10 @@ export class Transaction extends Component {
     }
 
     caseUpdateFailure(error) {
-        this.props.notifications.addNotification({
-            title: <FormattedMessage id="case-update-failure" defaultMessage="Case update failure!"/>,
-            message: error.message,
-            level: 'error'
-        });
+        NotificationsManager.error(
+            <FormattedMessage id="case-update-failure" defaultMessage="Case update failure!"/>,
+            error.message
+        );
     }
 
     onForceClose() {
@@ -2038,7 +2022,7 @@ export class Transaction extends Component {
                                 {
                                     raw_event ?
                                       <RequestBody content={raw_event.content} /> :
-                                      (request && request.details) && <ReactJson src={request.details}/>
+                                      (request && request.details) && <ReactJson name={null} src={request.details}/>
                                 }
                                 </Panel.Body>
                             </Panel>
@@ -2294,21 +2278,19 @@ export class Request extends Component {
         fetch_get(`/api/v02/apio/requests/${this.props.match.params.reqId}`)
             .then(data => !this.cancelLoad && this.setState({request: data.request}))
             .catch(error =>
-                !this.cancelLoad && this.props.notifications.addNotification({
-                    title: <FormattedMessage id="fetch-req-failed" defaultMessage="Fetch request failed!" />,
-                    message: error.message,
-                    level: 'error'
-                })
+                !this.cancelLoad && NotificationsManager.error(
+                    <FormattedMessage id="fetch-req-failed" defaultMessage="Fetch request failed!" />,
+                    error.message
+                )
             );
 
         fetch_get(`/api/v01/apio/requests/${this.props.match.params.reqId}/traces?details=1`)
             .then(data => !this.cancelLoad && this.setState({messages: data.traces}))
             .catch(error =>
-                !this.cancelLoad && this.props.notifications.addNotification({
-                    title: <FormattedMessage id="fetch-messages-failed" defaultMessage="Fetch request traces failed!" />,
-                    message: error.message,
-                    level: 'error'
-                })
+                !this.cancelLoad && NotificationsManager.error(
+                    <FormattedMessage id="fetch-messages-failed" defaultMessage="Fetch request traces failed!" />,
+                    error.message,
+                )
             );
     }
 
@@ -2456,9 +2438,7 @@ export const activeCriteria = {
     status: {model: 'instances', value: 'ACTIVE', op: 'eq'}
 };
 
-
 export const needActionCriteria = {role_id: {op: "is_not_null", value: null}, status: {op: "eq", value: 'ACTIVE'}}
-
 
 const AutoRefreshTime = 10;
 
@@ -3522,7 +3502,7 @@ export class __Requests extends Component{
                     <Breadcrumb.Item active><FormattedMessage id="requests" defaultMessage="Requests"/></Breadcrumb.Item>
                     <Breadcrumb.Item active><FormattedMessage id="requests" defaultMessage="Requests"/></Breadcrumb.Item>
                 </Breadcrumb>
-                <Panel defaultExpanded={false} >
+                <Panel defaultExpanded={true} >
                     <Panel.Heading>
                         <Panel.Title toggle>
                             <FormattedMessage id="search" defaultMessage="Search" /> <Glyphicon glyph="search" />

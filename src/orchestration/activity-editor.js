@@ -94,7 +94,7 @@ function isValid(p, v) {
     return null;
 }
 
-function fetchCells(onSuccess) {
+export function fetchCells(onSuccess) {
     fetch_get('/api/v01/cells')
         .then(data => onSuccess(data.cells))
         .catch(console.error);
@@ -112,7 +112,7 @@ export function fetchActivity(activityId, cb) {
         .catch(console.error);
 }
 
-function deleteActivity(activityId, cb) {
+export function deleteActivity(activityId, cb) {
     fetch_delete(`/api/v01/activities/${activityId}`)
         .then(r => r.json())
         .then(data =>{
@@ -293,6 +293,20 @@ export function Activities({user_info}) {
 
             <Panel>
                 <Panel.Body>
+                    <ButtonToolbar>
+                        <Button bsStyle='primary' onClick={() => setShowNew(true)}>
+                            <FormattedMessage id="new" defaultMessage="New" />
+                        </Button>
+                    </ButtonToolbar>
+                    <NewActivity
+                        show={showNew}
+                        onClose={() => {setShowNew(false);}}
+                         />
+                </Panel.Body>
+            </Panel>
+
+            <Panel>
+                <Panel.Body>
                     <SearchBar onSearch={setFilter} />
                     <Table>
                         <thead>
@@ -380,20 +394,6 @@ export function Activities({user_info}) {
                               });
                             })
                         }} />
-                </Panel.Body>
-            </Panel>
-
-            <Panel>
-                <Panel.Body>
-                    <ButtonToolbar>
-                        <Button bsStyle='primary' onClick={() => setShowNew(true)}>
-                            <FormattedMessage id="new" defaultMessage="New" />
-                        </Button>
-                    </ButtonToolbar>
-                    <NewActivity
-                        show={showNew}
-                        onClose={() => {setShowNew(false);}}
-                         />
                 </Panel.Body>
             </Panel>
         </>

@@ -34,6 +34,38 @@ function runTemplate(context, template, debug, onSuccess, onError) {
     .catch(e => onError && onError(e.message))
 }
 
+function PlaygroundOutput({title, error, value, defaultExpand=true}) {
+  const [expand, setExpand] = useState(defaultExpand);
+  return (
+    <>
+      <Col sm={12}>
+        <h4>
+          <i>
+            <Button onClick={() => setExpand(e => !e)}>
+              {
+                expand?<Glyphicon glyph="minus"/>:<Glyphicon glyph="plus"/>
+              }
+            </Button>
+            {" "}
+            {title}
+          </i>
+          {
+            error && <div style={{color: "red"}}>{error}</div>
+          }
+        </h4>
+        {
+          expand && <FormControl
+            componentClass="textarea"
+            style={{resize: "vertical"}}
+            value={value}
+            readOnly
+            rows={8}/>
+        }
+      </Col>
+    </>
+  )
+}
+
 const emptyResponse = {
   output: "",
   json_form: "",
@@ -118,11 +150,12 @@ export default function TemplatePlayground() {
                       componentClass="textarea"
                       value={template}
                       onChange={e => setTemplate(e.target.value)}
-                      rows={5} />
+                      style={{resize: "vertical"}}
+                      rows={15} />
               </Row>
               <Row style={{marginTop: "6px", marginLeft: "0px"}}>
                   <Col sm={5}>
-                      <h4><i>Context</i></h4>
+                      <h4><i><Glyphicon glyph="plus"/> Context</i></h4>
                   </Col>
                   <Col smOffset={8}>
                     <Form onSubmit={e => {
@@ -147,44 +180,44 @@ export default function TemplatePlayground() {
                   <FormControl
                       componentClass="textarea"
                       value={context}
-                      style={{ backgroundColor: validContext?undefined:"#fcdada" }}
+                      style={{ backgroundColor: validContext?undefined:"#fcdada", resize: "vertical" }}
                       onChange={e => setContext(e.target.value)}
-                      rows={50} />
+                      rows={15} />
               </Row>
           </Col>
           <Col sm={6}>
               <Row style={{marginLeft: "0px"}}>
-                  <Col sm={5}>
-                      <h4><i>Output</i></h4>
-                  </Col>
-                  <Col smOffset={6}>
-                      {
-                        output.output.length !== 0 && output.json_form === null && <p style={{color: "red"}}>*not* JSON valid</p>
-                      }
-                  </Col>
+                <PlaygroundOutput
+                  title={"Output (Raw)"}
+                  error={error}
+                  value={output.output} />
 
+                <PlaygroundOutput
+                  title={"Output (RAW -> JSON)"}
+                  defaultExpand={false}
+                  error={output.json_form === null ? "*not* JSON valid": ""}
+                  value={output.json_form} />
 
-              {
-                error && <p style={{color: "red"}}>{error}</p>
-              }
-              <FormControl
-                  componentClass="textarea"
-                  value={output.json_form || output.output}
-                  readOnly
-                  rows={output.trace?8:58} />
-              {
-                output.trace &&
-                <>
-                  <Col sm={5}>
-                      <h4><i>Trace</i></h4>
-                  </Col>
-                  <FormControl
-                    componentClass="textarea"
-                    value={JSON.stringify(output.trace, null, 2)}
-                    readOnly
-                    rows={40} />
-                </>
-              }
+                <PlaygroundOutput
+                  title={"Output (RAW -> AST eval)"}
+                  defaultExpand={false}
+                  error={output.ast_eval === null ? "*not* AST valid": ""}
+                  value={output.ast_eval} />
+
+                  {
+                    output.trace &&
+                    <>
+                      <Col sm={5}>
+                        <h4><i>Trace</i></h4>
+                      </Col>
+                      <FormControl
+                        componentClass="textarea"
+                        style={{resize: "vertical"}}
+                        value={JSON.stringify(output.trace, null, 2)}
+                        readOnly
+                        rows={8} />
+                    </>
+                  }
               </Row>
           </Col>
       </Row>

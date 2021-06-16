@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
 import {Bar} from 'react-chartjs-2';
+import 'chartjs-adapter-moment';
 import Modal from 'react-bootstrap/lib/Modal';
 import Col from 'react-bootstrap/lib/Col';
 import Form from 'react-bootstrap/lib/Form';
@@ -103,7 +104,7 @@ export default class TransactionsOverTime extends Component {
                     }, {}
                 )
             ),
-            backgroundColor: colorHash.hex(this.state.names[k] || k),
+            backgroundColor: colorHash.hex(this.state.names[k] || k || ""),
         })); 
 
         const chartData = {
@@ -117,22 +118,19 @@ export default class TransactionsOverTime extends Component {
                 intersect: false,
             },
             scales: {
-                xAxes: [{
+                x: {
                     stacked: true,
-                    //distribution: 'series',
-                    // barThickness: 5,
-                    barPercentage: 0.1,
                     type: 'time',
                     time: {
                         unit: 'day',
-                        min: this.state.start,
-                        max: this.state.end || moment(),
                         minUnit: 'day',
                     },
-                }],
-                yAxes: [{
+                    min: this.state.start,
+                    max: this.state.end || moment(),
+                },
+                y: {
                     stacked: true
-                }]
+                }
             }
         };
         return (

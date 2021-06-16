@@ -40,6 +40,7 @@ const audit_target_types = [
     "user profile",
     "template",
     "documents",
+    "logs",
 ];
 
 

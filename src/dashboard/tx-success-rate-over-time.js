@@ -2,6 +2,7 @@ import React, {useEffect, useState} from "react";
 import {DashboardPanel} from "./dashboard-panel";
 import {FormattedMessage} from "react-intl";
 import {Bar} from "react-chartjs-2";
+import 'chartjs-adapter-moment';
 import Modal from "react-bootstrap/lib/Modal";
 import Form from "react-bootstrap/lib/Form";
 import FormGroup from "react-bootstrap/lib/FormGroup";
@@ -75,24 +76,26 @@ export default function SuccessRateOverTime(props) {
           mode: 'index',
           intersect: false,
       },
-      legend: {
+      plugins: {
+        legend: {
           display: false,
+        },
       },
       scales: {
-          xAxes: [{
+          x: {
               stacked: true,
               barThickness: 5,
               type: 'time',
               time: {
                   unit: 'hour',
-                  min: start,
-                  max: end || moment(),
                   minUnit: 'hour',
               },
-          }],
-          yAxes: [{
+              min: start,
+              max: end || moment(),
+          },
+          y: {
               stacked: true
-          }]
+          }
       },
       maintainAspectRatio: false,
   };

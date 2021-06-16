@@ -33,10 +33,15 @@ const QueueState = ({name, state}) => {
         }]
     };
     const chartOptions = {
-        responsive: true,
-        legend: {
+        responsive: false,
+        animation: {
+          duration: 0
+        },
+        plugins:{
+          legend: {
             display: true,
             position: 'left',
+          }
         },
         tooltips: {
             enabled: false,
