@@ -19,17 +19,60 @@ import queryString from "query-string";
 import moment from "moment";
 import {Pagination} from "../utils/datatable";
 
+function spec2filter(s) {
+  switch(s.op) {
+    case "eq":
+    case "==":
+      return s.value;
+    case "ne":
+      return {"$neq": s.value}
+    case "gt":
+      return {"$gt": s.value}
+    case "ge":
+      return {"$gte": s.value}
+    case "lt":
+      return {"$lt": s.value}
+    case "le":
+      return {"$lte": s.value}
+    case "like":
+      return {"$like": s.value}
+    case "is_not_null":
+      return {"$neq": null}
+    case "is_null":
+      return null
+  }
+}
+
+function criteria2params(c) {
+  return Object.entries(c)
+    .filter(([name, s]) =>
+      s && (
+        s.value && s.op ||
+        s.or || s.and || s.op === 'is_null' ||
+        s.op === 'is_not_null' || typeof(s.value) === 'boolean'
+      )
+    ).reduce((o, [name, s]) => {
+      switch(name) {
+        default:
+          o[name] = spec2filter(s);
+      }
+      return o
+    }, {})
+}
 
 export function fetchAlarms(criteria, paging, sorting, onDone, onSuccess) {
-  const url = new URL(API_URL_PREFIX + "/api/v01/alarms");
+  const url = new URL(API_URL_PREFIX + "/api/v02/alarms");
+  const searchStr = encodeURI(
+    JSON.stringify({
+      filter: criteria2params(criteria),
+      limit: paging ? paging.page_size: undefined,
+      offset: paging ? (paging.page_number - 1) * paging.page_size : undefined,
+      sort: sorting || undefined,
+    })
+  )
+
   if(criteria) {
-    url.searchParams.append("filter", JSON.stringify(criteria));
-  }
-  if(paging) {
-    url.searchParams.append("paging", JSON.stringify(paging));
-  }
-  if(sorting) {
-    url.searchParams.append("sorting", JSON.stringify(sorting));
+    url.searchParams.append("q", searchStr);
   }
   fetch_get(url)
     .then(r => {
@@ -43,7 +86,7 @@ export function fetchAlarms(criteria, paging, sorting, onDone, onSuccess) {
 }
 
 function clearAlarm(aID, onSuccess) {
-  fetch_put(`/api/v01/alarms/${aID}`)
+  fetch_put(`/api/v02/alarms/${aID}`)
     .then(r => {
       onSuccess && onSuccess();
     })
@@ -53,7 +96,7 @@ function clearAlarm(aID, onSuccess) {
 }
 
 function fetchAlarmKeys(onSuccess) {
-  fetch_get("/api/v01/alarms/keys")
+  fetch_get("/api/v02/alarms/keys")
     .then(r => {
       onSuccess && onSuccess(r.keys);
     })
@@ -82,7 +125,7 @@ function pagingFromParams() {
   }
   return {};
 }
-
+/*
 function expandCrit(c) {
   if(typeof c === "object" && !c.field) {
     return Object.entries(c).map(([key, f]) => {
@@ -91,6 +134,7 @@ function expandCrit(c) {
   }
   return c;
 }
+*/
 
 function replacePaging(loc, newPaging) {
   const params = queryString.parse(loc.search);
@@ -126,9 +170,9 @@ export default function AlarmManagement({history, location}) {
     const paging = update(defaultPaging, {$merge: pagingFromParams()});
     setLoading(true);
     fetchAlarms(
-      expandCrit(crit),
+      crit,
       paging,
-      {field: "last_occurrence", direction: "desc"},
+      ["-last_occurrence"],
       () => setLoading(false),
       setAlarms,
     );
@@ -342,9 +386,9 @@ export default function AlarmManagement({history, location}) {
         <Panel.Body>
           <Pagination
             onChange={p => history.replace(replacePaging(location, JSON.stringify(p)))}
-            page_number={alarms?.pagination[0]}
-            num_pages={alarms?.pagination[2]}
-            total_results={alarms?.pagination[3]} />
+            page_number={alarms?(alarms.offset / alarms.limit) + 1: 1}
+            num_pages={alarms?Math.ceil(alarms.total_count / alarms.limit): 1}
+            total_results={alarms?.total_count} />
           <Table>
             <thead>
               <tr>
@@ -392,9 +436,9 @@ export default function AlarmManagement({history, location}) {
           </Table>
           <Pagination
             onChange={p => history.replace(replacePaging(location, JSON.stringify(p)))}
-            page_number={alarms?.pagination[0]}
-            num_pages={alarms?.pagination[2]}
-            total_results={alarms?.pagination[3]} />
+            page_number={alarms?(alarms.offset / alarms.limit) + 1: 1}
+            num_pages={alarms?Math.ceil(alarms.total_count / alarms.limit): 1}
+            total_results={alarms?.total_count} />
         </Panel.Body>
       </Panel>
     </>
