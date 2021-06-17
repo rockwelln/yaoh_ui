@@ -30,23 +30,23 @@ export function DashboardCard({className, heading, subheading, number}) {
   )
 }
 
-export const ErrorCasesTile = ({count, total}) => (
-    <Link to={{pathname: "/transactions/list", search: queryString.stringify({
-            q: JSON.stringify(update(errorCriteria, {$merge: activeCriteria}))
-        })}}>
-        <Tile className="error">
-            <TileHeader>
-                <div className="count">{count}</div>
-                <div className="title">
-                    <FormattedMessage id="cases-errors" defaultMessage="Case(s) with errors"/>
-                </div>
-                <div className="remark">
-                    {total} <FormattedMessage id="running-cases" defaultMessage="Running cases"/>
-                </div>
-            </TileHeader>
-        </Tile>
-    </Link>
-);
+// export const ErrorCasesTile = ({count, total}) => (
+//     <Link to={{pathname: "/transactions/list", search: queryString.stringify({
+//             q: JSON.stringify(update(errorCriteria, {$merge: activeCriteria}))
+//         })}}>
+//         <Tile className="error">
+//             <TileHeader>
+//                 <div className="count">{count}</div>
+//                 <div className="title">
+//                     <FormattedMessage id="cases-errors" defaultMessage="Case(s) with errors"/>
+//                 </div>
+//                 <div className="remark">
+//                     {total} <FormattedMessage id="running-cases" defaultMessage="Running cases"/>
+//                 </div>
+//             </TileHeader>
+//         </Tile>
+//     </Link>
+// );
 
 // export const Tile = ({className, children}) => (
 //     <Col md={2} sm={4} xs={6}>
