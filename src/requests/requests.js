@@ -1419,6 +1419,17 @@ function RequestBody(props) {
     )
 }
 
+function fetchRequest(requestID, onSuccess, onError) {
+  return fetch_get(`/api/v01/apio/requests/${requestID}`)
+    .then(data => onSuccess && onSuccess(data.request))
+    .catch(error => onError && onError(error));
+}
+
+function fetchInstance(instanceID, onSuccess, onError) {
+  fetch_get(`/api/v01/transactions/${instanceID}`)
+    .then(data => onSuccess && onSuccess(data))
+    .catch(error => onError && onError(error));
+}
 
 const RELOAD_TX = 10 * 1000;
 let USE_WS = false;
@@ -1654,9 +1665,8 @@ export class Transaction extends Component {
     }
 
     onReplay(activity_id, task_id) {
-        this.setState({replaying: true});
-        const {proxy_gateway_host} = this.state.request;
-        fetch_put(`/${proxy_gateway_host || "api/v01"}/transactions/${activity_id}/tasks/${task_id}`, {})
+        const _innerReplay = ({prefix}) => {
+          return fetch_put(`/${prefix || "api/v01"}/transactions/${activity_id}/tasks/${task_id}`, {})
             .then(() => {
                 !this.cancelLoad && this.setState({replaying: false});
                 if(USE_WS) {
@@ -1675,6 +1685,28 @@ export class Transaction extends Component {
                     error.message,
                 );
             })
+        }
+
+        const {tx} = this.state;
+        this.setState({replaying: true});
+
+        if(tx && tx.super_instance_chain) {
+          const topInstanceID = tx.super_instance_chain[tx.super_instance_chain.length-1].id;
+          fetchInstance(topInstanceID, i => {
+            if(i.original_request_id) {
+              fetchRequest(
+                i.original_request_id,
+                r => _innerReplay({prefix: r.proxy_gateway_host}),
+                () => { this.setState({replaying: false})}
+              )
+            } else {
+              _innerReplay()
+            }
+          }, () => { this.setState({replaying: false}) })
+        } else {
+          const {request} = this.state;
+          _innerReplay({prefix: request?.proxy_gateway_host})
+        }
     }
 
     onRollback(activity_id, task_id, replay_behaviour) {
