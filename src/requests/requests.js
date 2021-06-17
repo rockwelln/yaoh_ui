@@ -53,7 +53,7 @@ import {access_levels, isAllowed, modules, pages} from "../utils/user";
 import {TimerActions} from "./timers";
 import {fetchRoles} from "../system/user_roles";
 import {LinkContainer} from "react-router-bootstrap";
-import {EditCellModal, fetchCells, useWindowSize} from "../orchestration/activity-editor";
+import {EditCellModal, fetchActivities, fetchCells, useWindowSize} from "../orchestration/activity-editor";
 import {SavedFiltersFormGroup} from "../utils/searchFilters";
 import {ManualActionInputForm} from "../dashboard/manualActions";
 import {useDropzone} from "react-dropzone";
@@ -1352,10 +1352,11 @@ export const TasksTable = ({tasks, definition, onReplay, onRollback, user_can_re
 );
 
 
-export const TxTable = ({tx, request, userInfo}) => (
+export const TxTable = ({tx, request, userInfo, activities}) => (
     <Table condensed>
         <tbody>
             <tr><th><FormattedMessage id="id" defaultMessage="ID" /></th><td>{tx.id}</td></tr>
+            <tr><th><FormattedMessage id="workflow" defaultMessage="Workflow" /></th><td>{activities.find(a => a.id === tx.activity_id)?.name}</td></tr>
             <tr><th><FormattedMessage id="request-status" defaultMessage="Request status" /></th><td>{request && request.status}</td></tr>
             <tr><th><FormattedMessage id="workflow-status" defaultMessage="Workflow status" /></th><td>{tx.status}</td></tr>
             <tr><th><FormattedMessage id="creation-date" defaultMessage="Creation date" /></th><td>{userLocalizeUtcDate(moment.utc(tx.created_on), userInfo).format()}</td></tr>
@@ -1457,6 +1458,7 @@ export class Transaction extends Component {
             events: [],
             timers: [],
             autoRefresh: false,
+            activities: [],
         };
         this.cancelLoad = false;
         this.websocket = null;
@@ -1631,6 +1633,7 @@ export class Transaction extends Component {
 
     componentDidMount() {
         document.title = `Instance - ${this.props.match.params.txId}`;
+        fetchActivities(a => this.setState({activities: a}))
         USE_WS ? this.fetchDetails() : this.fetchTxDetails(true);
     }
 
@@ -1914,8 +1917,9 @@ export class Transaction extends Component {
             timers,
             subrequestsFilter,
             showActionForm,
+            activities,
         } = this.state;
-        const {user_info, auth_token} = this.props;
+        const {user_info} = this.props;
 
         const original_event_id = events && ((request && request.event_id) || (events[0] && events[0].event_id));
         const raw_event = events && (request ? events.filter(e => e.event_id === request.event_id)[0] : events[0]);
@@ -2124,7 +2128,7 @@ export class Transaction extends Component {
                                 <Panel.Title><FormattedMessage id="summary" defaultMessage="Summary" /></Panel.Title>
                             </Panel.Heading>
                             <Panel.Body>
-                                <TxTable tx={tx} request={request} userInfo={user_info}/>
+                                <TxTable tx={tx} request={request} userInfo={user_info} activities={activities}/>
                             </Panel.Body>
                         </Panel>
 
@@ -2500,7 +2504,6 @@ export class Requests extends Component{
             roles: [],
         };
         this._refresh = this._refresh.bind(this);
-        this._load_activities = this._load_activities.bind(this);
         this._load_proxy_hosts = this._load_proxy_hosts.bind(this);
         this._prepare_url = this._prepare_url.bind(this);
         this._onCloseAll = this._onCloseAll.bind(this);
@@ -2547,7 +2550,7 @@ export class Requests extends Component{
     componentDidMount() {
         document.title = "Requests";
         fetchRoles(roles => this.setState({roles: roles}));
-        this._load_activities();
+        fetchActivities(activities => this.setState({activities: activities}))
         this._load_proxy_hosts();
         this._refresh();
     }
@@ -2564,12 +2567,6 @@ export class Requests extends Component{
                 filter_criteria: Requests.criteria_from_params(nextProps.location.search)
             });
         }
-    }
-
-    _load_activities() {
-        fetch_get('/api/v01/activities')
-            .then(data => !this.cancelLoad && this.setState({activities: data.activities}))
-            .catch(error => console.error(error))
     }
 
     _load_proxy_hosts() {
@@ -2946,11 +2943,9 @@ export class Requests extends Component{
                                         })}>
                                         <option value='' />
                                         {
-                                            activities && activities.sort((a, b) => {
-                                                if(a.name > b.name) return 1;
-                                                if(a.name < b.name) return -1;
-                                                return 0
-                                            }).map(
+                                            activities && activities.sort(
+                                              (a, b) => a.name.localeCompare(b.name)
+                                            ).map(
                                                 a => <option value={a.id} key={a.id}>{a.name}</option>
                                             )
                                         }
@@ -3528,7 +3523,6 @@ export class CustomRequests extends Component{
             roles: [],
         };
         this._refresh = this._refresh.bind(this);
-        this._load_activities = this._load_activities.bind(this);
         this._prepare_url = this._prepare_url.bind(this);
     }
 
@@ -3562,7 +3556,7 @@ export class CustomRequests extends Component{
     componentDidMount() {
         document.title = "Requests";
         fetchRoles(roles => this.setState({roles: roles}));
-        this._load_activities();
+        fetchActivities(activities => this.setState({activities: activities}));
         this._refresh();
     }
 
@@ -3578,12 +3572,6 @@ export class CustomRequests extends Component{
                 filter_criteria: CustomRequests.criteria_from_params(nextProps.location.search, nextProps.user_info.ui_profile)
             });
         }
-    }
-
-    _load_activities() {
-        fetch_get('/api/v01/activities', this.props.auth_token)
-            .then(data => !this.cancelLoad && this.setState({activities: data.activities}))
-            .catch(error => console.error(error))
     }
 
     _prepare_url(paging_spec, sorting_spec, format) {
@@ -4021,7 +4009,7 @@ export class CustomRequests extends Component{
                                 {
                                     title: <FormattedMessage id="workflow" defaultMessage="Workflow" />,
                                     field: 'activity_id', model: 'instances', sortable: true,
-                                    render: n => activities && n.activity_id && activities.find(a => a.id === n.activity_id) ? activities.find(a => a.id === n.activity_id).name : "-"
+                                    render: n => activities && n.activity_id && activities.find(a => a.id === n.activity_id)?.name || "-"
                                 },
                                 {
                                     title: <FormattedMessage id="route" defaultMessage="Route" />,
