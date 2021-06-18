@@ -2518,7 +2518,7 @@ export class Requests extends Component{
             number: { model: 'requests', value: '', op: 'like' },
             status: { model: 'instances', value: '', op: 'eq' },
             kind: { model: 'instances', value: '', op: 'eq' },
-            created_on: { model: 'requests', value: '', op: 'ge' },
+            created_on: { model: 'requests', value: '', value2: '', op: 'ge' },
             request_status: { model: 'requests', value: '', op: 'eq' },
             label: { model: 'bulks', value: '', op: 'eq' },
             proxied_username: { model: 'requests', value: '', op: 'eq' },
@@ -2661,6 +2661,22 @@ export class Requests extends Component{
                             value: filter_criteria[f].value
                         };
                     case 'created_on':
+                        if(filter_criteria[f].op === "between") {
+                            return { "and": [
+                                {
+                                    model: filter_criteria[f].model,
+                                    field: f,
+                                    op: "ge",
+                                    value: moment.parseZone(filter_criteria[f].value).utc().format()
+                                },
+                                {
+                                    model: filter_criteria[f].model,
+                                    field: f,
+                                    op: "le",
+                                    value: moment.parseZone(filter_criteria[f].value2).utc().format()
+                                }
+                            ]};
+                        }
                         return {
                             model: filter_criteria[f].model,
                             field: f,
@@ -3304,6 +3320,7 @@ export class Requests extends Component{
                                         <option value="ge">&gt;=</option>
                                         <option value="lt">&lt;</option>
                                         <option value="le">&lt;=</option>
+                                        <option value="between">between</option>
                                     </FormControl>
                                 </Col>
 
@@ -3322,6 +3339,27 @@ export class Requests extends Component{
                                         showTimeSelect
                                         timeFormat="HH:mm"
                                         timeIntervals={60}/>
+
+                                    {
+                                      filter_criteria.created_on.op === "between" &&
+                                      <>
+                                        {" - "}
+                                        <DatePicker
+                                            className="form-control"
+                                            selected={filter_criteria.created_on.value2.length !== 0 ? userLocalizeUtcDate(moment(filter_criteria.created_on.value2), user_info).toDate() : null}
+                                            onChange={d => {
+                                              this.setState({
+                                                filter_criteria: update(
+                                                  this.state.filter_criteria,
+                                                  {created_on: {$merge: {value2: d || ""}}})
+                                              })
+                                            }}
+                                            dateFormat="dd/MM/yyyy HH:mm"
+                                            showTimeSelect
+                                            timeFormat="HH:mm"
+                                            timeIntervals={60}/>
+                                      </>
+                                    }
                                 </Col>
                             </FormGroup>
 
