@@ -2524,7 +2524,7 @@ export class Requests extends Component{
             proxied_username: { model: 'requests', value: '', op: 'eq' },
             proxied_method: { model: 'requests', value: '', op: 'eq' },
             proxied_url: { model: 'requests', value: '', op: 'eq' },
-            proxied_status: { model: 'processing_traces', value: '', op: 'eq' },
+            proxied_status: { model: 'requests', value: '', op: 'eq' },
             proxy_gateway_host: { model: 'requests', value: '', op: 'eq' },
             role_id: { model: 'manual_actions', value: '', op: 'eq' },
             task_status: undefined,
@@ -2603,36 +2603,31 @@ export class Requests extends Component{
                     case 'proxied_method':
                         return {
                             model: filter_criteria[f].model,
-                            field: 'details',
-                            json_field: 'method',
+                            field: 'request_method',
                             op: filter_criteria[f].op,
                             value: filter_criteria[f].value
                         };
                     case 'proxied_url':
                         return {
                             model: filter_criteria[f].model,
-                            field: 'details',
-                            json_field: 'url',
+                            field: 'request_url',
                             op: filter_criteria[f].op,
                             value: filter_criteria[f].value
                         };
                     case 'proxied_username':
-                        return {"or": [
-                            {
-                              model: filter_criteria[f].model,
-                              field: 'details',
-                              json_field: 'user',
-                              op: filter_criteria[f].op,
-                              value: filter_criteria[f].value
-                            },
-                            {
-                              model: filter_criteria[f].model,
-                              field: 'owner',
-                              op: filter_criteria[f].op,
-                              value: filter_criteria[f].value
-                            }
-                        ]};
+                        return {
+                            model: filter_criteria[f].model,
+                            field: 'owner',
+                            op: filter_criteria[f].op,
+                            value: filter_criteria[f].value
+                        };
                     case 'proxied_status':
+                        return {
+                            model: filter_criteria[f].model,
+                            field: 'response_status',
+                            op: filter_criteria[f].op,
+                            value: filter_criteria[f].value
+                        };
                     case 'task_status':
                     case 'action_status':
                     case 'request_status':
