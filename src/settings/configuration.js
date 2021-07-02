@@ -754,6 +754,39 @@ function GuiForm(props) {
               </Col>
             </FormGroup>
 
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="allowed-origins" defaultMessage="Allowed origins"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  readOnly
+                  componentClass="input"
+                  value={gui.allowed_origins || ""} />
+                <HelpBlock>
+                  RFU: the default setup use an NGINX as reverse proxy in front of the application server.
+                  Therefore, it must be configured in the NGINX settings using the command
+                  'add_header Access-Control-Allow-Origin ...domain...' with the appropriate value
+                </HelpBlock>
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="max-idle-timeout" defaultMessage="Max session idle timeout (minutes)"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="input"
+                  value={gui.max_idle_timeout || ""}
+                  onChange={e => onChange(update(gui, {$merge: {"max_idle_timeout": e.target.value && parseInt(e.target.value, 10)}}))}/>
+                <HelpBlock>
+                  Number of minutes the user can keep his session idle. (note: background API calls reset the idle timer)
+                </HelpBlock>
+              </Col>
+            </FormGroup>
           </Form>
         </Panel.Body>
       </Panel>
