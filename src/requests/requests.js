@@ -2442,7 +2442,12 @@ export class Request extends Component {
 
 
 export const errorCriteria = {
-    task_status: {model: 'tasks', value: 'ERROR', op: 'eq'}
+    task_status: {
+        and: [
+            {field: 'status', model: 'tasks', value: 'ERROR', op: 'eq'},
+            {field: 'cnt_tasks_in_error', value: 0, op: 'ne'},
+        ]
+    }
 };
 
 
@@ -2460,6 +2465,11 @@ const callbackErrorCriteria = {
                 field: 'cell_id',
                 op: "eq",
                 value: "end"
+            },
+            {
+                field: 'end_task_in_error',
+                op: "eq",
+                value: true,
             }
         ]
     }
@@ -2529,7 +2539,7 @@ export class Requests extends Component{
             proxy_gateway_host: { model: 'requests', value: '', op: 'eq' },
             role_id: { model: 'manual_actions', value: '', op: 'eq' },
             task_status: undefined,
-            action_status: undefined,
+            // action_status: undefined,
             end_task_status: undefined,
         }
     }
@@ -2629,8 +2639,7 @@ export class Requests extends Component{
                             op: filter_criteria[f].op,
                             value: filter_criteria[f].value
                         };
-                    case 'task_status':
-                    case 'action_status':
+                    // case 'action_status':
                     case 'request_status':
                         return {
                             model: filter_criteria[f].model,
@@ -2646,6 +2655,7 @@ export class Requests extends Component{
                             value: filter_criteria[f].value
                         };
                     case 'end_task_status':
+                    case 'task_status':
                         // filter transparently sent
                         return filter_criteria[f];
                     case 'tenant_id':
@@ -2679,7 +2689,7 @@ export class Requests extends Component{
                             op: filter_criteria[f].op,
                             value: moment.parseZone(filter_criteria[f].value).utc().format()
                         };
-                    case 'role_id':
+                  case 'role_id':
                         return { "and": [
                             {
                                 model: filter_criteria[f].model,
@@ -2691,7 +2701,16 @@ export class Requests extends Component{
                                 model: "manual_actions",
                                 field: "output",
                                 op: "is_null"
-                            }
+                            },
+                            {
+                                field: "roles",
+                                op: (
+                                  filter_criteria[f].op === "eq"? "like" :
+                                  filter_criteria[f].op === "is_not_null"? "ne" :
+                                  filter_criteria[f].op
+                                ),
+                                value: filter_criteria[f].op === "eq" ? "%." + filter_criteria[f].value + ".%" : ""
+                            },
                         ]};
                     default:
                         return {
@@ -3118,7 +3137,6 @@ export class Requests extends Component{
                                                         { role_id: { $merge: { op: e.target.value } } })
                                                 })}>
                                                 <option value="eq">==</option>
-                                                <option value="ne">!=</option>
                                                 <option value="is_not_null">*any*</option>
                                             </FormControl>
                                         </Col>
@@ -3366,7 +3384,7 @@ export class Requests extends Component{
 
                                 <Col smOffset={1} sm={8}>
                                     <Checkbox
-                                        checked={filter_criteria.task_status && filter_criteria.task_status.value === 'ERROR'}
+                                        checked={filter_criteria.task_status && filter_criteria.task_status.and[0].value === 'ERROR'}
                                         onChange={e => (
                                             e.target.checked ?
                                                 this.setState({
@@ -3378,7 +3396,7 @@ export class Requests extends Component{
                                                         {$unset: ['task_status']})
                                                 })
                                         )} >
-                                        <FormattedMessage id="with-errors" defaultMessage="With errors" />
+                                        <FormattedMessage id="with-tasks-in-errors" defaultMessage="With tasks in errors" />
                                     </Checkbox>
 
                                     <Checkbox
