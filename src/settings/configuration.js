@@ -2439,6 +2439,37 @@ function AlarmsPanel({alarms, onChange}) {
   )
 }
 
+function CleanupPanel({retention, onChange}) {
+  return (
+    <>
+      <HelpBlock>
+        Configuration for data retention periods.
+      </HelpBlock>
+
+      <Panel>
+        <Panel.Body>
+          <Form>
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="requests-retention" defaultMessage="Requests retention (months)"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="input"
+                  value={retention.monthKept}
+                  onChange={e => onChange(update(retention, {$merge: {monthKept: e.target.value && parseInt(e.target.value, 10)}}))}/>
+                <HelpBlock>
+                  The template used for new users created in the workflow engine datamodel.
+                </HelpBlock>
+              </Col>
+            </FormGroup>
+          </Form>
+        </Panel.Body>
+      </Panel>
+    </>
+  )
+}
 
 function fetchLicenseDetails(onSuccess) {
     return fetch_get("/api/v01/system/configuration/license")
@@ -3128,12 +3159,18 @@ export default function Configuration(props) {
             onChange={v => setConfig(update(config, {content: {alarms: {$set: v}}}))}
           />
         </Tab>
-        <Tab eventKey={10} title="License">
+        <Tab eventKey={10} title="Cleanup">
+          <CleanupPanel
+            retention={config.content.retention || {}}
+            onChange={v => setConfig(update(config, {content: {retention: {$set: v}}}))}
+          />
+        </Tab>
+        <Tab eventKey={11} title="License">
           <LicensePanel />
         </Tab>
-        <Tab eventKey={11} title="Raw">
+        <Tab eventKey={12} title="Raw">
           {
-            activeKey === 11 && config.content &&
+            activeKey === 12 && config.content &&
             <ReactJson
               name={null}
               src={config.content}
