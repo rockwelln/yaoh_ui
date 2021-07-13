@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 
 import Col from 'react-bootstrap/lib/Col';
 import Row from 'react-bootstrap/lib/Row';
@@ -48,16 +48,19 @@ export default function Dashboard(props) {
     const isManual = props.user_info.modules.includes(modules.manualActions);
     const isNpact = supportedModule(modules.npact, props.user_info.modules);
 
+    const fetch_gw = useCallback(() => fetch_gateways(setGateways), []);
+    const fetch_s = useCallback(() => fetch_stats(isNpact, setStats), [isNpact]);
+
     useEffect(() => {
         document.title = "Dashboard";
         fetch_gateways(setGateways);
-        const interval = setInterval(() => fetch_gateways(setGateways), REFRESH_CYCLE * 1000);
+        const interval = setInterval(fetch_gw, REFRESH_CYCLE * 1000);
         return () => clearInterval(interval);
     }, []);
 
     useEffect(() => {
         fetch_stats(isNpact, setStats);
-        const interval = setInterval(() => fetch_stats(isNpact, setStats), REFRESH_CYCLE * 1000);
+        const interval = setInterval(fetch_s, REFRESH_CYCLE * 1000);
         return () => clearInterval(interval);
     }, [isNpact]);
 

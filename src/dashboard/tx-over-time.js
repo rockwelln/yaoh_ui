@@ -70,6 +70,12 @@ export default class TransactionsOverTime extends Component {
         this._refreshHandler && clearInterval(this._refreshHandler);
     }
 
+    shouldComponentUpdate(nextProps, nextState, nextContext) {
+        const s1 = JSON.stringify(this.state.data);
+        const s2 = JSON.stringify(nextState.data);
+        return s1 !== s2 || this.state.names !== nextState.names;
+    }
+
     render() {
         const onConfigClose = () => {
             this.setState({showSettings: false});
