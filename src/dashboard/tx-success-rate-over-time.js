@@ -2,6 +2,7 @@ import React, {useEffect, useState} from "react";
 import {DashboardPanel} from "./dashboard-panel";
 import {FormattedMessage} from "react-intl";
 import {Bar} from "react-chartjs-2";
+import 'chartjs-adapter-moment';
 import Modal from "react-bootstrap/lib/Modal";
 import Form from "react-bootstrap/lib/Form";
 import FormGroup from "react-bootstrap/lib/FormGroup";
@@ -11,8 +12,9 @@ import DatePicker from "react-datepicker";
 import HelpBlock from "react-bootstrap/lib/HelpBlock";
 import Button from "react-bootstrap/lib/Button";
 import moment from "moment";
-import {fetch_get, userLocalizeUtcDate} from "../utils";
+import {fetch_get} from "../utils";
 import FormControl from "react-bootstrap/lib/FormControl";
+import {localUser} from "../utils/user";
 
 const REFRESH_CYCLE = 20;
 const DEFAULT_NB_DAYS = 1;
@@ -29,8 +31,7 @@ function fetchSuccessRatePerHour(start, end, onSuccess) {
 }
 
 
-export default function SuccessRateOverTime(props) {
-  const {user_info} = props;
+function SuccessRateOverTime() {
   const [data, setData] = useState([]);
   const [start, setStart] = useState(moment().subtract(DEFAULT_NB_DAYS, "days").toDate());
   const [end, setEnd] = useState(undefined);
@@ -52,12 +53,12 @@ export default function SuccessRateOverTime(props) {
   };
   const onShowClose = () => setShowBig(false);
 
-  const labels = data.map(d => userLocalizeUtcDate(moment.utc(d["date"]), user_info).toDate());
+  const labels = data.map(d => localUser.localizeUtcDate(moment.utc(d["date"])).toDate());
   const datasets = ["SUCCESS", "ERROR"].map(s => {
     return {
       label: s,
       data: labels.map(l => {
-        const e = data.filter(d => d.status === s && userLocalizeUtcDate(moment.utc(d["date"]), user_info).toDate().getTime() === l.getTime()).reduce((o, c) => o + c["counter"], 0);
+        const e = data.filter(d => d.status === s && localUser.localizeUtcDate(moment.utc(d["date"])).toDate().getTime() === l.getTime()).reduce((o, c) => o + c["counter"], 0);
         if(e) return e;
         return 0;
       }),
@@ -75,24 +76,26 @@ export default function SuccessRateOverTime(props) {
           mode: 'index',
           intersect: false,
       },
-      legend: {
+      plugins: {
+        legend: {
           display: false,
+        },
       },
       scales: {
-          xAxes: [{
+          x: {
               stacked: true,
               barThickness: 5,
               type: 'time',
               time: {
                   unit: 'hour',
-                  min: start,
-                  max: end || moment(),
                   minUnit: 'hour',
               },
-          }],
-          yAxes: [{
+              min: start,
+              max: end || moment(),
+          },
+          y: {
               stacked: true
-          }]
+          }
       },
       maintainAspectRatio: false,
   };
@@ -185,3 +188,5 @@ export default function SuccessRateOverTime(props) {
         </DashboardPanel>
     );
 }
+
+export default React.memo(SuccessRateOverTime);

@@ -41,7 +41,13 @@ export default class ActiveTransactionsPerWorkflow extends Component {
         .catch(console.error);
     }
 
-    loadActivityNames() {
+    shouldComponentUpdate(nextProps, nextState, nextContext) {
+        const s1 = JSON.stringify(this.state.data);
+        const s2 = JSON.stringify(nextState.data);
+        return s1 !== s2 || this.state.names !== nextState.names;
+    }
+
+  loadActivityNames() {
         if(this.cancelLoad) return;
 
         fetch_get('/api/v01/activities')
@@ -58,20 +64,23 @@ export default class ActiveTransactionsPerWorkflow extends Component {
         };
         let colorHash = new ColorHash();
         const chartData = {
-            labels: data.map(d => `${names[d.activity_id]}: ${d.counter}`),
+            labels: data.sort((a, b) => b.counter - a.counter).map(d => `${names[d.activity_id]}: ${d.counter}`),
             datasets: [{
                 data: data.map(d => d.counter),
-                backgroundColor: data.map(d => colorHash.hex(names[d.activity_id])),
+                backgroundColor: data.map(d => colorHash.hex(names[d.activity_id] || "")),
             }]
         };
         const chartOptions = {
             responsive: true,
-            legend: {
+            maintainAspectRatio: true,
+            plugins: {
+              legend: {
                 display: true,
-                position: 'left',
+                maxHeight: 100,
+              }
             },
             tooltips: {
-                enabled: false,
+                enabled: true,
             },
         };
 
@@ -79,7 +88,7 @@ export default class ActiveTransactionsPerWorkflow extends Component {
             <DashboardPanel
                 title={<FormattedMessage id='act-tx-workflow' defaultMessage='Active transactions / workflow'/>}
                 onShow={() => this.setState({showBig: true})} >
-                <Doughnut data={chartData} options={chartOptions}/>
+                <Doughnut data={chartData} options={chartOptions} />
                 <Modal show={this.state.showBig} onHide={onShowClose} dialogClassName='large-modal'>
                     <Modal.Header closeButton>
                         <Modal.Title>

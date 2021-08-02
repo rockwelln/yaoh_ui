@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
 import {Bar} from 'react-chartjs-2';
+import 'chartjs-adapter-moment';
 import Modal from 'react-bootstrap/lib/Modal';
 import Col from 'react-bootstrap/lib/Col';
 import Form from 'react-bootstrap/lib/Form';
@@ -69,6 +70,12 @@ export default class TransactionsOverTime extends Component {
         this._refreshHandler && clearInterval(this._refreshHandler);
     }
 
+    shouldComponentUpdate(nextProps, nextState, nextContext) {
+        const s1 = JSON.stringify(this.state.data);
+        const s2 = JSON.stringify(nextState.data);
+        return s1 !== s2 || this.state.names !== nextState.names;
+    }
+
     render() {
         const onConfigClose = () => {
             this.setState({showSettings: false});
@@ -103,7 +110,7 @@ export default class TransactionsOverTime extends Component {
                     }, {}
                 )
             ),
-            backgroundColor: colorHash.hex(this.state.names[k] || k),
+            backgroundColor: colorHash.hex(this.state.names[k] || k || ""),
         })); 
 
         const chartData = {
@@ -117,22 +124,19 @@ export default class TransactionsOverTime extends Component {
                 intersect: false,
             },
             scales: {
-                xAxes: [{
+                x: {
                     stacked: true,
-                    //distribution: 'series',
-                    // barThickness: 5,
-                    barPercentage: 0.1,
                     type: 'time',
                     time: {
                         unit: 'day',
-                        min: this.state.start,
-                        max: this.state.end || moment(),
                         minUnit: 'day',
                     },
-                }],
-                yAxes: [{
+                    min: this.state.start,
+                    max: this.state.end || moment(),
+                },
+                y: {
                     stacked: true
-                }]
+                }
             }
         };
         return (

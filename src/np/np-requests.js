@@ -11,6 +11,8 @@ import Glyphicon from 'react-bootstrap/lib/Glyphicon';
 import Checkbox from 'react-bootstrap/lib/Checkbox';
 import Breadcrumb from 'react-bootstrap/lib/Breadcrumb';
 
+import Select from 'react-select';
+import AsyncSelect from 'react-select/async';
 import DatePicker from 'react-datepicker';
 import moment from 'moment';
 import { Link } from 'react-router-dom';
@@ -28,7 +30,8 @@ import {
   needActionCriteria,
 } from "../requests/requests";
 import update from 'immutability-helper';
-import { is_admin} from "../utils/user";
+import {localUser, modules} from "../utils/user";
+import {fetchRoles} from "../system/user_roles";
 
 export const DATE_FORMAT = 'DD/MM/YYYY HH:mm:ss';
 
@@ -90,12 +93,24 @@ export const getIcon = (k) => {
   }
 };
 
+function fetchRequestStatuses(onSuccess) {
+  return fetch_get("/api/v01/npact/np_requests/statuses")
+    .then(d => onSuccess(d.statuses.sort((a, b) => a.localeCompare(b))))
+    .catch(error => console.error(error));
+}
+
+function fetchPendingActions(inputValue, onSuccess) {
+  return fetch_get(`/api/v01/manual_actions/search?q=${inputValue}`)
+    .then(d => onSuccess(d.actions.sort((a, b) => a.localeCompare(b)).map(a => ({label: a, value: a}))))
+    .catch(error => console.error(error));
+}
+
 export class NPRequests extends Component {
   constructor(props) {
     super(props);
     this.cancelLoad = false;
     this.state = {
-      filter_criteria: NPRequests.criteria_from_params(this.props.location.search, this.props.user_info.ui_profile),
+      filter_criteria: NPRequests.criteria_from_params(this.props.location.search),
       paging_info: {
         page_number: 1, page_size: 50
       },
@@ -103,7 +118,10 @@ export class NPRequests extends Component {
         model: 'NPRequest', field: 'created_on', direction: 'desc'
       }],
 
-      requests: [], operators: [],
+      requests: [],
+      request_statuses: [],
+      operators: [],
+      roles: [],
       pagination: {
         page_number: 1,
         num_pages: 1,
@@ -115,7 +133,7 @@ export class NPRequests extends Component {
     this._refreshOperators = this._refreshOperators.bind(this);
   }
 
-  static default_criteria(ui_profile) {
+  static default_criteria() {
     return {
       kind: { model: 'NPRequest', value: '', op: 'eq' },
       number: { model: 'NPRequestRange', value: '', op: 'eq' },
@@ -129,12 +147,14 @@ export class NPRequests extends Component {
       created_on: { model: 'NPRequest', value: '', op: 'ge' },
       due_date: { model: 'NPRequest', value: '', op: 'ge' },
       b2b: { model: 'NPRequest', value: '', op: 'eq' },
-      task_status: is_admin(ui_profile) ? undefined : errorCriteria.task_status,
+      role_id: { model: 'manual_actions', value: '', op: 'eq' },
+      action: { model: 'manual_actions', value: '', op: 'eq' },
+      task_status: localUser.isSystem() ? undefined : errorCriteria.task_status,
       action_status: undefined,
     }
   }
 
-  static criteria_from_params(url_params, ui_profile) {
+  static criteria_from_params(url_params) {
     const params = queryString.parse(url_params);
     let custom_params = {};
     if (params.filter !== undefined) {
@@ -143,7 +163,7 @@ export class NPRequests extends Component {
       } catch (e) { console.error(e) }
     }
     return update(
-      NPRequests.default_criteria(ui_profile),
+      NPRequests.default_criteria(),
       { $merge: custom_params }
     );
   }
@@ -158,6 +178,8 @@ export class NPRequests extends Component {
 
   componentDidMount() {
     document.title = "Requests";
+    fetchRoles(roles => this.setState({roles: roles}));
+    fetchRequestStatuses(s => this.setState({request_statuses: s}));
     this._refreshOperators();
     this._refresh();
   }
@@ -170,16 +192,16 @@ export class NPRequests extends Component {
     if (nextProps.location.pathname === this.props.location.pathname &&
       nextProps.location.search !== this.props.location.search) {
       this.setState({
-        filter_criteria: NPRequests.criteria_from_params(nextProps.location.search, nextProps.user_info.ui_profile)
+        filter_criteria: NPRequests.criteria_from_params(nextProps.location.search)
       });
     }
   }
 
-  componentWillUpdate(nextProps, nextState) {
-    if (JSON.stringify(nextState.filter_criteria) !== JSON.stringify(this.state.filter_criteria)) {
-      setTimeout(() => this._refresh(), 800);
-    }
-  }
+  // componentWillUpdate(nextProps, nextState) {
+  //   if (JSON.stringify(nextState.filter_criteria) !== JSON.stringify(this.state.filter_criteria)) {
+  //     setTimeout(() => this._refresh(), 800);
+  //   }
+  // }
 
   _prepare_url(paging_spec, sorting_spec, format) {
     let url = new URL(API_URL_PREFIX + '/api/v01/npact/np_requests/search');
@@ -189,8 +211,9 @@ export class NPRequests extends Component {
       .filter(f =>
         filter_criteria[f] &&
         (
-          (filter_criteria[f].value && filter_criteria[f].op) ||
-          filter_criteria[f].or || filter_criteria[f].and || filter_criteria[f].op === 'is_null' || typeof (filter_criteria[f].value) === 'boolean'
+          (filter_criteria[f].value && filter_criteria[f].op && (typeof(filter_criteria[f].value) !== "object" || filter_criteria[f].value.length !== 0)) ||
+          filter_criteria[f].or || filter_criteria[f].and || filter_criteria[f].op === 'is_null' || filter_criteria[f].op === 'is_not_null' ||
+          typeof (filter_criteria[f].value) === 'boolean'
         )
       )
       .map(f => {
@@ -220,20 +243,67 @@ export class NPRequests extends Component {
             };
           case 'task_status':
           case 'action_status':
-          case 'request_status':
             return {
               model: model,
               field: 'status',
               op: op,
-              value: value
+              value: value,
+            }
+          case 'request_status':
+            return op === "eq" ? {
+              "or": value.map(v =>
+                ({
+                  model: model,
+                  field: 'status',
+                  op: op,
+                  value: v,
+                }),
+              )
+            } : {
+              "and": value.map(v =>
+                ({
+                  model: model,
+                  field: 'status',
+                  op: op,
+                  value: v,
+                }),
+              )
             };
+          case 'action':
+            return { "and": [
+                {
+                    model: model,
+                    field: "description",
+                    op: op,
+                    value: value
+                },
+                {
+                    model: "manual_actions",
+                    field: "output",
+                    op: "is_null"
+                }
+            ]};
+          case 'role_id':
+            return { "and": [
+                {
+                    model: model,
+                    field: f,
+                    op: op,
+                    value: value
+                },
+                {
+                    model: "manual_actions",
+                    field: "output",
+                    op: "is_null"
+                }
+            ]};
           case 'created_on':
           case 'due_date':
             return {
-                model: filter_criteria[f].model,
+                model: model,
                 field: f,
-                op: filter_criteria[f].op,
-                value: moment.parseZone(filter_criteria[f].value).utc().format()
+                op: op,
+                value: moment.parseZone(value).utc().format()
             };
           case 'approval':
           case 'wait_ivr':
@@ -337,7 +407,8 @@ export class NPRequests extends Component {
   }
 
   render() {
-    const { filter_criteria, requests, operators, export_url } = this.state;
+    const { filter_criteria, requests, operators, export_url, roles } = this.state;
+    const { user_info } = this.props;
     requests && requests.forEach(r => {
       const donor = operators.find(o => o.id === r.nprequest.donor_id);
       const recipient = operators.find(o => o.id === r.nprequest.recipient_id);
@@ -346,6 +417,7 @@ export class NPRequests extends Component {
     });
     const invalid_created_on = filter_criteria.created_on.value.length !== 0 && !moment.utc(filter_criteria.created_on.value).isValid();
     const invalid_due_date = filter_criteria.due_date.value.length !== 0 && !moment.utc(filter_criteria.due_date.value).isValid();
+    const manualActions = user_info.modules && user_info.modules.includes(modules.manualActions);
 
     return (
       <div>
@@ -392,18 +464,33 @@ export class NPRequests extends Component {
                   <FormattedMessage id="kind" defaultMessage="Kind" />
                 </Col>
 
-                <Col smOffset={1} sm={8}>
-                  <FormControl componentClass="select" value={filter_criteria.kind.value}
+                <Col sm={1}>
+                  <FormControl
+                    componentClass="select"
+                    value={filter_criteria.kind.op}
                     onChange={(e) => this.setState({
                       filter_criteria: update(this.state.filter_criteria,
-                        { kind: { $merge: { value: e.target.value } } })
+                        { kind: { $merge: { op: e.target.value } } })
                     })}>
-                    <option value='' />
-                    <option value="Disconnect">Disconnect</option>
-                    <option value="PortIn">PortIn</option>
-                    <option value="PortOut">PortOut</option>
-                    <option value="Update">Update</option>
+                    <option value="eq">==</option>
+                    <option value="ne">!=</option>
                   </FormControl>
+                </Col>
+
+                <Col sm={8}>
+                  <Select
+                    isClearable
+                    value={{value: filter_criteria.kind.value, label: filter_criteria.kind.value}}
+                    name="kind"
+                    options={["Disconnect", "PortIn", "PortOut", "Update", "Broadcast", "ChangeOfInstallationAddress"].map(k => ({value: k, label: k}))}
+                    onChange={v => {
+                      this.setState({
+                        filter_criteria: update(this.state.filter_criteria,
+                          { kind: { $merge: { value: v ? v.value: "" } } })
+                      })
+                    }}
+                    className="basic-select"
+                    classNamePrefix="select" />
                 </Col>
               </FormGroup>
 
@@ -454,16 +541,19 @@ export class NPRequests extends Component {
                 </Col>
 
                 <Col sm={8}>
-                  <FormControl componentClass="select" value={filter_criteria.status.value}
-                    onChange={(e) => this.setState({
-                      filter_criteria: update(this.state.filter_criteria,
-                        { status: { $merge: { value: e.target.value } } })
-                    })}>
-                    <option value='' />
-                    <option value="ACTIVE">ACTIVE</option>
-                    <option value="CLOSED_IN_ERROR">CLOSED_IN_ERROR</option>
-                    <option value="CLOSED_IN_SUCCESS">CLOSED_IN_SUCCESS</option>
-                  </FormControl>
+                  <Select
+                    isClearable
+                    value={{value: filter_criteria.status.value, label: filter_criteria.status.value}}
+                    name="status"
+                    options={["ACTIVE", "CLOSED_IN_SUCCESS", "CLOSED_IN_ERROR"].map(k => ({value: k, label: k}))}
+                    onChange={v => {
+                      this.setState({
+                        filter_criteria: update(this.state.filter_criteria,
+                          { status: { $merge: { value: v ? v.value : "" } } })
+                      })
+                    }}
+                    className="basic-select"
+                    classNamePrefix="select" />
                 </Col>
               </FormGroup>
 
@@ -486,18 +576,29 @@ export class NPRequests extends Component {
                 </Col>
 
                 <Col sm={8}>
-                  <FormControl componentClass="select" value={filter_criteria.request_status.value}
-                    onChange={(e) => this.setState({
-                      filter_criteria: update(this.state.filter_criteria,
-                        { request_status: { $merge: { value: e.target.value } } })
-                    })}>
-                    <option value='' />
-                    <option value="ACTIVE">ACTIVE</option>
-                    <option value="UPDATED">UPDATED</option>
-                    <option value="DISCONNECTED">DISCONNECTED</option>
-                    <option value="ACTIVATED">ACTIVATED</option>
-                    <option value="FAILED">FAILED</option>
-                  </FormControl>
+                  <Select
+                    isMulti
+                    isClearable
+                    placeholder=""
+                    value={filter_criteria.request_status.value ? filter_criteria.request_status.value.map(s => ({value: s, label: s})): []}
+                    name="request_status"
+                    options={
+                      this.state.request_statuses.map(k => ({value: k, label: k}))
+                    }
+                    onChange={(v) => {
+                      v && this.setState({
+                        filter_criteria: update(this.state.filter_criteria,
+                          { request_status: { $merge: { value: v.map(e => e.value) } } })
+                      })
+                    }}
+                    clearValue={() =>
+                      this.setState({
+                        filter_criteria: update(this.state.filter_criteria,
+                          { request_status: { $merge: { value: [] } } })
+                      })
+                    }
+                    className="basic-multi-select"
+                    classNamePrefix="select" />
                 </Col>
               </FormGroup>
 
@@ -519,20 +620,20 @@ export class NPRequests extends Component {
                   </FormControl>
                 </Col>
                 <Col sm={8}>
-                  <FormControl
-                    componentClass="select"
-                    value={filter_criteria.donor_id.value}
-                    onChange={e => this.setState({
-                      filter_criteria: update(this.state.filter_criteria,
-                        { donor_id: { $merge: { value: e.target.value && parseInt(e.target.value) } } })
-                    })}>
-                    <option value="" />
-                    {
-                      this.state.operators.map(o =>
-                        <option key={o.id} value={o.id}>{o.name}</option>
-                      )
-                    }
-                  </FormControl>
+                  <Select
+                    isClearable
+                    isSearchable
+                    value={{ value: filter_criteria.donor_id.value, label: operators.find(o => o.id === filter_criteria.donor_id.value)?.name }}
+                    name="donor"
+                    options={operators.map(o => ({value: o.id, label: o.name}))}
+                    onChange={v => {
+                      this.setState({
+                        filter_criteria: update(this.state.filter_criteria,
+                          { donor_id: { $merge: { value: v && v.value } } })
+                      })
+                    }}
+                    className="basic-select"
+                    classNamePrefix="select" />
                 </Col>
               </FormGroup>
               <FormGroup>
@@ -553,22 +654,102 @@ export class NPRequests extends Component {
                   </FormControl>
                 </Col>
                 <Col sm={8}>
-                  <FormControl
-                    componentClass="select"
-                    value={filter_criteria.recipient_id.value}
-                    onChange={e => this.setState({
-                      filter_criteria: update(this.state.filter_criteria,
-                        { recipient_id: { $merge: { value: e.target.value && parseInt(e.target.value) } } })
-                    })}>
-                    <option value="" />
-                    {
-                      this.state.operators.map(o =>
-                        <option key={o.id} value={o.id}>{o.name}</option>
-                      )
-                    }
-                  </FormControl>
+                  <Select
+                    isClearable
+                    isSearchable
+                    value={{ value: filter_criteria.recipient_id.value, label: operators.find(o => o.id === filter_criteria.recipient_id.value)?.name }}
+                    name="recipient"
+                    options={operators.map(o => ({value: o.id, label: o.name}))}
+                    onChange={v => {
+                      this.setState({
+                        filter_criteria: update(this.state.filter_criteria,
+                          { recipient_id: { $merge: { value: v && v.value } } })
+                      })
+                    }}
+                    className="basic-select"
+                    classNamePrefix="select" />
                 </Col>
               </FormGroup>
+
+              {
+                  manualActions &&
+                    <>
+                      <FormGroup>
+                          <Col componentClass={ControlLabel} sm={2}>
+                              <FormattedMessage id="pending-action-role" defaultMessage="Pending action role" />
+                          </Col>
+
+                          <Col sm={1}>
+                              <FormControl
+                                  componentClass="select"
+                                  value={filter_criteria.role_id.op}
+                                  onChange={e => this.setState({
+                                      filter_criteria: update(this.state.filter_criteria,
+                                          { role_id: { $merge: { op: e.target.value } } })
+                                  })}>
+                                  <option value="eq">==</option>
+                                  <option value="ne">!=</option>
+                                  <option value="is_not_null">*any*</option>
+                              </FormControl>
+                          </Col>
+
+                          <Col sm={8}>
+                              <Select
+                                isClearable
+                                disabled={filter_criteria.role_id.op === "is_not_null"}
+                                value={{value: filter_criteria.role_id.value, label: roles.find(r => r.id === filter_criteria.role_id.value)?.name}}
+                                options={roles.map(r => ({value: r.id, label: r.name}))}
+                                onChange={v => {
+                                  this.setState({
+                                    filter_criteria: update(this.state.filter_criteria,
+                                      { role_id: { $merge: { value: v && v.value } } })
+                                  })
+                                }}
+                                name="manual-action-role"
+                                className="basic-select"
+                                classNamePrefix="select" />
+                          </Col>
+                      </FormGroup>
+
+                      <FormGroup>
+                          <Col componentClass={ControlLabel} sm={2}>
+                              <FormattedMessage id="pending-action" defaultMessage="Pending action" />
+                          </Col>
+
+                          <Col sm={1}>
+                              <FormControl
+                                  componentClass="select"
+                                  value={filter_criteria.action.op}
+                                  onChange={e => this.setState({
+                                      filter_criteria: update(this.state.filter_criteria,
+                                          { action: { $merge: { op: e.target.value } } })
+                                  })}>
+                                  <option value="eq">==</option>
+                              </FormControl>
+                          </Col>
+
+                          <Col sm={8}>
+                              <AsyncSelect
+                                isClearable
+                                cacheOptions
+                                loadOptions={(inputValue, callback) => {
+                                  fetchPendingActions(inputValue, callback);
+                                }}
+                                defaultOptions
+                                value={{value: filter_criteria.action.value, label: filter_criteria.action.value}}
+                                onChange={v => {
+                                  this.setState({
+                                    filter_criteria: update(this.state.filter_criteria,
+                                      { action: { $merge: { value: v && v.value } } })
+                                  })
+                                }}
+                                name="manual-action"
+                                className="basic-select"
+                                classNamePrefix="select" />
+                          </Col>
+                      </FormGroup>
+                    </>
+              }
 
               <FormGroup>
                 <Col componentClass={ControlLabel} sm={2}>
@@ -681,21 +862,19 @@ export class NPRequests extends Component {
                 </Col>
 
                 <Col smOffset={1} sm={8}>
-                  <FormControl
-                    componentClass="select"
-                    value={filter_criteria.b2b.value}
-                    onChange={e => this.setState({
-                      filter_criteria: update(this.state.filter_criteria,
-                        { b2b: { $merge: { value: e.target.value === '' ? e.target.value : e.target.value === 'true' } } })
-                    })}>
-                    <option value="" />
-                    <FormattedMessage id='true' defaultMessage='True'>
-                      {message => <option value="true">{message}</option>}
-                    </FormattedMessage>
-                    <FormattedMessage id='false' defaultMessage='False'>
-                      {message => <option value="false">{message}</option>}
-                    </FormattedMessage>
-                  </FormControl>
+                  <Select
+                    isClearable
+                    value={{value: filter_criteria.b2b.value, label: `${filter_criteria.b2b.value}` }}
+                    options={[{value: true, label: "true"}, {value: false, label: "false"}]}
+                    onChange={v => {
+                      this.setState({
+                        filter_criteria: update(this.state.filter_criteria,
+                          { b2b: { $merge: { value: v ? v.value : "" } } })
+                      })
+                    }}
+                    name="b2b"
+                    className="basic-select"
+                    classNamePrefix="select" />
                 </Col>
               </FormGroup>
 
@@ -778,7 +957,7 @@ export class NPRequests extends Component {
                   title: <FormattedMessage id="ranges" defaultMessage="Ranges" />, render: n => (
                     n.nprequest.ranges.map((r, key) => (
                       <span key={key}>
-                        {r.range_from}-{r.range_to}
+                        {r.range_from}-{r.range_to}{r.reject_code && <p style={{"color": "red"}}>{r.reject_code}</p>}
                         <br />
                       </span>
                     )

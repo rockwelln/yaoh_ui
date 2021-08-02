@@ -182,7 +182,7 @@ export function addNode(editor, def, name, paramsFields) {
                 v10.geometry.offset = new mxPoint(-5, -5);
                 break;
             default:
-                v = graph.insertVertex(parent, null, node, 0, 0, min_cell_height(c, name), baseY + (20 * c.outputs.length) + 15, cls);
+                v = graph.insertVertex(parent, null, node, c.x, c.y, min_cell_height(c, name), baseY + (20 * c.outputs.length) + 15, cls);
                 v.setConnectable(false);
 
                 v10 = graph.insertVertex(v, null, document.createElement('Target'), 0, 0, 10, 10, 'port;target;spacingLeft=18', true);
@@ -515,7 +515,7 @@ export default function draw_editor(container, handlers, placeholders, props) {
         if(cell.getAttribute('original_name', '') === 'start' || cell.getAttribute('original_name', '') === 'end')
             return cell.getAttribute('label', '');
         else if(cell.getAttribute('original_name', '') === 'sync_outputs'){
-            return "<div style='transform: rotate(45deg)'>+</div>";
+            return "<div style='transform: scale(var(--scale)) rotate(45deg)'>+</div>";
         }
         else if(cell.getAttribute('original_name', '') === 'or_outputs'){
             return "<div style='font-size: 10rem; margin-top: -1.5rem'>&cir;</div>";

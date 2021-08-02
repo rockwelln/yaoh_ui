@@ -185,6 +185,7 @@ export default class SearchOperators extends Search {
     super(props);
     this.onDelete = this.onDelete.bind(this);
     this.onFilterChange = this.onFilterChange.bind(this);
+    document.title = "Operators";
   }
 
   onFilterChange(f) {

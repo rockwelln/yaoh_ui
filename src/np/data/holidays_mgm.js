@@ -140,6 +140,11 @@ export class PublicHolidays extends Search {
     }
   });
 
+  componentDidMount() {
+    super.componentDidMount();
+    document.title = "Holidays";
+  }
+
   render() {
     const { resources, sorting_spec } = this.state;
     return (

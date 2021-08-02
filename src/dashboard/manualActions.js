@@ -8,14 +8,16 @@ import Modal from "react-bootstrap/lib/Modal";
 import Button from "react-bootstrap/lib/Button";
 import {Link} from "react-router-dom";
 import queryString from "query-string";
-import {needActionCriteria} from "../requests/requests";
-import {Tile, TileHeader} from "./dashboard-tiles";
+import {activeCriteria, errorCriteria, needActionCriteria} from "../requests/requests";
+import {DashboardCard} from "./dashboard-tiles";
 import FormGroup from "react-bootstrap/lib/FormGroup";
 import Col from "react-bootstrap/lib/Col";
 import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import Form from "react-bootstrap/lib/Form";
 import update from "immutability-helper";
 import FormControl from "react-bootstrap/lib/FormControl";
+import Checkbox from "react-bootstrap/lib/Checkbox";
+import Ajv from "ajv";
 
 
 function fetchManualActions(onSuccess) {
@@ -24,10 +26,14 @@ function fetchManualActions(onSuccess) {
         .catch(error => NotificationsManager.error("Failed to get manual actions", error.message))
 }
 
+function fetchManualActionsNP(onSuccess) {
+    fetch_get("/api/v01/npact/manual_actions?pending=1")
+        .then(r => onSuccess(r.manual_actions_per_role))
+        .catch(error => NotificationsManager.error("Failed to get manual actions", error.message))
+}
 
-function ManualActionsModal(props) {
-    const {actions, role, show, onHide} = props;
 
+function ManualActionsModal({actions, role, show, onHide}) {
     return (
         <Modal show={show} onHide={onHide} dialogClassName='large-modal'>
             <Modal.Header closeButton>
@@ -71,6 +77,67 @@ function ManualActionsModal(props) {
     )
 }
 
+function NPManualActionsModal({actions, role, show, onHide}) {
+    return (
+        <Modal show={show} onHide={onHide} dialogClassName='large-modal'>
+            <Modal.Header closeButton>
+                <Modal.Title>
+                    {`Pending manual actions for ${role}`}
+                </Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <Table condensed>
+                    <thead>
+                        <tr>
+                            <td>#</td>
+                            <td>Port ID</td>
+                            <td>Description</td>
+                            <td>Possible actions</td>
+                            <td>Created on</td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {
+                        actions && actions.map(a => (
+                            <tr key={`action-${a.id}`}>
+                                <td>
+                                    <Link to={`/transactions/${a.instance_id}`}>{a.instance_id}</Link>
+                                </td>
+                                <td>
+                                    {a.crdc_id}
+                                </td>
+                                <td>
+                                    {a.description}
+                                </td>
+                                <td>
+                                    {a.possible_outputs}
+                                </td>
+                                <td>
+                                    {a.created_on}
+                                </td>
+                            </tr>
+                        ))
+                    }
+                    </tbody>
+                </Table>
+            </Modal.Body>
+        </Modal>
+    )
+}
+
+function ManualActionInput({type, value, onChange}) {
+  switch(type) {
+    case "boolean":
+      return <Checkbox
+        checked={value}
+        onChange={e => onChange(e.target.checked)} />
+    default:
+      return <FormControl
+        componentClass="input"
+        value={value}
+        onChange={e => onChange(e.target.value)} />
+  }
+}
 
 export function ManualActionInputForm(props) {
     const {onTrigger, show, action, output, onHide} = props;
@@ -81,6 +148,9 @@ export function ManualActionInputForm(props) {
       input_form = JSON.parse(action.input_form)
     } catch(e) {}
 
+    let ajv = Ajv({allErrors: true});
+    const validInputs = input_form?ajv.validate(input_form, values):true;
+    console.log(ajv.errors, input_form, values)
     return (
         <Modal show={show} onHide={onHide} dialogClassName='large-modal'>
             <Modal.Header closeButton>
@@ -96,16 +166,16 @@ export function ManualActionInputForm(props) {
                             return (
                                 <FormGroup>
                                     <Col componentClass={ControlLabel} sm={2}>
-                                        {key}{ v.required && v.required.includes(key) && " *" }
+                                        {key}{ input_form.required && input_form.required.includes(key) && " *" }
                                     </Col>
 
                                     <Col sm={9}>
                                         {
-                                            <FormControl
-                                                componentClass="input"
+                                            <ManualActionInput
+                                                type={v.type}
                                                 value={values[key]}
-                                                onChange={e => setValues(
-                                                    update(values,{$merge: {[key] : e.target.value}})
+                                                onChange={v => setValues(
+                                                    update(values,{$merge: {[key] : v}})
                                                 )} />
                                         }
                                     </Col>
@@ -115,7 +185,7 @@ export function ManualActionInputForm(props) {
                     }
                     <FormGroup>
                         <Col smOffset={2} sm={9}>
-                            <Button onClick={() => onTrigger(action, output, values)}>
+                            <Button onClick={() => onTrigger(action, output, values)} disabled={!validInputs}>
                               {output}
                             </Button>
                         </Col>
@@ -127,7 +197,7 @@ export function ManualActionInputForm(props) {
 }
 
 
-export default function ManualActionsBox(props) {
+export default function ManualActionsBox() {
     const [actions, setActions] = useState({});
     const [showRole, setShowRole] = useState(undefined);
 
@@ -168,7 +238,50 @@ export default function ManualActionsBox(props) {
     )
 }
 
-export function ManualActionsTile(props) {
+
+export function NPManualActionsBox() {
+    const [actions, setActions] = useState({});
+    const [showRole, setShowRole] = useState(undefined);
+
+    useEffect(() => {
+        fetchManualActionsNP(setActions);
+    }, []);
+
+    return (
+        <DashboardPanel title={<FormattedMessage id='manual-tasks' defaultMessage='Manual tasks'/>}>
+            <Table condensed>
+                <thead>
+                    <tr>
+                        <th>Role</th>
+                        <th>Pending</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {
+                    Object.keys(actions).map(r => (
+                        <tr key={`role-${r}`}>
+                            <td>
+                                <Button onClick={() => setShowRole(r)} bsStyle="link">
+                                {r}
+                                </Button>
+                            </td>
+                            <td>{actions[r].length}</td>
+                        </tr>
+                    ))
+                }
+                </tbody>
+            </Table>
+            <NPManualActionsModal
+                role={showRole}
+                actions={actions[showRole]}
+                show={showRole !== undefined}
+                onHide={() => setShowRole(undefined)} />
+        </DashboardPanel>
+    )
+}
+
+
+export function ManualActionsTile() {
     const [actions, setActions] = useState({});
 
     useEffect(() => {
@@ -181,16 +294,15 @@ export function ManualActionsTile(props) {
 
     return (
       <Link to={{
-        pathname: "/transactions/list", search: queryString.stringify({
-          filter: JSON.stringify(needActionCriteria)
-        })
-      }}>
-        <Tile className="warning">
-          <TileHeader>
-            <div className="count">{count}</div>
-            <div className="title"><FormattedMessage id="cases-need-actions" defaultMessage="Case(s) need actions" /></div>
-          </TileHeader>
-        </Tile>
+          pathname: "/transactions/list", search: queryString.stringify({
+            filter: JSON.stringify(update(needActionCriteria, {$merge: activeCriteria}))
+          })
+        }}>
+        <DashboardCard
+          className={"bg-sand-tempest"}
+          heading={"Need actions"}
+          subheading={"Waiting for manual actions"}
+          number={count} />
       </Link>
     )
 }

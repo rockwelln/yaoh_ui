@@ -26,7 +26,7 @@ import update from 'immutability-helper';
 import {fetch_post, fetch_get, fetch_delete, fetch_put, NotificationsManager} from "../utils";
 import {ApioDatatable} from "../utils/datatable";
 import { LinkContainer } from 'react-router-bootstrap';
-import {INTERNAL_HELP_LINKS} from "../async-apio-help";
+import {INTERNAL_HELP_LINKS} from "../help/async-apio-help";
 import {Search, StaticControl} from "../utils/common";
 import {CallbackHandler} from "./callbacks";
 import {get_ui_profiles} from "../utils/user";
@@ -36,7 +36,7 @@ import {TrustedLocationsTable} from "./user_trusted_locs";
 // helper functions
 
 function updateLocalUser(data, onSuccess) {
-    const updatable_field = k => ['language', 'password', 'timezone'].includes(k);
+    const updatable_field = k => ['language', 'password', 'old_password', 'timezone'].includes(k);
     fetch_put(
         '/api/v01/system/users/local',
         Object.keys(data).filter(updatable_field).reduce(
@@ -141,15 +141,19 @@ function refreshLocalUserApiToken(onSuccess) {
 export function LocalUserProfile({onUserInfoChanged}) {
     const [userInfo, setUserInfo] = useState({});
     const user_info = userInfo;
-    const [newPassword, setNewPassword] = useState('');
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [onePassword, setOnePassword] = useState('');
+    const [fakePassword, _] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [profileName, setProfileName] = useState('');
     const [language, setLanguage] = useState(user_info.language);
     const [timezone, setTimezone] = useState(user_info.timezone);
 
     const delta = {};
-    if(newPassword.length !== 0) {
-        delta.password = newPassword;
+    if(onePassword.length !== 0) {
+        delta.password = onePassword;
+    }
+    if(currentPassword.length !== 0) {
+        delta.old_password = currentPassword;
     }
     if(language !== user_info.language) {
         delta.language = language;
@@ -158,17 +162,17 @@ export function LocalUserProfile({onUserInfoChanged}) {
         delta.timezone = timezone;
     }
     useEffect(() => {
-        user_info.profile_id && fetch_get("/api/v01/system/user_profiles")
-            .then(data => setProfileName(data.profiles.find(p => p.id === user_info.profile_id).name))
-            .catch(console.error)
-    }, [user_info.profile_id]);
-    useEffect(() => {
       fetchLocalUser(setUserInfo);
       document.title = "User";
-    }, [])
-    const validPassword = (newPassword === '')?null:(newPassword.length >= 7)?"success":"error";
-    const validRepPassword = (newPassword === '')?null:(confirmPassword === newPassword)?"success":"error";
-    const validForm = validPassword !== 'error' && validRepPassword !== 'error' && Object.keys(delta).length !== 0;
+    }, []);
+    useEffect(() => {
+      setLanguage(user_info.language);
+      setTimezone(user_info.timezone);
+    }, [user_info]);
+    const validPassword = (onePassword === '')?null:(onePassword.length >= 7)?"success":"error";
+    const validRepPassword = (onePassword === '')?null:(confirmPassword === onePassword)?"success":"error";
+    const validCurrentPassword = (onePassword === '')?null:currentPassword.length > 0?"success":"error";
+    const validForm = validPassword !== 'error' && validRepPassword !== 'error' && validCurrentPassword !== "error" && Object.keys(delta).length !== 0;
     return (
         <Panel>
             <Panel.Heading>
@@ -191,7 +195,7 @@ export function LocalUserProfile({onUserInfoChanged}) {
                                         <FormattedMessage id="yes" defaultMessage="Yes" />:
                                         <FormattedMessage id="no" defaultMessage="No" />
                                 }/>
-                        <StaticControl label={<FormattedMessage id='profile' defaultMessage='Profile'/>} value={profileName}/>
+                        <StaticControl label={<FormattedMessage id='profile' defaultMessage='Profile'/>} value={user_info.profile && user_info.profile.name}/>
                         <StaticControl label={<FormattedMessage id='ui-profile' defaultMessage='UI Profile'/>} value={user_info.ui_profile}/>
                         <StaticControl label={<FormattedMessage id='registered-on' defaultMessage='Registered on'/>} value={user_info.registered_on}/>
                         <FormGroup>
@@ -279,18 +283,20 @@ export function LocalUserProfile({onUserInfoChanged}) {
                         </FormGroup>
                         <FormGroup validationState={validPassword}>
                             <Col componentClass={ControlLabel} sm={2}>
-                                <FormattedMessage id="password" defaultMessage="Password" />
+                                <FormattedMessage id="new-password" defaultMessage="New password" />
                             </Col>
 
                             <Col sm={9}>
+                              { /* fakePassword tricks firefox to prevent prefill */ }
+                                <FormControl
+                                    style={{display: "none"}}
+                                    value={fakePassword}
+                                    type="password" />
                                 <FormControl
                                     componentClass="input"
-                                    placeholder="Password"
                                     type="password"
-                                    autoComplete="off"
-                                    name="new-password"
-                                    value={newPassword}
-                                    onChange={e => setNewPassword(e.target.value)} />
+                                    value={onePassword}
+                                    onChange={e => setOnePassword(e.target.value)} />
                             </Col>
                         </FormGroup>
                         <FormGroup validationState={validRepPassword}>
@@ -301,15 +307,25 @@ export function LocalUserProfile({onUserInfoChanged}) {
                             <Col sm={9}>
                                 <FormControl
                                     componentClass="input"
-                                    placeholder="Repeat password"
                                     type="password"
-                                    autoComplete="off"
-                                    name="confirm-new-password"
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)} />
                             </Col>
                         </FormGroup>
-                        <FormGroup validationState={validRepPassword}>
+                        <FormGroup validationState={validCurrentPassword}>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="current-password" defaultMessage="Current password" />
+                            </Col>
+
+                            <Col sm={9}>
+                                <FormControl
+                                    componentClass="input"
+                                    type="password"
+                                    value={currentPassword}
+                                    onChange={e => setCurrentPassword(e.target.value)} />
+                            </Col>
+                        </FormGroup>
+                        <FormGroup>
                             <Col componentClass={ControlLabel} sm={2}>
                                 <FormattedMessage id='token' defaultMessage='Token' />
                             </Col>
@@ -1077,6 +1093,36 @@ export default class SearchUsers extends Search {
                     <Breadcrumb.Item active><FormattedMessage id="system" defaultMessage="System"/></Breadcrumb.Item>
                     <Breadcrumb.Item active><FormattedMessage id="users" defaultMessage="Users"/></Breadcrumb.Item>
                 </Breadcrumb>
+
+                <Panel>
+                    <Panel.Body>
+                        <ButtonToolbar>
+                            <Button bsStyle='primary' onClick={() => this.setState({showNew: true})}>
+                                <FormattedMessage id="add-user" defaultMessage="Add user" />
+                            </Button>
+                            <LinkContainer to={"/system/users/profiles"}>
+                                <Button bsStyle='primary'>
+                                    <FormattedMessage id="profiles" defaultMessage="Profiles"/>
+                                </Button>
+                            </LinkContainer>
+                            <LinkContainer to={"/system/users/roles"}>
+                                <Button bsStyle='primary'>
+                                    <FormattedMessage id="roles" defaultMessage="Roles"/>
+                                </Button>
+                            </LinkContainer>
+                            <LinkContainer to={"/system/users/audit"}>
+                                <Button bsStyle='danger'>
+                                    <FormattedMessage id="audit" defaultMessage="Audit"/>
+                                </Button>
+                            </LinkContainer>
+                        </ButtonToolbar>
+                        <NewUser
+                            show={showNew}
+                            onClose={() => {this._refresh(); this.setState({showNew: false});}}
+                            user_info={user_info} />
+                    </Panel.Body>
+                </Panel>
+
                 <Panel>
                     <Panel.Heading>
                         <Panel.Title><FormattedMessage id="users" defaultMessage="Users" /></Panel.Title>
@@ -1113,35 +1159,6 @@ export default class SearchUsers extends Search {
                             onFilterChange={this.onFilterChange}
                             onSearch={() => this._refresh()}
                         />
-                    </Panel.Body>
-                </Panel>
-
-                <Panel>
-                    <Panel.Body>
-                        <ButtonToolbar>
-                            <Button bsStyle='primary' onClick={() => this.setState({showNew: true})}>
-                                <FormattedMessage id="add-user" defaultMessage="Add user" />
-                            </Button>
-                            <LinkContainer to={"/system/users/profiles"}>
-                                <Button bsStyle='primary'>
-                                    <FormattedMessage id="profiles" defaultMessage="Profiles"/>
-                                </Button>
-                            </LinkContainer>
-                            <LinkContainer to={"/system/users/roles"}>
-                                <Button bsStyle='primary'>
-                                    <FormattedMessage id="roles" defaultMessage="Roles"/>
-                                </Button>
-                            </LinkContainer>
-                            <LinkContainer to={"/system/users/audit"}>
-                                <Button bsStyle='danger'>
-                                    <FormattedMessage id="audit" defaultMessage="Audit"/>
-                                </Button>
-                            </LinkContainer>
-                        </ButtonToolbar>
-                        <NewUser
-                            show={showNew}
-                            onClose={() => {this._refresh(); this.setState({showNew: false});}}
-                            user_info={user_info} />
                     </Panel.Body>
                 </Panel>
             </>

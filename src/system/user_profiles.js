@@ -2,12 +2,21 @@ import React, {useState, useEffect} from 'react';
 import {LinkContainer} from 'react-router-bootstrap';
 import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
 import {FormattedMessage} from "react-intl";
-import {Panel} from "react-bootstrap";
+import Panel from "react-bootstrap/lib/Panel";
 import Button from "react-bootstrap/lib/Button";
 import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 import Modal from "react-bootstrap/lib/Modal";
 import Form from "react-bootstrap/lib/Form";
-import {fetch_delete, fetch_get, fetch_post, fetch_put, NotificationsManager, AuthServiceManager, API_URL_PREFIX} from "../utils";
+import {
+  fetch_delete,
+  fetch_get,
+  fetch_post,
+  fetch_put,
+  NotificationsManager,
+  AuthServiceManager,
+  API_URL_PREFIX,
+  ProvProxiesManager
+} from "../utils";
 import Col from "react-bootstrap/lib/Col";
 import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import FormControl from "react-bootstrap/lib/FormControl";
@@ -19,6 +28,9 @@ import Table from "react-bootstrap/lib/Table";
 import HelpBlock from "react-bootstrap/lib/HelpBlock";
 import Alert from "react-bootstrap/lib/Alert";
 import Papa from "papaparse";
+import Tabs from "react-bootstrap/lib/Tabs";
+import Tab from "react-bootstrap/lib/Tab";
+import {DeleteConfirmButton} from "../utils/deleteConfirm";
 
 
 // few helper functions
@@ -51,14 +63,14 @@ function deleteProfile(profile_id, onSuccess) {
 
 function updateProfile(profile_id, data, onSuccess) {
     const data_ = Object.keys(data).reduce((a, b) => {
-            if(["name", "available", "see_own_instances", "see_others_instances"].includes(b)) {
+            if(["name", "available", "see_own_instances", "see_others_instances", "accesses", "home"].includes(b)) {
                 a[b] = data[b];
             }
             return a;
         }, {}
     );
     data_.api_rules = data.api_rules.map(r => Object.keys(r).reduce((a, b) => {
-            if(["method", "url", "allowed"].includes(b)) {
+            if(["method", "url", "allowed", "name"].includes(b)) {
                 a[b] = r[b];
             }
             return a;
@@ -145,14 +157,28 @@ function UploadFileModal(props) {
     )
 }
 
+const new_profile = {
+  name: "",
+  available: true,
+  home: undefined,
+  accesses: [],
+  api_rules: []
+};
 
 function NewProfile(props) {
-    const new_profile = {name: "", available: true, see_own_instances:true, see_others_instances: false, api_rules: []};
     const [show, setShow] = useState(false);
     const [profile, setProfile] = useState(new_profile);
 
     const onClose_ = () => {setShow(false); setProfile(new_profile); props.onClose();};
     const validName = profile.name.length !== 0 ? "success" : null;
+
+    const hasAccess = (right) => profile.accesses && profile.accesses.includes(right)
+
+    const toggleAccess = (right, checked) =>
+      checked ?
+        setProfile(update(profile, {accesses: {$push: [right]}})) :
+        setProfile(update(profile, {accesses: {$splice: [[profile.accesses.findIndex(a => a === right), 1]]}}));
+
     return (
         <div>
             <Button bsStyle='primary' onClick={() => setShow(true)}>
@@ -188,24 +214,14 @@ function NewProfile(props) {
                         </FormGroup>
                         <FormGroup>
                             <Col componentClass={ControlLabel} sm={2}>
-                                <FormattedMessage id="see-own-requests" defaultMessage="See own instances / requests" />
+                                <FormattedMessage id="home" defaultMessage="Home" />
                             </Col>
 
                             <Col sm={9}>
-                                <Checkbox
-                                    checked={profile.see_own_instances}
-                                    onChange={e => setProfile(update(profile, {$merge: {see_own_instances: e.target.checked}}))} />
-                            </Col>
-                        </FormGroup>
-                        <FormGroup>
-                            <Col componentClass={ControlLabel} sm={2}>
-                                <FormattedMessage id="see_others_instances" defaultMessage="See others instances / requests" />
-                            </Col>
-
-                            <Col sm={9}>
-                                <Checkbox
-                                    checked={profile.see_others_instances}
-                                    onChange={e => setProfile(update(profile, {$merge: {see_others_instances: e.target.checked}}))} />
+                                <FormControl componentClass="input"
+                                    value={profile.home}
+                                             placeholder={"/"}
+                                    onChange={e => setProfile(update(profile, {$merge: {home: e.target.value}}))} />
                             </Col>
                         </FormGroup>
                         <FormGroup>
@@ -220,6 +236,7 @@ function NewProfile(props) {
                                             <th><FormattedMessage id="method" defaultMessage="method" /></th>
                                             <th>url</th>
                                             <th><FormattedMessage id="allowed" defaultMessage="allowed" /></th>
+                                            <th><FormattedMessage id="name" defaultMessage="name" /></th>
                                             <th/>
                                         </tr>
                                     </thead>
@@ -248,6 +265,11 @@ function NewProfile(props) {
                                                         checked={r.allowed}
                                                         onChange={e => setProfile(update(profile, {api_rules: {[i]: {$merge: {allowed: e.target.checked}}}}))} />
                                                 </td>
+                                                <td>
+                                                    <FormControl componentClass="input"
+                                                        value={r.name}
+                                                        onChange={e => setProfile(update(profile, {api_rules: {[i]: {$merge: {name: e.target.value}}}}))} />
+                                                </td>
                                                 <td><Button bsStyle="danger" onClick={() => setProfile(update(profile, {api_rules: {$splice: [[i, 1]]}}))}><Glyphicon glyph="remove-sign"/></Button></td>
                                             </tr>
                                         ))
@@ -261,6 +283,82 @@ function NewProfile(props) {
                                     }
                                     </tbody>
                                 </Table>
+                            </Col>
+                        </FormGroup>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="accesses" defaultMessage="Accesses" />
+                            </Col>
+
+                            <Col sm={9}>
+
+                                <Checkbox
+                                  checked={hasAccess("requests")}
+                                  onChange={e => toggleAccess("requests", e.target.checked)}>
+                                  requests
+                                  <Checkbox
+                                    checked={hasAccess("requests.others_requests")}
+                                    onChange={e => toggleAccess("requests.others_requests", e.target.checked)}>
+                                    from others
+                                  </Checkbox>
+                                </Checkbox>
+
+                                <Checkbox
+                                  checked={hasAccess("cron_requests")}
+                                  onChange={e => toggleAccess("cron_requests", e.target.checked)}>
+                                  scheduled requests
+                                </Checkbox>
+
+                                <Checkbox
+                                  checked={hasAccess("bulks")}
+                                  onChange={e => toggleAccess("bulks", e.target.checked)}>
+                                  bulks
+                                  <Checkbox
+                                    checked={hasAccess("bulks.actions")}
+                                    onChange={e => toggleAccess("bulks.actions", e.target.checked)}>
+                                    actions
+                                  </Checkbox>
+                                </Checkbox>
+                                <Checkbox
+                                  checked={hasAccess("provisioning")}
+                                  onChange={e => toggleAccess("provisioning", e.target.checked)}>
+                                  provisioning
+                                  {
+                                    ProvProxiesManager.listProxies().map((p, i) =>
+                                      <Checkbox
+                                        key={`provisioning.${p.name}`}
+                                        checked={hasAccess(`provisioning.${p.name}`)}
+                                        onChange={e => toggleAccess(`provisioning.${p.name}`, e.target.checked)}>
+                                        {p.name}
+                                      </Checkbox>
+                                    )
+                                  }
+                                </Checkbox>
+                                <Checkbox
+                                  checked={hasAccess("settings")}
+                                  onChange={e => toggleAccess("settings", e.target.checked)}>
+                                  settings
+                                  <Checkbox
+                                    checked={hasAccess("settings.users")}
+                                    onChange={e => toggleAccess("settings.users", e.target.checked)}>
+                                    users
+                                  </Checkbox>
+                                  <Checkbox
+                                    checked={hasAccess("settings.configuration")}
+                                    onChange={e => toggleAccess("settings.configuration", e.target.checked)}>
+                                    configuration
+                                  </Checkbox>
+                                  <Checkbox
+                                    checked={hasAccess("settings.alarms")}
+                                    onChange={e => toggleAccess("settings.alarms", e.target.checked)}>
+                                    alarms
+                                  </Checkbox>
+                                </Checkbox>
+                                <Checkbox
+                                  checked={hasAccess("orchestration")}
+                                  onChange={e => toggleAccess("orchestration", e.target.checked)}>
+                                  orchestration
+                                </Checkbox>
                             </Col>
                         </FormGroup>
                     </Form>
@@ -289,6 +387,13 @@ function UpdateProfile(props) {
     const refresh = () => fetchProfileDetails(props.profile.id).then(data => setProfile(data.profile));
     const validName = null;
 
+    const hasAccess = (right) => profile.accesses && profile.accesses.includes(right)
+
+    const toggleAccess = (right, checked) =>
+      checked ?
+        setProfile(update(profile, {accesses: {$push: [right]}})) :
+        setProfile(update(profile, {accesses: {$splice: [[profile.accesses.findIndex(a => a === right), 1]]}}));
+
     return (
         <Panel
             defaultExpanded={false}
@@ -299,133 +404,223 @@ function UpdateProfile(props) {
                 </Panel.Title>
             </Panel.Heading>
             <Panel.Body collapsible>
-                <Form horizontal>
-                    <FormGroup validationState={validName}>
-                        <Col componentClass={ControlLabel} sm={2}>
-                            <FormattedMessage id="name" defaultMessage="Name" />
-                        </Col>
+                <Tabs defaultActiveKey={0}>
+                    <Tab title={"details"} key={"details"} eventKey={0}>
+                        <Form horizontal style={{marginTop: "10px"}}>
+                            <FormGroup validationState={validName}>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="name" defaultMessage="Name" />
+                                </Col>
 
-                        <Col sm={9}>
-                            <div>
-                                <FormControl componentClass="input"
-                                    value={profile.name}
-                                    onChange={e => setProfile(update(profile, {$merge: {name: e.target.value}}))} />
-                            </div>
-                        </Col>
-                    </FormGroup>
-                    <FormGroup>
-                        <Col componentClass={ControlLabel} sm={2}>
-                            <FormattedMessage id="see-own-requests" defaultMessage="See own instances / requests" />
-                        </Col>
+                                <Col sm={9}>
+                                    <div>
+                                        <FormControl componentClass="input"
+                                            value={profile.name}
+                                            onChange={e => setProfile(update(profile, {$merge: {name: e.target.value}}))} />
+                                    </div>
+                                </Col>
+                            </FormGroup>
+                            <FormGroup>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="home" defaultMessage="Home" />
+                                </Col>
 
-                        <Col sm={9}>
-                            <Checkbox
-                                checked={profile.see_own_instances}
-                                onChange={e => setProfile(update(profile, {$merge: {see_own_instances: e.target.checked}}))} />
-                        </Col>
-                    </FormGroup>
-                    <FormGroup>
-                        <Col componentClass={ControlLabel} sm={2}>
-                            <FormattedMessage id="see_others_instances" defaultMessage="See others instances / requests" />
-                        </Col>
+                                <Col sm={9}>
+                                    <FormControl componentClass="input"
+                                        value={profile.home}
+                                        placeholder={"/"}
+                                        onChange={e => setProfile(update(profile, {$merge: {home: e.target.value}}))} />
+                                </Col>
+                            </FormGroup>
+                            <FormGroup>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="publicly-available" defaultMessage="Publicly available" />
+                                </Col>
 
-                        <Col sm={9}>
-                            <Checkbox
-                                checked={profile.see_others_instances}
-                                onChange={e => setProfile(update(profile, {$merge: {see_others_instances: e.target.checked}}))} />
-                        </Col>
-                    </FormGroup>
-                    <FormGroup>
-                        <Col componentClass={ControlLabel} sm={2}>
-                            <FormattedMessage id="publicly-available" defaultMessage="Publicly available" />
-                        </Col>
+                                <Col sm={9}>
+                                    <Checkbox
+                                        checked={profile.available}
+                                        onChange={e => setProfile(update(profile, {$merge: {available: e.target.checked}}))} />
+                                </Col>
+                            </FormGroup>
+                            <FormGroup>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="accesses" defaultMessage="Accesses" />
+                                </Col>
 
-                        <Col sm={9}>
-                            <Checkbox
-                                checked={profile.available}
-                                onChange={e => setProfile(update(profile, {$merge: {available: e.target.checked}}))} />
-                        </Col>
-                    </FormGroup>
-                    <FormGroup>
-                        <Col componentClass={ControlLabel} sm={2}>
-                            <FormattedMessage id="rules" defaultMessage="rules" />
-                        </Col>
+                                <Col sm={9}>
 
-                        <Col sm={9}>
-                            <Table>
-                                <thead>
-                                    <tr>
-                                        <th><FormattedMessage id="method" defaultMessage="method" /></th>
-                                        <th>url</th>
-                                        <th><FormattedMessage id="allowed" defaultMessage="allowed" /></th>
-                                        <th/>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                {
-                                    profile.api_rules && profile.api_rules.map((r, i) => (
-                                        <tr key={`rule_${i}`}>
-                                            <td>
-                                                <FormControl componentClass="select"
-                                                    value={r.method}
-                                                    onChange={e => setProfile(update(profile, {api_rules: {[i]: {$merge: {method: e.target.value}}}}))} >
-                                                    <option value="get">get</option>
-                                                    <option value="post">post</option>
-                                                    <option value="put">put</option>
-                                                    <option value="delete">delete</option>
-                                                </FormControl>
-                                            </td>
-                                            <td>
-                                                <FormControl componentClass="input"
-                                                    value={r.url}
-                                                    placeholder="/api/v01/p1/*"
-                                                    onChange={e => setProfile(update(profile, {api_rules: {[i]: {$merge: {url: e.target.value}}}}))} />
-                                            </td>
-                                            <td>
-                                                <Checkbox
-                                                    checked={r.allowed}
-                                                    onChange={e => setProfile(update(profile, {api_rules: {[i]: {$merge: {allowed: e.target.checked}}}}))} />
-                                            </td>
-                                            <td><Button bsStyle="danger" onClick={() => setProfile(update(profile, {api_rules: {$splice: [[i, 1]]}}))}><Glyphicon glyph="remove-sign"/></Button></td>
-                                        </tr>
-                                    ))
-                                }
-                                {
-                                    <tr key="new_rule">
-                                        <td colSpan={4}>
-                                            <Button bsStyle="primary" onClick={() => setProfile(update(profile, {api_rules: {$push: [{method: "get", url: "", allowed: true}]}}))}><Glyphicon glyph="plus"/></Button>
-                                        </td>
-                                    </tr>
-                                }
-                                </tbody>
-                            </Table>
-                            {
-                                loadErrors.map((e, i) => <Alert key={i} bsStyle="danger">{e.message} {e.row && `on row ${e.row}`}</Alert>)
-                            }
-                            <ButtonToolbar>
-                                <Button
-                                  onClick={() => {
-                                    AuthServiceManager.getValidToken().then(token => {
-                                        window.location=`${API_URL_PREFIX}/api/v01/system/user_profiles/${profile.id}?as=csv&auth_token=${token}`
-                                      })
-                                  }}
-                                ><Glyphicon glyph="save"/></Button>
-                                <Button onClick={() => setShowUploadRulesDialog(true)}>
-                                    <Glyphicon glyph="open"/>
-                                </Button>
-                            </ButtonToolbar>
-                        </Col>
-                    </FormGroup>
-                    <UploadFileModal
-                        show={showUploadRulesDialog}
-                        onClose={() => setShowUploadRulesDialog(false)}
-                        onLoad={(results, file) => {
-                            setProfile(update(profile, {$merge: {api_rules: results.data}}));
-                            NotificationsManager.success(`${results.data.length} records loaded from ${file && file.name} with ${results.errors.length} errors`);
-                            results.errors && setLoadErrors(results.errors)
-                        }}
-                    />
-                </Form>
+                                    <Checkbox
+                                      checked={hasAccess("dashboard")}
+                                      onChange={e => toggleAccess("dashboard", e.target.checked)}>
+                                      dashboard
+                                    </Checkbox>
+
+                                    <Checkbox
+                                      checked={hasAccess("requests")}
+                                      onChange={e => toggleAccess("requests", e.target.checked)}>
+                                      requests
+                                      <Checkbox
+                                        checked={hasAccess("requests.others_requests")}
+                                        onChange={e => toggleAccess("requests.others_requests", e.target.checked)}>
+                                        from others
+                                      </Checkbox>
+                                      <Checkbox
+                                        checked={hasAccess("cron_requests")}
+                                        onChange={e => toggleAccess("cron_requests", e.target.checked)}>
+                                        scheduled requests
+                                      </Checkbox>
+                                    </Checkbox>
+
+                                    <Checkbox
+                                      checked={hasAccess("bulks")}
+                                      onChange={e => toggleAccess("bulks", e.target.checked)}>
+                                      bulks
+                                      <Checkbox
+                                        checked={hasAccess("bulks.actions")}
+                                        onChange={e => toggleAccess("bulks.actions", e.target.checked)}>
+                                        actions
+                                      </Checkbox>
+                                    </Checkbox>
+                                    <Checkbox
+                                      checked={hasAccess("provisioning")}
+                                      onChange={e => toggleAccess("provisioning", e.target.checked)}>
+                                      provisioning
+                                      {
+                                        ProvProxiesManager.listProxies().map((p, i) =>
+                                          <Checkbox
+                                            key={`provisioning.${p.name}`}
+                                            checked={hasAccess(`provisioning.${p.name}`)}
+                                            onChange={e => toggleAccess(`provisioning.${p.name}`, e.target.checked)}>
+                                            {p.name}
+                                          </Checkbox>
+                                        )
+                                      }
+                                    </Checkbox>
+                                    <Checkbox
+                                      checked={hasAccess("data")}
+                                      onChange={e => toggleAccess("data", e.target.checked)}>
+                                      data
+                                    </Checkbox>
+                                    <Checkbox
+                                      checked={hasAccess("settings")}
+                                      onChange={e => toggleAccess("settings", e.target.checked)}>
+                                      settings
+                                      <Checkbox
+                                        checked={hasAccess("settings.users")}
+                                      onChange={e => toggleAccess("settings.users", e.target.checked)}>
+                                        users
+                                      </Checkbox>
+                                      <Checkbox
+                                        checked={hasAccess("settings.configuration")}
+                                      onChange={e => toggleAccess("settings.configuration", e.target.checked)}>
+                                        configuration
+                                      </Checkbox>
+                                      <Checkbox
+                                        checked={hasAccess("settings.alarms")}
+                                        onChange={e => toggleAccess("settings.alarms", e.target.checked)}>
+                                        alarms
+                                      </Checkbox>
+                                    </Checkbox>
+                                    <Checkbox
+                                      checked={hasAccess("orchestration")}
+                                      onChange={e => toggleAccess("orchestration", e.target.checked)}>
+                                      orchestration
+                                    </Checkbox>
+                                </Col>
+                            </FormGroup>
+                        </Form>
+                    </Tab>
+                    <Tab title={"proxy"} key={"proxy"} eventKey={1}>
+                        <Form horizontal>
+                            <FormGroup>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="rules" defaultMessage="rules" />
+                                </Col>
+
+                                <Col sm={9}>
+                                    <Table>
+                                        <thead>
+                                            <tr>
+                                                <th><FormattedMessage id="method" defaultMessage="method" /></th>
+                                                <th>url</th>
+                                                <th><FormattedMessage id="allowed" defaultMessage="allowed" /></th>
+                                                <th><FormattedMessage id="name" defaultMessage="name" /></th>
+                                                <th/>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        {
+                                            profile.api_rules && profile.api_rules.map((r, i) => (
+                                                <tr key={`rule_${i}`}>
+                                                    <td>
+                                                        <FormControl componentClass="select"
+                                                            value={r.method}
+                                                            onChange={e => setProfile(update(profile, {api_rules: {[i]: {$merge: {method: e.target.value}}}}))} >
+                                                            <option value="get">get</option>
+                                                            <option value="post">post</option>
+                                                            <option value="put">put</option>
+                                                            <option value="delete">delete</option>
+                                                        </FormControl>
+                                                    </td>
+                                                    <td>
+                                                        <FormControl componentClass="input"
+                                                            value={r.url}
+                                                            placeholder="/api/v01/p1/*"
+                                                            onChange={e => setProfile(update(profile, {api_rules: {[i]: {$merge: {url: e.target.value}}}}))} />
+                                                    </td>
+                                                    <td>
+                                                        <Checkbox
+                                                            checked={r.allowed}
+                                                            onChange={e => setProfile(update(profile, {api_rules: {[i]: {$merge: {allowed: e.target.checked}}}}))} />
+                                                    </td>
+                                                    <td>
+                                                        <FormControl componentClass="input"
+                                                            value={r.name}
+                                                            onChange={e => setProfile(update(profile, {api_rules: {[i]: {$merge: {name: e.target.value}}}}))} />
+                                                    </td>
+                                                    <td><Button bsStyle="danger" onClick={() => setProfile(update(profile, {api_rules: {$splice: [[i, 1]]}}))}><Glyphicon glyph="remove-sign"/></Button></td>
+                                                </tr>
+                                            ))
+                                        }
+                                        {
+                                            <tr key="new_rule">
+                                                <td colSpan={4}>
+                                                    <Button bsStyle="primary" onClick={() => setProfile(update(profile, {api_rules: {$push: [{method: "get", url: "", allowed: true}]}}))}><Glyphicon glyph="plus"/></Button>
+                                                </td>
+                                            </tr>
+                                        }
+                                        </tbody>
+                                    </Table>
+                                    {
+                                        loadErrors.map((e, i) => <Alert key={i} bsStyle="danger">{e.message} {e.row && `on row ${e.row}`}</Alert>)
+                                    }
+                                    <ButtonToolbar>
+                                        <Button
+                                          onClick={() => {
+                                            AuthServiceManager.getValidToken().then(token => {
+                                                window.location=`${API_URL_PREFIX}/api/v01/system/user_profiles/${profile.id}?as=csv&auth_token=${token}`
+                                              })
+                                          }}
+                                        ><Glyphicon glyph="save"/></Button>
+                                        <Button onClick={() => setShowUploadRulesDialog(true)}>
+                                            <Glyphicon glyph="open"/>
+                                        </Button>
+                                    </ButtonToolbar>
+                                </Col>
+                            </FormGroup>
+                            <UploadFileModal
+                                show={showUploadRulesDialog}
+                                onClose={() => setShowUploadRulesDialog(false)}
+                                onLoad={(results, file) => {
+                                    setProfile(update(profile, {$merge: {api_rules: results.data}}));
+                                    NotificationsManager.success(`${results.data.length} records loaded from ${file && file.name} with ${results.errors.length} errors`);
+                                    results.errors && setLoadErrors(results.errors)
+                                }}
+                            />
+                        </Form>
+                    </Tab>
+                </Tabs>
                 <ButtonToolbar>
                     <Button
                         bsStyle="primary"
@@ -433,12 +628,12 @@ function UpdateProfile(props) {
                     >
                         <FormattedMessage id="save" defaultMessage="Save"/>
                     </Button>
-                    <Button
-                        bsStyle="danger"
-                        onClick={() => deleteProfile(props.profile.id, props.onDelete)}
-                    >
+                    <DeleteConfirmButton
+                      resourceName={props.profile.name}
+                      button={"Delete"}
+                      onConfirm={() => deleteProfile(props.profile.id, props.onDelete)}>
                         <FormattedMessage id="delete" defaultMessage="Delete"/>
-                    </Button>
+                    </DeleteConfirmButton>
                     <Button onClick={refresh}><FormattedMessage id="cancel" defaultMessage="Cancel"/></Button>
                 </ButtonToolbar>
             </Panel.Body>
@@ -464,14 +659,6 @@ export default function UserProfiles() {
                 <Breadcrumb.Item active><FormattedMessage id="profiles" defaultMessage="Profiles"/></Breadcrumb.Item>
             </Breadcrumb>
 
-            {
-                profiles.sort(
-                    (a, b) => a.id - b.id
-                ).map(
-                    (p, i) => <UpdateProfile profile={p} onDelete={refresh} onUpdate={refresh} key={i}/>
-                )
-            }
-
             <Panel>
                 <Panel.Body>
                     <ButtonToolbar>
@@ -479,6 +666,14 @@ export default function UserProfiles() {
                     </ButtonToolbar>
                 </Panel.Body>
             </Panel>
+
+            {
+                profiles.sort(
+                    (a, b) => a.id - b.id
+                ).map(
+                    (p, i) => <UpdateProfile profile={p} onDelete={refresh} onUpdate={refresh} key={i}/>
+                )
+            }
         </div>
     )
 }

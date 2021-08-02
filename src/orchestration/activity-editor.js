@@ -1,7 +1,15 @@
 import React, {useState, useEffect, useRef, useLayoutEffect} from 'react';
 import ReactDOM from 'react-dom';
 import {Redirect} from "react-router";
-import {fetch_post, fetch_get, fetch_delete, fetch_put, NotificationsManager} from "../utils";
+import {
+  fetch_post,
+  fetch_get,
+  fetch_delete,
+  fetch_put,
+  NotificationsManager,
+  AuthServiceManager,
+  API_URL_PREFIX, userLocalizeUtcDate, downloadJson
+} from "../utils";
 
 import Col from 'react-bootstrap/lib/Col';
 import Row from 'react-bootstrap/lib/Row';
@@ -25,9 +33,11 @@ import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import update from "immutability-helper";
 import InputGroup from "react-bootstrap/lib/InputGroup";
 import InputGroupButton from "react-bootstrap/lib/InputGroupButton";
+import SplitButton from "react-bootstrap/lib/SplitButton";
+import MenuItem from "react-bootstrap/lib/MenuItem";
 import {DeleteConfirmButton} from "../utils/deleteConfirm";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {faArrowDown, faArrowUp, faChartBar, faCopy, faSpinner} from "@fortawesome/free-solid-svg-icons";
+import {faArrowDown, faArrowUp, faChartBar, faCopy, faDownload, faSpinner} from "@fortawesome/free-solid-svg-icons";
 import {Link} from "react-router-dom";
 import {SimulatorPanel} from "./simulator";
 import Checkbox from "react-bootstrap/lib/Checkbox";
@@ -35,6 +45,7 @@ import {fetchConfiguration, Param2Input} from "./nodeInputs";
 import Ajv from "ajv";
 import Select from "react-select";
 import ButtonGroup from "react-bootstrap/lib/ButtonGroup";
+import moment from "moment";
 
 
 const NEW_ACTIVITY = {
@@ -83,7 +94,7 @@ function isValid(p, v) {
     return null;
 }
 
-function fetchCells(onSuccess) {
+export function fetchCells(onSuccess) {
     fetch_get('/api/v01/cells')
         .then(data => onSuccess(data.cells))
         .catch(console.error);
@@ -95,13 +106,13 @@ export function fetchActivities(onSuccess) {
         .catch(console.error);
 }
 
-function fetchActivity(activityId, cb) {
+export function fetchActivity(activityId, cb) {
     fetch_get('/api/v01/activities/' + activityId)
         .then(data => cb(data.activity))
         .catch(console.error);
 }
 
-function deleteActivity(activityId, cb) {
+export function deleteActivity(activityId, cb) {
     fetch_delete(`/api/v01/activities/${activityId}`)
         .then(r => r.json())
         .then(data =>{
@@ -162,8 +173,20 @@ function activateVersion(id, versionId, onSuccess) {
         });
 }
 
-function NewActivity(props) {
-    const {show, onClose} = props;
+function downloadActivity(id, definitionOnly) {
+    AuthServiceManager
+      .getValidToken()
+      .then(token => window.location = `${API_URL_PREFIX}/api/v01/activities/${id}/export?def_only=${definitionOnly?1:0}&auth_token=${token}`)
+}
+
+function downloadActivityVersions(id) {
+    AuthServiceManager
+      .getValidToken()
+      .then(token => window.location = `${API_URL_PREFIX}/api/v01/activities/${id}/versions/export?auth_token=${token}`)
+}
+
+export function NewActivity(props) {
+    const {show, onClose, onCreated} = props;
     const [newActivity, setNewActivity] = useState(NEW_ACTIVITY);
     const [redirect, setRedirect] = useState(null);
 
@@ -193,7 +216,10 @@ function NewActivity(props) {
                                     type="submit"
                                     onClick={e => {
                                         e.preventDefault();
-                                        saveActivity(newActivity, a => setRedirect(a.id));
+                                        saveActivity(newActivity, a => {
+                                          setRedirect(a.id);
+                                          onCreated && onCreated(a.id);
+                                        });
                                     }}
                                     disabled={!newActivity.name || newActivity.name.length === 0}
                                     bsStyle="primary">
@@ -238,7 +264,7 @@ function SearchBar(props) {
     )
 }
 
-export function Activities(props) {
+export function Activities({user_info}) {
     const [activities, setActivities] = useState([]);
     const [showNew, setShowNew] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -267,6 +293,20 @@ export function Activities(props) {
 
             <Panel>
                 <Panel.Body>
+                    <ButtonToolbar>
+                        <Button bsStyle='primary' onClick={() => setShowNew(true)}>
+                            <FormattedMessage id="new" defaultMessage="New" />
+                        </Button>
+                    </ButtonToolbar>
+                    <NewActivity
+                        show={showNew}
+                        onClose={() => {setShowNew(false);}}
+                         />
+                </Panel.Body>
+            </Panel>
+
+            <Panel>
+                <Panel.Body>
                     <SearchBar onSearch={setFilter} />
                     <Table>
                         <thead>
@@ -290,7 +330,7 @@ export function Activities(props) {
                                     <tr key={a.id}>
                                         <td>{a.name}</td>
                                         <td>{a.version_label || WORKING_VERSION_LABEL}</td>
-                                        <td>{a.created_on}</td>
+                                        <td>{userLocalizeUtcDate(moment.utc(a.created_on), user_info).format()}</td>
 
                                         <td>
                                             <ButtonToolbar>
@@ -309,6 +349,24 @@ export function Activities(props) {
                                                   onClick={() => setDuplicateActivity(a.id)}>
                                                     <FontAwesomeIcon icon={faCopy}/>
                                                 </Button>
+
+                                                <SplitButton
+                                                  bsStyle="primary"
+                                                  title={<FontAwesomeIcon icon={faDownload}/>}
+                                                  onClick={() => downloadActivity(a.id)}>
+                                                    <MenuItem
+                                                      onClick={() => downloadActivityVersions(a.id)}>
+                                                      <FormattedMessage
+                                                        id="all-versions"
+                                                        defaultMessage="All versions" />
+                                                    </MenuItem>
+                                                    <MenuItem
+                                                      onClick={() => downloadActivity(a.id, true)}>
+                                                      <FormattedMessage
+                                                        id="definition-only"
+                                                        defaultMessage="Def. only (compat. <0.18)" />
+                                                    </MenuItem>
+                                                </SplitButton>
                                             </ButtonToolbar>
                                         </td>
                                     </tr>
@@ -322,6 +380,10 @@ export function Activities(props) {
                         isValidName={name => !activities.map(a => a.name).includes(name)}
                         title={"Duplicate"}
                         onHide={name => {
+                            if(!name) {
+                              setDuplicateActivity(undefined);
+                              return;
+                            }
                             fetchActivity(duplicateActivity, a => {
                               a.name = name;
                               delete a.id;
@@ -332,20 +394,6 @@ export function Activities(props) {
                               });
                             })
                         }} />
-                </Panel.Body>
-            </Panel>
-
-            <Panel>
-                <Panel.Body>
-                    <ButtonToolbar>
-                        <Button bsStyle='primary' onClick={() => setShowNew(true)}>
-                            <FormattedMessage id="new" defaultMessage="New" />
-                        </Button>
-                    </ButtonToolbar>
-                    <NewActivity
-                        show={showNew}
-                        onClose={() => {setShowNew(false);}}
-                         />
                 </Panel.Body>
             </Panel>
         </>
@@ -509,6 +557,7 @@ function NewCellModal(props)  {
                 param={param}
                 cells={cells}
                 activity={activity}
+                staticParams={staticParams}
                 value={staticParams[n]}
                 onChange={(e, outputs) => {
                   setStaticParams(update(staticParams, {$merge: {[n]: e}}));
@@ -539,7 +588,10 @@ function NewCellModal(props)  {
                 <Modal.Title>New cell</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                <Form horizontal>
+                <Form onSubmit={e => {
+                  e.preventDefault();
+                  onHide({def:definition, name:name, params:staticParams, customOutputs: customOutputs});
+                }} horizontal>
                     <FormGroup validationState={duplicateName?"error":null}>
                         <Col componentClass={ControlLabel} sm={2}>
                             <FormattedMessage id="name" defaultMessage="Name" />
@@ -603,9 +655,7 @@ function NewCellModal(props)  {
                     <FormGroup>
                       <Col smOffset={2} sm={10}>
                           <Button
-                            onClick={() => {
-                              onHide({def:definition, name:name, params:staticParams, customOutputs: customOutputs});
-                            }}
+                            type="submit"
                             disabled={!validName || invalidParams.length !== 0}
                           >
                               Save
@@ -731,10 +781,10 @@ function OutputsTable(props) {
 export function EditCellModal(props) {
     const {show, cell, cells, activity, onHide, readOnly = false} = props;
     const [staticParams, setStaticParams] = useState({});
+    const [name, setName] = useState("");
     const [outputs, setOutputs] = useState([]);
 
     const originalName = cell && cell.value.getAttribute('original_name');
-    const name = cell && cell.value.getAttribute('label');
     const attrsStr = cell && cell.value.getAttribute('attrList');
 
     let cellDef = cells && cells.find(c => c.name === originalName);
@@ -750,6 +800,9 @@ export function EditCellModal(props) {
     }, [show]);
     useEffect(() => {
       if(cell) {
+        if(cell.value.getAttribute('label')) {
+          setName(cell.value.getAttribute('label'));
+        }
         if(cell.value.getAttribute("attrList")) {
           setStaticParams(cell.value.getAttribute('attrList').split(",").reduce((o, a) => {
             o[a] = cell.value.getAttribute(a);
@@ -786,7 +839,7 @@ export function EditCellModal(props) {
 
     const usedRows = activity && activity.definition.transitions.map(t => t[0]).reduce((o, e) => {
       const [task, output] = e.split(".");
-      if(task === name) {
+      if(task === cell.value.getAttribute('label')) {
         o.push(output);
       }
       return o;
@@ -812,6 +865,8 @@ export function EditCellModal(props) {
                 cells={cells}
                 activity={activity}
                 value={staticParams[n]}
+                staticParams={staticParams}
+                readOnly={readOnly}
                 onChange={(e, outputs) => {
                   if(readOnly) return;
 
@@ -842,6 +897,18 @@ export function EditCellModal(props) {
         </Modal.Header>
         <Modal.Body>
           <Form horizontal>
+            <FormGroup>
+                <Col componentClass={ControlLabel} sm={2}>
+                    <FormattedMessage id="new-name" defaultMessage="New name" />
+                </Col>
+
+                <Col sm={9}>
+                    <FormControl
+                        componentClass="input"
+                        value={name}
+                        onChange={e => setName(e.target.value)} />
+                </Col>
+            </FormGroup>
             <FormGroup>
                 <Col componentClass={ControlLabel} sm={2}>
                     <FormattedMessage id="implementation" defaultMessage="Implementation" />
@@ -881,7 +948,8 @@ export function EditCellModal(props) {
                     disabled={invalidParams.length !== 0}
                     onClick={() => {
                       onHide({
-                        name: cell.value.getAttribute("label"),
+                        name: name,
+                        oldName: cell.value.getAttribute('label'),
                         originalName: originalName,
                         params: staticParams,
                         outputs: outputs.filter(o => o.visible).map(o => o.value),
@@ -980,16 +1048,7 @@ function CommitVersionModal({show, onHide, id}) {
 }
 
 function downloadDefinition(activity) {
-  let element = document.createElement('a');
-  element.setAttribute('href', 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(activity.definition, null, 2)));
-  element.setAttribute('download', `${activity.name}.json`);
-
-  element.style.display = 'none';
-  document.body.appendChild(element);
-
-  element.click();
-
-  document.body.removeChild(element);
+  downloadJson(activity.name, activity.definition);
 }
 
 function compareActivitiesDef(a, b) {
@@ -1028,7 +1087,7 @@ export function useWindowSize() {
 }
 
 
-const WORKING_VERSION_LABEL = "*working*";
+export const WORKING_VERSION_LABEL = "*working*";
 
 export function ActivityEditor(props) {
     const [cells, setCells] = useState([]);
@@ -1142,7 +1201,7 @@ export function ActivityEditor(props) {
     });
     const currentVersion = versionsOptions.find(v => v.id === versionId);
     const canCommit = currentVersion && !currentVersion.value;
-    const canSave = currentActivity && currentActivity.working;
+    const canSave = canCommit;
 
     useEffect(() => {
       if(currentVersion && currentVersion.working) {
@@ -1235,31 +1294,33 @@ export function ActivityEditor(props) {
                             <Button onClick={() => save()} disabled={!canSave}>Save</Button>
                         </ButtonGroup>
                         <ButtonGroup style={{paddingLeft: '1rem'}}>
-                            <Button onClick={() => editor && editor.execute("add_process")} disabled={!canSave}>+</Button>
-                            <Button onClick={() => editor && editor.execute("clone_process")} disabled={!canSave}>🐑</Button>
-                            <Button onClick={() => editor && editor.execute("delete")} disabled={!canSave}>✘</Button>
+                            <Button onClick={() => editor && editor.execute("add_process")} disabled={!canSave} title={"add a node"}>+</Button>
+                            <Button onClick={() => editor && editor.execute("clone_process")} disabled={!canSave} title={"clone a node"}>🐑</Button>
+                            <Button onClick={() => editor && editor.execute("delete")} disabled={!canSave} title={"delete"}>✘</Button>
                         </ButtonGroup>
                         <ButtonGroup style={{paddingLeft: '1rem'}}>
-                            <Button onClick={() => editor && editor.execute("undo")} disabled={!canSave}>⤾</Button>
-                            <Button onClick={() => editor && editor.execute("redo")} disabled={!canSave}>⤿</Button>
+                            <Button onClick={() => editor && editor.execute("undo")} disabled={!canSave} title={"undo"}>⤾</Button>
+                            <Button onClick={() => editor && editor.execute("redo")} disabled={!canSave} title={"redo"}>⤿</Button>
                         </ButtonGroup>
                         <ButtonGroup style={{paddingLeft: '1rem'}}>
-                            <Button onClick={() => editor && editor.execute("zoomIn")}>🔍 +</Button>
-                            <Button onClick={() => editor && editor.execute("zoomOut")}>🔍 -</Button>
+                            <Button onClick={() => editor && editor.execute("zoomIn")} title={"zoom in"}>🔍 +</Button>
+                            <Button onClick={() => editor && editor.execute("zoomOut")} title={"zoom out"}>🔍 -</Button>
                         </ButtonGroup>
                         <ButtonGroup style={{paddingLeft: '1rem'}}>
                             <Button onClick={() => editor && editor.execute("fit")}>fit</Button>
-                            <Button onClick={() => editor && editor.execute("show")}>👓</Button>
-                            <Button onClick={() => editor && editor.execute("showDefinition")}>txt</Button>
+                            <Button onClick={() => editor && editor.execute("show")} title={"show"}>👓</Button>
+                            <Button onClick={() => editor && editor.execute("showDefinition")} title={"show definition"}>txt</Button>
                             <Button onClick={() => {
                               editor && downloadDefinition(editor.getDefinition(ReactDOM.findDOMNode(titleRef.current).value).activity);
-                            }}>
+                            }} title={"download definition"}>
                               <FontAwesomeIcon icon={faArrowDown} />
                             </Button>
-                            <Button onClick={() => editor && editor.execute("upload_definition")} disabled={!canSave}>
+                            <Button onClick={() => editor && editor.execute("upload_definition")} disabled={!canSave} title={"upload definition"}>
                               <FontAwesomeIcon icon={faArrowUp} />
                             </Button>
-                            <Button onClick={() => setShowStats(true)}><FontAwesomeIcon icon={faChartBar} /></Button>
+                            <Button onClick={() => setShowStats(true)} title={"show stats"}>
+                              <FontAwesomeIcon icon={faChartBar} />
+                            </Button>
                         </ButtonGroup>
                     </ButtonToolbar>
                 </Col>
@@ -1308,7 +1369,7 @@ export function ActivityEditor(props) {
             }
             <Row>
                 <Col sm={12}>
-                    <div ref={editorRef} style={{backgroundImage: `url(${GridPic})`}} />
+                    <div ref={editorRef} style={{overflow: 'hidden', backgroundImage: `url(${GridPic})`}} />
                 </Col>
             </Row>
             <hr />
@@ -1368,6 +1429,8 @@ export function ActivityEditor(props) {
                     if(cDef) {
                         const c_def = JSON.parse(JSON.stringify(cDef));
                         c_def.outputs = (cell.getAttribute('outputs') || "").split(",");
+                        c_def.x = cell.geometry.x + 10;
+                        c_def.y = cell.geometry.y + 10;
                         const params = (cell.getAttribute('attrList') || "").split(",").reduce((xa, a) => {xa[a] = cell.getAttribute(a); return xa;}, {});
                         e.addNode(editor, c_def, newName, params);
                     }
@@ -1378,22 +1441,46 @@ export function ActivityEditor(props) {
                 show={editedCell !== undefined}
                 cells={cells}
                 activity={editor && editor.getDefinition().activity}
+                readOnly={!canSave}
                 onHide={c => {
                   setEditedCell(undefined);
                   if(c === null) return;
 
                   const activity = editor && editor.getDefinition().activity;
                   if(c.originalName === "entity") {
-                    const i = activity.definition.entities.findIndex(e => e.name === c.name)
+                    const i = activity.definition.entities.findIndex(e => e.name === c.oldName)
                     activity.definition.entities[i]["params"] = c.params;
                     if(c.outputs !== undefined) {
                       activity.definition.entities[i]["outputs"] = c.outputs;
                     }
                   } else {
-                    activity.definition.cells[c.name]["params"] = c.params;
+                    activity.definition.cells[c.oldName]["params"] = c.params;
                     if(c.outputs !== undefined) {
-                      activity.definition.cells[c.name]["outputs"] = c.outputs;
+                      activity.definition.cells[c.oldName]["outputs"] = c.outputs;
                     }
+                  }
+                  if(c.name !== c.oldName) {
+                    console.log("cell name has changed", c.name, c.oldName);
+                    if(c.originalName === "entity") {
+                      activity.definition.entities.push(c);
+                      const i = activity.definition.entities.findIndex(e => e.name === c.oldName);
+                      activity.definition.entities.splice(i, 1);
+                    } else {
+                      activity.definition.cells[c.name] = activity.definition.cells[c.oldName];
+                      delete activity.definition.cells[c.oldName];
+                    }
+                    // adapt transitions
+                    activity.definition.transitions = activity.definition.transitions.map(([s, d, extra]) => {
+                      if(d === c.oldName) {
+                        d = c.name;
+                      }
+                      const i = s.lastIndexOf(".");
+                      const n = s.substring(0, i)
+                      if(n === c.oldName) {
+                        s = c.name + s.substring(i)
+                      }
+                      return [s, d, extra];
+                    })
                   }
                   import("./editor").then(e => e.updateGraphModel(editor, activity, {clear: true, nofit: true}));
                 }} />

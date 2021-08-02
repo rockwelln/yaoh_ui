@@ -308,6 +308,7 @@ export default class SearchRoutingInfo extends Search {
   });
 
   componentDidMount() {
+    document.title = "Routing";
     this._refresh();
     fetchOperators(undefined, operators => this.setState({ operators: operators }));
   }

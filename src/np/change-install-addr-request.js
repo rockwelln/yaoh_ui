@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import { fetch_post, NotificationsManager } from "../utils";
 import { RangeInput } from "./utils";
 
@@ -40,6 +40,10 @@ export function NPChangeInstallationAddressRequest(props) {
 
   const validRanges = ranges.length === 0 ? null : getInvalidRanges(ranges).length === 0 ? "success" : "error";
   const validForm = validRanges === "success" && address.length > 5;
+
+  useEffect(() => {
+    document.title = "Change inst. address request";
+  }, []);
 
   return (
     <Panel>

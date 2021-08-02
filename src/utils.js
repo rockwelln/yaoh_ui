@@ -367,3 +367,16 @@ export function userLocalizeUtcDate(d, userInfo) {
     return d.local();
   }
 }
+
+export function downloadJson(name, content) {
+  let element = document.createElement('a');
+  element.setAttribute('href', 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(content, null, 2)));
+  element.setAttribute('download', `${name}.json`);
+
+  element.style.display = 'none';
+  document.body.appendChild(element);
+
+  element.click();
+
+  document.body.removeChild(element);
+}

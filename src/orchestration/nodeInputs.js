@@ -6,13 +6,14 @@ import Checkbox from "react-bootstrap/lib/Checkbox";
 import Table from "react-bootstrap/lib/Table";
 import Button from "react-bootstrap/lib/Button";
 import update from "immutability-helper";
-import {fetchActivities} from "./activity-editor";
+import {fetchActivities, fetchActivity} from "./activity-editor";
 import {fetch_get} from "../utils";
 import {MentionExample} from "./templateEditor";
 import Creatable from 'react-select/creatable';
 import Select from "react-select";
 import InputGroup from "react-bootstrap/lib/InputGroup";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
+import HelpBlock from "react-bootstrap/lib/HelpBlock";
 
 
 function BasicInput(props) {
@@ -317,8 +318,70 @@ function BoolInput(props) {
   const {value, defaultChecked, onChange} = props;
   return (
     <Checkbox
-      checked={value !== undefined?value === "true":defaultChecked}
+      checked={(value !== undefined && value !== "")?value === "true":defaultChecked}
       onChange={e => onChange(e.target.checked?"true":"false")} />
+  )
+}
+
+
+function WorkflowEnds({value, onChange, workflow}) {
+  const [newOutput, setNewOutput] = useState("");
+  const [ends, setEnds] = useState([]);
+  const outputs = value ? value.split(",") : [];
+
+  useEffect(() => {
+    workflow && fetchActivities(activities => {
+      const a = activities.find(a => a.name === workflow);
+      a && fetchActivity(
+        a.id,
+        activity => setEnds(
+          Object.entries(JSON.parse(activity.definition).cells)
+            .filter(([_, c]) => c.original_name === "end")
+            .map(([name, _]) => name)
+        )
+      )
+    })
+  }, [workflow]);
+
+  return (
+    <>
+      <Table>
+        <tbody>
+        {
+          outputs.map(o =>
+            <tr key={o}>
+              <td>{o}</td>
+              <td><Button onClick={() => {
+                onChange(outputs.filter(output => output !== o).join(","), outputs.filter(output => output !== o))
+              }}>{"-"}</Button></td>
+            </tr>)
+        }
+        {
+          <tr>
+            <td style={{width: "100px"}}>
+              <FormControl
+                value={newOutput}
+                onChange={e => setNewOutput(e.target.value)} />
+              {" "}
+            </td>
+            <td>
+              <Button
+                onClick={() => {
+                  onChange([...outputs, newOutput].join(","), [...outputs, newOutput])
+                  setNewOutput("");
+                }}
+              >{"+"}</Button>
+            </td>
+          </tr>
+        }
+        </tbody>
+      </Table>
+      <HelpBlock>
+        The terminations are the "names" of the "end" nodes of the target workflow.<br/>
+        The workflow associated currently defines the following ends:
+        <p style={{color: "blue"}}>{ends.join(", ")}</p>
+      </HelpBlock>
+    </>
   )
 }
 
@@ -434,12 +497,13 @@ function SwitchOutputs(props) {
 function JsonSchemaFormFields(props) {
   const {value, onChange} = props;
 
-  const [newField, setNewField] = useState(["", "string"]);
+  const [newField, setNewField] = useState(["", {type: "string", minLength: 1}, false]);
   let fields = {
     "$schema": "http://json-schema.org/schema#",
     type: "object",
     properties: {},
     additionalProperties: false,
+    required: [],
   };
   try {
     fields = JSON.parse(value);
@@ -448,8 +512,16 @@ function JsonSchemaFormFields(props) {
   }
 
   const addNewField = () => {
-    onChange(JSON.stringify(update(fields, {properties: {$merge: {[newField[0]]: {type: newField[1]}}}})))
-    setNewField(["", "string"]);
+    if(newField[2]) {
+      if(fields.required) {
+        onChange(JSON.stringify(update(fields, {properties: {$merge: {[newField[0]]: newField[1]}}, required: {$push: [newField[0]]}})))
+      } else {
+        onChange(JSON.stringify(update(fields, {properties: {$merge: {[newField[0]]: newField[1]}}, required: {$set: [newField[0]]}})))
+      }
+    } else {
+      onChange(JSON.stringify(update(fields, {properties: {$merge: {[newField[0]]: newField[1]}}})))
+    }
+    setNewField(["", {type: "string", minLength: 1}, false]);
   }
 
   return (
@@ -463,12 +535,29 @@ function JsonSchemaFormFields(props) {
               <FormControl
                 componentClass="select"
                 value={props.type}
-                onChange={e => onChange(JSON.stringify(update(fields, {properties: {[name]: {$merge: {type: e.target.value}}}})))}>
-                   <option value="string">string</option>
+                onChange={e => {
+                  let prop = {};
+                  switch(e.target.value) {
+                    case "string":
+                      prop = {type: e.target.value, minLength: 1};
+                      break;
+                    case "boolean":
+                      prop = {type: e.target.value, enum: [true]};
+                      break;
+                  }
+                  onChange(JSON.stringify(update(fields, {properties: {[name]: {$merge: prop}}})))
+                }}>
+                    <option value="string">string</option>
+                    <option value="boolean">boolean</option>
               </FormControl>
             </td>
+            <td>{fields.required && fields.required.includes(name)?"*":""}</td>
             <td><Button onClick={() => {
-              onChange(JSON.stringify(update(fields, {properties: {$unset: [name]}})))
+              if(fields.required && fields.required.includes(name)) {
+                onChange(JSON.stringify(update(fields, {properties: {$unset: [name]}, required: {$splice: [[fields.required.findIndex(e => e===name), 1]]}})))
+              } else {
+                onChange(JSON.stringify(update(fields, {properties: {$unset: [name]}})))
+              }
             }}>{"-"}</Button></td>
           </tr>)
       }
@@ -483,9 +572,28 @@ function JsonSchemaFormFields(props) {
             <FormControl
               componentClass="select"
               value={newField[1]}
-              onChange={e => setNewField(update(newField, {$merge: {[1]: e.target.value}}))} >
+              onChange={e => {
+                let prop = {};
+                  switch(e.target.value) {
+                  case "string":
+                    prop = {type: e.target.value, minLength: 1};
+                    break;
+                  case "boolean":
+                    prop = {type: e.target.value, enum: [true]};
+                    break;
+                }
+                setNewField(update(newField, {$merge: {[1]: prop}}))
+              }} >
                 <option value="string">string</option>
+                <option value="boolean">boolean</option>
             </FormControl>
+          </td>
+          <td style={{width: "40%"}}>
+            <Checkbox
+              checked={newField[2]}
+              onChange={e => setNewField(update(newField, {$merge: {[2]: e.target.checked}}))} >
+                Required?
+            </Checkbox>
           </td>
           <td>
             <Button
@@ -501,7 +609,7 @@ function JsonSchemaFormFields(props) {
 }
 
 
-export function Param2Input({param, activity, cells, value, onChange}) {
+export function Param2Input({param, activity, staticParams, cells, value, onChange}) {
   let i;
   switch(param.nature) {
     case 'session_holder':
@@ -530,12 +638,13 @@ export function Param2Input({param, activity, cells, value, onChange}) {
     case 'python_bool':
     case 'user_properties':
     case 'json':
+    case 'xml':
       i = <TextareaInput rows={10} value={value} onChange={e => onChange(e)} cells={activity.definition.cells} />
       break;
     case 'jsonschema_form_fields':
       i = <JsonSchemaFormFields value={value} onChange={e => onChange(e)} />
       break;
-    case 'bool':
+    case 'boolean':
       i = <BoolInput value={value} defaultChecked={param.default} onChange={e => onChange(e)} />
       break;
     case 'python_switch':
@@ -549,6 +658,14 @@ export function Param2Input({param, activity, cells, value, onChange}) {
       i = <DynamicOutputs
         value={value}
         regexp={param.regexp || (param.schema && param.schema.items.pattern)}
+        onChange={(e, outputs) => {
+          onChange(e, outputs);
+        }} />
+      break;
+    case 'workflow_ends':
+      i = <WorkflowEnds
+        value={value}
+        workflow={staticParams && staticParams[param.origin]}
         onChange={(e, outputs) => {
           onChange(e, outputs);
         }} />

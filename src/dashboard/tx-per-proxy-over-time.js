@@ -1,5 +1,6 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {Bar} from 'react-chartjs-2';
+import 'chartjs-adapter-moment';
 import Modal from 'react-bootstrap/lib/Modal';
 import Col from 'react-bootstrap/lib/Col';
 import Form from 'react-bootstrap/lib/Form';
@@ -30,16 +31,19 @@ function fetchData(start, end, onSuccess) {
     .catch(console.error);
 }
 
-
-export default function ProxyRequestsOverTime(props) {
+function ProxyRequestsOverTime() {
     const [data, setData] = useState(undefined);
-    const [names, setNames] = useState({});
+    const [names,] = useState({});
     const [start, setStart] = useState(moment().subtract(DEFAULT_NB_DAYS, "days").toDate());
     const [end, setEnd] = useState(undefined);
     const [showSettings, setShowSettings] = useState(false);
     const [showBig, setShowBig] = useState(false);
 
-    const refreshData = () => {fetchData(start, end, setData);};
+    const refreshData = useCallback(() => {
+      fetchData(start, end, setData);
+    },
+      [start, end]
+    );
     useEffect(refreshData, [start, end]);
     useEffect(() => {
         const handler = setInterval(refreshData, REFRESH_CYCLE * 1000);
@@ -78,7 +82,7 @@ export default function ProxyRequestsOverTime(props) {
                 }, {}
             )
         ),
-        backgroundColor: colorHash.hex(names[k] || k),
+        backgroundColor: colorHash.hex(names[k] || k || ""),
     }));
 
     const chartData = {
@@ -92,22 +96,21 @@ export default function ProxyRequestsOverTime(props) {
             intersect: false,
         },
         scales: {
-            xAxes: [{
+            x: {
                 stacked: true,
-                //distribution: 'series',
-                // barThickness: 5,
                 barPercentage: 0.1,
                 type: 'time',
                 time: {
                     unit: 'day',
-                    min: start,
-                    max: end || moment(),
                     minUnit: 'day',
                 },
-            }],
-            yAxes: [{
+                min: start,
+                max: end || moment(),
+
+            },
+            y: {
                 stacked: true
-            }]
+            }
         }
     };
     return (
@@ -176,3 +179,5 @@ export default function ProxyRequestsOverTime(props) {
         </DashboardPanel>
     );
 }
+
+export default React.memo(ProxyRequestsOverTime);

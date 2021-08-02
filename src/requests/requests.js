@@ -41,7 +41,7 @@ import {
   userLocalizeUtcDate,
   AuthServiceManager,
   fetch_post_raw,
-  fetch_delete,
+  fetch_delete, downloadJson,
 } from "../utils";
 import {ApioDatatable, Pagination} from "../utils/datatable";
 
@@ -53,11 +53,13 @@ import {access_levels, isAllowed, modules, pages} from "../utils/user";
 import {TimerActions} from "./timers";
 import {fetchRoles} from "../system/user_roles";
 import {LinkContainer} from "react-router-bootstrap";
-import {EditCellModal, useWindowSize} from "../orchestration/activity-editor";
+import {EditCellModal, fetchActivities, fetchCells, useWindowSize} from "../orchestration/activity-editor";
 import {SavedFiltersFormGroup} from "../utils/searchFilters";
 import {ManualActionInputForm} from "../dashboard/manualActions";
 import {useDropzone} from "react-dropzone";
 import {DeleteConfirmButton} from "../utils/deleteConfirm";
+import {fetchInstanceContext} from "../help/templatePlayground";
+import {ContextTable} from "./components";
 
 const SUB_REQUESTS_PAGE_SIZE = 25;
 
@@ -106,6 +108,7 @@ const pp_as_json = (s) => {
 
 export function TransactionFlow({definition, states, activityId}) {
   const [editedCell, setEditedCell] = useState();
+  const [cells, setCells] = useState([]);
   const [editor, setEditor] = useState(null);
   const [prevStates, setPrevStates] = useState(null);
   const [width, height] = useWindowSize();
@@ -163,15 +166,21 @@ export function TransactionFlow({definition, states, activityId}) {
       }
     }, [height, width, editor, flowGraphRef.current]);
 
+  useEffect(() => {
+    fetchCells(setCells);
+  }, []);
+
   return (
     <div>
       <div ref={toolbarRef} style={{position: 'absolute', zIndex: '100'}} />
-      <div ref={flowGraphRef} style={{backgroundImage: `url(${GridPic})`}} />
+      <div ref={flowGraphRef} style={{overflow: 'hidden', backgroundImage: `url(${GridPic})`}} />
 
       <EditCellModal
         show={editedCell !== undefined}
         cell={editedCell}
         onHide={() => setEditedCell(undefined)}
+        cells={cells}
+        activity={{definition: workableDefinition(JSON.parse(definition), [])}}
         readOnly />
     </div>
   )
@@ -603,7 +612,7 @@ export function triggerManualAction(transactionId, actionId, output, formValues,
         .catch(error => NotificationsManager.error("Failed to trigger the action", error.message))
 }
 
-function ManualActions(props) {
+export function ManualActions(props) {
     const {actions, tasks} = props;
     const [roles, setRoles] = useState([]);
 
@@ -619,6 +628,7 @@ function ManualActions(props) {
                     <th>role</th>
                     <th>task</th>
                     <th>answer</th>
+                    <th>handled by</th>
                     <th>description</th>
                 </tr>
             </thead>
@@ -630,15 +640,29 @@ function ManualActions(props) {
                     (a, i) => {
                         const task = ((tasks && tasks.find(t => t.id === a.created_by_task_id)) || {}).cell_id;
                         const role = ((roles && roles.find(r => r.id === a.role_id)) || {}).name;
-                        return (
+                        let resp = [
                             <tr key={i}>
                                 <td>{a.id}</td>
                                 <td>{role || "?"}</td>
                                 <td>{task || "?"}</td>
                                 <td>{a.output || "waiting"}</td>
+                                <td>{a.handled_by_username || "-"}</td>
                                 <td>{a.description}</td>
                             </tr>
-                        );
+                        ];
+                        if(a.form_values) {
+                          resp.push(
+                            <tr key={`output-${i}`}>
+                              <td/>
+                              <td colSpan={5}>
+                                <pre>
+                                  {JSON.stringify(a.form_values, null, 2)}
+                                </pre>
+                              </td>
+                            </tr>
+                          )
+                        }
+                        return resp;
                     }
                 )
             }
@@ -1328,10 +1352,12 @@ export const TasksTable = ({tasks, definition, onReplay, onRollback, user_can_re
 );
 
 
-export const TxTable = ({tx, request, userInfo}) => (
+export const TxTable = ({tx, request, userInfo, activities}) => (
     <Table condensed>
         <tbody>
             <tr><th><FormattedMessage id="id" defaultMessage="ID" /></th><td>{tx.id}</td></tr>
+            <tr><th><FormattedMessage id="workflow" defaultMessage="Workflow" /></th><td>{activities.find(a => a.id === tx.activity_id)?.name}</td></tr>
+            <tr><th><FormattedMessage id="owner" defaultMessage="Owner" /></th><td>{tx.username}</td></tr>
             <tr><th><FormattedMessage id="request-status" defaultMessage="Request status" /></th><td>{request && request.status}</td></tr>
             <tr><th><FormattedMessage id="workflow-status" defaultMessage="Workflow status" /></th><td>{tx.status}</td></tr>
             <tr><th><FormattedMessage id="creation-date" defaultMessage="Creation date" /></th><td>{userLocalizeUtcDate(moment.utc(tx.created_on), userInfo).format()}</td></tr>
@@ -1345,22 +1371,6 @@ export const TxTable = ({tx, request, userInfo}) => (
     </Table>
 );
 
-
-export const ContextTable = ({context}) => (
-    <Table style={{tableLayout: 'fixed'}}>
-        <tbody>
-        {
-            context.sort((a, b) => {
-                if(a.id < b.id) return 1;
-                if(a.id > b.id) return -1;
-                return 0;
-            }).map(c =>
-                <tr key={c.id}><th>{c.key}</th><td style={{wordWrap:'break-word'}}>{c.value}</td></tr>
-            )
-        }
-        </tbody>
-    </Table>
-);
 
 const Timers = ({timers, onUpdate}) => (
     <Table style={{tableLayout: 'fixed'}}>
@@ -1401,7 +1411,7 @@ function RequestBody(props) {
     try {
         parsedContent = JSON.parse(content);
         if(parsedContent !== null && typeof parsedContent === "object") {
-            return <ReactJson src={parsedContent}/>
+            return <ReactJson name={null} src={parsedContent}/>
         }
     } catch (e) {
         console.error(e);
@@ -1411,6 +1421,17 @@ function RequestBody(props) {
     )
 }
 
+function fetchRequest(requestID, onSuccess, onError) {
+  return fetch_get(`/api/v01/apio/requests/${requestID}`)
+    .then(data => onSuccess && onSuccess(data.request))
+    .catch(error => onError && onError(error));
+}
+
+function fetchInstance(instanceID, onSuccess, onError) {
+  fetch_get(`/api/v01/transactions/${instanceID}`)
+    .then(data => onSuccess && onSuccess(data))
+    .catch(error => onError && onError(error));
+}
 
 const RELOAD_TX = 10 * 1000;
 let USE_WS = false;
@@ -1438,6 +1459,7 @@ export class Transaction extends Component {
             events: [],
             timers: [],
             autoRefresh: false,
+            activities: [],
         };
         this.cancelLoad = false;
         this.websocket = null;
@@ -1595,11 +1617,10 @@ export class Transaction extends Component {
                 let error_msg = undefined;
                 reload && setTimeout(() => this.fetchTxDetails(true), RELOAD_TX / 2);
                 if(error.response === undefined) {
-                    this.props.notifications.addNotification({
-                        title: <FormattedMessage id="fetch-tx-failed" defaultMessage="Fetch transaction failed!"/>,
-                        message: error.message,
-                        level: 'error'
-                    });
+                    NotificationsManager.error(
+                      <FormattedMessage id="fetch-tx-failed" defaultMessage="Fetch transaction failed!"/>,
+                      error.message
+                    );
                     return;
                 }
                 switch(error.response.status) {
@@ -1613,6 +1634,7 @@ export class Transaction extends Component {
 
     componentDidMount() {
         document.title = `Instance - ${this.props.match.params.txId}`;
+        fetchActivities(a => this.setState({activities: a}))
         USE_WS ? this.fetchDetails() : this.fetchTxDetails(true);
     }
 
@@ -1647,8 +1669,8 @@ export class Transaction extends Component {
     }
 
     onReplay(activity_id, task_id) {
-        this.setState({replaying: true});
-        fetch_put(`/api/v01/transactions/${activity_id}/tasks/${task_id}`, {}, this.props.auth_token)
+        const _innerReplay = ({prefix}) => {
+          return fetch_put(`/${prefix || "api/v01"}/transactions/${activity_id}/tasks/${task_id}`, {})
             .then(() => {
                 !this.cancelLoad && this.setState({replaying: false});
                 if(USE_WS) {
@@ -1656,26 +1678,47 @@ export class Transaction extends Component {
                 } else {
                     this.fetchTxDetails(false);
                 }
-                this.props.notifications.addNotification({
-                        message: <FormattedMessage id="task-replayed" defaultMessage="Task replayed!"/>,
-                        level: 'success'
-                });
+                NotificationsManager.success(
+                  <FormattedMessage id="task-replayed" defaultMessage="Task replayed!"/>,
+                );
             })
             .catch(error => {
                 !this.cancelLoad && this.setState({replaying: false});
-                this.props.notifications.addNotification({
-                    title: <FormattedMessage id="task-replay-failed" defaultMessage="Task replay failed!"/>,
-                    message: error.message,
-                    level: 'error'
-                });
+                NotificationsManager.error(
+                    <FormattedMessage id="task-replay-failed" defaultMessage="Task replay failed!"/>,
+                    error.message,
+                );
             })
+        }
+
+        const {tx} = this.state;
+        this.setState({replaying: true});
+
+        if(tx && tx.super_instance_chain) {
+          const topInstanceID = tx.super_instance_chain[tx.super_instance_chain.length-1].id;
+          fetchInstance(topInstanceID, i => {
+            if(i.original_request_id) {
+              fetchRequest(
+                i.original_request_id,
+                r => _innerReplay({prefix: r.proxy_gateway_host}),
+                () => { this.setState({replaying: false})}
+              )
+            } else {
+              _innerReplay()
+            }
+          }, () => { this.setState({replaying: false}) })
+        } else {
+          const {request} = this.state;
+          _innerReplay({prefix: request?.proxy_gateway_host})
+        }
     }
 
     onRollback(activity_id, task_id, replay_behaviour) {
         this.setState({replaying: true});
+        const {proxy_gateway_host} = this.state.request;
         const meta = JSON.stringify({replay_behaviour: replay_behaviour});
         const action = titleCase(replay_behaviour);
-        fetch_put(`/api/v01/transactions/${activity_id}/tasks/${task_id}?meta=${meta}`, {}, this.props.auth_token)
+        fetch_put(`/${proxy_gateway_host || "api/v01"}/transactions/${activity_id}/tasks/${task_id}?meta=${meta}`, {})
             .then(() => {
                 !this.cancelLoad && this.setState({replaying: false});
                 if(USE_WS) {
@@ -1683,18 +1726,16 @@ export class Transaction extends Component {
                 } else {
                     this.fetchTxDetails(false);
                 }
-                this.props.notifications.addNotification({
-                        message: <FormattedMessage id="rollback-triggered" defaultMessage="{action} triggered!" values={{action: action}}/>,
-                        level: 'success'
-                });
+                NotificationsManager.success(
+                  <FormattedMessage id="rollback-triggered" defaultMessage="{action} triggered!" values={{action: action}}/>,
+                );
             })
             .catch(error => {
                 !this.cancelLoad && this.setState({replaying: false});
-                this.props.notifications.addNotification({
-                    title: <FormattedMessage id="rollback-failed" defaultMessage="{action} failed!" values={{action: action}}/>,
-                    message: error.message,
-                    level: 'error'
-                });
+                NotificationsManager.error(
+                  <FormattedMessage id="rollback-failed" defaultMessage="{action} failed!" values={{action: action}}/>,
+                  error.message
+                );
             })
     }
 
@@ -1790,32 +1831,28 @@ export class Transaction extends Component {
                         } else {
                             this.fetchTxDetails(false);
                         }
-                        this.props.notifications.addNotification({
-                            message: <FormattedMessage id="instance-status-changed" defaultMessage="Instance status updated!"/>,
-                            level: 'success'
-                        });
+                        NotificationsManager.success(
+                          <FormattedMessage id="instance-status-changed" defaultMessage="Instance status updated!"/>
+                        );
                     })
-                    .catch(error => this.props.notifications.addNotification({
-                            title: <FormattedMessage id="instance-update-failed" defaultMessage="Instance status update failed!"/>,
-                            message: error.message,
-                            level: 'error'
-                        })
+                    .catch(error => NotificationsManager.error(
+                        <FormattedMessage id="instance-update-failed" defaultMessage="Instance status update failed!"/>,
+                        error.message
+                      )
                     )
                 : this.fetchTxDetails(false)
             )
-            .catch(error => this.props.notifications.addNotification({
-                    title: <FormattedMessage id="instance-update-failed" defaultMessage="Instance status update failed!"/>,
-                    message: error.message,
-                    level: 'error'
-                })
+            .catch(error => NotificationsManager.error(
+                <FormattedMessage id="instance-update-failed" defaultMessage="Instance status update failed!"/>,
+                error.message
+              )
             )
     }
 
     caseUpdated() {
-        this.props.notifications.addNotification({
-            message: <FormattedMessage id="case-updated" defaultMessage="Case updated!"/>,
-            level: 'success'
-        });
+        NotificationsManager.success(
+            <FormattedMessage id="case-updated" defaultMessage="Case updated!"/>
+        );
         if(USE_WS) {
             this.websocket && this.websocket.send(JSON.stringify({"reload": true}));
         } else {
@@ -1824,11 +1861,10 @@ export class Transaction extends Component {
     }
 
     caseUpdateFailure(error) {
-        this.props.notifications.addNotification({
-            title: <FormattedMessage id="case-update-failure" defaultMessage="Case update failure!"/>,
-            message: error.message,
-            level: 'error'
-        });
+        NotificationsManager.error(
+            <FormattedMessage id="case-update-failure" defaultMessage="Case update failure!"/>,
+            error.message
+        );
     }
 
     onForceClose() {
@@ -1882,8 +1918,9 @@ export class Transaction extends Component {
             timers,
             subrequestsFilter,
             showActionForm,
+            activities,
         } = this.state;
-        const {user_info, auth_token} = this.props;
+        const {user_info} = this.props;
 
         const original_event_id = events && ((request && request.event_id) || (events[0] && events[0].event_id));
         const raw_event = events && (request ? events.filter(e => e.event_id === request.event_id)[0] : events[0]);
@@ -2015,7 +2052,7 @@ export class Transaction extends Component {
                                 {
                                     raw_event ?
                                       <RequestBody content={raw_event.content} /> :
-                                      (request && request.details) && <ReactJson src={request.details}/>
+                                      (request && request.details) && <ReactJson name={null} src={request.details}/>
                                 }
                                 </Panel.Body>
                             </Panel>
@@ -2044,6 +2081,20 @@ export class Transaction extends Component {
                                                 }}
                                             >
                                                 <FormattedMessage id="request-as-csv" defaultMessage="Request as CSV"/>
+                                            </Button>
+                                    }
+                                    {
+                                        this.props.match.params.txId &&
+                                          user_info.is_system &&
+                                            <Button
+                                                onClick={() => {
+                                                    fetchInstanceContext(
+                                                      this.props.match.params.txId,
+                                                      c => downloadJson(`template_context_${this.props.match.params.txId}`, c)
+                                                    )
+                                                }}
+                                            >
+                                                <FormattedMessage id="context-as-json" defaultMessage="Context as JSON"/>
                                             </Button>
                                     }
                                     <Button onClick={() => this.setState({autoRefresh: !this.state.autoRefresh})} active={this.state.autoRefresh}>Auto-refresh</Button>
@@ -2078,7 +2129,7 @@ export class Transaction extends Component {
                                 <Panel.Title><FormattedMessage id="summary" defaultMessage="Summary" /></Panel.Title>
                             </Panel.Heading>
                             <Panel.Body>
-                                <TxTable tx={tx} request={request} userInfo={user_info}/>
+                                <TxTable tx={tx} request={request} userInfo={user_info} activities={activities}/>
                             </Panel.Body>
                         </Panel>
 
@@ -2257,21 +2308,19 @@ export class Request extends Component {
         fetch_get(`/api/v01/apio/requests/${this.props.match.params.reqId}`)
             .then(data => !this.cancelLoad && this.setState({request: data.request}))
             .catch(error =>
-                !this.cancelLoad && this.props.notifications.addNotification({
-                    title: <FormattedMessage id="fetch-req-failed" defaultMessage="Fetch request failed!" />,
-                    message: error.message,
-                    level: 'error'
-                })
+                !this.cancelLoad && NotificationsManager.error(
+                    <FormattedMessage id="fetch-req-failed" defaultMessage="Fetch request failed!" />,
+                    error.message
+                )
             );
 
         fetch_get(`/api/v01/apio/requests/${this.props.match.params.reqId}/traces?details=1`)
             .then(data => !this.cancelLoad && this.setState({messages: data.traces}))
             .catch(error =>
-                !this.cancelLoad && this.props.notifications.addNotification({
-                    title: <FormattedMessage id="fetch-messages-failed" defaultMessage="Fetch request traces failed!" />,
-                    message: error.message,
-                    level: 'error'
-                })
+                !this.cancelLoad && NotificationsManager.error(
+                    <FormattedMessage id="fetch-messages-failed" defaultMessage="Fetch request traces failed!" />,
+                    error.message,
+                )
             );
     }
 
@@ -2393,7 +2442,12 @@ export class Request extends Component {
 
 
 export const errorCriteria = {
-    task_status: {model: 'tasks', value: 'ERROR', op: 'eq'}
+    task_status: {
+        and: [
+            {field: 'status', model: 'tasks', value: 'ERROR', op: 'eq'},
+            {field: 'cnt_tasks_in_error', value: 0, op: 'ne'},
+        ]
+    }
 };
 
 
@@ -2411,6 +2465,11 @@ const callbackErrorCriteria = {
                 field: 'cell_id',
                 op: "eq",
                 value: "end"
+            },
+            {
+                field: 'end_task_in_error',
+                op: "eq",
+                value: true,
             }
         ]
     }
@@ -2423,7 +2482,8 @@ export const activeCriteria = {
 
 
 export const needActionCriteria = {
-    action_status: {model: 'tasks', value: 'WAIT', op: 'eq'}
+    // action_status: {model: 'tasks', value: 'WAIT', op: 'eq'}
+    role_id: { model: 'manual_actions', op: 'is_not_null', value: '' }
 };
 
 
@@ -2455,7 +2515,6 @@ export class Requests extends Component{
             roles: [],
         };
         this._refresh = this._refresh.bind(this);
-        this._load_activities = this._load_activities.bind(this);
         this._load_proxy_hosts = this._load_proxy_hosts.bind(this);
         this._prepare_url = this._prepare_url.bind(this);
         this._onCloseAll = this._onCloseAll.bind(this);
@@ -2470,17 +2529,17 @@ export class Requests extends Component{
             number: { model: 'requests', value: '', op: 'like' },
             status: { model: 'instances', value: '', op: 'eq' },
             kind: { model: 'instances', value: '', op: 'eq' },
-            created_on: { model: 'requests', value: '', op: 'ge' },
+            created_on: { model: 'requests', value: '', value2: '', op: 'ge' },
             request_status: { model: 'requests', value: '', op: 'eq' },
             label: { model: 'bulks', value: '', op: 'eq' },
             proxied_username: { model: 'requests', value: '', op: 'eq' },
             proxied_method: { model: 'requests', value: '', op: 'eq' },
             proxied_url: { model: 'requests', value: '', op: 'eq' },
-            proxied_status: { model: 'processing_traces', value: '', op: 'eq' },
+            proxied_status: { model: 'requests', value: '', op: 'eq' },
             proxy_gateway_host: { model: 'requests', value: '', op: 'eq' },
             role_id: { model: 'manual_actions', value: '', op: 'eq' },
             task_status: undefined,
-            action_status: undefined,
+            // action_status: undefined,
             end_task_status: undefined,
         }
     }
@@ -2502,7 +2561,7 @@ export class Requests extends Component{
     componentDidMount() {
         document.title = "Requests";
         fetchRoles(roles => this.setState({roles: roles}));
-        this._load_activities();
+        fetchActivities(activities => this.setState({activities: activities}))
         this._load_proxy_hosts();
         this._refresh();
     }
@@ -2519,12 +2578,6 @@ export class Requests extends Component{
                 filter_criteria: Requests.criteria_from_params(nextProps.location.search)
             });
         }
-    }
-
-    _load_activities() {
-        fetch_get('/api/v01/activities')
-            .then(data => !this.cancelLoad && this.setState({activities: data.activities}))
-            .catch(error => console.error(error))
     }
 
     _load_proxy_hosts() {
@@ -2561,38 +2614,32 @@ export class Requests extends Component{
                     case 'proxied_method':
                         return {
                             model: filter_criteria[f].model,
-                            field: 'details',
-                            json_field: 'method',
+                            field: 'request_method',
                             op: filter_criteria[f].op,
                             value: filter_criteria[f].value
                         };
                     case 'proxied_url':
                         return {
                             model: filter_criteria[f].model,
-                            field: 'details',
-                            json_field: 'url',
+                            field: 'request_url',
                             op: filter_criteria[f].op,
                             value: filter_criteria[f].value
                         };
                     case 'proxied_username':
-                        return {"or": [
-                            {
-                              model: filter_criteria[f].model,
-                              field: 'details',
-                              json_field: 'user',
-                              op: filter_criteria[f].op,
-                              value: filter_criteria[f].value
-                            },
-                            {
-                              model: filter_criteria[f].model,
-                              field: 'owner',
-                              op: filter_criteria[f].op,
-                              value: filter_criteria[f].value
-                            }
-                        ]};
+                        return {
+                            model: filter_criteria[f].model,
+                            field: 'owner',
+                            op: filter_criteria[f].op,
+                            value: filter_criteria[f].value
+                        };
                     case 'proxied_status':
-                    case 'task_status':
-                    case 'action_status':
+                        return {
+                            model: filter_criteria[f].model,
+                            field: 'response_status',
+                            op: filter_criteria[f].op,
+                            value: filter_criteria[f].value
+                        };
+                    // case 'action_status':
                     case 'request_status':
                         return {
                             model: filter_criteria[f].model,
@@ -2608,6 +2655,7 @@ export class Requests extends Component{
                             value: filter_criteria[f].value
                         };
                     case 'end_task_status':
+                    case 'task_status':
                         // filter transparently sent
                         return filter_criteria[f];
                     case 'tenant_id':
@@ -2619,13 +2667,29 @@ export class Requests extends Component{
                             value: filter_criteria[f].value
                         };
                     case 'created_on':
+                        if(filter_criteria[f].op === "between") {
+                            return { "and": [
+                                {
+                                    model: filter_criteria[f].model,
+                                    field: f,
+                                    op: "ge",
+                                    value: moment.parseZone(filter_criteria[f].value).utc().format()
+                                },
+                                {
+                                    model: filter_criteria[f].model,
+                                    field: f,
+                                    op: "le",
+                                    value: moment.parseZone(filter_criteria[f].value2).utc().format()
+                                }
+                            ]};
+                        }
                         return {
                             model: filter_criteria[f].model,
                             field: f,
                             op: filter_criteria[f].op,
                             value: moment.parseZone(filter_criteria[f].value).utc().format()
                         };
-                    case 'role_id':
+                  case 'role_id':
                         return { "and": [
                             {
                                 model: filter_criteria[f].model,
@@ -2637,7 +2701,16 @@ export class Requests extends Component{
                                 model: "manual_actions",
                                 field: "output",
                                 op: "is_null"
-                            }
+                            },
+                            {
+                                field: "roles",
+                                op: (
+                                  filter_criteria[f].op === "eq"? "like" :
+                                  filter_criteria[f].op === "is_not_null"? "ne" :
+                                  filter_criteria[f].op
+                                ),
+                                value: filter_criteria[f].op === "eq" ? "%." + filter_criteria[f].value + ".%" : ""
+                            },
                         ]};
                     default:
                         return {
@@ -2794,7 +2867,7 @@ export class Requests extends Component{
                     <Breadcrumb.Item active><FormattedMessage id="requests" defaultMessage="Requests"/></Breadcrumb.Item>
                     <Breadcrumb.Item active><FormattedMessage id="requests" defaultMessage="Requests"/></Breadcrumb.Item>
                 </Breadcrumb>
-                <Panel defaultExpanded={false} >
+                <Panel defaultExpanded={true} >
                     <Panel.Heading>
                         <Panel.Title toggle>
                             <FormattedMessage id="search" defaultMessage="Search" /> <Glyphicon glyph="search" />
@@ -2901,11 +2974,9 @@ export class Requests extends Component{
                                         })}>
                                         <option value='' />
                                         {
-                                            activities && activities.sort((a, b) => {
-                                                if(a.name > b.name) return 1;
-                                                if(a.name < b.name) return -1;
-                                                return 0
-                                            }).map(
+                                            activities && activities.sort(
+                                              (a, b) => a.name.localeCompare(b.name)
+                                            ).map(
                                                 a => <option value={a.id} key={a.id}>{a.name}</option>
                                             )
                                         }
@@ -3066,7 +3137,6 @@ export class Requests extends Component{
                                                         { role_id: { $merge: { op: e.target.value } } })
                                                 })}>
                                                 <option value="eq">==</option>
-                                                <option value="ne">!=</option>
                                                 <option value="is_not_null">*any*</option>
                                             </FormControl>
                                         </Col>
@@ -3264,6 +3334,7 @@ export class Requests extends Component{
                                         <option value="ge">&gt;=</option>
                                         <option value="lt">&lt;</option>
                                         <option value="le">&lt;=</option>
+                                        <option value="between">between</option>
                                     </FormControl>
                                 </Col>
 
@@ -3282,6 +3353,27 @@ export class Requests extends Component{
                                         showTimeSelect
                                         timeFormat="HH:mm"
                                         timeIntervals={60}/>
+
+                                    {
+                                      filter_criteria.created_on.op === "between" &&
+                                      <>
+                                        {" - "}
+                                        <DatePicker
+                                            className="form-control"
+                                            selected={filter_criteria.created_on.value2.length !== 0 ? userLocalizeUtcDate(moment(filter_criteria.created_on.value2), user_info).toDate() : null}
+                                            onChange={d => {
+                                              this.setState({
+                                                filter_criteria: update(
+                                                  this.state.filter_criteria,
+                                                  {created_on: {$merge: {value2: d || ""}}})
+                                              })
+                                            }}
+                                            dateFormat="dd/MM/yyyy HH:mm"
+                                            showTimeSelect
+                                            timeFormat="HH:mm"
+                                            timeIntervals={60}/>
+                                      </>
+                                    }
                                 </Col>
                             </FormGroup>
 
@@ -3292,7 +3384,7 @@ export class Requests extends Component{
 
                                 <Col smOffset={1} sm={8}>
                                     <Checkbox
-                                        checked={filter_criteria.task_status && filter_criteria.task_status.value === 'ERROR'}
+                                        checked={filter_criteria.task_status && filter_criteria.task_status.and[0].value === 'ERROR'}
                                         onChange={e => (
                                             e.target.checked ?
                                                 this.setState({
@@ -3304,7 +3396,7 @@ export class Requests extends Component{
                                                         {$unset: ['task_status']})
                                                 })
                                         )} >
-                                        <FormattedMessage id="with-errors" defaultMessage="With errors" />
+                                        <FormattedMessage id="with-tasks-in-errors" defaultMessage="With tasks in errors" />
                                     </Checkbox>
 
                                     <Checkbox
@@ -3483,7 +3575,6 @@ export class CustomRequests extends Component{
             roles: [],
         };
         this._refresh = this._refresh.bind(this);
-        this._load_activities = this._load_activities.bind(this);
         this._prepare_url = this._prepare_url.bind(this);
     }
 
@@ -3517,7 +3608,7 @@ export class CustomRequests extends Component{
     componentDidMount() {
         document.title = "Requests";
         fetchRoles(roles => this.setState({roles: roles}));
-        this._load_activities();
+        fetchActivities(activities => this.setState({activities: activities}));
         this._refresh();
     }
 
@@ -3533,12 +3624,6 @@ export class CustomRequests extends Component{
                 filter_criteria: CustomRequests.criteria_from_params(nextProps.location.search, nextProps.user_info.ui_profile)
             });
         }
-    }
-
-    _load_activities() {
-        fetch_get('/api/v01/activities', this.props.auth_token)
-            .then(data => !this.cancelLoad && this.setState({activities: data.activities}))
-            .catch(error => console.error(error))
     }
 
     _prepare_url(paging_spec, sorting_spec, format) {
@@ -3976,7 +4061,7 @@ export class CustomRequests extends Component{
                                 {
                                     title: <FormattedMessage id="workflow" defaultMessage="Workflow" />,
                                     field: 'activity_id', model: 'instances', sortable: true,
-                                    render: n => activities && n.activity_id && activities.find(a => a.id === n.activity_id) ? activities.find(a => a.id === n.activity_id).name : "-"
+                                    render: n => activities && n.activity_id && activities.find(a => a.id === n.activity_id)?.name || "-"
                                 },
                                 {
                                     title: <FormattedMessage id="route" defaultMessage="Route" />,

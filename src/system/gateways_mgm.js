@@ -19,6 +19,7 @@ import ControlLabel from 'react-bootstrap/lib/ControlLabel';
 
 import {FormattedMessage} from 'react-intl';
 import {fetch_get, fetch_put, NotificationsManager} from '../utils';
+import {useLocation} from "react-router";
 
 
 function fetchConfig(name, onSuccess) {
@@ -253,7 +254,9 @@ export default function Gateways(props) {
         clearInterval(refreshHandler);
         clearInterval(countDown);
       }
-    }, [])
+    }, []);
+
+    const { hash } = useLocation();
 
     return (
         <div>
@@ -261,10 +264,10 @@ export default function Gateways(props) {
                 <Breadcrumb.Item active><FormattedMessage id="system" defaultMessage="System"/></Breadcrumb.Item>
                 <Breadcrumb.Item active><FormattedMessage id="gateways" defaultMessage="Gateways"/></Breadcrumb.Item>
             </Breadcrumb>
-            <Tabs defaultActiveKey={0} id="gateways-tabs">
+            <Tabs defaultActiveKey={hash ? hash.substring(1) : Object.keys(gateways)[0]} id="gateways-tabs">
             {
                 Object.keys(gateways).map((g, i) => (
-                    <Tab eventKey={i} title={g} key={i}>
+                    <Tab eventKey={g} title={g} key={g}>
                         <GatewayTab
                             name={g}
                             info={gateways[g]}

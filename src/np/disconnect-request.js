@@ -30,6 +30,7 @@ export class NPDisconnectRequest extends Component {
 
     this.cancelLoad = false;
     this.onSubmit = this.onSubmit.bind(this);
+    document.title = "Disconnect req.";
   }
 
   componentDidMount() {

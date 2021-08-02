@@ -228,12 +228,6 @@ export default function Templates() {
                 <Breadcrumb.Item active><FormattedMessage id="templates" defaultMessage="Templates"/></Breadcrumb.Item>
             </Breadcrumb>
 
-            {
-                templates
-                    .sort((a, b) => a.id - b.id)
-                    .map((t, i) => <Template key={i} template={t} onUpdate={refresh} onDelete={refresh}/>)
-            }
-
             <Panel>
                 <Panel.Body>
                     <ButtonToolbar>
@@ -241,6 +235,12 @@ export default function Templates() {
                     </ButtonToolbar>
                 </Panel.Body>
             </Panel>
+
+            {
+                templates
+                    .sort((a, b) => a.id - b.id)
+                    .map((t, i) => <Template key={i} template={t} onUpdate={refresh} onDelete={refresh}/>)
+            }
         </div>
     )
 }

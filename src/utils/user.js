@@ -1,3 +1,6 @@
+import {userLocalizeUtcDate} from "../utils";
+import moment from "moment";
+
 export const pages = Object.freeze({
     requests: 19,
     requests_nprequests: 0,
@@ -55,6 +58,21 @@ export const pages = Object.freeze({
     npact_holidays: 305,
 });
 
+export const accesses = Object.freeze({
+  dashboard: "dashboard",
+  requests: "requests",
+  cron_requests: "cron_requests",
+  bulks: "bulks",
+  bulks_actions: "bulks.actions",
+  provisioning: "provisioning",
+  data: "data",
+  settings: "settings",
+  settings_users: "settings.users",
+  settings_alarms: "settings.alarms",
+  settings_configuration: "settings.configuration",
+  orchestration: "orchestration",
+})
+
 export const modules = Object.freeze({
     orange: 'orange',
     proxy: 'proxy',
@@ -63,7 +81,6 @@ export const modules = Object.freeze({
     orchestration: 'orchestration',
     telenet: 'telenet',
     manualActions: 'manualActions',
-    saml: 'saml',
     npact: 'npact',
     npact_crdb: 'npact_crdb',
     npact_citc: 'npact_citc',
@@ -89,20 +106,20 @@ const UI_PROFILES = {
     "telenet": ["user", "admin", "CPM", "HelpDesk1",  "HelpDesk2",  "HelpDesk3", "VoiceOps", "VoiceEng"],
 };
 
-const HOME_PAGES = {
-    "provisioning": "/provisioning/list",
-    "CPM": "/provisioning/list",
-    "HelpDesk1": "/provisioning/list",
-    "HelpDesk2": "/provisioning/list",
-    "HelpDesk3": "/provisioning/list",
-    "VoiceOps": "/provisioning/list",
-    "VoiceEng": "/provisioning/list"
-};
+// const HOME_PAGES = {
+//     "provisioning": "/provisioning/list",
+//     "CPM": "/provisioning/list",
+//     "HelpDesk1": "/provisioning/list",
+//     "HelpDesk2": "/provisioning/list",
+//     "HelpDesk3": "/provisioning/list",
+//     "VoiceOps": "/provisioning/list",
+//     "VoiceEng": "/provisioning/list"
+// };
 
-export function getHomePage(ui_profile) {
-    if (HOME_PAGES[ui_profile] !== undefined) return HOME_PAGES[ui_profile];
-    else return "/dashboard";
-}
+// export function getHomePage(ui_profile) {
+//     if (HOME_PAGES[ui_profile] !== undefined) return HOME_PAGES[ui_profile];
+//     else return "/dashboard";
+// }
 
 const definition = {
     // give access to all pages for the admin
@@ -311,6 +328,30 @@ export function isAllowed(profile, page, requested_level, requested_privilege) {
     }
 }
 
-export function is_admin(profile) {
-    return profile === 'admin' || profile === 'system';
+class LocalUser {
+  fromObject(user) {
+    this.user = user;
+  }
+
+  getHomePage() {
+    return ((this.user && this.user.profile) ? this.user.profile.home : "/dashboard") || "/dashboard"
+  }
+
+  isSystem() {
+    return this.user && this.user.is_system
+  }
+
+  isAllowed(right) {
+    return this.user && (this.isSystem() || (this.user.profile.accesses && this.user.profile.accesses.includes(right)))
+  }
+
+  canSee(page) {
+    return this.user && isAllowed(this.user.ui_profile, page);
+  }
+
+  localizeUtcDate(m) {
+    return userLocalizeUtcDate(moment(m), this.user)
+  }
 }
+
+export const localUser = new LocalUser();
