@@ -1649,14 +1649,21 @@ export function fetchGetTrunkGroupTemplate(trunkGroupName) {
   };
 }
 
-export function fetchGetSelfcareURL() {
+export function fetchGetSelfcareURL(proxy) {
   return function (dispatch) {
     return fetch_get(
-      `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/applications/prov_gui/config`
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/applications/${proxy}/config`
     )
       .then((data) => dispatch(getSelfcareURL(data)))
-      .catch((error) => {
-        console.error(error.message);
+      .catch((err) => {
+        console.error(err.message);
+        return fetch_get(
+          `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/applications/prov_gui/config`
+        )
+          .then((data) => dispatch(getSelfcareURL(data)))
+          .catch((error) => {
+            console.error(error.message);
+          });
       });
   };
 }
@@ -1999,15 +2006,19 @@ export function fetchGetTrunkGroupAccessInfo(tenantId, groupId, trunkGroupId) {
   };
 }
 
-export function fetchPostCreateGroupAdmin(tenantId, groupId, data) {
+export function fetchPostCreateGroupAdmin(tenantId, groupId, data, callback) {
   return function (dispatch) {
     return fetch_post(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/admins/`,
       data
     )
       .then((resp) => resp.json())
-      .then((data) => dispatch(postCreateGroupAdmin(data)))
+      .then((data) => {
+        dispatch(postCreateGroupAdmin(data))
+        callback && callback()
+      })
       .catch((error) => {
+        callback && callback()
         if (error.response && error.response.status === 400) {
           return dispatch(postCreateGroupAdminError(error));
         } else {
@@ -2023,15 +2034,20 @@ export function fetchPostCreateGroupAdmin(tenantId, groupId, data) {
   };
 }
 
-export function fetchPostCreateTenantAdmin(tenantId, data) {
+export function fetchPostCreateTenantAdmin(tenantId, data, callback) {
   return function (dispatch) {
     return fetch_post(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/admins/`,
       data
     )
       .then((resp) => resp.json())
-      .then((data) => dispatch(postCreateTenantAdmin(data)))
+      .then((data) => {
+        dispatch(postCreateTenantAdmin(data))
+       callback && callback()
+      }
+        )
       .catch((error) => {
+        callback && callback()
         if (error.response && error.response.status === 400) {
           return dispatch(postCreateTenantAdminError(error));
         } else {

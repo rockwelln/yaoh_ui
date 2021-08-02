@@ -47,6 +47,7 @@ class CreateAdmin extends Component {
     userIdError: null,
     passwordError: null,
     textPasswordError: "",
+    disabledCreateButton: false,
   };
 
   componentDidMount() {
@@ -104,6 +105,7 @@ class CreateAdmin extends Component {
       isLoadingPassRules,
       passwordError,
       textPasswordError,
+      disabledCreateButton,
     } = this.state;
 
     if (isLoading || isLoadingLang || isLoadingPassRules) {
@@ -344,7 +346,10 @@ class CreateAdmin extends Component {
                 </FormGroup>
                 <Row>
                   <Col mdPush={10} md={1}>
-                    <Button onClick={this.createAdmin}>
+                    <Button
+                      onClick={this.createAdmin}
+                      disabled={disabledCreateButton}
+                    >
                       <Glyphicon glyph="glyphicon glyphicon-ok" /> CREATE
                     </Button>
                   </Col>
@@ -394,16 +399,25 @@ class CreateAdmin extends Component {
       this.setState({ passwordNotMatch: "error" });
       return;
     }
-    this.props.match.params.groupId
-      ? this.props.fetchPostCreateGroupAdmin(
-          this.props.match.params.tenantId,
-          this.props.match.params.groupId,
-          createAdminData
-        )
-      : this.props.fetchPostCreateTenantAdmin(
-          this.props.match.params.tenantId,
-          createAdminData
-        );
+
+    const callback = () => {
+      this.setState({ disabledCreateButton: false });
+    };
+
+    this.setState({ disabledCreateButton: true }, () => {
+      this.props.match.params.groupId
+        ? this.props.fetchPostCreateGroupAdmin(
+            this.props.match.params.tenantId,
+            this.props.match.params.groupId,
+            createAdminData,
+            callback
+          )
+        : this.props.fetchPostCreateTenantAdmin(
+            this.props.match.params.tenantId,
+            createAdminData,
+            callback
+          );
+    });
   };
 }
 
