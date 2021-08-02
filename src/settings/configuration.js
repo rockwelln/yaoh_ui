@@ -1177,7 +1177,7 @@ function ProxyGateways({value, gateways, onChange}) {
       </thead>
       <tbody>
         {
-          Object.entries(value).map(([px, gw], i) => {
+          value && Object.entries(value).map(([px, gw], i) => {
             return (
               <tr key={i}>
                 <td>
@@ -1244,10 +1244,12 @@ function BroadsoftIdpParameters({params, gateways, onChange}) {
   } else {
     v = (
       <ProxyGateways
-        value={params.proxies}
+        value={params.proxies || {}}
         gateways={gateways}
         onChange={prxs =>
-          onChange(update(params, {$merge: {proxies: prxs}}))
+          params.proxies === undefined ?
+          onChange(update(params, {$merge: {proxies: prxs}})) :
+          onChange(update(params, {$set: {proxies: prxs}}))
         }
       />
     )
@@ -1956,39 +1958,44 @@ function SSOPanel({sso, gateways, onChange}) {
 
       {
         sso
-          .sort((a, b) => a.name.localeCompare(b.name))
+          .sort((a, b) => {
+            if(a === null || b === null) return -1;
+            return a.name.localeCompare(b.name)
+          })
           .map(
             (p, i) => {
+              if(p === null) return <div/>
+
               let authenticationParams;
               switch (p.protocol) {
                 case "oidc":
                   authenticationParams =
                     <OidcParameters
-                      params={p.parameters}
+                      params={p.parameters || {}}
                       onChange={e => onChange(update(sso, {[i]: {$merge: {parameters: e}}}))}/>
                   break;
                 case "saml":
                   authenticationParams =
                     <SamlParameters
-                      params={p.parameters}
+                      params={p.parameters || {}}
                       onChange={e => onChange(update(sso, {[i]: {$merge: {parameters: e}}}))}/>
                   break;
                 case "webseal":
                   authenticationParams =
                     <WebSealParameters
-                      params={p.parameters}
+                      params={p.parameters || {}}
                       onChange={e => onChange(update(sso, {[i]: {$merge: {parameters: e}}}))}/>
                   break;
                 case "soap-token":
                   authenticationParams =
                     <SoapTokenParameters
-                      params={p.parameters}
+                      params={p.parameters || {}}
                       onChange={e => onChange(update(sso, {[i]: {$merge: {parameters: e}}}))}/>
                   break;
                 case "broadsoft":
                   authenticationParams =
                     <BroadsoftIdpParameters
-                      params={p.parameters}
+                      params={p.parameters || {}}
                       gateways={gateways}
                       onChange={e => onChange(update(sso, {[i]: {$merge: {parameters: e}}}))}/>
                   break;
