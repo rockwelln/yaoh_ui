@@ -9,7 +9,7 @@ import {
   fetchGetTenantById,
   fetchGetTrunkGroupTemplates,
   fetchGetTrunkGroupTemplate,
-  fetchGetDevicesByGroupId
+  fetchGetDevicesByGroupId,
 } from "../../store/actions";
 
 import Row from "react-bootstrap/lib/Row";
@@ -48,13 +48,13 @@ export class AddTrunkGroup extends Component {
     isNewTrukDevice: "",
     accessDevice: {
       name: "",
-      level: ""
+      level: "",
     },
     accessDeviceInfo: {
       deviceName: "",
-      deviceType: ""
+      deviceType: "",
     },
-    isRecivedTemplate: false
+    isRecivedTemplate: false,
   };
 
   componentDidMount() {
@@ -67,7 +67,7 @@ export class AddTrunkGroup extends Component {
       this.setState({
         isLoading: false,
         phoneTypes: this.props.phoneTypes,
-        name: `${this.props.match.params.groupId}_trgp${first}${second}`
+        name: `${this.props.match.params.groupId}_trgp${first}${second}`,
       })
     );
     this.props
@@ -105,7 +105,7 @@ export class AddTrunkGroup extends Component {
                 <FormControl
                   type="text"
                   value={this.state.name}
-                  onChange={e =>
+                  onChange={(e) =>
                     this.setState({ name: e.target.value, nameError: null })
                   }
                 />
@@ -128,7 +128,7 @@ export class AddTrunkGroup extends Component {
                 min={0}
                 max={this.props.trunkGroups.maxActiveCalls}
                 value={this.state.maxActiveCalls}
-                onChange={e => {
+                onChange={(e) => {
                   if (
                     Number(e.target.value) < 0 ||
                     Number(e.target.value) >
@@ -151,10 +151,10 @@ export class AddTrunkGroup extends Component {
                 className={"margin-top-0"}
                 name="authentication_type"
                 value={"sip"}
-                onChange={e =>
+                onChange={(e) =>
                   this.setState({
                     authenticationType: e.target.value,
-                    requireAuthentication: true
+                    requireAuthentication: true,
                   })
                 }
               >
@@ -169,9 +169,9 @@ export class AddTrunkGroup extends Component {
                     type="text"
                     placeholder="Username*"
                     value={this.state.sipAuthenticationUserName}
-                    onChange={e =>
+                    onChange={(e) =>
                       this.setState({
-                        sipAuthenticationUserName: e.target.value
+                        sipAuthenticationUserName: e.target.value,
                       })
                     }
                   />
@@ -182,9 +182,9 @@ export class AddTrunkGroup extends Component {
                     type="password"
                     placeholder="Password*"
                     value={this.state.sipAuthenticationPassword}
-                    onChange={e =>
+                    onChange={(e) =>
                       this.setState({
-                        sipAuthenticationPassword: e.target.value
+                        sipAuthenticationPassword: e.target.value,
                       })
                     }
                   />
@@ -198,8 +198,12 @@ export class AddTrunkGroup extends Component {
                 className={"margin-top-0"}
                 name="authentication_type"
                 value={"tgrp"}
-                onChange={e =>
-                  this.setState({ authenticationType: e.target.value })
+                onChange={(e) =>
+                  this.setState({
+                    authenticationType: e.target.value,
+                    trunkGroupIdentity:
+                      this.state.trunkGroupIdentity || this.state.name,
+                  })
                 }
               >
                 Static (tgrp)
@@ -213,7 +217,7 @@ export class AddTrunkGroup extends Component {
                       type="text"
                       value={this.state.trunkGroupIdentity}
                       placeholder={"tgrp"}
-                      onChange={e =>
+                      onChange={(e) =>
                         this.setState({ trunkGroupIdentity: e.target.value })
                       }
                     />
@@ -229,7 +233,7 @@ export class AddTrunkGroup extends Component {
                 className={"margin-top-0"}
                 name="authentication_type"
                 value={"otg/dtg"}
-                onChange={e =>
+                onChange={(e) =>
                   this.setState({ authenticationType: e.target.value })
                 }
               >
@@ -242,7 +246,7 @@ export class AddTrunkGroup extends Component {
                   type="text"
                   value={this.state.otgDtgIdentity}
                   placeholder={"otg/dtg"}
-                  onChange={e =>
+                  onChange={(e) =>
                     this.setState({ otgDtgIdentity: e.target.value })
                   }
                 />
@@ -256,12 +260,12 @@ export class AddTrunkGroup extends Component {
                 className={"margin-top-0"}
                 name="template"
                 value={"none"}
-                onChange={e =>
+                onChange={(e) =>
                   this.setState({
                     templateName: e.target.value,
                     isNewTrukDevice: "",
                     accessDevice: { name: "", level: "" },
-                    accessDeviceInfo: { deviceName: "", deviceType: "" }
+                    accessDeviceInfo: { deviceName: "", deviceType: "" },
                   })
                 }
                 checked={this.state.templateName === "none"}
@@ -272,14 +276,14 @@ export class AddTrunkGroup extends Component {
           </Row>
           {get(this.props, "trunkGroupTemplate") &&
             Array.isArray(this.props.trunkGroupsTemplates) &&
-            this.props.trunkGroupsTemplates.map(temp => (
+            this.props.trunkGroupsTemplates.map((temp) => (
               <Row className={"margin-top-1"}>
                 <Col mdOffset={3} md={9}>
                   <Radio
                     className={"margin-top-0"}
                     name="template"
                     value={temp.name}
-                    onChange={e =>
+                    onChange={(e) =>
                       this.setState({ templateName: e.target.value }, () =>
                         this.props
                           .fetchGetTrunkGroupTemplate(this.state.templateName)
@@ -311,11 +315,11 @@ export class AddTrunkGroup extends Component {
                     className={"margin-top-0"}
                     name="trunkDevice"
                     value={"existing"}
-                    onChange={e =>
+                    onChange={(e) =>
                       this.setState(
                         {
                           isNewTrukDevice: e.target.value,
-                          accessDeviceInfo: { deviceName: "", deviceType: "" }
+                          accessDeviceInfo: { deviceName: "", deviceType: "" },
                         },
                         () =>
                           this.props
@@ -327,8 +331,8 @@ export class AddTrunkGroup extends Component {
                               this.setState({
                                 accessDevice: {
                                   name: this.props.devices[0].deviceName,
-                                  level: "Group"
-                                }
+                                  level: "Group",
+                                },
                               })
                             )
                       )
@@ -342,12 +346,12 @@ export class AddTrunkGroup extends Component {
                   <Col md={3}>
                     <FormControl
                       componentClass="select"
-                      onChange={e => {
+                      onChange={(e) => {
                         this.setState({
                           accessDevice: {
                             name: this.props.devices[e.target.value].deviceName,
-                            level: "Group"
-                          }
+                            level: "Group",
+                          },
                         });
                       }}
                     >
@@ -366,10 +370,10 @@ export class AddTrunkGroup extends Component {
                     className={"margin-top-0"}
                     name="trunkDevice"
                     value={"new"}
-                    onChange={e =>
+                    onChange={(e) =>
                       this.setState({
                         isNewTrukDevice: e.target.value,
-                        accessDevice: { name: "", level: "" }
+                        accessDevice: { name: "", level: "" },
                       })
                     }
                     checked={this.state.isNewTrukDevice === "new"}
@@ -386,12 +390,12 @@ export class AddTrunkGroup extends Component {
                       <FormControl
                         type="text"
                         value={this.state.accessDeviceInfo.deviceName}
-                        onChange={e =>
+                        onChange={(e) =>
                           this.setState({
                             accessDeviceInfo: {
                               ...this.state.accessDeviceInfo,
-                              deviceName: e.target.value
-                            }
+                              deviceName: e.target.value,
+                            },
                           })
                         }
                       />
@@ -403,12 +407,12 @@ export class AddTrunkGroup extends Component {
                       <FormControl
                         componentClass="select"
                         value={this.state.accessDeviceInfo.deviceType}
-                        onChange={e =>
+                        onChange={(e) =>
                           this.setState({
                             accessDeviceInfo: {
                               ...this.state.accessDeviceInfo,
-                              deviceType: e.target.value
-                            }
+                              deviceType: e.target.value,
+                            },
                           })
                         }
                       >
@@ -416,7 +420,7 @@ export class AddTrunkGroup extends Component {
                           {"none"}
                         </option>
 
-                        {this.state.phoneTypes.map(type => (
+                        {this.state.phoneTypes.map((type) => (
                           <option
                             key={type.technicalName}
                             value={type.technicalName}
@@ -462,25 +466,25 @@ export class AddTrunkGroup extends Component {
       sipAuthenticationUserName,
       sipAuthenticationPassword,
       trunkGroupIdentity,
-      otgDtgIdentity
+      otgDtgIdentity,
     } = this.state;
     switch (this.state.authenticationType) {
       case "sip": {
         return {
           requireAuthentication,
           sipAuthenticationUserName,
-          sipAuthenticationPassword
+          sipAuthenticationPassword,
         };
       }
       case "tgrp": {
         return {
           trunkGroupIdentity:
-            trunkGroupIdentity + `@${this.props.tenant.defaultDomain}`
+            trunkGroupIdentity + `@${this.props.tenant.defaultDomain}`,
         };
       }
       case "otg/dtg": {
         return {
-          otgDtgIdentity
+          otgDtgIdentity,
         };
       }
       default: {
@@ -495,7 +499,7 @@ export class AddTrunkGroup extends Component {
       maxActiveCalls,
       accessDevice,
       templateName,
-      accessDeviceInfo
+      accessDeviceInfo,
     } = this.state;
     if (!name) {
       this.setState({ nameError: "error" });
@@ -508,7 +512,7 @@ export class AddTrunkGroup extends Component {
       ...authenticationData,
       accessDevice,
       accessDeviceInfo,
-      templateName: templateName === "none" ? "" : templateName
+      templateName: templateName === "none" ? "" : templateName,
     });
     this.setState({ isDisabled: true }, () =>
       this.props
@@ -517,7 +521,7 @@ export class AddTrunkGroup extends Component {
           this.props.match.params.groupId,
           data
         )
-        .then(res => {
+        .then((res) => {
           res === "success"
             ? this.props.history.push(
                 `/provisioning/${this.props.match.params.gwName}/tenants/${this.props.match.params.tenantId}/groups/${this.props.match.params.groupId}/trunkgroup/${name}`
@@ -528,14 +532,14 @@ export class AddTrunkGroup extends Component {
   };
 }
 
-const mapStateToProps = state => ({
+const mapStateToProps = (state) => ({
   phoneTypes: state.phoneTypes,
   createdTrunkGroup: state.createdTrunkGroup,
   trunkGroups: state.trunkGroups,
   tenant: state.tenant,
   trunkGroupTemplate: state.trunkGroupTemplate,
   trunkGroupsTemplates: state.trunkGroupsTemplates,
-  devices: state.devices
+  devices: state.devices,
 });
 
 const mapDispatchToProps = {
@@ -545,12 +549,9 @@ const mapDispatchToProps = {
   fetchGetTenantById,
   fetchGetTrunkGroupTemplates,
   fetchGetTrunkGroupTemplate,
-  fetchGetDevicesByGroupId
+  fetchGetDevicesByGroupId,
 };
 
 export default withRouter(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(AddTrunkGroup)
+  connect(mapStateToProps, mapDispatchToProps)(AddTrunkGroup)
 );
