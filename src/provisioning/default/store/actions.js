@@ -9,7 +9,6 @@ import {
 import * as actionType from "./constants";
 import { FormattedMessage } from "react-intl";
 import React from "react";
-import { get } from "../components/get";
 
 export const getTenants = (data) => ({
   type: actionType.GET_TENANTS,
@@ -341,6 +340,11 @@ export const getTrunkGroupAccessInfo = (data) => ({
   data,
 });
 
+export const getAllServicePacksOfTenant = (data) => ({
+  type: actionType.GET_ALL_SERVICE_PACKS_OF_TENANT,
+  data,
+});
+
 export const postCreateGroupAdmin = (data) => ({
   type: actionType.POST_CREATE_GROUP_ADMIN,
   data,
@@ -438,6 +442,10 @@ export const postCreateTemplate = () => ({
 
 export const postAddEntitlementToTenant = () => ({
   type: actionType.POST_ADD_ENTITLEMENTS_TO_TENANT,
+});
+
+export const postAddServicePacksToTenant = () => ({
+  type: actionType.POST_ADD_SERVICE_PACK_TO_TENANT,
 });
 
 export const putUpdateUser = (data) => ({
@@ -635,6 +643,10 @@ export const deleteTemplate = () => ({
 
 export const deleteEntitlementFromTenant = () => ({
   type: actionType.DELETE_ENTITLEMENT_FROM_TENANT,
+});
+
+export const deleteServicePackFromTenant = () => ({
+  type: actionType.DELETE_SERVICE_PACK_FROM_TENANT,
 });
 
 export const clearErrorMassage = () => ({
@@ -2006,6 +2018,25 @@ export function fetchGetTrunkGroupAccessInfo(tenantId, groupId, trunkGroupId) {
   };
 }
 
+export function fetchGetAllServicePacksOfTenant() {
+  return function (dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/service_packs/`
+    )
+      .then((data) => dispatch(getAllServicePacksOfTenant(data)))
+      .catch((error) => {
+        dispatch(getAllServicePacksOfTenant({ service_packs: [] }));
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-service-packs-failed"
+            defaultMessage="Failed to fetch service packs"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
 export function fetchPostCreateGroupAdmin(tenantId, groupId, data, callback) {
   return function (dispatch) {
     return fetch_post(
@@ -2014,11 +2045,11 @@ export function fetchPostCreateGroupAdmin(tenantId, groupId, data, callback) {
     )
       .then((resp) => resp.json())
       .then((data) => {
-        dispatch(postCreateGroupAdmin(data))
-        callback && callback()
+        dispatch(postCreateGroupAdmin(data));
+        callback && callback();
       })
       .catch((error) => {
-        callback && callback()
+        callback && callback();
         if (error.response && error.response.status === 400) {
           return dispatch(postCreateGroupAdminError(error));
         } else {
@@ -2042,12 +2073,11 @@ export function fetchPostCreateTenantAdmin(tenantId, data, callback) {
     )
       .then((resp) => resp.json())
       .then((data) => {
-        dispatch(postCreateTenantAdmin(data))
-       callback && callback()
-      }
-        )
+        dispatch(postCreateTenantAdmin(data));
+        callback && callback();
+      })
       .catch((error) => {
-        callback && callback()
+        callback && callback();
         if (error.response && error.response.status === 400) {
           return dispatch(postCreateTenantAdminError(error));
         } else {
@@ -2449,6 +2479,36 @@ export function fetchPostAddEntitlementToTenant(tenantId, data) {
           <FormattedMessage
             id="failed-to-add-entitlements"
             defaultMessage="Failed to add entitlements!"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchPostAddServicePacksToTenant(tenantId, data) {
+  return function (dispatch) {
+    return fetch_post(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/service_packs/`,
+      data
+    )
+      .then((res) => res.json())
+      .then(() => {
+        dispatch(postAddServicePacksToTenant());
+        NotificationsManager.success(
+          <FormattedMessage
+            id="Service-packs-successfully-added"
+            defaultMessage="Service packs successfully added"
+          />,
+          "Created"
+        );
+        return "success";
+      })
+      .catch((error) => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-add-service-packs"
+            defaultMessage="Failed to add service packs!"
           />,
           error.message
         );
@@ -3546,6 +3606,28 @@ export function fetchDeleteEntitlementFromTenant(tenantId, entitlementId) {
           <FormattedMessage
             id="failed-to-delete-entitlement"
             defaultMessage="Failed to delete entitlement!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchDeleteServicePacksFromTenant(tenantId, data) {
+  return function (dispatch) {
+    return fetch_delete(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/service_packs/`,
+      data
+    )
+      .then((res) => res.json())
+      .then(() => {
+        dispatch(deleteServicePackFromTenant());
+      })
+      .catch((error) =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-delete-service-pack"
+            defaultMessage="Failed to delete service-pack!"
           />,
           error.message
         )

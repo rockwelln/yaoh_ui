@@ -146,6 +146,7 @@ const initialState = {
   limitedUserServicesGroup: {},
   groupPasswordRules: {},
   trunkGroupAccessInfo: {},
+  allTenantServicePacks: [],
 };
 
 function mainReducer(state = initialState, action) {
@@ -820,6 +821,12 @@ function mainReducer(state = initialState, action) {
         trunkGroupAccessInfo: action.data,
       };
     }
+    case actionType.GET_ALL_SERVICE_PACKS_OF_TENANT: {
+      return {
+        ...state,
+        allTenantServicePacks: action.data.service_packs,
+      };
+    }
     case actionType.POST_CREATE_GROUP_ADMIN: {
       return {
         ...state,
@@ -979,6 +986,11 @@ function mainReducer(state = initialState, action) {
       };
     }
     case actionType.POST_ADD_ENTITLEMENTS_TO_TENANT: {
+      return {
+        ...state,
+      };
+    }
+    case actionType.POST_ADD_SERVICE_PACK_TO_TENANT: {
       return {
         ...state,
       };
@@ -1206,6 +1218,11 @@ function mainReducer(state = initialState, action) {
       };
     }
     case actionType.DELETE_ENTITLEMENT_FROM_TENANT: {
+      return {
+        ...state,
+      };
+    }
+    case actionType.DELETE_SERVICE_PACK_FROM_TENANT: {
       return {
         ...state,
       };
