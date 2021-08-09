@@ -1847,6 +1847,9 @@ export function fetchGetTenantSuspensionStatus(tenantId) {
     )
       .then((data) => dispatch(getTenantSuspensionStatus(data)))
       .catch((error) => {
+        if (error.response && error.response.status === 404) {
+          return;
+        }
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-suspension-status-failed"
@@ -1883,6 +1886,9 @@ export function fetchGetGroupSuspensionStatus(tenantId, groupId) {
     )
       .then((data) => dispatch(getGroupSuspensionStatus(data)))
       .catch((error) => {
+        if (error.response && error.response.status === 404) {
+          return;
+        }
         NotificationsManager.error(
           <FormattedMessage
             id="fetch-suspension-status-failed"
@@ -2187,6 +2193,10 @@ export function fetchPostAddPhoneNumbersToTenant(tenantId, data) {
       .then((res) => res.json())
       .then((data) => dispatch(postAddPhoneNumbersToTenant(data)))
       .catch((error) => {
+        // if (error.response.status === 400) {
+        //   dispatch(postAddPhoneNumbersToTenant(data));
+        //   return;
+        // }
         NotificationsManager.error(
           <FormattedMessage
             id="failed-to-add-phone-numbers"
