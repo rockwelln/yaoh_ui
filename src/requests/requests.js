@@ -2806,7 +2806,7 @@ export class Requests extends Component{
         if(selected_reqs.length === 0) {
             return this._onCloseAll();
         } else {
-            const reqs_ = requests.filter(r => r.request_id && r.status === "ACTIVE" && selected_reqs.includes(r.instance_id));
+            const reqs_ = requests.filter(r => r.request_id && r.instance_status === "ACTIVE" && selected_reqs.includes(r.instance_id));
             if(reqs_.length === 0) {
                 NotificationsManager.success(<FormattedMessage id="nothing-to-do"
                                                                defaultMessage="Nothing to be done."/>);
