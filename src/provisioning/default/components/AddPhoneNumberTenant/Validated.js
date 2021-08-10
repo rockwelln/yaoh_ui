@@ -216,7 +216,7 @@ export class Basic extends Component {
               data
             )
             .then((res) => {
-              if (res) {
+              if (res === "success") {
                 this.props.changeStepOfAddPhoneTenant("Info");
               }
             })

@@ -2191,12 +2191,15 @@ export function fetchPostAddPhoneNumbersToTenant(tenantId, data) {
       data
     )
       .then((res) => res.json())
-      .then((data) => dispatch(postAddPhoneNumbersToTenant(data)))
+      .then((data) => {
+        dispatch(postAddPhoneNumbersToTenant(data));
+        return "success";
+      })
       .catch((error) => {
-        // if (error.response.status === 400) {
-        //   dispatch(postAddPhoneNumbersToTenant(data));
-        //   return;
-        // }
+        if (error.response.status === 400 && error.body.result) {
+          dispatch(postAssignPhoneNumbersToGroup(error.body));
+          return "success";
+        }
         NotificationsManager.error(
           <FormattedMessage
             id="failed-to-add-phone-numbers"
@@ -2343,15 +2346,19 @@ export function fetchPostAssignPhoneNumbersToGroup(tenantId, groupId, data) {
         dispatch(postAssignPhoneNumbersToGroup(data));
         return "success";
       })
-      .catch((error) =>
+      .catch((error) => {
+        if (error.response.status === 400 && error.body.result) {
+          dispatch(postAssignPhoneNumbersToGroup(error.body));
+          return "success";
+        }
         NotificationsManager.error(
           <FormattedMessage
             id="failed-to-add-phone-numbers"
             defaultMessage="Failed to add phone numbers!"
           />,
           error.message
-        )
-      );
+        );
+      });
   };
 }
 
