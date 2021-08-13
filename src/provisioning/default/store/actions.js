@@ -1661,7 +1661,9 @@ export function fetchGetTrunkGroupTemplate(trunkGroupName) {
   };
 }
 
-export function fetchGetSelfcareURL(proxy) {
+export function fetchGetSelfcareURL() {
+  const prefixArray = ProvProxiesManager.getCurrentUrlPrefix().split("/");
+  const proxy = prefixArray[prefixArray.length - 1];
   return function (dispatch) {
     return fetch_get(
       `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/applications/${proxy}/config`
