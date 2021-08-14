@@ -43,7 +43,7 @@ import {
   TxTable,
   pp_output,
 } from "../../requests/requests";
-import {ContextTable} from "../../requests/components";
+import {ContextTable, SubTransactionsPanel} from "../../requests/components";
 import moment from 'moment';
 import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
@@ -1260,25 +1260,36 @@ export function SyncMessagesDetails(props) {
 function CitcMessages(props) {
   const {messages, userInfo} = props;
   let listOfMessages = messages
+    .sort((a, b) => a.processing_trace_id - b.processing_trace_id)
     .reduce((l, m) => {
-      const o = JSON.parse(m.output);
-      const i = m.input ? JSON.parse(m.input) : null;
+      var o, i;
+      try {
+        o = JSON.parse(m.output || "{}");
+      } catch (e) {
+        // console.error("failed to parse m.output: ", e, m.output);
+        o = {"message": m.output};
+      }
+      try {
+        i = m.input ? JSON.parse(m.input) : null;
+      } catch (e) {
+        console.error("failed to parse m.input: ", e, m.input);
+        i = null;
+      }
       const match = /MessageCode>([A-Za-z ]+)<\/.*$/gm.exec(o.request);
 
       o.request && l.push({id: m.processing_trace_id, endpoint: "CITC", summary: match?match[1]:"-", type:"request", created_on: m.created_on, raw: o.request});
       o.response && l.push({id: m.processing_trace_id, endpoint: "APIO", summary: o.status, type: "response", created_on: m.created_on, status: m.status === 200 ? o.status : m.status, ...o.response});
       i && i.event && l.push({id: m.processing_trace_id, endpoint: "APIO", type: "event", created_on: m.created_on, ...i.event});
       return l;
-    }, [])
-    .sort((a, b) => a.id - b.id);
+    }, []);
 
   return (
     <Tabs defaultActiveKey={1} id="syn-messages-flow">
       <Tab eventKey={1} title={<FormattedMessage id="flows" defaultMessage="Flows" />}>
         <SyncMessagesFlow
           data={listOfMessages}
-          getEndpoint={m => m.endpoint}
-          getSource={m => m.source ? m.source : m.endpoint === "APIO" ? "CITC" : "APIO"}
+          getEndpoint={m => m.endpoint.toUpperCase()}
+          getSource={m => m.source ? m.source.toUpperCase() : m.endpoint === "APIO" ? "CITC" : "APIO"}
           userInfo={userInfo}
         />
       </Tab>
@@ -1699,6 +1710,15 @@ export class NPTransaction extends Component {
                 </Panel>
               )
             }
+
+            <SubTransactionsPanel
+              txId={tx.id}
+              tasks={tx.tasks}
+              onReplay={() => {
+                this.setState({replaying: true});
+                return () => this.setState({replaying: false});
+              }}
+            />
 
             {tx.errors && tx.errors.length !== 0 &&
             <Panel bsStyle="danger">
