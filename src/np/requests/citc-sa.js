@@ -1340,9 +1340,13 @@ export class NPTransaction extends Component {
           return;
 
         this.setState({ tx: data });
+        document.title = `Instance ${txId}`;
 
-        fetch_get(`/api/v01/npact/np_requests/${data.original_request_id}`, this.props.auth_token)
-          .then(data => !this.cancelLoad && this.setState({ request: data }))
+        data.original_request_id && fetch_get(`/api/v01/npact/np_requests/${data.original_request_id}`, this.props.auth_token)
+          .then(data => {
+            !this.cancelLoad && this.setState({ request: data });
+            document.title = `Request ${data.crdc_id}`;
+          })
           .catch(error => !this.cancelLoad && this.setState({ error: error }));
 
         fetch_get(`/api/v01/transactions/${txId}/manual_actions`)

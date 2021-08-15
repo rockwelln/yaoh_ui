@@ -55,9 +55,9 @@ function SubInstance({instance, tasks, onReplay}) {
     <tr key={`message_sub_flow_sync_${instance.id}`}>
         <td style={{width: '2%'}}><Glyphicon style={{color: statusColor}} glyph={statusGlyph}/></td>
         <td>
-            <Link to={`/transactions/${instance.id}`}>{instance.label}</Link>{' '}
+            <Link to={`/transactions/${instance.id}`}>{instance.label || instance.id}</Link>{' '}
             {
-                instance.error_count !== 0 && <Badge style={{backgroundColor: '#ff0808'}}>{instance.error_count}{' '}<FormattedMessage id="errors" defaultMessage="error(s)"/></Badge>
+              (instance.error_count || instance.errors) && <Badge style={{backgroundColor: '#ff0808'}}>{instance.error_count || instance.errors}{' '}<FormattedMessage id="errors" defaultMessage="error(s)"/></Badge>
             }
         </td>
         <td style={{width: '30%'}}>
