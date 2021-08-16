@@ -179,11 +179,11 @@ const LimitedNavBar = ({user_info, logoutUser, database_status}) => (
 function AsyncApioNavBar({user_info, logoutUser, database_status}){
   const [alarms, setAlarms] = useState([]);
 
-  // useEffect(() => {
-  //   fetchAlarms({field: "active", op: "eq", value: true}, null, null, null, a => setAlarms(a.alarms));
-  //   const handler = setInterval(() => fetchAlarms({field: "active", op: "eq", value: true}, null, null, null, a => setAlarms(a.alarms)), 5000);
-  //   return () => { clearInterval(handler) }
-  // }, []);
+  useEffect(() => {
+    fetchAlarms({field: "active", op: "eq", value: true}, null, null, null, a => setAlarms(a.alarms));
+    const handler = setInterval(() => fetchAlarms({field: "active", op: "eq", value: true}, null, null, null, a => setAlarms(a.alarms)), 5000);
+    return () => { clearInterval(handler) }
+  }, []);
 
   return (
     <Navbar staticTop collapseOnSelect inverse>
