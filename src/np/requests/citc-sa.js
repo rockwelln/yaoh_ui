@@ -48,6 +48,7 @@ import moment from 'moment';
 import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import {ConfirmButton} from "../../utils/deleteConfirm";
+import {fetchActivities} from "../../orchestration/activity-editor";
 
 export const DEFAULT_RECIPIENT = "ITC";
 export const rejection_codes = [
@@ -754,8 +755,7 @@ export class NPDisconnectRequest extends Component {
         donor_id: parseInt(donor.id, 10),
         recipient_id: operators.filter(o => o.short_name === DEFAULT_RECIPIENT)[0].id,
         ranges: ranges,
-      },
-      this.props.auth_token
+      }
     )
       .then(parseJSON)
       .then(data => {
@@ -790,7 +790,7 @@ export class NPDisconnectRequest extends Component {
     this.setState({ donor: undefined, donor_error: undefined });
     if (number.length < MIN_NUMBER_LENGTH_LOOKUP || number.length >= MAX_NUMBER_LENGTH_LOOKUP) return;
 
-    fetch_get(url, this.props.auth_token)
+    fetch_get(url)
       .then(data => {
         if (data.numbers.length === 0) {
           throw new Error('No case found');
@@ -901,7 +901,7 @@ class RequestTable extends Component {
     }
 
     this.setState({ saving: true });
-    fetch_put(`/api/v01/voo/np_requests/${this.props.request.id}`, diff_req, this.props.auth_token)
+    fetch_put(`/api/v01/voo/np_requests/${this.props.request.id}`, diff_req)
       .then(parseJSON)
       .then(data => {
         this.setState({ request_crdc: data.event_sent, saving: false });
@@ -1315,6 +1315,7 @@ export class NPTransaction extends Component {
       events: [],
       messages: [],
       messageShown: true,
+      activities: [],
     };
     this.cancelLoad = false;
 
@@ -1334,15 +1335,20 @@ export class NPTransaction extends Component {
   fetchTxDetails(reload) {
     this.setState({ error: undefined });
     const txId = this.props.match.params.txId;
-    fetch_get(`/api/v01/transactions/${this.props.match.params.txId}`, this.props.auth_token)
+    fetch_get(`/api/v01/transactions/${this.props.match.params.txId}`)
       .then(data => {
         if (this.cancelLoad)
           return;
 
-        this.setState({ tx: data });
+        const diffState = { tx: data };
+        if(!this.state.tx && data.callback_task_id) {
+          diffState.activeTab = 2;
+        }
+        this.setState(diffState);
+
         document.title = `Instance ${txId}`;
 
-        data.original_request_id && fetch_get(`/api/v01/npact/np_requests/${data.original_request_id}`, this.props.auth_token)
+        data.original_request_id && fetch_get(`/api/v01/npact/np_requests/${data.original_request_id}`)
           .then(data => {
             !this.cancelLoad && this.setState({ request: data });
             document.title = `Request ${data.crdc_id}`;
@@ -1386,19 +1392,32 @@ export class NPTransaction extends Component {
 
   componentDidMount() {
     this.fetchTxDetails(true);
+    fetchActivities(a => this.setState({activities: a}))
   }
 
   componentWillUnmount() {
     this.cancelLoad = true;
   }
 
-  componentWillReceiveProps() {
-    this.setState({ activeTab: 1 });
-    this.fetchTxDetails(false);
+  componentDidUpdate(prevProps, prevState, snapshot) {
+      if(prevState.tx !== undefined && prevProps.match.params.txId !== this.props.match.params.txId) {
+          document.title = `Instance - ${this.props.match.params.txId}`;
+          this.setState({
+              activeTab: 1,
+              tx: undefined,
+              request: undefined,
+              logs: [],
+              events: [],
+              externalCallbacks: [],
+              manualActions: [],
+              messages: [],
+          });
+          this.fetchTxDetails(false);
+      }
   }
 
   onReplay(activity_id, task_id) {
-    fetch_put(`/api/v01/transactions/${activity_id}/tasks/${task_id}`, {}, this.props.auth_token)
+    fetch_put(`/api/v01/transactions/${activity_id}/tasks/${task_id}`, {})
       .then(() => NotificationsManager.success(
         <FormattedMessage id="task-replayed" defaultMessage="Task replayed!" />,
         )
@@ -1410,7 +1429,7 @@ export class NPTransaction extends Component {
   }
 
   changeTxStatus(new_status) {
-    fetch_put(`/api/v01/transactions/${this.state.tx.id}`, { status: new_status }, this.props.auth_token)
+    fetch_put(`/api/v01/transactions/${this.state.tx.id}`, { status: new_status })
       .then(() => {
         this.fetchTxDetails(false);
         NotificationsManager.success(
@@ -1453,8 +1472,7 @@ export class NPTransaction extends Component {
         key: trigger_type,
         value: value,
         ...extra,
-      },
-      this.props.auth_token
+      }
     )
       .then(() => {
         this.caseUpdated();
@@ -1473,8 +1491,7 @@ export class NPTransaction extends Component {
       {
         key: key,
         value: value,
-      },
-      this.props.auth_token
+      }
     )
       .then(() => {
         this.caseUpdated();
@@ -1492,8 +1509,7 @@ export class NPTransaction extends Component {
       `/api/v01/voo/np_requests/${this.state.tx.original_request_id}`,
       {
         due_date: proposed_due_date
-      },
-      this.props.auth_token
+      }
     )
       .then(() => this.updateContext("hold", "approved"))
       .catch(error => {
@@ -1564,7 +1580,7 @@ export class NPTransaction extends Component {
   }
 
   render() {
-    const { sending, error, tx, request, activeTab, events, logs, replaying, messages, messageShown } = this.state;
+    const { sending, error, tx, request, activeTab, events, logs, replaying, messages, messageShown, activities } = this.state;
     const { user_info } = this.props;
     let alerts = [];
     error && alerts.push(
@@ -1670,7 +1686,7 @@ export class NPTransaction extends Component {
                 <Panel.Title><FormattedMessage id="summary" defaultMessage="Summary" /></Panel.Title>
               </Panel.Heading>
               <Panel.Body>
-                <TxTable tx={tx} request={request} userInfo={user_info}/>
+                <TxTable tx={tx} request={request} userInfo={user_info} activities={activities}/>
               </Panel.Body>
             </Panel>
 

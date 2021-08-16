@@ -53,6 +53,7 @@ import {ContextTable} from "../../requests/components";
 import {SubTransactionsPanel} from "../../requests/components";
 import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
 import {LinkContainer} from "react-router-bootstrap";
+import {fetchActivities} from "../../orchestration/activity-editor";
 
 export const DEFAULT_RECIPIENT = "MTNBSGNP";
 export const rejection_codes = [];
@@ -1545,6 +1546,7 @@ export class NPTransaction extends Component {
       showCancel: false,
       showAbort: false,
       messageShown: true,
+      activities: [],
     };
     this.cancelLoad = false;
 
@@ -1624,6 +1626,7 @@ export class NPTransaction extends Component {
 
   componentDidMount() {
     this.fetchTxDetails(true);
+    fetchActivities(a => this.setState({activities: a}));
   }
 
   componentWillUnmount() {
@@ -1834,7 +1837,7 @@ export class NPTransaction extends Component {
   }
 
   render() {
-    const { sending, error, tx, request, activeTab, manualActions, events, logs, replaying, messages, messageShown, showActionForm } = this.state;
+    const { sending, error, tx, request, activeTab, manualActions, events, logs, replaying, messages, messageShown, showActionForm, activities } = this.state;
     const {user_info} = this.props;
     let alerts = [];
     error && alerts.push(
@@ -2007,7 +2010,7 @@ export class NPTransaction extends Component {
                 <Panel.Title><FormattedMessage id="summary" defaultMessage="Summary" /></Panel.Title>
               </Panel.Heading>
               <Panel.Body>
-                <TxTable tx={tx} request={request} userInfo={user_info}/>
+                <TxTable tx={tx} request={request} userInfo={user_info} activities={activities}/>
               </Panel.Body>
             </Panel>
 

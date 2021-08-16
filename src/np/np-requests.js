@@ -363,7 +363,7 @@ export class NPRequests extends Component {
     //reset collection
     this.setState({ requests: undefined });
 
-    fetch_get(url, this.props.auth_token)
+    fetch_get(url)
       .then(data => {
         if (this.cancelLoad) return;
         // devnote: save in the history the search.
@@ -389,6 +389,8 @@ export class NPRequests extends Component {
             }
           );
           this.props.history.push(this.props.location.pathname + '?' + search_str);
+        } else {
+          this.props.history.push(this.props.location.pathname);
         }
 
         this.setState({
