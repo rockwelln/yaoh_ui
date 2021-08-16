@@ -41,7 +41,7 @@ import {
   TasksTable,
   TransactionFlow,
   TxTable,
-  pp_output,
+  pp_output, ManualActions, triggerManualAction,
 } from "../../requests/requests";
 import {ContextTable, SubTransactionsPanel} from "../../requests/components";
 import moment from 'moment';
@@ -49,6 +49,7 @@ import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import {ConfirmButton} from "../../utils/deleteConfirm";
 import {fetchActivities} from "../../orchestration/activity-editor";
+import {ManualActionInputForm} from "../../dashboard/manualActions";
 
 export const DEFAULT_RECIPIENT = "ITC";
 export const rejection_codes = [
@@ -1580,7 +1581,7 @@ export class NPTransaction extends Component {
   }
 
   render() {
-    const { sending, error, tx, request, activeTab, events, logs, replaying, messages, messageShown, activities } = this.state;
+    const { sending, error, tx, request, activeTab, events, logs, replaying, messages, messageShown, activities, manualActions, showActionForm } = this.state;
     const { user_info } = this.props;
     let alerts = [];
     error && alerts.push(
@@ -1592,6 +1593,44 @@ export class NPTransaction extends Component {
       return <div>{alerts.map(e => e)}</div>
     } else if (!tx) {
       return <div><FormattedMessage id='loading' defaultMessage='Loading...' /></div>
+    }
+
+    if(tx && tx.status === 'ACTIVE' && manualActions.length !== 0) {
+      manualActions
+        .filter(a => !a.output && user_info.roles.find(ur => ur.id === a.role_id))
+        .map(a => alerts.push(
+          <Alert bsStyle="warning" key={`request-action-${a.id}`}>
+            Action required for {user_info.roles.find(ur => ur.id === a.role_id).name}<br/>
+            {a.description} <br/>
+            <ButtonToolbar>
+            {
+            a.possible_outputs.split(",").map(o => (
+              <Button
+                onClick={
+                  () => {
+                    !a.input_form ?
+                      triggerManualAction(tx.id, a.id, o, undefined, () => this.fetchTxDetails(false)) :
+                      this.setState({showActionForm: [a, o]})
+                  }}>
+                {o}
+              </Button>
+            ))
+            }
+            </ButtonToolbar>
+            <ManualActionInputForm
+              show={showActionForm !== undefined}
+              action={showActionForm ? showActionForm[0]: {}}
+              output={showActionForm && showActionForm[1]}
+              onHide={() => this.setState({showActionForm: undefined})}
+              onTrigger={(a, output, values) => {
+                triggerManualAction(tx.id, a.id, output, values, () => {
+                  this.setState({showActionForm: undefined});
+                  this.fetchTxDetails(false);
+                })
+              }}
+              />
+          </Alert>
+        ))
     }
 
     let actions_required = [];
@@ -1749,6 +1788,19 @@ export class NPTransaction extends Component {
                 <Errors errors={tx.errors} user_info={this.props.user_info}/>
               </Panel.Body>
             </Panel>
+            }
+
+            {
+              manualActions.length !== 0 && (
+                <Panel defaultExpanded={false}>
+                  <Panel.Heading>
+                    <Panel.Title toggle><FormattedMessage id="manual-actions" defaultMessage="Manual actions" /></Panel.Title>
+                  </Panel.Heading>
+                  <Panel.Body collapsible>
+                    <ManualActions actions={manualActions} tasks={tx.tasks}/>
+                  </Panel.Body>
+                </Panel>
+              )
             }
 
             <Panel>
