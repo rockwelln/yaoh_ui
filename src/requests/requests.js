@@ -1694,7 +1694,7 @@ export class Transaction extends Component {
         const {tx} = this.state;
         this.setState({replaying: true});
 
-        if(tx && tx.super_instance_chain) {
+        if(tx && tx.super_instance_chain && tx.super_instance_chain.length !== 0) {
           const topInstanceID = tx.super_instance_chain[tx.super_instance_chain.length-1].id;
           fetchInstance(topInstanceID, i => {
             if(i.original_request_id) {
