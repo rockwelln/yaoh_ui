@@ -208,9 +208,13 @@ class NotificationsHandler {
     }
 
     error(title, message, extra) {
-        NotificationsHandler.rootRef &&
-        NotificationsHandler.rootRef.current &&
-        NotificationsHandler.rootRef.current.addNotification({
+        if(!NotificationsHandler.rootRef || !NotificationsHandler.rootRef.current)
+          return
+
+        const handler = NotificationsHandler.rootRef.current;
+        handler.state.notifications.filter(n => n.message === message).forEach(n => handler.removeNotification(n));
+
+        handler.addNotification({
             title: title,
             message: message,
             level: 'error',
