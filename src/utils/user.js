@@ -352,6 +352,10 @@ class LocalUser {
   localizeUtcDate(m) {
     return userLocalizeUtcDate(moment(m), this.user)
   }
+
+  isModuleEnabled(m) {
+    return this.user && supportedModule(m, this.user.modules);
+  }
 }
 
 export const localUser = new LocalUser();

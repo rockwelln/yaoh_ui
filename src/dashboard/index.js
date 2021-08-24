@@ -15,9 +15,10 @@ import ManualActionsBox, {ManualActionsTile, NPManualActionsBox} from "./manualA
 // import {TransactionsNeedApprovalTile} from "../np/dashboard_tiles";
 
 import './dashboard.css';
-import {modules, supportedModule} from "../utils/user";
+import {localUser, modules, supportedModule} from "../utils/user";
 import {Link} from "react-router-dom";
 import {activeCriteria, errorCriteria} from "../requests/requests";
+import {activeCriteria as npActiveCriteria, errorCriteria as npErrorCriteria} from "../np/np-requests";
 import queryString from 'query-string';
 import update from "immutability-helper";
 const REFRESH_CYCLE = 10;
@@ -46,7 +47,7 @@ export default function Dashboard(props) {
     const [stats, setStats] = useState({active_requests: {}});
     const [gateways, setGateways] = useState({});
     const isManual = props.user_info.modules.includes(modules.manualActions);
-    const isNpact = supportedModule(modules.npact, props.user_info.modules);
+    const isNpact = localUser.isModuleEnabled(modules.npact); // supportedModule(modules.npact, props.user_info.modules);
 
     const fetch_gw = useCallback(() => fetch_gateways(setGateways), []);
     const fetch_s = useCallback(() => fetch_stats(isNpact, setStats), [isNpact]);
@@ -79,13 +80,20 @@ export default function Dashboard(props) {
         }
     }
 
+    let activeCriteriaQuery = activeCriteria;
+    let errorCriteriaQuery = errorCriteria;
+    if(isNpact) {
+      activeCriteriaQuery = npActiveCriteria;
+      errorCriteriaQuery = npErrorCriteria;
+    }
+
     return (
         <div>
             <Row>
               <Col xs={12} md={6} lg={3}>
                 <Link to={{
                     pathname: "/transactions/list", search: queryString.stringify({
-                      filter: JSON.stringify(activeCriteria)
+                      filter: JSON.stringify(activeCriteriaQuery)
                     })
                   }}>
                   <DashboardCard
@@ -98,7 +106,7 @@ export default function Dashboard(props) {
               <Col xs={12} md={6} lg={3}>
                 <Link to={{
                     pathname: "/transactions/list", search: queryString.stringify({
-                      filter: JSON.stringify(update(errorCriteria, {$merge: activeCriteria}))
+                      filter: JSON.stringify(update(errorCriteriaQuery, {$merge: activeCriteriaQuery}))
                     })
                   }}>
                   <DashboardCard
@@ -117,7 +125,7 @@ export default function Dashboard(props) {
             </Row>
             <Row>
                 {
-                    props.user_info.modules.includes(modules.proxy) &&
+                    localUser.isModuleEnabled(modules.proxy) &&
                       <Col xs={12}>
                         <SuccessRateOverTime {...props} />
                       </Col>
