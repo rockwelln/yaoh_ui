@@ -1137,6 +1137,13 @@ function CustomRoutes() {
       });
   }, []);
 
+  const allGroups = customRoutes.reduce((o, r) => {
+    if(!o.includes(r["group"])) {
+      o.push(r["group"]);
+    }
+    return o;
+  }, []).sort((a, b) => a.localeCompare(b));
+
   const routePerGroups = customRoutes
     .sort((a, b) => a.route_id - b.route_id)
     .filter(r => !filter || r.route.includes(filter) || ((activities.find(a => a.id === r.activity_id) || {}).name || "").includes(filter))
@@ -1183,14 +1190,14 @@ function CustomRoutes() {
             onChange={() => fetchCustomRoutes(setCustomRoutes)}
             routes={routes}
             group={group}
-            groups={Object.keys(routePerGroups)}
+            groups={allGroups}
             />
         )
       }
 
       <NewCustomRoute
           show={showNew}
-          groups={Object.keys(routePerGroups)}
+          groups={allGroups}
           onHide={c => {
               setShowNew(false);
               c && fetchCustomRoutes(setCustomRoutes);
