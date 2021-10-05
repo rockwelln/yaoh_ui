@@ -266,6 +266,9 @@ function SearchBar({onSearch, size}) {
 
 function CommitActivities({show, onHide, count, onCommit}) {
   const [label, setLabel] = useState("");
+
+  useEffect(() => setLabel(""), [show]);
+
   return (
     <Modal show={show} onHide={() => onHide(false)}>
       <Modal.Header closeButton>

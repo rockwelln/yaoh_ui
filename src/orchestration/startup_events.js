@@ -82,8 +82,10 @@ function fetchCustomRoutes(onSuccess) {
 }
 
 
-function importCustomRoute(data, onSuccess) {
-    return fetch_post(`/api/v01/custom_routes/import`, data)
+function importCustomRoute(data, options, onSuccess) {
+    const url = new URL(API_URL_PREFIX + `/api/v01/custom_routes/import`);
+    Object.entries(options).map(([k, v]) => url.searchParams.append(k, v));
+    return fetch_post(url, data)
         .then(r => onSuccess(r));
 }
 
@@ -700,8 +702,7 @@ function readFile(file) {
   })
 }
 
-function ImportCustomRouteModal(props) {
-  const {show, onHide} = props;
+function ImportCustomRouteModal({show, onHide}) {
   const [errors, setErrors] = useState([]);
   const [loaded, setLoaded] = useState([]);
   const {
@@ -710,11 +711,13 @@ function ImportCustomRouteModal(props) {
     getRootProps,
     getInputProps,
   } = useDropzone({accept: 'application/json'});
+  const [options, setOptions] = useState({});
 
   useEffect(() => {
     if(!show) {
       setErrors([]);
       setLoaded([]);
+      setOptions({});
     }
   }, [show])
 
@@ -754,18 +757,79 @@ function ImportCustomRouteModal(props) {
       </Modal.Header>
       <Modal.Body>
         <Form horizontal>
-          <section className="dropcontainer" >
-            <div {...getRootProps({className: 'dropzone'})} >
-              <input {...getInputProps()} />
-              <p>Drag 'n' drop some files here, or click to select files</p>
-            </div>
-            <aside>
-              <h5>Rejected</h5>
+          <FormGroup>
+            <section className="dropcontainer" >
+              <div {...getRootProps({className: 'dropzone'})} >
+                <input {...getInputProps()} />
+                <p>Drag 'n' drop some files here, or click to select files</p>
+              </div>
+            </section>
+          </FormGroup>
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              Rejected
+            </Col>
+            <Col sm={9}>
               <ul style={{color: "red"}}>{fileRejectionItems}</ul>
-              <h5>Accepted</h5>
+            </Col>
+          </FormGroup>
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              Files
+            </Col>
+            <Col sm={9}>
               <ul>{acceptedFileItems}</ul>
-            </aside>
-          </section>
+            </Col>
+          </FormGroup>
+
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              Merging options
+            </Col>
+            <Col sm={9}>
+              <Checkbox
+                checked={options.replaceWorkingVersion}
+                onChange={e => setOptions(update(options, {$merge: {replaceWorkingVersion: e.target.checked}}))}>
+                <FormattedMessage
+                  id="replace-working-version"
+                  defaultMessage='Replace working versions'/>
+              </Checkbox>
+              <HelpBlock>
+                Replace the working version in-place.
+                Otherwise if no matching definition is found, the import is rejected
+              </HelpBlock>
+
+              <Checkbox
+                disabled={!options.replaceWorkingVersion}
+                checked={options.commitCurrentWorkingVersion}
+                onChange={e => setOptions(update(options, {$merge: {commitCurrentWorkingVersion: e.target.checked}}))}>
+                <FormattedMessage
+                  id="commit-current-working-version"
+                  defaultMessage='Commit current working version'/>
+                <FormControl
+                  disabled={!options.commitCurrentWorkingVersion}
+                  componentClass="input"
+                  value={options.commitCurrentWorkingVersionLabel || ""}
+                  onChange={e => setOptions(update(options, {$merge: {commitCurrentWorkingVersionLabel: e.target.value}}))}
+                  placeholder="commit label" />
+              </Checkbox>
+              <HelpBlock>
+                Save the current working version in a commit.
+                (The saved version remain activated)
+              </HelpBlock>
+
+              <Checkbox
+                checked={options.activateNewVersion}
+                onChange={e => setOptions(update(options, {$merge: {activateNewVersion: e.target.checked}}))}>
+                <FormattedMessage
+                  id="activate-new-version"
+                  defaultMessage='Activate new version'/>
+              </Checkbox>
+              <HelpBlock>
+                Activate the new working version if not yet active.
+              </HelpBlock>
+            </Col>
+          </FormGroup>
 
           <FormGroup>
             <Col smOffset={2} sm={10}>
@@ -780,7 +844,7 @@ function ImportCustomRouteModal(props) {
                     acceptedFiles.map((f, i) => {
                       readFile(f)
                       .then(r => JSON.parse(r))
-                      .then(c => importCustomRoute(c, () => setLoaded(l => update(l, {$push: [i]}))))
+                      .then(c => importCustomRoute(c, options, () => setLoaded(l => update(l, {$push: [i]}))))
                       .catch(e => setErrors(es => update(es, {$push: [{id: i, error: e.message}]})));
                     })
                   }} >
