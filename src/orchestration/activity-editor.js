@@ -204,6 +204,7 @@ export function NewActivity(props) {
 
                         <Col sm={9}>
                             <FormControl
+                                autoFocus
                                 componentClass="input"
                                 value={newActivity.name}
                                 onChange={e => setNewActivity(update(newActivity, {$merge: {name: e.target.value}}))}/>
@@ -240,8 +241,7 @@ export function NewActivity(props) {
     )
 }
 
-function SearchBar(props) {
-    const {onSearch, size} = props;
+function SearchBar({onSearch, size}) {
     const [filter, setFilter] = useState("");
 
     return (
@@ -264,12 +264,56 @@ function SearchBar(props) {
     )
 }
 
+function CommitActivities({show, onHide, count, onCommit}) {
+  const [label, setLabel] = useState("");
+  return (
+    <Modal show={show} onHide={() => onHide(false)}>
+      <Modal.Header closeButton>
+        <Modal.Title>{`Commit ${count} activities`}</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Form onSubmit={e => {
+          e.preventDefault();
+          onCommit(label, () => onHide(true))
+        }} horizontal>
+          <Alert bsStyle={"info"}>
+            You are about to commit the current working version of these workflows.<br/>
+            When committed, these versions cannot be modified anymore.
+          </Alert>
+          <FormGroup>
+            <Col sm={12}>
+                <FormControl
+                  componentClass="input"
+                  value={label}
+                  placeholder={"Some reference"}
+                  autoFocus
+                  onChange={e => setLabel(e.target.value)} />
+            </Col>
+          </FormGroup>
+          <FormGroup>
+            <Col sm={12}>
+              <Button
+                disabled={!label.length}
+                type={"submit"}
+                bsStyle={"primary"}>
+                Commit
+              </Button>
+            </Col>
+          </FormGroup>
+        </Form>
+      </Modal.Body>
+    </Modal>
+  )
+}
+
 export function Activities({user_info}) {
     const [activities, setActivities] = useState([]);
     const [showNew, setShowNew] = useState(false);
+    const [showCommit, setShowCommit] = useState(false);
     const [loading, setLoading] = useState(false);
     const [filter, setFilter] = useState("");
     const [duplicateActivity, setDuplicateActivity] = useState();
+    const [selected, setSelected] = useState([]);
 
     const loadActivities = () => {
       setLoading(true);
@@ -284,6 +328,8 @@ export function Activities({user_info}) {
         document.title = "Activities";
     }, []);
 
+    const filteredActivities = activities.filter(a => filter.length === 0 || a.name.includes(filter));
+
     return (
         <>
             <Breadcrumb>
@@ -297,20 +343,57 @@ export function Activities({user_info}) {
                         <Button bsStyle='primary' onClick={() => setShowNew(true)}>
                             <FormattedMessage id="new" defaultMessage="New" />
                         </Button>
+
+                        <Button
+                          bsStyle="primary"
+                          onClick={() => setShowCommit(true)}
+                          disabled={selected.length === 0 || activities.filter(a => selected.includes(a.id) && a.version_label).length !== 0}>
+                          <FormattedMessage id="commit" defaultMessage="Commit"/>
+                        </Button>
+
+                        <DeleteConfirmButton
+                          button={"Delete"}
+                          disabled={selected.length === 0}
+                          resourceName={`${selected.length} activities`}
+                          onConfirm={() => {
+                            selected.map(s => deleteActivity(s, () => fetchActivities(setActivities)));
+                            setSelected([]);
+                          }}>
+                          <FormattedMessage id="delete" defaultMessage="Delete" />
+                        </DeleteConfirmButton>
                     </ButtonToolbar>
+
                     <NewActivity
                         show={showNew}
-                        onClose={() => {setShowNew(false);}}
-                         />
+                        onClose={() => setShowNew(false)} />
+
+                    <CommitActivities
+                        show={showCommit}
+                        onHide={() => setShowCommit(false)}
+                        count={selected.length}
+                        onCommit={label => selected.map(s => {
+                          commitVersion(s, label, () => fetchActivities(setActivities));
+                          setSelected([]);
+                        })} />
                 </Panel.Body>
             </Panel>
 
             <Panel>
                 <Panel.Body>
-                    <SearchBar onSearch={setFilter} />
+                    <SearchBar onSearch={s => {
+                      setFilter(s);
+                      setSelected([]);
+                    }} />
                     <Table>
                         <thead>
                             <tr>
+                                <th>
+                                  <Checkbox
+                                    checked={selected.length === filteredActivities.length}
+                                    onChange={e =>
+                                      e.target.checked ? setSelected(filteredActivities.map(a => a.id)) : setSelected([])
+                                    } />
+                                </th>
                                 <th>Name</th>
                                 <th>Version</th>
                                 <th>Created on</th>
@@ -323,11 +406,19 @@ export function Activities({user_info}) {
                                 <tr><td colSpan={4}><FontAwesomeIcon icon={faSpinner} aria-hidden="true" style={{'fontSize': '24px'}} spin /></td></tr>
                         }
                         {
-                            activities
-                                .filter(a => filter.length === 0 || a.name.includes(filter))
+                            filteredActivities
                                 .sort((a, b) => a.name.localeCompare(b.name))
                                 .map(a => (
                                     <tr key={a.id}>
+                                        <td>
+                                          <Checkbox
+                                            checked={selected.includes(a.id)}
+                                            onChange={e =>
+                                              e.target.checked?
+                                                setSelected([...selected, a.id]):
+                                                setSelected(selected.filter(s => s !== a.id))
+                                            } />
+                                        </td>
                                         <td>{a.name}</td>
                                         <td>{a.version_label || WORKING_VERSION_LABEL}</td>
                                         <td>{userLocalizeUtcDate(moment.utc(a.created_on), user_info).format()}</td>
