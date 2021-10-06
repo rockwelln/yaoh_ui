@@ -2605,9 +2605,109 @@ function LicensePanel(props) {
     );
 }
 
-function PasswordPanel(props) {
-    const {password, onChange} = props;
+function EnvVariablesPanel({env, onChange}) {
+  const [newVar, setNewVar] = useState({});
 
+  return (
+    <Panel>
+      <Panel.Body>
+        <Table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Value</th>
+              <th>Type</th>
+              <th/>
+            </tr>
+          </thead>
+          <tbody>
+          {
+            Object.entries(env).map(([key, value]) => (
+              <tr>
+                <td>{key}</td>
+                <td>
+                  {
+                    typeof value === "boolean" ?
+                      <Checkbox
+                        checked={value}
+                        onChange={e => onChange(update(env, {$merge: {[key]: e.target.checked}}))}/> :
+                    typeof value === "number" ?
+                      <FormControl
+                        componentClass="input"
+                        value={value}
+                        onChange={e => {
+                          const v = parseInt(e.target.value, 10);
+                          if(!isNaN(v)) {
+                            onChange(update(env, {$merge: {[key]: v}}))
+                          }
+                        }} /> :
+                    <FormControl
+                      componentClass="input"
+                      value={value}
+                      onChange={e => onChange(update(env, {$merge: {[key]: e.target.value}}))
+                      } />
+                  }
+                </td>
+                <td/>
+                <td>
+                  <Button onClick={() => onChange(update(env, {$unset: [key]}))}>-</Button>
+                </td>
+              </tr>
+            ))
+          }
+          <tr>
+            <td>
+              <FormControl
+                componentClass="input"
+                value={newVar.key || ""}
+                onChange={e => setNewVar(update(newVar, {$merge: {key: e.target.value}}))}
+                />
+            </td>
+            <td>
+              <FormControl
+                componentClass="input"
+                value={newVar.value || ""}
+                onChange={e => setNewVar(update(newVar, {$merge: {value: e.target.value}}))}
+                />
+            </td>
+            <td>
+              <Select
+                value={{value: newVar.value_type || "string", label: newVar.value_type || "string"}}
+                className="basic-single"
+                classNamePrefix="select"
+                onChange={v => setNewVar(update(newVar, {$merge: {value_type: v.value}}))}
+                options={["string", "integer", "boolean"].map(t => ({value: t, label: t}))}
+              />
+            </td>
+            <td>
+              <Button
+                disabled={
+                  !newVar.key || newVar.key.length === 0 ||
+                  (newVar.value_type === "integer" && isNaN(parseInt(newVar.value, 10)))
+                }
+                onClick={e => {
+                let value = newVar.value;
+                switch (newVar.value_type) {
+                  case "integer":
+                    value = parseInt(value, 10);
+                    break;
+                  case "boolean":
+                    value = value === "true";
+                    break;
+                }
+                onChange(update(env, {[newVar.key]: {$set: value}}));
+                setNewVar({});
+              }}>+</Button>
+            </td>
+          </tr>
+          </tbody>
+        </Table>
+      </Panel.Body>
+    </Panel>
+  )
+}
+
+function PasswordPanel({password, onChange}) {
     return (
     <Panel>
       <Panel.Body>
@@ -3175,9 +3275,18 @@ export default function Configuration(props) {
         <Tab eventKey={11} title="License">
           <LicensePanel />
         </Tab>
-        <Tab eventKey={12} title="Raw">
+        <Tab eventKey={12} title="Env.">
           {
             activeKey === 12 && config.content &&
+            <EnvVariablesPanel
+              env={config.content.env || {}}
+              onChange={v => setConfig(update(config, {content: {env: {$set: v}}}))}
+            />
+          }
+        </Tab>
+        <Tab eventKey={13} title="Raw">
+          {
+            activeKey === 13 && config.content &&
             <ReactJson
               name={null}
               src={config.content}
