@@ -59,6 +59,9 @@ class AuthService {
         const frag = window.location.hash.substring(1);
         if(frag) {
             const tokens = frag.split(",");
+            if(tokens.length !== 2 || tokens[0].length < 10 || tokens[1].length < 10) return false;
+
+            console.log("get tokens from URL location")
             this.loadJwtTokens(tokens[0], tokens[1]);
 
             window.location.replace("#");
