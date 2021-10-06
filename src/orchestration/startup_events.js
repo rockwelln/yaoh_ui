@@ -1206,7 +1206,7 @@ function CustomRoutes() {
       o.push(r["group"]);
     }
     return o;
-  }, []).sort((a, b) => a.localeCompare(b));
+  }, []).sort((a, b) => a && b ? a.localeCompare(b): 0);
 
   const routePerGroups = customRoutes
     .sort((a, b) => a.route_id - b.route_id)
