@@ -1143,7 +1143,7 @@ class App extends Component {
                         <Route path="/system/config"
                                component={props => (
                                    localUser.isAllowed(accesses.settings) ?
-                                       <Configuration userInfo={user_info} />:
+                                       <Configuration userInfo={user_info}  {...props} />:
                                        <NotAllowed />
                                )}
                                exact />

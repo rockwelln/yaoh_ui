@@ -26,6 +26,7 @@ import {StaticControl} from "../utils/common";
 import Select from "react-select";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import Table from "react-bootstrap/lib/Table";
+import {useLocation} from "react-router";
 
 
 function fetchConfiguration(onSuccess) {
@@ -392,7 +393,7 @@ function GatewaysPanel(props) {
                       <Col sm={9}>
                         <FormControl
                           componentClass="input"
-                          placeHolder="/health"
+                          placeholder="/health"
                           value={gateway.check_url}
                           onChange={e => onChange(update(gateways, {[g]: {$merge: {check_url: e.target.value || undefined}}}))}/>
                       </Col>
@@ -3194,18 +3195,22 @@ function ProvisioningPanels(props) {
   );
 }
 
-export default function Configuration(props) {
-  const [activeKey, setActiveKey] = useState(1);
+export default function Configuration({userInfo, history}) {
+  const [activeKey, setActiveKey] = useState("Gateways");
   const [config, setConfig] = useState({});
-  const {userInfo} = props;
+  const { hash } = useLocation();
 
   useEffect(() => {
-    fetchConfiguration(setConfig);
-    document.title = "Configuration"
-  }, []);
-  const editConfig = e => setConfig(update(config, {$merge: {content: e.updated_src}}));
+    hash && hash.length > 1 && setActiveKey(hash.substring(1));
+  }, [hash]);
 
-  // const ajv = new Ajv();
+  useEffect(() => fetchConfiguration(setConfig), []);
+
+  useEffect(() => {
+    document.title = `Configuration - ${activeKey}`;
+  }, [activeKey]);
+
+  const editConfig = e => setConfig(update(config, {$merge: {content: e.updated_src}}));
 
   if (config.content === undefined) {
     return <div/>
@@ -3218,75 +3223,78 @@ export default function Configuration(props) {
         <Breadcrumb.Item active><FormattedMessage id="configuration"
                                                   defaultMessage="Configuration"/></Breadcrumb.Item>
       </Breadcrumb>
-      <Tabs defaultActiveKey={1} onSelect={key => setActiveKey(key)} id="config-tabs">
-        <Tab eventKey={1} title="Gateways">
+      <Tabs defaultActiveKey={hash ? hash.substring(1) : "Gateways"} onSelect={key => {
+        setActiveKey(key);
+        history.replace("#" + key);
+      }} id="config-tabs">
+        <Tab eventKey={"Gateways"} title="Gateways">
           <GatewaysPanel
             gateways={config.content.gateways}
             onChange={v => setConfig(update(config, {content: {gateways: {$set: v}}}))}/>
         </Tab>
-        <Tab eventKey={2} title="Gui">
+        <Tab eventKey={"Gui"} title="Gui">
           <GuiForm
             gui={config.content.gui}
             onChange={v => setConfig(update(config, {content: {gui: {$merge: v}}}))}/>
         </Tab>
-        <Tab eventKey={3} title="SMTP">
+        <Tab eventKey={"SMTP"} title="SMTP">
           <SMTPForm
             smtp={config.content.smtp}
             onChange={v => setConfig(update(config, {content: {smtp: {$merge: v}}}))}
           />
         </Tab>
-        <Tab eventKey={5} title="Provisioning">
+        <Tab eventKey={"Provisioning"} title="Provisioning">
           <ProvisioningPanels
             prov={config.content.provisioning || {}}
             onChange={v => setConfig(update(config, {content: {provisioning: {$merge: v}}}))}
           />
         </Tab>
-        <Tab eventKey={6} title="Logs">
+        <Tab eventKey={"Logs"} title="Logs">
           <LogsPanel
             logs={config.content.logs || {}}
             onChange={v => setConfig(update(config, {content: {logs: {$set: v}}}))}
           />
         </Tab>
-        <Tab eventKey={7} title="Password">
+        <Tab eventKey={"Password"} title="Password">
           <PasswordPanel
             password={config.content.password || {}}
             onChange={v => setConfig(update(config, {content: {password: {$set: v}}}))}
           />
         </Tab>
-        <Tab eventKey={8} title="SSO">
+        <Tab eventKey={"SSO"} title="SSO">
           <SSOPanel
             sso={config.content.SSO || []}
             gateways={config.content.gateways}
             onChange={v => setConfig(update(config, {content: {SSO: {$set: v}}}))}
           />
         </Tab>
-        <Tab eventKey={9} title="Alarms">
+        <Tab eventKey={"Alarms"} title="Alarms">
           <AlarmsPanel
             alarms={config.content.alarms || {}}
             onChange={v => setConfig(update(config, {content: {alarms: {$set: v}}}))}
           />
         </Tab>
-        <Tab eventKey={10} title="Cleanup">
+        <Tab eventKey={"Cleanup"} title="Cleanup">
           <CleanupPanel
             retention={config.content.retention || {}}
             onChange={v => setConfig(update(config, {content: {retention: {$set: v}}}))}
           />
         </Tab>
-        <Tab eventKey={11} title="License">
+        <Tab eventKey={"License"} title="License">
           <LicensePanel />
         </Tab>
-        <Tab eventKey={12} title="Env.">
+        <Tab eventKey={"Env"} title="Env.">
           {
-            activeKey === 12 && config.content &&
+            activeKey === "Env" && config.content &&
             <EnvVariablesPanel
               env={config.content.env || {}}
               onChange={v => setConfig(update(config, {content: {env: {$set: v}}}))}
             />
           }
         </Tab>
-        <Tab eventKey={13} title="Raw">
+        <Tab eventKey={"Raw"} title="Raw">
           {
-            activeKey === 13 && config.content &&
+            activeKey === "Raw" && config.content &&
             <ReactJson
               name={null}
               src={config.content}
