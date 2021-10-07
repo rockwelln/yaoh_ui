@@ -1010,7 +1010,7 @@ class App extends Component {
                         <Route path="/transactions/config/activities/editor/:activityId"
                                component={props => (
                                    localUser.isAllowed(accesses.orchestration) ?
-                                       <ActivityEditor {...props} /> :
+                                       <ActivityEditor user_info={user_info} {...props} /> :
                                        <NotAllowed/>
                                )}
                                exact />

@@ -266,6 +266,7 @@ function SearchBar({onSearch, size}) {
 
 function CommitActivities({show, onHide, count, onCommit}) {
   const [label, setLabel] = useState("");
+  const [message, setMessage] = useState("");
 
   useEffect(() => setLabel(""), [show]);
 
@@ -277,7 +278,7 @@ function CommitActivities({show, onHide, count, onCommit}) {
       <Modal.Body>
         <Form onSubmit={e => {
           e.preventDefault();
-          onCommit(label, () => onHide(true))
+          onCommit(label, message, () => onHide(true))
         }} horizontal>
           <Alert bsStyle={"info"}>
             You are about to commit the current working version of these workflows.<br/>
@@ -291,6 +292,16 @@ function CommitActivities({show, onHide, count, onCommit}) {
                   placeholder={"Some reference"}
                   autoFocus
                   onChange={e => setLabel(e.target.value)} />
+            </Col>
+          </FormGroup>
+          <FormGroup>
+            <Col sm={12}>
+                <FormControl
+                  componentClass="textarea"
+                  value={message}
+                  placeholder={"Some description..."}
+                  autoFocus
+                  onChange={e => setMessage(e.target.value)} />
             </Col>
           </FormGroup>
           <FormGroup>
@@ -374,8 +385,8 @@ export function Activities({user_info}) {
                         show={showCommit}
                         onHide={() => setShowCommit(false)}
                         count={selected.length}
-                        onCommit={label => selected.map(s => {
-                          commitVersion(s, label, () => fetchActivities(setActivities));
+                        onCommit={(label, message) => selected.map(s => {
+                          commitVersion(s, label, message,() => fetchActivities(setActivities));
                           setSelected([]);
                         })} />
                 </Panel.Body>
@@ -1092,14 +1103,15 @@ function EditDescriptionModal({show, value, onChange, onHide}) {
     )
 }
 
-function commitVersion(id, label, onSuccess) {
-  fetch_post(`/api/v01/activities/${id}/versions`, {label: label})
+function commitVersion(id, label, message, onSuccess) {
+  fetch_post(`/api/v01/activities/${id}/versions`, {label: label, message: message})
     .then(onSuccess)
     .catch(error => NotificationsManager.error("Failed to commit.", error.message))
 }
 
 function CommitVersionModal({show, onHide, id}) {
   const [label, setLabel] = useState("");
+  const [message, setMessage] = useState("");
 
   return (
     <Modal show={show} onHide={() => onHide(false)}>
@@ -1109,7 +1121,7 @@ function CommitVersionModal({show, onHide, id}) {
       <Modal.Body>
         <Form onSubmit={e => {
           e.preventDefault();
-          commitVersion(id, label, () => onHide(true))
+          commitVersion(id, label, message,() => onHide(true))
         }} horizontal>
           <Alert bsStyle={"info"}>
             You are about to commit the current working version of this workflow.<br/>
@@ -1123,6 +1135,16 @@ function CommitVersionModal({show, onHide, id}) {
                   placeholder={"Some reference"}
                   autoFocus
                   onChange={e => setLabel(e.target.value)} />
+            </Col>
+          </FormGroup>
+          <FormGroup>
+            <Col sm={12}>
+                <FormControl
+                  componentClass="textarea"
+                  value={message}
+                  placeholder={"Some description..."}
+                  autoFocus
+                  onChange={e => setMessage(e.target.value)} />
             </Col>
           </FormGroup>
           <FormGroup>
@@ -1469,12 +1491,40 @@ export function ActivityEditor(props) {
             <hr />
             <Row>
                 <Col>
-                    <SimulatorPanel activity={() => {
-                        let a = editor.getDefinition(ReactDOM.findDOMNode(titleRef.current).value).activity;
-                        Object.keys(a.definition.cells).map(c => delete a.definition.cells[c].name);
-                        return a;
-                    }} />
+                    <Table>
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>Label</th>
+                          <th>Message</th>
+                          <th>Username</th>
+                          <th>Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                      {
+                        versions.sort((a, b) => b.id - a.id).map((v, i) => (
+                          <tr>
+                            <td>{i+1}</td>
+                            <td>{v.label || WORKING_VERSION_LABEL}</td>
+                            <td>{v.message ? v.message.split("\n").map(m => <>{m}<br/></>) : "-"}</td>
+                            <td>{v.username || "-"}</td>
+                            <td>{userLocalizeUtcDate(moment.utc(v.updated_on), props.user_info).format()}</td>
+                          </tr>
+                        ))
+                      }
+                      </tbody>
+                    </Table>
                 </Col>
+              {
+                /*<Col>
+                  <SimulatorPanel activity={() => {
+                    let a = editor.getDefinition(ReactDOM.findDOMNode(titleRef.current).value).activity;
+                    Object.keys(a.definition.cells).map(c => delete a.definition.cells[c].name);
+                    return a;
+                  }} />
+                </Col>*/
+              }
             </Row>
 
             <CommitVersionModal
