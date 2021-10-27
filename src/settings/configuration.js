@@ -166,6 +166,7 @@ function NewGatewayModal(props) {
                 value={entry.auth || "default"}
                 onChange={e => setEntry(update(entry, {$merge: {auth: e.target.value}}))}>
                   <option value="default">default</option>
+                  <option value="oauth1">oauth1</option>
                   <option value="oauth2">oauth2</option>
                   <option value="basic">basic</option>
                   <option value="hawk">hawk</option>
@@ -223,7 +224,7 @@ function NewGatewayModal(props) {
           }
 
             {
-              entry.auth === "oauth2" &&
+              (entry.auth === "oauth2" || entry.auth === "oauth1") &&
               <>
                 <FormGroup>
                   <Col componentClass={ControlLabel} sm={2}>
@@ -444,6 +445,7 @@ function GatewaysPanel(props) {
                           value={gateway.auth || "default"}
                           onChange={e => onChange(update(gateways, {[g]: {$merge: {auth: e.target.value}}}))}>
                             <option value="default">default</option>
+                            <option value="oauth1">oauth1</option>
                             <option value="oauth2">oauth2</option>
                             <option value="basic">basic</option>
                             <option value="hawk">hawk</option>
@@ -505,7 +507,7 @@ function GatewaysPanel(props) {
                     }
 
                     {
-                      gateway.auth === "oauth2" &&
+                      (gateway.auth === "oauth2" || gateway.auth === "oauth1") &&
                       <>
                         <FormGroup>
                           <Col componentClass={ControlLabel} sm={2}>
