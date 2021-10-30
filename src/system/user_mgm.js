@@ -621,7 +621,7 @@ function UpdateUser(props) {
                                 <FormattedMessage id="administrator-of" defaultMessage="Administrator of" />
                             </Col>
 
-                            <Col sm={2}>
+                            <Col sm={9}>
                                 <Table>
                                     <thead>
                                         <tr>
