@@ -817,6 +817,14 @@ export const clearSearchNumber = () => ({
   type: actionType.CLEAR_SEARCH_NUMBER,
 });
 
+export const disableTenantSuspensionStatusButton = () => ({
+  type: actionType.DISABLE_TENANT_SUSPESION_STATUS_BUTTON,
+});
+
+export const disableGroupSuspensionStatusButton = () => ({
+  type: actionType.DISABLE_GROUP_SUSPESION_STATUS_BUTTON,
+});
+
 export function fetchGetTenants(cancelLoad) {
   return function (dispatch) {
     return fetch_get(`${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/`)
@@ -1850,6 +1858,7 @@ export function fetchGetTenantSuspensionStatus(tenantId) {
       .then((data) => dispatch(getTenantSuspensionStatus(data)))
       .catch((error) => {
         if (error.response && error.response.status === 404) {
+          dispatch(disableTenantSuspensionStatusButton());
           return;
         }
         NotificationsManager.error(
@@ -1889,6 +1898,7 @@ export function fetchGetGroupSuspensionStatus(tenantId, groupId) {
       .then((data) => dispatch(getGroupSuspensionStatus(data)))
       .catch((error) => {
         if (error.response && error.response.status === 404) {
+          dispatch(disableGroupSuspensionStatusButton());
           return;
         }
         NotificationsManager.error(

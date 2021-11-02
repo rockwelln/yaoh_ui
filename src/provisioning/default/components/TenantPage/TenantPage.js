@@ -26,7 +26,7 @@ import {
   refuseAddPhoneToTenant,
   fetchGetSelfcareURL,
   fetchGetTenantSuspensionStatus,
-  fetchPutUpdateTenantSuspensionStatus
+  fetchPutUpdateTenantSuspensionStatus,
 } from "../../store/actions";
 
 import "./styles.css";
@@ -39,7 +39,7 @@ class TenantPage extends Component {
     activeKey: 0,
     refreshTab: "",
     isLoadingSS: true,
-    showSuspensionStatusModal: false
+    showSuspensionStatusModal: false,
   };
 
   fetchReq = () => {
@@ -66,7 +66,7 @@ class TenantPage extends Component {
   }
 
   render() {
-    const { tenant } = this.props;
+    const { tenant, isDisabledTenantSuspensionStatusButton } = this.props;
     const { isLoading, showDelete, isLoadingSCURL, isLoadingSS } = this.state;
     if (isLoading || isLoadingSCURL || isLoadingSS) {
       return <Loading />;
@@ -78,20 +78,22 @@ class TenantPage extends Component {
           <div className={"header flex space-between"}>
             <div>
               {`${tenant.type}: ${tenant.name} (id: ${tenant.tenantId})`}
-              <Button
-                className={`${
-                  this.props.tenantSuspensionStatus
-                    ? "btn-danger"
-                    : "btn-success"
-                } margin-left-1`}
-                onClick={() =>
-                  this.setState({ showSuspensionStatusModal: true })
-                }
-              >
-                {this.props.tenantSuspensionStatus
-                  ? this.props.tenantSuspensionStatus
-                  : "Active"}
-              </Button>
+              {!isDisabledTenantSuspensionStatusButton && (
+                <Button
+                  className={`${
+                    this.props.tenantSuspensionStatus
+                      ? "btn-danger"
+                      : "btn-success"
+                  } margin-left-1`}
+                  onClick={() =>
+                    this.setState({ showSuspensionStatusModal: true })
+                  }
+                >
+                  {this.props.tenantSuspensionStatus
+                    ? this.props.tenantSuspensionStatus
+                    : "Active"}
+                </Button>
+              )}
               <Glyphicon
                 glyph="glyphicon glyphicon-trash"
                 onClick={() => this.setState({ showDelete: true })}
@@ -188,9 +190,9 @@ class TenantPage extends Component {
     );
   }
 
-  updateSuspensionStatus = status => {
+  updateSuspensionStatus = (status) => {
     const data = {
-      suspensionStatus: status
+      suspensionStatus: status,
     };
     this.setState({ showSuspensionStatusModal: false });
     this.props
@@ -201,7 +203,7 @@ class TenantPage extends Component {
       .then(() => this.fetchReq());
   };
 
-  changeTab = key => {
+  changeTab = (key) => {
     let refreshTab = "";
     switch (key) {
       case 0:
@@ -238,19 +240,18 @@ const mapDispatchToProps = {
   refuseAddPhoneToTenant,
   fetchGetSelfcareURL,
   fetchGetTenantSuspensionStatus,
-  fetchPutUpdateTenantSuspensionStatus
+  fetchPutUpdateTenantSuspensionStatus,
 };
 
-const mapStateToProps = state => ({
+const mapStateToProps = (state) => ({
   tenant: state.tenant,
   isAuthorisedTrunkTenant: state.isAuthorisedTrunkTenant,
   selfcareUrl: state.selfcareUrl,
-  tenantSuspensionStatus: state.tenantSuspensionStatus
+  tenantSuspensionStatus: state.tenantSuspensionStatus,
+  isDisabledTenantSuspensionStatusButton:
+    state.isDisabledTenantSuspensionStatusButton,
 });
 
 export default withRouter(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(TenantPage)
+  connect(mapStateToProps, mapDispatchToProps)(TenantPage)
 );

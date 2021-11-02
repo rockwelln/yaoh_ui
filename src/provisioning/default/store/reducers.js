@@ -147,6 +147,8 @@ const initialState = {
   groupPasswordRules: {},
   trunkGroupAccessInfo: {},
   allTenantServicePacks: [],
+  isDisabledTenantSuspensionStatusButton: false,
+  isDisabledGroupSuspensionStatusButton: false,
 };
 
 function mainReducer(state = initialState, action) {
@@ -777,6 +779,7 @@ function mainReducer(state = initialState, action) {
       return {
         ...state,
         tenantSuspensionStatus: action.data.suspensionStatus,
+        isDisabledTenantSuspensionStatusButton: false,
       };
     }
     case actionType.GET_SUSPENSION_OPTIONS: {
@@ -789,6 +792,7 @@ function mainReducer(state = initialState, action) {
       return {
         ...state,
         groupSuspensionStatus: action.data.suspensionStatus,
+        isDisabledGroupSuspensionStatusButton: false
       };
     }
     case actionType.GET_TENANT_PASSWORD_RULES: {
@@ -1622,6 +1626,18 @@ function mainReducer(state = initialState, action) {
       return {
         ...state,
         globalSearchNumber: undefined,
+      };
+    }
+    case actionType.DISABLE_TENANT_SUSPESION_STATUS_BUTTON: {
+      return {
+        ...state,
+        isDisabledTenantSuspensionStatusButton: true,
+      };
+    }
+    case actionType.DISABLE_GROUP_SUSPESION_STATUS_BUTTON: {
+      return {
+        ...state,
+        isDisabledGroupSuspensionStatusButton: true,
       };
     }
     default:

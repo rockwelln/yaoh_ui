@@ -95,7 +95,7 @@ class TenantPage extends Component {
   }
 
   render() {
-    const { tenant, group } = this.props;
+    const { tenant, group, isDisabledGroupSuspensionStatusButton } = this.props;
     const {
       isLoadingTenant,
       isLoadingGroup,
@@ -121,20 +121,22 @@ class TenantPage extends Component {
           <div className={"header flex space-between"}>
             <div>
               {`GROUP: ${group.groupName} (${this.props.match.params.groupId}) of tenant ${tenant.name} (${tenant.tenantId})`}
-              <Button
-                className={`${
-                  this.props.groupSuspensionStatus
-                    ? "btn-danger"
-                    : "btn-success"
-                } margin-left-1`}
-                onClick={() =>
-                  this.setState({ showSuspensionStatusModal: true })
-                }
-              >
-                {this.props.groupSuspensionStatus
-                  ? this.props.groupSuspensionStatus
-                  : "Active"}
-              </Button>
+              {!isDisabledGroupSuspensionStatusButton && (
+                <Button
+                  className={`${
+                    this.props.groupSuspensionStatus
+                      ? "btn-danger"
+                      : "btn-success"
+                  } margin-left-1`}
+                  onClick={() =>
+                    this.setState({ showSuspensionStatusModal: true })
+                  }
+                >
+                  {this.props.groupSuspensionStatus
+                    ? this.props.groupSuspensionStatus
+                    : "Active"}
+                </Button>
+              )}
               {!group.sync && (
                 <Glyphicon
                   glyph="glyphicon glyphicon-trash"
@@ -325,6 +327,8 @@ const mapStateToProps = (state) => ({
   selfcareUrl: state.selfcareUrl,
   groupSuspensionStatus: state.groupSuspensionStatus,
   tenantPasswordRules: state.tenantPasswordRules,
+  isDisabledGroupSuspensionStatusButton:
+    state.isDisabledGroupSuspensionStatusButton,
 });
 
 export default withRouter(
