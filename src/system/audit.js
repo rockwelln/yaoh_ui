@@ -16,6 +16,9 @@ import {FormattedMessage} from 'react-intl';
 
 import update from "immutability-helper/index";
 import {ApioDatatable} from "../utils/datatable";
+import moment from "moment";
+import DatePicker from "react-datepicker";
+import {localUser} from "../utils/user";
 
 const audit_target_types = [
     "User",
@@ -192,7 +195,20 @@ export class AuditLogs extends Search {
                                 </Col>
 
                                 <Col sm={8}>
-
+                                    <DatePicker
+                                        className="form-control"
+                                        selected={filter_criteria.when.value.length !== 0?localUser.localizeUtcDate(filter_criteria.when.value).toDate():null}
+                                        onChange={d => {
+                                            this.setState({
+                                                filter_criteria: update(
+                                                    this.state.filter_criteria,
+                                                    {when: {$merge: {value: d? moment.utc(d).format() : ""}}})
+                                            })
+                                        }}
+                                        dateFormat="dd/MM/yyyy HH:mm"
+                                        showTimeSelect
+                                        timeFormat="HH:mm"
+                                        timeIntervals={60}/>
                                 </Col>
                             </FormGroup>
                             <FormGroup>
@@ -304,11 +320,11 @@ export class AuditLogs extends Search {
                         <ApioDatatable
                             sorting_spec={sorting_spec}
                             headers={[
-                                {title: <FormattedMessage id="user" defaultMessage="User" />, field: 'user', sortable: true},
+                                {title: <FormattedMessage id="user" defaultMessage="User" />, field: 'user_id', sortable: true, render: e => e.user},
                                 {title: <FormattedMessage id="operation" defaultMessage="Operation" />, field: 'operation', sortable: true},
                                 {title: <FormattedMessage id="target" defaultMessage="Target" />, field: 'target', sortable: true},
                                 {title: <FormattedMessage id="target-type" defaultMessage="Target type" />, field: 'target_type', sortable: true},
-                                {title: <FormattedMessage id="when" defaultMessage="When" />, field: 'when', sortable: true},
+                                {title: <FormattedMessage id="when" defaultMessage="When" />, field: 'when', sortable: true, render: e => e.when && localUser.localizeUtcDate(e.when).format()},
                                 {title: '', render: n => (
                                     <AuditActions
                                         entry={n}

@@ -989,7 +989,7 @@ function CustomRoutesGroup({routes, group, activities, groups, onChange}) {
   const [showNewActivity, setShowNewActivity] = useState(undefined);
   const activitiesOptions = activities
     .sort((a, b) => a.name.localeCompare(b.name))
-    .map(a => ({value: a.id, label: `${a.name} (${a.version_label === null?WORKING_VERSION_LABEL:a.version_label})`}));
+    .map(a => ({value: a.id, label: `${a.name} (${!a.version_label?WORKING_VERSION_LABEL:a.version_label})`}));
   return (
     <Panel style={{ minWidth: "min-content" }}>
       <Panel.Heading>

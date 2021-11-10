@@ -2514,6 +2514,9 @@ export class Requests extends Component{
             proxy_hosts: [],
             roles: [],
         };
+        if(this.props.location.search === "") {
+            this.state.filter_criteria.created_on.value = moment.utc().subtract(1, "days").format();
+        }
         this._refresh = this._refresh.bind(this);
         this._load_proxy_hosts = this._load_proxy_hosts.bind(this);
         this._prepare_url = this._prepare_url.bind(this);
@@ -2757,7 +2760,7 @@ export class Requests extends Component{
         //reset collection
         this.setState({requests: undefined, selected_reqs: []});
 
-        fetch_get(url, this.props.auth_token)
+        fetch_get(url)
             .then(data => {
                 if(this.cancelLoad) return;
                 // devnote: save in the history the search.
@@ -2860,6 +2863,11 @@ export class Requests extends Component{
         const request_entities = user_info.modules && user_info.modules.includes(modules.orange) ? "request_entities" : "requests";
         const proxy_activated = user_info.modules && user_info.modules.includes(modules.proxy);
         const manualActions = user_info.modules && user_info.modules.includes(modules.manualActions);
+        const nbFilters = Object.values(filter_criteria).filter(crit => crit && (
+            (crit.value && crit.op) ||
+            crit.or || crit.and || crit.op === 'is_null' ||
+            crit.op === 'is_not_null' || typeof(crit.value) === 'boolean'
+        )).length;
 
         return (
             <div>
@@ -2867,10 +2875,15 @@ export class Requests extends Component{
                     <Breadcrumb.Item active><FormattedMessage id="requests" defaultMessage="Requests"/></Breadcrumb.Item>
                     <Breadcrumb.Item active><FormattedMessage id="requests" defaultMessage="Requests"/></Breadcrumb.Item>
                 </Breadcrumb>
-                <Panel defaultExpanded={true} >
+                <Panel defaultExpanded={false} onToggle={e => this.setState({searchExpanded: e})}>
                     <Panel.Heading>
                         <Panel.Title toggle>
-                            <FormattedMessage id="search" defaultMessage="Search" /> <Glyphicon glyph="search" />
+                            <FormattedMessage id="search" defaultMessage="Search" />{" "}
+                            {
+                                !this.state.searchExpanded && nbFilters !== 0 ?
+                                  <Button bsStyle="info" bsSize="small">{nbFilters} <Glyphicon glyph="filter" /></Button> :
+                                  <Glyphicon glyph="search" />
+                            }
                             <Checkbox
                                 className="pull-right"
                                 style={{marginTop:0}}
