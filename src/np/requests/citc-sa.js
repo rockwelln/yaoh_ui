@@ -57,7 +57,7 @@ export const rejection_codes = [
 ];
 const RECIPIENTS = [
   DEFAULT_RECIPIENT,
-  "salamMOBILE",
+  "SALAMMOB",
 ];
 
 export const TENANTS = RECIPIENTS;
@@ -357,8 +357,8 @@ export function NPPortInRequest(props) {
                   onChange={e =>
                     setRequest(update(request, { $merge: {
                       service_type: e.target.value,
-                      tenant: e.target.value === "MOBILE" ? "salamMOBILE": DEFAULT_RECIPIENT,
-                      recipient: operators.find(o => o.name === (e.target.value === "MOBILE" ? "salamMOBILE" : DEFAULT_RECIPIENT))?.id,
+                      tenant: e.target.value === "MOBILE" ? "SALAMMOB": DEFAULT_RECIPIENT,
+                      recipient: operators.find(o => o.name === (e.target.value === "MOBILE" ? "SALAMMOB" : DEFAULT_RECIPIENT))?.id,
                     } }))
                   }>
                   <option value="MOBILE">MOBILE</option>
