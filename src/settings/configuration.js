@@ -1330,6 +1330,19 @@ function OidcParameters({params, onChange}) {
       </FormGroup>
       <FormGroup>
         <Col componentClass={ControlLabel} sm={2}>
+          <FormattedMessage id="scope" defaultMessage="Scope"/>
+        </Col>
+
+        <Col sm={9}>
+          <FormControl
+            componentClass="input"
+            placeholder={"openid profile email"}
+            value={params.scope}
+            onChange={e => onChange(update(params, {$merge: {scope: e.target.value}}))}/>
+        </Col>
+      </FormGroup>
+      <FormGroup>
+        <Col componentClass={ControlLabel} sm={2}>
           <FormattedMessage id="token-endpoint" defaultMessage="Token endpoint"/>
         </Col>
 
