@@ -146,6 +146,9 @@ const initialState = {
   limitedUserServicesGroup: {},
   groupPasswordRules: {},
   trunkGroupAccessInfo: {},
+  allTenantServicePacks: [],
+  isDisabledTenantSuspensionStatusButton: false,
+  isDisabledGroupSuspensionStatusButton: false,
 };
 
 function mainReducer(state = initialState, action) {
@@ -776,6 +779,7 @@ function mainReducer(state = initialState, action) {
       return {
         ...state,
         tenantSuspensionStatus: action.data.suspensionStatus,
+        isDisabledTenantSuspensionStatusButton: false,
       };
     }
     case actionType.GET_SUSPENSION_OPTIONS: {
@@ -788,6 +792,7 @@ function mainReducer(state = initialState, action) {
       return {
         ...state,
         groupSuspensionStatus: action.data.suspensionStatus,
+        isDisabledGroupSuspensionStatusButton: false
       };
     }
     case actionType.GET_TENANT_PASSWORD_RULES: {
@@ -818,6 +823,12 @@ function mainReducer(state = initialState, action) {
       return {
         ...state,
         trunkGroupAccessInfo: action.data,
+      };
+    }
+    case actionType.GET_ALL_SERVICE_PACKS_OF_TENANT: {
+      return {
+        ...state,
+        allTenantServicePacks: action.data.service_packs,
       };
     }
     case actionType.POST_CREATE_GROUP_ADMIN: {
@@ -870,12 +881,12 @@ function mainReducer(state = initialState, action) {
     }
     case actionType.POST_ADD_PHONE_NUMBERS_TO_TENANT: {
       const warning = action.data.warning;
-      const added = action.data.result.filter(
-        (number) => number.status === "added"
-      );
-      const rejected = action.data.result.filter(
-        (number) => number.status === "rejected"
-      );
+      const added =
+        action.data.result &&
+        action.data.result.filter((number) => number.status === "added");
+      const rejected =
+        action.data.result &&
+        action.data.result.filter((number) => number.status === "rejected");
       return {
         ...state,
         addedNumbersToTenant: {
@@ -979,6 +990,11 @@ function mainReducer(state = initialState, action) {
       };
     }
     case actionType.POST_ADD_ENTITLEMENTS_TO_TENANT: {
+      return {
+        ...state,
+      };
+    }
+    case actionType.POST_ADD_SERVICE_PACK_TO_TENANT: {
       return {
         ...state,
       };
@@ -1206,6 +1222,11 @@ function mainReducer(state = initialState, action) {
       };
     }
     case actionType.DELETE_ENTITLEMENT_FROM_TENANT: {
+      return {
+        ...state,
+      };
+    }
+    case actionType.DELETE_SERVICE_PACK_FROM_TENANT: {
       return {
         ...state,
       };
@@ -1605,6 +1626,18 @@ function mainReducer(state = initialState, action) {
       return {
         ...state,
         globalSearchNumber: undefined,
+      };
+    }
+    case actionType.DISABLE_TENANT_SUSPESION_STATUS_BUTTON: {
+      return {
+        ...state,
+        isDisabledTenantSuspensionStatusButton: true,
+      };
+    }
+    case actionType.DISABLE_GROUP_SUSPESION_STATUS_BUTTON: {
+      return {
+        ...state,
+        isDisabledGroupSuspensionStatusButton: true,
       };
     }
     default:
