@@ -8,9 +8,17 @@ import { FormattedMessage } from "react-intl";
 
 const INFINITY = 8734;
 
-const Licenses = props => {
+const Licenses = (props) => {
   const [showMore, setShowMore] = useState(false);
-  const { licenses, withShowMore, showHide, showEdit, isEditGroup } = props;
+  const {
+    licenses,
+    withShowMore,
+    showHide,
+    showEdit,
+    showDelete,
+    isEditGroup,
+    showDeleteIcon,
+  } = props;
   return (
     <React.Fragment>
       <Table responsive>
@@ -68,6 +76,24 @@ const Licenses = props => {
                       className={"edit-pencil"}
                       onClick={() => showEdit(i)}
                     />
+                    {showDeleteIcon && (
+                      <Glyphicon
+                        glyph="glyphicon glyphicon-remove"
+                        disabled={
+                          !el.allocated.unlimited && el.allocated.maximum === 0
+                        }
+                        className={`edit-pencil ${
+                          !el.allocated.unlimited && el.allocated.maximum === 0
+                            ? ""
+                            : "glyphicon-plus-sign-disabled"
+                        }`}
+                        onClick={() =>
+                          !el.allocated.unlimited &&
+                          el.allocated.maximum === 0 &&
+                          showDelete(i)
+                        }
+                      />
+                    )}
                   </td>
                 </tr>
               )

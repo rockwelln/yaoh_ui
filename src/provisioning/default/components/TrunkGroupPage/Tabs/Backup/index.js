@@ -15,7 +15,7 @@ import Well from "react-bootstrap/lib/Well";
 import {
   fetchGetBackupByTrunkGroup,
   fetchPutUpdateBackupByTrunkGtoup,
-  fetchPutUpdateTrunkGroup
+  fetchPutUpdateTrunkGroup,
 } from "../../../../store/actions";
 import Loading from "../../../../common/Loading";
 import EditFrom from "./EditFrom";
@@ -29,7 +29,7 @@ export class Backup extends Component {
     destination: null,
     trunk: {},
     show: false,
-    invitationTimeout: null
+    invitationTimeout: null,
   };
 
   componentDidMount() {
@@ -45,7 +45,7 @@ export class Backup extends Component {
           destination: this.props.trunkGroupBackup.destination,
           trunk: this.props.trunkGroupBackup.trunk,
           isLoading: false,
-          invitationTimeout: this.props.trunkGroup.invitationTimeout
+          invitationTimeout: this.props.trunkGroup.invitationTimeout,
         })
       );
   }
@@ -85,7 +85,7 @@ export class Backup extends Component {
                     type="text"
                     value={this.state.destination}
                     disabled={this.state.mode !== "Forward"}
-                    onChange={e =>
+                    onChange={(e) =>
                       this.setState({ destination: e.target.value })
                     }
                   />
@@ -133,9 +133,9 @@ export class Backup extends Component {
               <FormControl
                 type="number"
                 value={this.state.invitationTimeout}
-                onChange={e => {
+                onChange={(e) => {
                   this.setState({
-                    invitationTimeout: e.target.value
+                    invitationTimeout: e.target.value,
                   });
                 }}
               />
@@ -161,7 +161,7 @@ export class Backup extends Component {
         {this.state.show && (
           <EditFrom
             show={this.state.show}
-            onClose={e => {
+            onClose={(e) => {
               this.setState({ show: false });
             }}
             onSave={this.changeGroups}
@@ -176,14 +176,13 @@ export class Backup extends Component {
     const backupData = {
       mode,
       trunk,
-      destination
+      destination,
     };
 
     const trunkData = {
-      invitationTimeout: Number(invitationTimeout)
+      invitationTimeout: Number(invitationTimeout),
     };
 
-    const clearBackupData = removeEmpty(backupData);
     const clearTrunkData = removeEmpty(trunkData);
 
     this.setState({ disableButton: true }, () =>
@@ -195,13 +194,12 @@ export class Backup extends Component {
           clearTrunkData
         )
         .then(() => {
-          Object.keys(clearBackupData).length &&
-            this.props.fetchPutUpdateBackupByTrunkGtoup(
-              this.props.match.params.tenantId,
-              this.props.match.params.groupId,
-              this.props.match.params.trunkGroupName,
-              clearBackupData
-            );
+          this.props.fetchPutUpdateBackupByTrunkGtoup(
+            this.props.match.params.tenantId,
+            this.props.match.params.groupId,
+            this.props.match.params.trunkGroupName,
+            backupData
+          );
         })
         .then(() => this.setState({ disableButton: false }))
     );
@@ -213,26 +211,21 @@ export class Backup extends Component {
       trunk: {
         ...this.state.trunk,
         groupId,
-        name
-      }
+        name,
+      },
     });
   };
 }
 
-const mapStateToProps = state => ({
+const mapStateToProps = (state) => ({
   trunkGroupBackup: state.trunkGroupBackup,
-  trunkGroup: state.trunkGroup
+  trunkGroup: state.trunkGroup,
 });
 
 const mapDispatchToProps = {
   fetchGetBackupByTrunkGroup,
   fetchPutUpdateBackupByTrunkGtoup,
-  fetchPutUpdateTrunkGroup
+  fetchPutUpdateTrunkGroup,
 };
 
-export default withRouter(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(Backup)
-);
+export default withRouter(connect(mapStateToProps, mapDispatchToProps)(Backup));

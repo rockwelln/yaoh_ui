@@ -749,12 +749,12 @@ export class NPDisconnectRequest extends Component {
   }
 
   onSubmit(e) {
-    const { donor, ranges, operators } = this.state;
+    const { donor, ranges } = this.state;
     fetch_post(
       '/api/v01/npact/np_requests/disconnect',
       {
         donor_id: parseInt(donor.id, 10),
-        recipient_id: operators.filter(o => o.short_name === DEFAULT_RECIPIENT)[0].id,
+        // recipient_id: operators.filter(o => o.short_name === DEFAULT_RECIPIENT)[0].id,
         ranges: ranges,
       }
     )

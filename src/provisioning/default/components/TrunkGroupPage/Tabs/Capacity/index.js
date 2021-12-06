@@ -73,7 +73,7 @@ export class Capacity extends Component {
         <Row className={"margin-top-1"}>
           <Col md={12} className={"flex align-items-center"}>
             <div className={"margin-right-1 flex flex-basis-33"}>
-              Maximum number of simultaneous calls
+              Maximum number of simultaneous calls*
             </div>
             <div className={"flex flex-basis-33"}>
               <FormControl
@@ -94,6 +94,9 @@ export class Capacity extends Component {
                 }}
               />
             </div>
+            <span
+              className={"margin-left-1"}
+            >{`max: ${this.props.groupTrunkGroupInfo.maxActiveCalls}`}</span>
           </Col>
         </Row>
         <Row className={"margin-top-1"}>
@@ -108,9 +111,16 @@ export class Capacity extends Component {
                 max={this.props.groupTrunkGroupInfo.maxActiveCalls}
                 min={0}
                 onChange={(e) => {
-                  this.setState({
-                    maxIncomingCalls: Number(e.target.value),
-                  });
+                  if (e.target.value) {
+                    this.setState({
+                      maxIncomingCalls: Number(e.target.value),
+                    });
+                  } else {
+                    this.setState({
+                      maxIncomingCalls: Number(e.target.value),
+                      burstingMaxIncomingCalls: "",
+                    });
+                  }
                 }}
               />
             </div>
@@ -128,9 +138,16 @@ export class Capacity extends Component {
                 max={this.props.groupTrunkGroupInfo.maxActiveCalls}
                 min={0}
                 onChange={(e) => {
-                  this.setState({
-                    maxOutgoingCalls: Number(e.target.value),
-                  });
+                  if (e.target.value) {
+                    this.setState({
+                      maxOutgoingCalls: Number(e.target.value),
+                    });
+                  } else {
+                    this.setState({
+                      maxOutgoingCalls: Number(e.target.value),
+                      burstingMaxOutgoingCalls: "",
+                    });
+                  }
                 }}
               />
             </div>
@@ -196,6 +213,13 @@ export class Capacity extends Component {
                     }}
                   />
                 </div>
+                <span className={"margin-left-1"}>{`max: ${
+                  this.props.groupTrunkGroupInfo.burstingMaxActiveCalls
+                    .unlimited
+                    ? "unlimeted"
+                    : this.props.groupTrunkGroupInfo.burstingMaxActiveCalls
+                        .maximum
+                }`}</span>
               </Col>
             </Row>
             <Row className={"margin-top-1"}>
@@ -220,6 +244,7 @@ export class Capacity extends Component {
                         burstingMaxIncomingCalls: Number(e.target.value),
                       });
                     }}
+                    disabled={!this.state.maxIncomingCalls}
                   />
                 </div>
               </Col>
@@ -241,6 +266,7 @@ export class Capacity extends Component {
                             .maximum
                     }
                     min={0}
+                    disabled={!this.state.maxOutgoingCalls}
                     onChange={(e) => {
                       this.setState({
                         burstingMaxOutgoingCalls: Number(e.target.value),
@@ -261,7 +287,8 @@ export class Capacity extends Component {
                   onClick={this.update}
                   disabled={
                     this.state.disableButton ||
-                    this.getDisableButtonByBursting()
+                    this.getDisableButtonByBursting() ||
+                    !this.state.maxActiveCalls
                   }
                 >
                   Update

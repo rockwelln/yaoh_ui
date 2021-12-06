@@ -31,7 +31,7 @@ export class Users extends Component {
     page: 0,
     pagination: true,
     countPerPage: 25,
-    countPages: null
+    countPages: null,
     //showDelete: false,
     //usersForDelete: []
   };
@@ -51,7 +51,7 @@ export class Users extends Component {
               return 0;
             }),
             isLoading: false,
-            sortedBy: "userId"
+            sortedBy: "userId",
           },
           () => this.pagination()
         )
@@ -68,13 +68,8 @@ export class Users extends Component {
     }
   }
   render() {
-    const {
-      isLoading,
-      page,
-      pagination,
-      countPerPage,
-      paginationUsers
-    } = this.state;
+    const { isLoading, page, pagination, countPerPage, paginationUsers } =
+      this.state;
     if (isLoading && pagination) {
       return <Loading />;
     }
@@ -90,15 +85,15 @@ export class Users extends Component {
                 id="search_placeholder"
                 defaultMessage="User id or phone number or extension or name"
               >
-                {placeholder => (
+                {(placeholder) => (
                   <FormControl
                     type="text"
                     value={this.state.searchValue}
                     placeholder={placeholder}
-                    onChange={e =>
+                    onChange={(e) =>
                       this.setState(
                         {
-                          searchValue: e.target.value
+                          searchValue: e.target.value,
                         },
                         () => this.filterBySearchValue()
                       )
@@ -158,7 +153,7 @@ export class Users extends Component {
                       className={"margin-left-1"}
                       onChange={this.changeCoutOnPage}
                     >
-                      {countsPerPages.map(counts => (
+                      {countsPerPages.map((counts) => (
                         <option key={counts.value} value={counts.value}>
                           {counts.title}
                         </option>
@@ -276,7 +271,7 @@ export class Users extends Component {
     );
   }
 
-  changeCoutOnPage = e => {
+  changeCoutOnPage = (e) => {
     this.setState({ countPerPage: Number(e.target.value), page: 0 }, () =>
       this.pagination()
     );
@@ -314,28 +309,28 @@ export class Users extends Component {
       counter = counter + countPerPage;
     }
 
-    this.setState(prevState => {
+    this.setState((prevState) => {
       return {
         paginationUsers: paginationItems,
         pagination: false,
         countPages,
-        page: prevState.countPages === countPages ? this.state.page : 0
+        page: prevState.countPages === countPages ? this.state.page : 0,
       };
     });
   };
 
   filterBySearchValue = () => {
     const { searchValue } = this.state;
-    const SearchArray = this.props.users
+    const SearchArray = this.props.trunkGroupUsers
       .filter(
-        user =>
+        (user) =>
           user.userId.toLowerCase().includes(searchValue.toLowerCase()) ||
           user.firstName.toLowerCase().includes(searchValue.toLowerCase()) ||
           user.lastName.toLowerCase().includes(searchValue.toLowerCase()) ||
           user.extension.toLowerCase().includes(searchValue.toLowerCase()) ||
           user.phoneNumber.toLowerCase().includes(searchValue.toLowerCase())
       )
-      .map(user => user);
+      .map((user) => user);
     this.setState({ users: SearchArray }, () => this.pagination());
   };
 
@@ -441,28 +436,28 @@ export class Users extends Component {
     }
   };
 
-  handleSelectAllClick = e => {
+  handleSelectAllClick = (e) => {
     const isChecked = e.target.checked;
-    const newArr = this.state.users.map(el => ({
+    const newArr = this.state.users.map((el) => ({
       ...el,
-      userChecked: isChecked
+      userChecked: isChecked,
     }));
     this.setState({ users: newArr, selectAll: !this.state.selectAll }, () =>
       this.pagination()
     );
   };
 
-  handleSingleCheckboxClick = id => {
-    const newArr = this.state.users.map(el => ({
+  handleSingleCheckboxClick = (id) => {
+    const newArr = this.state.users.map((el) => ({
       ...el,
-      userChecked: el.userId === id ? !el.userChecked : el.userChecked
+      userChecked: el.userId === id ? !el.userChecked : el.userChecked,
     }));
     this.setState({ users: newArr, selectAll: false }, () => this.pagination());
   };
 
   deleteSlectedUsers = () => {
     const { users } = this.state;
-    const usersForDelete = users.filter(user => {
+    const usersForDelete = users.filter((user) => {
       return !!user.userChecked;
     });
     this.setState({ usersForDelete, showDelete: true }, () =>
@@ -471,15 +466,10 @@ export class Users extends Component {
   };
 }
 
-const mapStateToProps = state => ({
-  trunkGroupUsers: state.trunkGroupUsers
+const mapStateToProps = (state) => ({
+  trunkGroupUsers: state.trunkGroupUsers,
 });
 
 const mapDispatchToProps = { fetchGetUsersByTrunkGroup };
 
-export default withRouter(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(Users)
-);
+export default withRouter(connect(mapStateToProps, mapDispatchToProps)(Users));
