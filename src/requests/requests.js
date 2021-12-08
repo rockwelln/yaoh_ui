@@ -3648,7 +3648,8 @@ export class CustomRequests extends Component{
                 filter_criteria[f] &&
                 (
                     (filter_criteria[f].value && filter_criteria[f].op) ||
-                    filter_criteria[f].or || filter_criteria[f].and || filter_criteria[f].op === 'is_not_null' || filter_criteria[f].op === 'is_null' || typeof(filter_criteria[f].value) === 'boolean'
+                    filter_criteria[f].or || filter_criteria[f].and || filter_criteria[f].op === 'is_null' ||
+                    filter_criteria[f].op === 'is_not_null' || typeof(filter_criteria[f].value) === 'boolean'
                 )
             )
             .map(f => {
@@ -3671,12 +3672,7 @@ export class CustomRequests extends Component{
                             value: value,
                         };
                     case 'task_status':
-                        return {
-                            model: criteria.model,
-                            field: 'status',
-                            op: criteria.op,
-                            value: criteria.value
-                        };
+                       return criteria;
                     case 'cron':
                         return {
                             model: 'events',
@@ -4017,7 +4013,7 @@ export class CustomRequests extends Component{
 
                                 <Col smOffset={1} sm={8}>
                                     <Checkbox
-                                        checked={filter_criteria.task_status && filter_criteria.task_status.value === 'ERROR'}
+                                        checked={filter_criteria.task_status && filter_criteria.task_status.and[0].value === 'ERROR'}
                                         onChange={e => (
                                             e.target.checked ?
                                                 this.setState({
