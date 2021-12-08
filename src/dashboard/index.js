@@ -103,19 +103,36 @@ export default function Dashboard(props) {
                     number={stats.active_requests.total} />
                 </Link>
               </Col>
-              <Col xs={12} md={6} lg={3}>
-                <Link to={{
+              {
+                stats.active_requests.with_errors_with_request !== 0 ||
+                stats.active_requests.with_errors_without_request === 0  ?
+                <Col xs={12} md={6} lg={3}>
+                  <Link to={{
                     pathname: "/transactions/list", search: queryString.stringify({
                       filter: JSON.stringify(update(errorCriteriaQuery, {$merge: activeCriteriaQuery}))
                     })
                   }}>
-                  <DashboardCard
-                    className={"bg-alert-danger"}
-                    heading={"Errors"}
-                    subheading={"Workflows blocked"}
-                    number={stats.active_requests.with_errors} />
-                </Link>
-              </Col>
+                    <DashboardCard
+                      className={stats.active_requests.with_errors_without_request === 0 ? "bg-grow-early" : "bg-alert-danger"}
+                      heading={"Errors"}
+                      subheading={"Workflows blocked"}
+                      number={stats.active_requests.with_errors_with_request} />
+                  </Link>
+                </Col> :
+                <Col xs={12} md={6} lg={3}>
+                  <Link to={{
+                    pathname: "/custom-transactions/list", search: queryString.stringify({
+                      filter: JSON.stringify(update(errorCriteriaQuery, {$merge: activeCriteriaQuery}))
+                    })
+                  }}>
+                    <DashboardCard
+                      className={"bg-alert-danger"}
+                      heading={"Errors"}
+                      subheading={"Sch./Bulk workflows blocked"}
+                      number={stats.active_requests.with_errors_without_request} />
+                  </Link>
+                </Col>
+              }
               <Col xs={12} md={6} lg={3}>
                 { isManual && <ManualActionsTile /> }
               </Col>
