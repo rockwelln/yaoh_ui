@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React, {Component, useCallback, useEffect, useState} from 'react';
 import {FormattedMessage} from 'react-intl';
 import Panel from 'react-bootstrap/lib/Panel';
 import Badge from 'react-bootstrap/lib/Badge';
@@ -8,7 +8,7 @@ import Checkbox from 'react-bootstrap/lib/Checkbox';
 import Col from 'react-bootstrap/lib/Col';
 import Button from 'react-bootstrap/lib/Button';
 import FormGroup from 'react-bootstrap/lib/FormGroup';
-import {fetch_get, fetch_put, fetch_delete, fetch_post} from "../utils";
+import {fetch_get, fetch_put, fetch_delete, fetch_post, NotificationsManager} from "../utils";
 import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import Breadcrumb from 'react-bootstrap/lib/Breadcrumb';
 import update from 'immutability-helper';
@@ -40,10 +40,9 @@ class Report extends Component {
     onDelete() {
         fetch_delete(`/api/v01/reports/${this.props.report.id}`)
             .then(() => {
-                this.props.notifications.addNotification({
-                    message: <FormattedMessage id="report-deleted" defaultMessage="Report deleted!" />,
-                    level: 'success'
-                });
+                NotificationsManager.success(
+                  <FormattedMessage id="report-deleted" defaultMessage="Report deleted!" />,
+                );
                 this.props.onDelete && this.props.onDelete();
             })
             .catch(error => {
@@ -54,11 +53,10 @@ class Report extends Component {
                 } else {
                     message = error.message;
                 }
-                this.props.notifications.addNotification({
-                    title: <FormattedMessage id="delete-report-failed" defaultMessage="Failed to delete report"/>,
-                    message: message,
-                    level: 'error'
-                })
+                NotificationsManager.error(
+                  <FormattedMessage id="delete-report-failed" defaultMessage="Failed to delete report"/>,
+                  message
+                )
             })
     }
 
@@ -75,20 +73,18 @@ class Report extends Component {
                 return obj;
             }, {}
         );
-        fetch_put(`/api/v01/reports/${this.props.report.id}`, report, this.props.auth_token)
+        fetch_put(`/api/v01/reports/${this.props.report.id}`, report)
             .then(() => {
-                this.props.notifications.addNotification({
-                    message: <FormattedMessage id="report-saved" defaultMessage="Report saved!" />,
-                    level: 'success'
-                });
+                NotificationsManager.success(
+                  <FormattedMessage id="report-saved" defaultMessage="Report saved!" />,
+                );
                 this.props.onSaved && this.props.onSaved();
             })
             .catch(error => {
-                this.props.notifications.addNotification({
-                    title: <FormattedMessage id="save-report-failed" defaultMessage="Failed to save report"/>,
-                    message: error.message,
-                    level: 'error'
-                })
+                NotificationsManager.error(
+                  <FormattedMessage id="save-report-failed" defaultMessage="Failed to save report"/>,
+                  error.message
+                )
             })
     }
 
@@ -217,207 +213,189 @@ class RequestAlmostOverdueReport extends Report {
     }
 }
 
-class NewReport extends Component {
-    static empty_report() {
-        return {
-            name: '',
-            active: true,
-            type: undefined,
-            destination: '',
-            period_range: 24 * 60 * 60,
-        }
-    }
-    constructor(props) {
-        super(props);
-        this.state = {
-            report: NewReport.empty_report(),
-        };
-        this.onSubmit = this.onSubmit.bind(this);
-    }
+const emptyReport = {
+    name: '',
+    active: true,
+    type: undefined,
+    destination: '',
+    period_range: 24 * 60 * 60,
+};
 
-    onSubmit() {
-        const {report} = this.state;
 
-        fetch_post(`/api/v01/reports`, report, this.props.auth_token)
-            .then(() => {
-                this.props.notifications.addNotification({
-                    message: <FormattedMessage id="report-created" defaultMessage="Report created!" />,
-                    level: 'success'
-                });
-                this.setState({show: false, report: NewReport.empty_report()});
-                this.props.onClose && this.props.onClose();
-            })
-            .catch(error => {
-                this.props.notifications.addNotification({
-                    title: <FormattedMessage id="create-report-failed" defaultMessage="Failed to create report"/>,
-                    message: error.message,
-                    level: 'error'
-                })
-            })
-    }
+function NewReport({onClose}) {
+  const [report, setReport] = useState(emptyReport);
+  const [show, setShow] = useState(false);
 
-    render() {
-        const {report, show} = this.state;
-        const onClose = () => this.setState({show: false, report: NewReport.empty_report()});
-        const validName = validateName(report.name);
-        const validType = validateType(report.type);
-        const validPeriodicity = validatePeriodicity(report.period_range);
-        const validDestination = validateDestination(report.destination);
-        const validForm = validName === "success" && validType === "success" && validPeriodicity !== "error";
+  const _onClose = useCallback(() => {
+    setShow(false);
+    setReport(emptyReport);
+    onClose && onClose();
+  }, [onClose]);
 
-        return (
-            <div>
-                <Button bsStyle="primary" onClick={() => this.setState({show:true})}>
-                    <FormattedMessage id="reporting-new" defaultMessage="New report"/>
-                </Button>
-                <Modal show={show} onHide={onClose} backdrop={false}>
-                    <Modal.Header closeButton>
-                        <Modal.Title><FormattedMessage id="new-report" defaultMessage="Create a new report" /></Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <Form horizontal>
-                            <FormGroup validationState={validName}>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="name" defaultMessage="Name" />
-                                </Col>
-
-                                <Col sm={9}>
-                                    <FormControl
-                                        componentClass="input"
-                                        value={report.name}
-                                        onChange={e => this.setState({report: update(report, {$merge: {name: e.target.value}})})}/>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="active" defaultMessage="Active" />
-                                </Col>
-
-                                <Col sm={9}>
-                                    <Checkbox
-                                        checked={report.active}
-                                        onChange={e => this.setState({report: update(report, {$merge: {active: e.target.checked}})})}/>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup validationState={validType}>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="type" defaultMessage="Type" />
-                                </Col>
-
-                                <Col sm={9}>
-                                    <FormControl
-                                        componentClass="select"
-                                        value={report.type}
-                                        onChange={e => this.setState({report: update(report, {$merge: {type: e.target.value}})})}>
-                                        <option value=""/>
-                                        <option value="usage">usage</option>
-                                        <option value="errors">Errors</option>
-                                        <option value="t7">T7</option>
-                                    </FormControl>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup validationState={validDestination}>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="destination" defaultMessage="Destination" />
-                                </Col>
-
-                                <Col sm={9}>
-                                    <FormControl
-                                        componentClass="input"
-                                        value={report.destination}
-                                        onChange={e => this.setState({report: update(report, {$merge: {destination: e.target.value}})})}/>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup validationState={validPeriodicity}>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="Periodicity" defaultMessage="Periodicity" />
-                                </Col>
-
-                                <Col sm={9}>
-                                    <FormControl
-                                        type="number"
-                                        value={report.period_range}
-                                        onChange={e => this.setState({report: update(report, {$merge: {period_range:parseInt(e.target.value, 10)}})})}/>
-                                </Col>
-                            </FormGroup>
-                        </Form>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button onClick={this.onSubmit} bsStyle="primary" disabled={!validForm}>
-                            <FormattedMessage id="create" defaultMessage="Create" />
-                        </Button>
-                        <Button onClick={onClose}>
-                            <FormattedMessage id="cancel" defaultMessage="Cancel" />
-                        </Button>
-                    </Modal.Footer>
-                </Modal>
-            </div>
+  const onSubmit = useCallback(() => {
+    fetch_post(`/api/v01/reports`, report)
+    .then(() => {
+        NotificationsManager.success(
+          <FormattedMessage id="report-created" defaultMessage="Report created!" />,
+        );
+        _onClose();
+    })
+    .catch(error => {
+        NotificationsManager.error(
+          <FormattedMessage id="create-report-failed" defaultMessage="Failed to create report"/>,
+          error.message
         )
-    }
+    })
+  }, [_onClose, report]);
+
+
+  const validName = validateName(report.name);
+  const validType = validateType(report.type);
+  const validPeriodicity = validatePeriodicity(report.period_range);
+  const validDestination = validateDestination(report.destination);
+  const validForm = validName === "success" && validType === "success" && validPeriodicity !== "error";
+
+  return (
+      <div>
+          <Button bsStyle="primary" onClick={() => setShow(true)}>
+              <FormattedMessage id="reporting-new" defaultMessage="New report"/>
+          </Button>
+          <Modal show={show} onHide={_onClose} backdrop={false}>
+              <Modal.Header closeButton>
+                  <Modal.Title><FormattedMessage id="new-report" defaultMessage="Create a new report" /></Modal.Title>
+              </Modal.Header>
+              <Modal.Body>
+                  <Form horizontal>
+                      <FormGroup validationState={validName}>
+                          <Col componentClass={ControlLabel} sm={2}>
+                              <FormattedMessage id="name" defaultMessage="Name" />
+                          </Col>
+
+                          <Col sm={9}>
+                              <FormControl
+                                  componentClass="input"
+                                  value={report.name}
+                                  onChange={e => setReport(update(report, {$merge: {name: e.target.value}}))}/>
+                          </Col>
+                      </FormGroup>
+                      <FormGroup>
+                          <Col componentClass={ControlLabel} sm={2}>
+                              <FormattedMessage id="active" defaultMessage="Active" />
+                          </Col>
+
+                          <Col sm={9}>
+                              <Checkbox
+                                  checked={report.active}
+                                  onChange={e => setReport(update(report, {$merge: {active: e.target.checked}}))}/>
+                          </Col>
+                      </FormGroup>
+                      <FormGroup validationState={validType}>
+                          <Col componentClass={ControlLabel} sm={2}>
+                              <FormattedMessage id="type" defaultMessage="Type" />
+                          </Col>
+
+                          <Col sm={9}>
+                              <FormControl
+                                  componentClass="select"
+                                  value={report.type}
+                                  onChange={e => setReport(update(report, {$merge: {type: e.target.value}}))}>
+                                  <option value=""/>
+                                  <option value="usage">usage</option>
+                                  <option value="errors">Errors</option>
+                                  <option value="t7">T7</option>
+                              </FormControl>
+                          </Col>
+                      </FormGroup>
+                      <FormGroup validationState={validDestination}>
+                          <Col componentClass={ControlLabel} sm={2}>
+                              <FormattedMessage id="destination" defaultMessage="Destination" />
+                          </Col>
+
+                          <Col sm={9}>
+                              <FormControl
+                                  componentClass="input"
+                                  value={report.destination}
+                                  onChange={e => setReport(update(report, {$merge: {destination: e.target.value}}))}/>
+                          </Col>
+                      </FormGroup>
+                      <FormGroup validationState={validPeriodicity}>
+                          <Col componentClass={ControlLabel} sm={2}>
+                              <FormattedMessage id="Periodicity" defaultMessage="Periodicity" />
+                          </Col>
+
+                          <Col sm={9}>
+                              <FormControl
+                                  type="number"
+                                  value={report.period_range}
+                                  onChange={e => setReport(update(report, {$merge: {period_range:parseInt(e.target.value, 10)}}))}/>
+                          </Col>
+                      </FormGroup>
+                  </Form>
+              </Modal.Body>
+              <Modal.Footer>
+                  <Button onClick={onSubmit} bsStyle="primary" disabled={!validForm}>
+                      <FormattedMessage id="create" defaultMessage="Create" />
+                  </Button>
+                  <Button onClick={_onClose}>
+                      <FormattedMessage id="cancel" defaultMessage="Cancel" />
+                  </Button>
+              </Modal.Footer>
+          </Modal>
+      </div>
+  )
 }
 
-export class Reporting extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            reports: [],
-        };
-        this.getReport = this.getReport.bind(this);
-        this._refresh = this._refresh.bind(this);
-    }
+export function Reporting(props) {
+  const [reports, setReports] = useState([]);
 
-    _refresh() {
-        fetch_get('/api/v01/reports', this.props.auth_token)
-            .then(data => this.setState({reports: data.reports}))
-            .catch(error => this.props.notifications.addNotification({
-                title: <FormattedMessage id="fetch-reports-failed" defaultMessage="Failed to fetch reports"/>,
-                message: error.message,
-                level: 'error'
-            }));
-    }
+  const _refresh = () => {
+    fetch_get('/api/v01/reports')
+      .then(data => setReports(data.reports))
+      .catch(error => NotificationsManager.error(
+        <FormattedMessage id="fetch-reports-failed" defaultMessage="Failed to fetch reports"/>,
+        error.message
+      ));
+  }
 
-    componentDidMount() {
-        document.title = "Reports";
-        this._refresh();
-    }
+  useEffect(() => {
+    document.title = "Reports";
+    _refresh();
+  }, []);
 
-    getReport(report) {
-        switch(report.type) {
-            case 'usage':
-            case 'errors':
-            case 't7': return <Report key={report.id} report={report} onDelete={this._refresh} onSaved={this._refresh} {...this.props} />;
-            case 'almost_overdue': return <RequestAlmostOverdueReport key={report.id} report={report} onDelete={this._refresh} {...this.props} />;
-            default: return '';
-        }
+  const getReport = (report) => {
+    switch(report.type) {
+      case 'usage':
+      case 'errors':
+      case 't7': return <Report key={report.id} report={report} onDelete={_refresh} onSaved={_refresh} {...props} />;
+      case 'almost_overdue': return <RequestAlmostOverdueReport key={report.id} report={report} onDelete={_refresh} {...props} />;
+      default: return '';
     }
+  }
 
-    render() {
-        const {reports} = this.state;
-        return (
-            <div>
-                <Breadcrumb>
-                    <Breadcrumb.Item active><FormattedMessage id="system" defaultMessage="System"/></Breadcrumb.Item>
-                    <Breadcrumb.Item active><FormattedMessage id="reporting" defaultMessage="Reporting"/></Breadcrumb.Item>
-                </Breadcrumb>
-                <Panel>
-                    <Panel.Body>
-                        <ButtonToolbar>
-                            <NewReport
-                                onClose={() => this._refresh()}
-                                {...this.props} />
-                        </ButtonToolbar>
-                    </Panel.Body>
-                </Panel>
-            {
-                reports.map(this.getReport)
-            }
-            { reports.length === 0 &&
-                <Alert bsStyle="info">
-                    <FormattedMessage id="reporting-no-reports" defaultMessage="No reports defined"/>
-                </Alert>
+  return (
+      <div>
+          <Breadcrumb>
+              <Breadcrumb.Item active><FormattedMessage id="system" defaultMessage="System"/></Breadcrumb.Item>
+              <Breadcrumb.Item active><FormattedMessage id="reporting" defaultMessage="Reporting"/></Breadcrumb.Item>
+          </Breadcrumb>
+          <Panel>
+              <Panel.Body>
+                  <ButtonToolbar>
+                      <NewReport
+                          onClose={() => _refresh()}
+                          {...props} />
+                  </ButtonToolbar>
+              </Panel.Body>
+          </Panel>
+      {
+          reports.map(getReport)
+      }
+      { reports.length === 0 &&
+          <Alert bsStyle="info">
+              <FormattedMessage id="reporting-no-reports" defaultMessage="No reports defined"/>
+          </Alert>
 
-            }
-            </div>
-        )
-    }
+      }
+      </div>
+  )
 }
