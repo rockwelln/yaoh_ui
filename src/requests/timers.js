@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useState} from "react";
 import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
 import {FormattedMessage} from "react-intl";
 import Panel from "react-bootstrap/lib/Panel";
@@ -20,125 +20,116 @@ import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 import {fetch_delete, fetch_put, NotificationsManager} from "../utils";
 import Modal from "react-bootstrap/lib/Modal";
 import FormControlStatic from "react-bootstrap/lib/FormControlStatic";
+import {localUser} from "../utils/user";
 
+function updateTimer(id, diff, onSuccess) {
+    fetch_put(`/api/v01/timers/${id}`, diff)
+        .then(() => {
+            NotificationsManager.success(<FormattedMessage id="timer-updated" defaultMessage="Timer updated"/> );
+            onSuccess && onSuccess();
+        })
+        .catch(error =>
+            NotificationsManager.error(<FormattedMessage id="timer-updated" defaultMessage="Timer updated"/>, error.message)
+        )
+  }
 
-class UpdateTimer extends React.Component {
-    state = {
-        show: false,
-        diffTimer: {},
-    };
+function UpdateTimer({timer, onClose}) {
+  const [show, setShow] = useState(false);
+  const [diffTimer, setDifftimer] = useState({});
 
-    onClose() {
-        this.setState({show: false, diffTimer: {}});
-        this.props.onClose();
-    }
+  const onClose_ = () => {
+    setShow(false);
+    setDifftimer({});
+    onClose && onClose();
+  }
 
-    onSubmit() {
-        const {timer} = this.props;
-        const {diffTimer} = this.state;
+  const timer_ = update(timer, {$merge: diffTimer});
 
-        fetch_put(`/api/v01/timers/${timer.id}`, diffTimer)
-            .then(() => {
-                NotificationsManager.success(<FormattedMessage id="timer-updated" defaultMessage="Timer updated"/> );
-                this.onClose();
-            })
-            .catch(error =>
-                NotificationsManager.error(<FormattedMessage id="timer-updated" defaultMessage="Timer updated"/>, error.message)
-            )
-    }
+  return (
+    <div>
+      <Button onClick={() => setShow(true)} bsStyle="primary"
+              style={{marginLeft: '5px', marginRight: '5px'}}>
+          <Glyphicon glyph="pencil"/>
+      </Button>
+      <Modal show={show} onHide={() => onClose_()} backdrop={false}>
+          <Modal.Header closeButton>
+              <Modal.Title><FormattedMessage id="update-a-timer" defaultMessage="Update a timer" /></Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+              <Form horizontal style={{paddingTop: 10}}>
+                  <FormGroup>
+                      <Col componentClass={ControlLabel} sm={2}>
+                          <FormattedMessage id="instance-id" defaultMessage="Instance" />
+                      </Col>
 
-    render() {
-        const {show, diffTimer} = this.state;
-        const {timer} = this.props;
+                      <Col sm={9}>
+                          <FormControlStatic>
+                              {timer.instance_id}
+                          </FormControlStatic>
+                      </Col>
+                  </FormGroup>
+                  <FormGroup>
+                      <Col componentClass={ControlLabel} sm={2}>
+                          <FormattedMessage id="name" defaultMessage="Name" />
+                      </Col>
 
-        const timer_ = update(timer, {$merge: diffTimer});
-        return (
-            <div>
-                <Button onClick={() => this.setState({show: true})} bsStyle="primary"
-                        style={{marginLeft: '5px', marginRight: '5px'}}>
-                    <Glyphicon glyph="pencil"/>
-                </Button>
-                <Modal show={show} onHide={this.onClose.bind(this)} backdrop={false}>
-                    <Modal.Header closeButton>
-                        <Modal.Title><FormattedMessage id="update-a-timer" defaultMessage="Update a timer" /></Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <Form horizontal style={{paddingTop: 10}}>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="instance-id" defaultMessage="Instance" />
-                                </Col>
+                      <Col sm={9}>
+                          <FormControlStatic>
+                              {timer.name}
+                          </FormControlStatic>
+                      </Col>
+                  </FormGroup>
+                  <FormGroup>
+                      <Col componentClass={ControlLabel} sm={2}>
+                          <FormattedMessage id="key" defaultMessage="Key" />
+                      </Col>
 
-                                <Col sm={9}>
-                                    <FormControlStatic>
-                                        {timer.instance_id}
-                                    </FormControlStatic>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="name" defaultMessage="Name" />
-                                </Col>
+                      <Col sm={9}>
+                          <FormControlStatic>
+                              {timer.key}
+                          </FormControlStatic>
+                      </Col>
+                  </FormGroup>
+                  <FormGroup>
+                      <Col componentClass={ControlLabel} sm={2}>
+                          <FormattedMessage id="at" defaultMessage="At" />
+                      </Col>
 
-                                <Col sm={9}>
-                                    <FormControlStatic>
-                                        {timer.name}
-                                    </FormControlStatic>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="key" defaultMessage="Key" />
-                                </Col>
+                      <Col sm={9}>
+                          <DatePicker
+                              className="form-control"
+                              selected={localUser.localizeUtcDate(moment.utc(timer_.at)).toDate()}
+                              onChange={d => setDifftimer(update(
+                                diffTimer, {$merge: {at: moment(d).utc().format()}})
+                              )}
+                              dateFormat="dd/MM/yyyy HH:mm"
+                              showTimeInput />
+                      </Col>
+                  </FormGroup>
+                  <FormGroup>
+                      <Col componentClass={ControlLabel} sm={2}>
+                          <FormattedMessage id="status" defaultMessage="Status" />
+                      </Col>
 
-                                <Col sm={9}>
-                                    <FormControlStatic>
-                                        {timer.key}
-                                    </FormControlStatic>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="at" defaultMessage="At" />
-                                </Col>
-
-                                <Col sm={9}>
-                                    <DatePicker
-                                        className="form-control"
-                                        selected={moment(timer_.at).toDate()}
-                                        onChange={d => this.setState({
-                                            diffTimer: update(
-                                                diffTimer, {$merge: {at: moment(d).local().format()}})
-                                        })}
-                                        dateFormat="dd/MM/yyyy HH:mm"
-                                        showTimeInput />
-                                </Col>
-                            </FormGroup>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="status" defaultMessage="Status" />
-                                </Col>
-
-                                <Col sm={9}>
-                                    <FormControlStatic>
-                                        {timer.status}
-                                    </FormControlStatic>
-                                </Col>
-                            </FormGroup>
-                        </Form>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button onClick={this.onSubmit.bind(this)} bsStyle="primary">
-                            <FormattedMessage id="update" defaultMessage="Update" />
-                        </Button>
-                        <Button onClick={this.onClose.bind(this)}>
-                            <FormattedMessage id="cancel" defaultMessage="Cancel" />
-                        </Button>
-                    </Modal.Footer>
-                </Modal>
-            </div>
-        );
-    }
+                      <Col sm={9}>
+                          <FormControlStatic>
+                              {timer.status}
+                          </FormControlStatic>
+                      </Col>
+                  </FormGroup>
+              </Form>
+          </Modal.Body>
+          <Modal.Footer>
+              <Button onClick={() => updateTimer(timer.id, diffTimer, onClose_)} bsStyle="primary">
+                  <FormattedMessage id="update" defaultMessage="Update" />
+              </Button>
+              <Button onClick={() => onClose_()}>
+                  <FormattedMessage id="cancel" defaultMessage="Cancel" />
+              </Button>
+          </Modal.Footer>
+      </Modal>
+    </div>
+  );
 }
 
 
@@ -355,10 +346,12 @@ export default class Timers extends Search {
                                 },
                                 {
                                     title: <FormattedMessage id="at" defaultMessage="At" />,
+                                    render: n =>  localUser.localizeUtcDate(moment.utc(n.at)).format(),
                                     field: 'at', model: 'timers', sortable: true, style: {width: '200px'}
                                 },
                                 {
                                     title: <FormattedMessage id="created-on" defaultMessage="Created on" />,
+                                    render: n => localUser.localizeUtcDate(moment.utc(n.created_on)).format(),
                                     field: 'created_on', model: 'timers', sortable: true, style: {width: '200px'}
                                 },
                                 {
