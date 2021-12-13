@@ -186,6 +186,15 @@ export function LocalUserProfile({onUserInfoChanged}) {
                                 label={<FormattedMessage id='username' defaultMessage='Username' />}
                                 value={user_info.username}/>
                         <StaticControl
+                                label={<FormattedMessage id='firstname' defaultMessage='First name' />}
+                                value={user_info.first_name}/>
+                        <StaticControl
+                                label={<FormattedMessage id='lastname' defaultMessage='Last name' />}
+                                value={user_info.last_name}/>
+                        <StaticControl
+                                label={<FormattedMessage id='mobilenumber' defaultMessage='Mobile number' />}
+                                value={user_info.mobile_number}/>
+                        <StaticControl
                                 label={<FormattedMessage id='email' defaultMessage='Email' />}
                                 value={user_info.email}/>
                         <StaticControl
@@ -456,6 +465,48 @@ function UpdateUser(props) {
                         </FormGroup>
                         <FormGroup>
                             <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="firstname" defaultMessage="First name" />
+                            </Col>
+
+                            <Col sm={9}>
+                                <FormControl
+                                    componentClass="input"
+                                    value={localUser.first_name}
+                                    autoComplete="off"
+                                    name="firstname"
+                                    onChange={e => setDiffUser(update(diffUser, {$merge: {first_name: e.target.value}}))}/>
+                            </Col>
+                        </FormGroup>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="lastname" defaultMessage="Last name" />
+                            </Col>
+
+                            <Col sm={9}>
+                                <FormControl
+                                    componentClass="input"
+                                    value={localUser.last_name}
+                                    autoComplete="off"
+                                    name="lastname"
+                                    onChange={e => setDiffUser(update(diffUser, {$merge: {last_name: e.target.value}}))}/>
+                            </Col>
+                        </FormGroup>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="mobile number" defaultMessage="Mobile number" />
+                            </Col>
+
+                            <Col sm={9}>
+                                <FormControl
+                                    componentClass="input"
+                                    value={localUser.mobile_number}
+                                    autoComplete="off"
+                                    name="mobilenumber"
+                                    onChange={e => setDiffUser(update(diffUser, {$merge: {mobile_number: e.target.value}}))}/>
+                            </Col>
+                        </FormGroup>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
                                 <FormattedMessage id="system" defaultMessage="System" />
                             </Col>
 
@@ -561,9 +612,11 @@ function UpdateUser(props) {
                                                     {p}
                                                 </td>
                                                 <td>
-                                                    <input value={localUser.properties[p]} placeholder="value" onChange={e => {
-                                                        setDiffUser(update(diffUser, {properties: {$merge: {[p]: e.target.value}}}));
-                                                    }} />
+                                                    <FormControl
+                                                        componentClass="input"
+                                                        value={localUser.properties[p]}
+                                                        placeholder="value"
+                                                        onChange={e => setDiffUser(update(diffUser, {properties: {$merge: {[p]: e.target.value}}}))}/>
                                                 </td>
                                                 <td><Button onClick={() => {
                                                     let n = {...diffUser};
@@ -577,10 +630,18 @@ function UpdateUser(props) {
                                     }
                                     <tr>
                                         <td>
-                                            <input value={newProp.key} placeholder="value" onChange={e => setNewProp(update(newProp, {$merge: {key: e.target.value}}))} />
+                                            <FormControl
+                                              componentClass="input"
+                                              value={newProp.key}
+                                              placeholder="key"
+                                              onChange={e => setNewProp(update(newProp, {$merge: {key: e.target.value}}))}/>
                                         </td>
                                         <td>
-                                            <input value={newProp.value} placeholder="value" onChange={e => setNewProp(update(newProp, {$merge: {value: e.target.value}}))} />
+                                            <FormControl
+                                              componentClass="input"
+                                              value={newProp.value}
+                                              placeholder="value"
+                                              onChange={e => setNewProp(update(newProp, {$merge: {value: e.target.value}}))}/>
                                         </td>
                                         <td>
                                             <Button onClick={() => {
@@ -610,6 +671,7 @@ function UpdateUser(props) {
                                     type="password"
                                     autoComplete="off"
                                     name="new-password"
+                                    disabled={!fullUser.local_user}
                                     value={localUser.newPassword || ''}
                                     onChange={e => setDiffUser(update(diffUser, {$merge: {newPassword: e.target.value}}))}/>
                             </Col>
@@ -626,6 +688,7 @@ function UpdateUser(props) {
                                     type="password"
                                     autoComplete="off"
                                     name="confirm-new-password"
+                                    disabled={!fullUser.local_user}
                                     value={localUser.confirmPassword || ''}
                                     onChange={e => setDiffUser(update(diffUser, {$merge: {confirmPassword: e.target.value}}))}/>
                             </Col>
@@ -657,7 +720,7 @@ function UpdateUser(props) {
 
                             <Col sm={9}>
                                 <FormControl.Static>
-                                    {localUser.token}
+                                    {localUser.token ? "set" : "not-set"}
                                     {" "}
                                     <Button onClick={() => updateUser(user.id, {token: true}, () => loadFullUser(user.id))}>
                                         <Glyphicon glyph={"refresh"}/>
@@ -744,6 +807,9 @@ function UpdateUser(props) {
 function NewUser(props) {
     const [user, setUser] = useState({
         username: '',
+        first_name: '',
+        last_name: '',
+        mobile_number: '',
         email: '',
         is_system: false,
         profile_id: null,
@@ -787,6 +853,48 @@ function NewUser(props) {
                                 componentClass="input"
                                 value={user.username}
                                 onChange={e => setUser(update(user, {$merge: {username: e.target.value}}))}/>
+                        </Col>
+                    </FormGroup>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="firstname" defaultMessage="First name" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="input"
+                                value={user.first_name}
+                                autoComplete="off"
+                                name="firstname"
+                                onChange={e => setUser(update(user, {$merge: {first_name: e.target.value}}))}/>
+                        </Col>
+                    </FormGroup>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="lastname" defaultMessage="Last name" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="input"
+                                value={user.last_name}
+                                autoComplete="off"
+                                name="lastname"
+                                onChange={e => setUser(update(user, {$merge: {last_name: e.target.value}}))}/>
+                        </Col>
+                    </FormGroup>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="mobile number" defaultMessage="Mobile number" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="input"
+                                value={user.mobile_number}
+                                autoComplete="off"
+                                name="mobilenumber"
+                                onChange={e => setUser(update(user, {$merge: {mobile_number: e.target.value}}))}/>
                         </Col>
                     </FormGroup>
                     <FormGroup validationState={validEmail}>
