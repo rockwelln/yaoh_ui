@@ -20,6 +20,7 @@ import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 import {fetch_delete, fetch_put, NotificationsManager} from "../utils";
 import Modal from "react-bootstrap/lib/Modal";
 import FormControlStatic from "react-bootstrap/lib/FormControlStatic";
+import {localUser} from "../utils/user";
 
 
 class UpdateTimer extends React.Component {
@@ -105,10 +106,10 @@ class UpdateTimer extends React.Component {
                                 <Col sm={9}>
                                     <DatePicker
                                         className="form-control"
-                                        selected={moment(timer_.at).toDate()}
+                                        selected={localUser.localizeUtcDate(moment.utc(timer_.at)).toDate()}
                                         onChange={d => this.setState({
                                             diffTimer: update(
-                                                diffTimer, {$merge: {at: moment(d).local().format()}})
+                                                diffTimer, {$merge: {at: moment(d).utc().format()}})
                                         })}
                                         dateFormat="dd/MM/yyyy HH:mm"
                                         showTimeInput />
@@ -355,10 +356,12 @@ export default class Timers extends Search {
                                 },
                                 {
                                     title: <FormattedMessage id="at" defaultMessage="At" />,
+                                    render: n =>  localUser.localizeUtcDate(moment.utc(n.at)).format(),
                                     field: 'at', model: 'timers', sortable: true, style: {width: '200px'}
                                 },
                                 {
                                     title: <FormattedMessage id="created-on" defaultMessage="Created on" />,
+                                    render: n => localUser.localizeUtcDate(moment.utc(n.created_on)).format(),
                                     field: 'created_on', model: 'timers', sortable: true, style: {width: '200px'}
                                 },
                                 {
