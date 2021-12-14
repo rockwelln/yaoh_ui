@@ -72,7 +72,7 @@ export default class ActiveTransactionsPerWorkflow extends Component {
         };
         const chartOptions = {
             responsive: true,
-            maintainAspectRatio: true,
+            maintainAspectRatio: false,
             plugins: {
               legend: {
                 display: true,
