@@ -70,9 +70,13 @@ const newGateway = {
 function NewGatewayModal(props) {
   const {show, onHide} = props;
   const [entry, setEntry] = useState(newGateway);
+  const [newProp, setNewProp] = useState({key: "", value: ""});
 
   useEffect(() => {
-    !show && setEntry(newGateway)
+    if(!show) {
+      setEntry(newGateway)
+      setNewProp({key: "", value: ""});
+    }
   }, [show]);
 
   return (
@@ -203,9 +207,6 @@ function NewGatewayModal(props) {
                       componentClass="input"
                       value={entry.username}
                       onChange={e => setEntry(update(entry, {$merge: {username: e.target.value}}))}/>
-                    <HelpBlock>
-                      Empty the username to disable the authentication
-                    </HelpBlock>
                   </Col>
                 </FormGroup>
                 <FormGroup>
@@ -236,7 +237,6 @@ function NewGatewayModal(props) {
                       componentClass="input"
                       value={entry.client_id || ""}
                       onChange={e => setEntry(update(entry, {$merge: {client_id: e.target.value}}))}/>
-
                   </Col>
                 </FormGroup>
                 <FormGroup>
@@ -249,7 +249,68 @@ function NewGatewayModal(props) {
                       componentClass="input"
                       value={entry.client_secret || ""}
                       onChange={e => setEntry(update(entry, {$merge: {client_secret: e.target.value}}))}/>
+                  </Col>
+                </FormGroup>
+                <FormGroup>
+                  <Col componentClass={ControlLabel} sm={2}>
+                    <FormattedMessage id="grant-type" defaultMessage="Grant type"/>
+                  </Col>
 
+                  <Col sm={9}>
+                    <FormControl
+                      componentClass="input"
+                      placeholder={"password"}
+                      value={entry.grant_type || ""}
+                      onChange={e => setEntry(update(entry, {$merge: {grant_type: e.target.value}}))}/>
+                  </Col>
+                </FormGroup>
+                <FormGroup>
+                  <Col componentClass={ControlLabel} sm={2}>
+                    <FormattedMessage id="extra-params" defaultMessage="Extra params"/>
+                  </Col>
+
+                  <Col sm={9}>
+                    <Table>
+                      <tbody>
+                        {
+                          entry.extra_params && Object.entries(entry.extra_params).map(([key, value]) => (
+                            <tr key={`extra-p-${key}`}>
+                              <td>{key}</td>
+                              <td>{value}</td>
+                              <td><Button onClick={() => {
+                                  setEntry(update(entry, {extra_params: {$unset: [key]}}))
+                              }}>-</Button></td>
+                            </tr>
+                          ))
+                        }
+                        <tr>
+                            <td>
+                                <FormControl
+                                  componentClass="input"
+                                  value={newProp.key}
+                                  placeholder="key"
+                                  onChange={e => setNewProp(update(newProp, {$merge: {key: e.target.value}}))}/>
+                            </td>
+                            <td>
+                                <FormControl
+                                  componentClass="input"
+                                  value={newProp.value}
+                                  placeholder="value"
+                                  onChange={e => setNewProp(update(newProp, {$merge: {value: e.target.value}}))}/>
+                            </td>
+                            <td>
+                                <Button onClick={() => {
+                                    if(entry.extra_params === undefined) {
+                                      setEntry(update(entry, {$merge: {extra_params: {[newProp.key]: newProp.value}}}))
+                                    } else {
+                                      setEntry(update(entry, {extra_params: {$merge: {[newProp.key]: newProp.value}}}))
+                                    }
+                                    setNewProp({key: "", value: ""});
+                                }}>+</Button>
+                            </td>
+                        </tr>
+                      </tbody>
+                    </Table>
                   </Col>
                 </FormGroup>
               </>
@@ -316,6 +377,7 @@ function NewGatewayModal(props) {
 function GatewaysPanel(props) {
   const {onChange, gateways} = props;
   const [showNew, setShowNew] = useState(false);
+  const [newProp, setNewProp] = useState({key: "", value: ""});
 
   return (
     <>
@@ -484,9 +546,6 @@ function GatewaysPanel(props) {
                                 componentClass="input"
                                 value={gateway.username}
                                 onChange={e => onChange(update(gateways, {[g]: {$merge: {username: e.target.value}}}))}/>
-                                <HelpBlock>
-                                  Empty the username to disable the authentication
-                                </HelpBlock>
                             </Col>
                           </FormGroup>
 
@@ -519,7 +578,6 @@ function GatewaysPanel(props) {
                               componentClass="input"
                               value={gateway.client_id}
                               onChange={e => onChange(update(gateways, {[g]: {$merge: {client_id: e.target.value}}}))}/>
-
                           </Col>
                         </FormGroup>
                         <FormGroup>
@@ -532,7 +590,68 @@ function GatewaysPanel(props) {
                               componentClass="input"
                               value={gateway.client_secret}
                               onChange={e => onChange(update(gateways, {[g]: {$merge: {client_secret: e.target.value}}}))}/>
+                          </Col>
+                        </FormGroup>
+                        <FormGroup>
+                          <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="grant-type" defaultMessage="Grant type"/>
+                          </Col>
 
+                          <Col sm={9}>
+                            <FormControl
+                              componentClass="input"
+                              placeholder={"password"}
+                              value={gateway.grant_type || ""}
+                              onChange={e => onChange(update(gateways, {[g]: {$merge: {grant_type: e.target.value}}}))}/>
+                          </Col>
+                        </FormGroup>
+                        <FormGroup>
+                          <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="extra-params" defaultMessage="Extra params"/>
+                          </Col>
+
+                          <Col sm={9}>
+                            <Table>
+                              <tbody>
+                                {
+                                  gateway.extra_params && Object.entries(gateway.extra_params).map(([key, value]) => (
+                                    <tr key={`extra-p-${key}`}>
+                                      <td>{key}</td>
+                                      <td>{value}</td>
+                                      <td><Button onClick={() => {
+                                          onChange(update(gateways, {[g]: {extra_params: {$unset: [key]}}}))
+                                      }}>-</Button></td>
+                                    </tr>
+                                  ))
+                                }
+                                <tr>
+                                    <td>
+                                        <FormControl
+                                          componentClass="input"
+                                          value={newProp.key}
+                                          placeholder="key"
+                                          onChange={e => setNewProp(update(newProp, {$merge: {key: e.target.value}}))}/>
+                                    </td>
+                                    <td>
+                                        <FormControl
+                                          componentClass="input"
+                                          value={newProp.value}
+                                          placeholder="value"
+                                          onChange={e => setNewProp(update(newProp, {$merge: {value: e.target.value}}))}/>
+                                    </td>
+                                    <td>
+                                        <Button onClick={() => {
+                                            if(gateway.extra_params === undefined) {
+                                              onChange(update(gateways, {[g]: {$merge: {extra_params: {[newProp.key]: newProp.value}}}}))
+                                            } else {
+                                              onChange(update(gateways, {[g]: {extra_params: {$merge: {[newProp.key]: newProp.value}}}}))
+                                            }
+                                            setNewProp({key: "", value: ""});
+                                        }}>+</Button>
+                                    </td>
+                                </tr>
+                              </tbody>
+                            </Table>
                           </Col>
                         </FormGroup>
                       </>
