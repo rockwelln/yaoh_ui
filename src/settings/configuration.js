@@ -2735,6 +2735,33 @@ function LicensePanel(props) {
     );
 }
 
+function CachePanel({cache, onChange}) {
+  return (
+    <Panel>
+      <Panel.Body>
+        <Form horizontal>
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="URI" defaultMessage="URI"/>
+            </Col>
+            <Col sm={9}>
+              <FormControl
+                componentClass="input"
+                value={cache.store}
+                onChange={e => onChange(update(cache, {$merge: {store: e.target.value}}))}/>
+              <HelpBlock>
+                Samples:<br/>
+                memory:// for local process, in-memory caching<br/>
+                redis://localhost:6379/1 for redis remote caching
+              </HelpBlock>
+            </Col>
+          </FormGroup>
+        </Form>
+      </Panel.Body>
+    </Panel>
+  )
+}
+
 function EnvVariablesPanel({env, onChange}) {
   const [newVar, setNewVar] = useState({});
 
@@ -3418,6 +3445,15 @@ export default function Configuration({userInfo, history}) {
             <EnvVariablesPanel
               env={config.content.env || {}}
               onChange={v => setConfig(update(config, {content: {env: {$set: v}}}))}
+            />
+          }
+        </Tab>
+        <Tab eventKey={"Cache"} title="Cache">
+          {
+            activeKey === "Cache" && config.content &&
+            <CachePanel
+              cache={config.content.cache || {}}
+              onChange={v => setConfig(update(config, {content: {cache: {$set: v}}}))}
             />
           }
         </Tab>
