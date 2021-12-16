@@ -32,6 +32,8 @@ import {
 import update from 'immutability-helper';
 import {localUser, modules} from "../utils/user";
 import {fetchRoles} from "../system/user_roles";
+import {fetchActivities} from "../orchestration/activity-editor";
+import {getTenants} from "./requests";
 
 export const DATE_FORMAT = 'DD/MM/YYYY HH:mm:ss';
 
@@ -122,6 +124,7 @@ export class NPRequests extends Component {
       request_statuses: [],
       operators: [],
       roles: [],
+      activities: [],
       pagination: {
         page_number: 1,
         num_pages: 1,
@@ -140,6 +143,7 @@ export class NPRequests extends Component {
       crdc_id: { model: 'NPRequest', value: '', op: 'eq' },
       acbis_porting_id: { model: 'NPRequest', value: '', op: 'eq' },
       status: { model: 'ActivityInstance', value: '', op: 'eq' },
+      tenant: { model: 'NPRequest', value: '', op: 'eq' },
       request_status: { model: 'NPRequest', value: '', op: 'eq' },
       donor_id: { model: 'NPRequest', value: '', op: 'eq' },
       recipient_id: { model: 'NPRequest', value: '', op: 'eq' },
@@ -179,6 +183,7 @@ export class NPRequests extends Component {
   componentDidMount() {
     document.title = "Requests";
     fetchRoles(roles => this.setState({roles: roles}));
+    fetchActivities(activities => this.setState({activities: activities}));
     fetchRequestStatuses(s => this.setState({request_statuses: s}));
     this._refreshOperators();
     this._refresh();
@@ -489,6 +494,41 @@ export class NPRequests extends Component {
                       this.setState({
                         filter_criteria: update(this.state.filter_criteria,
                           { kind: { $merge: { value: v ? v.value: "" } } })
+                      })
+                    }}
+                    className="basic-select"
+                    classNamePrefix="select" />
+                </Col>
+              </FormGroup>
+
+              <FormGroup>
+                <Col componentClass={ControlLabel} sm={2}>
+                  <FormattedMessage id="tenant" defaultMessage="Tenant" />
+                </Col>
+
+                <Col sm={1}>
+                  <FormControl
+                    componentClass="select"
+                    value={filter_criteria.tenant.op}
+                    onChange={(e) => this.setState({
+                      filter_criteria: update(this.state.filter_criteria,
+                        { tenant: { $merge: { op: e.target.value } } })
+                    })}>
+                    <option value="eq">==</option>
+                    <option value="like">like</option>
+                  </FormControl>
+                </Col>
+
+                <Col sm={8}>
+                  <Select
+                    isClearable
+                    value={{value: filter_criteria.tenant.value, label: filter_criteria.tenant.value}}
+                    name="tenant"
+                    options={getTenants(this.props).map(k => ({value: k, label: k}))}
+                    onChange={v => {
+                      this.setState({
+                        filter_criteria: update(this.state.filter_criteria,
+                          { tenant: { $merge: { value: v ? v.value : "" } } })
                       })
                     }}
                     className="basic-select"
@@ -954,6 +994,7 @@ export class NPRequests extends Component {
                 },
                 { title: <FormattedMessage id="donor" defaultMessage="Donor" />, field: 'donor_name', className: 'visible-md visible-lg' },
                 { title: <FormattedMessage id="recipient" defaultMessage="Recipient" />, field: 'recipient_name', className: 'visible-md visible-lg' },
+                { title: <FormattedMessage id="tenant" defaultMessage="Tenant" />, field: 'tenant', className: 'visible-lg' },
                 { title: <FormattedMessage id="customer-id" defaultMessage="Customer ID" />, field: 'customer_id', render: n => n.nprequest.customer_id, className: 'visible-md visible-lg' },
                 {
                   title: <FormattedMessage id="ranges" defaultMessage="Ranges" />, render: n => (

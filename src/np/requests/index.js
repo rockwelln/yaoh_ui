@@ -8,7 +8,7 @@ import {
 import {
   NPTransaction as CitcNPTransaction,
   NPPortInRequest as CitcNPPortInRequest,
-  NPDisconnectRequest as CitcNPDisconnectRequest,
+  NPDisconnectRequest as CitcNPDisconnectRequest, TENANTS,
 } from "./citc-sa";
 
 export function NPTransaction(props) {
@@ -41,5 +41,14 @@ export function NPDisconnectRequest(props) {
     return <CitcNPDisconnectRequest {...props} />
   } else {
     return <div/>
+  }
+}
+
+export function getTenants(props) {
+  const {user_info} = props
+  if(user_info.modules.includes(modules.npact_citc)) {
+    return TENANTS;
+  } else {
+    return []
   }
 }

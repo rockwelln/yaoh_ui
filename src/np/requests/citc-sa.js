@@ -57,7 +57,10 @@ export const rejection_codes = [
 ];
 const RECIPIENTS = [
   DEFAULT_RECIPIENT,
+  "SALAMMOB",
 ];
+
+export const TENANTS = RECIPIENTS;
 
 
 function newRequest(request, onSuccess, onError) {
@@ -249,6 +252,7 @@ const emptyRequest = {
   street: '',
   Id: '',
   vat: '',
+  tenant: DEFAULT_RECIPIENT,
   accountNumber: '',
   isB2B: false,
   sub_type: 'GEOGRAPHIC',
@@ -281,9 +285,8 @@ export function NPPortInRequest(props) {
   const validContactPhone = request.subscriber_data.ContactPhone.length === 0 ? null : "success";
   const validContactID = request.subscriber_data[request.personIDType].length === 0 ? null : (request.personIDType === "GccId" && (request.subscriber_data[request.personIDType].length < 8 || request.subscriber_data[request.personIDType].length > 12)) || (request.personIDType !== "GccId" && request.subscriber_data[request.personIDType].length !== 10) ? "error" : "success";
   const validPortReqFormID = request.port_req_form_id.length === 0 ? null : "success";
-  const validRecipient = request.recipient !== null && request.recipient !== undefined && request.recipient !== "" ? "success" : null;
 
-  const validForm = validateRanges(request.ranges).length === 0 && validContactPhone === "success" && validContactID === "success" && validPortReqFormID === "success" && validRecipient === "success";
+  const validForm = validateRanges(request.ranges).length === 0 && validContactPhone === "success" && validContactID === "success" && validPortReqFormID === "success";
   return (
     <Panel>
         <Panel.Heading>
@@ -323,13 +326,14 @@ export function NPPortInRequest(props) {
               </Col>
             </FormGroup>
 
-            <FormGroup validationState={validRecipient}>
+            <FormGroup>
               <Col componentClass={ControlLabel} sm={2}>
                 <FormattedMessage id="recipient" defaultMessage="Recipient" />
               </Col>
 
               <Col sm={9}>
                 <FormControl
+                  disabled
                   componentClass="select"
                   value={request.recipient}
                   onChange={e => setRequest(update(request, { $merge: { recipient: e.target.value && parseInt(e.target.value, 10) } }))}>
@@ -350,7 +354,13 @@ export function NPPortInRequest(props) {
                 <FormControl
                   componentClass="select"
                   value={request.service_type}
-                  onChange={e => setRequest(update(request, { $merge: { service_type: e.target.value } }))}>
+                  onChange={e =>
+                    setRequest(update(request, { $merge: {
+                      service_type: e.target.value,
+                      tenant: e.target.value === "MOBILE" ? "SALAMMOB": DEFAULT_RECIPIENT,
+                      recipient: operators.find(o => o.name === (e.target.value === "MOBILE" ? "SALAMMOB" : DEFAULT_RECIPIENT))?.id,
+                    } }))
+                  }>
                   <option value="MOBILE">MOBILE</option>
                   <option value="FIXED">FIXED</option>
                 </FormControl>
@@ -954,6 +964,7 @@ class RequestTable extends Component {
             <tbody>
             <tr><th><FormattedMessage id="id" defaultMessage="ID" /></th><td>{req.id}</td></tr>
             <tr><th><FormattedMessage id="kind" defaultMessage="Kind" /></th><td>{req.kind}</td></tr>
+            <tr><th><FormattedMessage id="tenant" defaultMessage="Tenant" /></th><td>{req.tenant}</td></tr>
             <tr><th><FormattedMessage id="complexity" defaultMessage="Complexity" /></th><td>{req.complexity_class}</td></tr>
             <tr><th><FormattedMessage id="final-status" defaultMessage="Status" /></th><td>{req.status}</td></tr>
             <tr><th><FormattedMessage id="port-id" defaultMessage="Port ID (CITC ID)" /></th><td>{req.crdc_id}</td></tr>
@@ -1278,9 +1289,31 @@ function CitcMessages(props) {
       }
       const match = /MessageCode>([A-Za-z ]+)<\/.*$/gm.exec(o.request);
 
-      o.request && l.push({id: m.processing_trace_id, endpoint: "CITC", summary: match?match[1]:"-", type:"request", created_on: m.created_on, raw: o.request});
-      o.response && l.push({id: m.processing_trace_id, endpoint: "APIO", summary: o.status, type: "response", created_on: m.created_on, status: m.status === 200 ? o.status : m.status, ...o.response});
-      i && i.event && l.push({id: m.processing_trace_id, endpoint: "APIO", type: "event", created_on: m.created_on, ...i.event});
+      if(o.request || o.response) {
+        o.request && l.push({
+          id: m.processing_trace_id,
+          endpoint: "CITC",
+          summary: match ? match[1] : "-",
+          type: "request",
+          created_on: m.created_on,
+          raw: o.request
+        });
+        o.response && l.push({
+          id: m.processing_trace_id,
+          endpoint: "APIO",
+          summary: o.status,
+          type: "response",
+          created_on: m.created_on,
+          status: m.status === 200 ? o.status : m.status, ...o.response
+        });
+      } else if(i) {
+        if(i.event) {
+          l.push({id: m.processing_trace_id, endpoint: "APIO", type: "event", created_on: m.created_on, ...i.event});
+        } else if (i.host) {
+          l.push({id: m.processing_trace_id, endpoint: i.host, source: "APIO", type: "request", summary: `${i.method} ${i.url}`, created_on: m.created_on, raw: m.input});
+          l.push({id: m.processing_trace_id, endpoint: "APIO", source: i.host, type: "response", summary: m.status, created_on: m.created_on, raw: m.output});
+        }
+      }
       return l;
     }, []);
 
