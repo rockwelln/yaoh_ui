@@ -21,6 +21,8 @@ import {activeCriteria, errorCriteria} from "../requests/requests";
 import {activeCriteria as npActiveCriteria, errorCriteria as npErrorCriteria} from "../np/np-requests";
 import queryString from 'query-string';
 import update from "immutability-helper";
+import TopSlowApis from "./topSlowApis";
+import ResponseTimeOvertime from "./responseTimeOverTime";
 const REFRESH_CYCLE = 10;
 
 
@@ -70,6 +72,8 @@ export default function Dashboard(props) {
     ];
     if(props.user_info.modules.includes(modules.proxy)) {
         statsPanels.push(<ProxyRequestsOverTime {...props} />);
+        statsPanels.push(<TopSlowApis {...props} />);
+        statsPanels.push(<ResponseTimeOvertime {...props} />);
     }
     statsPanels.push(<ActiveTransactionsPerWorkflow {...props} />);
     if(isManual) {

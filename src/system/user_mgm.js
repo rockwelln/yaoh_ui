@@ -943,6 +943,48 @@ function NewUser(props) {
                                 onChange={e => setUser(update(user, {$merge: {username: e.target.value}}))}/>
                         </Col>
                     </FormGroup>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="firstname" defaultMessage="First name" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="input"
+                                value={user.first_name}
+                                autoComplete="off"
+                                name="firstname"
+                                onChange={e => setUser(update(user, {$merge: {first_name: e.target.value}}))}/>
+                        </Col>
+                    </FormGroup>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="lastname" defaultMessage="Last name" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="input"
+                                value={user.last_name}
+                                autoComplete="off"
+                                name="lastname"
+                                onChange={e => setUser(update(user, {$merge: {last_name: e.target.value}}))}/>
+                        </Col>
+                    </FormGroup>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="mobile number" defaultMessage="Mobile number" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="input"
+                                value={user.mobile_number}
+                                autoComplete="off"
+                                name="mobilenumber"
+                                onChange={e => setUser(update(user, {$merge: {mobile_number: e.target.value}}))}/>
+                        </Col>
+                    </FormGroup>
                     <FormGroup validationState={validEmail}>
                         <Col componentClass={ControlLabel} sm={2}>
                             <FormattedMessage id="email" defaultMessage="Email" />
