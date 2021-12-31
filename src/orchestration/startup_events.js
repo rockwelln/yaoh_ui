@@ -841,12 +841,13 @@ function ImportCustomRouteModal({show, onHide}) {
                     e.preventDefault();
                     setErrors([]);
                     setLoaded([]);
-                    acceptedFiles.map((f, i) => {
-                      readFile(f)
-                      .then(r => JSON.parse(r))
-                      .then(c => importCustomRoute(c, options, () => setLoaded(l => update(l, {$push: [i]}))))
-                      .catch(e => setErrors(es => update(es, {$push: [{id: i, error: e.message}]})));
-                    })
+
+                    importRoutes(
+                      acceptedFiles,
+                      options,
+                      i => setLoaded(l => update(l, {$push: [i]})),
+                      (i, e) => setErrors(es => update(es, {$push: [{id: i, error: e.message}]})),
+                    )
                   }} >
                   Save
                 </Button>
@@ -857,6 +858,20 @@ function ImportCustomRouteModal({show, onHide}) {
       </Modal.Body>
     </Modal>
   )
+}
+
+async function importRoutes(inputFiles, options, onSuccess, onError) {
+  for(let i = 0; i <inputFiles.length; i++) {
+    const inputFile = inputFiles[i];
+
+    try {
+      const c = await readFile(inputFile);
+      await importCustomRoute(JSON.parse(c), options, () => onSuccess(i))
+    } catch(e) {
+      console.error("failed to import route", e)
+      onError && onError(i, e)
+    }
+  }
 }
 
 function UpdateSyncConfirmCheckbox(props) {
