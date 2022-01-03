@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import Panel from 'react-bootstrap/lib/Panel';
 import Table from 'react-bootstrap/lib/Table';
 import Button from 'react-bootstrap/lib/Button';
@@ -90,7 +90,7 @@ function importCustomRoute(data, options, onSuccess) {
 }
 
 
-function deleteCustomRoute(routeId, onSuccess) {
+function deleteCustomRoute(routeId, onSuccess, onError) {
     fetch_delete(`/api/v01/custom_routes/${routeId}`)
         .then(() => {
             NotificationsManager.success(
@@ -98,10 +98,13 @@ function deleteCustomRoute(routeId, onSuccess) {
             );
             onSuccess();
         })
-        .catch(error => NotificationsManager.error(
+        .catch(error => {
+          NotificationsManager.error(
             <FormattedMessage id="delete-custom-routes-failed" defaultMessage="Failed to delete custom route"/>,
             error.message
-        ));
+          )
+          onError && onError();
+        });
 }
 
 function updateHandler(e, eventName, onSuccess) {
@@ -327,7 +330,7 @@ function NewCustomRoute({show, onHide, groups}) {
 
                         <Col sm={9}>
                             <Creatable
-                              value={{value: route.group, label: route.group || "*unassigned*"}}
+                              value={{value: route.group || "", label: route.group || "*unassigned*"}}
                               isClearable
                               isSearchable
                               name="groups"
@@ -516,7 +519,7 @@ function UpdateCustomRouteModal(props) {
                         <Col sm={9}>
                             <FormControl
                                 componentClass="input"
-                                value={localEntry.route}
+                                value={localEntry.route || ""}
                                 placeholder="ex: /clients/{client_id:\d+}/addresses"
                                 onChange={e => setDiffEntry(update(diffEntry, {$merge: {route: e.target.value}}))}/>
                         </Col>
@@ -539,7 +542,7 @@ function UpdateCustomRouteModal(props) {
                         <Col sm={2}>
                             <FormControl
                                 componentClass="select"
-                                value={localEntry.method}
+                                value={localEntry.method || ""}
                                 onChange={e => setDiffEntry(update(diffEntry, {$merge: {method: e.target.value}}))}>
                                 <option value="get">get</option>
                                 <option value="post">post</option>
@@ -908,7 +911,7 @@ function UpdateSyncConfirmCheckbox(props) {
                  defaultMessage={`You are about to change the output of the endpoint ${resourceName} !`}/>
           </p>
           <Form>
-            <Button bsStyle="primary" onClick={e => { onConfirm(!checked); setShow(false); }}>
+            <Button bsStyle="primary" onClick={e => { onConfirm(!checked); setShow(false); }} autoFocus>
               Update
             </Button>
           </Form>
@@ -950,6 +953,78 @@ function RenameGroupModal({show, onHide, group}) {
   )
 }
 
+
+function DeleteRoutes({show, routes, onHide}) {
+  const [deleteActivities, setDeleteActivities] = useState(false);
+
+  useEffect(() => setDeleteActivities(false), [show]);
+
+  const onSubmit = async () => {
+    for(const route of routes) {
+      await deleteCustomRoute(
+        route.route_id,
+        async () => {
+          if (deleteActivities && route.activity_id) {
+            await deleteActivity(route.activity_id)
+          }
+        },
+      )
+    }
+
+    onHide(true);
+  }
+
+  return (
+    <Modal show={show} onHide={() => onHide(false)}>
+      <Modal.Header closeButton>
+          <Modal.Title>Confirm delete of {routes.length} routes</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form onSubmit={e => {e.preventDefault(); Promise.resolve(onSubmit())}} horizontal>
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                Selected routes
+              </Col>
+              <Col sm={9}>
+                <ul>
+                {
+                  routes.sort((a, b) => a.route_id - b.route_id).map(r =>
+                    <li key={r.route_id}>
+                      {r.method.toUpperCase()}{" "}{r.route}
+                    </li>
+                  )
+                }
+                </ul>
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                Options
+              </Col>
+              <Col sm={9}>
+                <Checkbox
+                  checked={deleteActivities}
+                  onChange={e => setDeleteActivities(e.target.checked)}>
+                  <FormattedMessage
+                    id="delete-activities-and-versions"
+                    defaultMessage='Delete associated activities and their versions' />
+                </Checkbox>
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col sm={9}>
+                <Button type="submit" bsStyle="danger" autoFocus>
+                  Delete
+                </Button>
+              </Col>
+            </FormGroup>
+          </Form>
+        </Modal.Body>
+    </Modal>
+  )
+}
 
 function DeleteConfirmButton({ resourceName, activity, onConfirm }) {
   const [show, setShow] = useState(false);
@@ -998,7 +1073,7 @@ function DeleteConfirmButton({ resourceName, activity, onConfirm }) {
 }
 
 
-function CustomRoutesGroup({routes, group, activities, groups, onChange}) {
+function CustomRoutesGroup({routes, group, activities, groups, onChange, onSelect}) {
   const [showUpdateModal, setShowUpdateModal] = useState(undefined);
   const [showRename, setShowRename] = useState(false);
   const [showNewActivity, setShowNewActivity] = useState(undefined);
@@ -1019,6 +1094,7 @@ function CustomRoutesGroup({routes, group, activities, groups, onChange}) {
             {' '}
             {group &&
             <SplitButton
+              id={"group-export-routes"}
               bsStyle="primary"
               bsSize="small"
               title={<FontAwesomeIcon icon={faDownload}/>}
@@ -1027,6 +1103,7 @@ function CustomRoutesGroup({routes, group, activities, groups, onChange}) {
                   .then(token => window.location = `${API_URL_PREFIX}/api/v01/custom_routes/groups/${group}/export?auth_token=${token}`)
               }>
               <MenuItem
+                id={"group-export-routes-compatible-version"}
                 onClick={() =>
                   AuthServiceManager.getValidToken()
                     .then(token => window.location = `${API_URL_PREFIX}/api/v01/custom_routes/groups/${group}/export?compat=1&auth_token=${token}`)
@@ -1067,11 +1144,10 @@ function CustomRoutesGroup({routes, group, activities, groups, onChange}) {
                   draggable
                   onDragStart={e => {
                     e.dataTransfer.setData("custom-route", JSON.stringify(route));
-                  }}
-                >
-                  <Glyphicon glyph={"menu-hamburger"}/>
+                  }}>
+                  <Checkbox onClick={e => onSelect(route, e.target.checked)}/>
                 </td>
-                <td>{ route.method }</td>
+                <td style={{verticalAlign: "middle"}}>{ route.method.toUpperCase() }</td>
                 <td style={{overflowWrap: "anywhere"}}>{ route.route }</td>
                 <td>
                   <InputGroup>
@@ -1148,6 +1224,7 @@ function CustomRoutesGroup({routes, group, activities, groups, onChange}) {
                         },
                       )} />
                     <SplitButton
+                      id={"export-route"}
                       bsStyle="primary"
                       title={<FontAwesomeIcon icon={faDownload}/>}
                       onClick={() => {
@@ -1156,6 +1233,7 @@ function CustomRoutesGroup({routes, group, activities, groups, onChange}) {
                           })
                       }}>
                       <MenuItem
+                        id={"export-route-compatible-version"}
                         onClick={() =>
                           AuthServiceManager.getValidToken()
                             .then(token => window.location = `${API_URL_PREFIX}/api/v01/custom_routes/${route.route_id}/export?compat=1&auth_token=${token}`)
@@ -1203,18 +1281,23 @@ function CustomRoutes() {
   const [customRoutes, setCustomRoutes] = useState([]);
   const [showNew, setShowNew] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [selected, setSelected] = useState([]);
   const [key, setKey] = useState(0);
   const [filter, setFilter] = useState("");
 
-  useEffect(() => {
-      setLoading(true);
-      fetchActivities(setActivities);
-      fetchCustomRoutes(r => {
-        setCustomRoutes(r)
-        setLoading(false)
-      });
+  const refresh_ = useCallback(() => {
+    setLoading(true);
+    fetchActivities(setActivities);
+    fetchCustomRoutes(r => {
+      setCustomRoutes(r)
+      setLoading(false)
+      setSelected([])
+    });
   }, []);
+
+  useEffect(() => refresh_(), []);
 
   const allGroups = customRoutes.reduce((o, r) => {
     if(!o.includes(r["group"])) {
@@ -1253,6 +1336,9 @@ function CustomRoutes() {
                   <Button bsStyle="primary" onClick={() => setShowImport(true)}>
                       <FormattedMessage id="import" defaultMessage="Import" />
                   </Button>
+                  <Button bsStyle="danger" onClick={() => setShowDelete(true)} disabled={selected.length === 0}>
+                    <FormattedMessage id="delete" defaultMessage="Delete" />
+                  </Button>
               </ButtonToolbar>
             </Col>
             <Col sm={6}>
@@ -1265,11 +1351,16 @@ function CustomRoutes() {
       {
         !loading && Object.entries(routePerGroups).sort((a, b) => a[0].localeCompare(b[0])).map(([group, routes]) =>
           <CustomRoutesGroup
+            key={`activity-group-${group}`}
             activities={activities}
             onChange={() => fetchCustomRoutes(setCustomRoutes)}
             routes={routes}
             group={group}
             groups={allGroups}
+            onSelect={(r, checked) => {
+              checked ? setSelected(s => update(s, {$push: [r]})) :
+                setSelected(s => update(s, {$splice: [[s.findIndex(ro => ro.route_id === r.route_id), 1]]}))
+            }}
             />
         )
       }
@@ -1279,7 +1370,7 @@ function CustomRoutes() {
           groups={allGroups}
           onHide={c => {
               setShowNew(false);
-              c && fetchCustomRoutes(setCustomRoutes);
+              c && refresh_();
           }} />
 
       <ImportCustomRouteModal
@@ -1289,9 +1380,16 @@ function CustomRoutes() {
               setKey(k => k+1);
               setShowImport(false);
               if(c) {
-                fetchActivities(setActivities);
-                fetchCustomRoutes(setCustomRoutes);
+                refresh_();
               }
+          }} />
+
+      <DeleteRoutes
+          routes={selected}
+          show={showDelete}
+          onHide={c => {
+              setShowDelete(false);
+              c && refresh_();
           }} />
     </>
   )

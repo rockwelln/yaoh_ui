@@ -120,6 +120,10 @@ export function deleteActivity(activityId, cb) {
             NotificationsManager.success("Activity deleted");
         })
         .catch(error => {
+            if(error.response.status === 404) {
+              console.log(`activity ${activityId} not found`)
+              return
+            }
             NotificationsManager.error("Failed to delete activity", error.message);
         });
 }
