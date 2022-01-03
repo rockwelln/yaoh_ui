@@ -1148,7 +1148,7 @@ function CustomRoutesGroup({routes, group, activities, groups, onChange, onSelec
                   <Checkbox onClick={e => onSelect(route, e.target.checked)}/>
                 </td>
                 <td style={{verticalAlign: "middle"}}>{ route.method.toUpperCase() }</td>
-                <td style={{overflowWrap: "anywhere"}}>{ route.route }</td>
+                <td style={{overflowWrap: "anywhere", verticalAlign: "middle"}}>{ route.route }</td>
                 <td>
                   <InputGroup>
                       <Select
