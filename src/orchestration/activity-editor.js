@@ -460,16 +460,19 @@ export function Activities({user_info}) {
                                                 </Button>
 
                                                 <SplitButton
+                                                  id={"export-activity"}
                                                   bsStyle="primary"
                                                   title={<FontAwesomeIcon icon={faDownload}/>}
                                                   onClick={() => downloadActivity(a.id)}>
                                                     <MenuItem
+                                                      id={"export-activity-versions"}
                                                       onClick={() => downloadActivityVersions(a.id)}>
                                                       <FormattedMessage
                                                         id="all-versions"
                                                         defaultMessage="All versions" />
                                                     </MenuItem>
                                                     <MenuItem
+                                                      id={"export-activity-definition-only"}
                                                       onClick={() => downloadActivity(a.id, true)}>
                                                       <FormattedMessage
                                                         id="definition-only"
