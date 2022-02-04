@@ -3519,7 +3519,7 @@ export class Requests extends Component{
                                 },
                                 {
                                     title: <FormattedMessage id="tenant" defaultMessage="Tenant" />,
-                                    field: 'tenant_id', model: request_entities,
+                                    field: 'tenant', model: request_entities,
                                 },
                                 {
                                     title: <FormattedMessage id="site" defaultMessage="Site" />,
