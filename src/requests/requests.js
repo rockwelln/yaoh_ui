@@ -248,12 +248,22 @@ const XSLT_PP = "<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1
 
 export const pp_output = (protocol, content) => {
     switch(protocol) {
-        case "BS-OCI":
-        case "SOAP":
-        case "ROM":
-            return transformXML(content, XSLT_PP);
-        default:
-            return content;
+      case "BS-OCI":
+      case "SOAP":
+      case "ROM":
+        return transformXML(content, XSLT_PP);
+      case "HTTP":
+        if (content[0] === '{') {
+          return JSON.stringify(content, null, 2);
+        } else {
+          return String(content);
+        }
+      default:
+        try {
+         return JSON.stringify(content, null, 2)
+        }catch {
+          return String(content);
+        }
     }
 };
 

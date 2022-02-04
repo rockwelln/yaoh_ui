@@ -85,6 +85,7 @@ export const modules = Object.freeze({
     npact_crdb: 'npact_crdb',
     npact_citc: 'npact_citc',
     npact_crdc: 'npact_crdc',
+    npact_coin: 'npact_coin',
 });
 
 export function supportedModule(mod, modules) {

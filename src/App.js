@@ -227,11 +227,13 @@ function AsyncApioNavBar({user_info, logoutUser, database_status}){
               </MenuItem>
             </LinkContainer>
             }
-            <LinkContainer to={"/transactions/new_disconnect"}>
-              <MenuItem>
-                <FormattedMessage id="new-disconnect" defaultMessage="New Disconnect"/>
-              </MenuItem>
-            </LinkContainer>
+            {!supportedModule(modules.npact_coin, user_info.modules) &&
+              <LinkContainer to={"/transactions/new_disconnect"}>
+                <MenuItem>
+                  <FormattedMessage id="new-disconnect" defaultMessage="New Disconnect"/>
+                </MenuItem>
+              </LinkContainer>
+            }
             {supportedModule(modules.npact_crdb, user_info.modules) &&
             <LinkContainer to={"/transactions/new_install_address"}>
               <MenuItem>
