@@ -534,7 +534,7 @@ function JsonSchemaFormFields(props) {
             <td style={{width: "40%"}}>
               <FormControl
                 componentClass="select"
-                value={props.type}
+                value={props.format || props.type}
                 onChange={e => {
                   let prop = {};
                   switch(e.target.value) {
@@ -544,11 +544,18 @@ function JsonSchemaFormFields(props) {
                     case "boolean":
                       prop = {type: e.target.value, enum: [true]};
                       break;
+                    case "date-time":
+                      prop = {type: "string", format: "date-time"};
+                      break;
+                    default:
+                      prop = {type: e.target.value};
+                      break;
                   }
                   onChange(JSON.stringify(update(fields, {properties: {[name]: {$merge: prop}}})))
                 }}>
                     <option value="string">string</option>
                     <option value="boolean">boolean</option>
+                    <option value="date-time">datetime</option>
               </FormControl>
             </td>
             <td>{fields.required && fields.required.includes(name)?"*":""}</td>
@@ -571,7 +578,7 @@ function JsonSchemaFormFields(props) {
           <td style={{width: "40%"}}>
             <FormControl
               componentClass="select"
-              value={newField[1]}
+              value={newField[1]?.format || newField[1]?.type}
               onChange={e => {
                 let prop = {};
                   switch(e.target.value) {
@@ -581,11 +588,18 @@ function JsonSchemaFormFields(props) {
                   case "boolean":
                     prop = {type: e.target.value, enum: [true]};
                     break;
+                  case "date-time":
+                    prop = {type: "string", format: "date-time"};
+                    break;
+                  default:
+                    prop = {type: e.target.value};
+                    break;
                 }
                 setNewField(update(newField, {$merge: {[1]: prop}}))
               }} >
                 <option value="string">string</option>
                 <option value="boolean">boolean</option>
+                <option value="date-time">datetime</option>
             </FormControl>
           </td>
           <td style={{width: "40%"}}>

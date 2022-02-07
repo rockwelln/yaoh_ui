@@ -19,3 +19,13 @@ export function replayTask(activityId, taskId, onSuccess, onError) {
       onError && onError(error);
     })
 }
+
+export function fetchUpdateContext(txID, key, value, onSuccess, onError) {
+  fetch_put(`/api/v01/transactions/${txID}/context`, {key: key, value: value})
+    .then(() => {
+      onSuccess && onSuccess();
+    })
+    .catch(error => {
+      onError && onError(error);
+    })
+}

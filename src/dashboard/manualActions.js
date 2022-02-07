@@ -3,7 +3,7 @@ import React, {useState, useEffect} from "react";
 import {DashboardPanel} from "./dashboard-panel";
 import {FormattedMessage} from "react-intl";
 import Table from "react-bootstrap/lib/Table";
-import {fetch_get, NotificationsManager} from "../utils";
+import {fetch_get, NotificationsManager, userLocalizeUtcDate} from "../utils";
 import Modal from "react-bootstrap/lib/Modal";
 import Button from "react-bootstrap/lib/Button";
 import {Link} from "react-router-dom";
@@ -18,6 +18,9 @@ import update from "immutability-helper";
 import FormControl from "react-bootstrap/lib/FormControl";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 import Ajv from "ajv";
+import DatePicker from "react-datepicker";
+import moment from "moment";
+import {localUser} from "../utils/user";
 
 
 function fetchManualActions(onSuccess) {
@@ -131,6 +134,12 @@ function ManualActionInput({type, value, onChange}) {
       return <Checkbox
         checked={value}
         onChange={e => onChange(e.target.checked)} />
+    case "date-time":
+      return <DatePicker
+        className="form-control"
+        selected={value ? localUser.localizeUtcDate(moment.utc(value)).toDate() : null}
+        onChange={d => onChange(d.toISOString())}
+        dateFormat="yyyy-MM-dd" />
     default:
       return <FormControl
         componentClass="input"
@@ -172,7 +181,7 @@ export function ManualActionInputForm(props) {
                                     <Col sm={9}>
                                         {
                                             <ManualActionInput
-                                                type={v.type}
+                                                type={v.format || v.type}
                                                 value={values[key]}
                                                 onChange={v => setValues(
                                                     update(values,{$merge: {[key] : v}})

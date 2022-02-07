@@ -248,12 +248,22 @@ const XSLT_PP = "<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1
 
 export const pp_output = (protocol, content) => {
     switch(protocol) {
-        case "BS-OCI":
-        case "SOAP":
-        case "ROM":
-            return transformXML(content, XSLT_PP);
-        default:
-            return content;
+      case "BS-OCI":
+      case "SOAP":
+      case "ROM":
+        return transformXML(content, XSLT_PP);
+      case "HTTP":
+        if (content[0] === '{') {
+          return JSON.stringify(content, null, 2);
+        } else {
+          return String(content);
+        }
+      default:
+        try {
+         return JSON.stringify(content, null, 2)
+        }catch {
+          return String(content);
+        }
     }
 };
 
@@ -1714,29 +1724,56 @@ export class Transaction extends Component {
     }
 
     onRollback(activity_id, task_id, replay_behaviour) {
-        this.setState({replaying: true});
-        const {proxy_gateway_host} = this.state.request;
-        const meta = JSON.stringify({replay_behaviour: replay_behaviour});
-        const action = titleCase(replay_behaviour);
-        fetch_put(`/${proxy_gateway_host || "api/v01"}/transactions/${activity_id}/tasks/${task_id}?meta=${meta}`, {})
-            .then(() => {
-                !this.cancelLoad && this.setState({replaying: false});
-                if(USE_WS) {
-                    this.websocket && this.websocket.send(JSON.stringify({"reload": true}));
-                } else {
-                    this.fetchTxDetails(false);
-                }
-                NotificationsManager.success(
-                  <FormattedMessage id="rollback-triggered" defaultMessage="{action} triggered!" values={{action: action}}/>,
-                );
-            })
-            .catch(error => {
-                !this.cancelLoad && this.setState({replaying: false});
-                NotificationsManager.error(
-                  <FormattedMessage id="rollback-failed" defaultMessage="{action} failed!" values={{action: action}}/>,
-                  error.message
-                );
-            })
+      const action = titleCase(replay_behaviour);
+      const meta = JSON.stringify({replay_behaviour: replay_behaviour});
+
+      const _innerReplay = ({prefix}) => {
+        return fetch_put(`/${prefix || "api/v01"}/transactions/${activity_id}/tasks/${task_id}?meta=${meta}`, {})
+          .then(() => {
+            !this.cancelLoad && this.setState({replaying: false});
+            if (USE_WS) {
+              this.websocket && this.websocket.send(JSON.stringify({"reload": true}));
+            } else {
+              this.fetchTxDetails(false);
+            }
+            NotificationsManager.success(
+              <FormattedMessage id="rollback-triggered" defaultMessage="{action} triggered!"
+                                values={{action: action}}/>,
+            );
+          })
+          .catch(error => {
+            !this.cancelLoad && this.setState({replaying: false});
+            NotificationsManager.error(
+              <FormattedMessage id="rollback-failed" defaultMessage="{action} failed!" values={{action: action}}/>,
+              error.message
+            );
+          });
+      }
+
+      const {tx} = this.state;
+      this.setState({replaying: true});
+
+      if (tx && tx.super_instance_chain && tx.super_instance_chain.length !== 0) {
+        const topInstanceID = tx.super_instance_chain[tx.super_instance_chain.length - 1].id;
+        fetchInstance(topInstanceID, i => {
+          if (i.original_request_id) {
+            fetchRequest(
+              i.original_request_id,
+              r => _innerReplay({prefix: r.proxy_gateway_host}),
+              () => {
+                this.setState({replaying: false})
+              }
+            )
+          } else {
+            _innerReplay()
+          }
+        }, () => {
+          this.setState({replaying: false})
+        })
+      } else {
+        const {request} = this.state;
+        _innerReplay({prefix: request?.proxy_gateway_host})
+      }
     }
 
     refreshMessages() {
@@ -3482,7 +3519,7 @@ export class Requests extends Component{
                                 },
                                 {
                                     title: <FormattedMessage id="tenant" defaultMessage="Tenant" />,
-                                    field: 'tenant_id', model: request_entities,
+                                    field: 'tenant', model: request_entities,
                                 },
                                 {
                                     title: <FormattedMessage id="site" defaultMessage="Site" />,

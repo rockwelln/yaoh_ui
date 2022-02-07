@@ -10,6 +10,10 @@ import {
   NPPortInRequest as CitcNPPortInRequest,
   NPDisconnectRequest as CitcNPDisconnectRequest, TENANTS,
 } from "./citc-sa";
+import {
+  NPPortInRequest as CoinNPPortInRequest,
+  NPTransaction as CoinNPTransaction,
+} from "./coin-nl";
 
 export function NPTransaction(props) {
   const {user_info} = props
@@ -17,6 +21,8 @@ export function NPTransaction(props) {
     return <CrdbNPTransaction {...props} />
   } else if(user_info.modules.includes(modules.npact_citc)) {
     return <CitcNPTransaction {...props} />
+  } else if(user_info.modules.includes(modules.npact_coin)) {
+    return <CoinNPTransaction {...props} />
   } else {
     return <div/>
   }
@@ -28,6 +34,8 @@ export function NPPortInRequest(props) {
     return <CrdbNPPortInRequest userInfo={user_info} />
   } else if(user_info.modules.includes(modules.npact_citc)) {
     return <CitcNPPortInRequest {...props} />
+  } else if(user_info.modules.includes(modules.npact_coin)) {
+    return <CoinNPPortInRequest {...props} />
   } else {
     return <div/>
   }
