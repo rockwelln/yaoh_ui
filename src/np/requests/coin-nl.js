@@ -27,12 +27,10 @@ import {
   fetch_post,
   fetch_put,
   parseJSON,
-  API_URL_PREFIX,
   userLocalizeUtcDate
 } from "../../utils";
 import Panel from "react-bootstrap/lib/Panel";
 import {access_levels, isAllowed, localUser, pages} from "../../utils/user";
-import {StaticControl} from "../../utils/common";
 import {
   Comments,
   Errors,
@@ -45,14 +43,11 @@ import {
 } from "../../requests/requests";
 import {ContextTable, SubTransactionsPanel} from "../../requests/components";
 import moment from 'moment';
-import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
-import Glyphicon from "react-bootstrap/lib/Glyphicon";
-import {ConfirmButton} from "../../utils/deleteConfirm";
 import {fetchActivities} from "../../orchestration/activity-editor";
 import {ManualActionInputForm} from "../../dashboard/manualActions";
 import Select from "react-select";
-import {stringify} from "query-string";
 import {fetchUpdateContext} from "../../requests/utils";
+import DatePicker from "react-datepicker";
 
 export const rejection_codes = [
   { id: "??", summary: "..." },
@@ -695,66 +690,117 @@ function CancelModal({show, onHide}) {
   )
 }
 
-class RejectionReason extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {};
-    this.onClose = this.onClose.bind(this);
-    this.onSave = this.onSave.bind(this);
-  }
+function ApprovalModal({show, onHide, onSubmit}) {
+  const [fpd, setFPD] = useState(null);
 
-  onSave() {
-    this.props.onSubmit(JSON.stringify({ reason: this.state.rej }), 'API.reject');
-    this.onClose();
-  }
+  useEffect(() => setFPD(moment.utc().add(1, "days")), [show]);
 
-  onClose() {
-    this.setState({});
-    this.props.onHide && this.props.onHide();
-  }
+  return (
+    <Modal show={show} onHide={onHide} backdrop={false}>
+      <Modal.Header closeButton>
+        <Modal.Title><FormattedMessage id="reject-title" defaultMessage="Reject" /></Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Form horizontal>
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="first-possible-date" defaultMessage="First possible date" />
+            </Col>
 
-  render() {
-    const { rej } = this.state;
+            <Col sm={9}>
+              <DatePicker
+                className="form-control"
+                selected={fpd ? localUser.localizeUtcDate(moment.utc(fpd)).toDate() : null}
+                onChange={d => setFPD(d)}
+                dateFormat="yyyy-MM-dd" />
+            </Col>
+          </FormGroup>
+        </Form>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button onClick={() => {onSubmit(fpd.toISOString()); onHide();}} bsStyle="primary">
+          <FormattedMessage id="approve" defaultMessage="Approve" />
+        </Button>
+        <Button onClick={() => onHide()}><FormattedMessage id="cancel" defaultMessage="Cancel" /></Button>
+      </Modal.Footer>
+    </Modal>
+  );
+}
 
-    return (
-      <Modal show={this.props.show} onHide={this.onClose} backdrop={false}>
-        <Modal.Header closeButton>
-          <Modal.Title><FormattedMessage id="reject-title" defaultMessage="Reject" /></Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form horizontal>
-            <FormGroup>
-              <Col componentClass={ControlLabel} sm={2}>
-                <FormattedMessage id="reason" defaultMessage="Reason" />
-              </Col>
+function DelayModal({show, onHide, onSubmit}) {
+  const [fpd, setFPD] = useState(null);
 
-              <Col sm={9}>
-                <FormControl
-                  componentClass="select"
-                  value={rej && rej.id}
-                  onChange={e => this.setState({ rej: rejection_codes.find(r => r.id === e.target.value) })} >
-                  <option value={null} />
-                  {
-                    rejection_codes.map(r => <option key={r.id} value={r.id}>{r.id} - {r.summary}</option>)
-                  }
-                </FormControl>
-                <HelpBlock>
-                  {rej && rej.help}
-                </HelpBlock>
-              </Col>
-            </FormGroup>
+  useEffect(() => setFPD(moment.utc().add(1, "days")), [show]);
 
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button onClick={this.onSave} disabled={!rej} bsStyle="primary">
-            <FormattedMessage id="save" defaultMessage="Save" />
-          </Button>
-          <Button onClick={this.onClose}><FormattedMessage id="cancel" defaultMessage="Cancel" /></Button>
-        </Modal.Footer>
-      </Modal>
-    );
-  }
+  return (
+    <Modal show={show} onHide={onHide} backdrop={false}>
+      <Modal.Header closeButton>
+        <Modal.Title><FormattedMessage id="delay-title" defaultMessage="Delay" /></Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Form horizontal>
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="first-possible-date" defaultMessage="First possible date" />
+            </Col>
+
+            <Col sm={9}>
+              <DatePicker
+                className="form-control"
+                selected={fpd ? localUser.localizeUtcDate(moment.utc(fpd)).toDate() : null}
+                onChange={d => setFPD(d)}
+                dateFormat="yyyy-MM-dd" />
+            </Col>
+          </FormGroup>
+        </Form>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button onClick={() => {onSubmit(fpd.toISOString()); onHide();}} bsStyle="primary">
+          <FormattedMessage id="delay" defaultMessage="Delay" />
+        </Button>
+        <Button onClick={() => onHide()}><FormattedMessage id="cancel" defaultMessage="Cancel" /></Button>
+      </Modal.Footer>
+    </Modal>
+  );
+}
+
+function RejectionModal({show, onHide, onSubmit}) {
+  const [rej, setRej] = useState("");
+
+  useEffect(() => setRej(""), [show]);
+
+  return (
+    <Modal show={show} onHide={onHide} backdrop={false}>
+      <Modal.Header closeButton>
+        <Modal.Title><FormattedMessage id="reject-title" defaultMessage="Reject" /></Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Form horizontal>
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="reason" defaultMessage="Reason" />
+            </Col>
+
+            <Col sm={9}>
+              <FormControl
+                componentClass="input"
+                placeholder="optional"
+                value={rej}
+                onChange={e => setRej(e.target.value)} >
+              </FormControl>
+            </Col>
+          </FormGroup>
+
+        </Form>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button onClick={() => {onSubmit(rej); onHide();}} bsStyle="primary">
+          <FormattedMessage id="reject" defaultMessage="Reject" />
+        </Button>
+        <Button onClick={() => onHide()}><FormattedMessage id="cancel" defaultMessage="Cancel" /></Button>
+      </Modal.Footer>
+    </Modal>
+  );
 }
 
 
@@ -1292,14 +1338,6 @@ export class NPTransaction extends Component {
       });
   }
 
-  // onCancel() {
-  //   this.sendEvent('', 'API.cancel');
-  // }
-
-  // onAbort() {
-  //   this.sendEvent('', 'API.abort');
-  // }
-
   onEdit() {
     this.setState({ edit_request: true })
   }
@@ -1363,6 +1401,7 @@ export class NPTransaction extends Component {
     if(tx && tx.status === 'ACTIVE' && manualActions.length !== 0) {
       manualActions
         .filter(a => !a.output && user_info.roles.find(ur => ur.id === a.role_id))
+        .filter(a => a.description !== "Approve the port")
         .map(a => alerts.push(
           <Alert bsStyle="warning" key={`request-action-${a.id}`}>
             Action required for {user_info.roles.find(ur => ur.id === a.role_id).name}<br/>
@@ -1402,25 +1441,41 @@ export class NPTransaction extends Component {
     // add a user profile check to see if the user *can* approve/reject/hold
     const can_act = isAllowed(this.props.user_info.ui_profile, pages.requests_nprequests, access_levels.modify);
 
-    if (tx.context.find(c => c.key === "donor_approval" && c.value === "waiting") !== undefined) {
+    if (manualActions.find(a => !a.output && user_info.roles.find(ur => ur.id === a.role_id) && a.description === "Approve the port") !== undefined) {
       actions_required.push(<Alert bsStyle="warning">
         <FormattedMessage id="request-need-approval" defaultMessage="This request need your approval" />
         {can_act &&
         <ButtonToolbar>
-          <Button bsSize="xsmall" onClick={() => this.sendEvent('donor_approval', 'API.accept')} disabled={sending}>
+          {/* this.sendEvent('donor_approval', 'API.accept') */}
+          <Button bsSize="xsmall" onClick={() => this.setState({ showApproval: true })} disabled={sending}>
             <FormattedMessage id="approve" defaultMessage="approve" />
           </Button>
           <Button bsSize="xsmall" onClick={() => this.setState({ showRejectReason: true })} disabled={sending}>
             <FormattedMessage id="reject" defaultMessage="reject" />
           </Button>
+          <Button bsSize="xsmall" onClick={() => this.setState({ showDelay: true })} disabled={sending}>
+            <FormattedMessage id="reject" defaultMessage="delay" />
+          </Button>
         </ButtonToolbar>
         }
-        <RejectionReason
+        <RejectionModal
           show={this.state.showRejectReason}
-          onHide={() => this.setState({ showRejectReason: undefined })}
-          onSubmit={this.sendEvent}
-          tx={tx}
-          {...this.props} />
+          onHide={() => this.setState({ showRejectReason: false })}
+          onSubmit={note => {
+            this.sendEvent(JSON.stringify({"reason": note}), 'API.reject')
+          }} />
+        <ApprovalModal
+          show={this.state.showApproval}
+          onHide={() => this.setState({ showApproval: false })}
+          onSubmit={firstPossibleDate => {
+            this.sendEvent(JSON.stringify({"firstpossibledate": firstPossibleDate}), 'API.approve')
+          }} />
+        <DelayModal
+          show={this.state.showDelay}
+          onHide={() => this.setState({ showDelay: false })}
+          onSubmit={firstPossibleDate => {
+            this.sendEvent('donor_approval', 'API.delay', JSON.stringify({"firstpossibledate": firstPossibleDate}))
+          }} />
       </Alert>);
     }
 
