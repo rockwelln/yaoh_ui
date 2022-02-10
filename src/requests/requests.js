@@ -2894,7 +2894,7 @@ export class Requests extends Component{
     }
 
     render() {
-        const { filter_criteria, requests, activities, export_url, auto_refresh, sorting_spec, selected_reqs, proxy_hosts, roles} = this.state;
+        const { filter_criteria, requests, activities, export_url, auto_refresh, sorting_spec, selected_reqs, proxy_hosts, roles, searchExpanded} = this.state;
         const { user_info } = this.props;
         const invalid_created_on = filter_criteria.created_on.value.length !== 0 && !moment(filter_criteria.created_on.value).isValid();
         const request_entities = user_info.modules && user_info.modules.includes(modules.orange) ? "request_entities" : "requests";
@@ -2917,7 +2917,7 @@ export class Requests extends Component{
                         <Panel.Title toggle>
                             <FormattedMessage id="search" defaultMessage="Search" />{" "}
                             {
-                                !this.state.searchExpanded && nbFilters !== 0 ?
+                                !searchExpanded && nbFilters !== 0 ?
                                   <Button bsStyle="info" bsSize="small">{nbFilters} <Glyphicon glyph="filter" /></Button> :
                                   <Glyphicon glyph="search" />
                             }

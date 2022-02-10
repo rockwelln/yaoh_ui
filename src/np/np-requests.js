@@ -131,6 +131,9 @@ export class NPRequests extends Component {
       },
       error: undefined,
     };
+    if(this.props.location.search === "") {
+      this.state.filter_criteria.created_on.value = moment.utc().subtract(1, "days").format();
+    }
     this._refresh = this._refresh.bind(this);
     this._prepare_url = this._prepare_url.bind(this);
     this._refreshOperators = this._refreshOperators.bind(this);
@@ -414,7 +417,7 @@ export class NPRequests extends Component {
   }
 
   render() {
-    const { filter_criteria, requests, operators, export_url, roles } = this.state;
+    const { filter_criteria, requests, operators, export_url, roles, searchExpanded } = this.state;
     const { user_info } = this.props;
     requests && requests.forEach(r => {
       const donor = operators.find(o => o.id === r.nprequest.donor_id);
@@ -425,6 +428,11 @@ export class NPRequests extends Component {
     const invalid_created_on = filter_criteria.created_on.value.length !== 0 && !moment.utc(filter_criteria.created_on.value).isValid();
     const invalid_due_date = filter_criteria.due_date.value.length !== 0 && !moment.utc(filter_criteria.due_date.value).isValid();
     const manualActions = user_info.modules && user_info.modules.includes(modules.manualActions);
+    const nbFilters = Object.values(filter_criteria).filter(crit => crit && (
+        (crit.value && crit.op) ||
+        crit.or || crit.and || crit.op === 'is_null' ||
+        crit.op === 'is_not_null' || typeof(crit.value) === 'boolean'
+    )).length;
 
     return (
       <div>
@@ -432,9 +440,16 @@ export class NPRequests extends Component {
           <Breadcrumb.Item active><FormattedMessage id="requests" defaultMessage="Requests" /></Breadcrumb.Item>
           <Breadcrumb.Item active><FormattedMessage id="porting-requests" defaultMessage="Porting Requests" /></Breadcrumb.Item>
         </Breadcrumb>
-        <Panel defaultExpanded={false} >
+        <Panel defaultExpanded={false} onToggle={e => this.setState({searchExpanded: e})}>
           <Panel.Heading>
-            <Panel.Title toggle><FormattedMessage id="search" defaultMessage="Search" /> <Glyphicon glyph="search" /></Panel.Title>
+            <Panel.Title toggle>
+              <FormattedMessage id="search" defaultMessage="Search" />{" "}
+              {
+                  !searchExpanded && nbFilters !== 0 ?
+                    <Button bsStyle="info" bsSize="small">{nbFilters} <Glyphicon glyph="filter" /></Button> :
+                    <Glyphicon glyph="search" />
+              }
+            </Panel.Title>
           </Panel.Heading>
           <Panel.Body collapsible>
             <Form horizontal>
