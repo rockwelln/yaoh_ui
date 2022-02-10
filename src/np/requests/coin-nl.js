@@ -698,7 +698,7 @@ function ApprovalModal({show, onHide, onSubmit}) {
   return (
     <Modal show={show} onHide={onHide} backdrop={false}>
       <Modal.Header closeButton>
-        <Modal.Title><FormattedMessage id="reject-title" defaultMessage="Reject" /></Modal.Title>
+        <Modal.Title><FormattedMessage id="approve-title" defaultMessage="Approve" /></Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <Form horizontal>
