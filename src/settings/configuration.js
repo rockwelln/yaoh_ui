@@ -27,6 +27,7 @@ import Select from "react-select";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import Table from "react-bootstrap/lib/Table";
 import {useLocation} from "react-router";
+import {HttpHeaders} from "../orchestration/nodeInputs";
 
 
 function fetchConfiguration(onSuccess) {
@@ -80,7 +81,7 @@ function NewGatewayModal(props) {
   }, [show]);
 
   return (
-    <Modal show={show} onHide={() => onHide(undefined)} backdrop={false}>
+    <Modal show={show} onHide={() => onHide(undefined)} backdrop={false} bsSize={"large"}>
       <Modal.Header closeButton>
         <Modal.Title>
           New gateway
@@ -155,6 +156,18 @@ function NewGatewayModal(props) {
                 placeholder="http://proxy_host:8080/"
                 value={entry.proxies}
                 onChange={e => setEntry(update(entry, {$merge: {proxies: e.target.value}}))}/>
+            </Col>
+          </FormGroup>
+
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="headers" defaultMessage="Headers"/>
+            </Col>
+
+            <Col sm={9}>
+              <HttpHeaders
+                value={entry.headers}
+                onChange={e => setEntry(update(entry, {$merge: {headers: e}}))} />
             </Col>
           </FormGroup>
 
@@ -491,6 +504,18 @@ function GatewaysPanel(props) {
                           placeholder="http://proxy_host:8080/"
                           value={gateway.proxies}
                           onChange={e => onChange(update(gateways, {[g]: {$merge: {proxies: e.target.value}}}))}/>
+                      </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                      <Col componentClass={ControlLabel} sm={2}>
+                        <FormattedMessage id="headers" defaultMessage="Headers"/>
+                      </Col>
+
+                      <Col sm={9}>
+                        <HttpHeaders
+                          value={gateway.headers}
+                          onChange={e => onChange(update(gateways, {[g]: {$merge: {headers: e}}}))} />
                       </Col>
                     </FormGroup>
 
