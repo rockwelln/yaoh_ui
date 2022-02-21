@@ -436,6 +436,12 @@ function UpdateUser(props) {
                 <Tabs defaultActiveKey={1} id="user-update-tabs">
                     <Tab eventKey={1} title={<FormattedMessage id="details" defaultMessage="Details" />}>
 
+                    { !fullUser.local_user &&
+                      <Alert bsStyle="warning">
+                        <FormattedMessage id="non-local-user-warning" defaultMessage="This user is not managed locally. Any change should be applied in its host platform." />
+                      </Alert>
+                    }
+
                     <Form horizontal style={{paddingTop: 10}}>
                         <FormGroup validationState={validUsername}>
                             <Col componentClass={ControlLabel} sm={2}>
