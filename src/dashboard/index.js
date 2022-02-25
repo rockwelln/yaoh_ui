@@ -48,7 +48,7 @@ function fetch_stats(isNpact, onSuccess) {
 export default function Dashboard(props) {
     const [stats, setStats] = useState({active: {}});
     const [gateways, setGateways] = useState({});
-    const isManual = props.user_info.modules.includes(modules.manualActions);
+    const isManual = localUser.isModuleEnabled(modules.manualActions);
     const isNpact = localUser.isModuleEnabled(modules.npact); // supportedModule(modules.npact, props.user_info.modules);
 
     const fetch_gw = useCallback(() => fetch_gateways(setGateways), []);
@@ -70,7 +70,7 @@ export default function Dashboard(props) {
     let statsPanels = [
         <TransactionsOverTime {...props} />
     ];
-    if(props.user_info.modules.includes(modules.proxy)) {
+    if(localUser.isModuleEnabled(modules.proxy) || localUser.isModuleEnabled(modules.proxy)) {
         statsPanels.push(<ProxyRequestsOverTime {...props} />);
         statsPanels.push(<TopSlowApis {...props} />);
         statsPanels.push(<ResponseTimeOvertime {...props} />);
@@ -148,7 +148,7 @@ export default function Dashboard(props) {
             </Row>
             <Row>
                 {
-                    localUser.isModuleEnabled(modules.proxy) &&
+                    (localUser.isModuleEnabled(modules.proxy) || localUser.isModuleEnabled(modules.draas)) &&
                       <Col xs={12}>
                         <SuccessRateOverTime {...props} />
                       </Col>

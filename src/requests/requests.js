@@ -49,7 +49,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import GridPic from "../orchestration/grid.gif";
 import update from 'immutability-helper';
 import {StaticControl} from "../utils/common";
-import {access_levels, isAllowed, modules, pages} from "../utils/user";
+import {access_levels, isAllowed, localUser, modules, pages} from "../utils/user";
 import {TimerActions} from "./timers";
 import {fetchRoles} from "../system/user_roles";
 import {LinkContainer} from "react-router-bootstrap";
@@ -2566,15 +2566,21 @@ export class Requests extends Component{
             activity_id: { model: 'instances', value: '', op: 'eq' },
             tenant_id: { model: 'requests', value: '', op: 'eq' },
             site_id: { model: 'requests', value: '', op: 'eq' },
+            subscription_id: { model: 'requests', value: '', op: 'eq' },
+            distributor_id: { model: 'requests', value: '', op: 'eq' },
+            reseller_id: { model: 'requests', value: '', op: 'eq' },
+            group_id: { model: 'requests', value: '', op: 'eq' },
+            user_id: { model: 'requests', value: '', op: 'eq' },
             number: { model: 'requests', value: '', op: 'like' },
             status: { model: 'instances', value: '', op: 'eq' },
             kind: { model: 'instances', value: '', op: 'eq' },
             created_on: { model: 'requests', value: '', value2: '', op: 'ge' },
+            owner: { model: 'requests', value: '', value2: '', op: 'eq' },
             request_status: { model: 'requests', value: '', op: 'eq' },
+            request_url: { model: 'requests', value: '', op: 'eq' },
+            request_method: { model: 'requests', value: '', op: 'eq' },
+            response_status: { model: 'requests', value: '', op: 'eq' },
             label: { model: 'bulks', value: '', op: 'eq' },
-            proxied_username: { model: 'requests', value: '', op: 'eq' },
-            proxied_method: { model: 'requests', value: '', op: 'eq' },
-            proxied_url: { model: 'requests', value: '', op: 'eq' },
             proxied_status: { model: 'requests', value: '', op: 'eq' },
             proxy_gateway_host: { model: 'requests', value: '', op: 'eq' },
             role_id: { model: 'manual_actions', value: '', op: 'eq' },
@@ -2650,27 +2656,6 @@ export class Requests extends Component{
                             field: 'numbers',
                             op: filter_criteria[f].op,
                             value: '%' + filter_criteria[f].value.trim() + '%'
-                        };
-                    case 'proxied_method':
-                        return {
-                            model: filter_criteria[f].model,
-                            field: 'request_method',
-                            op: filter_criteria[f].op,
-                            value: filter_criteria[f].value
-                        };
-                    case 'proxied_url':
-                        return {
-                            model: filter_criteria[f].model,
-                            field: 'request_url',
-                            op: filter_criteria[f].op,
-                            value: filter_criteria[f].value
-                        };
-                    case 'proxied_username':
-                        return {
-                            model: filter_criteria[f].model,
-                            field: 'owner',
-                            op: filter_criteria[f].op,
-                            value: filter_criteria[f].value
                         };
                     case 'proxied_status':
                         return {
@@ -2757,7 +2742,7 @@ export class Requests extends Component{
                             model: filter_criteria[f].model, // needed in multi-model query
                             field: f,
                             op: filter_criteria[f].op,
-                            value: filter_criteria[f].value.trim()
+                            value: filter_criteria[f].value
                         }
                 }
             });
@@ -2899,6 +2884,7 @@ export class Requests extends Component{
         const invalid_created_on = filter_criteria.created_on.value.length !== 0 && !moment(filter_criteria.created_on.value).isValid();
         const request_entities = user_info.modules && user_info.modules.includes(modules.orange) ? "request_entities" : "requests";
         const proxy_activated = user_info.modules && user_info.modules.includes(modules.proxy);
+        const draasActivated = user_info.modules && user_info.modules.includes(modules.draas);
         const manualActions = user_info.modules && user_info.modules.includes(modules.manualActions);
         const nbFilters = Object.values(filter_criteria).filter(crit => crit && (
             (crit.value && crit.op) ||
@@ -3036,6 +3022,33 @@ export class Requests extends Component{
 
                             <FormGroup>
                                 <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="owner" defaultMessage="Owner" />
+                                </Col>
+
+                                <Col sm={1}>
+                                    <FormControl
+                                        componentClass="select"
+                                        value={filter_criteria.owner.op}
+                                        onChange={e => this.setState({
+                                            filter_criteria: update(this.state.filter_criteria,
+                                                { owner: { $merge: { op: e.target.value } } })
+                                        })}>
+                                        <option value="eq">==</option>
+                                        <option value="ne">!=</option>
+                                    </FormControl>
+                                </Col>
+
+                                <Col sm={8}>
+                                    <FormControl componentClass="input" value={filter_criteria.owner.value}
+                                        onChange={e => this.setState({
+                                            filter_criteria: update(filter_criteria,
+                                                { owner: { $merge: { value: e.target.value } } })
+                                        })} />
+                                </Col>
+                            </FormGroup>
+
+                            <FormGroup>
+                                <Col componentClass={ControlLabel} sm={2}>
                                     <FormattedMessage id="workflow-status" defaultMessage="Workflow status" />
                                 </Col>
 
@@ -3097,80 +3110,6 @@ export class Requests extends Component{
                                 </Col>
                             </FormGroup>
 
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="tenant-id" defaultMessage="Tenant ID" />
-                                </Col>
-
-                                <Col sm={1}>
-                                    <FormControl
-                                        componentClass="select"
-                                        value={filter_criteria.tenant_id.op}
-                                        onChange={e => this.setState({
-                                            filter_criteria: update(this.state.filter_criteria,
-                                                {tenant_id: {$merge: {op: e.target.value}}})
-                                        })}>
-                                        <option value="eq">==</option>
-                                        <option value="ne">!=</option>
-                                    </FormControl>
-                                </Col>
-
-                                <Col sm={8}>
-                                    <FormControl componentClass="input" value={filter_criteria.tenant_id.value}
-                                        onChange={e => this.setState({
-                                            filter_criteria: update(this.state.filter_criteria,
-                                                {tenant_id: {$merge: {value: e.target.value}}})
-                                        })} />
-                                </Col>
-                            </FormGroup>
-
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="site-id" defaultMessage="Site ID" />
-                                </Col>
-
-                                <Col sm={1}>
-                                    <FormControl
-                                        componentClass="select"
-                                        value={filter_criteria.site_id.op}
-                                        onChange={e => this.setState({
-                                            filter_criteria: update(this.state.filter_criteria,
-                                                {site_id: {$merge: {op: e.target.value}}})
-                                        })}>
-                                        <option value="eq">==</option>
-                                        <option value="ne">!=</option>
-                                    </FormControl>
-                                </Col>
-
-                                <Col sm={8}>
-                                    <FormControl componentClass="input" value={filter_criteria.site_id.value}
-                                        onChange={e => this.setState({
-                                            filter_criteria: update(filter_criteria,
-                                                {site_id: {$merge: {value: e.target.value}}})
-                                        })} />
-                                </Col>
-                            </FormGroup>
-
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="number" defaultMessage="Number" />
-                                </Col>
-
-                                <Col sm={1}>
-                                    <FormControl componentClass="select" value="like" readOnly>
-                                        <option value="like">like</option>
-                                    </FormControl>
-                                </Col>
-
-                                <Col sm={8}>
-                                    <FormControl componentClass="input" value={filter_criteria.number && filter_criteria.number.value}
-                                        onChange={e => this.setState({
-                                            filter_criteria: update(filter_criteria,
-                                                {number: {$merge: {value: e.target.value}}})
-                                        })} />
-                                </Col>
-                            </FormGroup>
-
                             {
                                 manualActions &&
                                     <FormGroup>
@@ -3210,20 +3149,191 @@ export class Requests extends Component{
                             }
 
                             {
-                                proxy_activated &&
+                                draasActivated &&
                                 <>
                                 <FormGroup>
+                                  <Col componentClass={ControlLabel} sm={2}>
+                                      <FormattedMessage id="tenant" defaultMessage="Tenant" />
+                                  </Col>
+
+                                  <Col sm={1}>
+                                      <FormControl
+                                        componentClass="select"
+                                        value={filter_criteria.tenant_id.op}
+                                        onChange={e => this.setState({
+                                            filter_criteria: update(this.state.filter_criteria,
+                                                { tenant_id: { $merge: { op: e.target.value } } })
+                                        })}>
+                                        <option value="eq">==</option>
+                                        <option value="ne">!=</option>
+                                        <option value="like">like</option>
+                                      </FormControl>
+                                  </Col>
+
+                                  <Col sm={8}>
+                                      <FormControl componentClass="input" value={filter_criteria.tenant_id.value}
+                                        onChange={e => this.setState({
+                                            filter_criteria: update(filter_criteria,
+                                                { tenant_id: { $merge: { value: e.target.value } } })
+                                        })} />
+                                  </Col>
+                                </FormGroup>
+
+                                <FormGroup>
+                                  <Col componentClass={ControlLabel} sm={2}>
+                                      <FormattedMessage id="distributor" defaultMessage="Distributor" />
+                                  </Col>
+
+                                  <Col sm={1}>
+                                      <FormControl
+                                        componentClass="select"
+                                        value={filter_criteria.distributor_id.op}
+                                        onChange={e => this.setState({
+                                            filter_criteria: update(this.state.filter_criteria,
+                                                { distributor_id: { $merge: { op: e.target.value } } })
+                                        })}>
+                                        <option value="eq">==</option>
+                                        <option value="ne">!=</option>
+                                        <option value="like">like</option>
+                                      </FormControl>
+                                  </Col>
+
+                                  <Col sm={8}>
+                                      <FormControl componentClass="input" value={filter_criteria.distributor_id.value}
+                                        onChange={e => this.setState({
+                                            filter_criteria: update(filter_criteria,
+                                                { distributor_id: { $merge: { value: e.target.value } } })
+                                        })} />
+                                  </Col>
+                                </FormGroup>
+
+                                <FormGroup>
+                                  <Col componentClass={ControlLabel} sm={2}>
+                                      <FormattedMessage id="reseller" defaultMessage="Reseller" />
+                                  </Col>
+
+                                  <Col sm={1}>
+                                      <FormControl
+                                        componentClass="select"
+                                        value={filter_criteria.reseller_id.op}
+                                        onChange={e => this.setState({
+                                            filter_criteria: update(this.state.filter_criteria,
+                                                { reseller_id: { $merge: { op: e.target.value } } })
+                                        })}>
+                                        <option value="eq">==</option>
+                                        <option value="ne">!=</option>
+                                        <option value="like">like</option>
+                                      </FormControl>
+                                  </Col>
+
+                                  <Col sm={8}>
+                                      <FormControl componentClass="input" value={filter_criteria.reseller_id.value}
+                                        onChange={e => this.setState({
+                                            filter_criteria: update(filter_criteria,
+                                                { reseller_id: { $merge: { value: e.target.value } } })
+                                        })} />
+                                  </Col>
+                                </FormGroup>
+
+                                <FormGroup>
+                                  <Col componentClass={ControlLabel} sm={2}>
+                                      <FormattedMessage id="subscription" defaultMessage="Subscription" />
+                                  </Col>
+
+                                  <Col sm={1}>
+                                      <FormControl
+                                        componentClass="select"
+                                        value={filter_criteria.subscription_id.op}
+                                        onChange={e => this.setState({
+                                            filter_criteria: update(this.state.filter_criteria,
+                                                { subscription_id: { $merge: { op: e.target.value } } })
+                                        })}>
+                                        <option value="eq">==</option>
+                                        <option value="ne">!=</option>
+                                        <option value="like">like</option>
+                                      </FormControl>
+                                  </Col>
+
+                                  <Col sm={8}>
+                                      <FormControl componentClass="input" value={filter_criteria.subscription_id.value}
+                                        onChange={e => this.setState({
+                                            filter_criteria: update(filter_criteria,
+                                                { subscription_id: { $merge: { value: e.target.value } } })
+                                        })} />
+                                  </Col>
+                                </FormGroup>
+
+                                <FormGroup>
                                     <Col componentClass={ControlLabel} sm={2}>
-                                        <FormattedMessage id="owner" defaultMessage="Owner" />
+                                        <FormattedMessage id="http-status" defaultMessage="HTTP status" />
                                     </Col>
 
                                     <Col sm={1}>
                                         <FormControl
                                             componentClass="select"
-                                            value={filter_criteria.proxied_username.op}
+                                            value={filter_criteria.response_status.op}
                                             onChange={e => this.setState({
                                                 filter_criteria: update(this.state.filter_criteria,
-                                                    { proxied_username: { $merge: { op: e.target.value } } })
+                                                    { response_status: { $merge: { op: e.target.value } } })
+                                            })}>
+                                            <option value="eq">==</option>
+                                            <option value="ne">!=</option>
+                                            <option value="gt">&gt;</option>
+                                            <option value="ge">&gt;=</option>
+                                            <option value="lt">&lt;</option>
+                                            <option value="le">&lt;=</option>
+                                        </FormControl>
+                                    </Col>
+
+                                    <Col sm={8}>
+                                        <FormControl componentClass="input" value={filter_criteria.response_status.value}
+                                            onChange={e => this.setState({
+                                                filter_criteria: update(filter_criteria,
+                                                    { response_status: { $merge: { value: e.target.value && parseInt(e.target.value) } } })
+                                            })} />
+                                    </Col>
+                                </FormGroup>
+
+                                <FormGroup>
+                                    <Col componentClass={ControlLabel} sm={2}>
+                                        <FormattedMessage id="URL" defaultMessage="URL" />
+                                    </Col>
+
+                                    <Col sm={1}>
+                                        <FormControl
+                                            componentClass="select"
+                                            value={filter_criteria.request_url.op}
+                                            onChange={e => this.setState({
+                                                filter_criteria: update(this.state.filter_criteria,
+                                                    { request_url: { $merge: { op: e.target.value } } })
+                                            })}>
+                                            <option value="eq">==</option>
+                                            <option value="ne">!=</option>
+                                            <option value="like">like</option>
+                                        </FormControl>
+                                    </Col>
+
+                                    <Col sm={8}>
+                                        <FormControl componentClass="input" value={filter_criteria.request_url.value}
+                                            onChange={e => this.setState({
+                                                filter_criteria: update(filter_criteria,
+                                                    { request_url: { $merge: { value: e.target.value } } })
+                                            })} />
+                                    </Col>
+                                </FormGroup>
+
+                                <FormGroup>
+                                    <Col componentClass={ControlLabel} sm={2}>
+                                        <FormattedMessage id="method" defaultMessage="Method" />
+                                    </Col>
+
+                                    <Col sm={1}>
+                                        <FormControl
+                                            componentClass="select"
+                                            value={filter_criteria.request_method.op}
+                                            onChange={e => this.setState({
+                                                filter_criteria: update(this.state.filter_criteria,
+                                                    {request_method: {$merge: {op: e.target.value}}})
                                             })}>
                                             <option value="eq">==</option>
                                             <option value="ne">!=</option>
@@ -3231,12 +3341,97 @@ export class Requests extends Component{
                                     </Col>
 
                                     <Col sm={8}>
-                                        <FormControl componentClass="input" value={filter_criteria.proxied_username.value}
+                                        <FormControl componentClass="select" value={filter_criteria.request_method.value}
                                             onChange={e => this.setState({
-                                                filter_criteria: update(filter_criteria,
-                                                    { proxied_username: { $merge: { value: e.target.value } } })
-                                            })} />
+                                                filter_criteria: update(this.state.filter_criteria,
+                                                    {request_method: {$merge: {value: e.target.value}}})
+                                            })}>
+                                            <option value='' />
+                                            <option value="get">get</option>
+                                            <option value="post">post</option>
+                                            <option value="put">put</option>
+                                            <option value="delete">delete</option>
+                                        </FormControl>
                                     </Col>
+                                </FormGroup>
+                                </>
+                            }
+
+                            {
+                                proxy_activated &&
+                                <>
+                                <FormGroup>
+                                  <Col componentClass={ControlLabel} sm={2}>
+                                      <FormattedMessage id="tenant-id" defaultMessage="Tenant ID" />
+                                  </Col>
+
+                                  <Col sm={1}>
+                                      <FormControl
+                                          componentClass="select"
+                                          value={filter_criteria.tenant_id.op}
+                                          onChange={e => this.setState({
+                                              filter_criteria: update(this.state.filter_criteria,
+                                                  {tenant_id: {$merge: {op: e.target.value}}})
+                                          })}>
+                                          <option value="eq">==</option>
+                                          <option value="ne">!=</option>
+                                      </FormControl>
+                                  </Col>
+
+                                  <Col sm={8}>
+                                      <FormControl componentClass="input" value={filter_criteria.tenant_id.value}
+                                          onChange={e => this.setState({
+                                              filter_criteria: update(this.state.filter_criteria,
+                                                  {tenant_id: {$merge: {value: e.target.value}}})
+                                          })} />
+                                  </Col>
+                                </FormGroup>
+
+                                <FormGroup>
+                                  <Col componentClass={ControlLabel} sm={2}>
+                                      <FormattedMessage id="site-id" defaultMessage="Site ID" />
+                                  </Col>
+
+                                  <Col sm={1}>
+                                      <FormControl
+                                          componentClass="select"
+                                          value={filter_criteria.site_id.op}
+                                          onChange={e => this.setState({
+                                              filter_criteria: update(this.state.filter_criteria,
+                                                  {site_id: {$merge: {op: e.target.value}}})
+                                          })}>
+                                          <option value="eq">==</option>
+                                          <option value="ne">!=</option>
+                                      </FormControl>
+                                  </Col>
+
+                                  <Col sm={8}>
+                                      <FormControl componentClass="input" value={filter_criteria.site_id.value}
+                                          onChange={e => this.setState({
+                                              filter_criteria: update(filter_criteria,
+                                                  {site_id: {$merge: {value: e.target.value}}})
+                                          })} />
+                                  </Col>
+                                </FormGroup>
+
+                                <FormGroup>
+                                  <Col componentClass={ControlLabel} sm={2}>
+                                      <FormattedMessage id="number" defaultMessage="Number" />
+                                  </Col>
+
+                                  <Col sm={1}>
+                                      <FormControl componentClass="select" value="like" readOnly>
+                                          <option value="like">like</option>
+                                      </FormControl>
+                                  </Col>
+
+                                  <Col sm={8}>
+                                      <FormControl componentClass="input" value={filter_criteria.number && filter_criteria.number.value}
+                                          onChange={e => this.setState({
+                                              filter_criteria: update(filter_criteria,
+                                                  {number: {$merge: {value: e.target.value}}})
+                                          })} />
+                                  </Col>
                                 </FormGroup>
 
                                 <FormGroup>
@@ -3312,10 +3507,10 @@ export class Requests extends Component{
                                     <Col sm={1}>
                                         <FormControl
                                             componentClass="select"
-                                            value={filter_criteria.proxied_url.op}
+                                            value={filter_criteria.request_url.op}
                                             onChange={e => this.setState({
                                                 filter_criteria: update(this.state.filter_criteria,
-                                                    { proxied_url: { $merge: { op: e.target.value } } })
+                                                    { request_url: { $merge: { op: e.target.value } } })
                                             })}>
                                             <option value="eq">==</option>
                                             <option value="ne">!=</option>
@@ -3324,10 +3519,10 @@ export class Requests extends Component{
                                     </Col>
 
                                     <Col sm={8}>
-                                        <FormControl componentClass="input" value={filter_criteria.proxied_url.value}
+                                        <FormControl componentClass="input" value={filter_criteria.request_url.value}
                                             onChange={e => this.setState({
                                                 filter_criteria: update(filter_criteria,
-                                                    { proxied_url: { $merge: { value: e.target.value } } })
+                                                    { request_url: { $merge: { value: e.target.value } } })
                                             })} />
                                     </Col>
                                 </FormGroup>
@@ -3340,10 +3535,10 @@ export class Requests extends Component{
                                     <Col sm={1}>
                                         <FormControl
                                             componentClass="select"
-                                            value={filter_criteria.proxied_method.op}
+                                            value={filter_criteria.request_method.op}
                                             onChange={e => this.setState({
                                                 filter_criteria: update(this.state.filter_criteria,
-                                                    {proxied_method: {$merge: {op: e.target.value}}})
+                                                    {request_method: {$merge: {op: e.target.value}}})
                                             })}>
                                             <option value="eq">==</option>
                                             <option value="ne">!=</option>
@@ -3351,10 +3546,10 @@ export class Requests extends Component{
                                     </Col>
 
                                     <Col sm={8}>
-                                        <FormControl componentClass="select" value={filter_criteria.proxied_method.value}
+                                        <FormControl componentClass="select" value={filter_criteria.request_method.value}
                                             onChange={e => this.setState({
                                                 filter_criteria: update(this.state.filter_criteria,
-                                                    {proxied_method: {$merge: {value: e.target.value}}})
+                                                    {request_method: {$merge: {value: e.target.value}}})
                                             })}>
                                             <option value='' />
                                             <option value="get">get</option>
@@ -3521,11 +3716,11 @@ export class Requests extends Component{
                                     title: <FormattedMessage id="tenant" defaultMessage="Tenant" />,
                                     field: 'tenant', model: request_entities,
                                 },
-                                {
+                                !draasActivated && {
                                     title: <FormattedMessage id="site" defaultMessage="Site" />,
                                     field: 'site_id', model: request_entities,
                                 },
-                                {
+                                !draasActivated && {
                                     title: <FormattedMessage id="user-s" defaultMessage="User(s)" />,
                                     field: 'numbers', model: request_entities,
                                     style: {
@@ -3536,6 +3731,22 @@ export class Requests extends Component{
                                         overflowWrap: 'unset',
                                         wordWrap:'normal'
                                     },
+                                },
+                                draasActivated && {
+                                    title: <FormattedMessage id="sub" defaultMessage="Sub" />,
+                                    field: 'subscription_id', model: request_entities,
+                                },
+                                draasActivated && {
+                                    title: <FormattedMessage id="ditrib." defaultMessage="Distrib." />,
+                                    field: 'distributor_id', model: request_entities,
+                                },
+                                draasActivated && {
+                                    title: <FormattedMessage id="resel." defaultMessage="Resel." />,
+                                    field: 'reseller_id', model: request_entities,
+                                },
+                                draasActivated && {
+                                    title: <FormattedMessage id="gr." defaultMessage="Gr." />,
+                                    field: 'group_id', model: request_entities,
                                 },
                                 {
                                     title: <FormattedMessage id="status" defaultMessage="Status" />,
