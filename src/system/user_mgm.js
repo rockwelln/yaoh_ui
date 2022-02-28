@@ -69,7 +69,7 @@ function updateUser(user_id, data, onSuccess) {
 
 
 function revokeUser(user_id, unblock, onSuccess) {
-    fetch_put(`/api/v01/auth/${user_id}/${unblock?'un':''}revoke`, {})
+    fetch_put(`/api/v01/system/users/${user_id}/${unblock?'un':''}revoke`, {})
     .then(() => {
         NotificationsManager.success(<FormattedMessage id="user-updated" defaultMessage="User updated" />);
         onSuccess && onSuccess();
