@@ -1961,7 +1961,7 @@ export class Transaction extends Component {
         const {user_info} = this.props;
 
         const original_event_id = events && ((request && request.event_id) || (events[0] && events[0].event_id));
-        const raw_event = events && (request ? events.filter(e => e.event_id === request.event_id)[0] : events[0]);
+        const raw_event = events && (request && request.event_id ? events.filter(e => e.event_id === request.event_id)[0] : events[0]);
 
         let alerts = [];
         if(error) {
