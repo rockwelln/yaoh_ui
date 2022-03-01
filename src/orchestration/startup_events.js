@@ -244,7 +244,7 @@ function createCustomRoute(route, onSuccess) {
         ));
 }
 
-function NewCustomRoute({show, onHide, groups}) {
+function NewCustomRoute({show, onHide, groups, activities}) {
     const [route, setRoute] = useState(newRoute);
 
     useEffect(() => {
@@ -274,6 +274,9 @@ function NewCustomRoute({show, onHide, groups}) {
         }
     }
     const validNewRouteForm = validRoute === "success" && validSchema !== "error" && validOptions !== "error";
+    const activitiesOptions = activities
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map(a => ({value: a.id, label: `${a.name} (${!a.version_label?WORKING_VERSION_LABEL:a.version_label})`}));
 
     return (
         <Modal show={show} onHide={() => onHide(false)} backdrop={false}>
@@ -368,6 +371,28 @@ function NewCustomRoute({show, onHide, groups}) {
                              <HelpBlock>
                                  <FormattedMessage id="custom-route-schema" defaultMessage="When set, the body is systematically checked against the schema associated to the route."/>
                              </HelpBlock>
+                         </Col>
+                     </FormGroup>
+
+                     <FormGroup>
+                         <Col componentClass={ControlLabel} sm={2}>
+                             <FormattedMessage id="err-activity-id" defaultMessage="Error handler" />
+                         </Col>
+
+                         <Col sm={9}>
+                             <Select
+                              className="basic-single"
+                              classNamePrefix="select"
+                              value={route.err_activity_id && activitiesOptions.find(a => a.value === route.err_activity_id)}
+                              isClearable={true}
+                              isSearchable={true}
+                              name="err-activity"
+                              onChange={(value, action) => {
+                                  if(["select-option", "clear"].includes(action.action)) {
+                                    setRoute(update(route, {$merge: {err_activity_id: value && value.value}}));
+                                  }
+                              }}
+                              options={activitiesOptions} />
                          </Col>
                      </FormGroup>
 
@@ -468,8 +493,7 @@ function NewCustomRoute({show, onHide, groups}) {
 }
 
 
-function UpdateCustomRouteModal(props) {
-    const {show, entry, onHide, groups} = props;
+function UpdateCustomRouteModal({show, entry, onHide, groups, activities}) {
     const [diffEntry, setDiffEntry] = useState({});
 
     useEffect(() => {
@@ -501,6 +525,9 @@ function UpdateCustomRouteModal(props) {
         }
     }
     const validUpdateRouteForm = validUpdateSchema !== "error" && validOptions !== "error";
+    const activitiesOptions = activities
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map(a => ({value: a.id, label: `${a.name} (${!a.version_label?WORKING_VERSION_LABEL:a.version_label})`}));
 
     return (
         <Modal show={show} onHide={() => onHide(false)} backdrop={false}>
@@ -597,6 +624,28 @@ function UpdateCustomRouteModal(props) {
                              <HelpBlock>
                                  <FormattedMessage id="custom-route-schema" defaultMessage="When set, the body is systematically checked against the schema associated to the route."/>
                              </HelpBlock>
+                         </Col>
+                     </FormGroup>
+
+                     <FormGroup>
+                         <Col componentClass={ControlLabel} sm={2}>
+                             <FormattedMessage id="err-activity-id" defaultMessage="Error handler" />
+                         </Col>
+
+                         <Col sm={9}>
+                             <Select
+                              className="basic-single"
+                              classNamePrefix="select"
+                              value={localEntry.err_activity_id && activitiesOptions.find(a => a.value === localEntry.err_activity_id)}
+                              isClearable={true}
+                              isSearchable={true}
+                              name="err-activity"
+                              onChange={(value, action) => {
+                                  if(["select-option", "clear"].includes(action.action)) {
+                                    setDiffEntry(update(diffEntry, {$merge: {err_activity_id: value && value.value}}));
+                                  }
+                              }}
+                              options={activitiesOptions} />
                          </Col>
                      </FormGroup>
 
@@ -1260,6 +1309,7 @@ function CustomRoutesGroup({routes, group, activities, groups, onChange, onSelec
           show={showUpdateModal !== undefined}
           entry={showUpdateModal || {}}
           groups={groups}
+          activities={activities}
           onHide={c => {
               setShowUpdateModal(undefined);
               c && onChange();
@@ -1368,6 +1418,7 @@ function CustomRoutes() {
       <NewCustomRoute
           show={showNew}
           groups={allGroups}
+          activities={activities}
           onHide={c => {
               setShowNew(false);
               c && refresh_();
