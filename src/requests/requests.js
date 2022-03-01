@@ -60,6 +60,7 @@ import {useDropzone} from "react-dropzone";
 import {DeleteConfirmButton} from "../utils/deleteConfirm";
 import {fetchInstanceContext} from "../help/templatePlayground";
 import {ContextTable} from "./components";
+import Select from "react-select";
 
 const SUB_REQUESTS_PAGE_SIZE = 25;
 
@@ -2539,6 +2540,7 @@ export class Requests extends Component{
                 model: 'requests', field: 'created_on', direction: 'desc'
             }],
 
+            activities: [],
             requests: [],
             selected_reqs: [],
             pagination: {
@@ -3014,23 +3016,17 @@ export class Requests extends Component{
                                 </Col>
 
                                 <Col sm={8}>
-                                    <FormControl
-                                        componentClass="select"
-                                        disabled={["is_null", "is_not_null"].includes(filter_criteria.activity_id.op)}
-                                        value={filter_criteria.activity_id.value}
-                                        onChange={e => this.setState({
-                                            filter_criteria: update(this.state.filter_criteria,
-                                                {activity_id: {$merge: {value: e.target.value && parseInt(e.target.value, 10)}}})
-                                        })}>
-                                        <option value='' />
-                                        {
-                                            activities && activities.sort(
-                                              (a, b) => a.name.localeCompare(b.name)
-                                            ).map(
-                                                a => <option value={a.id} key={a.id}>{a.name}</option>
-                                            )
-                                        }
-                                    </FormControl>
+                                    <Select
+                                      isClearable
+                                      disabled={["is_null", "is_not_null"].includes(filter_criteria.activity_id.op)}
+                                      value={{ value: filter_criteria.activity_id.value, label: activities.find(a => a.id === filter_criteria.activity_id.value)?.name }}
+                                      options={activities.sort((a, b) => a.name.localeCompare(b.name)).map(a => ({value: a.id, label: a.name}))}
+                                      onChange={v => this.setState({
+                                          filter_criteria: update(this.state.filter_criteria,
+                                              {activity_id: {$merge: {value: v && v.value && parseInt(v.value, 10)}}})
+                                      })}
+                                      className="basic-select"
+                                      classNamePrefix="select" />
                                 </Col>
                             </FormGroup>
 
@@ -3053,16 +3049,19 @@ export class Requests extends Component{
                                 </Col>
 
                                 <Col sm={8}>
-                                    <FormControl componentClass="select" value={filter_criteria.status.value}
-                                        onChange={e => this.setState({
-                                            filter_criteria: update(this.state.filter_criteria,
-                                                {status: {$merge: {value: e.target.value}}})
-                                        })}>
-                                        <option value='' />
-                                        <option value="ACTIVE">ACTIVE</option>
-                                        <option value="CLOSED_IN_ERROR">CLOSED_IN_ERROR</option>
-                                        <option value="CLOSED_IN_SUCCESS">CLOSED_IN_SUCCESS</option>
-                                    </FormControl>
+                                    <Select
+                                      isClearable
+                                      value={{value: filter_criteria.status.value, label: filter_criteria.status.value}}
+                                      name="status"
+                                      options={["ACTIVE", "CLOSED_IN_ERROR", "CLOSED_IN_SUCCESS"].map(k => ({value: k, label: k}))}
+                                      onChange={v => {
+                                        this.setState({
+                                          filter_criteria: update(filter_criteria,
+                                            { status: { $merge: { value: v ? v.value : "" } } })
+                                        })
+                                      }}
+                                      className="basic-select"
+                                      classNamePrefix="select" />
                                 </Col>
                             </FormGroup>
 
@@ -3085,15 +3084,19 @@ export class Requests extends Component{
                                 </Col>
 
                                 <Col sm={8}>
-                                    <FormControl componentClass="select" value={filter_criteria.request_status.value}
-                                        onChange={e => this.setState({
-                                            filter_criteria: update(this.state.filter_criteria,
-                                                {request_status: {$merge: {value: e.target.value}}})
-                                        })}>
-                                        <option value='' />
-                                        <option value="ACTIVE">ACTIVE</option>
-                                        <option value="FAILED">FAILED</option>
-                                    </FormControl>
+                                    <Select
+                                      isClearable
+                                      value={{value: filter_criteria.request_status.value, label: filter_criteria.request_status.value}}
+                                      name="status"
+                                      options={["ACTIVE", "FAILED"].map(k => ({value: k, label: k}))}
+                                      onChange={v => {
+                                        this.setState({
+                                          filter_criteria: update(filter_criteria,
+                                            { request_status: { $merge: { value: v ? v.value : "" } } })
+                                        })
+                                      }}
+                                      className="basic-select"
+                                      classNamePrefix="select" />
                                 </Col>
                             </FormGroup>
 
@@ -3192,19 +3195,20 @@ export class Requests extends Component{
                                         </Col>
 
                                         <Col sm={8}>
-                                            <FormControl
-                                                componentClass="select"
-                                                disabled={filter_criteria.role_id.op === "is_not_null"}
-                                                value={filter_criteria.role_id.value}
-                                                onChange={e => this.setState({
-                                                    filter_criteria: update(filter_criteria,
-                                                        { role_id: { $merge: { value: e.target.value && parseInt(e.target.value, 10) } } })
-                                                })} >
-                                                <option value=""/>
-                                                {
-                                                    roles.map(r => <option key={`role-${r.id}`} value={r.id}>{r.name}</option>)
-                                                }
-                                            </FormControl>
+                                            <Select
+                                              isClearable
+                                              value={{value: filter_criteria.role_id.value, label: roles.find(r => r.id === filter_criteria.role_id.value)?.name}}
+                                              name="role"
+                                              options={roles.map(r => ({value: r.id, label: r.name}))}
+                                              disabled={filter_criteria.role_id.op === "is_not_null"}
+                                              onChange={v => {
+                                                this.setState({
+                                                  filter_criteria: update(filter_criteria,
+                                                    { role_id: { $merge: { value: v ? parseInt(v.value, 10) : "" } } })
+                                                })
+                                              }}
+                                              className="basic-select"
+                                              classNamePrefix="select" />
                                         </Col>
                                     </FormGroup>
                             }
@@ -3258,18 +3262,19 @@ export class Requests extends Component{
                                     </Col>
 
                                     <Col sm={8}>
-                                        <FormControl
-                                            componentClass="select"
-                                            value={filter_criteria.proxy_gateway_host.value}
-                                            onChange={e => this.setState({
-                                                filter_criteria: update(filter_criteria,
-                                                    { proxy_gateway_host: { $merge: { value: e.target.value } } })
-                                            })} >
-                                            <option value="" />
-                                            {
-                                                proxy_hosts.map((h, i) => <option key={`phost-${i}-${h.url}`} value={h.url}>{h.name}</option>)
-                                            }
-                                        </FormControl>
+                                        <Select
+                                          isClearable
+                                          value={{value: filter_criteria.proxy_gateway_host.value, label: proxy_hosts.find(p => p.url === filter_criteria.proxy_gateway_host.value)?.name }}
+                                          name="proxy_gateway_host"
+                                          options={proxy_hosts.map(p => ({value: p.url, label: p.name}))}
+                                          onChange={v => {
+                                            this.setState({
+                                              filter_criteria: update(filter_criteria,
+                                                { proxy_gateway_host: { $merge: { value: v ? v.value : "" } } })
+                                            })
+                                          }}
+                                          className="basic-select"
+                                          classNamePrefix="select" />
                                     </Col>
                                 </FormGroup>
 
@@ -3351,17 +3356,19 @@ export class Requests extends Component{
                                     </Col>
 
                                     <Col sm={8}>
-                                        <FormControl componentClass="select" value={filter_criteria.proxied_method.value}
-                                            onChange={e => this.setState({
-                                                filter_criteria: update(this.state.filter_criteria,
-                                                    {proxied_method: {$merge: {value: e.target.value}}})
-                                            })}>
-                                            <option value='' />
-                                            <option value="get">get</option>
-                                            <option value="post">post</option>
-                                            <option value="put">put</option>
-                                            <option value="delete">delete</option>
-                                        </FormControl>
+                                        <Select
+                                          isClearable
+                                          value={{value: filter_criteria.proxied_method.value, label: filter_criteria.proxied_method.value}}
+                                          name="tenant"
+                                          options={["get", "put", "post", "delete"].map(k => ({value: k, label: k}))}
+                                          onChange={v => {
+                                            this.setState({
+                                              filter_criteria: update(this.state.filter_criteria,
+                                                { proxied_method: { $merge: { value: v ? v.value : "" } } })
+                                            })
+                                          }}
+                                          className="basic-select"
+                                          classNamePrefix="select" />
                                     </Col>
                                 </FormGroup>
                                 </>
