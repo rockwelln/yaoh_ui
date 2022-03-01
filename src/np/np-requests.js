@@ -131,6 +131,9 @@ export class NPRequests extends Component {
       },
       error: undefined,
     };
+    if(this.props.location.search === "") {
+      this.state.filter_criteria.created_on.value = moment.utc().subtract(1, "days").format();
+    }
     this._refresh = this._refresh.bind(this);
     this._prepare_url = this._prepare_url.bind(this);
     this._refreshOperators = this._refreshOperators.bind(this);
@@ -151,6 +154,7 @@ export class NPRequests extends Component {
       created_on: { model: 'NPRequest', value: '', op: 'ge' },
       due_date: { model: 'NPRequest', value: '', op: 'ge' },
       b2b: { model: 'NPRequest', value: '', op: 'eq' },
+      activity_id: { model: 'ActivityInstance', value: '', op: 'eq' },
       role_id: { model: 'manual_actions', value: '', op: 'eq' },
       action: { model: 'manual_actions', value: '', op: 'eq' },
       task_status: localUser.isSystem() ? undefined : errorCriteria.task_status,
@@ -414,7 +418,7 @@ export class NPRequests extends Component {
   }
 
   render() {
-    const { filter_criteria, requests, operators, export_url, roles } = this.state;
+    const { filter_criteria, requests, operators, export_url, roles, searchExpanded, activities } = this.state;
     const { user_info } = this.props;
     requests && requests.forEach(r => {
       const donor = operators.find(o => o.id === r.nprequest.donor_id);
@@ -425,6 +429,11 @@ export class NPRequests extends Component {
     const invalid_created_on = filter_criteria.created_on.value.length !== 0 && !moment.utc(filter_criteria.created_on.value).isValid();
     const invalid_due_date = filter_criteria.due_date.value.length !== 0 && !moment.utc(filter_criteria.due_date.value).isValid();
     const manualActions = user_info.modules && user_info.modules.includes(modules.manualActions);
+    const nbFilters = Object.values(filter_criteria).filter(crit => crit && (
+        (crit.value && crit.op) ||
+        crit.or || crit.and || crit.op === 'is_null' ||
+        crit.op === 'is_not_null' || typeof(crit.value) === 'boolean'
+    )).length;
 
     return (
       <div>
@@ -432,9 +441,16 @@ export class NPRequests extends Component {
           <Breadcrumb.Item active><FormattedMessage id="requests" defaultMessage="Requests" /></Breadcrumb.Item>
           <Breadcrumb.Item active><FormattedMessage id="porting-requests" defaultMessage="Porting Requests" /></Breadcrumb.Item>
         </Breadcrumb>
-        <Panel defaultExpanded={false} >
+        <Panel defaultExpanded={false} onToggle={e => this.setState({searchExpanded: e})}>
           <Panel.Heading>
-            <Panel.Title toggle><FormattedMessage id="search" defaultMessage="Search" /> <Glyphicon glyph="search" /></Panel.Title>
+            <Panel.Title toggle>
+              <FormattedMessage id="search" defaultMessage="Search" />{" "}
+              {
+                  !searchExpanded && nbFilters !== 0 ?
+                    <Button bsStyle="info" bsSize="small">{nbFilters} <Glyphicon glyph="filter" /></Button> :
+                    <Glyphicon glyph="search" />
+              }
+            </Panel.Title>
           </Panel.Heading>
           <Panel.Body collapsible>
             <Form horizontal>
@@ -500,6 +516,38 @@ export class NPRequests extends Component {
                     classNamePrefix="select" />
                 </Col>
               </FormGroup>
+
+              <FormGroup>
+                <Col componentClass={ControlLabel} sm={2}>
+                    <FormattedMessage id="workflow" defaultMessage="Workflow" />
+                </Col>
+
+                <Col sm={1}>
+                    <FormControl
+                        componentClass="select"
+                        value={filter_criteria.activity_id.op}
+                        onChange={e => this.setState({
+                            filter_criteria: update(this.state.filter_criteria,
+                                {activity_id: {$merge: {op: e.target.value}}})
+                        })}>
+                        <option value="eq">==</option>
+                        <option value="ne">!=</option>
+                    </FormControl>
+                </Col>
+
+                <Col sm={8}>
+                    <Select
+                      isClearable
+                      value={{ value: filter_criteria.activity_id.value, label: activities.find(a => a.id === filter_criteria.activity_id.value)?.name }}
+                      options={activities.sort((a, b) => a.name.localeCompare(b.name)).map(a => ({value: a.id, label: a.name}))}
+                      onChange={v => this.setState({
+                          filter_criteria: update(this.state.filter_criteria,
+                              {activity_id: {$merge: {value: v && v.value && parseInt(v.value, 10)}}})
+                      })}
+                      className="basic-select"
+                      classNamePrefix="select" />
+                </Col>
+            </FormGroup>
 
               <FormGroup>
                 <Col componentClass={ControlLabel} sm={2}>
@@ -977,48 +1025,7 @@ export class NPRequests extends Component {
           <Panel.Body>
             <ApioDatatable
               sorting_spec={this.state.sorting_spec}
-              headers={[
-                { title: '', render: n => getIcon(n.nprequest.kind), style: { width: '40px' } },
-                {
-                  title: '#', field: 'crdc_id', model: 'NPRequest',
-                  render: n => <Link to={`/transactions/${n.id}`}>{n.nprequest.crdc_id || n.id}</Link>,
-                  sortable: true
-                },
-                {
-                  title: <FormattedMessage id="status" defaultMessage="Status" />,
-                  field: 'status',
-                  model: 'NPRequest',
-                  render: n => n.nprequest.status,
-                  sortable: true,
-                  className: 'visible-md visible-lg',
-                },
-                { title: <FormattedMessage id="donor" defaultMessage="Donor" />, field: 'donor_name', className: 'visible-md visible-lg' },
-                { title: <FormattedMessage id="recipient" defaultMessage="Recipient" />, field: 'recipient_name', className: 'visible-md visible-lg' },
-                { title: <FormattedMessage id="tenant" defaultMessage="Tenant" />, field: 'tenant', className: 'visible-lg' },
-                { title: <FormattedMessage id="customer-id" defaultMessage="Customer ID" />, field: 'customer_id', render: n => n.nprequest.customer_id, className: 'visible-md visible-lg' },
-                {
-                  title: <FormattedMessage id="ranges" defaultMessage="Ranges" />, render: n => (
-                    n.nprequest.ranges.map((r, key) => (
-                      <span key={key}>
-                        {r.range_from}-{r.range_to}{r.reject_code && <p style={{"color": "red"}}>{r.reject_code}</p>}
-                        <br />
-                      </span>
-                    )
-                    )),
-                  className: 'visible-md visible-lg',
-                },
-                {
-                  title: <FormattedMessage id="due-date" defaultMessage="Due date" />, field: 'due_date', model: 'NPRequest',
-                  render: n => n.nprequest.due_date?userLocalizeUtcDate(moment.utc(n.nprequest.due_date), this.props.user_info).format():"-",
-                  sortable: true,
-                  className: 'visible-md visible-lg',
-                },
-                {
-                  title: <FormattedMessage id="created-on" defaultMessage="Created on" />, field: 'created_on', model: 'NPRequest',
-                  render: n => userLocalizeUtcDate(moment.utc(n.created_on), this.props.user_info).format(),
-                  sortable: true,
-                },
-              ]}
+              headers={getHeaders()}
               pagination={this.state.pagination}
               data={requests}
               onSort={s => this._refresh(undefined, s)}
@@ -1045,3 +1052,139 @@ export class NPRequests extends Component {
     )
   }
 }
+
+function getHeaders() {
+  if (localUser.isModuleEnabled(modules.npact_coin)) {
+    return CoinHeaders;
+  }
+  if (localUser.isModuleEnabled(modules.npact_citc)) {
+    return CitcHeaders;
+  }
+  return DefaultHeaders;
+}
+
+const DefaultHeaders = [
+  { title: '', render: n => getIcon(n.nprequest.kind), style: { width: '40px' } },
+  {
+    title: '#', field: 'crdc_id', model: 'NPRequest',
+    render: n => <Link to={`/transactions/${n.id}`}>{n.nprequest.crdc_id || n.id}</Link>,
+    sortable: true
+  },
+  {
+    title: <FormattedMessage id="status" defaultMessage="Status" />,
+    field: 'status',
+    model: 'NPRequest',
+    render: n => n.nprequest.status,
+    sortable: true,
+    className: 'visible-md visible-lg',
+  },
+  { title: <FormattedMessage id="donor" defaultMessage="Donor" />, field: 'donor_name', className: 'visible-md visible-lg' },
+  { title: <FormattedMessage id="recipient" defaultMessage="Recipient" />, field: 'recipient_name', className: 'visible-md visible-lg' },
+  { title: <FormattedMessage id="customer-id" defaultMessage="Customer ID" />, field: 'customer_id', render: n => n.nprequest.customer_id, className: 'visible-md visible-lg' },
+  {
+    title: <FormattedMessage id="ranges" defaultMessage="Ranges" />, render: n => (
+      n.nprequest.ranges.map((r, key) => (
+        <span key={key}>
+          {r.range_from}-{r.range_to}{r.reject_code && <p style={{"color": "red"}}>{r.reject_code}</p>}
+          <br />
+        </span>
+      )
+      )),
+    className: 'visible-md visible-lg',
+  },
+  {
+    title: <FormattedMessage id="due-date" defaultMessage="Due date" />, field: 'due_date', model: 'NPRequest',
+    render: n => n.nprequest.due_date?localUser.localizeUtcDate(moment.utc(n.nprequest.due_date)).format():"-",
+    sortable: true,
+    className: 'visible-md visible-lg',
+  },
+  {
+    title: <FormattedMessage id="created-on" defaultMessage="Created on" />, field: 'created_on', model: 'NPRequest',
+    render: n => localUser.localizeUtcDate(moment.utc(n.created_on)).format(),
+    sortable: true,
+  },
+];
+
+const CitcHeaders = [
+  { title: '', render: n => getIcon(n.nprequest.kind), style: { width: '40px' } },
+  {
+    title: '#', field: 'crdc_id', model: 'NPRequest',
+    render: n => <Link to={`/transactions/${n.id}`}>{n.nprequest.crdc_id || n.id}</Link>,
+    sortable: true
+  },
+  {
+    title: <FormattedMessage id="status" defaultMessage="Status" />,
+    field: 'status',
+    model: 'NPRequest',
+    render: n => n.nprequest.status,
+    sortable: true,
+    className: 'visible-md visible-lg',
+  },
+  { title: <FormattedMessage id="donor" defaultMessage="Donor" />, field: 'donor_name', className: 'visible-md visible-lg' },
+  { title: <FormattedMessage id="recipient" defaultMessage="Recipient" />, field: 'recipient_name', className: 'visible-md visible-lg' },
+  { title: <FormattedMessage id="tenant" defaultMessage="Tenant" />, field: 'tenant', className: 'visible-lg' },
+  { title: <FormattedMessage id="customer-id" defaultMessage="Customer ID" />, field: 'customer_id', render: n => n.nprequest.customer_id, className: 'visible-md visible-lg' },
+  {
+    title: <FormattedMessage id="ranges" defaultMessage="Ranges" />, render: n => (
+      n.nprequest.ranges.map((r, key) => (
+        <span key={key}>
+          {r.range_from}-{r.range_to}{r.reject_code && <p style={{"color": "red"}}>{r.reject_code}</p>}
+          <br />
+        </span>
+      )
+      )),
+    className: 'visible-md visible-lg',
+  },
+  {
+    title: <FormattedMessage id="due-date" defaultMessage="Due date" />, field: 'due_date', model: 'NPRequest',
+    render: n => n.nprequest.due_date?localUser.localizeUtcDate(moment.utc(n.nprequest.due_date)).format():"-",
+    sortable: true,
+    className: 'visible-md visible-lg',
+  },
+  {
+    title: <FormattedMessage id="created-on" defaultMessage="Created on" />, field: 'created_on', model: 'NPRequest',
+    render: n => localUser.localizeUtcDate(moment.utc(n.created_on)).format(),
+    sortable: true,
+  },
+];
+
+const CoinHeaders = [
+  { title: '', render: n => getIcon(n.nprequest.kind), style: { width: '40px' } },
+  {
+    title: '#', field: 'crdc_id', model: 'NPRequest',
+    render: n => <Link to={`/transactions/${n.id}`}>{n.nprequest.crdc_id || n.id}</Link>,
+    sortable: true
+  },
+  {
+    title: <FormattedMessage id="status" defaultMessage="Status" />,
+    field: 'status',
+    model: 'NPRequest',
+    render: n => n.nprequest.status,
+    sortable: true,
+    className: 'visible-md visible-lg',
+  },
+  { title: <FormattedMessage id="donor" defaultMessage="Donor" />, field: 'donor_name', className: 'visible-md visible-lg' },
+  { title: <FormattedMessage id="recipient" defaultMessage="Recipient" />, field: 'recipient_name', className: 'visible-md visible-lg' },
+  {
+    title: <FormattedMessage id="ranges" defaultMessage="Ranges" />, render: n => (
+      n.nprequest.ranges.map((r, key) => (
+        <span key={key}>
+          {r.range_from}-{r.range_to}{r.reject_code && <p style={{"color": "red"}}>{r.reject_code}</p>}
+          <br />
+        </span>
+      )
+      )),
+    className: 'visible-md visible-lg',
+  },
+  {
+    title: <FormattedMessage id="due-date" defaultMessage="Due date" />, field: 'due_date', model: 'NPRequest',
+    render: n => n.nprequest.due_date?localUser.localizeUtcDate(moment.utc(n.nprequest.due_date)).format():"-",
+    sortable: true,
+    className: 'visible-md visible-lg',
+  },
+  {
+    title: <FormattedMessage id="created-on" defaultMessage="Created on" />, field: 'created_on', model: 'NPRequest',
+    render: n => localUser.localizeUtcDate(moment.utc(n.created_on)).format(),
+    sortable: true,
+  },
+];

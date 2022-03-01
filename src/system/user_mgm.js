@@ -70,7 +70,7 @@ function updateUser(user_id, data, onSuccess) {
 
 
 function revokeUser(user_id, unblock, onSuccess) {
-    fetch_put(`/api/v01/auth/${user_id}/${unblock?'un':''}revoke`, {})
+    fetch_put(`/api/v01/system/users/${user_id}/${unblock?'un':''}revoke`, {})
     .then(() => {
         NotificationsManager.success(<FormattedMessage id="user-updated" defaultMessage="User updated" />);
         onSuccess && onSuccess();
@@ -461,6 +461,12 @@ function UpdateUser(props) {
             <Modal.Body>
                 <Tabs defaultActiveKey={1} id="user-update-tabs">
                     <Tab eventKey={1} title={<FormattedMessage id="details" defaultMessage="Details" />}>
+
+                    { !fullUser.local_user &&
+                      <Alert bsStyle="warning">
+                        <FormattedMessage id="non-local-user-warning" defaultMessage="This user is not managed locally. Any change should be applied in its host platform." />
+                      </Alert>
+                    }
 
                     <Form horizontal style={{paddingTop: 10}}>
                         <FormGroup validationState={validUsername}>

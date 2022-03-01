@@ -232,7 +232,7 @@ function ContextKey({value, onChange}) {
 }
 
 
-function HttpHeaders(props) {
+export function HttpHeaders(props) {
   const {value, onChange} = props;
   const [newHeader, setNewHeader] = useState(["", ""])
 
