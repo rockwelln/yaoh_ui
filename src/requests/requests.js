@@ -3347,10 +3347,10 @@ export class Requests extends Component{
                                                     {request_method: {$merge: {value: e.target.value}}})
                                             })}>
                                             <option value='' />
-                                            <option value="get">get</option>
-                                            <option value="post">post</option>
-                                            <option value="put">put</option>
-                                            <option value="delete">delete</option>
+                                            <option value="GET">get</option>
+                                            <option value="POST">post</option>
+                                            <option value="PUT">put</option>
+                                            <option value="DELETE">delete</option>
                                         </FormControl>
                                     </Col>
                                 </FormGroup>
