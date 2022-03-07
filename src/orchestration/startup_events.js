@@ -745,7 +745,7 @@ function UpdateCustomRouteModal({show, entry, onHide, groups, activities}) {
     )
 }
 
-function readFile(file) {
+export function readFile(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsText(file);
