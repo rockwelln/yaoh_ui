@@ -513,7 +513,7 @@ export default function Templates() {
                     </ul>
                   </div>
                 </Col>
-                <Col sm={6} md={8} lg={8}>
+                <Col sm={6} md={8} lg={8} style={{position: "sticky", top: "1rem"}}>
                   {showTemplate &&
                     <Template
                       label={showTemplate.key}
