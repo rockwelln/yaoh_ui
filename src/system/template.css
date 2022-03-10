@@ -1,20 +1,17 @@
-body {
-  margin-bottom: 6em;
-}
-
 .treeview .btn-default {
   border-color: #e3e5ef;
 }
 .treeview .btn-default:hover {
   background-color: #f7faea;
-  color: #bada55;
+  color: #54a6d9;
 }
 .treeview ul {
   list-style: none;
   padding-left: 32px;
+  margin-bottom: 10px;
 }
 .treeview ul li {
-  padding: 50px 0px 0px 35px;
+  padding: 35px 0px 0px 35px;
   position: relative;
 }
 .treeview ul li:before {
@@ -143,5 +140,3 @@ body {
 .treeview--mapview ul li:after {
   content: unset;
 }
-
-/*# sourceMappingURL=template.css.map */

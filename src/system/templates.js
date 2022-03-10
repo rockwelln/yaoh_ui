@@ -14,12 +14,13 @@ import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
 
 import "./template.css";
-import {faMinus, faPlus} from "@fortawesome/free-solid-svg-icons";
+import {faFile, faMinus, faPlus, faFolder} from "@fortawesome/free-solid-svg-icons";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import ButtonGroup from "react-bootstrap/lib/ButtonGroup";
 import ReactDOM from "react-dom";
 import {DeleteConfirmButton} from "../utils/deleteConfirm";
 import {readFile} from "../orchestration/startup_events";
+import {FoldableButton} from "../utils/button";
 
 
 // helpers
@@ -306,11 +307,17 @@ function TemplateTree({
             }}>
               <FontAwesomeIcon icon={showSiblings?faMinus:faPlus}/>
             </Button>
-            <div className={"btn btn-default btn-sm level-same" + (showSiblings?" in":"")}>
-              <span onClick={() => setShowNewTemplate(true)}>Add Template</span>
-            </div>
-            <div className={"btn btn-default btn-sm level-sub" + (showSiblings?" in":"")}>
-              <span onClick={() => setShowNewSubNode(true)}>Add Sub Level</span>
+            <div style={{position: "absolute", display: "inline-block"}}>
+              <FoldableButton
+                icon={<FontAwesomeIcon icon={faFolder}/>}
+                style={{display: !showSiblings?"none":"inline-block", marginLeft: "10px"}}
+                onClick={() => setShowNewSubNode(true)}
+                >New folder</FoldableButton>
+              <FoldableButton
+                icon={<FontAwesomeIcon icon={faFile}/>}
+                style={{display: !showSiblings?"none":"inline-block", marginLeft: "10px"}}
+                onClick={() => setShowNewTemplate(true)}
+                >New template</FoldableButton>
             </div>
           </div>
         </div>
