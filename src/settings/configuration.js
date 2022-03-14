@@ -1025,7 +1025,20 @@ function mergeDeep(...objects) {
   }, {});
 }
 
-const default_sso = {
+const default_saml_v2 = {
+  "sp": {
+    "entityId": "https://sp.example.com/saml2/metadata",
+    "assertionConsumerService": {"url": "https://sp.example.com/saml2/acs"},
+    "privateKey": "",
+    "x509cert": ""
+  },
+  "idp": {
+    "metadata": "<EntityDescriptor...>",
+  },
+  "validRedirects": []
+}
+
+const default_saml_v1 = {
     strict: true,
     idp: {
       'entityId': '',
@@ -1105,8 +1118,9 @@ const newSso = {
   authorisation_handler: {},
 }
 
-function NewSsoModal({show, onHide, gateways}) {
+function NewSsoModal({show, onHide, gateways, enabledMods}) {
   const [entry, setEntry] = useState(newSso);
+  const defaultSaml = enabledMods.includes(modules.npact) ? default_saml_v1 : default_saml_v2;
 
   let authenticationParams;
   switch (entry.protocol) {
@@ -1117,8 +1131,11 @@ function NewSsoModal({show, onHide, gateways}) {
           onChange={e => setEntry(update(entry, {$merge: {parameters: e}}))}/>
       break;
     case "saml":
-      authenticationParams =
-        <SamlParameters
+      authenticationParams = enabledMods.includes(modules.npact) ?
+        <SamlParametersV1
+          params={entry.parameters}
+          onChange={e => setEntry(update(entry, {$merge: {parameters: e}}))}/> :
+        <SamlParametersV2
           params={entry.parameters}
           onChange={e => setEntry(update(entry, {$merge: {parameters: e}}))}/>
       break;
@@ -1188,7 +1205,7 @@ function NewSsoModal({show, onHide, gateways}) {
               <FormControl
                 componentClass="select"
                 value={entry.protocol}
-                onChange={e => setEntry(update(entry, {$merge: {protocol: e.target.value, parameters: e.target.value === "saml"?default_sso:{}}}))}>
+                onChange={e => setEntry(update(entry, {$merge: {protocol: e.target.value, parameters: e.target.value === "saml"?defaultSaml:{}}}))}>
                 <option value=""/>
                 <option value="oidc">Open IDConnect</option>
                 <option value="saml">SAML</option>
@@ -1578,7 +1595,147 @@ function OidcParameters({params, onChange}) {
   )
 }
 
-function SamlParameters({params, onChange}) {
+function SamlParametersV2({params, onChange}) {
+  const [newRedirect, setNewRedirect] = useState("");
+  return (
+    <>
+      <h4>IDP</h4>
+
+      <FormGroup>
+        <Col componentClass={ControlLabel} sm={2}>
+          <FormattedMessage id="metadata" defaultMessage="Metadata"/>
+        </Col>
+
+        <Col sm={9}>
+          <FormControl
+            componentClass="textarea"
+            rows={10}
+            value={params.idp.metadata}
+            onChange={e => onChange(update(params, {idp: {$merge: {metadata: e.target.value}}}))}/>
+          <HelpBlock>
+            Must be an XML document like &lt;EntityDescriptor ...&gt;
+          </HelpBlock>
+        </Col>
+      </FormGroup>
+
+      <h4>SP</h4>
+
+      <FormGroup>
+        <Col componentClass={ControlLabel} sm={2}>
+          <FormattedMessage id="entity-id" defaultMessage="Entity ID"/>
+        </Col>
+
+        <Col sm={9}>
+          <FormControl
+            componentClass="input"
+            value={params.sp.entityId}
+            onChange={e => onChange(update(params, {sp: {$merge: {entityId: e.target.value}}}))}/>
+        </Col>
+      </FormGroup>
+
+      <FormGroup>
+        <Col componentClass={ControlLabel} sm={2}>
+          <FormattedMessage id="acs-url" defaultMessage="Assertion Consumer Service Url"/>
+        </Col>
+
+        <Col sm={9}>
+          <FormControl
+            componentClass="input"
+            value={params.sp.assertionConsumerService.url}
+            onChange={e => onChange(update(params, {sp: {assertionConsumerService: {$merge: {url: e.target.value}}}}))}/>
+          <HelpBlock>
+            Endpoint visible from the IdP with the structure https://&lt;host&gt;/api/v01/auth/login_&lt;sso name&gt;
+          </HelpBlock>
+        </Col>
+      </FormGroup>
+
+      <FormGroup>
+        <Col componentClass={ControlLabel} sm={2}>
+          <FormattedMessage id="x509-certificate" defaultMessage="x509 certificate"/>
+        </Col>
+
+        <Col sm={9}>
+          <FormControl
+            componentClass="textarea"
+            rows={10}
+            value={params.sp.x509cert}
+            onChange={e => onChange(update(params, {sp: {$merge: {x509cert: e.target.value}}}))} />
+        </Col>
+      </FormGroup>
+
+      <FormGroup>
+        <Col componentClass={ControlLabel} sm={2}>
+          <FormattedMessage id="x509-private-key" defaultMessage="x509 private key"/>
+        </Col>
+
+        <Col sm={9}>
+          <FormControl
+            componentClass="textarea"
+            rows={10}
+            value={params.sp.privateKey}
+            onChange={e => onChange(update(params, {sp: {$merge: {privateKey: e.target.value}}}))} />
+        </Col>
+      </FormGroup>
+
+      <h4>Misc</h4>
+
+      <FormGroup>
+        <Col componentClass={ControlLabel} sm={2}>
+          <FormattedMessage id="valid-redirects" defaultMessage="Valid Redirects"/>
+        </Col>
+
+        <Col sm={9}>
+          <Table>
+            <thead>
+              <tr>
+                <th>prefix</th>
+                <th/>
+              </tr>
+            </thead>
+            <tbody>
+              {
+                params.validRedirects?.map((r, i) =>
+                  <tr>
+                    <td>{r}</td>
+                    <td>
+                      <Button
+                        onClick={() => onChange(update(params, {validRedirects: {$splice: [[i, 1]]}}))}
+                      >{"-"}</Button>
+                    </td>
+                  </tr>
+                )
+              }
+              <tr>
+                <td>
+                  <FormControl
+                    componentClass="input"
+                    value={newRedirect || ""}
+                    onChange={e => setNewRedirect(e.target.value)}
+                    />
+                </td>
+                <td>
+                  <Button
+                    disabled={newRedirect.length === 0}
+                    onClick={() => {
+                      onChange(update(params, {validRedirects: {$push: [newRedirect]}}))
+                      setNewRedirect("")
+                    }}
+                    >{"+"}</Button>
+                </td>
+              </tr>
+            </tbody>
+          </Table>
+
+          <HelpBlock>
+            Endpoints hosts visible from the users with the structure https://&lt;visible-host&gt;/
+          </HelpBlock>
+        </Col>
+      </FormGroup>
+    </>
+  )
+}
+
+function SamlParametersV1({params, onChange}) {
   const [idpRemoteMetadataUrl, setIdpRemoteMetadataUrl] = useState("");
   const [loadError, setLoadError] = useState("");
 
@@ -2135,7 +2292,7 @@ function BsftAuthorisationParameters({params, onChange}) {
   )
 }
 
-function SSOPanel({sso, gateways, onChange}) {
+function SSOPanel({sso, gateways, onChange, enabledMods}) {
   const [showNew, setShowNew] = useState(false);
 
   return (
@@ -2164,8 +2321,11 @@ function SSOPanel({sso, gateways, onChange}) {
                       onChange={e => onChange(update(sso, {[i]: {$merge: {parameters: e}}}))}/>
                   break;
                 case "saml":
-                  authenticationParams =
-                    <SamlParameters
+                  authenticationParams = enabledMods.includes(modules.npact) ?
+                    <SamlParametersV1
+                      params={p.parameters || {}}
+                      onChange={e => onChange(update(sso, {[i]: {$merge: {parameters: e}}}))}/> :
+                    <SamlParametersV2
                       params={p.parameters || {}}
                       onChange={e => onChange(update(sso, {[i]: {$merge: {parameters: e}}}))}/>
                   break;
@@ -2349,6 +2509,7 @@ function SSOPanel({sso, gateways, onChange}) {
           <NewSsoModal
             show={showNew}
             gateways={gateways}
+            enabledMods={enabledMods}
             onHide={newEntry => {
               setShowNew(false);
               if (newEntry !== undefined) {
@@ -3446,6 +3607,7 @@ export default function Configuration({userInfo, history}) {
           <SSOPanel
             sso={config.content.SSO || []}
             gateways={config.content.gateways}
+            enabledMods={config.content.gui?.modules}
             onChange={v => setConfig(update(config, {content: {SSO: {$set: v}}}))}
           />
         </Tab>

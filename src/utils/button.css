@@ -1,0 +1,44 @@
+.btn-foldable {
+    display: inline-block;
+    cursor: pointer;
+    width: 35px;
+    height: 35px;
+    overflow: hidden;
+    border-radius: 26px;
+    background: rgba(84, 166, 217, 0.26);
+    transition: all .3s ease-out;
+    white-space: nowrap;
+    text-align: center;
+}
+
+.btn-foldable .icon {
+    float: left;
+    z-index: 9;
+    display: inline-block;
+    width: 35px;
+    background: #54a6d9;
+    height: 35px;
+    border-radius: 26px;
+    box-sizing: border-box;
+    margin: 0;
+}
+
+.btn-foldable .icon svg {
+    font-size: 25px;
+    padding: 8px 0 0 0px;
+}
+
+.btn-foldable span {
+    display: block;
+    font-weight: 700;
+    padding: 4px 0;
+    text-transform: capitalize;
+}
+
+.btn-foldable:hover .icon {
+  width: 35px;
+}
+
+.btn-foldable:hover {
+  width: 150px;
+}

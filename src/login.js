@@ -215,7 +215,15 @@ export function LoginForm({onLogin}) {
                             setError(undefined);
                             // 1. fetch the login request signed (loc => window.location.href, to return to the same page)
                             fetch_get(`/api/v01/auth/${provider.protocol}/loginRequest?name=${provider.name}&state=${window.location.href}`)
-                              .then(r => {window.location = decodeURIComponent(r.url)})
+                              .then(r => {
+                                // SAML implementation in Keycloak require the url to stay encoded
+                                // but OIDC OAM require the URL to be decoded
+                                if(r.url.includes("SAML")) {
+                                  window.location = r.url
+                                } else {
+                                  window.location = decodeURIComponent(r.url)
+                                }
+                              })
                               .catch(e => setError(e))
                           }}
                           bsStyle="primary">Login with {provider.name.charAt(0).toUpperCase() + provider.name.slice(1)}</Button>
