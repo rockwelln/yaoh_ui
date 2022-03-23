@@ -1378,6 +1378,7 @@ export const TxTable = ({tx, request, userInfo, activities}) => (
                 tx.label &&
                 <tr><th><FormattedMessage id="label" defaultMessage="Label" /></th><td>{tx.label}</td></tr>
             }
+            <tr><th><FormattedMessage id="guid" defaultMessage="GUID" /></th><td>{tx.guid}</td></tr>
         </tbody>
     </Table>
 );
