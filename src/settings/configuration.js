@@ -3072,57 +3072,77 @@ function PasswordPanel({password, onChange}) {
           </FormGroup>
           <FormGroup>
             <Col componentClass={ControlLabel} sm={2}>
-              <FormattedMessage id="enforce lowercase" defaultMessage="Enforce use of lowercase char."/>
+              <FormattedMessage id="enforce lowercase" defaultMessage="Lowercase char."/>
             </Col>
 
             <Col sm={9}>
-              <Checkbox
-                checked={password.lowercase === undefined ? true : password.lowercase}
-                onChange={e => onChange(update(password, {$merge: {lowercase: e.target.checked}}))}/>
+              <FormControl
+                componentClass="input"
+                value={
+                  password.lowercase === undefined ? 0 :
+                    typeof password.lowercase === "boolean" ? (password.lowercase ? 1:0) :
+                    password.lowercase
+                }
+                onChange={e => onChange(update(password, {$merge: {lowercase: e.target.value ? parseInt(e.target.value):undefined}}))}/>
               <HelpBlock>
-                The password have to contain at least 1 lower case characters (a-z)
+                The password has to contain at least n lower case characters (a-z)
               </HelpBlock>
             </Col>
           </FormGroup>
           <FormGroup>
             <Col componentClass={ControlLabel} sm={2}>
-              <FormattedMessage id="enforce uppercase" defaultMessage="Enforce use of uppercase char."/>
+              <FormattedMessage id="enforce uppercase" defaultMessage="Uppercase char."/>
             </Col>
 
             <Col sm={9}>
-              <Checkbox
-                checked={password.uppercase}
-                onChange={e => onChange(update(password, {$merge: {uppercase: e.target.checked}}))}/>
+              <FormControl
+                componentClass="input"
+                value={
+                  password.uppercase === undefined ? 0 :
+                    typeof password.uppercase === "boolean" ? (password.uppercase ? 1:0) :
+                    password.uppercase
+                }
+                onChange={e => onChange(update(password, {$merge: {uppercase: e.target.value ? parseInt(e.target.value):undefined}}))}/>
               <HelpBlock>
-                The password have to contain at least 1 upper case characters (A-Z)
+                The password has to contain at least n upper case characters (A-Z)
               </HelpBlock>
             </Col>
           </FormGroup>
           <FormGroup>
             <Col componentClass={ControlLabel} sm={2}>
-              <FormattedMessage id="enforce digits" defaultMessage="Enforce use of digits char."/>
+              <FormattedMessage id="enforce digits" defaultMessage="Digits char."/>
             </Col>
 
             <Col sm={9}>
-              <Checkbox
-                checked={password.digits}
-                onChange={e => onChange(update(password, {$merge: {digits: e.target.checked}}))}/>
+              <FormControl
+                componentClass="input"
+                value={
+                  password.digits === undefined ? 0 :
+                    typeof password.digits === "boolean" ? (password.digits ? 1:0) :
+                    password.digits
+                }
+                onChange={e => onChange(update(password, {$merge: {digits: e.target.value ? parseInt(e.target.value):undefined}}))}/>
               <HelpBlock>
-                The password have to contain at least 1 digit (0-9)
+                The password has to contain at least n digit (0-9)
               </HelpBlock>
             </Col>
           </FormGroup>
           <FormGroup>
             <Col componentClass={ControlLabel} sm={2}>
-              <FormattedMessage id="enforce special char" defaultMessage="Enforce use of special char."/>
+              <FormattedMessage id="enforce special char" defaultMessage="Special char."/>
             </Col>
 
             <Col sm={9}>
-              <Checkbox
-                checked={password.special_chars}
-                onChange={e => onChange(update(password, {$merge: {special_chars: e.target.checked}}))}/>
+              <FormControl
+                componentClass="input"
+                value={
+                  password.special_chars === undefined ? 0 :
+                    typeof password.special_chars === "boolean" ? (password.special_chars ? 1:0) :
+                    password.special_chars
+                }
+                onChange={e => onChange(update(password, {$merge: {special_chars: e.target.value ? parseInt(e.target.value):undefined}}))}/>
               <HelpBlock>
-                The password have to contain at least 1 special character (%()*./:;?[]_-)
+                The password have to contain at least n special character (%()*./:;?[]_-)
               </HelpBlock>
             </Col>
           </FormGroup>
@@ -3153,6 +3173,31 @@ function PasswordPanel({password, onChange}) {
                 onChange={e => onChange(update(password, {$merge: {min_entropy: e.target.value?parseInt(e.target.value, 10):""}}))}/>
               <HelpBlock>
                 Enforce the minimal entropy of new password (formula: length(password) * log2(length(&lt;all alphabets represented in the password&gt;)))
+              </HelpBlock>
+            </Col>
+          </FormGroup>
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="cannot contain username" defaultMessage="Cannot contain the username"/>
+            </Col>
+
+            <Col sm={9}>
+              <Checkbox
+                checked={password.cannot_contain_username || false}
+                onChange={e => onChange(update(password, {$merge: {cannot_contain_username: e.target.checked}}))} />
+            </Col>
+          </FormGroup>
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="cannot be an an old password reversed" defaultMessage="Cannot be an an old password reversed"/>
+            </Col>
+
+            <Col sm={9}>
+              <Checkbox
+                checked={password.cannot_reverse_old_password || false}
+                onChange={e => onChange(update(password, {$merge: {cannot_reverse_old_password: e.target.checked}}))} />
+              <HelpBlock>
+                In the limit of the history limit check configured above
               </HelpBlock>
             </Col>
           </FormGroup>
