@@ -180,7 +180,7 @@ export default function ({props}) {
             <>
             <tr>
               <td>{getMethodLabel(stat.method)}</td>
-              <td>{stat.url}</td>
+              <td style={{wordBreak: "break-word"}}>{stat.url}</td>
               <td/>
             </tr>
             <tr>
