@@ -53,7 +53,14 @@ function SuccessRateOverTime() {
   };
   const onShowClose = () => setShowBig(false);
 
-  const labels = data.map(d => localUser.localizeUtcDate(moment.utc(d["date"])).toDate());
+  const labels = data.map(d => localUser.localizeUtcDate(moment.utc(d["date"])).toDate()).reduce(
+    (a, c) => {
+      if (a.findIndex(v => c.toString() === v.toString()) === -1) {
+        a.push(c)
+      }
+      return a;
+    }, []
+  );
   const datasets = ["SUCCESS", "ERROR"].map(s => {
     return {
       label: s,
