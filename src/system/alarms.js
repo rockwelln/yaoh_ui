@@ -20,7 +20,7 @@ import moment from "moment";
 import {Pagination} from "../utils/datatable";
 
 
-export function fetchAlarms(criteria, paging, sorting, onDone, onSuccess) {
+export function fetchAlarms(criteria, paging, sorting, onDone, onSuccess, silentError) {
   const url = new URL(API_URL_PREFIX + "/api/v01/alarms");
   if(criteria) {
     url.searchParams.append("filter", JSON.stringify(criteria));
@@ -38,7 +38,7 @@ export function fetchAlarms(criteria, paging, sorting, onDone, onSuccess) {
     })
     .catch(error => {
       onDone && onDone();
-      NotificationsManager.error("Failed to fetch alarms", error.message);
+      !silentError && NotificationsManager.error("Failed to fetch alarms", error.message);
     })
 }
 

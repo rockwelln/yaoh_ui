@@ -180,8 +180,8 @@ function AsyncApioNavBar({user_info, logoutUser, database_status}){
   const [alarms, setAlarms] = useState([]);
 
   useEffect(() => {
-    fetchAlarms({field: "active", op: "eq", value: true}, null, null, null, a => setAlarms(a.alarms));
-    const handler = setInterval(() => fetchAlarms({field: "active", op: "eq", value: true}, null, null, null, a => setAlarms(a.alarms)), 5000);
+    fetchAlarms({field: "active", op: "eq", value: true}, null, null, null, a => setAlarms(a.alarms), true);
+    const handler = setInterval(() => fetchAlarms({field: "active", op: "eq", value: true}, null, null, null, a => setAlarms(a.alarms), true), 5000);
     return () => { clearInterval(handler) }
   }, []);
 
