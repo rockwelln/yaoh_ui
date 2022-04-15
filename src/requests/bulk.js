@@ -212,8 +212,8 @@ class NewBulk extends Component {
                                             defaultMessage="Columns available (mandatory: *): {cols}"
                                             values={
                                                 {cols: (
-                                                    action_obj.validation_schema.properties
-                                                        .map(p => action_obj.validation_schema.required.indexOf(p) !== -1?`*${p}*`:p)
+                                                    Object.keys(action_obj.validation_schema.properties)
+                                                        .map(p => action_obj.validation_schema.required && action_obj.validation_schema.required.contains(p) !== -1?`*${p}*`:p)
                                                         .join(", ")
                                                 )}
                                             }/>
