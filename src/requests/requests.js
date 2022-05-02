@@ -2570,7 +2570,7 @@ export class Requests extends Component{
             activity_id: { model: 'instances', value: '', op: 'eq' },
             tenant_id: { model: 'requests', value: '', op: 'eq' },
             site_id: { model: 'requests', value: '', op: 'eq' },
-            number: { model: 'requests', value: '', op: 'like' },
+            numbers: { model: 'requests', value: '', op: 'eq' },
             status: { model: 'instances', value: '', op: 'eq' },
             kind: { model: 'instances', value: '', op: 'eq' },
             created_on: { model: 'requests', value: '', value2: '', op: 'ge' },
@@ -2647,14 +2647,14 @@ export class Requests extends Component{
             )
             .map(f => {
                 switch(f) {
-                    case 'number':
-                        // special handling to look into the ranges of the requests
-                        return {
-                            model: request_data_model,
-                            field: 'numbers',
-                            op: filter_criteria[f].op,
-                            value: '%' + filter_criteria[f].value.trim() + '%'
-                        };
+                    // case 'number':
+                    //     // special handling to look into the ranges of the requests
+                    //     return {
+                    //         model: request_data_model,
+                    //         field: 'numbers',
+                    //         op: filter_criteria[f].op,
+                    //         value: '%' + filter_criteria[f].value.trim() + '%'
+                    //     };
                     case 'proxied_method':
                         return {
                             model: filter_criteria[f].model,
@@ -3158,20 +3158,28 @@ export class Requests extends Component{
 
                             <FormGroup>
                                 <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="number" defaultMessage="Number" />
+                                    <FormattedMessage id="object" defaultMessage="Object" />
                                 </Col>
 
                                 <Col sm={1}>
-                                    <FormControl componentClass="select" value="like" readOnly>
+                                    <FormControl
+                                        componentClass="select"
+                                        value={filter_criteria.numbers.op}
+                                        onChange={e => this.setState({
+                                            filter_criteria: update(this.state.filter_criteria,
+                                                {numbers: {$merge: {op: e.target.value}}})
+                                        })}>
+                                        <option value="eq">==</option>
+                                        <option value="ne">!=</option>
                                         <option value="like">like</option>
                                     </FormControl>
                                 </Col>
 
                                 <Col sm={8}>
-                                    <FormControl componentClass="input" value={filter_criteria.number && filter_criteria.number.value}
+                                    <FormControl componentClass="input" value={filter_criteria.numbers && filter_criteria.numbers.value}
                                         onChange={e => this.setState({
                                             filter_criteria: update(filter_criteria,
-                                                {number: {$merge: {value: e.target.value}}})
+                                                {numbers: {$merge: {value: e.target.value}}})
                                         })} />
                                 </Col>
                             </FormGroup>
@@ -3535,7 +3543,7 @@ export class Requests extends Component{
                                     field: 'site_id', model: request_entities,
                                 },
                                 {
-                                    title: <FormattedMessage id="user-s" defaultMessage="User(s)" />,
+                                    title: <FormattedMessage id="object-s" defaultMessage="Object(s)" />,
                                     field: 'numbers', model: request_entities,
                                     style: {
                                         //whiteSpace: 'nowrap',
