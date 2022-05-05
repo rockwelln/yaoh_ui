@@ -3117,6 +3117,7 @@ export class Requests extends Component{
                                         })}>
                                         <option value="eq">==</option>
                                         <option value="ne">!=</option>
+                                        <option value="like">like</option>
                                     </FormControl>
                                 </Col>
 
@@ -3144,6 +3145,7 @@ export class Requests extends Component{
                                         })}>
                                         <option value="eq">==</option>
                                         <option value="ne">!=</option>
+                                        <option value="like">like</option>
                                     </FormControl>
                                 </Col>
 
@@ -3241,6 +3243,7 @@ export class Requests extends Component{
                                             })}>
                                             <option value="eq">==</option>
                                             <option value="ne">!=</option>
+                                            <option value="like">like</option>
                                         </FormControl>
                                     </Col>
 
@@ -3268,6 +3271,7 @@ export class Requests extends Component{
                                             })}>
                                             <option value="eq">==</option>
                                             <option value="ne">!=</option>
+                                            <option value="like">like</option>
                                         </FormControl>
                                     </Col>
 
