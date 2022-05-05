@@ -1683,7 +1683,11 @@ export class Transaction extends Component {
 
     onReplay(activity_id, task_id) {
         const _innerReplay = ({prefix}) => {
-          return fetch_put(`/${prefix || "api/v01"}/transactions/${activity_id}/tasks/${task_id}`, {})
+          let u = `${prefix || "/api/v01"}/transactions/${activity_id}/tasks/${task_id}`;
+          if(u[0] !== '/') {
+            u = '/' + u
+          }
+          return fetch_put(u, {})
             .then(() => {
                 !this.cancelLoad && this.setState({replaying: false});
                 if(USE_WS) {
@@ -1731,7 +1735,11 @@ export class Transaction extends Component {
       const meta = JSON.stringify({replay_behaviour: replay_behaviour});
 
       const _innerReplay = ({prefix}) => {
-        return fetch_put(`/${prefix || "api/v01"}/transactions/${activity_id}/tasks/${task_id}?meta=${meta}`, {})
+        let u = `${prefix || "/api/v01"}/transactions/${activity_id}/tasks/${task_id}?meta=${meta}`;
+        if(u[0] !== '/') {
+          u = '/' + u
+        }
+        return fetch_put(u, {})
           .then(() => {
             !this.cancelLoad && this.setState({replaying: false});
             if (USE_WS) {

@@ -299,7 +299,7 @@ function NewProfile(props) {
                                   <Checkbox
                                     checked={hasAccess("requests.others_requests")}
                                     onChange={e => toggleAccess("requests.others_requests", e.target.checked)}>
-                                    from others
+                                    all
                                   </Checkbox>
                                 </Checkbox>
 
@@ -307,6 +307,20 @@ function NewProfile(props) {
                                   checked={hasAccess("cron_requests")}
                                   onChange={e => toggleAccess("cron_requests", e.target.checked)}>
                                   scheduled requests
+                                </Checkbox>
+
+                                <Checkbox disabled={true}>
+                                only against
+                                {
+                                  ProvProxiesManager.listProxies().map((p, i) =>
+                                    <Checkbox
+                                      key={`requests.on.${p.name}`}
+                                      checked={hasAccess(`requests.on.${p.name}`)}
+                                      onChange={e => toggleAccess(`requests.on.${p.name}`, e.target.checked)}>
+                                      {p.name}
+                                    </Checkbox>
+                                  )
+                                }
                                 </Checkbox>
 
                                 <Checkbox
@@ -463,12 +477,25 @@ function UpdateProfile(props) {
                                       <Checkbox
                                         checked={hasAccess("requests.others_requests")}
                                         onChange={e => toggleAccess("requests.others_requests", e.target.checked)}>
-                                        from others
+                                        all
                                       </Checkbox>
                                       <Checkbox
                                         checked={hasAccess("cron_requests")}
                                         onChange={e => toggleAccess("cron_requests", e.target.checked)}>
                                         scheduled requests
+                                      </Checkbox>
+                                      <Checkbox disabled={true}>
+                                      only against
+                                      {
+                                        ProvProxiesManager.listProxies().map((p, i) =>
+                                          <Checkbox
+                                            key={`requests.on.${p.name}`}
+                                            checked={hasAccess(`requests.on.${p.name}`)}
+                                            onChange={e => toggleAccess(`requests.on.${p.name}`, e.target.checked)}>
+                                            {p.name}
+                                          </Checkbox>
+                                        )
+                                      }
                                       </Checkbox>
                                     </Checkbox>
 
