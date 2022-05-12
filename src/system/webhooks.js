@@ -424,7 +424,7 @@ function UpdateWebhook(props) {
                         <Table>
                             <tbody>
                             {
-                                wbHistory.sort((a, b) => a.history_id - b.history_id).map(h =>
+                                wbHistory.sort((a, b) => b.history_id - a.history_id).map(h =>
                                     <HistoryLine key={h.history_id} h={h}/>
                                 )
                             }
