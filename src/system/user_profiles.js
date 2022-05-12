@@ -172,7 +172,8 @@ function NewProfile(props) {
     const onClose_ = () => {setShow(false); setProfile(new_profile); props.onClose();};
     const validName = profile.name.length !== 0 ? "success" : null;
 
-    const hasAccess = (right) => profile.accesses && profile.accesses.includes(right)
+    const hasAccess = (right) => profile.accesses && profile.accesses.includes(right);
+    const hasPrefixAccess = (prefix) => profile.accesses && profile.accesses.filter(a => a.startsWith(prefix)).length !== 0;
 
     const toggleAccess = (right, checked) =>
       checked ?
@@ -295,32 +296,32 @@ function NewProfile(props) {
                                 <Checkbox
                                   checked={hasAccess("requests")}
                                   onChange={e => toggleAccess("requests", e.target.checked)}>
-                                  requests
+                                  search for requests
                                   <Checkbox
                                     checked={hasAccess("requests.others_requests")}
                                     onChange={e => toggleAccess("requests.others_requests", e.target.checked)}>
-                                    all
+                                    from any user
+                                  </Checkbox>
+
+                                  <Checkbox checked={hasPrefixAccess("requests.on.")} disabled={true}>
+                                    only against
+                                    {
+                                      ProvProxiesManager.listProxies().map((p, i) =>
+                                        <Checkbox
+                                          key={`requests.on.${p.name}`}
+                                          checked={hasAccess(`requests.on.${p.name}`)}
+                                          onChange={e => toggleAccess(`requests.on.${p.name}`, e.target.checked)}>
+                                          {p.name}
+                                        </Checkbox>
+                                      )
+                                    }
                                   </Checkbox>
                                 </Checkbox>
 
                                 <Checkbox
                                   checked={hasAccess("cron_requests")}
                                   onChange={e => toggleAccess("cron_requests", e.target.checked)}>
-                                  scheduled requests
-                                </Checkbox>
-
-                                <Checkbox disabled={true}>
-                                only against
-                                {
-                                  ProvProxiesManager.listProxies().map((p, i) =>
-                                    <Checkbox
-                                      key={`requests.on.${p.name}`}
-                                      checked={hasAccess(`requests.on.${p.name}`)}
-                                      onChange={e => toggleAccess(`requests.on.${p.name}`, e.target.checked)}>
-                                      {p.name}
-                                    </Checkbox>
-                                  )
-                                }
+                                  search for scheduled jobs
                                 </Checkbox>
 
                                 <Checkbox
@@ -336,7 +337,7 @@ function NewProfile(props) {
                                 <Checkbox
                                   checked={hasAccess("provisioning")}
                                   onChange={e => toggleAccess("provisioning", e.target.checked)}>
-                                  provisioning
+                                  show/hide provisioning menu
                                   {
                                     ProvProxiesManager.listProxies().map((p, i) =>
                                       <Checkbox
@@ -347,6 +348,10 @@ function NewProfile(props) {
                                       </Checkbox>
                                     )
                                   }
+                                  <HelpBlock>
+                                    Only affects the menu entries visible in the provisioning section.<br/>
+                                    API calls are limited in the proxy rules section of the user profile.
+                                  </HelpBlock>
                                 </Checkbox>
                                 <Checkbox
                                   checked={hasAccess("settings")}
@@ -401,7 +406,8 @@ function UpdateProfile(props) {
     const refresh = () => fetchProfileDetails(props.profile.id).then(data => setProfile(data.profile));
     const validName = null;
 
-    const hasAccess = (right) => profile.accesses && profile.accesses.includes(right)
+    const hasAccess = (right) => profile.accesses && profile.accesses.includes(right);
+    const hasPrefixAccess = (prefix) => profile.accesses && profile.accesses.filter(a => a.startsWith(prefix)).length !== 0;
 
     const toggleAccess = (right, checked) =>
       checked ?
@@ -473,18 +479,14 @@ function UpdateProfile(props) {
                                     <Checkbox
                                       checked={hasAccess("requests")}
                                       onChange={e => toggleAccess("requests", e.target.checked)}>
-                                      requests
+                                      search for requests
                                       <Checkbox
                                         checked={hasAccess("requests.others_requests")}
                                         onChange={e => toggleAccess("requests.others_requests", e.target.checked)}>
-                                        all
+                                        from any user
                                       </Checkbox>
-                                      <Checkbox
-                                        checked={hasAccess("cron_requests")}
-                                        onChange={e => toggleAccess("cron_requests", e.target.checked)}>
-                                        scheduled requests
-                                      </Checkbox>
-                                      <Checkbox disabled={true}>
+
+                                      <Checkbox checked={hasPrefixAccess("requests.on.")} disabled={true}>
                                       only against
                                       {
                                         ProvProxiesManager.listProxies().map((p, i) =>
@@ -500,6 +502,12 @@ function UpdateProfile(props) {
                                     </Checkbox>
 
                                     <Checkbox
+                                        checked={hasAccess("cron_requests")}
+                                        onChange={e => toggleAccess("cron_requests", e.target.checked)}>
+                                        search for scheduled jobs
+                                    </Checkbox>
+
+                                    <Checkbox
                                       checked={hasAccess("bulks")}
                                       onChange={e => toggleAccess("bulks", e.target.checked)}>
                                       bulks
@@ -512,7 +520,7 @@ function UpdateProfile(props) {
                                     <Checkbox
                                       checked={hasAccess("provisioning")}
                                       onChange={e => toggleAccess("provisioning", e.target.checked)}>
-                                      provisioning
+                                      show/hide provisioning menu
                                       {
                                         ProvProxiesManager.listProxies().map((p, i) =>
                                           <Checkbox
@@ -523,6 +531,10 @@ function UpdateProfile(props) {
                                           </Checkbox>
                                         )
                                       }
+                                      <HelpBlock>
+                                        Only affects the menu entries visible in the provisioning section.<br/>
+                                        API calls are limited in the proxy rules section of the user profile.
+                                      </HelpBlock>
                                     </Checkbox>
                                     <Checkbox
                                       checked={hasAccess("data")}
