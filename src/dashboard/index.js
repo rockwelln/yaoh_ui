@@ -29,20 +29,14 @@ const REFRESH_CYCLE = 10;
 function fetch_gateways(onSuccess) {
     fetch_get('/api/v01/gateways')
         .then(data => onSuccess(data.gateways))
-        .catch(error => NotificationsManager.error(
-            <FormattedMessage id="gw-stats-fect-failed" defaultMessage="Failed to fetch gateways"/>,
-            error.message
-        ));
+        .catch(error => console.error("Failed to fetch gateways", error));
 }
 
 
 function fetch_stats(isNpact, onSuccess) {
     fetch_get(`/api/v01/${isNpact?"npact":"apio"}/stats`)
         .then(data => onSuccess(data))
-        .catch(error => NotificationsManager.error(
-                <FormattedMessage id="core-stats-fect-failed" defaultMessage="Failed to fetch statistics"/>,
-                error.message
-        ));
+        .catch(error => console.error("Failed to fetch statistics", error));
 }
 
 export default function Dashboard(props) {
