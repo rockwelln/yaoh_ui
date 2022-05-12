@@ -39,13 +39,13 @@ import {DeleteConfirmButton} from "../utils/deleteConfirm";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {faArrowDown, faArrowUp, faChartBar, faCopy, faDownload, faSpinner} from "@fortawesome/free-solid-svg-icons";
 import {Link} from "react-router-dom";
-import {SimulatorPanel} from "./simulator";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 import {fetchConfiguration, Param2Input} from "./nodeInputs";
 import Ajv from "ajv";
 import Select from "react-select";
 import ButtonGroup from "react-bootstrap/lib/ButtonGroup";
 import moment from "moment";
+import deepEqual from "../utils/deepEqual";
 
 
 const NEW_ACTIVITY = {
@@ -162,7 +162,7 @@ function fetchActivityVersions(id, onSuccess) {
     fetch_get(`/api/v01/activities/${id}/versions`)
         .then(resp => onSuccess(resp.activity_versions))
         .catch(error => {
-            NotificationsManager.error("Failed to fetch versions", error.message);
+            console.error("Failed to fetch versions", error);
         });
 }
 
@@ -1178,9 +1178,9 @@ function compareActivitiesDef(a, b) {
   return (b.definition &&
     (
       typeof b.definition === "string" &&
-        JSON.stringify(JSON.parse(a.definition)) !== JSON.stringify(JSON.parse(b.definition)) ||
+        !deepEqual(JSON.parse(a.definition), JSON.parse(b.definition)) ||
       typeof b.definition === "object" &&
-        JSON.stringify(JSON.parse(a.definition)) !== JSON.stringify(b.definition)
+        !deepEqual(JSON.parse(a.definition), b.definition)
     )
   )
 }
