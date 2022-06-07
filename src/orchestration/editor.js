@@ -109,7 +109,7 @@ export function getDefinition(editor, title) {
             };
             if(c.getAttribute('original_name') === 'start') hasAStart = true;
             if(c.hasAttribute('attrList') && c.getAttribute('attrList') !== undefined) {
-                cell.params = c.getAttribute('attrList').split(",").reduce((xa, a) => {xa[a] = c.getAttribute(a); return xa;}, {});
+                cell.params = c.getAttribute('attrList').split(",").reduce((xa, a) => {xa[a] = c.value.params[a]; return xa;}, {});
             }
 
             switch(c.style) {
@@ -157,9 +157,11 @@ export function addNode(editor, def, name, paramsFields) {
         node.setAttribute('original_name', value);
         node.setAttribute('outputs', c.outputs);
         node.setAttribute('attrList', (c.params && c.params.map(p => p.name || p).join(',')) || '');
+        node.params = {};
         c.params && c.params.map(p => {
             const param_name = p.name || p;
-            node.setAttribute(param_name, paramsFields[param_name] || '');
+            // node.setAttribute(param_name, paramsFields[param_name] || '');
+            node.params[param_name] = paramsFields[param_name] || '';
             return null;
         });
         let v = undefined;
@@ -282,10 +284,12 @@ export function updateGraphModel(editor, activity, options) {
             node.setAttribute('label', name);
             node.setAttribute('original_name', c.original_name);
             node.setAttribute('outputs', c.outputs);
+            node.params = {};
             if(c.params !== undefined && Object.keys(c.params).length !== 0) {
                 node.setAttribute('attrList', Object.keys(c.params).filter(p => p).map(param_name => {
-                    const value = c.params[param_name];
-                    node.setAttribute(param_name, value);
+                    // const value = c.params[param_name];
+                    // node.setAttribute(param_name, value);
+                    node.params[param_name] = c.params[param_name];
                     return param_name;
                 }))
             }
@@ -353,10 +357,12 @@ export function updateGraphModel(editor, activity, options) {
             node.setAttribute('label', e.name);
             node.setAttribute('original_name', e.original_name);
             node.setAttribute('outputs', e.outputs);
+            node.params = {};
             if(e.params !== undefined && Object.keys(e.params).length !== 0) {
                 node.setAttribute('attrList', Object.keys(e.params).filter(p => p).map(param_name => {
                     const value = e.params[param_name];
-                    node.setAttribute(param_name, value);
+                    // node.setAttribute(param_name, value);
+                    node.params[param_name] = value;
                     return param_name;
                 }))
             }

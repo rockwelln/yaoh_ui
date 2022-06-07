@@ -917,7 +917,7 @@ export function EditCellModal(props) {
         }
         if(cell.value.getAttribute("attrList")) {
           setStaticParams(cell.value.getAttribute('attrList').split(",").reduce((o, a) => {
-            o[a] = cell.value.getAttribute(a);
+            o[a] = cell.value.params[a];
             return o;
           }, {}))
         }
@@ -1582,7 +1582,7 @@ export function ActivityEditor(props) {
                         c_def.outputs = (cell.getAttribute('outputs') || "").split(",");
                         c_def.x = cell.geometry.x + 10;
                         c_def.y = cell.geometry.y + 10;
-                        const params = (cell.getAttribute('attrList') || "").split(",").reduce((xa, a) => {xa[a] = cell.getAttribute(a); return xa;}, {});
+                        const params = (cell.getAttribute('attrList') || "").split(",").reduce((xa, a) => {xa[a] = cell.params[a]; return xa;}, {});
                         e.addNode(editor, c_def, newName, params);
                     }
                 })} />

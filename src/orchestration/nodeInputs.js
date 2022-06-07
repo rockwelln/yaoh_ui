@@ -232,6 +232,77 @@ function ContextKey({value, onChange}) {
 }
 
 
+function ContextKeyValues({value, onChange}) {
+  const [newEntry, setNewEntry] = useState({key: "", value: "", cleanup: false});
+
+  const addNewEntry = () => {
+    const es = [...value || [], newEntry];
+    onChange(es)
+    setNewEntry({key: "", value: "", cleanup: false});
+  }
+
+  return (
+    <Table>
+      <thead>
+        <tr>
+          <th>key</th>
+          <th>value</th>
+          <th>cl.</th>
+          <th/>
+        </tr>
+      </thead>
+      <tbody>
+      {
+        value?.map((e, i) =>
+          <tr>
+            <td style={{width: "40%"}}>
+              {e.key}
+            </td>
+            <td style={{width: "40%"}}>
+              <pre>{e.value}</pre>
+            </td>
+            <td style={{width: "15%"}}>
+              {e.cleanup?"✔️":""}
+            </td>
+            <td>
+              <Button onClick={() => {
+                onChange(update(value, {$splice: [[i, 1]]}))
+              }}>{"-"}</Button>
+            </td>
+          </tr>)
+      }
+        <tr>
+          <td style={{width: "40%"}}>
+            <FormControl
+              value={newEntry.key}
+              onChange={e => setNewEntry(update(newEntry, {$merge: {key: e.target.value}}))} />
+          </td>
+          <td style={{width: "40%"}}>
+            <FormControl
+              componentClass="textarea"
+              rows={4}
+              value={newEntry.value}
+              onChange={e => setNewEntry(update(newEntry, {$merge: {value: e.target.value}}))}
+              style={{resize: "both"}} />
+          </td>
+          <td style={{width: "15%"}}>
+            <Checkbox
+              checked={newEntry.cleanup}
+              onChange={e => setNewEntry(update(newEntry, {$merge: {cleanup: e.target.checked}}))} />
+          </td>
+          <td>
+            <Button
+              onClick={() => addNewEntry()}
+              disabled={newEntry.key.length === 0}
+            >{"+"}</Button>
+          </td>
+        </tr>
+      </tbody>
+    </Table>
+  )
+}
+
+
 export function HttpHeaders(props) {
   const {value, onChange} = props;
   const [newHeader, setNewHeader] = useState(["", ""])
@@ -689,6 +760,9 @@ export function Param2Input({param, activity, staticParams, cells, value, onChan
       break;
     case 'context_key':
       i = <ContextKey value={value} onChange={e => onChange(e)} />
+      break;
+    case 'context_keys':
+      i = <ContextKeyValues value={value} onChange={e => onChange(e)} />
       break;
     default:
       i = <BasicInput value={value} onChange={e => onChange(e.target.value)} />
