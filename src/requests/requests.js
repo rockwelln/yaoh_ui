@@ -877,7 +877,7 @@ function ErrorEntry(props){
                 <Button bsStyle="link" onClick={() => setShowDetails(true)}>...</Button>
             </td>
             <td>{userLocalizeUtcDate(moment.utc(entry.created_on), userInfo).format()}</td>
-            <Modal show={showDetails} onHide={() => setShowDetails(false)}>
+            <Modal show={showDetails} onHide={() => setShowDetails(false)} bsSize={"large"}>
                 <Modal.Header closeButton>
                     <Modal.Title><FormattedMessage id="error-details" defaultMessage="Error details" /></Modal.Title>
                 </Modal.Header>
@@ -901,7 +901,7 @@ function ErrorEntry(props){
                             </Col>
 
                             <Col sm={9}>
-                                {entry.description && entry.description.split("\n").map((l, i) => <FormControl.Static key={i}>{l}</FormControl.Static>)}
+                                <pre>{entry.description}</pre>
                             </Col>
                         </FormGroup>
                     </Form>
