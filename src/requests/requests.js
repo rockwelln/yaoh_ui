@@ -1263,10 +1263,6 @@ export function Attachments({txId, userInfo}) {
     </div>);
 }
 
-const FORCEABLE_TASKS = [
-    "delete @ENUM",
-];
-
 function timer(ms) {
  return new Promise(res => setTimeout(res, ms));
 }
@@ -1309,7 +1305,6 @@ export const TasksTable = ({tasks, definition, onReplay, onRollback, user_can_re
                     const can_replay = (replayable || t.cell_id === 'end') && t.status === 'ERROR' &&
                         t.id === Math.max(...tasks.filter(ot => ot.cell_id === t.cell_id).map(oot => oot.id));
                     const support_rollback = definition.cells && definition.cells[t.cell_id] && definition.cells[t.cell_id].outputs.includes("rollback");
-                    const support_force = FORCEABLE_TASKS.includes(t.cell_id);
                     const support_skip = definition.cells && definition.cells[t.cell_id] && definition.cells[t.cell_id].outputs.includes("skip");
 
                     return (
@@ -1332,12 +1327,6 @@ export const TasksTable = ({tasks, definition, onReplay, onRollback, user_can_re
                                         can_replay && support_rollback &&
                                         <Button bsStyle="danger" onClick={() => onRollback(tx_id, t.id, "rollback")}>
                                             <FormattedMessage id="rollback" defaultMessage="Rollback"/>
-                                        </Button>
-                                    }
-                                    {
-                                        can_replay && support_force &&
-                                        <Button bsStyle="danger" onClick={() => onRollback(tx_id, t.id, "force")}>
-                                            <FormattedMessage id="force" defaultMessage="Force"/>
                                         </Button>
                                     }
                                     {
