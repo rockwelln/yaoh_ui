@@ -2637,7 +2637,7 @@ function AlarmsPanel({alarms, onChange}) {
 
               <Col sm={9}>
                 <Checkbox
-                  checked={alarms.alarms.http_success_rate.system_clear}
+                  checked={alarms.alarms?.http_success_rate?.system_clear}
                   onChange={e => onChange(update(alarms, {alarms: {http_success_rate: {$merge: {system_clear: e.target.checked}}}}))}
                 />
               </Col>
@@ -2685,7 +2685,7 @@ function AlarmsPanel({alarms, onChange}) {
 
               <Col sm={9}>
                 <Checkbox
-                  checked={alarms.alarms.http_south_success_rate.system_clear}
+                  checked={alarms.alarms?.http_south_success_rate?.system_clear}
                   onChange={e => onChange(update(alarms, {alarms: {http_south_success_rate: {$merge: {system_clear: e.target.checked}}}}))}
                 />
               </Col>
@@ -2729,7 +2729,7 @@ function AlarmsPanel({alarms, onChange}) {
 
               <Col sm={9}>
                 <Checkbox
-                  checked={alarms.alarms.network_issues.system_clear}
+                  checked={alarms.alarms?.network_issues?.system_clear}
                   onChange={e => onChange(update(alarms, {alarms: {network_issues: {$merge: {system_clear: e.target.checked}}}}))}
                 />
               </Col>
