@@ -657,6 +657,7 @@ function NewCellModal(props)  {
 
     const params = definition && definition.params && definition
       .params
+      .sort((a, b) => a.ui_order - b.ui_order)
       .map(param => {
         const n = param.name || param;
         const error = isValid(param, staticParams[n] || "");
@@ -964,6 +965,7 @@ export function EditCellModal(props) {
     const params = paramsList
       // get the param definition (if possible)
       .map(p => (cellDef && cellDef.params.find(param => (param.name || param) === p)) || p)
+      .sort((a, b) => a.ui_order - b.ui_order)
       .map(param => {
         const n = param.name || param;
         const error = isValid(param, staticParams[n] || "");
