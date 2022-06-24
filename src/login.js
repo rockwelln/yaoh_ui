@@ -313,8 +313,7 @@ export function LoginForm({onLogin}) {
 }
 
 
-export function LoginPage(props) {
-    const {error_msg, standby_alert, logo, children} = props;
+export function LoginPage({error_msg, standby_alert, logo, children}) {
     return (
         <div>
             <Row style={{height: "20px", display: "block"}}/>

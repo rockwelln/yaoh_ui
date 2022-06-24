@@ -56,6 +56,7 @@ import {AuthCallback, AuthSilentCallback} from "./sso/login";
 import './App.css';
 import apio_brand from "./images/apio.png";
 import apio_logo from "./images/logo.png";
+import npact_logo from "./images/npact_logo.png";
 import loading from './loading.gif';
 import {sso_auth_service} from "./sso/auth_service";
 import {Webhooks} from "./system/webhooks";
@@ -733,8 +734,8 @@ class App extends Component {
 
     getPlatformDetails() {
         fetchPlatformDetails(data => {
-          if (data.modules) {
-              UiFlavourService.updateFlavourFromModules(data.modules);
+          if (data.gui?.modules) {
+              UiFlavourService.updateFlavourFromModules(data.gui.modules);
               document.title = UiFlavourService.getWindowTitle();
           }
         })
@@ -881,7 +882,7 @@ class App extends Component {
                             component={() => (
                                 <LoginPage
                                     error_msg={error_msg}
-                                    logo={UiFlavourService.isApio() ? apio_logo : null}
+                                    logo={UiFlavourService.isApio() ? apio_logo : UiFlavourService.isNpact() ? npact_logo: null}
                                     standby_alert={standby_alert} >
                                     <ResetPasswordRequestForm />
                                 </LoginPage>
@@ -891,7 +892,7 @@ class App extends Component {
                             component={() => (
                                 <LoginPage
                                     error_msg={error_msg}
-                                    logo={UiFlavourService.isApio() ? apio_logo : null}
+                                    logo={UiFlavourService.isApio() ? apio_logo : UiFlavourService.isNpact() ? npact_logo: null}
                                     standby_alert={standby_alert} >
                                     <LoginForm
                                         sso={this.state.SSO}
