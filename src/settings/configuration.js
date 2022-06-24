@@ -3797,7 +3797,7 @@ export default function Configuration({userInfo, history}) {
           <SSOPanel
             sso={config.content.SSO || []}
             gateways={config.content.gateways}
-            enabledMods={config.content.gui?.modules}
+            enabledMods={config.content.gui?.modules || []}
             onChange={v => setConfig(update(config, {content: {SSO: {$set: v}}}))}
           />
         </Tab>

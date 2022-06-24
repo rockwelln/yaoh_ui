@@ -1122,7 +1122,7 @@ const CitcHeaders = [
   },
   { title: <FormattedMessage id="donor" defaultMessage="Donor" />, field: 'donor_name', className: 'visible-md visible-lg' },
   { title: <FormattedMessage id="recipient" defaultMessage="Recipient" />, field: 'recipient_name', className: 'visible-md visible-lg' },
-  { title: <FormattedMessage id="tenant" defaultMessage="Tenant" />, field: 'tenant', className: 'visible-lg' },
+  { title: <FormattedMessage id="tenant" defaultMessage="Tenant" />, field: 'tenant', render: n => n.nprequest.tenant, className: 'visible-lg' },
   { title: <FormattedMessage id="customer-id" defaultMessage="Customer ID" />, field: 'customer_id', render: n => n.nprequest.customer_id, className: 'visible-md visible-lg' },
   {
     title: <FormattedMessage id="ranges" defaultMessage="Ranges" />, render: n => (

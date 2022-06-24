@@ -242,7 +242,7 @@ function validateRanges(ranges) {
   }).filter(e => e !== null);
 }
 
-function validContactID(personIDType, value) {
+function validateContactID(personIDType, value) {
   if (value.length === 0) return null;
 
   if (personIDType === "GccId") {
@@ -298,7 +298,7 @@ export function NPPortInRequest() {
   const validRanges = request.ranges.length === 1 && request.ranges[0].from === '' && request.ranges[0].to === '' ? null : validateRanges(request.ranges).length === 0 && rangeError === undefined ? "success" : "error";
 
   const validContactPhone = request.subscriber_data.ContactPhone.length === 0 ? null : "success";
-  const validContactID = validContactID(request.personIDType, request.subscriber_data[request.personIDType]);
+  const validContactID = validateContactID(request.personIDType, request.subscriber_data[request.personIDType]);
   const validPortReqFormID = request.port_req_form_id.length === 0 ? null : "success";
 
   const validForm = validateRanges(request.ranges).length === 0 && validContactPhone === "success" && validContactID === "success" && validPortReqFormID === "success";
