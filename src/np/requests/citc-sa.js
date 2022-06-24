@@ -287,7 +287,10 @@ export function NPPortInRequest() {
   const [loading, setLoading] = useState(false);
   const [rangeError, setRangeError] = useState(undefined);
 
-  useEffect(() => fetchOperators(null, setOperators), []);
+  useEffect(() => {
+    fetchOperators(null, setOperators);
+    document.title = "New port-in";
+  }, []);
   useEffect(() => {
     const o = operators && operators.find(o => o.name === DEFAULT_RECIPIENT);
     if (o) {
@@ -761,6 +764,7 @@ export class NPDisconnectRequest extends Component {
   }
 
   componentDidMount() {
+    document.title = "New Disconnect";
     fetchOperators(this.props.auth_token,
       data => !this.cancelLoad && this.setState({ operators: data }),
       error => !this.cancelLoad && NotificationsManager.error(
