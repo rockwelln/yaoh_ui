@@ -21,7 +21,7 @@ import {FormattedMessage} from 'react-intl';
 
 import AsyncApioHelp from './help/async-apio-help';
 import Dashboard from './dashboard';
-import {CustomRequests, Request, Requests, Transaction} from './requests/requests';
+import {ScheduledRequests, Request, Requests, Transaction} from './requests/requests';
 import Timers from './requests/timers';
 import {Bulks} from "./requests/bulk";
 import {BulkActions} from "./system/bulk_actions";
@@ -973,7 +973,7 @@ class App extends Component {
                         <Route path="/custom-transactions/list"
                                component={props => (
                                    localUser.isAllowed(accesses.cron_requests) ?
-                                   <CustomRequests
+                                   <ScheduledRequests
                                        user_info={user_info}
                                        {...props} /> :
                                    <NotAllowed/>
