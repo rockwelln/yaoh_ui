@@ -1701,7 +1701,7 @@ export class Transaction extends Component {
         this.setState({replaying: true});
 
         if(tx && tx.super_instance_chain && tx.super_instance_chain.length !== 0) {
-          const topInstanceID = tx.super_instance_chain[tx.super_instance_chain.length-1].id;
+          const topInstanceID = tx.super_instance_chain.sort((a, b) => a.id - b.id)[0].id;
           fetchInstance(topInstanceID, i => {
             if(i.original_request_id) {
               fetchRequest(
@@ -1710,7 +1710,7 @@ export class Transaction extends Component {
                 () => { this.setState({replaying: false})}
               )
             } else {
-              _innerReplay()
+              _innerReplay({prefix: null})
             }
           }, () => { this.setState({replaying: false}) })
         } else {
