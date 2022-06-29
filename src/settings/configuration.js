@@ -3534,7 +3534,7 @@ function NewDataStoreModal({show, onHide}) {
     <Modal show={show} onHide={() => onHide(undefined)} backdrop={false}>
       <Modal.Header closeButton>
         <Modal.Title>
-          New daata store
+          New data store
         </Modal.Title>
       </Modal.Header>
       <Modal.Body>
