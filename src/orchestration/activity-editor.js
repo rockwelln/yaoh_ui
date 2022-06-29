@@ -871,6 +871,13 @@ function OutputsTable(props) {
                     disabled={usedRows.includes(output.value) || output.custom} />
                 </td>
                 <td>{output.value}</td>
+                <td>
+                  <Checkbox
+                    checked={output.errorPath}
+                    onChange={e => onDragEnd(update(rows, {[i]: {$merge: {errorPath: e.target.checked}}}))} >
+                    Error path
+                  </Checkbox>
+                </td>
               </tr>
             )
           })
@@ -939,7 +946,8 @@ export function EditCellModal(props) {
                 o.push({
                   value: e,
                   custom: cellDef.outputs?!cellDef.outputs.includes(e):true,
-                  visible: cell.value.getAttribute("outputs").split(",").includes(e)
+                  visible: cell.value.getAttribute("outputs").split(",").includes(e),
+                  errorPath: cell.value.getAttribute("error_outputs")?.split(",").includes(e)
                 })
                 return o;
               }, [])
@@ -1067,6 +1075,7 @@ export function EditCellModal(props) {
                         originalName: originalName,
                         params: staticParams,
                         outputs: outputs.filter(o => o.visible).map(o => o.value),
+                        errorPaths: outputs.filter(o => o.errorPath).map(o => o.value),
                       });
                     }}
                   >
@@ -1606,10 +1615,16 @@ export function ActivityEditor(props) {
                     if(c.outputs !== undefined) {
                       activity.definition.entities[i]["outputs"] = c.outputs;
                     }
+                    if(c.errorPaths !== undefined) {
+                      activity.definition.entities[i]["error_outputs"] = c.errorPaths;
+                    }
                   } else {
                     activity.definition.cells[c.oldName]["params"] = c.params;
                     if(c.outputs !== undefined) {
                       activity.definition.cells[c.oldName]["outputs"] = c.outputs;
+                    }
+                    if(c.errorPaths !== undefined) {
+                      activity.definition.cells[c.oldName]["error_outputs"] = c.errorPaths;
                     }
                   }
                   if(c.name !== c.oldName) {
