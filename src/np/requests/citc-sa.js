@@ -95,7 +95,7 @@ function newRequest(request, onSuccess, onError) {
       'IqamaNumber',
       'CommRegNumber',
       'GccId',
-      'AltGovID',
+      'AltGovId',
       'BorderId',
       'UnifiedEntityId',
       'ContactPhone',
@@ -502,7 +502,7 @@ export function NPPortInRequest() {
                   <option value="IqamaNumber">Iqama Number</option>
                   <option value="CommRegNumber">Commercial Reg. Number</option>
                   <option value="GccId">GCC ID</option>
-                  <option value="AltGovID">Alt. Government ID</option>
+                  <option value="AltGovId">Alt. Government ID</option>
                   <option value="BorderId">Border ID number</option>
                   <option value="UnifiedEntityId">Unified Entity ID</option>
                 </FormControl>{'*'}
