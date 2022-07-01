@@ -84,6 +84,7 @@ import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 import Button from "react-bootstrap/lib/Button";
 import AlarmManagement, {fetchAlarms} from "./system/alarms";
 import moment from "moment";
+import Clients from "./system/clients_mgm";
 
 const ListProvisioningGateways=React.lazy(() => import("./provisioning/ListProvisioningGateways"))
 
@@ -1095,7 +1096,9 @@ class App extends Component {
                         <Route path="/system/gateways"
                                component={props => (
                                    localUser.canSee(pages.system_gateways) ?
-                                       <Gateways />:
+                                     (localUser.isModuleEnabled(modules.npact)?
+                                         <Gateways />:
+                                         <Clients />):
                                        <NotAllowed />
                                )}
                                exact />
