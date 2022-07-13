@@ -365,13 +365,7 @@ export function LocalUserProfile({onUserInfoChanged}) {
                             </Col>
 
                             <Col sm={9}>
-                                <FormControl.Static>
-                                    {user_info.token}
-                                    {" "}
-                                    <Button onClick={() => refreshLocalUserApiToken(() => fetchLocalUser(setUserInfo))}>
-                                        <Glyphicon glyph={"refresh"}/>
-                                    </Button>
-                                </FormControl.Static>
+                                <UserToken value={user_info.token} onRefresh={() => refreshLocalUserApiToken(() => fetchLocalUser(setUserInfo))} />
                             </Col>
                         </FormGroup>
                         <FormGroup>
@@ -397,6 +391,32 @@ export function LocalUserProfile({onUserInfoChanged}) {
             </Panel.Body>
         </Panel>
     )
+}
+
+function UserToken({value, onRefresh}) {
+  const [copied, setCopied] = useState(false);
+
+  return (
+      <FormControl.Static>
+          {value}
+          {" "}
+          <Button onClick={() => {
+            navigator.clipboard.writeText(value);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+          }}>
+              {
+                copied ?
+                  <Glyphicon glyph={"ok"} style={{color: "green"}}/> :
+                  <Glyphicon glyph={"copy"}/>
+              }
+          </Button>
+          {" "}
+          <Button onClick={() => onRefresh()}>
+              <Glyphicon glyph={"refresh"}/>
+          </Button>
+      </FormControl.Static>
+  )
 }
 
 

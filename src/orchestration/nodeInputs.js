@@ -31,8 +31,32 @@ export function fetchConfiguration(onSuccess) {
         .catch(console.error);
 }
 
-function SessionHolderInput(props) {
-  const {value, onChange} = props;
+function  DataStoreInput({value, onChange}) {
+  const [stores, setStores] = useState([]);
+  useEffect(() => {
+    fetchConfiguration(
+      c => c.datastores &&
+        setStores(c.datastores.map(h => h.name)
+          .sort((a, b) => a.localeCompare(b))
+        )
+    )
+  }, []);
+  return (
+    <Creatable
+      value={{value: value, label: value}}
+      isClearable
+      isSearchable
+      name="data-store"
+      onChange={(value, action) => {
+        if(["select-option", "create-option", "clear"].includes(action.action)) {
+          onChange(value && value.value);
+        }
+      }}
+      options={stores.map(h => ({value: h, label: h}))} />
+  )
+}
+
+function SessionHolderInput({value, onChange}) {
   const [holders, setHolders] = useState([]);
   useEffect(() => {
     fetchConfiguration(
@@ -228,6 +252,77 @@ function ContextKey({value, onChange}) {
         Delete key on workflow ending
       </Checkbox>
     </>
+  )
+}
+
+
+function ContextKeyValues({value, onChange}) {
+  const [newEntry, setNewEntry] = useState({key: "", value: "", cleanup: false});
+
+  const addNewEntry = () => {
+    const es = [...value || [], newEntry];
+    onChange(es)
+    setNewEntry({key: "", value: "", cleanup: false});
+  }
+
+  return (
+    <Table>
+      <thead>
+        <tr>
+          <th>key</th>
+          <th>value</th>
+          <th>cl.</th>
+          <th/>
+        </tr>
+      </thead>
+      <tbody>
+      {
+        value?.map((e, i) =>
+          <tr>
+            <td style={{width: "40%"}}>
+              {e.key}
+            </td>
+            <td style={{width: "40%"}}>
+              <pre>{e.value}</pre>
+            </td>
+            <td style={{width: "15%"}}>
+              {e.cleanup?"✔️":""}
+            </td>
+            <td>
+              <Button onClick={() => {
+                onChange(update(value, {$splice: [[i, 1]]}))
+              }}>{"-"}</Button>
+            </td>
+          </tr>)
+      }
+        <tr>
+          <td style={{width: "40%"}}>
+            <FormControl
+              value={newEntry.key}
+              onChange={e => setNewEntry(update(newEntry, {$merge: {key: e.target.value}}))} />
+          </td>
+          <td style={{width: "40%"}}>
+            <FormControl
+              componentClass="textarea"
+              rows={4}
+              value={newEntry.value}
+              onChange={e => setNewEntry(update(newEntry, {$merge: {value: e.target.value}}))}
+              style={{resize: "both"}} />
+          </td>
+          <td style={{width: "15%"}}>
+            <Checkbox
+              checked={newEntry.cleanup}
+              onChange={e => setNewEntry(update(newEntry, {$merge: {cleanup: e.target.checked}}))} />
+          </td>
+          <td>
+            <Button
+              onClick={() => addNewEntry()}
+              disabled={newEntry.key.length === 0}
+            >{"+"}</Button>
+          </td>
+        </tr>
+      </tbody>
+    </Table>
   )
 }
 
@@ -429,9 +524,67 @@ function DynamicOutputs(props) {
   )
 }
 
+function TypedValues({value, onChange}) {
+  const [newValue, setNewValue] = useState({value: "", type: "string"});
 
-function SwitchOutputs(props) {
-  const {value, onChange} = props;
+  const addNewEntry = () => {
+    const es = [...value || [], newValue];
+    onChange(es)
+    setNewValue({value: "", type: "string"});
+  }
+
+  return (
+    <Table>
+      <thead>
+        <tr>
+          <th>value</th>
+          <th>type</th>
+          <th/>
+        </tr>
+      </thead>
+      <tbody>
+      {
+        value?.map((e, i) =>
+          <tr>
+            <td style={{width: "70%"}}>
+              {e.value}
+            </td>
+            <td style={{width: "30%"}}>
+              {e.type}
+            </td>
+            <td>
+              <Button onClick={() => {
+                onChange(update(value, {$splice: [[i, 1]]}))
+              }}>{"-"}</Button>
+            </td>
+          </tr>)
+      }
+        <tr>
+          <td style={{width: "70%"}}>
+            <FormControl
+              value={newValue.value}
+              onChange={e => setNewValue(update(newValue, {$merge: {value: e.target.value}}))} />
+          </td>
+          <td style={{width: "30%"}}>
+            <Select
+              value={{value: newValue.type, label: newValue.type}}
+              name={"type"}
+              onChange={e => setNewValue(update(newValue, {$merge: {type: e.target.value}}))}
+              options={["int", "string", "float", "bool"].map(e => ({value: e, label: e}))} />
+          </td>
+          <td>
+            <Button
+              onClick={() => addNewEntry()}
+              disabled={newValue.value.length === 0}
+            >{"+"}</Button>
+          </td>
+        </tr>
+      </tbody>
+    </Table>
+  )
+}
+
+function SwitchOutputs({value, onChange}) {
   const [newExpression, setNewExpression] = useState(["", ""]);
   let expressions = [];
   try {
@@ -629,6 +782,12 @@ export function Param2Input({param, activity, staticParams, cells, value, onChan
     case 'session_holder':
       i = <SessionHolderInput value={value} onChange={e => onChange(e)} />
       break;
+    case 'datastore':
+      i = <DataStoreInput value={value} onChange={e => onChange(e)} />
+      break;
+    case 'typed_values':
+      i = <TypedValues value={value || []} onChange={e => onChange(e)} />
+      break;
     case 'task':
       i = <TaskInput cells={activity.definition.cells} value={value} onChange={e => onChange(e)} />
       break;
@@ -679,7 +838,7 @@ export function Param2Input({param, activity, staticParams, cells, value, onChan
     case 'workflow_ends':
       i = <WorkflowEnds
         value={value}
-        workflow={staticParams && staticParams[param.origin]}
+        workflow={staticParams && staticParams[param.origin || 'workflow']}
         onChange={(e, outputs) => {
           onChange(e, outputs);
         }} />
@@ -689,6 +848,9 @@ export function Param2Input({param, activity, staticParams, cells, value, onChan
       break;
     case 'context_key':
       i = <ContextKey value={value} onChange={e => onChange(e)} />
+      break;
+    case 'context_keys':
+      i = <ContextKeyValues value={value} onChange={e => onChange(e)} />
       break;
     default:
       i = <BasicInput value={value} onChange={e => onChange(e.target.value)} />

@@ -877,7 +877,7 @@ function ErrorEntry(props){
                 <Button bsStyle="link" onClick={() => setShowDetails(true)}>...</Button>
             </td>
             <td>{userLocalizeUtcDate(moment.utc(entry.created_on), userInfo).format()}</td>
-            <Modal show={showDetails} onHide={() => setShowDetails(false)}>
+            <Modal show={showDetails} onHide={() => setShowDetails(false)} bsSize={"large"}>
                 <Modal.Header closeButton>
                     <Modal.Title><FormattedMessage id="error-details" defaultMessage="Error details" /></Modal.Title>
                 </Modal.Header>
@@ -901,7 +901,7 @@ function ErrorEntry(props){
                             </Col>
 
                             <Col sm={9}>
-                                {entry.description && entry.description.split("\n").map((l, i) => <FormControl.Static key={i}>{l}</FormControl.Static>)}
+                                <pre>{entry.description}</pre>
                             </Col>
                         </FormGroup>
                     </Form>
@@ -1263,10 +1263,6 @@ export function Attachments({txId, userInfo}) {
     </div>);
 }
 
-const FORCEABLE_TASKS = [
-    "delete @ENUM",
-];
-
 function timer(ms) {
  return new Promise(res => setTimeout(res, ms));
 }
@@ -1309,7 +1305,6 @@ export const TasksTable = ({tasks, definition, onReplay, onRollback, user_can_re
                     const can_replay = (replayable || t.cell_id === 'end') && t.status === 'ERROR' &&
                         t.id === Math.max(...tasks.filter(ot => ot.cell_id === t.cell_id).map(oot => oot.id));
                     const support_rollback = definition.cells && definition.cells[t.cell_id] && definition.cells[t.cell_id].outputs.includes("rollback");
-                    const support_force = FORCEABLE_TASKS.includes(t.cell_id);
                     const support_skip = definition.cells && definition.cells[t.cell_id] && definition.cells[t.cell_id].outputs.includes("skip");
 
                     return (
@@ -1332,12 +1327,6 @@ export const TasksTable = ({tasks, definition, onReplay, onRollback, user_can_re
                                         can_replay && support_rollback &&
                                         <Button bsStyle="danger" onClick={() => onRollback(tx_id, t.id, "rollback")}>
                                             <FormattedMessage id="rollback" defaultMessage="Rollback"/>
-                                        </Button>
-                                    }
-                                    {
-                                        can_replay && support_force &&
-                                        <Button bsStyle="danger" onClick={() => onRollback(tx_id, t.id, "force")}>
-                                            <FormattedMessage id="force" defaultMessage="Force"/>
                                         </Button>
                                     }
                                     {
@@ -1683,7 +1672,11 @@ export class Transaction extends Component {
 
     onReplay(activity_id, task_id) {
         const _innerReplay = ({prefix}) => {
-          return fetch_put(`/${prefix || "api/v01"}/transactions/${activity_id}/tasks/${task_id}`, {})
+          let u = `${prefix || "/api/v01"}/transactions/${activity_id}/tasks/${task_id}`;
+          if(u[0] !== '/') {
+            u = '/' + u
+          }
+          return fetch_put(u, {})
             .then(() => {
                 !this.cancelLoad && this.setState({replaying: false});
                 if(USE_WS) {
@@ -1708,7 +1701,7 @@ export class Transaction extends Component {
         this.setState({replaying: true});
 
         if(tx && tx.super_instance_chain && tx.super_instance_chain.length !== 0) {
-          const topInstanceID = tx.super_instance_chain[tx.super_instance_chain.length-1].id;
+          const topInstanceID = tx.super_instance_chain.sort((a, b) => a.id - b.id)[0].id;
           fetchInstance(topInstanceID, i => {
             if(i.original_request_id) {
               fetchRequest(
@@ -1717,7 +1710,7 @@ export class Transaction extends Component {
                 () => { this.setState({replaying: false})}
               )
             } else {
-              _innerReplay()
+              _innerReplay({prefix: null})
             }
           }, () => { this.setState({replaying: false}) })
         } else {
@@ -1731,7 +1724,11 @@ export class Transaction extends Component {
       const meta = JSON.stringify({replay_behaviour: replay_behaviour});
 
       const _innerReplay = ({prefix}) => {
-        return fetch_put(`/${prefix || "api/v01"}/transactions/${activity_id}/tasks/${task_id}?meta=${meta}`, {})
+        let u = `${prefix || "/api/v01"}/transactions/${activity_id}/tasks/${task_id}?meta=${meta}`;
+        if(u[0] !== '/') {
+          u = '/' + u
+        }
+        return fetch_put(u, {})
           .then(() => {
             !this.cancelLoad && this.setState({replaying: false});
             if (USE_WS) {
@@ -2586,7 +2583,6 @@ export class Requests extends Component{
             response_status: { model: 'requests', value: '', op: 'eq' },
             label: { model: 'bulks', value: '', op: 'eq' },
             proxied_status: { model: 'requests', value: '', op: 'eq' },
-            proxy_gateway_host: { model: 'requests', value: '', op: 'eq' },
             role_id: { model: 'manual_actions', value: '', op: 'eq' },
             task_status: undefined,
             // action_status: undefined,
@@ -3095,6 +3091,7 @@ export class Requests extends Component{
                                         })}>
                                         <option value="eq">==</option>
                                         <option value="ne">!=</option>
+                                        <option value="like">like</option>
                                     </FormControl>
                                 </Col>
 
@@ -3451,6 +3448,7 @@ export class Requests extends Component{
                                             })}>
                                             <option value="eq">==</option>
                                             <option value="ne">!=</option>
+                                            <option value="like">like</option>
                                         </FormControl>
                                     </Col>
 
@@ -3817,12 +3815,12 @@ export class Requests extends Component{
 }
 
 
-export class CustomRequests extends Component{
+export class ScheduledRequests extends Component{
     constructor(props) {
         super(props);
         this.cancelLoad = false;
         this.state = {
-            filter_criteria: CustomRequests.criteria_from_params(this.props.location.search, this.props.user_info.ui_profile),
+            filter_criteria: ScheduledRequests.criteria_from_params(this.props.location.search, this.props.user_info.ui_profile),
             paging_info: {
                 page_number: 1, page_size: 50
             },
@@ -3839,6 +3837,7 @@ export class CustomRequests extends Component{
             auto_refresh: false,
             auto_refresh_remaining: AutoRefreshTime,
             roles: [],
+            activties: [],
         };
         this._refresh = this._refresh.bind(this);
         this._prepare_url = this._prepare_url.bind(this);
@@ -3848,12 +3847,13 @@ export class CustomRequests extends Component{
         return {
             status: {value: '', op: 'eq'},
             created_on: {value: '', op: 'ge'},
-            method: {model: 'events', value: '', op: 'eq'},
-            url: {model: 'events', value: '', op: 'like'},
-            cron: undefined,
+            // method: {model: 'events', value: '', op: 'eq'},
+            // url: {model: 'events', value: '', op: 'like'},
+            // cron: undefined,
             user: {value: '', op: 'eq'},
-            task_status: undefined,
-            role_id: {model: 'manual_actions', value: '', op: 'eq'},
+            activity_id: {value: '', op: 'eq'},
+            // task_status: undefined,
+            // role_id: {model: 'manual_actions', value: '', op: 'eq'},
         }
     }
 
@@ -3866,7 +3866,7 @@ export class CustomRequests extends Component{
             } catch (e) { console.error(e) }
         }
         return update(
-            CustomRequests.default_criteria(ui_profile),
+            ScheduledRequests.default_criteria(ui_profile),
             {$merge: custom_params}
         );
     }
@@ -3887,7 +3887,7 @@ export class CustomRequests extends Component{
         if (nextProps.location.pathname === this.props.location.pathname &&
             nextProps.location.search !== this.props.location.search) {
             this.setState({
-                filter_criteria: CustomRequests.criteria_from_params(nextProps.location.search, nextProps.user_info.ui_profile)
+                filter_criteria: ScheduledRequests.criteria_from_params(nextProps.location.search, nextProps.user_info.ui_profile)
             });
         }
     }
@@ -3908,31 +3908,6 @@ export class CustomRequests extends Component{
             .map(f => {
                 const criteria = filter_criteria[f];
                 switch(f) {
-                    case 'method':
-                        return {
-                            model: criteria.model,
-                            field: 'key',
-                            op: criteria.op === "eq"?"like":"not_like",
-                            value: criteria.value + " %"
-                        };
-                    case 'url':
-                        const op = criteria.op === "ne" ? "not_like": "like";
-                        const value = ["like", "ne"].includes(criteria.op) ? "% %" + criteria.value + "%" : "% " + criteria.value;
-                        return {
-                            model: criteria.model,
-                            field: 'key',
-                            op: op,
-                            value: value,
-                        };
-                    case 'task_status':
-                       return criteria;
-                    case 'cron':
-                        return {
-                            model: 'events',
-                            field: 'source_entity',
-                            op: criteria.op,
-                            value: 'cron'
-                        }
                     case 'created_on':
                         return {
                             model: criteria.model,
@@ -3940,26 +3915,12 @@ export class CustomRequests extends Component{
                             op: criteria.op,
                             value: moment.parseZone(criteria.value).utc().format()
                         };
-                    case 'role_id':
-                        return { "and": [
-                            {
-                                model: criteria.model,
-                                field: f,
-                                op: criteria.op,
-                                value: criteria.value
-                            },
-                            {
-                                model: "manual_actions",
-                                field: "output",
-                                op: "is_null"
-                            }
-                        ]};
                     default:
                         return {
                             model: criteria.model, // needed in multi-model query
                             field: f,
                             op: criteria.op,
-                            value: criteria.value.trim()
+                            value: criteria.value
                         };
                 }
             });
@@ -3997,7 +3958,7 @@ export class CustomRequests extends Component{
         //reset collection
         this.setState({requests: undefined});
 
-        fetch_get(url, this.props.auth_token)
+        fetch_get(url)
             .then(data => {
                 if(this.cancelLoad) return;
                 // devnote: save in the history the search.
@@ -4041,10 +4002,10 @@ export class CustomRequests extends Component{
     }
 
     render() {
-        const {filter_criteria, requests, activities, export_url, auto_refresh, roles} = this.state;
+        const {filter_criteria, requests, activities, export_url, auto_refresh} = this.state;
         const { user_info } = this.props;
         const invalid_created_on = filter_criteria.created_on.value.length !== 0 && !moment(filter_criteria.created_on.value).isValid();
-        const manualActions =  user_info.modules && user_info.modules.includes(modules.manualActions);
+        // const manualActions =  user_info.modules && user_info.modules.includes(modules.manualActions);
 
         return (
             <div>
@@ -4093,13 +4054,13 @@ export class CustomRequests extends Component{
 
                             <FormGroup>
                                 <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="method" defaultMessage="Method" />
+                                    <FormattedMessage id="workflow" defaultMessage="Workflow" />
                                 </Col>
 
                                 <Col sm={1}>
                                     <FormControl
                                         componentClass="select"
-                                        value={filter_criteria.method.op}
+                                        value={filter_criteria.activity_id.op}
                                         onChange={e => this.setState({
                                             filter_criteria: update(this.state.filter_criteria,
                                                 {method: {$merge: {op: e.target.value}}})
@@ -4110,45 +4071,16 @@ export class CustomRequests extends Component{
                                 </Col>
 
                                 <Col sm={8}>
-                                    <FormControl componentClass="select" value={filter_criteria.method.value}
-                                        onChange={e => this.setState({
-                                            filter_criteria: update(this.state.filter_criteria,
-                                                {method: {$merge: {value: e.target.value}}})
-                                        })}>
-                                        <option value='' />
-                                        <option value="get">get</option>
-                                        <option value="post">post</option>
-                                        <option value="put">put</option>
-                                        <option value="delete">delete</option>
-                                    </FormControl>
-                                </Col>
-                            </FormGroup>
-
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="url" defaultMessage="URL" />
-                                </Col>
-
-                                <Col sm={1}>
-                                    <FormControl
-                                        componentClass="select"
-                                        value={filter_criteria.url.op}
-                                        onChange={e => this.setState({
-                                            filter_criteria: update(this.state.filter_criteria,
-                                                {url: {$merge: {op: e.target.value}}})
-                                        })}>
-                                        <option value="like">like</option>
-                                        <option value="eq">==</option>
-                                        <option value="ne">!=</option>
-                                    </FormControl>
-                                </Col>
-
-                                <Col sm={8}>
-                                    <FormControl componentClass="input" value={filter_criteria.url.value}
-                                        onChange={e => this.setState({
-                                            filter_criteria: update(filter_criteria,
-                                                {url: {$merge: {value: e.target.value}}})
-                                        })} />
+                                    <Select
+                                      isClearable
+                                      value={{ value: filter_criteria.activity_id.value, label: activities?.find(a => a.id === filter_criteria.activity_id.value)?.name }}
+                                      options={activities?.sort((a, b) => a.name.localeCompare(b.name)).map(a => ({value: a.id, label: a.name}))}
+                                      onChange={v => this.setState({
+                                          filter_criteria: update(this.state.filter_criteria,
+                                              {activity_id: {$merge: {value: v?.value && parseInt(v.value, 10)}}})
+                                      })}
+                                      className="basic-select"
+                                      classNamePrefix="select" />
                                 </Col>
                             </FormGroup>
 
@@ -4171,57 +4103,17 @@ export class CustomRequests extends Component{
                                 </Col>
 
                                 <Col sm={8}>
-                                    <FormControl componentClass="select" value={filter_criteria.status.value}
-                                        onChange={e => this.setState({
-                                            filter_criteria: update(this.state.filter_criteria,
-                                                {status: {$merge: {value: e.target.value}}})
-                                        })}>
-                                        <option value='' />
-                                        <option value="ACTIVE">ACTIVE</option>
-                                        <option value="CLOSED_IN_ERROR">CLOSED_IN_ERROR</option>
-                                        <option value="CLOSED_IN_SUCCESS">CLOSED_IN_SUCCESS</option>
-                                    </FormControl>
+                                    <Select
+                                      isClearable
+                                      value={{value: filter_criteria.status.value, label: filter_criteria.status.value }}
+                                      options={["ACTIVE", "CLOSED_IN_ERROR", "CLOSED_IN_SUCCESS"].map(a => ({value: a, label: a}))}
+                                      onChange={v => this.setState({
+                                        filter_criteria: update(this.state.filter_criteria, {status: {$merge: {value: v?.value}}})
+                                      })}
+                                      className="basic-select"
+                                      classNamePrefix="select" />
                                 </Col>
                             </FormGroup>
-
-                            {
-                                manualActions &&
-                                    <FormGroup>
-                                        <Col componentClass={ControlLabel} sm={2}>
-                                            <FormattedMessage id="pending-action-role" defaultMessage="Pending action role" />
-                                        </Col>
-
-                                        <Col sm={1}>
-                                            <FormControl
-                                                componentClass="select"
-                                                value={filter_criteria.role_id.op}
-                                                onChange={e => this.setState({
-                                                    filter_criteria: update(this.state.filter_criteria,
-                                                        { role_id: { $merge: { op: e.target.value } } })
-                                                })}>
-                                                <option value="eq">==</option>
-                                                <option value="ne">!=</option>
-                                                <option value="is_not_null">*any*</option>
-                                            </FormControl>
-                                        </Col>
-
-                                        <Col sm={8}>
-                                            <FormControl
-                                                componentClass="select"
-                                                disabled={filter_criteria.role_id.op === "is_not_null"}
-                                                value={filter_criteria.role_id.value}
-                                                onChange={e => this.setState({
-                                                    filter_criteria: update(filter_criteria,
-                                                        { role_id: { $merge: { value: e.target.value && parseInt(e.target.value, 10) } } })
-                                                })} >
-                                                <option value=""/>
-                                                {
-                                                    roles.map(r => <option key={`role-${r.id}`} value={r.id}>{r.name}</option>)
-                                                }
-                                            </FormControl>
-                                        </Col>
-                                    </FormGroup>
-                            }
 
                             <FormGroup validationState={invalid_created_on?"error":null}>
                                 <Col componentClass={ControlLabel} sm={2}>
@@ -4260,45 +4152,6 @@ export class CustomRequests extends Component{
                             </FormGroup>
 
                             <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="flags" defaultMessage="Flags" />
-                                </Col>
-
-                                <Col smOffset={1} sm={8}>
-                                    <Checkbox
-                                        checked={filter_criteria.task_status && filter_criteria.task_status.and[0].value === 'ERROR'}
-                                        onChange={e => (
-                                            e.target.checked ?
-                                                this.setState({
-                                                    filter_criteria: update(this.state.filter_criteria,
-                                                        {$merge: errorCriteria})
-                                                }) :
-                                                this.setState({
-                                                    filter_criteria: update(this.state.filter_criteria,
-                                                        {$unset: ['task_status']})
-                                                })
-                                        )} >
-                                        <FormattedMessage id="with-errors" defaultMessage="With errors" />
-                                    </Checkbox>
-                                    <Checkbox
-                                        checked={filter_criteria.cron && filter_criteria.cron.value === 'cron'}
-                                        onChange={e => (
-                                            e.target.checked ?
-                                                this.setState({
-                                                    filter_criteria: update(this.state.filter_criteria,
-                                                        {$merge:  {cron: {model: 'events', value: 'cron', op: 'eq'}}})
-                                                }) :
-                                                this.setState({
-                                                    filter_criteria: update(this.state.filter_criteria,
-                                                        {$unset: ['cron']})
-                                                })
-                                        )} >
-                                        <FormattedMessage id="cron-jobs" defaultMessage="Cron jobs" />
-                                    </Checkbox>
-                                </Col>
-                            </FormGroup>
-
-                            <FormGroup>
                                 <Col smOffset={1} sm={1}>
                                     <Button bsStyle="info" onClick={() => this._refresh({page_number: 1})} disabled={invalid_created_on}>
                                         <FormattedMessage id="search" defaultMessage="Search" />
@@ -4324,10 +4177,6 @@ export class CustomRequests extends Component{
                                     title: <FormattedMessage id="workflow" defaultMessage="Workflow" />,
                                     field: 'activity_id', model: 'instances', sortable: true,
                                     render: n => activities && n.activity_id && activities.find(a => a.id === n.activity_id)?.name || "-"
-                                },
-                                {
-                                    title: <FormattedMessage id="route" defaultMessage="Route" />,
-                                    field: 'key', model: 'events',
                                 },
                                 {
                                     title: <FormattedMessage id="status" defaultMessage="Status" />,

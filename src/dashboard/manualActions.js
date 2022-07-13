@@ -26,7 +26,7 @@ import {localUser} from "../utils/user";
 function fetchManualActions(onSuccess) {
     fetch_get("/api/v01/system/users/local/manual_actions?pending=1")
         .then(r => onSuccess(r.manual_actions_per_role))
-        .catch(error => NotificationsManager.error("Failed to get manual actions", error.message))
+        .catch(error => console.error("Failed to get manual actions", error))
 }
 
 function fetchManualActionsNP(onSuccess) {

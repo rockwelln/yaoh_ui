@@ -22,9 +22,8 @@ import Tabs from "react-bootstrap/lib/Tabs";
 import Tab from "react-bootstrap/lib/Tab";
 
 
-function HistoryLine(props) {
+function HistoryLine({h}) {
     const [expanded, setExpanded] = useState(false);
-    const {h} = props;
     const expIco = expanded?<Glyphicon glyph="chevron-down"/>:<Glyphicon glyph="chevron-right"/>;
 
     let v = [
@@ -64,10 +63,11 @@ const newWb = {
     name: '',
     active: true,
     target: '',
-    format: 'json',
     secret: '',
     custom_header: '',
     custom_header_value: '',
+    username: '',
+    password: '',
     events: [],
 };
 
@@ -95,12 +95,16 @@ function createNewWebhook(data, onSuccess) {
 }
 
 
-function NewWebhook(props) {
-    const {show, onClose} = props;
+function NewWebhook({show, onClose}) {
     const [wb, setWb] = useState(newWb);
     const [events, setEvents] = useState([]);
 
-    useEffect(() => {if(show) {setWb(newWb); fetchEvents(setEvents);}}, [show]);
+    useEffect(() => {
+      if(show) {
+        setWb(newWb);
+        fetchEvents(setEvents);
+      }
+    }, [show]);
 
     return (
         <Modal show={show} onHide={() => onClose(false)} backdrop={false} bsSize="large">
@@ -194,6 +198,31 @@ function NewWebhook(props) {
                         <hr/>
                         <FormGroup>
                             <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="basic-auth-username" defaultMessage="Basic auth. username" />
+                            </Col>
+
+                            <Col sm={9}>
+                                <FormControl
+                                    componentClass="input"
+                                    value={wb.username}
+                                    onChange={e => setWb(update(wb, {$merge: {username: e.target.value}}))}/>
+                            </Col>
+                        </FormGroup>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="basic-auth-password" defaultMessage="Basic auth. password" />
+                            </Col>
+
+                            <Col sm={9}>
+                                <FormControl
+                                    componentClass="input"
+                                    value={wb.password}
+                                    onChange={e => setWb(update(wb, {$merge: {password: e.target.value}}))}/>
+                            </Col>
+                        </FormGroup>
+                        <hr/>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
                                 <FormattedMessage id="events" defaultMessage="Events" />
                             </Col>
 
@@ -269,8 +298,7 @@ function updateWebhook(webhookID, entry, onSuccess) {
 }
 
 
-function UpdateWebhook(props) {
-    const {show, onClose, entry} = props;
+function UpdateWebhook({show, onClose, entry}) {
     const [diff, setDiff] = useState({});
     const [events, setEvents] = useState([]);
     const [wbHistory, setWebHistory] = useState([]);
@@ -381,6 +409,31 @@ function UpdateWebhook(props) {
                     <hr/>
                     <FormGroup>
                         <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="basic-auth-username" defaultMessage="Basic auth. username" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="input"
+                                value={localEntry.username}
+                                onChange={e => setDiff(update(diff, {$merge: {username: e.target.value}}))}/>
+                        </Col>
+                    </FormGroup>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="basic-auth-password" defaultMessage="Basic auth. password" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="input"
+                                value={localEntry.password}
+                                onChange={e => setDiff(update(diff, {$merge: {password: e.target.value}}))}/>
+                        </Col>
+                    </FormGroup>
+                    <hr/>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
                             <FormattedMessage id="events" defaultMessage="Events" />
                         </Col>
 
@@ -424,7 +477,7 @@ function UpdateWebhook(props) {
                         <Table>
                             <tbody>
                             {
-                                wbHistory.sort((a, b) => a.history_id - b.history_id).map(h =>
+                                wbHistory.sort((a, b) => b.history_id - a.history_id).map(h =>
                                     <HistoryLine key={h.history_id} h={h}/>
                                 )
                             }
@@ -440,7 +493,7 @@ function UpdateWebhook(props) {
 
 const newEvent = {
     label: '',
-    tag: 'BW',
+    tag: '',
     method: 'post',
     url: '',
 };
@@ -458,8 +511,7 @@ function createEvent(entry, onSuccess) {
         ))
 }
 
-function NewEvent(props) {
-    const {show, onClose} = props;
+function NewEvent({show, onClose}) {
     const [event, setEvent] = useState(newEvent);
 
     useEffect(() => {show && setEvent(newEvent)}, [show]);
@@ -482,20 +534,6 @@ function NewEvent(props) {
                                     componentClass="input"
                                     value={event.label}
                                     onChange={e => setEvent(update(event, {$merge: {label: e.target.value}}))}/>
-                            </Col>
-                        </FormGroup>
-                        <FormGroup>
-                            <Col componentClass={ControlLabel} sm={2}>
-                                <FormattedMessage id="tag" defaultMessage="Tag" />
-                            </Col>
-
-                            <Col sm={9}>
-                                <FormControl
-                                    componentClass="select"
-                                    value={event.tag}
-                                    onChange={e => setEvent(update(event, {$merge: {tag: e.target.value}}))}>
-                                    <option value="BW">BroadSoft AS</option>
-                                </FormControl>
                             </Col>
                         </FormGroup>
                         <FormGroup>
@@ -525,6 +563,9 @@ function NewEvent(props) {
                                     placeholder="/api/v1/tenants"
                                     value={event.url}
                                     onChange={e => setEvent(update(event, {$merge: {url: e.target.value}}))}/>
+                                <HelpBlock>
+                                  This is a regular expression to match on URL.
+                                </HelpBlock>
                             </Col>
                         </FormGroup>
                     </Form>
@@ -551,8 +592,7 @@ function updateEvent(eventID, diff, onSuccess) {
 }
 
 
-function UpdateEvent(props) {
-    const {entry, show, onHide} = props;
+function UpdateEvent({entry, show, onHide}) {
     const [diff, setDiff] = useState({});
 
     useEffect(() => {show && setDiff({})}, [show]);
@@ -584,20 +624,6 @@ function UpdateEvent(props) {
                     </FormGroup>
                     <FormGroup>
                         <Col componentClass={ControlLabel} sm={2}>
-                            <FormattedMessage id="tag" defaultMessage="Tag" />
-                        </Col>
-
-                        <Col sm={9}>
-                            <FormControl
-                                componentClass="select"
-                                value={localEntry.tag}
-                                onChange={e => setDiff(update(diff, {$merge: {tag: e.target.value}}))}>
-                                <option value="BW">BroadSoft AS</option>
-                            </FormControl>
-                        </Col>
-                    </FormGroup>
-                    <FormGroup>
-                        <Col componentClass={ControlLabel} sm={2}>
                             <FormattedMessage id="method" defaultMessage="Method" />
                         </Col>
 
@@ -623,6 +649,9 @@ function UpdateEvent(props) {
                                 placeholder="/api/v1/tenants"
                                 value={localEntry.url}
                                 onChange={e => setDiff(update(diff, {$merge: {url: e.target.value}}))}/>
+                            <HelpBlock>
+                              This is a regular expression to match on URL.
+                            </HelpBlock>
                         </Col>
                     </FormGroup>
                 </Form>
@@ -652,7 +681,7 @@ function deleteEvent(eventId, onSuccess) {
 }
 
 
-function WebhookEvents(props) {
+function WebhookEvents() {
     const [events, setEvents] = useState([]);
     const [showNew, setShowNew] = useState(false);
     const [updateEvent, setUpdateEvent] = useState(undefined);
@@ -675,7 +704,6 @@ function WebhookEvents(props) {
                             ).map(e =>
                                 <tr key={e.event_id}>
                                     <td>{ e.label }</td>
-                                    <td>{ e.tag }</td>
                                     <td>{ e.method }</td>
                                     <td>{ e.url }</td>
                                     <td style={{width: "20%"}}>
@@ -746,7 +774,7 @@ function deleteWebhook(webhookId, onSuccess) {
         ))
 }
 
-export function Webhooks(props) {
+export function Webhooks() {
     const [webhooks, setWebhooks] = useState([]);
     const [showNew, setShowNew] = useState(false);
     const [updateWh, setUpdateWh] = useState(undefined);
@@ -754,7 +782,7 @@ export function Webhooks(props) {
     useEffect(() => {
       fetchWebhooks(setWebhooks);
       document.title = "Webhooks";
-      }, []);
+    }, []);
 
     return (
         <div>

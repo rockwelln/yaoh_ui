@@ -21,7 +21,7 @@ import {FormattedMessage} from 'react-intl';
 
 import AsyncApioHelp from './help/async-apio-help';
 import Dashboard from './dashboard';
-import {CustomRequests, Request, Requests, Transaction} from './requests/requests';
+import {ScheduledRequests, Request, Requests, Transaction} from './requests/requests';
 import Timers from './requests/timers';
 import {Bulks} from "./requests/bulk";
 import {BulkActions} from "./system/bulk_actions";
@@ -56,6 +56,7 @@ import {AuthCallback, AuthSilentCallback} from "./sso/login";
 import './App.css';
 import apio_brand from "./images/apio.png";
 import apio_logo from "./images/logo.png";
+import npact_logo from "./images/npact_logo.png";
 import loading from './loading.gif';
 import {sso_auth_service} from "./sso/auth_service";
 import {Webhooks} from "./system/webhooks";
@@ -83,6 +84,7 @@ import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 import Button from "react-bootstrap/lib/Button";
 import AlarmManagement, {fetchAlarms} from "./system/alarms";
 import moment from "moment";
+import Clients from "./system/clients_mgm";
 
 const ListProvisioningGateways=React.lazy(() => import("./provisioning/ListProvisioningGateways"))
 
@@ -180,8 +182,8 @@ function AsyncApioNavBar({user_info, logoutUser, database_status}){
   const [alarms, setAlarms] = useState([]);
 
   useEffect(() => {
-    fetchAlarms({field: "active", op: "eq", value: true}, null, null, null, a => setAlarms(a.alarms));
-    const handler = setInterval(() => fetchAlarms({field: "active", op: "eq", value: true}, null, null, null, a => setAlarms(a.alarms)), 5000);
+    fetchAlarms({field: "active", op: "eq", value: true}, null, null, null, a => setAlarms(a.alarms), true);
+    const handler = setInterval(() => fetchAlarms({field: "active", op: "eq", value: true}, null, null, null, a => setAlarms(a.alarms), true), 5000);
     return () => { clearInterval(handler) }
   }, []);
 
@@ -733,8 +735,8 @@ class App extends Component {
 
     getPlatformDetails() {
         fetchPlatformDetails(data => {
-          if (data.modules) {
-              UiFlavourService.updateFlavourFromModules(data.modules);
+          if (data.gui?.modules) {
+              UiFlavourService.updateFlavourFromModules(data.gui.modules);
               document.title = UiFlavourService.getWindowTitle();
           }
         })
@@ -881,7 +883,7 @@ class App extends Component {
                             component={() => (
                                 <LoginPage
                                     error_msg={error_msg}
-                                    logo={UiFlavourService.isApio() ? apio_logo : null}
+                                    logo={UiFlavourService.isApio() ? apio_logo : UiFlavourService.isNpact() ? npact_logo: null}
                                     standby_alert={standby_alert} >
                                     <ResetPasswordRequestForm />
                                 </LoginPage>
@@ -891,7 +893,7 @@ class App extends Component {
                             component={() => (
                                 <LoginPage
                                     error_msg={error_msg}
-                                    logo={UiFlavourService.isApio() ? apio_logo : null}
+                                    logo={UiFlavourService.isApio() ? apio_logo : UiFlavourService.isNpact() ? npact_logo: null}
                                     standby_alert={standby_alert} >
                                     <LoginForm
                                         sso={this.state.SSO}
@@ -972,7 +974,7 @@ class App extends Component {
                         <Route path="/custom-transactions/list"
                                component={props => (
                                    localUser.isAllowed(accesses.cron_requests) ?
-                                   <CustomRequests
+                                   <ScheduledRequests
                                        user_info={user_info}
                                        {...props} /> :
                                    <NotAllowed/>
@@ -1094,7 +1096,9 @@ class App extends Component {
                         <Route path="/system/gateways"
                                component={props => (
                                    localUser.canSee(pages.system_gateways) ?
-                                       <Gateways />:
+                                     (localUser.isModuleEnabled(modules.npact)?
+                                         <Gateways />:
+                                         <Clients />):
                                        <NotAllowed />
                                )}
                                exact />

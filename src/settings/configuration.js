@@ -2637,7 +2637,7 @@ function AlarmsPanel({alarms, onChange}) {
 
               <Col sm={9}>
                 <Checkbox
-                  checked={alarms.alarms.http_success_rate.system_clear}
+                  checked={alarms.alarms?.http_success_rate?.system_clear}
                   onChange={e => onChange(update(alarms, {alarms: {http_success_rate: {$merge: {system_clear: e.target.checked}}}}))}
                 />
               </Col>
@@ -2685,7 +2685,7 @@ function AlarmsPanel({alarms, onChange}) {
 
               <Col sm={9}>
                 <Checkbox
-                  checked={alarms.alarms.http_south_success_rate.system_clear}
+                  checked={alarms.alarms?.http_south_success_rate?.system_clear}
                   onChange={e => onChange(update(alarms, {alarms: {http_south_success_rate: {$merge: {system_clear: e.target.checked}}}}))}
                 />
               </Col>
@@ -2729,7 +2729,7 @@ function AlarmsPanel({alarms, onChange}) {
 
               <Col sm={9}>
                 <Checkbox
-                  checked={alarms.alarms.network_issues.system_clear}
+                  checked={alarms.alarms?.network_issues?.system_clear}
                   onChange={e => onChange(update(alarms, {alarms: {network_issues: {$merge: {system_clear: e.target.checked}}}}))}
                 />
               </Col>
@@ -3433,13 +3433,154 @@ function LogsPanel(props) {
   )
 }
 
+function DataStoresPanel({stores, onChange}) {
+  const [showNew, setShowNew] = useState(false);
+  if (stores === undefined) {
+    stores = [];
+  }
+
+  return (
+    <>
+      {
+        stores
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map((s, i) => (
+            <Panel key={`store-${s.name}`}>
+                <Panel.Heading>
+                  <Panel.Title toggle>{s.name}</Panel.Title>
+                </Panel.Heading>
+                <Panel.Body collapsible>
+                  <Form horizontal>
+                    <FormGroup>
+                      <Col componentClass={ControlLabel} sm={2}>
+                        <FormattedMessage id="name" defaultMessage="Name"/>
+                      </Col>
+
+                      <Col sm={9}>
+                        <FormControl
+                          componentClass="input"
+                          value={s.name}
+                          readOnly/>
+                        <HelpBlock>
+                          Label to identify the store in the workflows
+                        </HelpBlock>
+                      </Col>
+                    </FormGroup>
+                    <FormGroup>
+                      <Col componentClass={ControlLabel} sm={2}>
+                        <FormattedMessage id="dsn" defaultMessage="Dsn"/>
+                      </Col>
+
+                      <Col sm={9}>
+                        <FormControl
+                          componentClass="input"
+                          value={s.dsn}
+                          placeholder="postgresql://user:secret@host:5432/database"
+                          onChange={e => onChange(update(stores, {[i]: {$merge: {dsn: e.target.value}}}))}/>
+                      </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                      <Col smOffset={2} sm={9}>
+                        <ButtonToolbar>
+                          <Button bsStyle="danger"
+                                  onClick={() => onChange(update(stores, {$splice: [[i, 1]]}))}>
+                            <FormattedMessage id="delete" defaultMessage="Delete"/>
+                          </Button>
+                        </ButtonToolbar>
+                      </Col>
+                    </FormGroup>
+                  </Form>
+                </Panel.Body>
+              </Panel>
+          ))
+      }
+
+      <Panel>
+        <Panel.Body>
+          <ButtonToolbar>
+            <Button onClick={() => setShowNew(true)} bsStyle="primary">
+              <FormattedMessage id="new" defaultMessage="New"/>
+            </Button>
+          </ButtonToolbar>
+          <NewDataStoreModal
+            show={showNew}
+            onHide={newEntry => {
+              setShowNew(false);
+              if (newEntry !== undefined) {
+                onChange(update(stores, {$push: [newEntry]}))
+              }
+            }}
+          />
+        </Panel.Body>
+      </Panel>
+    </>
+  );
+}
+
+const newDataStore = {
+  name: "",
+  dsn: "",
+};
+
+function NewDataStoreModal({show, onHide}) {
+  const [entry, setEntry] = useState(newDataStore);
+
+  useEffect(() => {
+    !show && setEntry(newDataStore)
+  }, [show]);
+
+  return (
+    <Modal show={show} onHide={() => onHide(undefined)} backdrop={false}>
+      <Modal.Header closeButton>
+        <Modal.Title>
+          New data store
+        </Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Form horizontal>
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="name" defaultMessage="Name"/>
+            </Col>
+
+            <Col sm={9}>
+              <FormControl
+                componentClass="input"
+                value={entry.name}
+                onChange={e => setEntry(update(entry, {$merge: {name: e.target.value}}))}/>
+            </Col>
+          </FormGroup>
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="dsn" defaultMessage="DSN"/>
+            </Col>
+
+            <Col sm={9}>
+              <FormControl
+                componentClass="input"
+                value={entry.dsn}
+                onChange={e => setEntry(update(entry, {$merge: {dsn: e.target.value}}))}/>
+            </Col>
+          </FormGroup>
+        </Form>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button onClick={() => onHide(entry)}
+                disabled={!entry.name || entry.dsn.length === 0 || entry.name.length === 0}
+                bsStyle="primary"><FormattedMessage id="save" defaultMessage="Save"/></Button>
+        <Button onClick={() => onHide(undefined)}><FormattedMessage id="cancel" defaultMessage="Cancel"/></Button>
+      </Modal.Footer>
+    </Modal>
+  );
+}
+
 const newProvisioningGateway = {
   name: "",
   prefix: ""
 };
 
-function NewProvisioningGatewayModal(props) {
-  const {show, onHide} = props;
+function NewProvisioningGatewayModal({show, onHide}) {
   const [entry, setEntry] = useState(newProvisioningGateway);
 
   useEffect(() => {
@@ -3492,8 +3633,7 @@ function NewProvisioningGatewayModal(props) {
   );
 }
 
-function ProvisioningPanels(props) {
-  const { prov, onChange } = props;
+function ProvisioningPanels({prov, onChange}) {
   const [showNew, setShowNew] = useState(false);
   if (prov.gateways === undefined) {
     prov.gateways = [];
@@ -3619,6 +3759,11 @@ export default function Configuration({userInfo, history}) {
             gateways={config.content.gateways}
             onChange={v => setConfig(update(config, {content: {gateways: {$set: v}}}))}/>
         </Tab>
+        <Tab eventKey={"Datastore"} title="Data Stores">
+          <DataStoresPanel
+            stores={config.content.datastores}
+            onChange={v => setConfig(update(config, {content: {datastores: {$set: v}}}))}/>
+        </Tab>
         <Tab eventKey={"Gui"} title="Gui">
           <GuiForm
             gui={config.content.gui}
@@ -3652,7 +3797,7 @@ export default function Configuration({userInfo, history}) {
           <SSOPanel
             sso={config.content.SSO || []}
             gateways={config.content.gateways}
-            enabledMods={config.content.gui?.modules}
+            enabledMods={config.content.gui?.modules || []}
             onChange={v => setConfig(update(config, {content: {SSO: {$set: v}}}))}
           />
         </Tab>

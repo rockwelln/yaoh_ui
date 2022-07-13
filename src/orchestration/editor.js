@@ -42,7 +42,8 @@ const SCHEMA_DEFINITION = {
                   "x": {"type": "number"},
                   "y": {"type": "number"},
                   "params": {"type": "object"},
-                  "outputs": {"type": "array", "items": {"type": "string"}}
+                  "outputs": {"type": "array", "items": {"type": "string"}},
+                  "error_outputs": {"type": "array", "items": {"type": "string"}}
               },
               "required": ["original_name", "x", "y"],
               "additionalProperties": false
@@ -58,7 +59,8 @@ const SCHEMA_DEFINITION = {
                   "x": {"type": "number"},
                   "y": {"type": "number"},
                   "params": {"type": "object"},
-                  "outputs": {"type": "array", "items": {"type": "string"}}
+                  "outputs": {"type": "array", "items": {"type": "string"}},
+                  "error_outputs": {"type": "array", "items": {"type": "string"}}
               },
               "required": ["name", "original_name", "x", "y"],
               "additionalProperties": false
@@ -99,6 +101,7 @@ export function getDefinition(editor, title) {
             let c = model.cells[cellId];
             if(c.geometry === undefined || c.getAttribute('label') === undefined) continue;
             let outputs = c.getAttribute('outputs') || "";
+            let errOuts = (c.getAttribute('error_outputs') || "").split(",").filter(o => o !== "");
             let cell = {
                 name: c.getAttribute('label'),
                 original_name: c.getAttribute('original_name'),
@@ -107,9 +110,12 @@ export function getDefinition(editor, title) {
                 params: {},
                 outputs: outputs.split(",").filter(o => o !== ""),
             };
+            if(errOuts.length > 0) {
+               cell.error_outputs = errOuts;
+            }
             if(c.getAttribute('original_name') === 'start') hasAStart = true;
             if(c.hasAttribute('attrList') && c.getAttribute('attrList') !== undefined) {
-                cell.params = c.getAttribute('attrList').split(",").reduce((xa, a) => {xa[a] = c.getAttribute(a); return xa;}, {});
+                cell.params = c.getAttribute('attrList').split(",").reduce((xa, a) => {xa[a] = c.value.params[a]; return xa;}, {});
             }
 
             switch(c.style) {
@@ -156,10 +162,13 @@ export function addNode(editor, def, name, paramsFields) {
         node.setAttribute('label', name);
         node.setAttribute('original_name', value);
         node.setAttribute('outputs', c.outputs);
+        node.setAttribute('error_outputs', c.error_outputs || "");
         node.setAttribute('attrList', (c.params && c.params.map(p => p.name || p).join(',')) || '');
+        node.params = {};
         c.params && c.params.map(p => {
             const param_name = p.name || p;
-            node.setAttribute(param_name, paramsFields[param_name] || '');
+            // node.setAttribute(param_name, paramsFields[param_name] || '');
+            node.params[param_name] = paramsFields[param_name] || '';
             return null;
         });
         let v = undefined;
@@ -282,10 +291,13 @@ export function updateGraphModel(editor, activity, options) {
             node.setAttribute('label', name);
             node.setAttribute('original_name', c.original_name);
             node.setAttribute('outputs', c.outputs);
+            node.setAttribute('error_outputs', c.error_outputs || "");
+            node.params = {};
             if(c.params !== undefined && Object.keys(c.params).length !== 0) {
                 node.setAttribute('attrList', Object.keys(c.params).filter(p => p).map(param_name => {
-                    const value = c.params[param_name];
-                    node.setAttribute(param_name, value);
+                    // const value = c.params[param_name];
+                    // node.setAttribute(param_name, value);
+                    node.params[param_name] = c.params[param_name];
                     return param_name;
                 }))
             }
@@ -335,11 +347,13 @@ export function updateGraphModel(editor, activity, options) {
                 } else {
                   p.geometry.offset = new mxPoint(-5, baseY + (i * 20));
                 }
-                endpoints.push([name + '.' + o, p]);
+
+                endpoints.push([name + '.' + o, p, c.error_outputs?.includes(o)]);
             }
 
             graph.removeCellOverlays(v);
             switch(c.state) {
+                case 'WAIT':
                 case 'RUN': graph.addCellOverlay(v, createOverlay(new mxImage(runPic, 32, 32), c.state)); break;
                 case 'ERROR': graph.addCellOverlay(v, createOverlay(new mxImage(errPic, 32, 32), c.state)); break;
                 case 'OK': graph.addCellOverlay(v, createOverlay(new mxImage(okPic, 32, 32), c.state)); break;
@@ -353,10 +367,13 @@ export function updateGraphModel(editor, activity, options) {
             node.setAttribute('label', e.name);
             node.setAttribute('original_name', e.original_name);
             node.setAttribute('outputs', e.outputs);
+            node.setAttribute('error_outputs', e.error_outputs || "");
+            node.params = {};
             if(e.params !== undefined && Object.keys(e.params).length !== 0) {
                 node.setAttribute('attrList', Object.keys(e.params).filter(p => p).map(param_name => {
                     const value = e.params[param_name];
-                    node.setAttribute(param_name, value);
+                    // node.setAttribute(param_name, value);
+                    node.params[param_name] = value;
                     return param_name;
                 }))
             }
@@ -379,6 +396,30 @@ export function updateGraphModel(editor, activity, options) {
             return null;
         });
 
+        // trace error path (if any)
+        const ranTransitions =  data.transitions.filter(([s, d, extra]) => extra?.status !== undefined);
+        let markChildrenAsErrorPath = (source) => {
+            const a = endpoints.find(endp => source === endp[0]);
+            if(a && !a[2]) {
+              // mark the source endpoint as error path
+              a[2] = true;
+            }
+            // get the triggered destinations from the source
+            const children = ranTransitions.filter(([s, d, extra]) => s === source && extra?.status !== undefined).map(([s, d, extra]) => d);
+
+            for(let i=0; i < children.length; i++) {
+                const a = endpoints.find(endp => children[i] === endp[0]);
+                if(a !== undefined && !a[2]) {
+                    ranTransitions.
+                      // get transitions with source starting with child name
+                      filter(([s, d, extra]) => s.indexOf(children[i] + ".") === 0).
+                      // use the transition source as new start marker
+                      map(([s, d, extra]) => markChildrenAsErrorPath(s))
+                }
+            }
+        }
+        endpoints.filter(e => e[2]).map(e => markChildrenAsErrorPath(e[0]))
+
         // add transitions to the model.
         data.transitions.map((t) => {
             const s = t[0]; // source
@@ -394,8 +435,14 @@ export function updateGraphModel(editor, activity, options) {
 
             let style = undefined;
             if(extra && extra.status !== undefined && (extra.status === 'OK' || extra.status === 'ERROR')) {
-                const color = extra.status === 'OK'?(s.indexOf('.rollback') !== -1?'#ffbd53':'#32cd32'):'#ff0000';
-                style = `strokeColor=${color};fillColor=${color};`
+              let color = extra.status === 'OK' ? (s.indexOf('.rollback') !== -1 ? '#ffbd53' : '#32cd32') : '#ff0000';
+
+              // if error path
+              if(a[2]) {
+                color = '#ff0000';
+              }
+
+              style = `strokeColor=${color};fillColor=${color};`
             }
             graph.insertEdge(parent, null, '',  a[1], b[1], style);
             return null;

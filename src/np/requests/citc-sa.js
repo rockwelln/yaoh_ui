@@ -95,6 +95,7 @@ function newRequest(request, onSuccess, onError) {
       'IqamaNumber',
       'CommRegNumber',
       'GccId',
+      'AltGovId',
       'BorderId',
       'UnifiedEntityId',
       'ContactPhone',
@@ -241,6 +242,20 @@ function validateRanges(ranges) {
   }).filter(e => e !== null);
 }
 
+function validateContactID(personIDType, value) {
+  if (value.length === 0) return null;
+
+  if (personIDType === "GccId") {
+    if (value.length < 8 || value.length > 12) return "error";
+  } else if (personIDType === "AltGovId") {
+    if (value.length < 2 || value.length > 15) return "error";
+  } else {
+    if (value.length !== 10) return "error"
+  }
+
+  return "success";
+}
+
 const emptyRequest = {
   complexityClass: 'Simple',
   ranges: [{ from: '', to: '', codedId: '' }],
@@ -265,14 +280,17 @@ const emptyRequest = {
   personIDType: "NationalIDNumber",
 }
 
-export function NPPortInRequest(props) {
+export function NPPortInRequest() {
   const [operators, setOperators] = useState([]);
   const [request, setRequest] = useState(emptyRequest);
   const [redirect, setRedirect] = useState(false);
   const [loading, setLoading] = useState(false);
   const [rangeError, setRangeError] = useState(undefined);
 
-  useEffect(() => fetchOperators(null, setOperators), []);
+  useEffect(() => {
+    fetchOperators(null, setOperators);
+    document.title = "New port-in";
+  }, []);
   useEffect(() => {
     const o = operators && operators.find(o => o.name === DEFAULT_RECIPIENT);
     if (o) {
@@ -283,7 +301,7 @@ export function NPPortInRequest(props) {
   const validRanges = request.ranges.length === 1 && request.ranges[0].from === '' && request.ranges[0].to === '' ? null : validateRanges(request.ranges).length === 0 && rangeError === undefined ? "success" : "error";
 
   const validContactPhone = request.subscriber_data.ContactPhone.length === 0 ? null : "success";
-  const validContactID = request.subscriber_data[request.personIDType].length === 0 ? null : (request.personIDType === "GccId" && (request.subscriber_data[request.personIDType].length < 8 || request.subscriber_data[request.personIDType].length > 12)) || (request.personIDType !== "GccId" && request.subscriber_data[request.personIDType].length !== 10) ? "error" : "success";
+  const validContactID = validateContactID(request.personIDType, request.subscriber_data[request.personIDType]);
   const validPortReqFormID = request.port_req_form_id.length === 0 ? null : "success";
 
   const validForm = validateRanges(request.ranges).length === 0 && validContactPhone === "success" && validContactID === "success" && validPortReqFormID === "success";
@@ -484,6 +502,7 @@ export function NPPortInRequest(props) {
                   <option value="IqamaNumber">Iqama Number</option>
                   <option value="CommRegNumber">Commercial Reg. Number</option>
                   <option value="GccId">GCC ID</option>
+                  <option value="AltGovId">Alt. Government ID</option>
                   <option value="BorderId">Border ID number</option>
                   <option value="UnifiedEntityId">Unified Entity ID</option>
                 </FormControl>{'*'}
@@ -745,6 +764,7 @@ export class NPDisconnectRequest extends Component {
   }
 
   componentDidMount() {
+    document.title = "New Disconnect";
     fetchOperators(this.props.auth_token,
       data => !this.cancelLoad && this.setState({ operators: data }),
       error => !this.cancelLoad && NotificationsManager.error(

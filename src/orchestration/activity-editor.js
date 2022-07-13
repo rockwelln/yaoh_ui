@@ -39,13 +39,13 @@ import {DeleteConfirmButton} from "../utils/deleteConfirm";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {faArrowDown, faArrowUp, faChartBar, faCopy, faDownload, faSpinner} from "@fortawesome/free-solid-svg-icons";
 import {Link} from "react-router-dom";
-import {SimulatorPanel} from "./simulator";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 import {fetchConfiguration, Param2Input} from "./nodeInputs";
 import Ajv from "ajv";
 import Select from "react-select";
 import ButtonGroup from "react-bootstrap/lib/ButtonGroup";
 import moment from "moment";
+import deepEqual from "../utils/deepEqual";
 
 
 const NEW_ACTIVITY = {
@@ -162,7 +162,7 @@ function fetchActivityVersions(id, onSuccess) {
     fetch_get(`/api/v01/activities/${id}/versions`)
         .then(resp => onSuccess(resp.activity_versions))
         .catch(error => {
-            NotificationsManager.error("Failed to fetch versions", error.message);
+            console.error("Failed to fetch versions", error);
         });
 }
 
@@ -657,6 +657,7 @@ function NewCellModal(props)  {
 
     const params = definition && definition.params && definition
       .params
+      .sort((a, b) => a.ui_order - b.ui_order)
       .map(param => {
         const n = param.name || param;
         const error = isValid(param, staticParams[n] || "");
@@ -870,6 +871,13 @@ function OutputsTable(props) {
                     disabled={usedRows.includes(output.value) || output.custom} />
                 </td>
                 <td>{output.value}</td>
+                <td>
+                  <Checkbox
+                    checked={output.errorPath}
+                    onChange={e => onDragEnd(update(rows, {[i]: {$merge: {errorPath: e.target.checked}}}))} >
+                    Error path
+                  </Checkbox>
+                </td>
               </tr>
             )
           })
@@ -917,7 +925,7 @@ export function EditCellModal(props) {
         }
         if(cell.value.getAttribute("attrList")) {
           setStaticParams(cell.value.getAttribute('attrList').split(",").reduce((o, a) => {
-            o[a] = cell.value.getAttribute(a);
+            o[a] = cell.value.params[a];
             return o;
           }, {}))
         }
@@ -938,7 +946,8 @@ export function EditCellModal(props) {
                 o.push({
                   value: e,
                   custom: cellDef.outputs?!cellDef.outputs.includes(e):true,
-                  visible: cell.value.getAttribute("outputs").split(",").includes(e)
+                  visible: cell.value.getAttribute("outputs").split(",").includes(e),
+                  errorPath: cell.value.getAttribute("error_outputs")?.split(",").includes(e)
                 })
                 return o;
               }, [])
@@ -964,6 +973,7 @@ export function EditCellModal(props) {
     const params = paramsList
       // get the param definition (if possible)
       .map(p => (cellDef && cellDef.params.find(param => (param.name || param) === p)) || p)
+      .sort((a, b) => a.ui_order - b.ui_order)
       .map(param => {
         const n = param.name || param;
         const error = isValid(param, staticParams[n] || "");
@@ -1065,6 +1075,7 @@ export function EditCellModal(props) {
                         originalName: originalName,
                         params: staticParams,
                         outputs: outputs.filter(o => o.visible).map(o => o.value),
+                        errorPaths: outputs.filter(o => o.errorPath).map(o => o.value),
                       });
                     }}
                   >
@@ -1178,9 +1189,9 @@ function compareActivitiesDef(a, b) {
   return (b.definition &&
     (
       typeof b.definition === "string" &&
-        JSON.stringify(JSON.parse(a.definition)) !== JSON.stringify(JSON.parse(b.definition)) ||
+        !deepEqual(JSON.parse(a.definition), JSON.parse(b.definition)) ||
       typeof b.definition === "object" &&
-        JSON.stringify(JSON.parse(a.definition)) !== JSON.stringify(b.definition)
+        !deepEqual(JSON.parse(a.definition), b.definition)
     )
   )
 }
@@ -1582,7 +1593,7 @@ export function ActivityEditor(props) {
                         c_def.outputs = (cell.getAttribute('outputs') || "").split(",");
                         c_def.x = cell.geometry.x + 10;
                         c_def.y = cell.geometry.y + 10;
-                        const params = (cell.getAttribute('attrList') || "").split(",").reduce((xa, a) => {xa[a] = cell.getAttribute(a); return xa;}, {});
+                        const params = (cell.getAttribute('attrList') || "").split(",").reduce((xa, a) => {xa[a] = cell.params[a]; return xa;}, {});
                         e.addNode(editor, c_def, newName, params);
                     }
                 })} />
@@ -1604,10 +1615,16 @@ export function ActivityEditor(props) {
                     if(c.outputs !== undefined) {
                       activity.definition.entities[i]["outputs"] = c.outputs;
                     }
+                    if(c.errorPaths !== undefined) {
+                      activity.definition.entities[i]["error_outputs"] = c.errorPaths;
+                    }
                   } else {
                     activity.definition.cells[c.oldName]["params"] = c.params;
                     if(c.outputs !== undefined) {
                       activity.definition.cells[c.oldName]["outputs"] = c.outputs;
+                    }
+                    if(c.errorPaths !== undefined) {
+                      activity.definition.cells[c.oldName]["error_outputs"] = c.errorPaths;
                     }
                   }
                   if(c.name !== c.oldName) {

@@ -39,7 +39,7 @@ import {
   TasksTable,
   TransactionFlow,
   TxTable,
-  pp_output, ManualActions, triggerManualAction,
+  pp_output, ManualActions, triggerManualAction, Attachments,
 } from "../../requests/requests";
 import {ContextTable, SubTransactionsPanel} from "../../requests/components";
 import moment from 'moment';
@@ -1519,6 +1519,16 @@ export class NPTransaction extends Component {
               }
               <Panel header="Context">
                 <ContextTable context={tx.context} />
+              </Panel>
+            </Col>
+            <Col xs={12} sm={12} md={12} lg={12}>
+              <Panel>
+                <Panel.Heading>
+                  <Panel.Title><FormattedMessage id="attachments" defaultMessage="Attachments" /></Panel.Title>
+                </Panel.Heading>
+                <Panel.Body>
+                  <Attachments txId={tx.id} userInfo={user_info}/>
+                </Panel.Body>
               </Panel>
             </Col>
             <Col xs={12} sm={12} md={12} lg={12}>
