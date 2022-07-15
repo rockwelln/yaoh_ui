@@ -295,9 +295,12 @@ export function ManualActionsTile() {
 
     useEffect(() => {
         fetchManualActions(setActions);
-        const interval = setInterval(() => fetchManualActions(setActions), 5 * 1000);
-        return () => clearInterval(interval);
     }, []);
+
+    useEffect(() => {
+      let h = setTimeout(() => fetchManualActions(setActions), 5 * 1000);
+      return () => clearTimeout(h)
+    }, [actions]);
 
     const count = Object.keys(actions).reduce((r, o) => r + actions[o].length, 0);
 

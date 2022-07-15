@@ -46,9 +46,9 @@ function ProxyRequestsOverTime() {
     );
     useEffect(refreshData, [start, end]);
     useEffect(() => {
-        const handler = setInterval(refreshData, REFRESH_CYCLE * 1000);
-        return () => clearInterval(handler);
-    }, []);
+        const handler = setTimeout(refreshData, REFRESH_CYCLE * 1000);
+        return () => clearTimeout(handler);
+    }, [data]);
 
 
     const onConfigClose = () => {
