@@ -2782,9 +2782,6 @@ function CleanupPanel({retention, onChange}) {
                   componentClass="input"
                   value={retention.monthKept}
                   onChange={e => onChange(update(retention, {$merge: {monthKept: e.target.value && parseInt(e.target.value, 10)}}))}/>
-                <HelpBlock>
-                  The template used for new users created in the workflow engine datamodel.
-                </HelpBlock>
               </Col>
             </FormGroup>
           </Form>
