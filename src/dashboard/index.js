@@ -57,9 +57,12 @@ export default function Dashboard(props) {
 
     useEffect(() => {
         fetch_stats(isNpact, setStats);
-        const interval = setInterval(fetch_s, REFRESH_CYCLE * 1000);
-        return () => clearInterval(interval);
     }, [isNpact]);
+
+    useEffect(() => {
+        const h = setTimeout(fetch_s, REFRESH_CYCLE * 1000);
+        return () => clearTimeout(h);
+    }, [stats]);
 
     let statsPanels = [
         <TransactionsOverTime {...props} />
@@ -150,7 +153,7 @@ export default function Dashboard(props) {
             </Row>
             <Row>
                 {
-                    statsPanels.map(e => <Col sm={6} md={6} xs={12}>{e}</Col>)
+                    statsPanels.map((e, i) => <Col key={`stats-pan${i}`} sm={6} md={6} xs={12}>{e}</Col>)
                 }
             </Row>
         </div>

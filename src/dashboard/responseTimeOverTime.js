@@ -75,8 +75,8 @@ function ResponseTimeOvertime({props}) {
   const _refresh = () => fetchResponseTime(filter, setData);
   useEffect(() => {
     _refresh();
-    const h = setInterval(() => _refresh(), REFRESH_CYCLE * 1000);
-    return () => clearInterval(h);
+    const h = setTimeout(() => _refresh(), REFRESH_CYCLE * 1000);
+    return () => clearTimeout(h);
   }, [filter]);
 
   const filledData = fillMissingDataPoints(data, filter.unit);

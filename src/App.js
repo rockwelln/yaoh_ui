@@ -183,9 +183,12 @@ function AsyncApioNavBar({user_info, logoutUser, database_status}){
 
   useEffect(() => {
     fetchAlarms({field: "active", op: "eq", value: true}, null, null, null, a => setAlarms(a.alarms), true);
-    const handler = setInterval(() => fetchAlarms({field: "active", op: "eq", value: true}, null, null, null, a => setAlarms(a.alarms), true), 5000);
-    return () => { clearInterval(handler) }
   }, []);
+
+  useEffect(() => {
+    const handler = setTimeout(() => fetchAlarms({field: "active", op: "eq", value: true}, null, null, null, a => setAlarms(a.alarms), true), 5000);
+    return () => clearTimeout(handler)
+  }, [alarms]);
 
   return (
     <Navbar staticTop collapseOnSelect inverse>
