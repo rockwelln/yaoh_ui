@@ -350,7 +350,7 @@ function NewProfile(props) {
                                   }
                                   <HelpBlock>
                                     Only affects the menu entries visible in the provisioning section.<br/>
-                                    API calls are limited in the proxy rules section of the user profile.
+                                    API calls are limited in the api rules section of the user profile.
                                   </HelpBlock>
                                 </Checkbox>
                                 <Checkbox
@@ -533,7 +533,7 @@ function UpdateProfile(props) {
                                       }
                                       <HelpBlock>
                                         Only affects the menu entries visible in the provisioning section.<br/>
-                                        API calls are limited in the proxy rules section of the user profile.
+                                        API calls are limited in the api rules section of the user profile.
                                       </HelpBlock>
                                     </Checkbox>
                                     <Checkbox
@@ -570,7 +570,7 @@ function UpdateProfile(props) {
                             </FormGroup>
                         </Form>
                     </Tab>
-                    <Tab title={"proxy"} key={"proxy"} eventKey={1}>
+                    <Tab title={"api"} key={"api"} eventKey={1}>
                         <Form horizontal>
                             <FormGroup>
                                 <Col componentClass={ControlLabel} sm={2}>
