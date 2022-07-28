@@ -56,15 +56,18 @@ class AuthService {
     }
 
     loadJwtTokensFromLocation() {
-        const frag = window.location.hash.substring(1);
-        if(frag) {
-            const tokens = frag.split(",");
-            if(tokens.length !== 2 || tokens[0].length < 10 || tokens[1].length < 10) return false;
-
+        var loc = new URL(window.location);
+        const params = loc.searchParams;
+        const token = params.get("token");
+        const refreshToken = params.get("refreshToken");
+        if(token && token.length > 10 && refreshToken && refreshToken.length > 10) {
             console.log("get tokens from URL location")
-            this.loadJwtTokens(tokens[0], tokens[1]);
+            this.loadJwtTokens(token, refreshToken);
 
-            window.location.replace("#");
+            loc.searchParams.delete("token");
+            loc.searchParams.delete("refreshToken");
+
+            window.location.replace(loc);
             if (typeof window.history.replaceState === 'function') {
                 window.history.replaceState({}, '', window.location.href.slice(0, -1));
             }
