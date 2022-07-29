@@ -1591,9 +1591,10 @@ export function ActivityEditor(props) {
                     if(cDef) {
                         const c_def = JSON.parse(JSON.stringify(cDef));
                         c_def.outputs = (cell.getAttribute('outputs') || "").split(",");
+                        c_def.error_outputs = (cell.getAttribute('error_outputs') || "").split(",");
                         c_def.x = cell.geometry.x + 10;
                         c_def.y = cell.geometry.y + 10;
-                        const params = (cell.getAttribute('attrList') || "").split(",").reduce((xa, a) => {xa[a] = cell.params[a]; return xa;}, {});
+                        const params = (cell.getAttribute('attrList') || "").split(",").reduce((xa, a) => {xa[a] = cell.value.params[a]; return xa;}, {});
                         e.addNode(editor, c_def, newName, params);
                     }
                 })} />
