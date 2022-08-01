@@ -270,10 +270,12 @@ const BulkResult = ({result, colOffset}) => {
     let statusColor = '';
     let statusGlyph = '';
     switch(result.status) {
+        case "ERROR":
         case "fail":
             statusColor = '#ca6f7b';
             statusGlyph = 'remove';
             break;
+        case "SUCCESS":
         case "ok":
             if (result.instance && result.instance.status) {
                 switch(result.instance.status) {
@@ -437,7 +439,7 @@ class BulkEntry extends Component {
         const {bulk} = this.props;
         this.setState({loading: true});
 
-        fetch_get(`/api/v01/bulks/${bulk.bulk_id}/results`)
+        fetch_get(`/api/v01/bulks/${bulk.bulk_id}/results?limit=251`)
             .then(data => {
                 if(this.cancelLoad) {
                     return;
@@ -534,7 +536,7 @@ class BulkEntry extends Component {
             rows.push(
                 <tr>
                     <td colSpan={7}>
-                        { truncated &&
+                        { // truncated &&
                         <p>
                           The result list is limited to 250 results. Click here to have the full results:
                           <Button
@@ -548,11 +550,11 @@ class BulkEntry extends Component {
                         </p>
                         }
                         {
-                            results.length && results[0].instance && <p>
-                                See generated <Link to={{pathname: "/transactions/list", search: queryString.stringify({
-                                    filter: JSON.stringify({label: { model: 'bulks', value: bulk.label, op: 'eq' }})
-                                })}}>requests</Link>
-                            </p>
+                            // results.length && results[0].instance && <p>
+                            //     See generated <Link to={{pathname: "/transactions/list", search: queryString.stringify({
+                            //         filter: JSON.stringify({label: { model: 'bulks', value: bulk.label, op: 'eq' }})
+                            //     })}}>requests</Link>
+                            // </p>
                         }
                     </td>
                 </tr>

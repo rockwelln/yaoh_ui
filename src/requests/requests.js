@@ -2959,20 +2959,6 @@ export class Requests extends Component{
 
                             <FormGroup>
                                 <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="bulk-label" defaultMessage="Bulk label" />
-                                </Col>
-
-                                <Col smOffset={1} sm={8}>
-                                    <FormControl componentClass="input" value={filter_criteria.label.value}
-                                        onChange={e => this.setState({
-                                            filter_criteria: update(filter_criteria,
-                                                {label: {$merge: {value: e.target.value}}})
-                                        })} />
-                                </Col>
-                            </FormGroup>
-
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
                                     <FormattedMessage id="workflow" defaultMessage="Workflow" />
                                 </Col>
 
