@@ -104,7 +104,7 @@ export const access_levels = Object.freeze({
 const UI_PROFILES = {
     "default": ["user", "admin", "provisioning"],
     "orange": ["user", "admin"],
-    "telenet": ["user", "admin", "CPM", "HelpDesk1",  "HelpDesk2",  "HelpDesk3", "VoiceOps", "VoiceEng"],
+    "telenet": ["user", "admin", "provisioning", "CPM", "HelpDesk1",  "HelpDesk2",  "HelpDesk3", "VoiceOps", "VoiceEng"],
 };
 
 // const HOME_PAGES = {
