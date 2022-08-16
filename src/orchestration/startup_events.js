@@ -763,13 +763,13 @@ function ImportCustomRouteModal({show, onHide}) {
     getRootProps,
     getInputProps,
   } = useDropzone({accept: 'application/json'});
-  const [options, setOptions] = useState({});
+  const [options, setOptions] = useState({activateNewVersion: true});
 
   useEffect(() => {
     if(!show) {
       setErrors([]);
       setLoaded([]);
-      setOptions({});
+      setOptions({activateNewVersion: true});
     }
   }, [show])
 
