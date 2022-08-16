@@ -116,7 +116,7 @@ export function RangeOrNumbersInput({ ranges, onChange, multipleRanges }) {
     if (f > t) {
       return "invalid";
     }
-    return t - f;
+    return t - f +1;
   }
   return (
     <>
@@ -245,24 +245,26 @@ export function NPPortInRequest({userInfo, defaultRecipient}) {
     }
   }, [operators]);
 
-  const validRanges = request.ranges.length === 1 && request.ranges[0].from === '' && request.ranges[0].to === '' ? null : validateRanges(request.ranges).length === 0 && rangeError === undefined ? "success" : "error";
+  const validRanges = request.ranges.length === 1 && request.ranges[0].from === '' && request.ranges[0].to === '' ? "error" : validateRanges(request.ranges).length === 0 && rangeError === undefined ? "success" : "error";
   const validRecipient = request.recipient !== null && request.recipient !== undefined && request.recipient !== "" ? "success" : null;
   const validAccountNum = request.subscriber_data.AccountPayType === "PostPaid" && (request.subscriber_data.AccountNum === undefined || request.subscriber_data.AccountNum.length === 0 || request.subscriber_data.AccountNum.length > 20) ? "error" : null;
   const validManagedPerson = request.subscriber_data.ProcessType === "Individual" || (request.subscriber_data.ProcessType === "Managed" && request.subscriber_data.ManagedContactPerson !== undefined && request.subscriber_data.ManagedContactPerson.length !== 0) ? "success" : "error";
   const validManagedPhone = request.subscriber_data.ProcessType === "Individual" || (request.subscriber_data.ProcessType === "Managed" && request.subscriber_data.ManagedContactPhone !== undefined && request.subscriber_data.ManagedContactPhone.length !== 0) ? "success" : "error";
+
+  const validAccountRegNum = (
+    (request.subscriber_data.AccountID !== undefined && request.subscriber_data.AccountID.length !== 0) ||
+    (request.subscriber_data.RegNum !== undefined && request.subscriber_data.RegNum.length !== 0)
+  );
 
   const validForm = (
     validateRanges(request.ranges).length === 0 &&
     validRecipient === "success" &&
     request.routing_info !== "" &&
     request.due_date && request.due_date !== "" &&
-    request.subscriber_data.AccountNum.length !== 0 &&
+    validAccountNum === null &&
     validManagedPerson !== "error" &&
     validManagedPhone !== "error" &&
-    (
-      (request.subscriber_data.AccountID !== undefined && request.subscriber_data.AccountID.length !== 0) ||
-      (request.subscriber_data.RegNum !== undefined && request.subscriber_data.RegNum.length !== 0)
-    )
+    validAccountRegNum
   );
   return (
     <Form horizontal>
@@ -352,7 +354,7 @@ export function NPPortInRequest({userInfo, defaultRecipient}) {
         </Col>
       </FormGroup>
 
-      <FormGroup>
+      <FormGroup validationState={request.routing_info !== ""?"success":"error"}>
         <Col componentClass={ControlLabel} sm={2}>
           <FormattedMessage id="route" defaultMessage="Route" />{"*"}
         </Col>
@@ -371,7 +373,7 @@ export function NPPortInRequest({userInfo, defaultRecipient}) {
       </FormGroup>
 
 
-      <FormGroup>
+      <FormGroup validationState={request.due_date && request.due_date !== "" ? "success" : null}>
         <Col componentClass={ControlLabel} sm={2}>
           <FormattedMessage id="port-date-time" defaultMessage="Port date time" />{"*"}
         </Col>
@@ -446,7 +448,7 @@ export function NPPortInRequest({userInfo, defaultRecipient}) {
         </Col>
       </FormGroup>
 
-      <FormGroup>
+      <FormGroup validationState={validAccountRegNum?null:"error"}>
         <Col componentClass={ControlLabel} sm={2}>
           <FormattedMessage id="account-id" defaultMessage="Account ID" />
         </Col>
@@ -498,7 +500,7 @@ export function NPPortInRequest({userInfo, defaultRecipient}) {
       {
         request.subscriber_data.AccountType === "GNPAccount" &&
         <>
-          <FormGroup>
+          <FormGroup validationState={validAccountRegNum?null:"error"}>
             <Col componentClass={ControlLabel} sm={2}>
               <FormattedMessage id="reg-num" defaultMessage="Reg. number" />
             </Col>
