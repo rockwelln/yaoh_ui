@@ -83,6 +83,7 @@ export const modules = Object.freeze({
     manualActions: 'manualActions',
     npact: 'npact',
     npact_crdb: 'npact_crdb',
+    npact_crdb_dd: 'npact_crdb_dd',
     npact_citc: 'npact_citc',
     npact_crdc: 'npact_crdc',
     npact_coin: 'npact_coin',

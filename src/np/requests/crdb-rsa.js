@@ -55,11 +55,11 @@ import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
 import {LinkContainer} from "react-router-bootstrap";
 import {fetchActivities} from "../../orchestration/activity-editor";
 
-export const DEFAULT_RECIPIENT = "MTNBSGNP";
+// export const DEFAULT_RECIPIENT = "MTNBSGNP";
 export const rejection_codes = [];
-const RECIPIENTS = [
-  DEFAULT_RECIPIENT,
-];
+// const RECIPIENTS = [
+//   DEFAULT_RECIPIENT,
+// ];
 
 
 
@@ -225,7 +225,7 @@ const emptyRequest = {
   due_date: moment.utc().add(1, "days").toISOString(),
 }
 
-export function NPPortInRequest({userInfo}) {
+export function NPPortInRequest({userInfo, defaultRecipient}) {
   const [operators, setOperators] = useState([]);
   const [routes, setRoutes] = useState([]);
   const [request, setRequest] = useState(emptyRequest);
@@ -239,7 +239,7 @@ export function NPPortInRequest({userInfo}) {
     fetchRoutes(setRoutes);
   }, []);
   useEffect(() => {
-    const o = operators && operators.find(o => o.name === DEFAULT_RECIPIENT);
+    const o = operators && operators.find(o => o.name === defaultRecipient);
     if (o) {
       setRequest(r => update(r, { $merge: { recipient: o.id, donor: o.id } }))
     }
@@ -346,7 +346,7 @@ export function NPPortInRequest({userInfo}) {
             onChange={e => setRequest(update(request, { $merge: { recipient: e.target.value && parseInt(e.target.value, 10) } }))}>
             <option value=""></option>
             {
-              operators.filter(o => RECIPIENTS.indexOf(o.short_name) !== -1).map(o => <option key={o.id} value={o.id}>{o.name}</option>)
+              operators.filter(o => o.short_name === defaultRecipient).map(o => <option key={o.id} value={o.id}>{o.name}</option>)
             }
           </FormControl>
         </Col>
@@ -1307,11 +1307,12 @@ export class NPDisconnectRequest extends Component {
   onSubmit(e) {
     e.preventDefault();
     const { donor, ranges, operators } = this.state;
+    const {defaultRecipient} = this.props;
     fetch_post(
       '/api/v01/npact/np_requests/disconnect',
       {
         donor_id: parseInt(donor.id, 10),
-        recipient_id: operators.filter(o => o.short_name === DEFAULT_RECIPIENT)[0].id,
+        recipient_id: operators.filter(o => o.short_name === defaultRecipient)[0].id,
         ranges: ranges,
       },
       this.props.auth_token

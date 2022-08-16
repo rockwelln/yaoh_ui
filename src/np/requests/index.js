@@ -17,7 +17,7 @@ import {
 
 export function NPTransaction(props) {
   const {user_info} = props
-  if(user_info.modules.includes(modules.npact_crdb)) {
+  if(user_info.modules.includes(modules.npact_crdb) || user_info.modules.includes(modules.npact_crdb_dd)) {
     return <CrdbNPTransaction {...props} />
   } else if(user_info.modules.includes(modules.npact_citc)) {
     return <CitcNPTransaction {...props} />
@@ -30,8 +30,10 @@ export function NPTransaction(props) {
 
 export function NPPortInRequest(props) {
   const {user_info} = props
-  if(user_info.modules.includes(modules.npact_crdb)) {
-    return <CrdbNPPortInRequest userInfo={user_info} />
+  if(user_info.modules.includes(modules.npact_crdb_dd)) {
+    return <CrdbNPPortInRequest userInfo={user_info} defaultRecipient={"INTERSOL"} />
+  } else if(user_info.modules.includes(modules.npact_crdb)) {
+    return <CrdbNPPortInRequest userInfo={user_info} defaultRecipient={"MTNBSGNP"} />
   } else if(user_info.modules.includes(modules.npact_citc)) {
     return <CitcNPPortInRequest {...props} />
   } else if(user_info.modules.includes(modules.npact_coin)) {
@@ -43,8 +45,10 @@ export function NPPortInRequest(props) {
 
 export function NPDisconnectRequest(props) {
   const {user_info} = props
-  if(user_info.modules.includes(modules.npact_crdb)) {
-    return <CrdbNPDisconnectRequest {...props} />
+  if(user_info.modules.includes(modules.npact_crdb_dd)) {
+    return <CrdbNPDisconnectRequest defaultRecipient={"INTERSOL"} {...props} />
+  } else if(user_info.modules.includes(modules.npact_crdb)) {
+    return <CrdbNPDisconnectRequest defaultRecipient={"MTNBSGNP"} {...props} />
   } else if(user_info.modules.includes(modules.npact_citc)) {
     return <CitcNPDisconnectRequest {...props} />
   } else {
