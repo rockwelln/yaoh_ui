@@ -1419,6 +1419,7 @@ export class NPDisconnectRequest extends Component {
 function CrdbMessages(props) {
   const {messages, userInfo} = props;
   const [seeDetails, setSeeDetails] = useState(false);
+  let errors = [];
   let listOfMessages = messages
     .sort((a, b) => a.processing_trace_id - b.processing_trace_id)
     .reduce((l, m) => {
@@ -1488,6 +1489,7 @@ function CrdbMessages(props) {
           summary: `${message} (${messageID})`,
           type: "request",
           created_on: m.created_on,
+          protocol: "SOAP",
           raw: o.request
         });
       }
@@ -1499,8 +1501,16 @@ function CrdbMessages(props) {
           summary: o.status,
           type: "response",
           created_on: m.created_on,
-          status: m.status === 200 ? o.status : m.status, ...o.response
+          status: m.status === 200 ? o.status : m.status,
+          raw: o.response,
+          ...o.response
         });
+      }
+      if(o.errors) {
+        errors.push(...o.errors)
+      }
+      if(o.error) {
+        errors.push(o.error)
       }
       return l;
     }, [])
@@ -1521,6 +1531,9 @@ function CrdbMessages(props) {
           <Checkbox checked={seeDetails} onChange={e => setSeeDetails(e.target.checked)}>
             <i>See details</i>
           </Checkbox>
+        </Row>
+        <Row style={{ textAlign: "center" }}>
+          {errors.map((e, i) => <Alert bsStyle="danger">{e}</Alert>)}
         </Row>
       </Tab>
       <Tab eventKey={2} title={<FormattedMessage id="messages" defaultMessage="Messages" />}>
@@ -1939,7 +1952,7 @@ export class NPTransaction extends Component {
               </LinkContainer>
             ))
           }
-          <Breadcrumb.Item active>{tx.id}</Breadcrumb.Item>
+          <Breadcrumb.Item active>{(request && request.crdc_id) ? request.crdc_id : tx.id}</Breadcrumb.Item>
         </Breadcrumb>
         {alerts}
         <Row>
