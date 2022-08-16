@@ -375,17 +375,19 @@ function UserToken({value, onRefresh}) {
       <FormControl.Static>
           {value}
           {" "}
-          <Button onClick={() => {
-            navigator.clipboard.writeText(value);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-          }}>
-              {
-                copied ?
-                  <Glyphicon glyph={"ok"} style={{color: "green"}}/> :
-                  <Glyphicon glyph={"copy"}/>
-              }
-          </Button>
+          {
+              value?.length > 10 && <Button onClick={() => {
+                  navigator.clipboard.writeText(value);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+              }}>
+                  {
+                      copied ?
+                        <Glyphicon glyph={"ok"} style={{color: "green"}}/> :
+                        <Glyphicon glyph={"copy"}/>
+                  }
+              </Button>
+          }
           {" "}
           <Button onClick={() => onRefresh()}>
               <Glyphicon glyph={"refresh"}/>
@@ -746,11 +748,9 @@ function UpdateUser(props) {
 
                             <Col sm={9}>
                                 <FormControl.Static>
-                                    {localUser.token ? "set" : "not-set"}
-                                    {" "}
-                                    <Button onClick={() => updateUser(user.id, {token: true}, () => loadFullUser(user.id))}>
-                                        <Glyphicon glyph={"refresh"}/>
-                                    </Button>
+                                    <UserToken
+                                      value={localUser.token}
+                                      onRefresh={() => updateUser(user.id, {token: true}, () => loadFullUser(user.id))} />
                                 </FormControl.Static>
                             </Col>
                         </FormGroup>
