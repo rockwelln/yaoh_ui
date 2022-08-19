@@ -63,6 +63,7 @@ const newGateway = {
   timeout: 10,
   session_holder: "",
   auth: "default",
+  tls_verify: true,
   login_url: "/api/v1/login/",
   check: false,
   check_url: "/health",
@@ -112,6 +113,17 @@ function NewGatewayModal(props) {
                 componentClass="input"
                 value={entry.url}
                 onChange={e => setEntry(update(entry, {$merge: {url: e.target.value}}))}/>
+            </Col>
+          </FormGroup>
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="tls-verify" defaultMessage="TLS verify"/>
+            </Col>
+
+            <Col sm={9}>
+              <Checkbox
+                checked={entry.tls_verify}
+                onChange={e => setEntry(update(entry, {$merge: {tls_verify: e.target.checked}}))}/>
             </Col>
           </FormGroup>
           <FormGroup>
@@ -425,6 +437,18 @@ function GatewaysPanel(props) {
                         <HelpBlock>
                           URL with the '/' at end to reach the gateway
                         </HelpBlock>
+                      </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                      <Col componentClass={ControlLabel} sm={2}>
+                        <FormattedMessage id="tls-verify" defaultMessage="TLS verify"/>
+                      </Col>
+
+                      <Col sm={9}>
+                        <Checkbox
+                          checked={gateway.tls_verify}
+                          onChange={e => onChange(update(gateways, {[g]: {$merge: {tls_verify: e.target.checked}}}))}/>
                       </Col>
                     </FormGroup>
 
