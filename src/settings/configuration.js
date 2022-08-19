@@ -67,6 +67,8 @@ const newGateway = {
   login_url: "/api/v1/login/",
   check: false,
   check_url: "/health",
+  client_tls_cert: null,
+  client_tls_key: null,
 };
 
 function NewGatewayModal(props) {
@@ -383,6 +385,44 @@ function NewGatewayModal(props) {
                     value={entry.algorithm || "sha256"}
                     disabled
                     />
+                </Col>
+              </FormGroup>
+            </>
+          }
+
+          {
+            entry.url.startsWith("https") && <>
+              <hr/>
+
+              <FormGroup>
+                <Col componentClass={ControlLabel} sm={2}>
+                  <FormattedMessage id="tls client cert" defaultMessage="TLS client certificate"/>
+                </Col>
+
+                <Col sm={9}>
+                  <FormControl
+                    componentClass="textarea"
+                    rows={10}
+                    placeholder={"fill only to use mTLS"}
+                    style={{resize: "vertical"}}
+                    value={entry.client_tls_cert || ""}
+                    onChange={e => setEntry(update(entry, {$merge: {client_tls_cert: e.target.value}}))}/>
+                </Col>
+              </FormGroup>
+
+              <FormGroup>
+                <Col componentClass={ControlLabel} sm={2}>
+                  <FormattedMessage id="tls client key" defaultMessage="TLS client key"/>
+                </Col>
+
+                <Col sm={9}>
+                  <FormControl
+                    componentClass="textarea"
+                    rows={10}
+                    placeholder={"fill only to use mTLS"}
+                    style={{resize: "vertical"}}
+                    value={entry.client_tls_key || ""}
+                    onChange={e => setEntry(update(entry, {$merge: {client_tls_key: e.target.value}}))}/>
                 </Col>
               </FormGroup>
             </>
@@ -749,6 +789,44 @@ function GatewaysPanel(props) {
                               value={gateway.algorithm || "sha256"}
                               disabled
                               />
+                          </Col>
+                        </FormGroup>
+                      </>
+                    }
+
+                    {
+                      gateway.url.startsWith("https") && <>
+                        <hr/>
+
+                        <FormGroup>
+                          <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="tls client cert" defaultMessage="TLS client certificate"/>
+                          </Col>
+
+                          <Col sm={9}>
+                            <FormControl
+                              componentClass="textarea"
+                              rows={10}
+                              placeholder={"fill only to use mTLS"}
+                              style={{resize: "vertical"}}
+                              value={gateway.client_tls_cert || ""}
+                              onChange={e => onChange(update(gateways, {[g]: {$merge: {client_tls_cert: e.target.value}}}))}/>
+                          </Col>
+                        </FormGroup>
+
+                        <FormGroup>
+                          <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="tls client key" defaultMessage="TLS client key"/>
+                          </Col>
+
+                          <Col sm={9}>
+                            <FormControl
+                              componentClass="textarea"
+                              rows={10}
+                              placeholder={"fill only to use mTLS"}
+                              style={{resize: "vertical"}}
+                              value={gateway.client_tls_key || ""}
+                              onChange={e => onChange(update(gateways, {[g]: {$merge: {client_tls_key: e.target.value}}}))}/>
                           </Col>
                         </FormGroup>
                       </>
