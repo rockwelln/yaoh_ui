@@ -55,11 +55,11 @@ import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
 import {LinkContainer} from "react-router-bootstrap";
 import {fetchActivities} from "../../orchestration/activity-editor";
 
-export const DEFAULT_RECIPIENT = "MTNBSGNP";
+// export const DEFAULT_RECIPIENT = "MTNBSGNP";
 export const rejection_codes = [];
-const RECIPIENTS = [
-  DEFAULT_RECIPIENT,
-];
+// const RECIPIENTS = [
+//   DEFAULT_RECIPIENT,
+// ];
 
 
 
@@ -116,7 +116,7 @@ export function RangeOrNumbersInput({ ranges, onChange, multipleRanges }) {
     if (f > t) {
       return "invalid";
     }
-    return t - f;
+    return t - f +1;
   }
   return (
     <>
@@ -225,7 +225,7 @@ const emptyRequest = {
   due_date: moment.utc().add(1, "days").toISOString(),
 }
 
-export function NPPortInRequest({userInfo}) {
+export function NPPortInRequest({userInfo, defaultRecipient}) {
   const [operators, setOperators] = useState([]);
   const [routes, setRoutes] = useState([]);
   const [request, setRequest] = useState(emptyRequest);
@@ -239,30 +239,32 @@ export function NPPortInRequest({userInfo}) {
     fetchRoutes(setRoutes);
   }, []);
   useEffect(() => {
-    const o = operators && operators.find(o => o.name === DEFAULT_RECIPIENT);
+    const o = operators && operators.find(o => o.name === defaultRecipient);
     if (o) {
       setRequest(r => update(r, { $merge: { recipient: o.id, donor: o.id } }))
     }
   }, [operators]);
 
-  const validRanges = request.ranges.length === 1 && request.ranges[0].from === '' && request.ranges[0].to === '' ? null : validateRanges(request.ranges).length === 0 && rangeError === undefined ? "success" : "error";
+  const validRanges = request.ranges.length === 1 && request.ranges[0].from === '' && request.ranges[0].to === '' ? "error" : validateRanges(request.ranges).length === 0 && rangeError === undefined ? "success" : "error";
   const validRecipient = request.recipient !== null && request.recipient !== undefined && request.recipient !== "" ? "success" : null;
   const validAccountNum = request.subscriber_data.AccountPayType === "PostPaid" && (request.subscriber_data.AccountNum === undefined || request.subscriber_data.AccountNum.length === 0 || request.subscriber_data.AccountNum.length > 20) ? "error" : null;
   const validManagedPerson = request.subscriber_data.ProcessType === "Individual" || (request.subscriber_data.ProcessType === "Managed" && request.subscriber_data.ManagedContactPerson !== undefined && request.subscriber_data.ManagedContactPerson.length !== 0) ? "success" : "error";
   const validManagedPhone = request.subscriber_data.ProcessType === "Individual" || (request.subscriber_data.ProcessType === "Managed" && request.subscriber_data.ManagedContactPhone !== undefined && request.subscriber_data.ManagedContactPhone.length !== 0) ? "success" : "error";
+
+  const validAccountRegNum = (
+    (request.subscriber_data.AccountID !== undefined && request.subscriber_data.AccountID.length !== 0) ||
+    (request.subscriber_data.RegNum !== undefined && request.subscriber_data.RegNum.length !== 0)
+  );
 
   const validForm = (
     validateRanges(request.ranges).length === 0 &&
     validRecipient === "success" &&
     request.routing_info !== "" &&
     request.due_date && request.due_date !== "" &&
-    request.subscriber_data.AccountNum.length !== 0 &&
+    validAccountNum === null &&
     validManagedPerson !== "error" &&
     validManagedPhone !== "error" &&
-    (
-      (request.subscriber_data.AccountID !== undefined && request.subscriber_data.AccountID.length !== 0) ||
-      (request.subscriber_data.RegNum !== undefined && request.subscriber_data.RegNum.length !== 0)
-    )
+    validAccountRegNum
   );
   return (
     <Form horizontal>
@@ -346,13 +348,13 @@ export function NPPortInRequest({userInfo}) {
             onChange={e => setRequest(update(request, { $merge: { recipient: e.target.value && parseInt(e.target.value, 10) } }))}>
             <option value=""></option>
             {
-              operators.filter(o => RECIPIENTS.indexOf(o.short_name) !== -1).map(o => <option key={o.id} value={o.id}>{o.name}</option>)
+              operators.filter(o => o.short_name === defaultRecipient).map(o => <option key={o.id} value={o.id}>{o.name}</option>)
             }
           </FormControl>
         </Col>
       </FormGroup>
 
-      <FormGroup>
+      <FormGroup validationState={request.routing_info !== ""?"success":"error"}>
         <Col componentClass={ControlLabel} sm={2}>
           <FormattedMessage id="route" defaultMessage="Route" />{"*"}
         </Col>
@@ -371,7 +373,7 @@ export function NPPortInRequest({userInfo}) {
       </FormGroup>
 
 
-      <FormGroup>
+      <FormGroup validationState={request.due_date && request.due_date !== "" ? "success" : null}>
         <Col componentClass={ControlLabel} sm={2}>
           <FormattedMessage id="port-date-time" defaultMessage="Port date time" />{"*"}
         </Col>
@@ -446,7 +448,7 @@ export function NPPortInRequest({userInfo}) {
         </Col>
       </FormGroup>
 
-      <FormGroup>
+      <FormGroup validationState={validAccountRegNum?null:"error"}>
         <Col componentClass={ControlLabel} sm={2}>
           <FormattedMessage id="account-id" defaultMessage="Account ID" />
         </Col>
@@ -498,7 +500,7 @@ export function NPPortInRequest({userInfo}) {
       {
         request.subscriber_data.AccountType === "GNPAccount" &&
         <>
-          <FormGroup>
+          <FormGroup validationState={validAccountRegNum?null:"error"}>
             <Col componentClass={ControlLabel} sm={2}>
               <FormattedMessage id="reg-num" defaultMessage="Reg. number" />
             </Col>
@@ -1307,11 +1309,12 @@ export class NPDisconnectRequest extends Component {
   onSubmit(e) {
     e.preventDefault();
     const { donor, ranges, operators } = this.state;
+    const {defaultRecipient} = this.props;
     fetch_post(
       '/api/v01/npact/np_requests/disconnect',
       {
         donor_id: parseInt(donor.id, 10),
-        recipient_id: operators.filter(o => o.short_name === DEFAULT_RECIPIENT)[0].id,
+        recipient_id: operators.filter(o => o.short_name === defaultRecipient)[0].id,
         ranges: ranges,
       },
       this.props.auth_token
@@ -1418,6 +1421,7 @@ export class NPDisconnectRequest extends Component {
 function CrdbMessages(props) {
   const {messages, userInfo} = props;
   const [seeDetails, setSeeDetails] = useState(false);
+  let errors = [];
   let listOfMessages = messages
     .sort((a, b) => a.processing_trace_id - b.processing_trace_id)
     .reduce((l, m) => {
@@ -1487,6 +1491,7 @@ function CrdbMessages(props) {
           summary: `${message} (${messageID})`,
           type: "request",
           created_on: m.created_on,
+          protocol: "SOAP",
           raw: o.request
         });
       }
@@ -1498,8 +1503,16 @@ function CrdbMessages(props) {
           summary: o.status,
           type: "response",
           created_on: m.created_on,
-          status: m.status === 200 ? o.status : m.status, ...o.response
+          status: m.status === 200 ? o.status : m.status,
+          raw: o.response,
+          ...o.response
         });
+      }
+      if(o.errors) {
+        errors.push(...o.errors)
+      }
+      if(o.error) {
+        errors.push(o.error)
       }
       return l;
     }, [])
@@ -1520,6 +1533,9 @@ function CrdbMessages(props) {
           <Checkbox checked={seeDetails} onChange={e => setSeeDetails(e.target.checked)}>
             <i>See details</i>
           </Checkbox>
+        </Row>
+        <Row style={{ textAlign: "center" }}>
+          {errors.map((e, i) => <Alert bsStyle="danger">{e}</Alert>)}
         </Row>
       </Tab>
       <Tab eventKey={2} title={<FormattedMessage id="messages" defaultMessage="Messages" />}>
@@ -1938,7 +1954,7 @@ export class NPTransaction extends Component {
               </LinkContainer>
             ))
           }
-          <Breadcrumb.Item active>{tx.id}</Breadcrumb.Item>
+          <Breadcrumb.Item active>{(request && request.crdc_id) ? request.crdc_id : tx.id}</Breadcrumb.Item>
         </Breadcrumb>
         {alerts}
         <Row>

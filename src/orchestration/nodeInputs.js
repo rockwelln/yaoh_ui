@@ -430,7 +430,7 @@ function WorkflowEnds({value, onChange, workflow}) {
       a && fetchActivity(
         a.id,
         activity => setEnds(
-          Object.entries(JSON.parse(activity.definition).cells)
+          Object.entries(activity.definition.cells)
             .filter(([_, c]) => c.original_name === "end")
             .map(([name, _]) => name)
         )

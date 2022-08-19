@@ -63,9 +63,12 @@ const newGateway = {
   timeout: 10,
   session_holder: "",
   auth: "default",
+  tls_verify: true,
   login_url: "/api/v1/login/",
   check: false,
   check_url: "/health",
+  client_tls_cert: null,
+  client_tls_key: null,
 };
 
 function NewGatewayModal(props) {
@@ -112,6 +115,17 @@ function NewGatewayModal(props) {
                 componentClass="input"
                 value={entry.url}
                 onChange={e => setEntry(update(entry, {$merge: {url: e.target.value}}))}/>
+            </Col>
+          </FormGroup>
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="tls-verify" defaultMessage="TLS verify"/>
+            </Col>
+
+            <Col sm={9}>
+              <Checkbox
+                checked={entry.tls_verify}
+                onChange={e => setEntry(update(entry, {$merge: {tls_verify: e.target.checked}}))}/>
             </Col>
           </FormGroup>
           <FormGroup>
@@ -187,6 +201,7 @@ function NewGatewayModal(props) {
                   <option value="oauth2">oauth2</option>
                   <option value="basic">basic</option>
                   <option value="hawk">hawk</option>
+                  <option value="oracle-sbc">oracle sbc</option>
               </FormControl>
 
             </Col>
@@ -375,6 +390,44 @@ function NewGatewayModal(props) {
             </>
           }
 
+          {
+            entry.url.startsWith("https") && <>
+              <hr/>
+
+              <FormGroup>
+                <Col componentClass={ControlLabel} sm={2}>
+                  <FormattedMessage id="tls client cert" defaultMessage="TLS client certificate"/>
+                </Col>
+
+                <Col sm={9}>
+                  <FormControl
+                    componentClass="textarea"
+                    rows={10}
+                    placeholder={"fill only to use mTLS"}
+                    style={{resize: "vertical"}}
+                    value={entry.client_tls_cert || ""}
+                    onChange={e => setEntry(update(entry, {$merge: {client_tls_cert: e.target.value}}))}/>
+                </Col>
+              </FormGroup>
+
+              <FormGroup>
+                <Col componentClass={ControlLabel} sm={2}>
+                  <FormattedMessage id="tls client key" defaultMessage="TLS client key"/>
+                </Col>
+
+                <Col sm={9}>
+                  <FormControl
+                    componentClass="textarea"
+                    rows={10}
+                    placeholder={"fill only to use mTLS"}
+                    style={{resize: "vertical"}}
+                    value={entry.client_tls_key || ""}
+                    onChange={e => setEntry(update(entry, {$merge: {client_tls_key: e.target.value}}))}/>
+                </Col>
+              </FormGroup>
+            </>
+          }
+
         </Form>
       </Modal.Body>
       <Modal.Footer>
@@ -424,6 +477,18 @@ function GatewaysPanel(props) {
                         <HelpBlock>
                           URL with the '/' at end to reach the gateway
                         </HelpBlock>
+                      </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                      <Col componentClass={ControlLabel} sm={2}>
+                        <FormattedMessage id="tls-verify" defaultMessage="TLS verify"/>
+                      </Col>
+
+                      <Col sm={9}>
+                        <Checkbox
+                          checked={gateway.tls_verify}
+                          onChange={e => onChange(update(gateways, {[g]: {$merge: {tls_verify: e.target.checked}}}))}/>
                       </Col>
                     </FormGroup>
 
@@ -536,6 +601,7 @@ function GatewaysPanel(props) {
                             <option value="oauth2">oauth2</option>
                             <option value="basic">basic</option>
                             <option value="hawk">hawk</option>
+                            <option value="oracle-sbc">oracle sbc</option>
                         </FormControl>
 
                       </Col>
@@ -723,6 +789,44 @@ function GatewaysPanel(props) {
                               value={gateway.algorithm || "sha256"}
                               disabled
                               />
+                          </Col>
+                        </FormGroup>
+                      </>
+                    }
+
+                    {
+                      gateway.url.startsWith("https") && <>
+                        <hr/>
+
+                        <FormGroup>
+                          <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="tls client cert" defaultMessage="TLS client certificate"/>
+                          </Col>
+
+                          <Col sm={9}>
+                            <FormControl
+                              componentClass="textarea"
+                              rows={10}
+                              placeholder={"fill only to use mTLS"}
+                              style={{resize: "vertical"}}
+                              value={gateway.client_tls_cert || ""}
+                              onChange={e => onChange(update(gateways, {[g]: {$merge: {client_tls_cert: e.target.value}}}))}/>
+                          </Col>
+                        </FormGroup>
+
+                        <FormGroup>
+                          <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="tls client key" defaultMessage="TLS client key"/>
+                          </Col>
+
+                          <Col sm={9}>
+                            <FormControl
+                              componentClass="textarea"
+                              rows={10}
+                              placeholder={"fill only to use mTLS"}
+                              style={{resize: "vertical"}}
+                              value={gateway.client_tls_key || ""}
+                              onChange={e => onChange(update(gateways, {[g]: {$merge: {client_tls_key: e.target.value}}}))}/>
                           </Col>
                         </FormGroup>
                       </>
