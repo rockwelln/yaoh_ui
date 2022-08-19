@@ -187,6 +187,7 @@ function NewGatewayModal(props) {
                   <option value="oauth2">oauth2</option>
                   <option value="basic">basic</option>
                   <option value="hawk">hawk</option>
+                  <option value="oracle-sbc">oracle sbc</option>
               </FormControl>
 
             </Col>
@@ -536,6 +537,7 @@ function GatewaysPanel(props) {
                             <option value="oauth2">oauth2</option>
                             <option value="basic">basic</option>
                             <option value="hawk">hawk</option>
+                            <option value="oracle-sbc">oracle sbc</option>
                         </FormControl>
 
                       </Col>
