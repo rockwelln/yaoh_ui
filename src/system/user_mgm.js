@@ -680,7 +680,7 @@ function UpdateUser(props) {
                                           <td>
                                               <Select
                                                 value={{value: newAdmin.level, label: newAdmin.level}}
-                                                options={["system", "distributor", "reseller", "tenant"].map(r => ({value: r, label: r}))}
+                                                options={["system", "group", "distributor", "reseller", "tenant"].map(r => ({value: r, label: r}))}
                                                 onChange={v => setNewAdmin(update(newAdmin, {$merge: {level: v.value}}))}
                                                 />
                                           </td>
