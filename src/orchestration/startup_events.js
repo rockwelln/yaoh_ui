@@ -189,7 +189,7 @@ function DedicatedEvents(props) {
 }
 
 const isObject = value => value && typeof value === 'object' && value.constructor === Object;
-const newRoute = {method: "get", sync: false, enabled:true, route: "", schema: null, support_bulk: false, bulk_options: null, group: null};
+const newRoute = {method: "get", sync: false, public: false, enabled:true, route: "", schema: null, support_bulk: false, bulk_options: null, group: null};
 
 
 function updateCustomRoute(routeId, entry, onSuccess) {
@@ -224,6 +224,10 @@ function updateCustomRouteEnabled(routeId, enabled, onSuccess) {
 
 function updateCustomRouteSync(routeId, sync, onSuccess) {
     return updateCustomRoute(routeId, {sync: sync}, onSuccess);
+}
+
+function updateCustomRoutePublic(routeId, public_, onSuccess) {
+    return updateCustomRoute(routeId, {public: public_}, onSuccess);
 }
 
 
@@ -420,6 +424,22 @@ function NewCustomRoute({show, onHide, groups, activities}) {
 
                              <HelpBlock>
                                  <FormattedMessage id="custom-route-sync" defaultMessage="When set, the call to this API is synchronous and the response is returned directly. Otherwise, only an instance id is returned and the associated job is spawned asynchronously."/>
+                             </HelpBlock>
+                         </Col>
+                     </FormGroup>
+
+                     <FormGroup>
+                         <Col componentClass={ControlLabel} sm={2}>
+                             <FormattedMessage id="public" defaultMessage="Public" />
+                         </Col>
+
+                         <Col sm={9}>
+                             <Checkbox
+                                 checked={route.public}
+                                 onChange={e => setRoute(update(route, {$merge: {public: e.target.checked}}))}/>
+
+                             <HelpBlock>
+                                 <FormattedMessage id="custom-route-public" defaultMessage="Whether the route is public or not. (when public the route is exposed as /api/v0x/public/... and require no authentication at all)"/>
                              </HelpBlock>
                          </Col>
                      </FormGroup>
@@ -679,6 +699,22 @@ function UpdateCustomRouteModal({show, entry, onHide, groups, activities}) {
 
                     <FormGroup>
                         <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="public" defaultMessage="Public" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <Checkbox
+                                checked={localEntry.public}
+                                onChange={e => setDiffEntry(update(diffEntry, {$merge: {public: e.target.checked}}))}/>
+
+                            <HelpBlock>
+                                <FormattedMessage id="custom-route-public" defaultMessage="Whether the route is public or not. (when public the route is exposed as /api/v0x/public/... and require no authentication at all)"/>
+                            </HelpBlock>
+                        </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
                             <FormattedMessage id="support-bulk" defaultMessage="Support bulk" />
                         </Col>
 
@@ -926,8 +962,54 @@ async function importRoutes(inputFiles, options, onSuccess, onError) {
   }
 }
 
-function UpdateSyncConfirmCheckbox(props) {
-  const { checked, onConfirm, resourceName, ...props_ } = props;
+function UpdatePublicConfirmCheckbox({ checked, onConfirm, resourceName, ...props_ }) {
+  const [show, setShow] = useState(false);
+
+  return (
+    <>
+      <Checkbox
+        checked={checked}
+        onChange={e => e.preventDefault()}
+        onClick={e => {
+            e.preventDefault();
+            setShow(true);
+        }} {...props_} />
+
+      <Modal show={show} onHide={() => setShow(false)} >
+        <Modal.Header closeButton>
+          <Modal.Title>
+              <FormattedMessage
+                  id="confirm-update"
+                  defaultMessage="Are you sure?" />
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Alert bsStyle="danger">
+             <FormattedMessage
+                 id="public-update"
+                 defaultMessage="Update public flag..."/>
+             <br/>
+             <FormattedMessage
+                 id="update-public-warning-suite"
+                 defaultMessage={`When public, there is no more authentication required to access it`}/>
+          </Alert>
+          <p>
+             <FormattedMessage
+                 id="update-public-warning"
+                 defaultMessage={`You are about to change the visibility of the endpoint ${resourceName} !`}/>
+          </p>
+          <Form>
+            <Button bsStyle="primary" onClick={e => { onConfirm(!checked); setShow(false); }} autoFocus>
+              Update
+            </Button>
+          </Form>
+        </Modal.Body>
+      </Modal>
+    </>
+  )
+}
+
+function UpdateSyncConfirmCheckbox({ checked, onConfirm, resourceName, ...props_ }) {
   const [show, setShow] = useState(false);
 
   return (
@@ -1182,13 +1264,14 @@ function CustomRoutesGroup({routes, group, activities, groups, onChange, onSelec
                 <th style={{ minWidth: "22em" }}><FormattedMessage id="activity" defaultMessage="Activity" /></th>
                 <th style={{ width: "2em" }}><FormattedMessage id="enabled" defaultMessage="Enabled" /></th>
                 <th style={{ width: "2em" }}><FormattedMessage id="sync" defaultMessage="Sync" /></th>
+                <th style={{ width: "2em" }}><FormattedMessage id="public" defaultMessage="Public" /></th>
                 <th style={{ minWidth: "15em" }}/>
             </tr>
           </thead>
           <tbody>
           {
             routes.map((route, i) => (
-              <tr key={i}>
+              <tr key={i} style={{ backgroundColor: route.public ? '#B0FDACFF' : '#ffffffff' }}>
                 <td
                   draggable
                   onDragStart={e => {
@@ -1250,6 +1333,12 @@ function CustomRoutesGroup({routes, group, activities, groups, onChange, onSelec
                     resourceName={route.route}
                     checked={route.sync}
                     onConfirm={checked => updateCustomRouteSync(route.route_id, checked, () => onChange())} />
+                </td>
+                <td>
+                  <UpdatePublicConfirmCheckbox
+                    resourceName={route.route}
+                    checked={route.public}
+                    onConfirm={checked => updateCustomRoutePublic(route.route_id, checked, () => onChange())} />
                 </td>
                 <td>
                   <ButtonToolbar>
