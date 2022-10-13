@@ -499,7 +499,11 @@ export function Activities({user_info}) {
                             fetchActivity(duplicateActivity, a => {
                               a.name = name;
                               delete a.id;
-                              a.definition = JSON.parse(a.definition);
+                              try {
+                                a.definition = JSON.parse(a.definition);
+                              } catch (e) {
+                                console.log(e)
+                              }
                               saveActivity(a, () => {
                                 setDuplicateActivity(undefined);
                                 loadActivities();
