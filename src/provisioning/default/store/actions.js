@@ -345,6 +345,11 @@ export const getAllServicePacksOfTenant = (data) => ({
   data,
 });
 
+export const getCallRecordingPlatforms = (data) => ({
+  type: actionType.GET_CALL_RECORDING_PLATFORMS,
+  data,
+});
+
 export const postCreateGroupAdmin = (data) => ({
   type: actionType.POST_CREATE_GROUP_ADMIN,
   data,
@@ -564,6 +569,11 @@ export const putUpdateTenantEntitlement = (data) => ({
 
 export const putUpdateTrunkGroupAccessInfo = (data) => ({
   type: actionType.PUT_UPDATE_TRUNK_GROUP_ACCESS_INFO,
+  data,
+});
+
+export const putUpdateCallRecordingPlatform = (data) => ({
+  type: actionType.PUT_UPDATE_CALL_RECORDING_PLATFORMS,
   data,
 });
 
@@ -2055,6 +2065,24 @@ export function fetchGetAllServicePacksOfTenant() {
   };
 }
 
+export function fetchGetCallRecordingPlatforms() {
+  return function (dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/system/services/call_recording/platforms/`
+    )
+      .then((data) => dispatch(getCallRecordingPlatforms(data)))
+      .catch((error) => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-bwks-licenses-failed"
+            defaultMessage="Failed to fetch call recording platforms!"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
 export function fetchPostCreateGroupAdmin(tenantId, groupId, data, callback) {
   return function (dispatch) {
     return fetch_post(
@@ -3237,6 +3265,35 @@ export function fetchPutUpdateTrunkGroupAccessInfo(
           <FormattedMessage
             id="trunk-group-access-info-update-failed"
             defaultMessage="Failed to update trunk group access info!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchPutUpdateCallRecordingPlatform({ name, data }) {
+  return function (dispatch) {
+    return fetch_put(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/system/services/call_recording/platforms/${name}/`,
+      data
+    )
+      .then((res) => res.json())
+      .then(() => {
+        dispatch(putUpdateCallRecordingPlatform());
+        NotificationsManager.success(
+          <FormattedMessage
+            id="Entitlement-successfully-updated"
+            defaultMessage="Call recording platform successfully updated"
+          />,
+          "Updated"
+        );
+      })
+      .catch((error) =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="entitlement-update-failed"
+            defaultMessage="Failed to update call recording platform!"
           />,
           error.message
         )

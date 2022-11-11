@@ -149,6 +149,7 @@ const initialState = {
   allTenantServicePacks: [],
   isDisabledTenantSuspensionStatusButton: false,
   isDisabledGroupSuspensionStatusButton: false,
+  callRecordingPlatforms: [],
 };
 
 function mainReducer(state = initialState, action) {
@@ -792,7 +793,7 @@ function mainReducer(state = initialState, action) {
       return {
         ...state,
         groupSuspensionStatus: action.data.suspensionStatus,
-        isDisabledGroupSuspensionStatusButton: false
+        isDisabledGroupSuspensionStatusButton: false,
       };
     }
     case actionType.GET_TENANT_PASSWORD_RULES: {
@@ -829,6 +830,20 @@ function mainReducer(state = initialState, action) {
       return {
         ...state,
         allTenantServicePacks: action.data.service_packs,
+      };
+    }
+    case actionType.GET_CALL_RECORDING_PLATFORMS: {
+      const callRecordingPlatforms = action.data.callRecordingPlatforms.map(
+        (el) => {
+          if (el.name === action.data.systemDefault) {
+            return { ...el, isDefault: true };
+          }
+          return { ...el, isDefault: false };
+        }
+      );
+      return {
+        ...state,
+        callRecordingPlatforms: callRecordingPlatforms,
       };
     }
     case actionType.POST_CREATE_GROUP_ADMIN: {
@@ -1130,6 +1145,11 @@ function mainReducer(state = initialState, action) {
       return {
         ...state,
         trunkGroupAccessInfo: action.data,
+      };
+    }
+    case actionType.PUT_UPDATE_CALL_RECORDING_PLATFORMS: {
+      return {
+        ...state,
       };
     }
     case actionType.DELETE_TENANT: {
