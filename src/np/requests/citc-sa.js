@@ -95,7 +95,7 @@ function newRequest(request, onSuccess, onError) {
       'IqamaNumber',
       'CommRegNumber',
       'GccId',
-      'AltGovId',
+      'AltGovID',
       'BorderId',
       'UnifiedEntityId',
       'ContactPhone',
@@ -247,7 +247,7 @@ function validateContactID(personIDType, value) {
 
   if (personIDType === "GccId") {
     if (value.length < 8 || value.length > 12) return "error";
-  } else if (personIDType === "AltGovId") {
+  } else if (personIDType === "AltGovID") {
     if (value.length < 2 || value.length > 15) return "error";
   } else {
     if (value.length !== 10) return "error"
@@ -502,7 +502,7 @@ export function NPPortInRequest() {
                   <option value="IqamaNumber">Iqama Number</option>
                   <option value="CommRegNumber">Commercial Reg. Number</option>
                   <option value="GccId">GCC ID</option>
-                  <option value="AltGovId">Alt. Government ID</option>
+                  <option value="AltGovID">Alt. Government ID</option>
                   <option value="BorderId">Border ID number</option>
                   <option value="UnifiedEntityId">Unified Entity ID</option>
                 </FormControl>{'*'}
