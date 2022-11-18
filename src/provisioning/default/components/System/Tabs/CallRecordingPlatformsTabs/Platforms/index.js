@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { useLocation, useHistory, useParams } from "react-router";
+import { useParams } from "react-router";
 import { Link } from "react-router-dom";
 
 import Table from "react-bootstrap/lib/Table";
@@ -37,9 +37,13 @@ const Platforms = () => {
   const [countPages, setCountPages] = useState(null);
   const [sortedBy, setSortedBy] = useState("");
 
-  useEffect(() => {
+  const fetchData = () => {
     setIsLoading(true);
     dispatch(fetchGetCallRecordingPlatforms()).then(() => setIsLoading(false));
+  };
+
+  useEffect(() => {
+    fetchData();
   }, []);
 
   useEffect(() => {
@@ -153,9 +157,7 @@ const Platforms = () => {
           </InputGroup>
         </Col>
         <Col md={1}>
-          <Link
-            to={`/provisioning/${params.gwName}/tenants/${params.tenantId}/addgroup`}
-          >
+          <Link to={`/provisioning/${params.gwName}/system/addplatform`}>
             <Glyphicon
               className={"x-large"}
               glyph="glyphicon glyphicon-plus-sign"
@@ -277,7 +279,7 @@ const Platforms = () => {
                       key={platform.name}
                       platform={platform}
                       changeDefault={changeDefault}
-                      //onReload={() => this.fetchReq()}
+                      onReload={fetchData}
                     />
                   ))}
                 </tbody>

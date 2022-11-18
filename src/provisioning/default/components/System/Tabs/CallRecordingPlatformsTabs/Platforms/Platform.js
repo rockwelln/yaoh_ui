@@ -1,16 +1,21 @@
-import React from "react";
+import React, { useState } from "react";
 import { withRouter } from "react-router";
 
 import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 
-//import DeleteModal from "./DeleteModal";
+import DeleteModal from "./DeleteModal";
+import UsageModal from "./UsageModal";
 
-const Platform = ({ platform, changeDefault }) => {
-  // state = { showDelete: false };
-  // const { group, onReload } = this.props;
-  // const { showDelete } = this.state;
+const Platform = ({ platform, changeDefault, onReload }) => {
+  const [showUsage, setShowUsage] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
+
+  const onCloseDeleteModal = () => {
+    setShowDelete(false);
+    onReload();
+  };
 
   return (
     <tr>
@@ -38,35 +43,31 @@ const Platform = ({ platform, changeDefault }) => {
         <ButtonToolbar title="Usage">
           <Glyphicon
             glyph="glyphicon glyphicon-list-alt"
-            // onClick={() => this.setState({ showDelete: true })}
+            onClick={() => setShowUsage(true)}
           />
         </ButtonToolbar>
-        {/* <DeleteModal
-              groupId={group.groupId}
-              show={showDelete}
-              onClose={e => {
-                onReload && onReload();
-                this.setState({ showDelete: false });
-              }}
-              {...this.props}
-            /> */}
+        {showUsage && (
+          <UsageModal
+            platformName={platform.name}
+            show={showUsage}
+            onClose={() => setShowUsage(false)}
+          />
+        )}
       </td>
       <td className="text-align-center">
         <ButtonToolbar>
           <Glyphicon
             glyph="glyphicon glyphicon-remove"
-            // onClick={() => this.setState({ showDelete: true })}
+            onClick={() => setShowDelete(true)}
           />
         </ButtonToolbar>
-        {/* <DeleteModal
-              groupId={group.groupId}
-              show={showDelete}
-              onClose={e => {
-                onReload && onReload();
-                this.setState({ showDelete: false });
-              }}
-              {...this.props}
-            /> */}
+        {showDelete && (
+          <DeleteModal
+            platformName={platform.name}
+            show={showDelete}
+            onClose={onCloseDeleteModal}
+          />
+        )}
       </td>
     </tr>
   );

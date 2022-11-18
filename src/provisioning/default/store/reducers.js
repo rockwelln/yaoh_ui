@@ -150,6 +150,8 @@ const initialState = {
   isDisabledTenantSuspensionStatusButton: false,
   isDisabledGroupSuspensionStatusButton: false,
   callRecordingPlatforms: [],
+  usageOfCallRecordingPlaform: [],
+  callRecordingProperties: {},
 };
 
 function mainReducer(state = initialState, action) {
@@ -846,6 +848,18 @@ function mainReducer(state = initialState, action) {
         callRecordingPlatforms: callRecordingPlatforms,
       };
     }
+    case actionType.GET_USAGE_OF_CALL_RECORDING_PLATFORMS: {
+      return {
+        ...state,
+        usageOfCallRecordingPlaform: action.data.groups,
+      };
+    }
+    case actionType.GET_CALL_RECORDING_PROPERTIES: {
+      return {
+        ...state,
+        callRecordingProperties: action.data,
+      };
+    }
     case actionType.POST_CREATE_GROUP_ADMIN: {
       return {
         ...state,
@@ -1014,6 +1028,11 @@ function mainReducer(state = initialState, action) {
         ...state,
       };
     }
+    case actionType.POST_ADD_CALL_RECORDING_PLATFORM: {
+      return {
+        ...state,
+      };
+    }
     case actionType.PUT_UPDATE_USER: {
       return {
         ...state,
@@ -1152,6 +1171,11 @@ function mainReducer(state = initialState, action) {
         ...state,
       };
     }
+    case actionType.PUT_UPDATE_CALL_RECORDING_PROPERTIES: {
+      return {
+        ...state,
+      };
+    }
     case actionType.DELETE_TENANT: {
       return {
         ...state,
@@ -1247,6 +1271,11 @@ function mainReducer(state = initialState, action) {
       };
     }
     case actionType.DELETE_SERVICE_PACK_FROM_TENANT: {
+      return {
+        ...state,
+      };
+    }
+    case actionType.DELETE_CALL_RECORDING_PLATFORM: {
       return {
         ...state,
       };

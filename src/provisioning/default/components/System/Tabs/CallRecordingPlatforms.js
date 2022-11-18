@@ -1,30 +1,14 @@
-import React, { useState, useEffect } from "react";
-import { useSelector, useDispatch } from "react-redux";
+import React from "react";
 import { useLocation, useHistory } from "react-router";
 
 import Tabs from "react-bootstrap/lib/Tabs";
 import Tab from "react-bootstrap/lib/Tab";
-//import { fetchGetBWKSLicenses } from "../../../store/actions";
-
-import Loading from "../../../common/Loading";
 import Platforms from "./CallRecordingPlatformsTabs/Platforms/";
+import Properties from "./CallRecordingPlatformsTabs/Properties";
 
 const CallRecordingPlatforms = () => {
   const location = useLocation();
   const history = useHistory();
-  //const [isLoading, setIsLoading] = useState(false);
-
-  //const licenses = useSelector(state => state.bwksLicenses);
-  //const dispatch = useDispatch();
-
-  // useEffect(() => {
-  //   setIsLoading(true);
-  //   dispatch(fetchGetBWKSLicenses()).then(() => setIsLoading(false));
-  // }, []);
-
-  // if (isLoading) {
-  //   return <Loading />;
-  // }
 
   const tabRouting = (key) => {
     switch (key) {
@@ -59,7 +43,7 @@ const CallRecordingPlatforms = () => {
           <Platforms />
         </Tab>
         <Tab eventKey={1} title="Properties">
-          1
+          <Properties />
         </Tab>
       </Tabs>
     </>
