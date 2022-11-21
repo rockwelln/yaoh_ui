@@ -158,6 +158,14 @@ function fetchActivityStats(id, onSuccess) {
         });
 }
 
+function fetchActivityUsage(id, onSuccess) {
+    fetch_get(`/api/v01/activities/${id}/usage`)
+        .then(resp => onSuccess(resp))
+        .catch(error => {
+            NotificationsManager.error("Failed to fetch usage", error.message);
+        });
+}
+
 function fetchActivityVersions(id, onSuccess) {
     fetch_get(`/api/v01/activities/${id}/versions`)
         .then(resp => onSuccess(resp.activity_versions))
@@ -499,7 +507,11 @@ export function Activities({user_info}) {
                             fetchActivity(duplicateActivity, a => {
                               a.name = name;
                               delete a.id;
-                              a.definition = JSON.parse(a.definition);
+                              try {
+                                a.definition = JSON.parse(a.definition);
+                              } catch (e) {
+                                console.log(e)
+                              }
                               saveActivity(a, () => {
                                 setDuplicateActivity(undefined);
                                 loadActivities();
@@ -1240,6 +1252,7 @@ export function ActivityEditor(props) {
     const [descriptionStyle, setDescriptionStyle] = useState(DefaultDescriptionStyle);
     const [versionId, setVersionId] = useState();
     const [versions, setVersions] = useState([]);
+    const [usage, setUsage] = useState({});
     const [width, height] = useWindowSize();
 
     useEffect(() => {
@@ -1312,6 +1325,7 @@ export function ActivityEditor(props) {
                 }
             );
             fetchActivityVersions(activityId, r => { setVersions(r); setVersionId((r.find(v => v.active) || {}).id); })
+            fetchActivityUsage(activityId, setUsage)
         }
     }, [activityId]);
 
@@ -1510,7 +1524,40 @@ export function ActivityEditor(props) {
             <Row>
                 <Col>
                     <Table>
+                        <thead>
+                            <tr>
+                              <th colSpan={2}>Used By</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {
+                          usage.routes?.map(r => (
+                            <tr>
+                              <td>{r.method.toUpperCase()}</td>
+                              <td>{r.route}</td>
+                            </tr>
+                          ))
+                        }
+                        {
+                          usage.parents?.map(p => (
+                            <tr>
+                              <td>{p.id}</td>
+                              <td><Link to={`/transactions/config/activities/editor/${p.id}`}>{p.name}</Link></td>
+                            </tr>
+                          ))
+                        }
+                        </tbody>
+                    </Table>
+                </Col>
+            </Row>
+            <hr />
+            <Row>
+                <Col>
+                    <Table>
                       <thead>
+                        <tr>
+                          <th colSpan={5}>History</th>
+                        </tr>
                         <tr>
                           <th>#</th>
                           <th>Label</th>

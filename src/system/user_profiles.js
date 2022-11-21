@@ -316,6 +316,18 @@ function NewProfile(props) {
                                       )
                                     }
                                   </Checkbox>
+
+                                  <Checkbox
+                                    checked={hasAccess("requests.responsible_for")}
+                                    onChange={e => toggleAccess("requests.responsible_for", e.target.checked)}>
+                                    made on objects the user is responsible for
+                                    <HelpBlock>
+                                      This flag is very dependent of the implementation.
+                                      it aims at limiting the search for requests by resource associated to the user.
+                                      e.g for Broadsoft, if the user is group admin on 'a' (user has the properties bsft_tenant_id and bsft_group_id set),
+                                      so the request filter is preset to search on requests made on objects at and under that group_id
+                                    </HelpBlock>
+                                  </Checkbox>
                                 </Checkbox>
 
                                 <Checkbox
@@ -498,6 +510,18 @@ function UpdateProfile(props) {
                                           </Checkbox>
                                         )
                                       }
+                                      </Checkbox>
+
+                                      <Checkbox
+                                        checked={hasAccess("requests.responsible_for")}
+                                        onChange={e => toggleAccess("requests.responsible_for", e.target.checked)}>
+                                        made on objects the user is responsible for
+                                        <HelpBlock>
+                                          This flag is very dependent of the implementation.
+                                          it aims at limiting the search for requests by resource associated to the user.
+                                          e.g for Broadsoft, if the user is group admin on 'a' (user has the properties tenant_id and group_id set),
+                                          so the request filter is preset to search on requests made on objects at and under that group_id
+                                        </HelpBlock>
                                       </Checkbox>
                                     </Checkbox>
 

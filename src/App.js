@@ -462,7 +462,7 @@ function AsyncApioNavBar({user_info, logoutUser, database_status}){
               </MenuItem>
             </LinkContainer>
             }
-            {localUser.canSee(pages.system_queues) &&
+            {localUser.canSee(pages.system_queues) && user_info.modules.includes(modules.npact) &&
             <LinkContainer to={"/system/queues"}>
               <MenuItem>
                 <FormattedMessage id="queues" defaultMessage="Queues"/>
@@ -489,12 +489,12 @@ function AsyncApioNavBar({user_info, logoutUser, database_status}){
               </LinkContainer>
             </>
             }
-            {localUser.canSee(pages.system_logs) &&
-              <LinkContainer to={"/system/logs"} key="logs">
-                <MenuItem>
-                  <FormattedMessage id="logs" defaultMessage="Logs"/>
-                </MenuItem>
-              </LinkContainer>
+            {//localUser.canSee(pages.system_logs) &&
+             // <LinkContainer to={"/system/logs"} key="logs">
+             //   <MenuItem>
+             //     <FormattedMessage id="logs" defaultMessage="Logs"/>
+             //   </MenuItem>
+             // </LinkContainer>
             }
             {localUser.isAllowed(accesses.settings_alarms) &&
               <LinkContainer to={"/system/alarms"} key="alarms">

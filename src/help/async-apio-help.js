@@ -19,7 +19,7 @@ export const INTERNAL_HELP_LINKS = {
 export default function AsynApioHelp() {
     const [packages, setPackages] = useState([]);
     useEffect(() => {
-        fetch_get("/health").then(data => setPackages(data.versions))
+        fetch_get("/api/v01/health").then(data => setPackages(data.versions || (data.version && {"apio_core": data.version} )))
         document.title = "help"
     }, []);
 
