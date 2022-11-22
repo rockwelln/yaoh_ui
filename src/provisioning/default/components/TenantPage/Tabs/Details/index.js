@@ -24,6 +24,8 @@ import {
   fetchPutUpdateTenantRoutingProfile,
   fetchGetTenantVoiceMessaging,
   fetchPutUpdateTenantVoiceMessaging,
+  fetchGetTenantOnlineCharging,
+  fetchPutUpdateTenantOnlineCharging,
 } from "../../../../store/actions";
 
 class Details extends Component {
@@ -43,6 +45,11 @@ class Details extends Component {
     voiceMessageDelivery: "",
     voiceMessageNotification: "",
     voicePortalPasscodeLockout: "",
+
+    isLoadingOnlineCharging: false,
+    onlineChargingEnabled: false,
+    spendingLimit: "",
+    isDisabledOnlineCharging: false,
   };
 
   fetchReq = () => {
@@ -52,6 +59,7 @@ class Details extends Component {
         isLoadingRoutingProfile: true,
         isLoadingVM: true,
         isLoadingListRoutingProfile: true,
+        isLoadingOnlineCharging: true,
       },
       () => {
         this.props
@@ -82,6 +90,15 @@ class Details extends Component {
           .then(() => {
             this.setVoiceMessaging();
           });
+        this.props
+          .fetchGetTenantOnlineCharging(this.props.tenantId)
+          .then(() => {
+            this.setState({
+              isLoadingOnlineCharging: false,
+              onlineChargingEnabled: this.props.tenantOnlineCharging.enabled,
+              spendingLimit: this.props.tenantOnlineCharging.spendingLimit,
+            });
+          });
       }
     );
   };
@@ -109,7 +126,8 @@ class Details extends Component {
     if (
       this.props.isLoading ||
       this.state.isLoadingRoutingProfile ||
-      this.state.isLoadingVM
+      this.state.isLoadingVM ||
+      this.state.isLoadingOnlineCharging
     ) {
       return <Loading />;
     }
@@ -518,6 +536,66 @@ class Details extends Component {
                     </FormGroup>
                   </React.Fragment>
                 )}
+                {this.props?.config?.tenantFeatures?.onlineCharging && (
+                  <>
+                    <FormGroup controlId="onlineCharging">
+                      <Col mdOffset={3} md={9}>
+                        <Checkbox
+                          checked={this.state.onlineChargingEnabled}
+                          onChange={(e) => {
+                            if (!e.target.checked) {
+                              this.setState({
+                                onlineChargingEnabled: e.target.checked,
+                                spendingLimit: "",
+                              });
+                            } else {
+                              this.setState({
+                                onlineChargingEnabled: e.target.checked,
+                              });
+                            }
+                          }}
+                        >
+                          Online Charging Enabled
+                        </Checkbox>
+                      </Col>
+                    </FormGroup>
+                    <FormGroup controlId="onlineCharging">
+                      <Col componentClass={ControlLabel} md={3}>
+                        Spending Limit
+                      </Col>
+                      <Col md={9}>
+                        <FormControl
+                          type="number"
+                          placeholder="Spending Limit"
+                          disabled={!this.state.onlineChargingEnabled}
+                          value={this.state.spendingLimit}
+                          onChange={(e) =>
+                            this.setState({ spendingLimit: e.target.value })
+                          }
+                        />
+                      </Col>
+                    </FormGroup>
+                    <FormGroup controlId="onlineCharging">
+                      <Col md={12}>
+                        <div class="button-row margin-right-0">
+                          <div className="pull-right">
+                            <Button
+                              className={"btn-primary"}
+                              disabled={
+                                (this.state.onlineChargingEnabled &&
+                                  !this.state.spendingLimit) ||
+                                this.state.isDisabledOnlineCharging
+                              }
+                              onClick={this.updateTenantOnlineCharging}
+                            >
+                              {`Save`}
+                            </Button>
+                          </div>
+                        </div>
+                      </Col>
+                    </FormGroup>
+                  </>
+                )}
               </React.Fragment>
             ) : null}
           </FormGroup>
@@ -525,6 +603,21 @@ class Details extends Component {
       </Col>
     );
   }
+
+  updateTenantOnlineCharging = () => {
+    const data = {
+      enabled: this.state.onlineChargingEnabled,
+      spendingLimit: this.state.spendingLimit,
+    };
+    this.setState({ isDisabledOnlineCharging: true }, () =>
+      this.props
+        .fetchPutUpdateTenantOnlineCharging({
+          tenantId: this.props.tenantId,
+          data,
+        })
+        .then(() => this.setState({ isDisabledOnlineCharging: false }))
+    );
+  };
 
   setVoiceMessaging = () => {
     this.setState({
@@ -661,6 +754,8 @@ const mapStateToProps = (state) => ({
   listOfRoutingProfiles: state.listOfRoutingProfiles,
   tenantRoutingProfile: state.tenantRoutingProfile,
   tenantVoiceMessaging: state.tenantVoiceMessaging,
+  config: state.selfcareUrl,
+  tenantOnlineCharging: state.tenantOnlineCharging,
 });
 
 const mapDispatchToProps = {
@@ -671,6 +766,8 @@ const mapDispatchToProps = {
   fetchPutUpdateTenantRoutingProfile,
   fetchGetTenantVoiceMessaging,
   fetchPutUpdateTenantVoiceMessaging,
+  fetchGetTenantOnlineCharging,
+  fetchPutUpdateTenantOnlineCharging,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(Details);

@@ -360,6 +360,11 @@ export const getCallRecordingProperties = (data) => ({
   data,
 });
 
+export const getTenantOnlineCharging = (data) => ({
+  type: actionType.GET_TENANT_ONLINE_CHARGING,
+  data,
+});
+
 export const postCreateGroupAdmin = (data) => ({
   type: actionType.POST_CREATE_GROUP_ADMIN,
   data,
@@ -593,6 +598,11 @@ export const putUpdateCallRecordingPlatform = (data) => ({
 
 export const putUpdateCallRecordingProperties = (data) => ({
   type: actionType.PUT_UPDATE_CALL_RECORDING_PROPERTIES,
+  data,
+});
+
+export const putUpdateTenantOnlineCharging = (data) => ({
+  type: actionType.PUT_UPDATE_TENANT_ONLINE_CHARGING,
   data,
 });
 
@@ -2142,6 +2152,34 @@ export function fetchGetCallRecordingProperties() {
   };
 }
 
+export function fetchGetTenantOnlineCharging(tenantId) {
+  return function (dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/properties/online_charging/`
+    )
+      .then((data) => dispatch(getTenantOnlineCharging(data)))
+      .catch((error) => {
+        if (error.response.status === 404) {
+          dispatch(
+            getTenantOnlineCharging({
+              doPost: true,
+              enabled: false,
+              spendingLimit: "",
+            })
+          );
+          return;
+        }
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-bwks-licenses-failed"
+            defaultMessage="Failed to fetch online charging!"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
 export function fetchPostCreateGroupAdmin(tenantId, groupId, data, callback) {
   return function (dispatch) {
     return fetch_post(
@@ -3412,6 +3450,35 @@ export function fetchPutUpdateCallRecordingProperties({ data }) {
           <FormattedMessage
             id="entitlement-update-failed"
             defaultMessage="Failed to update call recording properties!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchPutUpdateTenantOnlineCharging({ tenantId, data }) {
+  return function (dispatch) {
+    return fetch_put(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/properties/online_charging/`,
+      data
+    )
+      .then((res) => res.json())
+      .then(() => {
+        dispatch(putUpdateTenantOnlineCharging());
+        NotificationsManager.success(
+          <FormattedMessage
+            id="Entitlement-successfully-updated"
+            defaultMessage="Online charging successfully updated"
+          />,
+          "Updated"
+        );
+      })
+      .catch((error) =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="entitlement-update-failed"
+            defaultMessage="Failed to update online charging!"
           />,
           error.message
         )

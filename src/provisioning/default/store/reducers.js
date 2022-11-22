@@ -152,6 +152,10 @@ const initialState = {
   callRecordingPlatforms: [],
   usageOfCallRecordingPlaform: [],
   callRecordingProperties: {},
+  tenantOnlineCharging: {
+    enabled: false,
+    spendingLimit: "",
+  },
 };
 
 function mainReducer(state = initialState, action) {
@@ -860,6 +864,12 @@ function mainReducer(state = initialState, action) {
         callRecordingProperties: action.data,
       };
     }
+    case actionType.GET_TENANT_ONLINE_CHARGING: {
+      return {
+        ...state,
+        tenantOnlineCharging: action.data,
+      };
+    }
     case actionType.POST_CREATE_GROUP_ADMIN: {
       return {
         ...state,
@@ -1172,6 +1182,11 @@ function mainReducer(state = initialState, action) {
       };
     }
     case actionType.PUT_UPDATE_CALL_RECORDING_PROPERTIES: {
+      return {
+        ...state,
+      };
+    }
+    case actionType.PUT_UPDATE_TENANT_ONLINE_CHARGING: {
       return {
         ...state,
       };
