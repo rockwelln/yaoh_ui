@@ -48,7 +48,7 @@ class Details extends Component {
 
     isLoadingOnlineCharging: false,
     onlineChargingEnabled: false,
-    spendingLimit: "",
+    spendingLimit: 0,
     isDisabledOnlineCharging: false,
   };
 
@@ -546,7 +546,7 @@ class Details extends Component {
                             if (!e.target.checked) {
                               this.setState({
                                 onlineChargingEnabled: e.target.checked,
-                                spendingLimit: "",
+                                spendingLimit: 0,
                               });
                             } else {
                               this.setState({
@@ -569,8 +569,11 @@ class Details extends Component {
                           placeholder="Spending Limit"
                           disabled={!this.state.onlineChargingEnabled}
                           value={this.state.spendingLimit}
+                          min={0}
                           onChange={(e) =>
-                            this.setState({ spendingLimit: e.target.value })
+                            this.setState({
+                              spendingLimit: Number(e.target.value),
+                            })
                           }
                         />
                       </Col>
