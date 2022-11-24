@@ -154,7 +154,7 @@ const initialState = {
   callRecordingProperties: {},
   tenantOnlineCharging: {
     enabled: false,
-    spendingLimit: "",
+    spendingLimit: 0,
   },
 };
 

@@ -546,7 +546,6 @@ class Details extends Component {
                             if (!e.target.checked) {
                               this.setState({
                                 onlineChargingEnabled: e.target.checked,
-                                spendingLimit: 0,
                               });
                             } else {
                               this.setState({
