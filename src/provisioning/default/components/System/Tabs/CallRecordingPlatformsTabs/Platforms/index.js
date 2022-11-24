@@ -271,6 +271,7 @@ const Platforms = () => {
                     </th>
                     <th style={{ width: "4%" }} />
                     <th style={{ width: "4%" }} />
+                    <th style={{ width: "4%" }} />
                   </tr>
                 </thead>
                 <tbody>

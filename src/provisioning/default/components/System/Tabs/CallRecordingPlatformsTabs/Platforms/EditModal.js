@@ -1,9 +1,11 @@
-import React, { useState } from "react";
-import { withRouter } from "react-router";
-import { useDispatch } from "react-redux";
-import { useHistory, useParams } from "react-router";
+import React, { useState, useEffect } from "react";
 
-import { fetchPostAddCallRecordingPlatform } from "../../store/actions";
+import { useParams } from "react-router";
+
+import { useSelector, useDispatch } from "react-redux";
+import { Link } from "react-router-dom";
+
+import { fetchPutUpdateCallRecordingPlatform } from "../../../../../store/actions";
 
 import Button from "react-bootstrap/lib/Button";
 import Row from "react-bootstrap/lib/Row";
@@ -12,7 +14,11 @@ import FormControl from "react-bootstrap/lib/FormControl";
 import Select from "react-select";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 
-import { removeEmpty } from "../remuveEmptyInObject";
+import { FormattedMessage } from "react-intl";
+import { removeEmpty } from "../../../../remuveEmptyInObject";
+
+import Modal from "react-bootstrap/lib/Modal";
+import Loading from "../../../../../common/Loading";
 
 const mediaStreamOptions = [
   {
@@ -55,32 +61,32 @@ const schemaVersionOptions = [
   },
 ];
 
-const CreatePlatform = () => {
-  const dispatch = useDispatch();
-  const history = useHistory();
-  const params = useParams();
-
-  const [name, setName] = useState("");
-  const [netAddress, setNetAddress] = useState("");
-  const [port, setPort] = useState("");
+const EditModal = ({ platform, show, onClose }) => {
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [netAddress, setNetAddress] = useState(platform.netAddress);
+  const [port, setPort] = useState(platform.port);
   const [mediaStream, setMediaStream] = useState({
-    value: "Dual",
-    label: "Dual",
+    value: platform.mediaStream,
+    label: platform.mediaStream,
   });
   const [transportProtocol, setTransportProtocol] = useState({
-    value: "UDP",
-    label: "UDP",
+    value: platform.transportProtocol,
+    label: platform.transportProtocol,
   });
-  const [description, setDescription] = useState("");
+  const [description, setDescription] = useState(platform.description);
   const [schemaVersion, setSchemaVersion] = useState({
-    value: "1.0",
-    label: "1.0",
+    value: platform.schemaVersion,
+    label: platform.schemaVersion,
   });
-  const [supportVideoRecording, setSupportVideoRecording] = useState(false);
+  const [supportVideoRecording, setSupportVideoRecording] = useState(
+    platform.supportVideoRecording
+  );
 
-  const addPlatform = () => {
+  const dispatch = useDispatch();
+
+  const updatePlatform = () => {
+    setIsUpdating(true);
     const data = {
-      name,
       netAddress,
       port: Number(port),
       mediaStream: mediaStream.value,
@@ -91,46 +97,39 @@ const CreatePlatform = () => {
     };
 
     const clearData = removeEmpty(data);
-    dispatch(fetchPostAddCallRecordingPlatform(clearData)).then(() =>
-      history.push(
-        `/provisioning/${params.gwName}/system#callRecordingPlatforms_Platforms`
-      )
-    );
+    dispatch(
+      fetchPutUpdateCallRecordingPlatform({
+        name: platform.name,
+        data: clearData,
+      })
+    ).then(() => onClose());
   };
 
   return (
-    <>
-      <div className={"panel-heading flex space-between"}>
-        <div className={"header"}>{`Create platform`}</div>
-        <div>
-          <Button
-            className={"btn-primary"}
-            disabled={!name || !netAddress || !description}
-            onClick={addPlatform}
-          >
-            Add
-          </Button>
-        </div>
-      </div>
-      <div className={"panel-body"}>
+    <Modal show={show} onHide={() => onClose && onClose(false)}>
+      <Modal.Header closeButton>
+        <Modal.Title>
+          <FormattedMessage id="edit_platfor" defaultMessage="Edit platform" />
+        </Modal.Title>
+      </Modal.Header>
+
+      <Modal.Body
+        style={{ maxHeight: "calc(100vh - 120px", overflowY: "auto" }}
+      >
         <Row className={"indent-top-bottom-1"}>
           <Col md={12} className={"flex align-items-center"}>
-            <div className={"margin-right-1 flex flex-basis-16"}>Name*:</div>
-            <div className={"margin-right-1 flex-basis-33"}>
-              <FormControl
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
+            <div className={"margin-right-1 flex flex-basis-33"}>Name:</div>
+            <div className={"margin-right-1 flex-basis-66"}>
+              <FormControl type="text" value={platform.name} disabled />
             </div>
           </Col>
         </Row>
         <Row className={"indent-top-bottom-1"}>
           <Col md={12} className={"flex align-items-center"}>
-            <div className={"margin-right-1 flex flex-basis-16"}>
+            <div className={"margin-right-1 flex flex-basis-33"}>
               Net address*:
             </div>
-            <div className={"margin-right-1 flex-basis-33"}>
+            <div className={"margin-right-1 flex-basis-66"}>
               <FormControl
                 type="text"
                 value={netAddress}
@@ -141,8 +140,8 @@ const CreatePlatform = () => {
         </Row>
         <Row className={"indent-top-bottom-1"}>
           <Col md={12} className={"flex align-items-center"}>
-            <div className={"margin-right-1 flex flex-basis-16"}>Port:</div>
-            <div className={"margin-right-1 flex-basis-33"}>
+            <div className={"margin-right-1 flex flex-basis-33"}>Port:</div>
+            <div className={"margin-right-1 flex-basis-66"}>
               <FormControl
                 type="number"
                 value={port}
@@ -153,10 +152,10 @@ const CreatePlatform = () => {
         </Row>
         <Row className={"indent-top-bottom-1"}>
           <Col md={12} className={"flex align-items-center"}>
-            <div className={"margin-right-1 flex flex-basis-16"}>
+            <div className={"margin-right-1 flex flex-basis-33"}>
               Media Stream:
             </div>
-            <div className={"margin-right-1 flex-basis-33"}>
+            <div className={"margin-right-1 flex-basis-66"}>
               <Select
                 className={"width-100p"}
                 value={mediaStream}
@@ -168,10 +167,10 @@ const CreatePlatform = () => {
         </Row>
         <Row className={"indent-top-bottom-1"}>
           <Col md={12} className={"flex align-items-center"}>
-            <div className={"margin-right-1 flex flex-basis-16"}>
+            <div className={"margin-right-1 flex flex-basis-33"}>
               Transport protocol:
             </div>
-            <div className={"margin-right-1 flex-basis-33"}>
+            <div className={"margin-right-1 flex-basis-66"}>
               <Select
                 className={"width-100p"}
                 value={transportProtocol}
@@ -183,10 +182,10 @@ const CreatePlatform = () => {
         </Row>
         <Row className={"indent-top-bottom-1"}>
           <Col md={12} className={"flex align-items-center"}>
-            <div className={"margin-right-1 flex flex-basis-16"}>
+            <div className={"margin-right-1 flex flex-basis-33"}>
               Description*:
             </div>
-            <div className={"margin-right-1 flex-basis-33"}>
+            <div className={"margin-right-1 flex-basis-66"}>
               <textarea
                 className={"width-100p height-10"}
                 onChange={(e) => setDescription(e.target.value)}
@@ -197,10 +196,10 @@ const CreatePlatform = () => {
         </Row>
         <Row className={"indent-top-bottom-1"}>
           <Col md={12} className={"flex align-items-center"}>
-            <div className={"margin-right-1 flex flex-basis-16"}>
+            <div className={"margin-right-1 flex flex-basis-33"}>
               Schema version:
             </div>
-            <div className={"margin-right-1 flex-basis-33"}>
+            <div className={"margin-right-1 flex-basis-66"}>
               <Select
                 className={"width-100p"}
                 value={schemaVersion}
@@ -212,10 +211,10 @@ const CreatePlatform = () => {
         </Row>
         <Row className={"indent-top-bottom-1"}>
           <Col md={12} className={"flex align-items-center"}>
-            <div className={"margin-right-1 flex flex-basis-16"}>
+            <div className={"margin-right-1 flex flex-basis-33"}>
               Support video recording:
             </div>
-            <div className={"margin-right-1 flex-basis-33"}>
+            <div className={"margin-right-1 flex-basis-66"}>
               <Checkbox
                 checked={supportVideoRecording}
                 onChange={(e) => setSupportVideoRecording(e.target.checked)}
@@ -223,9 +222,24 @@ const CreatePlatform = () => {
             </div>
           </Col>
         </Row>
-      </div>
-    </>
+        <Row>
+          <Col md={12}>
+            <div class="button-row margin-right-1">
+              <div className="pull-right">
+                <Button
+                  className={"btn-primary"}
+                  disabled={!netAddress || !description || isUpdating}
+                  onClick={updatePlatform}
+                >
+                  {`Update`}
+                </Button>
+              </div>
+            </div>
+          </Col>
+        </Row>
+      </Modal.Body>
+    </Modal>
   );
 };
 
-export default withRouter(CreatePlatform);
+export default EditModal;

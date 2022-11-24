@@ -7,13 +7,20 @@ import Checkbox from "react-bootstrap/lib/Checkbox";
 
 import DeleteModal from "./DeleteModal";
 import UsageModal from "./UsageModal";
+import EditModal from "./EditModal";
 
 const Platform = ({ platform, changeDefault, onReload }) => {
   const [showUsage, setShowUsage] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
 
   const onCloseDeleteModal = () => {
     setShowDelete(false);
+    onReload();
+  };
+
+  const onCloseEditModal = () => {
+    setShowEdit(false);
     onReload();
   };
 
@@ -51,6 +58,21 @@ const Platform = ({ platform, changeDefault, onReload }) => {
             platformName={platform.name}
             show={showUsage}
             onClose={() => setShowUsage(false)}
+          />
+        )}
+      </td>
+      <td className="text-align-center">
+        <ButtonToolbar title="Usage">
+          <Glyphicon
+            glyph="glyphicon glyphicon-pencil"
+            onClick={() => setShowEdit(true)}
+          />
+        </ButtonToolbar>
+        {showEdit && (
+          <EditModal
+            platform={platform}
+            show={showEdit}
+            onClose={onCloseEditModal}
           />
         )}
       </td>
