@@ -1713,6 +1713,7 @@ export function fetchGetTrunkGroupTemplate(trunkGroupName) {
 }
 
 export function fetchGetSelfcareURL() {
+  //GET config
   const prefixArray = ProvProxiesManager.getCurrentUrlPrefix().split("/");
   const proxy = prefixArray[prefixArray.length - 1];
   return function (dispatch) {

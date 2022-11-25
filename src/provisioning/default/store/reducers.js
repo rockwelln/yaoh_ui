@@ -122,7 +122,7 @@ const initialState = {
   trunkGroupsTemplates: [],
   trunkGroupNotAuthorisedGroup: true,
   trunkGroupTemplate: {},
-  selfcareUrl: {},
+  selfcareUrl: {}, //Config object
   timeZones: [],
   globalSearchNumber: undefined,
   bwksLicenses: undefined,

@@ -11,6 +11,7 @@ import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import {
   fetchGetCallRecordingProperties,
   fetchPutUpdateCallRecordingProperties,
+  fetchGetSelfcareURL,
 } from "../../../../../store/actions";
 
 import Loading from "../../../../../common/Loading";
@@ -22,12 +23,20 @@ const Properties = () => {
     (state) => state.callRecordingProperties
   );
 
-  const [isLoading, setIsLoading] = useState(false);
+  const config = useSelector((state) => state.selfcareUrl);
+
+  const [isLoadingProperties, setIsLoadingProperties] = useState(false);
+  const [isLoadingConfig, setIsLoadingConfig] = useState(false);
+
   const [properties, setProperties] = useState(callRecordingProperties);
 
   useEffect(() => {
-    setIsLoading(true);
-    dispatch(fetchGetCallRecordingProperties()).then(() => setIsLoading(false));
+    setIsLoadingProperties(true);
+    setIsLoadingConfig(true);
+    dispatch(fetchGetCallRecordingProperties()).then(() =>
+      setIsLoadingProperties(false)
+    );
+    dispatch(fetchGetSelfcareURL()).then(() => setIsLoadingConfig(false));
   }, []);
 
   useEffect(() => {
@@ -44,7 +53,7 @@ const Properties = () => {
     dispatch(fetchPutUpdateCallRecordingProperties({ data: properties }));
   };
 
-  if (isLoading) {
+  if (isLoadingProperties || isLoadingConfig) {
     return <Loading />;
   }
 
@@ -72,46 +81,50 @@ const Properties = () => {
             </div>
           </Col>
         </Row>
-        <Row className={"indent-top-bottom-1"}>
-          <Col md={12} className={"flex align-items-center"}>
-            <div className={"margin-right-1 flex flex-basis-33"}>
-              Refresh period seconds:
-            </div>
-            <div className={"margin-right-1 flex-basis-33"}>
-              <FormControl
-                type="number"
-                min={0}
-                value={properties.refreshPeriodSeconds}
-                onChange={(e) =>
-                  handleEditProperties(
-                    "refreshPeriodSeconds",
-                    Number(e.target.value)
-                  )
-                }
-              />
-            </div>
-          </Col>
-        </Row>
-        <Row className={"indent-top-bottom-1"}>
-          <Col md={12} className={"flex align-items-center"}>
-            <div className={"margin-right-1 flex flex-basis-33"}>
-              Max consecutive failures:
-            </div>
-            <div className={"margin-right-1 flex-basis-33"}>
-              <FormControl
-                type="number"
-                min={0}
-                value={properties.maxConsecutiveFailures}
-                onChange={(e) =>
-                  handleEditProperties(
-                    "maxConsecutiveFailures",
-                    Number(e.target.value)
-                  )
-                }
-              />
-            </div>
-          </Col>
-        </Row>
+        {config?.broadworksServer?.ociVersion < 22 && (
+          <Row className={"indent-top-bottom-1"}>
+            <Col md={12} className={"flex align-items-center"}>
+              <div className={"margin-right-1 flex flex-basis-33"}>
+                Refresh period seconds:
+              </div>
+              <div className={"margin-right-1 flex-basis-33"}>
+                <FormControl
+                  type="number"
+                  min={0}
+                  value={properties.refreshPeriodSeconds}
+                  onChange={(e) =>
+                    handleEditProperties(
+                      "refreshPeriodSeconds",
+                      Number(e.target.value)
+                    )
+                  }
+                />
+              </div>
+            </Col>
+          </Row>
+        )}
+        {config?.broadworksServer?.ociVersion < 22 && (
+          <Row className={"indent-top-bottom-1"}>
+            <Col md={12} className={"flex align-items-center"}>
+              <div className={"margin-right-1 flex flex-basis-33"}>
+                Max consecutive failures:
+              </div>
+              <div className={"margin-right-1 flex-basis-33"}>
+                <FormControl
+                  type="number"
+                  min={0}
+                  value={properties.maxConsecutiveFailures}
+                  onChange={(e) =>
+                    handleEditProperties(
+                      "maxConsecutiveFailures",
+                      Number(e.target.value)
+                    )
+                  }
+                />
+              </div>
+            </Col>
+          </Row>
+        )}
         <Row className={"indent-top-bottom-1"}>
           <Col md={12} className={"flex align-items-center"}>
             <div className={"margin-right-1 flex flex-basis-33"}>
