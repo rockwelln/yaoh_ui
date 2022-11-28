@@ -345,6 +345,11 @@ export const getAllServicePacksOfTenant = (data) => ({
   data,
 });
 
+export const getResellers = (data) => ({
+  type: actionType.GET_RESELLERS,
+  data,
+});
+
 export const postCreateGroupAdmin = (data) => ({
   type: actionType.POST_CREATE_GROUP_ADMIN,
   data,
@@ -2048,6 +2053,24 @@ export function fetchGetAllServicePacksOfTenant() {
           <FormattedMessage
             id="fetch-service-packs-failed"
             defaultMessage="Failed to fetch service packs"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchGetResellers() {
+  return function (dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/local/resellers/`
+    )
+      .then((data) => dispatch(getResellers(data)))
+      .catch((error) => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-resellers-failed"
+            defaultMessage="Failed to fetch resellers"
           />,
           error.message
         );

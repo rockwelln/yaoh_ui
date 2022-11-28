@@ -38,6 +38,7 @@ import mainDefaultProvisioningReducer from "./default/store/reducers";
 import AddTrunkGroupUser from "./default/components/AddUserToTrunkGroup";
 import BWKSLicenses from "./default/components/BWKSLicenses";
 import CreateTemplatePage from "./default/components/CreateTemplate";
+import ResellersPage from "./default/components/Resellers";
 // end
 
 // pra
@@ -142,6 +143,17 @@ function provisioningDefaultRoutes(ui_profile) {
             component={props =>
                 isAllowed(ui_profile, pages.data_tenants) ? (
                     <ConfigPage/>
+                ) : (
+                    <NotAllowed/>
+                )
+            }
+            exact
+        />
+        <Route
+            path="/provisioning/:gwName/resellers"
+            component={props =>
+                isAllowed(ui_profile, pages.data_tenants) ? (
+                    <ResellersPage/>
                 ) : (
                     <NotAllowed/>
                 )

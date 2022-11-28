@@ -149,6 +149,7 @@ const initialState = {
   allTenantServicePacks: [],
   isDisabledTenantSuspensionStatusButton: false,
   isDisabledGroupSuspensionStatusButton: false,
+  resellers: [],
 };
 
 function mainReducer(state = initialState, action) {
@@ -792,7 +793,7 @@ function mainReducer(state = initialState, action) {
       return {
         ...state,
         groupSuspensionStatus: action.data.suspensionStatus,
-        isDisabledGroupSuspensionStatusButton: false
+        isDisabledGroupSuspensionStatusButton: false,
       };
     }
     case actionType.GET_TENANT_PASSWORD_RULES: {
@@ -829,6 +830,12 @@ function mainReducer(state = initialState, action) {
       return {
         ...state,
         allTenantServicePacks: action.data.service_packs,
+      };
+    }
+    case actionType.GET_RESELLERS: {
+      return {
+        ...state,
+        resellers: action.data.resellers,
       };
     }
     case actionType.POST_CREATE_GROUP_ADMIN: {

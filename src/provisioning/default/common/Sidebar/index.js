@@ -10,7 +10,7 @@ import CategoriesSideBar from "../../components/CategoriesSideBar";
 
 export class Sidebar extends Component {
   state = {
-    activeKey: 0
+    activeKey: 0,
   };
 
   render() {
@@ -54,6 +54,11 @@ export class Sidebar extends Component {
             <NavItem eventKey={3}>CONFIGS</NavItem>
           </LinkContainer>
           <LinkContainer
+            to={`/provisioning/${this.props.match.params.gwName}/resellers`}
+          >
+            <NavItem eventKey={7}>RESELLERS</NavItem>
+          </LinkContainer>
+          <LinkContainer
             to={`/provisioning/${this.props.match.params.gwName}/localusers`}
           >
             <NavItem eventKey={0}>LOCAL USERS</NavItem>
@@ -67,10 +72,10 @@ export class Sidebar extends Component {
       </React.Fragment>
     );
   }
-  handleSelect = selectedKey => {
+  handleSelect = (selectedKey) => {
     this.setState({ activeKey: selectedKey });
   };
-  handleSelectTemplate = selectedKey => {
+  handleSelectTemplate = (selectedKey) => {
     this.setState({ activeKeyTemplate: selectedKey });
   };
 }
