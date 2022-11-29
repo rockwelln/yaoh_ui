@@ -664,6 +664,10 @@ export const deleteServicePackFromTenant = () => ({
   type: actionType.DELETE_SERVICE_PACK_FROM_TENANT,
 });
 
+export const deleteReseller = () => ({
+  type: actionType.DELETE_RESELLER,
+});
+
 export const clearErrorMassage = () => ({
   type: actionType.CLEAR_ERROR_MASSAGE,
 });
@@ -3750,6 +3754,27 @@ export function fetchDeleteServicePacksFromTenant(tenantId, data) {
           <FormattedMessage
             id="failed-to-delete-service-pack"
             defaultMessage="Failed to delete service-pack!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchDeleteReseller(name) {
+  return function (dispatch) {
+    return fetch_delete(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/local/resellers/${name}/`
+    )
+      .then((res) => res.json())
+      .then(() => {
+        dispatch(deleteReseller());
+      })
+      .catch((error) =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-delete-reseller"
+            defaultMessage="Failed to delete reseller!"
           />,
           error.message
         )

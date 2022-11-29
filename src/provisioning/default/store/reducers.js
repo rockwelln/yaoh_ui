@@ -1144,6 +1144,11 @@ function mainReducer(state = initialState, action) {
         trunkGroupAccessInfo: action.data,
       };
     }
+    case actionType.PUT_UPDATE_RESELLER: {
+      return {
+        ...state,
+      };
+    }
     case actionType.DELETE_TENANT: {
       return {
         ...state,

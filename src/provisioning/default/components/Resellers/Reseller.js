@@ -8,11 +8,11 @@ import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
 
 import EditResellerModal from "./AddModifyReseller";
+import DeleteModal from "./DeleteModal";
 
-const Reseller = ({ reseller, changeDefault, onReload }) => {
+const Reseller = ({ reseller, onReload }) => {
   const dispatch = useDispatch();
 
-  const [showUsage, setShowUsage] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
 
@@ -63,13 +63,13 @@ const Reseller = ({ reseller, changeDefault, onReload }) => {
             onClick={() => setShowDelete(true)}
           />
         </ButtonToolbar>
-        {/* {showDelete && (
+        {showDelete && (
           <DeleteModal
-            platformName={platform.name}
+            resellerName={reseller.name}
             show={showDelete}
             onClose={onCloseDeleteModal}
           />
-        )} */}
+        )}
       </td>
     </tr>
   );
