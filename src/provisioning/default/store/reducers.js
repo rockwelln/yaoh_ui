@@ -1006,6 +1006,11 @@ function mainReducer(state = initialState, action) {
         ...state,
       };
     }
+    case actionType.POST_ADD_RESELLER: {
+      return {
+        ...state,
+      };
+    }
     case actionType.PUT_UPDATE_USER: {
       return {
         ...state,

@@ -11,11 +11,12 @@ import Row from "react-bootstrap/lib/Row";
 import Col from "react-bootstrap/lib/Col";
 import Pagination from "react-bootstrap/lib/Pagination";
 import { FormattedMessage } from "react-intl";
-import { fetchGetResellers } from "../../store/actions";
+import { fetchGetResellers, fetchPostAddReseller } from "../../store/actions";
 
 import { countsPerPages } from "../../constants";
 import Reseller from "./Reseller";
 import Loading from "../../common/Loading";
+import AddResellerModal from "./AddModifyReseller";
 
 const Resellers = () => {
   const params = useParams();
@@ -31,6 +32,7 @@ const Resellers = () => {
   const [paginationResellers, setPaginationPlatforms] = useState([]);
   const [countPages, setCountPages] = useState(null);
   const [sortedBy, setSortedBy] = useState("");
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const fetchData = () => {
     setIsLoading(true);
@@ -124,6 +126,16 @@ const Resellers = () => {
     setPage(page - 1);
   };
 
+  const createReseller = ({ data, callback }) => {
+    dispatch(fetchPostAddReseller(data)).then((isSuccess) => {
+      callback && callback();
+      if (isSuccess === "success") {
+        setShowAddModal(false);
+        fetchData();
+      }
+    });
+  };
+
   if (isLoading) {
     return <Loading />;
   }
@@ -155,12 +167,19 @@ const Resellers = () => {
             </InputGroup>
           </Col>
           <Col md={1}>
-            <Link to={`/provisioning/${params.gwName}/system/addreseller`}>
-              <Glyphicon
-                className={"x-large"}
-                glyph="glyphicon glyphicon-plus-sign"
+            <Glyphicon
+              className={"x-large"}
+              onClick={() => setShowAddModal(true)}
+              glyph="glyphicon glyphicon-plus-sign"
+            />
+            {showAddModal && (
+              <AddResellerModal
+                show={showAddModal}
+                mode="Create"
+                onClose={() => setShowAddModal(false)}
+                onSubmit={createReseller}
               />
-            </Link>
+            )}
           </Col>
         </Row>
         <Row>

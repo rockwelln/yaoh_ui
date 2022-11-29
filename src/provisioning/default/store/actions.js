@@ -441,6 +441,11 @@ export const postAddMobileNumberToGroup = (data) => ({
   data,
 });
 
+export const postAddReseller = (data) => ({
+  type: actionType.POST_ADD_RESELLER,
+  data,
+});
+
 export const postCreateTemplate = () => ({
   type: actionType.POST_CREATE_TEMPLATE,
 });
@@ -569,6 +574,11 @@ export const putUpdateTenantEntitlement = (data) => ({
 
 export const putUpdateTrunkGroupAccessInfo = (data) => ({
   type: actionType.PUT_UPDATE_TRUNK_GROUP_ACCESS_INFO,
+  data,
+});
+
+export const putUpdateReseller = (data) => ({
+  type: actionType.PUT_UPDATE_RESELLER,
   data,
 });
 
@@ -2568,6 +2578,36 @@ export function fetchPostAddServicePacksToTenant(tenantId, data) {
   };
 }
 
+export function fetchPostAddReseller(data) {
+  return function (dispatch) {
+    return fetch_post(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/local/resellers/`,
+      data
+    )
+      .then((res) => res.json())
+      .then(() => {
+        dispatch(postAddReseller());
+        NotificationsManager.success(
+          <FormattedMessage
+            id="Reseller-successfully-added"
+            defaultMessage="Reseller successfully added"
+          />,
+          "Created"
+        );
+        return "success";
+      })
+      .catch((error) => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-add-reseller"
+            defaultMessage="Failed to add reseller!"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
 export function fetchPutUpdateUser(tenantId, groupId, userName, data) {
   return function (dispatch) {
     return fetch_put(
@@ -3260,6 +3300,36 @@ export function fetchPutUpdateTrunkGroupAccessInfo(
           <FormattedMessage
             id="trunk-group-access-info-update-failed"
             defaultMessage="Failed to update trunk group access info!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchPutUpdateReseller(name, data) {
+  return function (dispatch) {
+    return fetch_put(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/local/resellers/${name}/`,
+      data
+    )
+      .then((res) => res.json())
+      .then(() => {
+        dispatch(putUpdateReseller());
+        NotificationsManager.success(
+          <FormattedMessage
+            id="reseller-successfully-updated"
+            defaultMessage="Reseller successfully updated"
+          />,
+          "Updated"
+        );
+        return "success";
+      })
+      .catch((error) =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="reseller-update-failed"
+            defaultMessage="Reseller group access info!"
           />,
           error.message
         )
