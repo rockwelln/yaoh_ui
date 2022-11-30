@@ -150,6 +150,7 @@ const initialState = {
   isDisabledTenantSuspensionStatusButton: false,
   isDisabledGroupSuspensionStatusButton: false,
   resellers: [],
+  reseller: {},
 };
 
 function mainReducer(state = initialState, action) {
@@ -836,6 +837,12 @@ function mainReducer(state = initialState, action) {
       return {
         ...state,
         resellers: action.data.resellers,
+      };
+    }
+    case actionType.GET_RESELLER: {
+      return {
+        ...state,
+        reseller: action.data,
       };
     }
     case actionType.POST_CREATE_GROUP_ADMIN: {

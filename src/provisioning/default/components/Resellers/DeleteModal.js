@@ -15,7 +15,7 @@ const DeleteModal = ({ resellerName, show, onClose }) => {
   const [deleting, setDeleting] = useState(false);
   const onDelete = () => {
     setDeleting(true);
-    dispatch(fetchDeleteReseller(resellerName)).then(() => onClose());
+    dispatch(fetchDeleteReseller(resellerName)).then(() => onClose("deleted"));
   };
 
   return (

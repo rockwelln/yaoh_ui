@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 
 import "./styles.css";
 
-const convertCrumb = crumb => {
+const convertCrumb = (crumb) => {
   if (crumb === "broadsoft_xsp1_as1") {
     return "broadsoft XSP 1 / AS 1";
   }
@@ -17,6 +17,7 @@ const convertCrumb = crumb => {
 //Links and rename path for crumb
 const linkByCrumb = (item, lastItem, i, path, match) => {
   const crumb = convertCrumb(item);
+  console.log(crumb, path[i - 1], lastItem);
   if (crumb === "tenants" && !lastItem.includes(crumb)) {
     return (
       <Link to={`/provisioning/${match.params.gwName}/tenants`}>{crumb}</Link>
@@ -79,6 +80,11 @@ const linkByCrumb = (item, lastItem, i, path, match) => {
       <Link to={`/provisioning/${match.params.gwName}/localusers`}>
         Local users
       </Link>
+    );
+  }
+  if (crumb === "resellers") {
+    return (
+      <Link to={`/provisioning/${match.params.gwName}/resellers`}>{crumb}</Link>
     );
   }
   return crumb;

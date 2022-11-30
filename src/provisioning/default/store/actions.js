@@ -350,6 +350,11 @@ export const getResellers = (data) => ({
   data,
 });
 
+export const getReseller = (data) => ({
+  type: actionType.GET_RESELLER,
+  data,
+});
+
 export const postCreateGroupAdmin = (data) => ({
   type: actionType.POST_CREATE_GROUP_ADMIN,
   data,
@@ -2085,6 +2090,24 @@ export function fetchGetResellers() {
           <FormattedMessage
             id="fetch-resellers-failed"
             defaultMessage="Failed to fetch resellers"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchGetReseller(name) {
+  return function (dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/local/resellers/${name}/`
+    )
+      .then((data) => dispatch(getReseller(data)))
+      .catch((error) => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-reseller-failed"
+            defaultMessage="Failed to fetch reseller"
           />,
           error.message
         );
