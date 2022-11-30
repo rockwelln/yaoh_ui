@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { withRouter } from "react-router";
 import { useDispatch } from "react-redux";
+import { useParams } from "react-router";
+
+import { Link } from "react-router-dom";
 
 import { fetchPutUpdateReseller } from "../../store/actions";
 
@@ -12,6 +15,7 @@ import DeleteModal from "./DeleteModal";
 
 const Reseller = ({ reseller, onReload }) => {
   const dispatch = useDispatch();
+  const params = useParams();
 
   const [showDelete, setShowDelete] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
@@ -37,7 +41,11 @@ const Reseller = ({ reseller, onReload }) => {
 
   return (
     <tr>
-      <td>{reseller.name}</td>
+      <td>
+        <Link to={`/provisioning/${params.gwName}/resellers/${reseller.name}`}>
+          {reseller.name}
+        </Link>
+      </td>
       <td>{reseller.externalName}</td>
       <td className="text-align-center">
         <ButtonToolbar title="Edit">

@@ -14,7 +14,7 @@ const AddResellerModal = ({
   reseller = {
     name: "",
     externalName: "",
-    extraData: "",
+    extraData: {},
   },
   mode,
   show,
@@ -26,6 +26,7 @@ const AddResellerModal = ({
     ...reseller,
     extraData: JSON.stringify(reseller.extraData, undefined, 4),
   });
+  const [isFailedParseJSON, setIsFaildeParseJSON] = useState(false);
 
   const saveReseller = () => {
     setIsSaving(true);
@@ -34,7 +35,11 @@ const AddResellerModal = ({
       objExtraData = stateReseller.extraData
         ? JSON.parse(stateReseller.extraData)
         : {};
-    } catch (error) {}
+    } catch (error) {
+      setIsFaildeParseJSON(true);
+      setIsSaving(false);
+      return;
+    }
     const data = {
       ...stateReseller,
       extraData: objExtraData,
@@ -92,15 +97,25 @@ const AddResellerModal = ({
         </Row>
         <Row className={"indent-top-bottom-1"}>
           <Col md={12} className={"flex align-items-center"}>
-            <div className={"margin-right-1 flex flex-basis-33"}>
+            <div
+              className={"margin-right-1 flex flex-basis-33"}
+              style={{ color: isFailedParseJSON ? "red" : "black" }}
+            >
               Extra data:
             </div>
             <div className={"margin-right-1 flex-basis-66"}>
               <textarea
                 className={"width-100p height-10"}
+                style={{ borderColor: isFailedParseJSON ? "red" : "black" }}
                 value={stateReseller.extraData}
-                onChange={(e) => editReseller(e.target.value, "extraData")}
+                onChange={(e) => {
+                  editReseller(e.target.value, "extraData");
+                  setIsFaildeParseJSON(false);
+                }}
               />
+              <div style={{ height: 18, color: "red", fontSize: 12 }}>
+                {isFailedParseJSON && <span>Feiled to parse JSON</span>}
+              </div>
             </div>
           </Col>
         </Row>
