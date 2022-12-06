@@ -10,32 +10,37 @@ import Row from "react-bootstrap/lib/Row";
 import Col from "react-bootstrap/lib/Col";
 import Pagination from "react-bootstrap/lib/Pagination";
 import { FormattedMessage } from "react-intl";
-import { fetchGetResellers, fetchPostAddReseller } from "../../store/actions";
+import {
+  fetchGetResellerAdmins,
+  fetchPostAddResellerAdmin,
+} from "../../../../store/actions";
 
-import { countsPerPages } from "../../constants";
-import Reseller from "./Reseller";
-import Loading from "../../common/Loading";
-import AddResellerModal from "./AddModifyReseller";
+import { countsPerPages } from "../../../../constants";
+import Admin from "./Admin";
+import Loading from "../../../../common/Loading";
+import AddAdminModal from "./AddEditAdmin";
 
-const Resellers = () => {
+const Admins = () => {
   const params = useParams();
 
-  const resellers = useSelector((state) => state.resellers);
+  const resellerAdmins = useSelector((state) => state.resellerAdmins);
 
   const dispatch = useDispatch();
   //const history = useHistory();
   const [isLoading, setIsLoading] = useState(false);
   const [countPerPage, setCountPerPage] = useState(25);
   const [page, setPage] = useState(0);
-  const [resellersState, setResellersState] = useState(resellers);
-  const [paginationResellers, setPaginationResellers] = useState([]);
+  const [adminsState, setResellersState] = useState(resellerAdmins);
+  const [paginationAdmins, setPaginationAdmins] = useState([]);
   const [countPages, setCountPages] = useState(null);
   const [sortedBy, setSortedBy] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
 
   const fetchData = () => {
     setIsLoading(true);
-    dispatch(fetchGetResellers()).then(() => setIsLoading(false));
+    dispatch(fetchGetResellerAdmins(params.resellerName)).then(() =>
+      setIsLoading(false)
+    );
   };
 
   useEffect(() => {
@@ -43,30 +48,30 @@ const Resellers = () => {
   }, []);
 
   useEffect(() => {
-    setResellersState(resellers);
-  }, [resellers]);
+    setResellersState(resellerAdmins);
+  }, [resellerAdmins]);
 
   useEffect(() => {
     pagination();
-  }, [resellersState, countPerPage]);
+  }, [adminsState, countPerPage]);
 
   const pagination = () => {
-    const countPages = Math.ceil(resellersState.length / countPerPage);
+    const countPages = Math.ceil(adminsState.length / countPerPage);
 
     let paginationItems = [];
     let counter = 0;
 
     for (let i = 0; i < countPages; i++) {
       if (i === 0) {
-        const item = resellersState.slice(0, countPerPage);
+        const item = adminsState.slice(0, countPerPage);
         paginationItems.push(item);
       } else {
-        const item = resellersState.slice(counter, counter + countPerPage);
+        const item = adminsState.slice(counter, counter + countPerPage);
         paginationItems.push(item);
       }
       counter = counter + countPerPage;
     }
-    setPaginationResellers(paginationItems);
+    setPaginationAdmins(paginationItems);
     setCountPages(countPages);
   };
 
@@ -75,19 +80,8 @@ const Resellers = () => {
     setPage(0);
   };
 
-  const changeDefault = (name) => {
-    // setIsLoading(true);
-    // dispatch(
-    //   fetchPutUpdateCallRecordingPlatform({ name, data: { default: true } })
-    // ).then(() => {
-    //   dispatch(fetchGetCallRecordingPlatforms()).then(() =>
-    //     setIsLoading(false)
-    //   );
-    // });
-  };
-
   const sort = (sortBy) => {
-    const tempResellers = [...resellersState];
+    const tempResellers = [...adminsState];
     if (sortedBy === sortBy) {
       const resellerSorted = tempResellers.reverse();
       setResellersState(resellerSorted);
@@ -103,10 +97,12 @@ const Resellers = () => {
   };
 
   const filterBySearchValue = (searchValue) => {
-    const searchArray = [...resellers].filter(
-      (reseller) =>
-        reseller.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-        reseller?.externalName.toLowerCase().includes(searchValue.toLowerCase())
+    const searchArray = [...resellerAdmins].filter(
+      (admin) =>
+        admin.username.toLowerCase().includes(searchValue.toLowerCase()) ||
+        admin?.firstName.toLowerCase().includes(searchValue.toLowerCase()) ||
+        admin?.lastName.toLowerCase().includes(searchValue.toLowerCase()) ||
+        admin?.language.toLowerCase().includes(searchValue.toLowerCase())
     );
     setResellersState(searchArray);
   };
@@ -125,14 +121,16 @@ const Resellers = () => {
     setPage(page - 1);
   };
 
-  const createReseller = ({ data, callback }) => {
-    dispatch(fetchPostAddReseller(data)).then((isSuccess) => {
-      callback && callback();
-      if (isSuccess === "success") {
-        setShowAddModal(false);
-        fetchData();
+  const createAdmin = ({ data, callback }) => {
+    dispatch(fetchPostAddResellerAdmin(params.resellerName, data)).then(
+      (isSuccess) => {
+        callback && callback();
+        if (isSuccess === "success") {
+          setShowAddModal(false);
+          fetchData();
+        }
       }
-    });
+    );
   };
 
   if (isLoading) {
@@ -141,9 +139,6 @@ const Resellers = () => {
 
   return (
     <>
-      <div className={"panel-heading"}>
-        <div className={"header"}>Resellers</div>
-      </div>
       <div className={"panel-body"}>
         <Row className={"margin-top-2"}>
           <Col md={11}>
@@ -153,7 +148,7 @@ const Resellers = () => {
               </InputGroup.Addon>
               <FormattedMessage
                 id="search_placeholder"
-                defaultMessage="Name, external name"
+                defaultMessage="Username, first name, last name, language"
               >
                 {(placeholder) => (
                   <FormControl
@@ -172,11 +167,11 @@ const Resellers = () => {
               glyph="glyphicon glyphicon-plus-sign"
             />
             {showAddModal && (
-              <AddResellerModal
+              <AddAdminModal
                 show={showAddModal}
                 mode="Create"
                 onClose={() => setShowAddModal(false)}
-                onSubmit={createReseller}
+                onSubmit={createAdmin}
               />
             )}
           </Col>
@@ -201,7 +196,7 @@ const Resellers = () => {
             </div>
           </Col>
         </Row>
-        {paginationResellers.length ? (
+        {paginationAdmins.length ? (
           <React.Fragment>
             <Row>
               <Col md={12}>
@@ -209,20 +204,73 @@ const Resellers = () => {
                   <thead>
                     <tr>
                       <th>
-                        <FormattedMessage id="name" defaultMessage="Name" />
+                        <FormattedMessage
+                          id="username"
+                          defaultMessage="Username"
+                        />
                         <Glyphicon
                           glyph="glyphicon glyphicon-sort"
-                          onClick={() => sort("name")}
+                          onClick={() => sort("username")}
                         />
                       </th>
                       <th>
                         <FormattedMessage
-                          id="externalName"
-                          defaultMessage="External name"
+                          id="firstName"
+                          defaultMessage="First name"
                         />
                         <Glyphicon
                           glyph="glyphicon glyphicon-sort"
-                          onClick={() => sort("externalName")}
+                          onClick={() => sort("firstName")}
+                        />
+                      </th>
+                      <th>
+                        <FormattedMessage
+                          id="lastName"
+                          defaultMessage="Last name"
+                        />
+                        <Glyphicon
+                          glyph="glyphicon glyphicon-sort"
+                          onClick={() => sort("lastName")}
+                        />
+                      </th>
+                      <th>
+                        <FormattedMessage
+                          id="language"
+                          defaultMessage="Language"
+                        />
+                        <Glyphicon
+                          glyph="glyphicon glyphicon-sort"
+                          onClick={() => sort("language")}
+                        />
+                      </th>
+                      <th>
+                        <FormattedMessage
+                          id="userLevel"
+                          defaultMessage="User level"
+                        />
+                        <Glyphicon
+                          glyph="glyphicon glyphicon-sort"
+                          onClick={() => sort("userLevel")}
+                        />
+                      </th>
+                      <th>
+                        <FormattedMessage
+                          id="userProfileType"
+                          defaultMessage="User profile type"
+                        />
+                        <Glyphicon
+                          glyph="glyphicon glyphicon-sort"
+                          onClick={() => sort("userProfileType")}
+                        />
+                      </th>
+                      <th>
+                        <FormattedMessage
+                          id="tenantId"
+                          defaultMessage="Tenant ID"
+                        />
+                        <Glyphicon
+                          glyph="glyphicon glyphicon-sort"
+                          onClick={() => sort("tenantId")}
                         />
                       </th>
                       <th style={{ width: "4%" }} />
@@ -230,11 +278,10 @@ const Resellers = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {paginationResellers[page].map((reseller) => (
-                      <Reseller
-                        key={reseller.name}
-                        reseller={reseller}
-                        changeDefault={changeDefault}
+                    {paginationAdmins[page].map((admin) => (
+                      <Admin
+                        key={admin.username}
+                        admin={admin}
                         onReload={fetchData}
                       />
                     ))}
@@ -258,7 +305,7 @@ const Resellers = () => {
           <Col md={10}>
             <FormattedMessage
               id="notFound"
-              defaultMessage="No resellers were found"
+              defaultMessage="No admins were found"
             />
           </Col>
         )}
@@ -267,4 +314,4 @@ const Resellers = () => {
   );
 };
 
-export default Resellers;
+export default Admins;

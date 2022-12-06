@@ -17,7 +17,6 @@ const convertCrumb = (crumb) => {
 //Links and rename path for crumb
 const linkByCrumb = (item, lastItem, i, path, match) => {
   const crumb = convertCrumb(item);
-  console.log(crumb, path[i - 1], lastItem);
   if (crumb === "tenants" && !lastItem.includes(crumb)) {
     return (
       <Link to={`/provisioning/${match.params.gwName}/tenants`}>{crumb}</Link>

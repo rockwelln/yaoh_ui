@@ -7,6 +7,7 @@ import Tab from "react-bootstrap/lib/Tab";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
 
 import ResellerInfo from "./Tabs/ResellerInfo";
+import Admins from "./Tabs/AdminsTab";
 import DeleteModal from "../Resellers/DeleteModal";
 
 const ResellerPage = () => {
@@ -75,7 +76,7 @@ const ResellerPage = () => {
             <ResellerInfo />
           </Tab>
           <Tab eventKey={1} title="Administrators">
-            321
+            <Admins />
           </Tab>
         </Tabs>
       </div>

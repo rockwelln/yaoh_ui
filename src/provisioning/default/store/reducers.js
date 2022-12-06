@@ -151,6 +151,8 @@ const initialState = {
   isDisabledGroupSuspensionStatusButton: false,
   resellers: [],
   reseller: {},
+  resellerAdmins: [],
+  userProfileTypes: [],
 };
 
 function mainReducer(state = initialState, action) {
@@ -845,6 +847,18 @@ function mainReducer(state = initialState, action) {
         reseller: action.data,
       };
     }
+    case actionType.GET_RESELLER_ADMINS: {
+      return {
+        ...state,
+        resellerAdmins: action.data.admins,
+      };
+    }
+    case actionType.GET_USER_PROFILE_TYPES: {
+      return {
+        ...state,
+        userProfileTypes: action.data.userProfileTypes,
+      };
+    }
     case actionType.POST_CREATE_GROUP_ADMIN: {
       return {
         ...state,
@@ -1018,6 +1032,11 @@ function mainReducer(state = initialState, action) {
         ...state,
       };
     }
+    case actionType.POST_ADD_RESELLER_ADMIN: {
+      return {
+        ...state,
+      };
+    }
     case actionType.PUT_UPDATE_USER: {
       return {
         ...state,
@@ -1156,6 +1175,11 @@ function mainReducer(state = initialState, action) {
         ...state,
       };
     }
+    case actionType.PUT_UPDATE_RESELLER_ADMIN: {
+      return {
+        ...state,
+      };
+    }
     case actionType.DELETE_TENANT: {
       return {
         ...state,
@@ -1251,6 +1275,16 @@ function mainReducer(state = initialState, action) {
       };
     }
     case actionType.DELETE_SERVICE_PACK_FROM_TENANT: {
+      return {
+        ...state,
+      };
+    }
+    case actionType.DELETE_RESELLER: {
+      return {
+        ...state,
+      };
+    }
+    case actionType.DELETE_RESELLER_ADMIN: {
       return {
         ...state,
       };

@@ -355,6 +355,16 @@ export const getReseller = (data) => ({
   data,
 });
 
+export const getResellerAdmins = (data) => ({
+  type: actionType.GET_RESELLER_ADMINS,
+  data,
+});
+
+export const getUserProfileTypes = (data) => ({
+  type: actionType.GET_USER_PROFILE_TYPES,
+  data,
+});
+
 export const postCreateGroupAdmin = (data) => ({
   type: actionType.POST_CREATE_GROUP_ADMIN,
   data,
@@ -461,6 +471,11 @@ export const postAddEntitlementToTenant = () => ({
 
 export const postAddServicePacksToTenant = () => ({
   type: actionType.POST_ADD_SERVICE_PACK_TO_TENANT,
+});
+
+export const postAddResellerAdmin = (data) => ({
+  type: actionType.POST_ADD_RESELLER_ADMIN,
+  data,
 });
 
 export const putUpdateUser = (data) => ({
@@ -586,6 +601,10 @@ export const putUpdateReseller = (data) => ({
   type: actionType.PUT_UPDATE_RESELLER,
   data,
 });
+export const putUpdateResellerAdmin = (data) => ({
+  type: actionType.PUT_UPDATE_RESELLER_ADMIN,
+  data,
+});
 
 export const deleteTenant = (data) => ({
   type: actionType.DELETE_TENANT,
@@ -671,6 +690,10 @@ export const deleteServicePackFromTenant = () => ({
 
 export const deleteReseller = () => ({
   type: actionType.DELETE_RESELLER,
+});
+
+export const deleteResellerAdmin = () => ({
+  type: actionType.DELETE_RESELLER_ADMIN,
 });
 
 export const clearErrorMassage = () => ({
@@ -849,9 +872,11 @@ export const disableGroupSuspensionStatusButton = () => ({
   type: actionType.DISABLE_GROUP_SUSPESION_STATUS_BUTTON,
 });
 
-export function fetchGetTenants(cancelLoad) {
+export function fetchGetTenants(cancelLoad, queryString) {
   return function (dispatch) {
-    return fetch_get(`${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/`)
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${queryString || ""}`
+    )
       .then((data) => !cancelLoad && dispatch(getTenants(data)))
       .catch((error) =>
         NotificationsManager.error(
@@ -2115,6 +2140,42 @@ export function fetchGetReseller(name) {
   };
 }
 
+export function fetchGetResellerAdmins(name) {
+  return function (dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/local/resellers/${name}/admins/`
+    )
+      .then((data) => dispatch(getResellerAdmins(data)))
+      .catch((error) => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-reseller-admins-failed"
+            defaultMessage="Failed to fetch reseller admins"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchGetUserProfileTypes({ queryString = "" }) {
+  return function (dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/config/userprofiletypes/${queryString}`
+    )
+      .then((data) => dispatch(getUserProfileTypes(data)))
+      .catch((error) => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-user-profile-types-failed"
+            defaultMessage="Failed to fetch user profile types"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
 export function fetchPostCreateGroupAdmin(tenantId, groupId, data, callback) {
   return function (dispatch) {
     return fetch_post(
@@ -2628,6 +2689,36 @@ export function fetchPostAddReseller(data) {
           <FormattedMessage
             id="failed-to-add-reseller"
             defaultMessage="Failed to add reseller!"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchPostAddResellerAdmin(resellerName, data) {
+  return function (dispatch) {
+    return fetch_post(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/local/resellers/${resellerName}/admins/`,
+      data
+    )
+      .then((res) => res.json())
+      .then(() => {
+        dispatch(postAddResellerAdmin());
+        NotificationsManager.success(
+          <FormattedMessage
+            id="Reseller-admin-successfully-added"
+            defaultMessage="Reseller admin successfully added"
+          />,
+          "Created"
+        );
+        return "success";
+      })
+      .catch((error) => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-add-reseller-admin"
+            defaultMessage="Failed to add reseller admin!"
           />,
           error.message
         );
@@ -3356,7 +3447,37 @@ export function fetchPutUpdateReseller(name, data) {
         NotificationsManager.error(
           <FormattedMessage
             id="reseller-update-failed"
-            defaultMessage="Reseller group access info!"
+            defaultMessage="Failed to update reseller!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchPutUpdateResellerAdmin(resellerName, adminName, data) {
+  return function (dispatch) {
+    return fetch_put(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/local/resellers/${resellerName}/admins/${adminName}`,
+      data
+    )
+      .then((res) => res.json())
+      .then(() => {
+        dispatch(putUpdateResellerAdmin());
+        NotificationsManager.success(
+          <FormattedMessage
+            id="reseller-admin-successfully-updated"
+            defaultMessage="Reseller admin successfully updated"
+          />,
+          "Updated"
+        );
+        return "success";
+      })
+      .catch((error) =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="reseller-admin-update-failed"
+            defaultMessage="Failed to update reseller admin!"
           />,
           error.message
         )
@@ -3798,6 +3919,27 @@ export function fetchDeleteReseller(name) {
           <FormattedMessage
             id="failed-to-delete-reseller"
             defaultMessage="Failed to delete reseller!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchDeleteResellerAdmin(resellerName, username) {
+  return function (dispatch) {
+    return fetch_delete(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/local/resellers/${resellerName}/admins/${username}`
+    )
+      .then((res) => res.json())
+      .then(() => {
+        dispatch(deleteResellerAdmin());
+      })
+      .catch((error) =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-delete-reseller-admin"
+            defaultMessage="Failed to delete reseller admin!"
           />,
           error.message
         )
