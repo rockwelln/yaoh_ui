@@ -104,8 +104,7 @@ function TaskInput(props) {
 }
 
 
-function ActivityInput(props) {
-  const {value, onChange} = props;
+function ActivityInput({value, onChange}) {
   const [activities, setActivities] = useState([]);
 
   useEffect(() => {
@@ -113,28 +112,27 @@ function ActivityInput(props) {
   }, []);
 
   const activitiesOptions = activities.sort((a, b) => a.name.localeCompare(b.name)).map(a => ({value: a.name, label: a.name, id: a.id}));
+  const activity = value ? activitiesOptions.find(a => a.value === value): null;
 
   return (
     <InputGroup>
-      <Select
-          className="basic-single"
-          classNamePrefix="select"
-          value={value && activitiesOptions.find(a => a.value === value)}
-          isClearable={true}
-          isSearchable={true}
+      <Creatable
+          value={{value: value, label: value}}
+          isClearable
+          isSearchable
           name="activity"
           onChange={(value, action) => {
-              if(["select-option", "clear"].includes(action.action)) {
+              if(["select-option", "create-option", "clear"].includes(action.action)) {
                 onChange(value?value.value:"");
               }
           }}
           options={activitiesOptions} />
       <InputGroup.Button>
           <Button
-              disabled={!value}
+              disabled={!value || !activity}
               bsStyle="primary"
               onClick={() => {
-                window.open(`/transactions/config/activities/editor/${activitiesOptions.find(a => a.value === value).id}`, '_blank').focus();
+                window.open(`/transactions/config/activities/editor/${activity?.id}`, '_blank').focus();
               }}
               style={{marginLeft: '5px'}}
           >
