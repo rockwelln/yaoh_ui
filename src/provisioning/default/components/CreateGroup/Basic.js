@@ -10,6 +10,7 @@ import FormControl from "react-bootstrap/lib/FormControl";
 import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import Button from "react-bootstrap/lib/Button";
 import Checkbox from "react-bootstrap/lib/Checkbox";
+import Select from "react-select";
 
 import {
   refuseCreateGroup,
@@ -23,7 +24,10 @@ import {
   changeStepOfCreateGroup,
   fetchGetTenantById,
   fetchGetTimezones,
-  changeTimeZoneOfGroup
+  changeTimeZoneOfGroup,
+  fetchGetSelfcareURL,
+  fetchGetResellers,
+  changeResellerIdOfGroup,
 } from "../../store/actions";
 import Loading from "../../common/Loading";
 
@@ -37,22 +41,51 @@ export class Basic extends Component {
     overwriteId: false,
     isLoading: false,
     defaultTimeZone: true,
-    timeZone: ""
+    timeZone: "",
+    isLoadingConfig: false,
+    isLoadingResellers: false,
+    isLoadingTenant: false,
   };
 
   componentDidMount() {
-    this.props
-      .fetchGetTenantById(this.props.match.params.tenantId)
-      .then(() => this.props.changeDomainOfGroup(this.props.defaultDomain));
-    this.setState({ isLoading: true }, () =>
-      this.props
-        .fetchGetTimezones()
-        .then(() => this.setState({ isLoading: false }))
+    this.setState(
+      {
+        isLoading: true,
+        isLoadingConfig: true,
+        isLoadingResellers: true,
+        isLoadingTenant: true,
+      },
+      () => {
+        this.props
+          .fetchGetTimezones()
+          .then(() => this.setState({ isLoading: false }));
+        this.props
+          .fetchGetSelfcareURL()
+          .then(() => this.setState({ isLoadingConfig: false }));
+        this.props
+          .fetchGetResellers()
+          .then(() => this.setState({ isLoadingResellers: false }));
+        this.props
+          .fetchGetTenantById(this.props.match.params.tenantId)
+          .then(() => {
+            this.props.changeDomainOfGroup(this.props.defaultDomain);
+            this.props.changeResellerIdOfGroup({
+              value: this.props.tenant.resellerId,
+              label: this.props.tenant.resellerId,
+            });
+            this.setState({ isLoadingTenant: false });
+          });
+      }
     );
   }
 
   render() {
-    if (this.state.isLoading) {
+    if (
+      this.state.isLoading ||
+      this.state.isLoadingConfig ||
+      this.state.isLoadingResellers ||
+      this.state.isLoadingTenant
+    ) {
       return <Loading />;
     }
     return (
@@ -83,7 +116,7 @@ export class Basic extends Component {
             <Col md={12}>
               <Checkbox
                 checked={this.state.overwriteId}
-                onChange={e => {
+                onChange={(e) => {
                   if (e.target.checked) {
                     this.setState({ overwriteId: e.target.checked });
                   } else {
@@ -106,7 +139,7 @@ export class Basic extends Component {
                   type="text"
                   placeholder="Group ID"
                   value={this.props.createGroup.groupId}
-                  onChange={e => {
+                  onChange={(e) => {
                     this.props.changeIdOfGroup(e.target.value);
                     this.setState({ errorMessage: "" });
                   }}
@@ -123,18 +156,42 @@ export class Basic extends Component {
                 type="text"
                 placeholder="Group name"
                 defaultValue={this.props.createGroup.groupName}
-                onChange={e => {
+                onChange={(e) => {
                   this.props.changeNameOfGroup(e.target.value);
                   this.setState({ errorMessage: "" });
                 }}
               />
             </Col>
           </Row>
+          {this.props?.config?.reseller?.group && (
+            <Row className={"margin-1"}>
+              <Col componentClass={ControlLabel} md={3}>
+                Reseller
+              </Col>
+              <Col md={9}>
+                <Select
+                  value={this.props.createGroup.resellerId}
+                  onChange={(selected) => {
+                    this.props.changeResellerIdOfGroup(selected);
+                  }}
+                  options={[
+                    { value: "", label: "Not set" },
+                    ...this.props.resellers.map((el) => {
+                      return {
+                        value: el.name,
+                        label: el.name,
+                      };
+                    }),
+                  ]}
+                />
+              </Col>
+            </Row>
+          )}
           <Row className={"margin-1"}>
             <Col md={12}>
               <Checkbox
                 checked={this.state.defaultTimeZone}
-                onChange={e => {
+                onChange={(e) => {
                   if (e.target.checked) {
                     this.setState({ defaultTimeZone: e.target.checked });
                     this.props.changeTimeZoneOfGroup("");
@@ -161,11 +218,11 @@ export class Basic extends Component {
                   componentClass="select"
                   placeholder="Time zone"
                   value={this.props.createGroup.timeZone}
-                  onChange={e => {
+                  onChange={(e) => {
                     this.props.changeTimeZoneOfGroup(e.target.value);
                   }}
                 >
-                  {this.props.timeZones.map(timeZone => (
+                  {this.props.timeZones.map((timeZone) => (
                     <option key={`${timeZone.name}`} value={timeZone.name}>
                       {timeZone.description}
                     </option>
@@ -206,7 +263,7 @@ export class Basic extends Component {
                     type="text"
                     placeholder="Street"
                     defaultValue={this.props.createGroup.address.addressLine1}
-                    onChange={e =>
+                    onChange={(e) =>
                       this.props.changeAddressOfGroup(e.target.value)
                     }
                   />
@@ -218,7 +275,9 @@ export class Basic extends Component {
                     type="text"
                     placeholder="ZIP"
                     defaultValue={this.props.createGroup.address.postalCode}
-                    onChange={e => this.props.changeZIPOfGroup(e.target.value)}
+                    onChange={(e) =>
+                      this.props.changeZIPOfGroup(e.target.value)
+                    }
                   />
                 </Col>
                 <Col md={6}>
@@ -226,7 +285,9 @@ export class Basic extends Component {
                     type="text"
                     placeholder="City"
                     defaultValue={this.props.createGroup.address.city}
-                    onChange={e => this.props.changeCityOfGroup(e.target.value)}
+                    onChange={(e) =>
+                      this.props.changeCityOfGroup(e.target.value)
+                    }
                   />
                 </Col>
               </Row>
@@ -267,11 +328,11 @@ export class Basic extends Component {
     const { groupName, timeZone } = this.props.createGroup;
     if (!groupName) {
       this.setState({
-        errorMessage: "Name are required"
+        errorMessage: "Name are required",
       });
     } else if (!this.state.defaultTimeZone && !timeZone) {
       this.setState({
-        errorMessage: "Need to select time zone"
+        errorMessage: "Need to select time zone",
       });
     } else {
       this.props.changeStepOfCreateGroup("Template");
@@ -279,15 +340,17 @@ export class Basic extends Component {
   };
 
   showHideMore = () => {
-    this.setState(prevState => ({ showHideMore: !prevState.showHideMore }));
+    this.setState((prevState) => ({ showHideMore: !prevState.showHideMore }));
   };
 }
 
-const mapStateToProps = state => ({
-  createTenant: state.createTenant,
+const mapStateToProps = (state) => ({
   createGroup: state.createGroup,
   defaultDomain: state.tenant.defaultDomain,
-  timeZones: state.timeZones
+  timeZones: state.timeZones,
+  config: state.selfcareUrl,
+  resellers: state.resellers,
+  tenant: state.tenant,
 });
 
 const mapDispatchToProps = {
@@ -302,12 +365,10 @@ const mapDispatchToProps = {
   changeStepOfCreateGroup,
   fetchGetTenantById,
   fetchGetTimezones,
-  changeTimeZoneOfGroup
+  changeTimeZoneOfGroup,
+  fetchGetSelfcareURL,
+  fetchGetResellers,
+  changeResellerIdOfGroup,
 };
 
-export default withRouter(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(Basic)
-);
+export default withRouter(connect(mapStateToProps, mapDispatchToProps)(Basic));

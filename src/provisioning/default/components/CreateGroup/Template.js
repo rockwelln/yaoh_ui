@@ -20,13 +20,13 @@ import {
   changeTemplateOfGroup,
   fetchGetTamplatesOfGroup,
   changeStepOfCreateGroup,
-  fetchPostCreateGroup
+  fetchPostCreateGroup,
 } from "../../store/actions";
 
 export class Template extends Component {
   state = {
     isLoading: true,
-    creating: false
+    creating: false,
   };
 
   componentDidMount() {
@@ -118,13 +118,20 @@ export class Template extends Component {
 
   createButtonClick = () => {
     const filteredDataCreateGroup = removeEmpty(this.props.createGroup);
+    if (this.props?.config?.reseller?.group) {
+      filteredDataCreateGroup.resellerId =
+        this.props.createGroup.resellerId.value;
+    } else {
+      delete filteredDataCreateGroup.resellerId;
+    }
+
     this.setState({ creating: "Creating..." }, () => {
       this.props
         .fetchPostCreateGroup(
           this.props.match.params.tenantId,
           filteredDataCreateGroup
         )
-        .then(res =>
+        .then((res) =>
           res
             ? this.props.changeStepOfCreateGroup("Created")
             : this.setState({ creating: "" })
@@ -132,7 +139,7 @@ export class Template extends Component {
     });
   };
 
-  selectTemplate = name => {
+  selectTemplate = (name) => {
     this.props.changeTemplateOfGroup(name);
   };
 
@@ -141,9 +148,10 @@ export class Template extends Component {
   };
 }
 
-const mapStateToProps = state => ({
+const mapStateToProps = (state) => ({
   templatesOfGroup: state.templatesOfGroup,
-  createGroup: state.createGroup
+  createGroup: state.createGroup,
+  config: state.selfcareUrl,
 });
 
 const mapDispatchToProps = {
@@ -151,12 +159,9 @@ const mapDispatchToProps = {
   changeTemplateOfGroup,
   fetchGetTamplatesOfGroup,
   changeStepOfCreateGroup,
-  fetchPostCreateGroup
+  fetchPostCreateGroup,
 };
 
 export default withRouter(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(Template)
+  connect(mapStateToProps, mapDispatchToProps)(Template)
 );

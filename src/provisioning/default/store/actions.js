@@ -720,6 +720,11 @@ export const changeNameOfTenant = (data) => ({
   data,
 });
 
+export const changeResellerIdOfTenant = (data) => ({
+  type: actionType.CHANGE_RESELLER_ID_OF_TENANT,
+  data,
+});
+
 export const changeAddressOfTenant = (data) => ({
   type: actionType.CHANGE_ADDRESS_OF_TENANT,
   data,
@@ -775,6 +780,11 @@ export const changeTimeZoneOfGroup = (data) => ({
 
 export const changeNameOfGroup = (data) => ({
   type: actionType.CHANGE_NAME_OF_GROUP,
+  data,
+});
+
+export const changeResellerIdOfGroup = (data) => ({
+  type: actionType.CHANGE_RESELLER_ID_OF_GROUP,
   data,
 });
 

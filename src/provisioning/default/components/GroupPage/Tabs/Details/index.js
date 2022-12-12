@@ -16,8 +16,11 @@ import { Form } from "react-bootstrap";
 import Loading from "../../../../common/Loading";
 import {
   fetchGetGroupById,
-  fetchPutUpdateGroupDetails
+  fetchPutUpdateGroupDetails,
+  fetchGetResellers,
 } from "../../../../store/actions";
+
+import { removeEmpty } from "../../../remuveEmptyInObject";
 
 import { get } from "../../../get";
 
@@ -25,11 +28,12 @@ class Details extends Component {
   state = {
     group: [],
     isLoading: true,
-    updateMassage: ""
+    updateMassage: "",
+    isLoadingResellers: false,
   };
 
   fetchReq = () => {
-    this.setState({ isLoading: true }, () =>
+    this.setState({ isLoading: true, isLoadingResellers: true }, () => {
       this.props
         .fetchGetGroupById(
           this.props.match.params.tenantId,
@@ -37,17 +41,28 @@ class Details extends Component {
         )
         .then(() =>
           this.setState({
-            group: this.props.group,
+            group: {
+              ...this.props.group,
+              resellerId: this.props.group?.resellerId
+                ? {
+                    label: this.props.group.resellerId,
+                    value: this.props.group.resellerId,
+                  }
+                : { value: "", label: "Not set" },
+            },
             isLoading: false,
             cliNumber: {
               value: this.props.group.cliPhoneNumber,
               label: this.props.group.cliPhoneNumber
                 ? this.props.group.cliPhoneNumber
-                : "No number"
-            }
+                : "No number",
+            },
           })
-        )
-    );
+        );
+      this.props
+        .fetchGetResellers()
+        .then(() => this.setState({ isLoadingResellers: false }));
+    });
   };
 
   componentDidMount() {
@@ -64,9 +79,9 @@ class Details extends Component {
   }
 
   render() {
-    const { isLoading, group, updateMassage } = this.state;
+    const { isLoading, group, updateMassage, isLoadingResellers } = this.state;
 
-    if (isLoading) {
+    if (isLoading || isLoadingResellers) {
       return <Loading />;
     }
 
@@ -152,15 +167,41 @@ class Details extends Component {
                   type="text"
                   placeholder="Group name"
                   value={get(group, "groupName") ? group.groupName : ""}
-                  onChange={e => {
+                  onChange={(e) => {
                     this.setState({
-                      group: { ...this.state.group, groupName: e.target.value }
+                      group: { ...this.state.group, groupName: e.target.value },
                     });
                   }}
                   disabled={this.props.group.sync}
                 />
               </Col>
             </FormGroup>
+            {this.props?.config?.reseller?.group && (
+              <FormGroup controlId="resellerId">
+                <Col componentClass={ControlLabel} md={3}>
+                  Reseller
+                </Col>
+                <Col md={9}>
+                  <Select
+                    value={this.state.group.resellerId}
+                    onChange={(selected) => {
+                      this.setState({
+                        group: { ...this.state.group, resellerId: selected },
+                      });
+                    }}
+                    options={[
+                      { value: "", label: "Not set" },
+                      ...this.props.resellers.map((el) => {
+                        return {
+                          value: el.name,
+                          label: el.name,
+                        };
+                      }),
+                    ]}
+                  />
+                </Col>
+              </FormGroup>
+            )}
             <FormGroup controlId="tentantStreet">
               <Col componentClass={ControlLabel} md={3} className={"text-left"}>
                 Address
@@ -174,15 +215,15 @@ class Details extends Component {
                       ? group.addressInformation.addressLine1
                       : ""
                   }`}
-                  onChange={e => {
+                  onChange={(e) => {
                     this.setState({
                       group: {
                         ...this.state.group,
                         addressInformation: {
                           ...this.state.group.addressInformation,
-                          addressLine1: e.target.value
-                        }
-                      }
+                          addressLine1: e.target.value,
+                        },
+                      },
                     });
                   }}
                 />
@@ -198,15 +239,15 @@ class Details extends Component {
                       ? group.addressInformation.postalCode
                       : ""
                   }
-                  onChange={e => {
+                  onChange={(e) => {
                     this.setState({
                       group: {
                         ...this.state.group,
                         addressInformation: {
                           ...this.state.group.addressInformation,
-                          postalCode: e.target.value
-                        }
-                      }
+                          postalCode: e.target.value,
+                        },
+                      },
                     });
                   }}
                 />
@@ -220,15 +261,15 @@ class Details extends Component {
                       ? group.addressInformation.city
                       : ""
                   }
-                  onChange={e => {
+                  onChange={(e) => {
                     this.setState({
                       group: {
                         ...this.state.group,
                         addressInformation: {
                           ...this.state.group.addressInformation,
-                          city: e.target.value
-                        }
-                      }
+                          city: e.target.value,
+                        },
+                      },
                     });
                   }}
                 />
@@ -242,15 +283,15 @@ class Details extends Component {
                       ? group.addressInformation.country
                       : ""
                   }
-                  onChange={e => {
+                  onChange={(e) => {
                     this.setState({
                       group: {
                         ...this.state.group,
                         addressInformation: {
                           ...this.state.group.addressInformation,
-                          country: e.target.value
-                        }
-                      }
+                          country: e.target.value,
+                        },
+                      },
                     });
                   }}
                 />
@@ -265,12 +306,12 @@ class Details extends Component {
                   type="text"
                   placeholder="Default Domain"
                   value={get(group, "defaultDomain") ? group.defaultDomain : ""}
-                  onChange={e => {
+                  onChange={(e) => {
                     this.setState({
                       group: {
                         ...this.state.group,
-                        defaultDomain: e.target.value
-                      }
+                        defaultDomain: e.target.value,
+                      },
                     });
                   }}
                 />
@@ -283,7 +324,9 @@ class Details extends Component {
               <Col md={9}>
                 <Select
                   value={this.state.cliNumber}
-                  onChange={selected => this.setState({ cliNumber: selected })}
+                  onChange={(selected) =>
+                    this.setState({ cliNumber: selected })
+                  }
                   options={this.props.fullListGroupNumber}
                 />
                 {/* <FormControl
@@ -312,12 +355,12 @@ class Details extends Component {
                   type="text"
                   placeholder="Calling Line Id Name"
                   defaultValue={get(group, "cliName") ? group.cliName : ""}
-                  onChange={e => {
+                  onChange={(e) => {
                     this.setState({
                       group: {
                         ...this.state.group,
-                        cliName: e.target.value
-                      }
+                        cliName: e.target.value,
+                      },
                     });
                   }}
                 />
@@ -353,30 +396,36 @@ class Details extends Component {
     const { group, cliNumber } = this.state;
     const data = {
       ...group,
-      cliPhoneNumber: cliNumber.value
+      cliPhoneNumber: cliNumber.value,
+      resellerId: group.resellerId.value,
     };
+    const clearData = removeEmpty(data);
+
+    if (this.props?.config?.reseller?.group) {
+      clearData.resellerId = group.resellerId.value;
+    }
     this.props.fetchPutUpdateGroupDetails(
       this.props.match.params.tenantId,
       this.props.match.params.groupId,
-      data
+      clearData
     );
   };
 }
 
 const mapDispatchToProps = {
   fetchGetGroupById,
-  fetchPutUpdateGroupDetails
+  fetchPutUpdateGroupDetails,
+  fetchGetResellers,
 };
 
-const mapStateToProps = state => ({
+const mapStateToProps = (state) => ({
   group: state.group,
   tenant: state.tenant,
-  fullListGroupNumber: state.fullListGroupNumber
+  fullListGroupNumber: state.fullListGroupNumber,
+  resellers: state.resellers,
+  config: state.selfcareUrl,
 });
 
 export default withRouter(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(Details)
+  connect(mapStateToProps, mapDispatchToProps)(Details)
 );

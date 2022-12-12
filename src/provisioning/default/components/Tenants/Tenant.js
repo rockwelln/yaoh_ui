@@ -15,12 +15,12 @@ class Tenant extends Component {
     super(props);
     this.state = {
       showDetails: false,
-      showDelete: false
+      showDelete: false,
     };
   }
 
   render() {
-    const { t, onReload } = this.props;
+    const { t, onReload, showReseller } = this.props;
     const { showDelete } = this.state;
     return (
       <tr className={"table-cell"}>
@@ -33,6 +33,7 @@ class Tenant extends Component {
         </td>
         <td>{t.name}</td>
         <td>{t.type}</td>
+        {showReseller && <td>{t.resellerId}</td>}
         {t.sync ? <td>{t.sync.ldap}</td> : <td />}
         <td>
           <ButtonToolbar>
@@ -44,7 +45,7 @@ class Tenant extends Component {
           <DeleteModal
             tenantId={t.tenantId}
             show={showDelete}
-            onClose={e => {
+            onClose={(e) => {
               e && onReload && onReload();
               this.setState({ showDelete: false });
             }}

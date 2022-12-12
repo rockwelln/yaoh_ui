@@ -3,7 +3,11 @@ import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import { withRouter } from "react-router";
 
-import { fetchGetTenants, refuseCreateTenant } from "../../store/actions";
+import {
+  fetchGetTenants,
+  refuseCreateTenant,
+  fetchGetSelfcareURL,
+} from "../../store/actions";
 
 import Table from "react-bootstrap/lib/Table";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
@@ -32,7 +36,7 @@ class Tenants extends Component {
       countPerPage: 25,
       page: 0,
       pagination: true,
-      countPages: null
+      countPages: null,
     };
   }
 
@@ -52,13 +56,14 @@ class Tenants extends Component {
               return 0;
             }),
             sortedBy: "id",
-            isLoading: false
+            isLoading: false,
           },
           () => this.pagination()
         );
       })
     );
     this.props.refuseCreateTenant();
+    this.props.fetchGetSelfcareURL();
   };
 
   componentDidMount() {
@@ -80,7 +85,7 @@ class Tenants extends Component {
               return 0;
             }),
             sortedBy: "id",
-            isLoading: false
+            isLoading: false,
           },
           () => this.pagination()
         )
@@ -111,15 +116,15 @@ class Tenants extends Component {
                   id="search_placeholder"
                   defaultMessage="Tenant ID or Name or Type or Resellers"
                 >
-                  {placeholder => (
+                  {(placeholder) => (
                     <FormControl
                       type="text"
                       value={this.state.searchValue}
                       placeholder={placeholder}
-                      onChange={e =>
+                      onChange={(e) =>
                         this.setState(
                           {
-                            searchValue: e.target.value
+                            searchValue: e.target.value,
                           },
                           () => this.filterBySearchValue()
                         )
@@ -151,7 +156,7 @@ class Tenants extends Component {
                   className={"margin-left-1"}
                   onChange={this.changeCoutOnPage}
                 >
-                  {countsPerPages.map(counts => (
+                  {countsPerPages.map((counts) => (
                     <option key={counts.value} value={counts.value}>
                       {counts.title}
                     </option>
@@ -167,7 +172,7 @@ class Tenants extends Component {
                   <Table hover>
                     <thead>
                       <tr>
-                        <th style={{ width: "24%" }}>
+                        <th style={{ width: "19%" }}>
                           <FormattedMessage
                             id="tenant-id"
                             defaultMessage="ID"
@@ -177,21 +182,33 @@ class Tenants extends Component {
                             onClick={this.sortByID}
                           />
                         </th>
-                        <th style={{ width: "24%" }}>
+                        <th style={{ width: "19%" }}>
                           <FormattedMessage id="name" defaultMessage="Name" />
                           <Glyphicon
                             glyph="glyphicon glyphicon-sort"
                             onClick={this.sortByName}
                           />
                         </th>
-                        <th style={{ width: "24%" }}>
+                        <th style={{ width: "19%" }}>
                           <FormattedMessage id="type" defaultMessage="Type" />
                           <Glyphicon
                             glyph="glyphicon glyphicon-sort"
                             onClick={this.sortByType}
                           />
                         </th>
-                        <th style={{ width: "24%" }}>
+                        {this.props?.config?.reseller?.tenant && (
+                          <th style={{ width: "19%" }}>
+                            <FormattedMessage
+                              id="reseller"
+                              defaultMessage="Reseller"
+                            />
+                            <Glyphicon
+                              glyph="glyphicon glyphicon-sort"
+                              onClick={this.sortByReseller}
+                            />
+                          </th>
+                        )}
+                        <th style={{ width: "19%" }}>
                           <FormattedMessage id="sync" defaultMessage="Sync" />
                           <Glyphicon
                             glyph="glyphicon glyphicon-sort"
@@ -202,11 +219,12 @@ class Tenants extends Component {
                       </tr>
                     </thead>
                     <tbody>
-                      {paginationTenants[page].map(t => (
+                      {paginationTenants[page].map((t) => (
                         <Tenant
                           key={t.tenantId}
                           t={t}
                           onReload={this.fetchRequsts}
+                          showReseller={this.props?.config?.reseller?.tenant}
                           {...this.props}
                         />
                       ))}
@@ -239,7 +257,7 @@ class Tenants extends Component {
     );
   }
 
-  changeCoutOnPage = e => {
+  changeCoutOnPage = (e) => {
     this.setState({ countPerPage: Number(e.target.value), page: 0 }, () =>
       this.pagination()
     );
@@ -281,7 +299,7 @@ class Tenants extends Component {
       paginationTenants: paginationItems,
       pagination: false,
       countPages,
-      page: this.state.page
+      page: this.state.page,
     });
   };
 
@@ -289,12 +307,13 @@ class Tenants extends Component {
     const { searchValue } = this.state;
     const SearchArray = this.props.tenants
       .filter(
-        tennant =>
+        (tennant) =>
           tennant.tenantId.toLowerCase().includes(searchValue.toLowerCase()) ||
           tennant.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-          tennant.type.toLowerCase().includes(searchValue.toLowerCase())
+          tennant.type.toLowerCase().includes(searchValue.toLowerCase()) ||
+          tennant?.resellerId?.toLowerCase().includes(searchValue.toLowerCase())
       )
-      .map(tenant => tenant);
+      .map((tenant) => tenant);
     this.setState({ tenants: SearchArray }, () => {
       const tenansSorted = this.state.tenants.sort((a, b) => {
         if (a.tenantId < b.tenantId) return -1;
@@ -358,15 +377,35 @@ class Tenants extends Component {
     }
   };
 
+  sortByReseller = () => {
+    const { tenants, sortedBy } = this.state;
+    if (sortedBy === "resellerId") {
+      const tenansSorted = tenants.reverse();
+      this.setState({ tenants: tenansSorted }, () => this.pagination());
+    } else {
+      const tenansSorted = tenants.sort((a, b) => {
+        if (!a.resellerId && b.resellerId) return -1;
+        if (a.resellerId && !b.resellerId) return 1;
+
+        if (a.resellerId < b.resellerId) return -1;
+        if (a.resellerId > b.resellerId) return 1;
+        return 0;
+      });
+      this.setState({ tenants: tenansSorted, sortedBy: "resellerId" }, () =>
+        this.pagination()
+      );
+    }
+  };
+
   sortBySync = () => {
     const { tenants, sortedBy } = this.state;
     if (sortedBy === "sync") {
       const tenansSorted = tenants.reverse();
       this.setState({ tenants: tenansSorted }, () => this.pagination());
     } else {
-      const notSyncTenants = tenants.filter(el => !el.sync);
+      const notSyncTenants = tenants.filter((el) => !el.sync);
       const tenantsSorted = tenants
-        .filter(el => el.sync)
+        .filter((el) => el.sync)
         .sort((a, b) => {
           if (a.sync.ldap < b.sync.ldap) return -1;
           if (a.sync.ldap > b.sync.ldap) return 1;
@@ -382,16 +421,15 @@ class Tenants extends Component {
 
 const mapDispatchToProps = {
   fetchGetTenants,
-  refuseCreateTenant
+  refuseCreateTenant,
+  fetchGetSelfcareURL,
 };
 
-const mapStateToProps = state => ({
-  tenants: state.tenants
+const mapStateToProps = (state) => ({
+  tenants: state.tenants,
+  config: state.selfcareUrl,
 });
 
 export default withRouter(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(Tenants)
+  connect(mapStateToProps, mapDispatchToProps)(Tenants)
 );

@@ -20,13 +20,13 @@ import {
   changeTemplateOfTenant,
   changeStepOfCreateTenant,
   refuseCreateTenant,
-  fetchPostCreateTenant
+  fetchPostCreateTenant,
 } from "../../store/actions";
 
 export class Template extends Component {
   state = {
     isLoading: true,
-    creating: ""
+    creating: "",
   };
 
   componentDidMount() {
@@ -119,10 +119,16 @@ export class Template extends Component {
 
   createButtonClick = () => {
     const filteredDataCreateTenant = removeEmpty(this.props.createTenant);
+    if (this.props?.config?.reseller?.tenant) {
+      filteredDataCreateTenant.resellerId =
+        this.props.createTenant.resellerId.value;
+    } else {
+      delete filteredDataCreateTenant.resellerId;
+    }
     this.setState({ creating: "Creating..." }, () => {
       this.props
         .fetchPostCreateTenant(filteredDataCreateTenant)
-        .then(res =>
+        .then((res) =>
           res
             ? this.props.changeStepOfCreateTenant("Created")
             : this.setState({ creating: "" })
@@ -130,14 +136,15 @@ export class Template extends Component {
     });
   };
 
-  selectTemplate = name => {
+  selectTemplate = (name) => {
     this.props.changeTemplateOfTenant(name);
   };
 }
 
-const mapStateToProps = state => ({
+const mapStateToProps = (state) => ({
   templatesOfTenant: state.templatesOfTenant,
-  createTenant: state.createTenant
+  createTenant: state.createTenant,
+  config: state.selfcareUrl,
 });
 
 const mapDispatchToProps = {
@@ -145,12 +152,9 @@ const mapDispatchToProps = {
   changeTemplateOfTenant,
   changeStepOfCreateTenant,
   refuseCreateTenant,
-  fetchPostCreateTenant
+  fetchPostCreateTenant,
 };
 
 export default withRouter(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(Template)
+  connect(mapStateToProps, mapDispatchToProps)(Template)
 );

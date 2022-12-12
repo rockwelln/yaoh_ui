@@ -9,6 +9,7 @@ import Button from "react-bootstrap/lib/Button";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 import { Form } from "react-bootstrap";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
+import Select from "react-select";
 
 import Loading from "../../../../common/Loading";
 
@@ -24,6 +25,7 @@ import {
   fetchPutUpdateTenantRoutingProfile,
   fetchGetTenantVoiceMessaging,
   fetchPutUpdateTenantVoiceMessaging,
+  fetchGetResellers,
 } from "../../../../store/actions";
 
 class Details extends Component {
@@ -31,6 +33,7 @@ class Details extends Component {
     tenant: {},
     tenantName: "",
     defaultDomain: "",
+    resellerId: { value: "", label: "No Reseller" },
     //useTenantLanguages: "",
     useCustomRoutingProfile: "",
     isLoading: true,
@@ -39,6 +42,7 @@ class Details extends Component {
     tenantRoutingProfile: "",
     syncStatus: undefined,
     isLoadingListRoutingProfile: true,
+    isLoadingReselles: false,
 
     voiceMessageDelivery: "",
     voiceMessageNotification: "",
@@ -52,6 +56,7 @@ class Details extends Component {
         isLoadingRoutingProfile: true,
         isLoadingVM: true,
         isLoadingListRoutingProfile: true,
+        isLoadingReselles: true,
       },
       () => {
         this.props
@@ -59,7 +64,13 @@ class Details extends Component {
           .then(() => this.setState({ isLoadingListRoutingProfile: false }));
         this.props.fetchGetTenantById(this.props.tenantId).then(() =>
           this.setState({
-            tenant: { ...this.props.tenant },
+            tenant: {
+              ...this.props.tenant,
+            },
+            resellerId: {
+              value: this.props.tenant.resellerId || "",
+              label: this.props.tenant.resellerId || "No Reseller",
+            },
             addressInformation: this.props.tenant.addressInformation
               ? this.props.tenant.addressInformation
               : {},
@@ -82,6 +93,9 @@ class Details extends Component {
           .then(() => {
             this.setVoiceMessaging();
           });
+        this.props
+          .fetchGetResellers()
+          .then(() => this.setState({ isLoadingReselles: false }));
       }
     );
   };
@@ -109,7 +123,8 @@ class Details extends Component {
     if (
       this.props.isLoading ||
       this.state.isLoadingRoutingProfile ||
-      this.state.isLoadingVM
+      this.state.isLoadingVM ||
+      this.state.isLoadingReselles
     ) {
       return <Loading />;
     }
@@ -203,6 +218,30 @@ class Details extends Component {
                 />
               </Col>
             </FormGroup>
+            {this.props?.config?.reseller?.tenant && (
+              <FormGroup controlId="resellerId">
+                <Col componentClass={ControlLabel} md={3}>
+                  Reseller
+                </Col>
+                <Col md={9}>
+                  <Select
+                    value={this.state.resellerId}
+                    onChange={(selected) => {
+                      this.setState({ resellerId: selected });
+                    }}
+                    options={[
+                      { value: "", label: "No Reseller" },
+                      ...this.props.resellers.map((el) => {
+                        return {
+                          value: el.name,
+                          label: el.name,
+                        };
+                      }),
+                    ]}
+                  />
+                </Col>
+              </FormGroup>
+            )}
             <FormGroup controlId="defaultDomain">
               <Col componentClass={ControlLabel} md={3}>
                 Domain
@@ -583,6 +622,7 @@ class Details extends Component {
       useCustomRoutingProfile,
       addressInformation,
       syncStatus,
+      resellerId,
     } = this.state;
 
     const data = {
@@ -601,11 +641,15 @@ class Details extends Component {
         ? useCustomRoutingProfile
         : this.state.tenant.useCustomRoutingProfile,
       addressInformation,
+      resellerId: resellerId.value,
       sync: {
         status: syncStatus,
       },
     };
     const clearData = removeEmpty(data);
+    if (this.props?.config?.reseller?.tenant) {
+      clearData.resellerId = resellerId.value;
+    }
 
     this.props.fetchPutUpdateTenantDetails(
       this.state.tenant.tenantId,
@@ -661,6 +705,8 @@ const mapStateToProps = (state) => ({
   listOfRoutingProfiles: state.listOfRoutingProfiles,
   tenantRoutingProfile: state.tenantRoutingProfile,
   tenantVoiceMessaging: state.tenantVoiceMessaging,
+  resellers: state.resellers,
+  config: state.selfcareUrl,
 });
 
 const mapDispatchToProps = {
@@ -671,6 +717,7 @@ const mapDispatchToProps = {
   fetchPutUpdateTenantRoutingProfile,
   fetchGetTenantVoiceMessaging,
   fetchPutUpdateTenantVoiceMessaging,
+  fetchGetResellers,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(Details);

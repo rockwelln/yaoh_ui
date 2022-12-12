@@ -10,7 +10,7 @@ import DeleteModal from "./DeleteModal";
 class Group extends Component {
   state = { showDelete: false };
   render() {
-    const { group, onReload } = this.props;
+    const { group, onReload, showReseller } = this.props;
     const { showDelete } = this.state;
     return (
       <tr>
@@ -23,6 +23,7 @@ class Group extends Component {
         </td>
         <td>{group.groupName}</td>
         <td>{group.userLimit}</td>
+        {showReseller && <td>{group.resellerId}</td>}
         {group.sync ? (
           <td className="text-align-center">Sync</td>
         ) : (
@@ -36,7 +37,7 @@ class Group extends Component {
             <DeleteModal
               groupId={group.groupId}
               show={showDelete}
-              onClose={e => {
+              onClose={(e) => {
                 onReload && onReload();
                 this.setState({ showDelete: false });
               }}

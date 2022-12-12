@@ -35,6 +35,7 @@ const initialState = {
     defaultDomain: "",
     useCustomRoutingProfile: false,
     name: "",
+    resellerId: { label: "No Reseller", value: "" },
     contact: {
       name: "",
       phoneNumber: "",
@@ -60,6 +61,7 @@ const initialState = {
   createGroup: {
     groupId: "",
     groupName: "",
+    resellerId: { label: "Not set", value: "" },
     userLimit: "",
     defaultDomain: "",
     cliName: "",
@@ -1329,6 +1331,15 @@ function mainReducer(state = initialState, action) {
         },
       };
     }
+    case actionType.CHANGE_RESELLER_ID_OF_TENANT: {
+      return {
+        ...state,
+        createTenant: {
+          ...state.createTenant,
+          resellerId: action.data,
+        },
+      };
+    }
     case actionType.CHANGE_ADDRESS_OF_TENANT: {
       return {
         ...state,
@@ -1496,6 +1507,15 @@ function mainReducer(state = initialState, action) {
         createGroup: {
           ...state.createGroup,
           groupName: action.data,
+        },
+      };
+    }
+    case actionType.CHANGE_RESELLER_ID_OF_GROUP: {
+      return {
+        ...state,
+        createGroup: {
+          ...state.createGroup,
+          resellerId: action.data,
         },
       };
     }
