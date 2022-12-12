@@ -46,7 +46,7 @@
     "analyze": "source-map-explorer 'build/static/js/*.js'",
     "start": "react-scripts start",
     "start-pra": "sed -i.bkp '/\\/\\/ default/,/\\/\\/ end/d' src/provisioning/index.js; react-scripts start; mv src/provisioning/index.js.bkp src/provisioning/index.js",
-    "build": "sed -i.bkp '/\\/\\/ pra/,/\\/\\/ end/d' src/provisioning/index.js; react-scripts build; mv src/provisioning/index.js.bkp src/provisioning/index.js",
+    "build": "sed -i.bkp '/\\/\\/ pra/,/\\/\\/ end/d' src/provisioning/index.js && react-scripts build && mv src/provisioning/index.js.bkp src/provisioning/index.js",
     "build-pra": "sed -i.bkp '/\\/\\/ default/,/\\/\\/ end/d' src/provisioning/index.js; react-scripts build; mv src/provisioning/index.js.bkp src/provisioning/index.js",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
