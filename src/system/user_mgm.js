@@ -27,7 +27,7 @@ import {fetch_post, fetch_get, fetch_delete, fetch_put, NotificationsManager} fr
 import {ApioDatatable} from "../utils/datatable";
 import { LinkContainer } from 'react-router-bootstrap';
 import {INTERNAL_HELP_LINKS} from "../help/async-apio-help";
-import {StaticControl} from "../utils/common";
+import {Search, StaticControl} from "../utils/common";
 import {CallbackHandler} from "./callbacks";
 import {get_ui_profiles, modules, localUser as localUserMod} from "../utils/user";
 import {TrustedLocationsTable} from "./user_trusted_locs";
