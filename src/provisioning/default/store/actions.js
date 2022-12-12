@@ -345,6 +345,26 @@ export const getAllServicePacksOfTenant = (data) => ({
   data,
 });
 
+export const getCallRecordingPlatforms = (data) => ({
+  type: actionType.GET_CALL_RECORDING_PLATFORMS,
+  data,
+});
+
+export const getUsageOfCallRecordingPlatforms = (data) => ({
+  type: actionType.GET_USAGE_OF_CALL_RECORDING_PLATFORMS,
+  data,
+});
+
+export const getCallRecordingProperties = (data) => ({
+  type: actionType.GET_CALL_RECORDING_PROPERTIES,
+  data,
+});
+
+export const getTenantOnlineCharging = (data) => ({
+  type: actionType.GET_TENANT_ONLINE_CHARGING,
+  data,
+});
+
 export const postCreateGroupAdmin = (data) => ({
   type: actionType.POST_CREATE_GROUP_ADMIN,
   data,
@@ -446,6 +466,10 @@ export const postAddEntitlementToTenant = () => ({
 
 export const postAddServicePacksToTenant = () => ({
   type: actionType.POST_ADD_SERVICE_PACK_TO_TENANT,
+});
+
+export const postAddCallRecordingPlatform = () => ({
+  type: actionType.POST_ADD_CALL_RECORDING_PLATFORM,
 });
 
 export const putUpdateUser = (data) => ({
@@ -567,6 +591,21 @@ export const putUpdateTrunkGroupAccessInfo = (data) => ({
   data,
 });
 
+export const putUpdateCallRecordingPlatform = (data) => ({
+  type: actionType.PUT_UPDATE_CALL_RECORDING_PLATFORMS,
+  data,
+});
+
+export const putUpdateCallRecordingProperties = (data) => ({
+  type: actionType.PUT_UPDATE_CALL_RECORDING_PROPERTIES,
+  data,
+});
+
+export const putUpdateTenantOnlineCharging = (data) => ({
+  type: actionType.PUT_UPDATE_TENANT_ONLINE_CHARGING,
+  data,
+});
+
 export const deleteTenant = (data) => ({
   type: actionType.DELETE_TENANT,
   data,
@@ -647,6 +686,10 @@ export const deleteEntitlementFromTenant = () => ({
 
 export const deleteServicePackFromTenant = () => ({
   type: actionType.DELETE_SERVICE_PACK_FROM_TENANT,
+});
+
+export const deleteCallRecordingPlatform = () => ({
+  type: actionType.DELETE_CALL_RECORDING_PLATFORM,
 });
 
 export const clearErrorMassage = () => ({
@@ -1670,6 +1713,7 @@ export function fetchGetTrunkGroupTemplate(trunkGroupName) {
 }
 
 export function fetchGetSelfcareURL() {
+  //GET config
   const prefixArray = ProvProxiesManager.getCurrentUrlPrefix().split("/");
   const proxy = prefixArray[prefixArray.length - 1];
   return function (dispatch) {
@@ -2048,6 +2092,88 @@ export function fetchGetAllServicePacksOfTenant() {
           <FormattedMessage
             id="fetch-service-packs-failed"
             defaultMessage="Failed to fetch service packs"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchGetCallRecordingPlatforms() {
+  return function (dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/system/services/call_recording/platforms/`
+    )
+      .then((data) => dispatch(getCallRecordingPlatforms(data)))
+      .catch((error) => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-bwks-licenses-failed"
+            defaultMessage="Failed to fetch call recording platforms!"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchGetUsageOfCallRecordingPlatforms(name) {
+  return function (dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/system/services/call_recording/platforms/${name}/usage/`
+    )
+      .then((data) => dispatch(getUsageOfCallRecordingPlatforms(data)))
+      .catch((error) => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-bwks-licenses-failed"
+            defaultMessage="Failed to fetch usage of call recording platforms!"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchGetCallRecordingProperties() {
+  return function (dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/system/services/call_recording/properties/`
+    )
+      .then((data) => dispatch(getCallRecordingProperties(data)))
+      .catch((error) => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-bwks-licenses-failed"
+            defaultMessage="Failed to fetch call recording properties!"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchGetTenantOnlineCharging(tenantId) {
+  return function (dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/properties/online_charging/`
+    )
+      .then((data) => dispatch(getTenantOnlineCharging(data)))
+      .catch((error) => {
+        if (error.response.status === 404) {
+          dispatch(
+            getTenantOnlineCharging({
+              doPost: true,
+              enabled: false,
+              spendingLimit: "",
+            })
+          );
+          return;
+        }
+        NotificationsManager.error(
+          <FormattedMessage
+            id="fetch-bwks-licenses-failed"
+            defaultMessage="Failed to fetch online charging!"
           />,
           error.message
         );
@@ -2538,6 +2664,36 @@ export function fetchPostAddServicePacksToTenant(tenantId, data) {
           <FormattedMessage
             id="failed-to-add-service-packs"
             defaultMessage="Failed to add service packs!"
+          />,
+          error.message
+        );
+      });
+  };
+}
+
+export function fetchPostAddCallRecordingPlatform(data) {
+  return function (dispatch) {
+    return fetch_post(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/system/services/call_recording/platforms/`,
+      data
+    )
+      .then((res) => res.json())
+      .then(() => {
+        dispatch(postAddCallRecordingPlatform());
+        NotificationsManager.success(
+          <FormattedMessage
+            id="Service-packs-successfully-added"
+            defaultMessage="Call recording platform successfully added"
+          />,
+          "Created"
+        );
+        return "success";
+      })
+      .catch((error) => {
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-add-service-packs"
+            defaultMessage="Failed to add call recording platform!"
           />,
           error.message
         );
@@ -3244,6 +3400,93 @@ export function fetchPutUpdateTrunkGroupAccessInfo(
   };
 }
 
+export function fetchPutUpdateCallRecordingPlatform({ name, data }) {
+  return function (dispatch) {
+    return fetch_put(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/system/services/call_recording/platforms/${name}/`,
+      data
+    )
+      .then((res) => res.json())
+      .then(() => {
+        dispatch(putUpdateCallRecordingPlatform());
+        NotificationsManager.success(
+          <FormattedMessage
+            id="Entitlement-successfully-updated"
+            defaultMessage="Call recording platform successfully updated"
+          />,
+          "Updated"
+        );
+      })
+      .catch((error) =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="entitlement-update-failed"
+            defaultMessage="Failed to update call recording platform!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchPutUpdateCallRecordingProperties({ data }) {
+  return function (dispatch) {
+    return fetch_put(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/system/services/call_recording/properties/`,
+      data
+    )
+      .then((res) => res.json())
+      .then(() => {
+        dispatch(putUpdateCallRecordingProperties());
+        NotificationsManager.success(
+          <FormattedMessage
+            id="Entitlement-successfully-updated"
+            defaultMessage="Call recording properties successfully updated"
+          />,
+          "Updated"
+        );
+      })
+      .catch((error) =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="entitlement-update-failed"
+            defaultMessage="Failed to update call recording properties!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchPutUpdateTenantOnlineCharging({ tenantId, data }) {
+  return function (dispatch) {
+    return fetch_put(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/properties/online_charging/`,
+      data
+    )
+      .then((res) => res.json())
+      .then(() => {
+        dispatch(putUpdateTenantOnlineCharging());
+        NotificationsManager.success(
+          <FormattedMessage
+            id="Entitlement-successfully-updated"
+            defaultMessage="Online charging successfully updated"
+          />,
+          "Updated"
+        );
+      })
+      .catch((error) =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="entitlement-update-failed"
+            defaultMessage="Failed to update online charging!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
 export function fetchDeleteTenant(ID) {
   return function (dispatch) {
     return fetch_delete(
@@ -3657,6 +3900,27 @@ export function fetchDeleteServicePacksFromTenant(tenantId, data) {
           <FormattedMessage
             id="failed-to-delete-service-pack"
             defaultMessage="Failed to delete service-pack!"
+          />,
+          error.message
+        )
+      );
+  };
+}
+
+export function fetchDeleteCallRecordingPlatfrom(name) {
+  return function (dispatch) {
+    return fetch_delete(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/system/services/call_recording/platforms/${name}/`
+    )
+      .then((res) => res.json())
+      .then(() => {
+        dispatch(deleteCallRecordingPlatform());
+      })
+      .catch((error) =>
+        NotificationsManager.error(
+          <FormattedMessage
+            id="failed-to-delete-service-pack"
+            defaultMessage="Failed to delete call recording platform!"
           />,
           error.message
         )

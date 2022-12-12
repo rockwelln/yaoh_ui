@@ -2628,9 +2628,13 @@ function SSOPanel({sso, gateways, onChange, enabledMods}) {
 }
 
 function ThresholdFormGroup({alarms, alarm, label, level, onChange}) {
-  const thresholds = alarms.alarms[alarm].thresholds;
+  let thresholds;
+  const al = alarms?.alarms;
+  if(al !== undefined && al.hasOwnProperty(alarm)) {
+    thresholds = al[alarm]?.thresholds;
+  }
   const value = thresholds?.find(t => t.level === level)?.threshold;
-  const p = thresholds.findIndex(t => t.level === level);
+  const p = thresholds?.findIndex(t => t.level === level);
 
   return (
     <FormGroup>

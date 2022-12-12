@@ -1573,7 +1573,7 @@ export function ActivityEditor(props) {
                             <td>{i+1}</td>
                             <td>{v.label || WORKING_VERSION_LABEL}</td>
                             <td>{v.message ? v.message.split("\n").map(m => <>{m}<br/></>) : "-"}</td>
-                            <td>{v.username || "-"}</td>
+                            <td>{v.username ? `${v.username} (${v.email})` : "-"}</td>
                             <td>{userLocalizeUtcDate(moment.utc(v.updated_on), props.user_info).format()}</td>
                           </tr>
                         ))
@@ -1581,15 +1581,6 @@ export function ActivityEditor(props) {
                       </tbody>
                     </Table>
                 </Col>
-              {
-                /*<Col>
-                  <SimulatorPanel activity={() => {
-                    let a = editor.getDefinition(ReactDOM.findDOMNode(titleRef.current).value).activity;
-                    Object.keys(a.definition.cells).map(c => delete a.definition.cells[c].name);
-                    return a;
-                  }} />
-                </Col>*/
-              }
             </Row>
 
             <CommitVersionModal
