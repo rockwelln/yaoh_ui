@@ -9,7 +9,6 @@ import FormControl from "react-bootstrap/lib/FormControl";
 import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import FormGroup from "react-bootstrap/lib/FormGroup";
 import { Form } from "react-bootstrap";
-import HelpBlock from "react-bootstrap/lib/HelpBlock";
 import Select from "react-select";
 
 import { FormattedMessage } from "react-intl";
@@ -50,7 +49,10 @@ const AddResellerModal = ({
   const [isSaving, setIsSaving] = useState(false);
   const [stateAdmin, setStateAdmin] = useState({
     ...admin,
-    tenantId: { label: admin.tenantId, value: admin.tenantId },
+    tenantId:
+      typeof admin.tenantId === "string"
+        ? { label: admin.tenantId, value: admin.tenantId }
+        : admin.tenantId,
   });
 
   const saveAdmin = () => {
