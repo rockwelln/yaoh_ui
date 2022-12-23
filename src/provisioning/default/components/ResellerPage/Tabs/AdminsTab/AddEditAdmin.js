@@ -157,7 +157,7 @@ const AddResellerModal = ({
                     md={3}
                     className={"text-left"}
                   >
-                    First name
+                    First name*
                   </Col>
                   <Col md={8}>
                     <FormControl
@@ -174,7 +174,7 @@ const AddResellerModal = ({
                     md={3}
                     className={"text-left"}
                   >
-                    Last name
+                    Last name*
                   </Col>
                   <Col md={8}>
                     <FormControl
