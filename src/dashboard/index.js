@@ -23,6 +23,8 @@ import queryString from 'query-string';
 import update from "immutability-helper";
 import TopSlowApis from "./topSlowApis";
 import ResponseTimeOvertime from "./responseTimeOverTime";
+import NPLicenseBox from "./license";
+
 const REFRESH_CYCLE = 10;
 
 
@@ -44,6 +46,7 @@ export default function Dashboard(props) {
     const [gateways, setGateways] = useState({});
     const isManual = localUser.isModuleEnabled(modules.manualActions);
     const isNpact = localUser.isModuleEnabled(modules.npact); // supportedModule(modules.npact, props.user_info.modules);
+    const isNpactItc = localUser.isModuleEnabled(modules.npact_citc);
 
     const fetch_gw = useCallback(() => fetch_gateways(setGateways), []);
     const fetch_s = useCallback(() => fetch_stats(isNpact, setStats), [isNpact]);
@@ -76,6 +79,9 @@ export default function Dashboard(props) {
     if(isManual) {
         if(isNpact) {
           statsPanels.push(<NPManualActionsBox/>);
+          if(isNpactItc) {
+            statsPanels.push(<NPLicenseBox/>);
+          }
         } else {
           statsPanels.push(<ManualActionsBox/>);
         }
