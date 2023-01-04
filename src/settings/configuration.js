@@ -1695,6 +1695,33 @@ function OidcParameters({params, onChange}) {
             onChange={e => onChange(update(params, {$merge: {token_issuer: e.target.value}}))}/>
         </Col>
       </FormGroup>
+      <FormGroup>
+        <Col componentClass={ControlLabel} sm={2}>
+          <FormattedMessage id="provider" defaultMessage="Provider"/>
+        </Col>
+
+        <Col sm={9}>
+          <Select
+            isClearable
+            value={{label: params.provider, value: params.provider}}
+            options={["oidc", "oam"].map(o => ({value: o, label: o}))}
+            onChange={v => onChange(update(params, {$merge: {provider: v?.value}}))} />
+        </Col>
+      </FormGroup>
+      { params.provider === "oam" &&
+        <FormGroup>
+          <Col componentClass={ControlLabel} sm={2}>
+            <FormattedMessage id="domain" defaultMessage="Domain"/>
+          </Col>
+
+          <Col sm={9}>
+            <FormControl
+              componentClass="input"
+              value={params.domain}
+              onChange={e => onChange(update(params, {$merge: {domain: e.target.value}}))}/>
+          </Col>
+        </FormGroup>
+      }
     </>
   )
 }
