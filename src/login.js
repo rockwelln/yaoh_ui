@@ -9,7 +9,7 @@ import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 import Button from "react-bootstrap/lib/Button";
 import Form from "react-bootstrap/lib/Form";
 import {LinkContainer} from "react-router-bootstrap";
-import {API_URL_PREFIX, fetch_get, parseJSON} from "./utils";
+import {API_URL_PREFIX, AuthServiceManager, fetch_get, parseJSON} from "./utils";
 import Row from "react-bootstrap/lib/Row";
 import Panel from "react-bootstrap/lib/Panel";
 import Modal from "react-bootstrap/lib/Modal";
@@ -213,6 +213,7 @@ export function LoginForm({onLogin}) {
                           key={provider.name}
                           onClick={() => {
                             setError(undefined);
+                            AuthServiceManager.logout();
                             // 1. fetch the login request signed (loc => window.location.href, to return to the same page)
                             fetch_get(`/api/v01/auth/${provider.protocol}/loginRequest?name=${provider.name}&state=${window.location.href}`)
                               .then(r => {
