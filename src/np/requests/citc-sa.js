@@ -248,7 +248,7 @@ function validateContactID(personIDType, value) {
   if (personIDType === "GccId") {
     if (value.length < 8 || value.length > 12) return "error";
   } else if (personIDType === "AltGovID") {
-    if (value.length < 2 || value.length > 15) return "error";
+    if (value.length < 2) return "error";
   } else {
     if (value.length !== 10) return "error"
   }
