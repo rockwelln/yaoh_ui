@@ -20,7 +20,7 @@ import moment from "moment";
 import {Pagination} from "../utils/datatable";
 
 
-export function fetchAlarms(criteria, paging, sorting, onDone, onSuccess, silentError) {
+export function fetchAlarms(criteria, paging, sorting, onDone, onSuccess, onError) {
   const url = new URL(API_URL_PREFIX + "/api/v01/alarms");
   if(criteria) {
     url.searchParams.append("filter", JSON.stringify(criteria));
@@ -38,7 +38,7 @@ export function fetchAlarms(criteria, paging, sorting, onDone, onSuccess, silent
     })
     .catch(error => {
       onDone && onDone();
-      !silentError && NotificationsManager.error("Failed to fetch alarms", error.message);
+      onError && onError(error);
     })
 }
 
@@ -131,6 +131,7 @@ export default function AlarmManagement({history, location}) {
       {field: "last_occurrence", direction: "desc"},
       () => setLoading(false),
       setAlarms,
+      error => NotificationsManager.error("Failed to fetch alarms", error.message),
     );
   }, [])
 
@@ -351,6 +352,7 @@ export default function AlarmManagement({history, location}) {
                 <th>Type</th>
                 <th>Message</th>
                 <th>Status</th>
+                <th>Value</th>
                 <th>Level</th>
                 <th>Fist occurrence</th>
                 <th>Last occurrence</th>
@@ -371,6 +373,7 @@ export default function AlarmManagement({history, location}) {
                     <td>{a.key}</td>
                     <td>{a.message}</td>
                     <td>{a.active?"active":"inactive"}</td>
+                    <td>{a.value}</td>
                     <td><span className={`label alarm alarm-${a.level}`}>{a.level}</span></td>
                     <td>{a.first_occurrence && localUser.localizeUtcDate(moment.utc(a.first_occurrence)).format()}</td>
                     <td>{a.last_occurrence && localUser.localizeUtcDate(moment.utc(a.last_occurrence)).format()}</td>
