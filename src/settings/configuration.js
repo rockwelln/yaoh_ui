@@ -2756,12 +2756,11 @@ function AlarmsPanel({alarms, onChange}) {
 
       <Panel>
         <Panel.Heading>
-          <Panel.Title toggle>Northbound success rate</Panel.Title>
+          <Panel.Title toggle>Northbound errors</Panel.Title>
         </Panel.Heading>
         <Panel.Body>
           <HelpBlock>
-            Success rate is a percentage of requests answered by northbound HTTP status different of 5xx.<br/>
-            Note: Slots with no activity are skipped (they are not considered to clear the alarm)
+            Northbound HTTP status greater or equal to 500.
           </HelpBlock>
 
           <Form horizontal>
@@ -2781,21 +2780,21 @@ function AlarmsPanel({alarms, onChange}) {
             <ThresholdFormGroup
               alarms={alarms}
               alarm="http_success_rate"
-              label={<FormattedMessage id="info-threshold" defaultMessage="Informative threshold (%)"/>}
+              label={<FormattedMessage id="info-threshold" defaultMessage="Informative threshold"/>}
               level={"info"}
               onChange={onChange} />
 
             <ThresholdFormGroup
               alarms={alarms}
               alarm="http_success_rate"
-              label={<FormattedMessage id="major-threshold" defaultMessage="Major threshold (%)"/>}
+              label={<FormattedMessage id="major-threshold" defaultMessage="Major threshold"/>}
               level={"major"}
               onChange={onChange} />
 
             <ThresholdFormGroup
               alarms={alarms}
               alarm="http_success_rate"
-              label={<FormattedMessage id="critical-threshold" defaultMessage="Critical threshold (%)"/>}
+              label={<FormattedMessage id="critical-threshold" defaultMessage="Critical threshold"/>}
               level={"critical"}
               onChange={onChange} />
           </Form>
@@ -2804,12 +2803,11 @@ function AlarmsPanel({alarms, onChange}) {
 
       <Panel>
         <Panel.Heading>
-          <Panel.Title toggle>Southbound success rate</Panel.Title>
+          <Panel.Title toggle>Southbound http errors</Panel.Title>
         </Panel.Heading>
         <Panel.Body>
           <HelpBlock>
-            Success rate is a percentage of requests answered by southbound APIs (read session holders) with HTTP status different of 5xx.<br/>
-            Note: Slots with no activity are skipped (they are not considered to clear the alarm)
+            Southbound HTTP status greater or equal to 500.
           </HelpBlock>
 
           <Form horizontal>
@@ -2829,21 +2827,21 @@ function AlarmsPanel({alarms, onChange}) {
             <ThresholdFormGroup
               alarms={alarms}
               alarm="http_south_success_rate"
-              label={<FormattedMessage id="info-thresholds" defaultMessage="Informative threshold (%)"/>}
+              label={<FormattedMessage id="info-thresholds" defaultMessage="Informative threshold"/>}
               level={"info"}
               onChange={onChange} />
 
             <ThresholdFormGroup
               alarms={alarms}
               alarm="http_south_success_rate"
-              label={<FormattedMessage id="major-thresholds" defaultMessage="Major threshold (%)"/>}
+              label={<FormattedMessage id="major-thresholds" defaultMessage="Major threshold"/>}
               level={"major"}
               onChange={onChange} />
 
             <ThresholdFormGroup
               alarms={alarms}
               alarm="http_south_success_rate"
-              label={<FormattedMessage id="critical-thresholds" defaultMessage="Critical threshold (%)"/>}
+              label={<FormattedMessage id="critical-thresholds" defaultMessage="Critical threshold"/>}
               level={"critical"}
               onChange={onChange} />
           </Form>
@@ -2855,7 +2853,7 @@ function AlarmsPanel({alarms, onChange}) {
           <Panel.Title toggle>Network issues</Panel.Title>
         </Panel.Heading>
         <Panel.Body>
-          <HelpBlock>Number of network issues (timeout, connection, etc...) per session holders per 20 secs</HelpBlock>
+          <HelpBlock>Number of network issues (timeout, connection, etc...) per gateway</HelpBlock>
           <Form horizontal>
             <FormGroup>
               <Col componentClass={ControlLabel} sm={2}>
