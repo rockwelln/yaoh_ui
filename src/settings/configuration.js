@@ -1858,7 +1858,8 @@ function SamlParametersV2({params, onChange}) {
           </Table>
 
           <HelpBlock>
-            Endpoints hosts visible from the users with the structure https://&lt;visible-host&gt;/
+            Endpoints hosts visible from the users with the structure https://&lt;visible-host&gt;.<br/>
+            The first valid redirect is used to redirect the user at the end of the authentication process when the RelayState is missing.
           </HelpBlock>
         </Col>
       </FormGroup>
