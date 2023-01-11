@@ -83,12 +83,7 @@ class AuthService {
                 'Accept': 'application/json',
                 'Authorization': `Bearer ${localStorage.getItem("refreshToken")}`
             }
-        }).then(checkStatus)
-            .then(parseJSON)
-            .then(r => {
-                this.loadJwtTokens(r.access_token);
-                return r.access_token;
-            })
+        })
     }
 
     getValidToken() {
@@ -107,7 +102,12 @@ class AuthService {
               }
           }
           if(!payload || payload["exp"] < Math.floor((Date.now() / 1000) + SAFE_GUARD_DELAY)) {
-              return this.fetchNewAccessToken()
+              return this.fetchNewAccessToken().then(checkStatus)
+                  .then(parseJSON)
+                  .then(r => {
+                      this.loadJwtTokens(r.access_token, r.refresh_token);
+                      return r.access_token;
+                  })
           }
         }
         if(token === null) {
@@ -265,9 +265,15 @@ export function checkStatus(response) {
     if (response.status >= 200 && response.status < 300) {
         return response
     } else if (response.status === 401) {
-        console.log("the request was *not* authorized!");
-        AuthServiceManager.logout();
-        window.location.reload();
+        console.log("the request was *not* authorized! -> ");
+        return AuthServiceManager.fetchNewAccessToken().then(r => {
+            if (r.status >= 400) {
+                AuthServiceManager.logout();
+                window.location.reload();
+            }
+
+            throw new ApiError("please try again...");
+        })
     }
 
     const contentType = response.headers.get("content-type");
