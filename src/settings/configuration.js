@@ -1695,6 +1695,33 @@ function OidcParameters({params, onChange}) {
             onChange={e => onChange(update(params, {$merge: {token_issuer: e.target.value}}))}/>
         </Col>
       </FormGroup>
+      <FormGroup>
+        <Col componentClass={ControlLabel} sm={2}>
+          <FormattedMessage id="provider" defaultMessage="Provider"/>
+        </Col>
+
+        <Col sm={9}>
+          <Select
+            isClearable
+            value={{label: params.provider, value: params.provider}}
+            options={["oidc", "oam"].map(o => ({value: o, label: o}))}
+            onChange={v => onChange(update(params, {$merge: {provider: v?.value}}))} />
+        </Col>
+      </FormGroup>
+      { params.provider === "oam" &&
+        <FormGroup>
+          <Col componentClass={ControlLabel} sm={2}>
+            <FormattedMessage id="domain" defaultMessage="Domain"/>
+          </Col>
+
+          <Col sm={9}>
+            <FormControl
+              componentClass="input"
+              value={params.domain}
+              onChange={e => onChange(update(params, {$merge: {domain: e.target.value}}))}/>
+          </Col>
+        </FormGroup>
+      }
     </>
   )
 }
@@ -1831,7 +1858,8 @@ function SamlParametersV2({params, onChange}) {
           </Table>
 
           <HelpBlock>
-            Endpoints hosts visible from the users with the structure https://&lt;visible-host&gt;/
+            Endpoints hosts visible from the users with the structure https://&lt;visible-host&gt;.<br/>
+            The first valid redirect is used to redirect the user at the end of the authentication process when the RelayState is missing.
           </HelpBlock>
         </Col>
       </FormGroup>
@@ -2628,9 +2656,13 @@ function SSOPanel({sso, gateways, onChange, enabledMods}) {
 }
 
 function ThresholdFormGroup({alarms, alarm, label, level, onChange}) {
-  const thresholds = alarms.alarms[alarm].thresholds;
+  let thresholds;
+  const al = alarms?.alarms;
+  if(al !== undefined && al.hasOwnProperty(alarm)) {
+    thresholds = al[alarm]?.thresholds;
+  }
   const value = thresholds?.find(t => t.level === level)?.threshold;
-  const p = thresholds.findIndex(t => t.level === level);
+  const p = thresholds?.findIndex(t => t.level === level);
 
   return (
     <FormGroup>
@@ -2725,12 +2757,11 @@ function AlarmsPanel({alarms, onChange}) {
 
       <Panel>
         <Panel.Heading>
-          <Panel.Title toggle>Northbound success rate</Panel.Title>
+          <Panel.Title toggle>Northbound errors</Panel.Title>
         </Panel.Heading>
         <Panel.Body>
           <HelpBlock>
-            Success rate is a percentage of requests answered by northbound HTTP status different of 5xx.<br/>
-            Note: Slots with no activity are skipped (they are not considered to clear the alarm)
+            Northbound HTTP status greater or equal to 500.
           </HelpBlock>
 
           <Form horizontal>
@@ -2750,21 +2781,21 @@ function AlarmsPanel({alarms, onChange}) {
             <ThresholdFormGroup
               alarms={alarms}
               alarm="http_success_rate"
-              label={<FormattedMessage id="info-threshold" defaultMessage="Informative threshold (%)"/>}
+              label={<FormattedMessage id="info-threshold" defaultMessage="Informative threshold"/>}
               level={"info"}
               onChange={onChange} />
 
             <ThresholdFormGroup
               alarms={alarms}
               alarm="http_success_rate"
-              label={<FormattedMessage id="major-threshold" defaultMessage="Major threshold (%)"/>}
+              label={<FormattedMessage id="major-threshold" defaultMessage="Major threshold"/>}
               level={"major"}
               onChange={onChange} />
 
             <ThresholdFormGroup
               alarms={alarms}
               alarm="http_success_rate"
-              label={<FormattedMessage id="critical-threshold" defaultMessage="Critical threshold (%)"/>}
+              label={<FormattedMessage id="critical-threshold" defaultMessage="Critical threshold"/>}
               level={"critical"}
               onChange={onChange} />
           </Form>
@@ -2773,12 +2804,11 @@ function AlarmsPanel({alarms, onChange}) {
 
       <Panel>
         <Panel.Heading>
-          <Panel.Title toggle>Southbound success rate</Panel.Title>
+          <Panel.Title toggle>Southbound http errors</Panel.Title>
         </Panel.Heading>
         <Panel.Body>
           <HelpBlock>
-            Success rate is a percentage of requests answered by southbound APIs (read session holders) with HTTP status different of 5xx.<br/>
-            Note: Slots with no activity are skipped (they are not considered to clear the alarm)
+            Southbound HTTP status greater or equal to 500.
           </HelpBlock>
 
           <Form horizontal>
@@ -2798,21 +2828,21 @@ function AlarmsPanel({alarms, onChange}) {
             <ThresholdFormGroup
               alarms={alarms}
               alarm="http_south_success_rate"
-              label={<FormattedMessage id="info-thresholds" defaultMessage="Informative threshold (%)"/>}
+              label={<FormattedMessage id="info-thresholds" defaultMessage="Informative threshold"/>}
               level={"info"}
               onChange={onChange} />
 
             <ThresholdFormGroup
               alarms={alarms}
               alarm="http_south_success_rate"
-              label={<FormattedMessage id="major-thresholds" defaultMessage="Major threshold (%)"/>}
+              label={<FormattedMessage id="major-thresholds" defaultMessage="Major threshold"/>}
               level={"major"}
               onChange={onChange} />
 
             <ThresholdFormGroup
               alarms={alarms}
               alarm="http_south_success_rate"
-              label={<FormattedMessage id="critical-thresholds" defaultMessage="Critical threshold (%)"/>}
+              label={<FormattedMessage id="critical-thresholds" defaultMessage="Critical threshold"/>}
               level={"critical"}
               onChange={onChange} />
           </Form>
@@ -2824,7 +2854,7 @@ function AlarmsPanel({alarms, onChange}) {
           <Panel.Title toggle>Network issues</Panel.Title>
         </Panel.Heading>
         <Panel.Body>
-          <HelpBlock>Number of network issues (timeout, connection, etc...) per session holders per 20 secs</HelpBlock>
+          <HelpBlock>Number of network issues (timeout, connection, etc...) per gateway</HelpBlock>
           <Form horizontal>
             <FormGroup>
               <Col componentClass={ControlLabel} sm={2}>

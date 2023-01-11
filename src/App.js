@@ -182,11 +182,11 @@ function AsyncApioNavBar({user_info, logoutUser, database_status}){
   const [alarms, setAlarms] = useState([]);
 
   useEffect(() => {
-    fetchAlarms({field: "active", op: "eq", value: true}, null, null, null, a => setAlarms(a.alarms), true);
+    fetchAlarms({field: "active", op: "eq", value: true}, null, null, null, a => setAlarms(a.alarms), () => setAlarms([...alarms]));
   }, []);
 
   useEffect(() => {
-    const handler = setTimeout(() => fetchAlarms({field: "active", op: "eq", value: true}, null, null, null, a => setAlarms(a.alarms), true), 5000);
+    const handler = setTimeout(() => fetchAlarms({field: "active", op: "eq", value: true}, null, null, null, a => setAlarms(a.alarms), () => setAlarms([...alarms])), 5000);
     return () => clearTimeout(handler)
   }, [alarms]);
 

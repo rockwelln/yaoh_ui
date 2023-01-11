@@ -76,6 +76,7 @@ export const accesses = Object.freeze({
 export const modules = Object.freeze({
     orange: 'orange',
     proxy: 'proxy',
+    draas: 'draas',
     provisioning: 'provisioning',
     bulk: 'bulk',
     orchestration: 'orchestration',

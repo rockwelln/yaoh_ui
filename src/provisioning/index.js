@@ -40,6 +40,8 @@ import BWKSLicenses from "./default/components/BWKSLicenses";
 import CreateTemplatePage from "./default/components/CreateTemplate";
 import ResellersPage from "./default/components/Resellers";
 import ResellerPage from "./default/components/ResellerPage";
+import SystemPage from "./default/components/System";
+import CreatePlaform from "./default/components/CreatePlatform";
 // end
 
 // pra
@@ -118,10 +120,32 @@ function provisioningDefaultRoutes(ui_profile) {
           exact
         />
         <Route
+          path="/provisioning/:gwName/system"
+          component={(props) =>
+            isAllowed(ui_profile, pages.data_tenants) ? (
+              <SystemPage />
+            ) : (
+              <NotAllowed />
+            )
+          }
+          exact
+        />
+        <Route
           path="/provisioning/:gwName/localusers/user/:localUserName"
           component={(props) =>
             isAllowed(ui_profile, pages.data_tenants) ? (
               <UpdateLocalUser />
+            ) : (
+              <NotAllowed />
+            )
+          }
+          exact
+        />
+        <Route
+          path="/provisioning/:gwName/system/addPlatform"
+          component={(props) =>
+            isAllowed(ui_profile, pages.data_tenants) ? (
+              <CreatePlaform />
             ) : (
               <NotAllowed />
             )
@@ -140,10 +164,32 @@ function provisioningDefaultRoutes(ui_profile) {
           exact
         />
         <Route
+          path="/provisioning/:gwName/localusers"
+          component={(props) =>
+            isAllowed(ui_profile, pages.data_tenants) ? (
+              <LocalUsers />
+            ) : (
+              <NotAllowed />
+            )
+          }
+          exact
+        />
+        <Route
           path="/provisioning/:gwName/configs"
           component={(props) =>
             isAllowed(ui_profile, pages.data_tenants) ? (
               <ConfigPage />
+            ) : (
+              <NotAllowed />
+            )
+          }
+          exact
+        />
+        <Route
+          path="/provisioning/:gwName/localusers/user/:localUserName"
+          component={(props) =>
+            isAllowed(ui_profile, pages.data_tenants) ? (
+              <UpdateLocalUser />
             ) : (
               <NotAllowed />
             )
@@ -162,10 +208,32 @@ function provisioningDefaultRoutes(ui_profile) {
           exact
         />
         <Route
+          path="/provisioning/:gwName/localusers/adduser"
+          component={(props) =>
+            isAllowed(ui_profile, pages.data_tenants) ? (
+              <AddLocalUsers />
+            ) : (
+              <NotAllowed />
+            )
+          }
+          exact
+        />
+        <Route
           path="/provisioning/:gwName/resellers/:resellerName"
           component={(props) =>
             isAllowed(ui_profile, pages.data_tenants) ? (
               <ResellerPage />
+            ) : (
+              <NotAllowed />
+            )
+          }
+          exact
+        />
+        <Route
+          path="/provisioning/:gwName/configs"
+          component={(props) =>
+            isAllowed(ui_profile, pages.data_tenants) ? (
+              <ConfigPage />
             ) : (
               <NotAllowed />
             )

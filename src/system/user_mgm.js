@@ -29,8 +29,9 @@ import { LinkContainer } from 'react-router-bootstrap';
 import {INTERNAL_HELP_LINKS} from "../help/async-apio-help";
 import {Search, StaticControl} from "../utils/common";
 import {CallbackHandler} from "./callbacks";
-import {get_ui_profiles} from "../utils/user";
+import {get_ui_profiles, modules, localUser as localUserMod} from "../utils/user";
 import {TrustedLocationsTable} from "./user_trusted_locs";
+import Select from "react-select";
 
 
 // helper functions
@@ -238,6 +239,31 @@ export function LocalUserProfile({onUserInfoChanged}) {
                                 </FormControl>
                             </Col>
                         </FormGroup>
+                        { localUserMod.isModuleEnabled(modules.draas) && <FormGroup>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="administrator-of" defaultMessage="Administrator of" />
+                                </Col>
+
+                                <Col sm={2}>
+                                    <Table>
+                                        <thead>
+                                            <tr>
+                                                <th>Level</th>
+                                                <th>Reference</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        {
+                                          user_info.admin_of && user_info.admin_of.map(a => <tr>
+                                            <td>{a.level}</td>
+                                            <td>{a.reference}</td>
+                                          </tr>)
+                                        }
+                                        </tbody>
+                                    </Table>
+                                </Col>
+                            </FormGroup>
+                        }
                         <FormGroup>
                             <Col componentClass={ControlLabel} sm={2}>
                                 <FormattedMessage id="roles" defaultMessage="Roles" />
@@ -405,6 +431,8 @@ function UpdateUser(props) {
     const [profiles, setProfiles] = useState([]);
     const [roles, setRoles] = useState([]);
     const [newProp, setNewProp] = useState({key: "", value: ""});
+    // specific to DRAAS
+    const [newAdmin, setNewAdmin] = useState({level: "", reference: ""});
 
     const loadFullUser = userId => fetch_get(`/api/v01/system/users/${userId}`)
         .then(user => setFullUser(user))
@@ -618,6 +646,70 @@ function UpdateUser(props) {
                                 </FormControl>
                             </Col>
                         </FormGroup>
+                      { localUserMod.isModuleEnabled(modules.draas) &&
+                          <FormGroup>
+                              <Col componentClass={ControlLabel} sm={2}>
+                                  <FormattedMessage id="administrator-of" defaultMessage="Administrator of" />
+                              </Col>
+
+                              <Col sm={9}>
+                                  <Table>
+                                      <thead>
+                                          <tr>
+                                              <th>Level</th>
+                                              <th>Reference</th>
+                                              <th/>
+                                          </tr>
+                                      </thead>
+                                      <tbody>
+                                        {
+                                          localUser.admin_of && localUser.admin_of.map((a, i) =>
+                                            <tr>
+                                              <td>{a.level}</td>
+                                              <td>{a.reference}</td>
+                                              <td>
+                                                <Button onClick={() => {
+                                                  let n = {...diffUser};
+                                                  if(diffUser.admin_of === undefined) {
+                                                      n = update(diffUser, {admin_of: {$set: localUser.admin_of}})
+                                                  }
+                                                  setDiffUser(update(n, {admin_of: {$splice: [[i, 1]]}}))
+                                                }}>-</Button>
+                                              </td>
+                                            </tr>
+                                          )
+                                        }
+                                        <tr>
+                                            <td>
+                                                <Select
+                                                  value={{value: newAdmin.level, label: newAdmin.level}}
+                                                  options={["system", "group", "distributor", "reseller", "tenant"].map(r => ({value: r, label: r}))}
+                                                  onChange={v => setNewAdmin(update(newAdmin, {$merge: {level: v.value}}))}
+                                                  />
+                                            </td>
+                                            <td>
+                                                <FormControl
+                                                  componentClass="input"
+                                                  value={newAdmin.reference}
+                                                  onChange={e => setNewAdmin(update(newAdmin, {$merge: {reference: e.target.value}}))}/>
+                                            </td>
+                                            <td>
+                                                <Button onClick={() => {
+                                                    let n = {...diffUser};
+                                                    if(diffUser.admin_of === undefined) {
+                                                        n = update(diffUser, {admin_of: {$set: localUser.admin_of}})
+                                                    }
+                                                    setDiffUser(update(n, {admin_of: {$push: [newAdmin]}}))
+
+                                                    setNewAdmin({level: "", reference: ""})
+                                                }}>+</Button>
+                                            </td>
+                                        </tr>
+                                      </tbody>
+                                  </Table>
+                              </Col>
+                          </FormGroup>
+                        }
                         <FormGroup>
                             <Col componentClass={ControlLabel} sm={2}>
                                 <FormattedMessage id="properties" defaultMessage="Properties" />

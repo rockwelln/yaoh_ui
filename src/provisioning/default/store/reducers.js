@@ -124,7 +124,7 @@ const initialState = {
   trunkGroupsTemplates: [],
   trunkGroupNotAuthorisedGroup: true,
   trunkGroupTemplate: {},
-  selfcareUrl: {},
+  selfcareUrl: {}, //Config object
   timeZones: [],
   globalSearchNumber: undefined,
   bwksLicenses: undefined,
@@ -155,6 +155,13 @@ const initialState = {
   reseller: {},
   resellerAdmins: [],
   userProfileTypes: [],
+  callRecordingPlatforms: [],
+  usageOfCallRecordingPlaform: [],
+  callRecordingProperties: {},
+  tenantOnlineCharging: {
+    enabled: false,
+    spendingLimit: 0,
+  },
 };
 
 function mainReducer(state = initialState, action) {
@@ -861,6 +868,38 @@ function mainReducer(state = initialState, action) {
         userProfileTypes: action.data.userProfileTypes,
       };
     }
+    case actionType.GET_CALL_RECORDING_PLATFORMS: {
+      const callRecordingPlatforms = action.data.callRecordingPlatforms.map(
+        (el) => {
+          if (el.name === action.data.systemDefault) {
+            return { ...el, isDefault: true };
+          }
+          return { ...el, isDefault: false };
+        }
+      );
+      return {
+        ...state,
+        callRecordingPlatforms: callRecordingPlatforms,
+      };
+    }
+    case actionType.GET_USAGE_OF_CALL_RECORDING_PLATFORMS: {
+      return {
+        ...state,
+        usageOfCallRecordingPlaform: action.data.groups,
+      };
+    }
+    case actionType.GET_CALL_RECORDING_PROPERTIES: {
+      return {
+        ...state,
+        callRecordingProperties: action.data,
+      };
+    }
+    case actionType.GET_TENANT_ONLINE_CHARGING: {
+      return {
+        ...state,
+        tenantOnlineCharging: action.data,
+      };
+    }
     case actionType.POST_CREATE_GROUP_ADMIN: {
       return {
         ...state,
@@ -1039,6 +1078,11 @@ function mainReducer(state = initialState, action) {
         ...state,
       };
     }
+    case actionType.POST_ADD_CALL_RECORDING_PLATFORM: {
+      return {
+        ...state,
+      };
+    }
     case actionType.PUT_UPDATE_USER: {
       return {
         ...state,
@@ -1177,7 +1221,22 @@ function mainReducer(state = initialState, action) {
         ...state,
       };
     }
+    case actionType.PUT_UPDATE_CALL_RECORDING_PLATFORMS: {
+      return {
+        ...state,
+      };
+    }
     case actionType.PUT_UPDATE_RESELLER_ADMIN: {
+      return {
+        ...state,
+      };
+    }
+    case actionType.PUT_UPDATE_CALL_RECORDING_PROPERTIES: {
+      return {
+        ...state,
+      };
+    }
+    case actionType.PUT_UPDATE_TENANT_ONLINE_CHARGING: {
       return {
         ...state,
       };
@@ -1287,6 +1346,11 @@ function mainReducer(state = initialState, action) {
       };
     }
     case actionType.DELETE_RESELLER_ADMIN: {
+      return {
+        ...state,
+      };
+    }
+    case actionType.DELETE_CALL_RECORDING_PLATFORM: {
       return {
         ...state,
       };
