@@ -498,7 +498,7 @@ export const postAddResellerAdmin = (data) => ({
   data,
 });
 
-export const postAddCallRecordingPlatform = () => ({
+export const postAddCallRecordingPlatform = (data) => ({
   type: actionType.POST_ADD_CALL_RECORDING_PLATFORM,
   data,
 });
