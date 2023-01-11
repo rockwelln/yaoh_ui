@@ -15,6 +15,8 @@ import {
   refuseCreateTenant,
   fetchGetTenantEntitlements,
   fetchGetSelfcareURL,
+  fetchGetDictServicePacks,
+  fetchGetDictVirtualServicePacks,
 } from "../../store/actions";
 
 import Panel from "react-bootstrap/lib/Panel";
@@ -59,6 +61,8 @@ export class Limits extends Component {
     editEntitlement: undefined,
     deleteEntitlement: undefined,
     isLoadingSCURL: true,
+    isLoadingServicePacksDict: false,
+    isLoadingVirtualServicePacksDict: false,
   };
 
   fetchData() {
@@ -108,12 +112,23 @@ export class Limits extends Component {
         );
       }
     );
+    this.setState({ isLoadingServicePacksDict: true }, () =>
+      this.props
+        .fetchGetDictServicePacks()
+        .then(() => this.setState({ isLoadingServicePacksDict: false }))
+    );
+    this.setState({ isLoadingVirtualServicePacksDict: true }, () =>
+      this.props
+        .fetchGetDictVirtualServicePacks()
+        .then(() => this.setState({ isLoadingVirtualServicePacksDict: false }))
+    );
   }
   componentDidMount() {
     this.fetchData();
   }
   render() {
     const {
+      isLoading,
       isLoadingTrunk,
       trunkGroups,
       editTrunkLicenses,
@@ -123,13 +138,17 @@ export class Limits extends Component {
       indexOfService,
       isLoadingEntitlements,
       isLoadingSCURL,
+      isLoadingServicePacksDict,
+      isLoadingVirtualServicePacksDict,
     } = this.state;
 
     if (
-      this.state.isLoading ||
+      isLoading ||
       isLoadingTrunk ||
       isLoadingEntitlements ||
-      isLoadingSCURL
+      isLoadingSCURL ||
+      isLoadingServicePacksDict ||
+      isLoadingVirtualServicePacksDict
     ) {
       return <Loading />;
     }
@@ -338,6 +357,10 @@ export class Limits extends Component {
                             <LicensesPanel
                               licenses={this.props.tenantServicePacks}
                               showEdit={this.showEditSericePacks}
+                              dict={{
+                                ...this.props.dictServicePacks,
+                                ...this.props.dictVirtualServicePacks,
+                              }}
                             />
                           ) : (
                             <FormattedMessage
@@ -799,6 +822,8 @@ const mapStateToProps = (state) => ({
   isAuthorisedTrunkTenant: state.isAuthorisedTrunkTenant,
   selfcareUrl: state.selfcareUrl,
   tenantEntitlements: state.tenantEntitlements,
+  dictServicePacks: state.dictServicePacks,
+  dictVirtualServicePacks: state.dictVirtualServicePacks,
 });
 
 const mapDispatchToProps = {
@@ -812,6 +837,8 @@ const mapDispatchToProps = {
   refuseCreateTenant,
   fetchGetTenantEntitlements,
   fetchGetSelfcareURL,
+  fetchGetDictServicePacks,
+  fetchGetDictVirtualServicePacks,
 };
 
 export default withRouter(connect(mapStateToProps, mapDispatchToProps)(Limits));

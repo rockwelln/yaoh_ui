@@ -365,6 +365,21 @@ export const getTenantOnlineCharging = (data) => ({
   data,
 });
 
+export const getDictServicePacks = (data) => ({
+  type: actionType.GET_DICT_SERVICE_PACKS,
+  data,
+});
+
+export const getDictUserServices = (data) => ({
+  type: actionType.GET_DICT_USER_SERVICES,
+  data,
+});
+
+export const getDictVirtualServicePacks = (data) => ({
+  type: actionType.GET_DICT_VIRTUAL_SERVICE_PACKS,
+  data,
+});
+
 export const postCreateGroupAdmin = (data) => ({
   type: actionType.POST_CREATE_GROUP_ADMIN,
   data,
@@ -2177,6 +2192,60 @@ export function fetchGetTenantOnlineCharging(tenantId) {
           />,
           error.message
         );
+      });
+  };
+}
+
+export function fetchGetDictServicePacks() {
+  return function (dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/service_packs/`
+    )
+      .then((data) => dispatch(getDictServicePacks(data)))
+      .catch((error) => {
+        // NotificationsManager.error(
+        //   <FormattedMessage
+        //     id="fetch-bwks-licenses-failed"
+        //     defaultMessage="Failed to fetch dict service pack!"
+        //   />,
+        //   error.message
+        // );
+      });
+  };
+}
+
+export function fetchGetDictUserServices() {
+  return function (dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/user_services/`
+    )
+      .then((data) => dispatch(getDictUserServices(data)))
+      .catch((error) => {
+        // NotificationsManager.error(
+        //   <FormattedMessage
+        //     id="fetch-bwks-licenses-failed"
+        //     defaultMessage="Failed to fetch dict user services!"
+        //   />,
+        //   error.message
+        // );
+      });
+  };
+}
+
+export function fetchGetDictVirtualServicePacks() {
+  return function (dispatch) {
+    return fetch_get(
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/configs/virtual_service_packs/`
+    )
+      .then((data) => dispatch(getDictVirtualServicePacks(data)))
+      .catch((error) => {
+        // NotificationsManager.error(
+        //   <FormattedMessage
+        //     id="fetch-bwks-licenses-failed"
+        //     defaultMessage="Failed to fetch dict user services!"
+        //   />,
+        //   error.message
+        // );
       });
   };
 }

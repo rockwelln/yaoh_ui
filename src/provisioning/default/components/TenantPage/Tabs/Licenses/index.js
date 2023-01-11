@@ -13,6 +13,9 @@ import {
   fetchGetSelfcareURL,
   showHideAdditionalUserServicesTenant,
   fetchDeleteServicePacksFromTenant,
+  fetchGetDictServicePacks,
+  fetchGetDictUserServices,
+  fetchGetDictVirtualServicePacks,
 } from "../../../../store/actions";
 
 import Panel from "react-bootstrap/lib/Panel";
@@ -63,6 +66,9 @@ export class Licenses extends Component {
     editUserServices: false,
     isDeleteServicePack: false,
     showAddServicePack: false,
+    isLoadingServicePacksDict: false,
+    isLoadingUserServicesDict: false,
+    isLoadingVirtualServicePacksDict: false,
   };
 
   fetchData() {
@@ -104,6 +110,21 @@ export class Licenses extends Component {
     } else {
       this.setState({ isLoadingEntitlements: false });
     }
+    this.setState({ isLoadingServicePacksDict: true }, () =>
+      this.props
+        .fetchGetDictServicePacks()
+        .then(() => this.setState({ isLoadingServicePacksDict: false }))
+    );
+    this.setState({ isLoadingUserServicesDict: true }, () =>
+      this.props
+        .fetchGetDictUserServices()
+        .then(() => this.setState({ isLoadingUserServicesDict: false }))
+    );
+    this.setState({ isLoadingVirtualServicePacksDict: true }, () =>
+      this.props
+        .fetchGetDictVirtualServicePacks()
+        .then(() => this.setState({ isLoadingVirtualServicePacksDict: false }))
+    );
   }
 
   componentDidMount() {
@@ -120,6 +141,7 @@ export class Licenses extends Component {
   }
   render() {
     const {
+      isLoading,
       isLoadingTrunk,
       trunkGroups,
       editTrunkLicenses,
@@ -131,8 +153,18 @@ export class Licenses extends Component {
       editUserServices,
       isDeleteServicePack,
       showAddServicePack,
+      isLoadingServicePacksDict,
+      isLoadingUserServicesDict,
+      isLoadingVirtualServicePacksDict,
     } = this.state;
-    if (this.state.isLoading || isLoadingTrunk || isLoadingEntitlements) {
+    if (
+      isLoading ||
+      isLoadingTrunk ||
+      isLoadingEntitlements ||
+      isLoadingServicePacksDict ||
+      isLoadingUserServicesDict ||
+      isLoadingVirtualServicePacksDict
+    ) {
       return <Loading />;
     }
 
@@ -310,6 +342,10 @@ export class Licenses extends Component {
                     showEdit={this.showEditSericePacks}
                     showDelete={this.showDeleteServicePacks}
                     showDeleteIcon={true}
+                    dict={{
+                      ...this.props.dictServicePacks,
+                      ...this.props.dictVirtualServicePacks,
+                    }}
                   />
                 ) : (
                   <FormattedMessage
@@ -571,6 +607,7 @@ export class Licenses extends Component {
                   showHide={this.showHideAdditionalUserServices}
                   showEdit={this.showEditUserServices}
                   withShowMore
+                  dict={{ ...this.props.dictUserServices }}
                 />
               ) : (
                 <FormattedMessage
@@ -884,6 +921,9 @@ const mapStateToProps = (state) => ({
   selfcareUrl: state.selfcareUrl,
   tenantEntitlements: state.tenantEntitlements,
   limitedUserServicesTenant: state.limitedUserServicesTenant,
+  dictServicePacks: state.dictServicePacks,
+  dictUserServices: state.dictUserServices,
+  dictVirtualServicePacks: state.dictVirtualServicePacks,
 });
 
 const mapDispatchToProps = {
@@ -897,6 +937,9 @@ const mapDispatchToProps = {
   fetchGetSelfcareURL,
   showHideAdditionalUserServicesTenant,
   fetchDeleteServicePacksFromTenant,
+  fetchGetDictServicePacks,
+  fetchGetDictUserServices,
+  fetchGetDictVirtualServicePacks,
 };
 
 export default withRouter(
