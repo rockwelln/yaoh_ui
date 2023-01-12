@@ -17,7 +17,7 @@ import FormGroup from 'react-bootstrap/lib/FormGroup';
 import HelpBlock from 'react-bootstrap/lib/HelpBlock';
 import Checkbox from 'react-bootstrap/lib/Checkbox';
 import Modal from 'react-bootstrap/lib/Modal';
-import { Redirect } from 'react-router-dom';
+import {Link, Redirect} from 'react-router-dom';
 import { FormattedMessage } from 'react-intl';
 import update from 'immutability-helper';
 import { fetchOperators } from "../data/operator_mgm";
@@ -88,10 +88,17 @@ function newRequest(request, onSuccess, onError) {
         )
       })
       .catch(error => {
-        NotificationsManager.error(
-          <FormattedMessage id="create-portin-failed" defaultMessage="Failed to start port-in" />,
-          error.message
-        );
+        if(error.message === "duplicate request still running") {
+          NotificationsManager.error(
+            <FormattedMessage id="create-portin-duplicated" defaultMessage="Duplicate port-in"/>,
+            <Link to={`/transactions/${error.body?.id}`}>{error.body?.crdc_id}</Link>
+          );
+        } else {
+          NotificationsManager.error(
+            <FormattedMessage id="create-portin-failed" defaultMessage="Failed to start port-in"/>,
+            error.message
+          );
+        }
         onError && onError();
       })
 }
