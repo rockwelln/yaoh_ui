@@ -211,31 +211,33 @@ function validateRanges(ranges) {
   }).filter(e => e !== null);
 }
 
-function generateNewPortId(prefix="", suffix="") {
+function generateNewPortId(issuer="", prefix="", suffix="") {
   const now = (new Date()).toISOString().slice(0,19).replace(/-/g,"").replace(/T/g,"").replace(/:/g,"")
-  return `${prefix}${now}MTNBSGNP${suffix}${Math.floor(Math.random()*10000)}`
+  return `${prefix}${now}${issuer}${suffix}${Math.floor(Math.random()*10000)}`
 }
 
-const emptyRequest = {
-  ranges: [{ from: '', to: '' }],
-  donor: '',
-  change_addr_installation_porting_id: '',
-  isB2B: false,
-  crdc_id: generateNewPortId(),
-  service_type: 'GEOGRAPHIC',
-  routing_info: '',
-  subscriber_data: {
+const emptyRequest = issuer => {
+  return {
+    ranges: [{ from: '', to: '' }],
+    donor: '',
+    change_addr_installation_porting_id: '',
+    isB2B: false,
+    crdc_id: generateNewPortId(issuer),
+    service_type: 'GEOGRAPHIC',
+    routing_info: '',
+    subscriber_data: {
     AccountType: "GNPAccount",
-    AccountNum: "",
-    ProcessType: "Individual",
+      AccountNum: "",
+      ProcessType: "Individual",
   },
-  due_date: moment.utc().add(1, "days").toISOString(),
-}
+    due_date: moment.utc().add(1, "days").toISOString(),
+  }
+};
 
 export function NPPortInRequest({userInfo, defaultRecipient}) {
   const [operators, setOperators] = useState([]);
   const [routes, setRoutes] = useState([]);
-  const [request, setRequest] = useState(emptyRequest);
+  const [request, setRequest] = useState(emptyRequest(defaultRecipient));
   const [redirect, setRedirect] = useState(false);
   const [loading, setLoading] = useState(false);
   const [rangeError, setRangeError] = useState(undefined);
