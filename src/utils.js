@@ -1,5 +1,7 @@
+import React from "react";
 import { Base64 } from 'js-base64';
 import crypto from "crypto";
+import {toast} from 'react-toastify';
 
 const BASE_LOC = process.env.REACT_APP_BASE_URL ? new URL(process.env.REACT_APP_BASE_URL): window.location;
 export const API_WS_URL = (BASE_LOC.protocol === 'https:'?'wss':'ws') + '://' + BASE_LOC.host;
@@ -214,28 +216,19 @@ class NotificationsHandler {
     }
 
     error(title, message, extra) {
-        if(!NotificationsHandler.rootRef || !NotificationsHandler.rootRef.current)
-          return
-
-        const handler = NotificationsHandler.rootRef.current;
-        handler.state.notifications.filter(n => n.message === message).forEach(n => handler.removeNotification(n));
-
-        handler.addNotification({
-            title: title,
-            message: message,
-            level: 'error',
-            autoDismiss: 5 * 60,
-            dismissible: "both",
-            ...extra
+        toast.error(
+            <div>
+              <b>{title}</b>
+              <p>{message}</p>
+            </div>
+          , {
+          toastId: title+message,
         });
     }
 
     success(message, extra) {
-        NotificationsHandler.rootRef &&
-        NotificationsHandler.rootRef.current.addNotification({
-            message: message,
-            level: 'success',
-            ...extra
+      toast.success(message, {
+          toastId: message,
         });
     }
 }

@@ -60,7 +60,6 @@ class IAD extends Component {
               />
             </ButtonToolbar>
             <DeleteModal
-              notifications={this.props.notifications}
               iadId={iad.iadId}
               tenantId={this.props.match.params.tenantId}
               groupId={this.props.match.params.groupId}

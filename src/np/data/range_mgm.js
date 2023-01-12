@@ -14,7 +14,7 @@ import Breadcrumb from 'react-bootstrap/lib/Breadcrumb';
 
 import { FormattedMessage } from 'react-intl';
 
-import { fetch_delete, fetch_post, fetch_put } from "../../utils";
+import {fetch_delete, fetch_post, fetch_put, NotificationsManager} from "../../utils";
 import { ApioDatatable } from "../../utils/datatable";
 import update from "immutability-helper";
 import { Search, StaticControl } from "../../utils/common";
@@ -47,17 +47,15 @@ class NewRange extends Component {
     const { range } = this.state;
     fetch_post('/api/v01/npact/ranges', range, this.props.auth_token)
       .then(() => {
-        this.props.notifications.addNotification({
-          message: <FormattedMessage id="new-range-saved" defaultMessage="New range saved!" />,
-          level: 'success'
-        });
+        NotificationsManager.success(
+          <FormattedMessage id="new-range-saved" defaultMessage="New range saved!" />,
+        );
         this.onClose();
       })
-      .catch(error => this.props.notifications.addNotification({
-        title: <FormattedMessage id="range-failed" defaultMessage="Failed to save the range" />,
-        message: error.message,
-        level: 'error'
-      }));
+      .catch(error => NotificationsManager.error(
+        <FormattedMessage id="range-failed" defaultMessage="Failed to save the range" />,
+        error.message,
+      ));
   }
 
   onClose() {
@@ -170,34 +168,30 @@ class RangeActions extends Component {
     const { _pendingChanges } = this.state;
     fetch_put(`/api/v01/npact/ranges/${entry.id}`, _pendingChanges, this.props.auth_token)
       .then(() => {
-        this.props.notifications.addNotification({
-          message: <FormattedMessage id="saved" defaultMessage="Saved!" />,
-          level: 'success'
-        });
+        NotificationsManager.success(
+          <FormattedMessage id="saved" defaultMessage="Saved!" />,
+        );
         this.onClose();
       })
-      .catch(error => this.props.notifications.addNotification({
-        title: <FormattedMessage id="range-failed" defaultMessage="Failed to save the range" />,
-        message: error.message,
-        level: 'error'
-      }));
+      .catch(error => NotificationsManager.error(
+        <FormattedMessage id="range-failed" defaultMessage="Failed to save the range" />,
+        error.message,
+      ));
   }
 
   onDelete() {
     fetch_delete(`/api/v01/npact/ranges/${this.props.entry.id}`, this.props.auth_token)
       .then(() => {
-        this.props.notifications.addNotification({
-          message: <FormattedMessage id="range-deleted" defaultMessage="Range deleted!" />,
-          level: 'success'
-        });
+        NotificationsManager.success(
+          <FormattedMessage id="range-deleted" defaultMessage="Range deleted!" />,
+        );
         this.props.onDelete && this.props.onDelete();
         this.onClose();
       })
-      .catch(error => this.props.notifications.addNotification({
-        title: <FormattedMessage id="range-delete-failed" defaultMessage="Failed to delete the range" />,
-        message: error.message,
-        level: 'error'
-      }));
+      .catch(error => NotificationsManager.error(
+        <FormattedMessage id="range-delete-failed" defaultMessage="Failed to delete the range" />,
+        error.message,
+      ));
   }
 
   onClose() {

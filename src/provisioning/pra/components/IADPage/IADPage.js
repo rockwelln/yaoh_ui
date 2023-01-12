@@ -86,7 +86,6 @@ export class IADPage extends Component {
                   <DeleteModal
                     iadId={this.props.match.params.iadId}
                     show={this.state.showDelete}
-                    notifications={this.props.notifications}
                     onClose={() => {
                       this.setState({ showDelete: false });
                     }}

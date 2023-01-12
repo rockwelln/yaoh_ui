@@ -17,7 +17,7 @@ import { FormattedMessage } from 'react-intl';
 import moment from 'moment';
 
 import { DATE_FORMAT } from './np-requests';
-import { fetch_delete, fetch_put } from "../utils";
+import {fetch_delete, fetch_put, NotificationsManager} from "../utils";
 import { ApioDatatable } from '../utils/datatable';
 import { Search, StaticControl } from "../utils/common";
 import { access_levels, isAllowed, pages } from "../utils/user";
@@ -56,16 +56,14 @@ class MVNONumberActions extends Component {
       .then(() => {
         this.setState({ showUpdate: false, showDelete: false });
         this.props.onDelete && this.props.onDelete();
-        this.props.notifications.addNotification({
-          message: <FormattedMessage id="mvno-deleted" defaultMessage="MVNO entry deleted!" />,
-          level: 'success'
-        })
+        NotificationsManager.success(
+          <FormattedMessage id="mvno-deleted" defaultMessage="MVNO entry deleted!" />,
+        )
       })
-      .catch(error => this.props.notifications.addNotification({
-        title: <FormattedMessage id="delete-mvno-failed" defaultMessage="Failed to delete MVNO entry" />,
-        message: error.message,
-        level: 'error'
-      }));
+      .catch(error => NotificationsManager.error(
+        <FormattedMessage id="delete-mvno-failed" defaultMessage="Failed to delete MVNO entry" />,
+        error.message,
+      ));
   }
 
   onClose() {
