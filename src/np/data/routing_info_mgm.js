@@ -52,17 +52,15 @@ class NewRoutingInfo extends Component {
     const { routing_info } = this.state;
     fetch_post('/api/v01/npact/routing_info', routing_info, this.props.auth_token)
       .then(() => {
-        this.props.notifications.addNotification({
-          message: <FormattedMessage id="new-routing-saved" defaultMessage="New routing info saved!" />,
-          level: 'success'
-        });
+        NotificationsManager.success(
+          <FormattedMessage id="new-routing-saved" defaultMessage="New routing info saved!" />,
+        );
         this.onClose();
       })
-      .catch(error => this.props.notifications.addNotification({
-        title: <FormattedMessage id="new-routing-failed" defaultMessage="Failed to save" />,
-        message: error.message,
-        level: 'error'
-      }));
+      .catch(error => NotificationsManager.error(
+        <FormattedMessage id="new-routing-failed" defaultMessage="Failed to save" />,
+        error.message,
+      ));
   }
 
   onClose() {
@@ -161,34 +159,30 @@ class RoutingInfoActions extends Component {
     const { entry, auth_token } = this.props;
     fetch_put(`/api/v01/npact/routing_info/${entry.id}`, _pendingChanges, auth_token)
       .then(() => {
-        this.props.notifications.addNotification({
-          message: <FormattedMessage id="routing-updated" defaultMessage="Routing info updated!" />,
-          level: 'success'
-        });
+        NotificationsManager.success(
+          <FormattedMessage id="routing-updated" defaultMessage="Routing info updated!" />,
+        );
         this.onClose();
       })
-      .catch(error => this.props.notifications.addNotification({
-        title: <FormattedMessage id="routing-failed" defaultMessage="Failed to save" />,
-        message: error.message,
-        level: 'error'
-      }));
+      .catch(error => NotificationsManager.error(
+        <FormattedMessage id="routing-failed" defaultMessage="Failed to save" />,
+        error.message,
+      ));
   }
 
   onDelete() {
     fetch_delete(`/api/v01/npact/routing_info/${this.props.entry.id}`, this.props.auth_token)
       .then(() => {
-        this.props.notifications.addNotification({
-          message: <FormattedMessage id="routing-deleted" defaultMessage="Routing info deleted!" />,
-          level: 'success'
-        });
+        NotificationsManager.success(
+          <FormattedMessage id="routing-deleted" defaultMessage="Routing info deleted!" />,
+        );
         this.props.onDelete && this.props.onDelete();
         this.onClose();
       })
-      .catch(error => this.props.notifications.addNotification({
-        title: <FormattedMessage id="routing-delete-failed" defaultMessage="Failed to delete" />,
-        message: error.message,
-        level: 'error'
-      }));
+      .catch(error => NotificationsManager.error(
+        <FormattedMessage id="routing-delete-failed" defaultMessage="Failed to delete" />,
+        error.message,
+      ));
   }
 
   onClose() {

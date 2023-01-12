@@ -5,7 +5,7 @@ import FormControl from "react-bootstrap/lib/FormControl";
 import Col from "react-bootstrap/lib/Col";
 
 import {FormattedMessage} from 'react-intl';
-import {API_URL_PREFIX, fetch_get, userLocalizeUtcDate} from "../utils";
+import {API_URL_PREFIX, fetch_get, NotificationsManager, userLocalizeUtcDate} from "../utils";
 import queryString from "query-string";
 import update from "immutability-helper/index";
 import PropTypes from 'prop-types';
@@ -178,11 +178,10 @@ export class Search extends React.Component {
                 if(this.cancelLoad) return;
 
                 if(this.props.useNotifications) {
-                    this.props.notifications && this.props.notifications.addNotification({
-                        title: <FormattedMessage id="failed-search" defaultMessage="Search query failed!"/>,
-                        message: error.message,
-                        level: 'error'
-                    })
+                    NotificationsManager.error(
+                      <FormattedMessage id="failed-search" defaultMessage="Search query failed!"/>,
+                      error.message,
+                    );
                 } else {
                     this.setState({error: error})
                 }

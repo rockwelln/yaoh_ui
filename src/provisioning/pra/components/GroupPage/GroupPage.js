@@ -81,7 +81,6 @@ class TenantPage extends Component {
             <DeleteModal
               groupId={this.props.match.params.groupId}
               show={showDelete}
-              notifications={this.props.notifications}
               onClose={() => {
                 this.setState({ showDelete: false });
               }}

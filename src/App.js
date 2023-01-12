@@ -15,7 +15,8 @@ import MenuItem from 'react-bootstrap/lib/MenuItem';
 
 import {BrowserRouter as Router, Link, Redirect, Route, Switch} from 'react-router-dom';
 import {LinkContainer} from 'react-router-bootstrap';
-import NotificationSystem from 'react-notification-system';
+import {ToastContainer} from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.min.css';
 
 import {FormattedMessage} from 'react-intl';
 
@@ -690,8 +691,6 @@ class App extends Component {
             provisioningRoutes: <Route path="/provisioning" component={Loading} />,
             health: {},
         };
-        this._notificationSystem = React.createRef();
-        NotificationsManager.setRef(this._notificationSystem);
         AuthServiceManager.loadJwtTokensFromLocation()
 
         this.getUserInfo = this.getUserInfo.bind(this);
@@ -863,7 +862,6 @@ class App extends Component {
         if(!authenticated || error_msg !== undefined) {
             return (
                 <Router>
-                    <NotificationSystem ref={this._notificationSystem}/>
                     <Switch>
                         <Route
                             path="/auth-callback/:name"
@@ -919,7 +917,7 @@ class App extends Component {
         return (
           <Router>
             <div className="App">
-                <NotificationSystem ref={this._notificationSystem}/>
+                <ToastContainer />
                 {
                     standby_alert
                 }
@@ -956,7 +954,6 @@ class App extends Component {
                                    localUser.isAllowed(accesses.dashboard) ?
                                    <Dashboard
                                        user_info={user_info}
-                                       notifications={this._notificationSystem.current}
                                        {...props} /> :
                                    <NotAllowed/>
                                )}
@@ -1001,9 +998,7 @@ class App extends Component {
                         <Route path="/transactions/config/startup_events"
                                component={props => (
                                    localUser.isAllowed(accesses.orchestration) ?
-                                       <StartupEvents
-                                           notifications={this._notificationSystem.current}
-                                           {...props} /> :
+                                       <StartupEvents {...props} /> :
                                        <NotAllowed/>
                                )}
                                exact />
@@ -1033,7 +1028,6 @@ class App extends Component {
                                    localUser.canSee(pages.requests_ndg)?
                                        <NdgHistory
                                            user_info={user_info}
-                                           notifications={this._notificationSystem.current}
                                            {...props} /> :
                                        <NotAllowed/>
                                )}
@@ -1043,7 +1037,6 @@ class App extends Component {
                                    localUser.isAllowed(accesses.requests) ?
                                        <Request
                                            user_info={user_info}
-                                           notifications={this._notificationSystem.current}
                                            {...props} /> :
                                        <NotAllowed/>
                                )} />
@@ -1059,7 +1052,6 @@ class App extends Component {
                                    localUser.isAllowed(accesses.settings_users) ?
                                        <UserManagement
                                            user_info={user_info}
-                                           notifications={this._notificationSystem.current}
                                            {...props} />:
                                        <NotAllowed />
                                )}
@@ -1069,7 +1061,7 @@ class App extends Component {
                                    localUser.isAllowed(accesses.settings_users) ?
                                        <AuditLogs
                                            user_info={user_info}
-                                           notifications={this._notificationSystem.current} />:
+                                       />:
                                        <NotAllowed />
                                )}
                                exact />
@@ -1090,9 +1082,7 @@ class App extends Component {
                         <Route path="/system/reporting"
                                component={props => (
                                    localUser.canSee(pages.system_reporting)?
-                                       <Reporting
-                                           notifications={this._notificationSystem.current}
-                                           {...props} />:
+                                       <Reporting {...props} />:
                                        <NotAllowed />
                                )}
                                exact />
@@ -1108,9 +1098,7 @@ class App extends Component {
                         <Route path="/system/databases"
                                component={props => (
                                    localUser.canSee(pages.system_databases) ?
-                                       <Databases
-                                           notifications={this._notificationSystem.current}
-                                           {...props} />:
+                                       <Databases {...props} />:
                                        <NotAllowed />
                                )}
                                exact />
@@ -1161,7 +1149,6 @@ class App extends Component {
                                    localUser.isAllowed(accesses.settings) ?
                                        <Webhooks
                                            user_info={user_info}
-                                           notifications={this._notificationSystem.current}
                                            {...props} />:
                                        <NotAllowed />
                                )}
@@ -1169,9 +1156,7 @@ class App extends Component {
                         <Route path="/system/public_holidays"
                                component={props => (
                                    localUser.canSee(pages.npact_holidays)?
-                                       <PublicHolidays
-                                           notifications={this._notificationSystem.current}
-                                           {...props} />:
+                                       <PublicHolidays {...props} />:
                                        <NotAllowed />
                                )}
                                exact />
@@ -1180,7 +1165,6 @@ class App extends Component {
                                    localUser.canSee(pages.npact_mvno_numbers) ?
                                        <SearchMVNO
                                            user_info={user_info}
-                                           notifications={this._notificationSystem.current}
                                            {...props} />:
                                        <NotAllowed />
                                )}
@@ -1190,7 +1174,6 @@ class App extends Component {
                                    localUser.canSee(pages.npact_porting_cases) ?
                                        <SearchPortingCases
                                            user_info={user_info}
-                                           notifications={this._notificationSystem.current}
                                            {...props} />:
                                        <NotAllowed />
                                )}
@@ -1200,7 +1183,6 @@ class App extends Component {
                                    localUser.canSee(pages.npact_operators) ?
                                        <OperatorManagement
                                            user_info={user_info}
-                                           notifications={this._notificationSystem.current}
                                            {...props} />:
                                        <NotAllowed />
                                )}
@@ -1210,7 +1192,6 @@ class App extends Component {
                                    localUser.canSee(pages.npact_ranges) ?
                                        <RangesManagement
                                            user_info={user_info}
-                                           notifications={this._notificationSystem.current}
                                            {...props} />:
                                        <NotAllowed />
                                )}
@@ -1220,7 +1201,6 @@ class App extends Component {
                                    localUser.canSee(pages.npact_routing_info) ?
                                        <RoutingInfoManagement
                                            user_info={user_info}
-                                           notifications={this._notificationSystem.current}
                                            {...props} />:
                                        <NotAllowed />
                                )}
@@ -1235,7 +1215,6 @@ class App extends Component {
                                component={props => (
                                    localUser.isAllowed(accesses.requests) ?
                                        <NPPortInRequest
-                                           notifications={this._notificationSystem}
                                            user_info={user_info}
                                            {...props} /> :
                                        <NotAllowed/>
@@ -1252,7 +1231,6 @@ class App extends Component {
                                component={props => (
                                    localUser.isAllowed(accesses.requests) ?
                                        <NPDisconnectRequest
-                                           notifications={this._notificationSystem}
                                            user_info={user_info}
                                            {...props} /> :
                                        <NotAllowed/>
@@ -1279,11 +1257,9 @@ class App extends Component {
                                    (!user_info.modules || supportedModule(modules.npact, user_info.modules)) ?
                                        <NPTransaction
                                            user_info={user_info}
-                                           notifications={this._notificationSystem}
                                            {...props} /> :
                                        <Transaction
                                            user_info={user_info}
-                                           notifications={this._notificationSystem.current}
                                            {...props} /> :
                                        <NotAllowed/>
                                )} />
@@ -1307,6 +1283,7 @@ class App extends Component {
                   </Suspense>
                 </Col>
             </div>
+            <ToastContainer />
           </Router>
         );
     }

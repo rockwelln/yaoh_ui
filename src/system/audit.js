@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {fetch_get} from "../utils";
+import {fetch_get, NotificationsManager} from "../utils";
 import Panel from 'react-bootstrap/lib/Panel';
 import Button from 'react-bootstrap/lib/Button';
 import Form from 'react-bootstrap/lib/Form';
@@ -111,11 +111,10 @@ export class AuditLogs extends Search {
     _fetchUsers() {
         fetch_get('/api/v01/system/users', this.props.auth_token)
             .then(data => this.setState({users: data.users}))
-            .catch(error => this.props.notifications.addNotification({
-                title: <FormattedMessage id="fetch-users-failed" defaultMessage="Failed to fetch users"/>,
-                message: error.message,
-                level: 'error'
-            }));
+            .catch(error => NotificationsManager.error(
+              <FormattedMessage id="fetch-users-failed" defaultMessage="Failed to fetch users"/>,
+              error.message,
+            ));
     }
 
     render() {
