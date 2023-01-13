@@ -14,6 +14,7 @@ import {fetch_get, fetch_post, NotificationsManager} from "../utils";
 import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 import queryString from "query-string";
 import {useLocation} from "react-router";
+import LZString from "lz-string";
 
 export function fetchInstanceContext(instanceId, onSuccess) {
   fetch_get(`/api/v01/transactions/${instanceId}/template_context`)
@@ -85,19 +86,36 @@ export default function TemplatePlayground() {
   document.title = "Template playground";
 
   useEffect(() => {
-    let o = queryString.parse(location.search);
-    if(o.context !== undefined) {
-      setContext(o.context);
+    if(location.hash.length === 0) {
+      return
     }
-    if(o.template !== undefined) {
-      setTemplate(o.template);
-    }
-    if(o.output !== undefined) {
+
+    let o = queryString.parse(location.hash);
+    if(o.context !== undefined && o.context !== "") {
       try {
-        let po = JSON.parse(o.output)
+        const v = LZString.decompressFromBase64(o.context);
+        if(typeof v === "string") {
+          setContext(v);
+        }
+      } catch (e) {
+        console.error("failed to decompress context", e);
+      }
+    }
+    if(o.template !== undefined && o.template !== "") {
+      try {
+        setTemplate(LZString.decompressFromBase64(o.template));
+      } catch (e) {
+        console.error("failed to decompress template", e);
+        setTemplate("");
+      }
+    }
+    if(o.output !== undefined && o.output !== "") {
+      try {
+        let po = JSON.parse(LZString.decompressFromBase64(o.output))
         setOutput(po);
       } catch (e) {
-        console.error("failed to parse output", error)
+        console.error("failed to parse output", e);
+        setOutput(emptyResponse);
       }
     }
   }, [location]);
@@ -168,19 +186,18 @@ export default function TemplatePlayground() {
                       <Button
                         bsSize={"small"}
                         onClick={() => {
+                          const t = LZString.compressToBase64(template)
+                          const o = LZString.compressToBase64(JSON.stringify(output))
+                          const c = LZString.compressToBase64(context)
                           let searchStr = queryString.stringify({
-                            template: template,
-                            output: JSON.stringify(output),
-                            context: context,
+                            template: t,
+                            output: o,
+                            context: c,
                           });
-                          let u = new URL(window.location.href)
-                          u.search = searchStr;
-                          // 2000 is the defacto limit for URL's
-                          if(u.length > 2000) {
-                            u.search = queryString.stringify({
-                              template: template,
-                            });
-                          }
+                          let u = new URL(window.location.href);
+                          // use the hash because it is not sent to the web server and so the URL length limitation doesn't apply.
+                          // so the content is *not* limited to the defacto limit of 2000 characters.
+                          u.hash = searchStr;
                           navigator.clipboard.writeText(u);
                           setCopied(true);
                           setTimeout(() => setCopied(false), 2000);
