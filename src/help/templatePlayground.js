@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
 import {FormattedMessage} from "react-intl";
 import {LinkContainer} from "react-router-bootstrap";
@@ -12,6 +12,8 @@ import InputGroup from "react-bootstrap/lib/InputGroup";
 import Form from "react-bootstrap/lib/Form";
 import {fetch_get, fetch_post, NotificationsManager} from "../utils";
 import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
+import queryString from "query-string";
+import {useLocation} from "react-router";
 
 export function fetchInstanceContext(instanceId, onSuccess) {
   fetch_get(`/api/v01/transactions/${instanceId}/template_context`)
@@ -77,8 +79,28 @@ export default function TemplatePlayground() {
   const [template, setTemplate] = useState("");
   const [output, setOutput] = useState(emptyResponse);
   const [error, setError] = useState(undefined);
+  const [copied, setCopied] = useState(false);
+  const location = useLocation();
 
-  document.title = "Template playground"
+  document.title = "Template playground";
+
+  useEffect(() => {
+    let o = queryString.parse(location.search);
+    if(o.context !== undefined) {
+      setContext(o.context);
+    }
+    if(o.template !== undefined) {
+      setTemplate(o.template);
+    }
+    if(o.output !== undefined) {
+      try {
+        let po = JSON.parse(o.output)
+        setOutput(po);
+      } catch (e) {
+        console.error("failed to parse output", error)
+      }
+    }
+  }, [location]);
 
   let validContext = true
   if(context.length !== 0) {
@@ -142,6 +164,31 @@ export default function TemplatePlayground() {
                         }}
                         style={{float: "right"}}>
                         Debug &gt;&gt;
+                      </Button>
+                      <Button
+                        bsSize={"small"}
+                        onClick={() => {
+                          let searchStr = queryString.stringify({
+                            template: template,
+                            output: JSON.stringify(output),
+                            context: context,
+                          });
+                          let u = new URL(window.location.href)
+                          u.search = searchStr;
+                          // 2000 is the defacto limit for URL's
+                          if(u.length > 2000) {
+                            u.search = queryString.stringify({
+                              template: template,
+                            });
+                          }
+                          navigator.clipboard.writeText(u);
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 2000);
+                        }}
+                        style={{float: "right"}}>
+                        { copied?
+                          <Glyphicon glyph={"ok"} style={{color: "green"}}/>
+                          : <Glyphicon glyph="link"/>}
                       </Button>
                     </ButtonToolbar>
                   </Col>
