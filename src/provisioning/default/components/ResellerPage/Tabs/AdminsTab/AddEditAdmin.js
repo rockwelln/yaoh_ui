@@ -52,7 +52,7 @@ const AddResellerModal = ({
     tenantId:
       typeof admin.tenantId === "string"
         ? { label: admin.tenantId, value: admin.tenantId }
-        : admin.tenantId,
+        : { label: "", value: "" },
   });
 
   const saveAdmin = () => {
