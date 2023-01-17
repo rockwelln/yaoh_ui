@@ -70,8 +70,8 @@ export class Basic extends Component {
           .then(() => {
             this.props.changeDomainOfGroup(this.props.defaultDomain);
             this.props.changeResellerIdOfGroup({
-              value: this.props.tenant.resellerId,
-              label: this.props.tenant.resellerId,
+              value: this.props.tenant.resellerId || "",
+              label: this.props.tenant.resellerId || "Not set",
             });
             this.setState({ isLoadingTenant: false });
           });
@@ -88,6 +88,8 @@ export class Basic extends Component {
     ) {
       return <Loading />;
     }
+
+    console.log(this.props.createGroup);
     return (
       <React.Fragment>
         <div className={"panel-heading"}>

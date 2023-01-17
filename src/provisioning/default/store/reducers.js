@@ -283,11 +283,22 @@ function mainReducer(state = initialState, action) {
       };
     }
     case actionType.GET_LICENSES_BY_GROUP_ID: {
-      const availableTrunkGroups = action.data.groupServices.filter(
+      const services = JSON.parse(JSON.stringify(action.data));
+      if (!Array.isArray(services.groupServices)) {
+        services.groupServices = [];
+      }
+      if (!Array.isArray(services.servicePacks)) {
+        services.servicePacks = [];
+      }
+      if (!Array.isArray(services.userServices)) {
+        services.userServices = [];
+      }
+
+      const availableTrunkGroups = services.groupServices.filter(
         (group) => group.name === "Trunk Group"
       );
       ////////
-      const groupServicesShown = action.data.groupServices
+      const groupServicesShown = services.groupServices
         .filter(
           (group) =>
             group.name === "Auto Attendant" ||
@@ -304,7 +315,7 @@ function mainReducer(state = initialState, action) {
           return 0;
         });
       const groupServicesHide = [];
-      action.data.groupServices.forEach((group) => {
+      services.groupServices.forEach((group) => {
         if (
           group.name !== "Auto Attendant" &&
           group.name !== "Auto Attendant - Standard" &&
@@ -327,18 +338,18 @@ function mainReducer(state = initialState, action) {
         return 0;
       });
       const groupServices = [...groupServicesShown, ...groupServicesHide];
-      const limitedUS = action.data.userServices.filter(
+      const limitedUS = services.userServices?.filter(
         (el) => el.allocated && !el.allocated.unlimited
       );
       const userServices = [
-        ...limitedUS.slice(0, 9),
+        ...limitedUS?.slice(0, 9),
         ...limitedUS
-          .slice(9, limitedUS.length)
-          .map((el) => ({ ...el, hide: true, additional: true })),
+          ?.slice(9, limitedUS.length)
+          ?.map((el) => ({ ...el, hide: true, additional: true })),
       ];
       return {
         ...state,
-        servicePacks: action.data.servicePacks,
+        servicePacks: services.servicePacks,
         groupServices: {
           groups: groupServices,
           countShown: groupServicesShown.length,
@@ -346,7 +357,7 @@ function mainReducer(state = initialState, action) {
         limitedUserServicesGroup: { services: userServices, countShown: 10 },
         availableTrunkGroups:
           availableTrunkGroups[0] && availableTrunkGroups[0],
-        userServicesGroup: action.data.userServices,
+        userServicesGroup: services.userServices,
       };
     }
     case actionType.GET_DEVICES_BY_GROUP_ID: {
