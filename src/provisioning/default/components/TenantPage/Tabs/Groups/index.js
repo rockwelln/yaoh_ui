@@ -162,7 +162,7 @@ export class GroupsTab extends Component {
                           onClick={this.sortByUserLimit}
                         />
                       </th>
-                      {this.props.config.reseller.tenant && (
+                      {this.props?.config?.reseller?.tenant && (
                         <th style={{ width: "24%" }}>
                           <FormattedMessage
                             id="reseller"
