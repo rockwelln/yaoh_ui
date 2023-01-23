@@ -2897,6 +2897,16 @@ function AlarmsPanel({alarms, onChange}) {
 }
 
 function CleanupPanel({retention, onChange}) {
+  const defaultRet = retention.monthKept || retention.default;
+  
+  useEffect(() => {
+    const ret = retention?.monthKept;
+    // update the old name to the new structure
+    if(ret !== undefined) {
+      onChange(update(retention, {$merge: {"default": ret}, $unset: ["monthKept"]}))
+    }
+  }, [retention])
+
   return (
     <>
       <HelpBlock>
@@ -2905,17 +2915,45 @@ function CleanupPanel({retention, onChange}) {
 
       <Panel>
         <Panel.Body>
-          <Form>
+          <Form horizontal>
             <FormGroup>
               <Col componentClass={ControlLabel} sm={2}>
-                <FormattedMessage id="requests-retention" defaultMessage="Requests retention (months)"/>
+                <FormattedMessage id="requests-retention" defaultMessage="Default requests retention (months)"/>
               </Col>
 
               <Col sm={9}>
                 <FormControl
                   componentClass="input"
-                  value={retention.monthKept}
-                  onChange={e => onChange(update(retention, {$merge: {monthKept: e.target.value && parseInt(e.target.value, 10)}}))}/>
+                  value={defaultRet}
+                  onChange={e => onChange(update(retention, {$merge: {default: e.target.value && parseInt(e.target.value, 10)}}))}/>
+                
+              </Col>
+            </FormGroup>
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="get-requests-retention" defaultMessage="Get requests retention (months)"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="input"
+                  value={retention.get_requests}
+                  placeholder={defaultRet}
+                  onChange={e => onChange(update(retention, {$merge: {get_requests: e.target.value && parseInt(e.target.value, 10)}}))}/>
+                
+              </Col>
+            </FormGroup>
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="scheduled-requests-retention" defaultMessage="Scheduled jobs retention (months)"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="input"
+                  value={retention.scheduled_jobs}
+                  placeholder={defaultRet}
+                  onChange={e => onChange(update(retention, {$merge: {scheduled_jobs: e.target.value && parseInt(e.target.value, 10)}}))}/>
               </Col>
             </FormGroup>
           </Form>
