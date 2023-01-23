@@ -18,6 +18,7 @@ const Licenses = (props) => {
     showDelete,
     isEditGroup,
     showDeleteIcon,
+    dict = {},
   } = props;
   return (
     <React.Fragment>
@@ -43,7 +44,9 @@ const Licenses = (props) => {
             (el, i) =>
               (!el.additional || !el.hide) && (
                 <tr key={el.name}>
-                  <td className={"licenses-td vertical-middle"}>{el.name}</td>
+                  <td className={"licenses-td vertical-middle"}>
+                    {dict[el.name]?.display_name || el.name}
+                  </td>
                   {!el.allocated.unlimited && el.allocated.maximum === 0 ? (
                     <td
                       colSpan={"2"}

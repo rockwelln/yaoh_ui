@@ -18,7 +18,9 @@ import { FormattedMessage } from "react-intl";
 import {
   fetchGetUserServicesByUserId,
   fetchPostAssignUserServicePacks,
-  fetchDeleteAssignUserServicePacks
+  fetchDeleteAssignUserServicePacks,
+  fetchGetDictServicePacks,
+  fetchGetDictVirtualServicePacks,
 } from "../../../../store/actions";
 import { countsPerPages } from "../../../../constants";
 
@@ -40,17 +42,29 @@ export class Services extends Component {
     servicesForDelete: [],
     postServices: false,
     deleteServices: false,
-    updateMessage: ""
+    updateMessage: "",
+    isLoadingServicePacksDict: false,
+    isLoadingVirtualServicePacksDict: false,
   };
 
   fetchServices = () => {
+    this.setState({ isLoadingServicePacksDict: true }, () =>
+      this.props
+        .fetchGetDictServicePacks()
+        .then(() => this.setState({ isLoadingServicePacksDict: false }))
+    );
+    this.setState({ isLoadingVirtualServicePacksDict: true }, () =>
+      this.props
+        .fetchGetDictVirtualServicePacks()
+        .then(() => this.setState({ isLoadingVirtualServicePacksDict: false }))
+    );
     return this.props
       .fetchGetUserServicesByUserId(
         this.props.match.params.tenantId,
         this.props.match.params.groupId,
         this.props.match.params.userName
       )
-      .then(data =>
+      .then((data) =>
         this.setState(
           {
             services: this.props.userServicePacks.sort((a, b) => {
@@ -59,7 +73,7 @@ export class Services extends Component {
               return 0;
             }),
             isLoading: data ? false : true,
-            sortedBy: "name"
+            sortedBy: "name",
           },
           () => this.pagination()
         )
@@ -79,7 +93,7 @@ export class Services extends Component {
         this.setState({
           postServices: false,
           deleteServices: false,
-          updateMessage: "Service Packs is updated"
+          updateMessage: "Service Packs is updated",
         })
       );
     }
@@ -98,9 +112,15 @@ export class Services extends Component {
       countPerPage,
       paginationServices,
       page,
-      updateMessage
+      updateMessage,
+      isLoadingServicePacksDict,
+      isLoadingVirtualServicePacksDict,
     } = this.state;
-    if (isLoading) {
+    if (
+      isLoading ||
+      isLoadingServicePacksDict ||
+      isLoadingVirtualServicePacksDict
+    ) {
       return <Loading />;
     }
 
@@ -116,15 +136,15 @@ export class Services extends Component {
                 id="search_placeholder"
                 defaultMessage="Service"
               >
-                {placeholder => (
+                {(placeholder) => (
                   <FormControl
                     type="text"
                     value={this.state.searchValue}
                     placeholder={placeholder}
-                    onChange={e =>
+                    onChange={(e) =>
                       this.setState(
                         {
-                          searchValue: e.target.value
+                          searchValue: e.target.value,
                         },
                         () => this.filterBySearchValue()
                       )
@@ -164,7 +184,7 @@ export class Services extends Component {
                       className={"margin-left-1"}
                       onChange={this.changeCoutOnPage}
                     >
-                      {countsPerPages.map(counts => (
+                      {countsPerPages.map((counts) => (
                         <option key={counts.value} value={counts.value}>
                           {counts.title}
                         </option>
@@ -201,7 +221,7 @@ export class Services extends Component {
                   <tbody>
                     {paginationServices[page].map((service, i) => (
                       <Service
-                        key={i}
+                        key={service.name}
                         index={i}
                         tenantId={this.props.tenantId}
                         service={service}
@@ -215,6 +235,10 @@ export class Services extends Component {
                             this.props.match.params.userName
                           )
                         }
+                        dict={{
+                          ...this.props.dictServicePacks,
+                          ...this.props.dictVirtualServicePacks,
+                        }}
                       />
                     ))}
                   </tbody>
@@ -277,22 +301,22 @@ export class Services extends Component {
   updateSevices = () => {
     const { services } = this.state;
     const servicesToPost = services
-      .filter(service => service.serviceChecked === true)
-      .map(service => {
+      .filter((service) => service.serviceChecked === true)
+      .map((service) => {
         let data = { name: service.name };
         return data;
       });
     const postData = {
-      servicePacks: servicesToPost
+      servicePacks: servicesToPost,
     };
     const servicesToDelete = services
-      .filter(service => service.serviceChecked === false)
-      .map(service => {
+      .filter((service) => service.serviceChecked === false)
+      .map((service) => {
         let data = { name: service.name };
         return data;
       });
     const deleteData = {
-      servicePacks: servicesToDelete
+      servicePacks: servicesToDelete,
     };
     this.setState({ updateMessage: "Loading..." }, () => {
       this.props
@@ -314,7 +338,7 @@ export class Services extends Component {
     });
   };
 
-  changeCoutOnPage = e => {
+  changeCoutOnPage = (e) => {
     this.setState({ countPerPage: Number(e.target.value), page: 0 }, () =>
       this.pagination()
     );
@@ -356,25 +380,25 @@ export class Services extends Component {
       paginationServices: paginationItems,
       pagination: false,
       countPages,
-      page: this.state.page
+      page: this.state.page,
     });
   };
 
-  handleSelectAllClick = e => {
+  handleSelectAllClick = (e) => {
     const isChecked = e.target.checked;
-    const newArr = this.state.services.map(el => ({
+    const newArr = this.state.services.map((el) => ({
       ...el,
-      serviceChecked: isChecked
+      serviceChecked: isChecked,
     }));
     this.setState({ services: newArr, selectAll: !this.state.selectAll }, () =>
       this.pagination()
     );
   };
 
-  handleSingleCheckboxClick = index => {
+  handleSingleCheckboxClick = (index) => {
     const newArr = this.state.services.map((el, i) => ({
       ...el,
-      serviceChecked: index === i ? !el.serviceChecked : el.serviceChecked
+      serviceChecked: index === i ? !el.serviceChecked : el.serviceChecked,
     }));
     this.setState({ services: newArr, selectAll: false }, () =>
       this.pagination()
@@ -384,10 +408,10 @@ export class Services extends Component {
   filterBySearchValue = () => {
     const { searchValue } = this.state;
     const SearchArray = this.props.userServicePacks
-      .filter(service =>
+      .filter((service) =>
         service.name.toLowerCase().includes(searchValue.toLowerCase())
       )
-      .map(service => service);
+      .map((service) => service);
     this.setState({ services: SearchArray }, () => this.pagination());
   };
 
@@ -427,17 +451,20 @@ export class Services extends Component {
   };
 }
 
-const mapStateToProps = state => ({ userServicePacks: state.userServicePacks });
+const mapStateToProps = (state) => ({
+  userServicePacks: state.userServicePacks,
+  dictServicePacks: state.dictServicePacks,
+  dictVirtualServicePacks: state.dictVirtualServicePacks,
+});
 
 const mapDispatchToProps = {
   fetchGetUserServicesByUserId,
   fetchPostAssignUserServicePacks,
-  fetchDeleteAssignUserServicePacks
+  fetchDeleteAssignUserServicePacks,
+  fetchGetDictServicePacks,
+  fetchGetDictVirtualServicePacks,
 };
 
 export default withRouter(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(Services)
+  connect(mapStateToProps, mapDispatchToProps)(Services)
 );

@@ -27,7 +27,10 @@ import {
   fetchGetTenantServicePack,
   showHideAdditionalServiceGroup,
   fetchGetTenantGroupService,
-  showHideAdditionalUserServicesGroup
+  showHideAdditionalUserServicesGroup,
+  fetchGetDictServicePacks,
+  fetchGetDictUserServices,
+  fetchGetDictVirtualServicePacks,
 } from "../../../../store/actions";
 
 const INFINITY = 8734;
@@ -48,22 +51,25 @@ export class Licenses extends Component {
     indexOfService: 0,
     showMore: true,
     editUserLimit: false,
-    editUserServices: false
+    editUserServices: false,
+    isLoadingServicePacksDict: false,
+    isLoadingUserServicesDict: false,
+    isLoadingVirtualServicePacksDict: false,
   };
 
   fetchData = () => {
     this.setState({ isLoading: true, isLoadingTrunk: true }, () => {
       this.props
         .fetchGetLicensesByGroupId(this.props.tenantId, this.props.groupId)
-        .then(data => {
+        .then((data) => {
           this.setState(
             {
               groupServices: this.props.groupServices.groups,
               servicePacks: this.props.servicePacks,
               newUserLimit: this.props.group.userLimit,
-              limitedUserServicesGroup: this.props.limitedUserServicesGroup
-                .services,
-              isLoading: data ? false : true
+              limitedUserServicesGroup:
+                this.props.limitedUserServicesGroup.services,
+              isLoading: data ? false : true,
             },
             () => this.props.showHideAdditionalServiceGroup(this.state.showMore)
           );
@@ -74,10 +80,25 @@ export class Licenses extends Component {
           this.setState({
             trunkGroups: this.props.trunkGroups,
             newUserLimit: this.props.group.userLimit,
-            isLoadingTrunk: false
+            isLoadingTrunk: false,
           });
         });
     });
+    this.setState({ isLoadingServicePacksDict: true }, () =>
+      this.props
+        .fetchGetDictServicePacks()
+        .then(() => this.setState({ isLoadingServicePacksDict: false }))
+    );
+    this.setState({ isLoadingUserServicesDict: true }, () =>
+      this.props
+        .fetchGetDictUserServices()
+        .then(() => this.setState({ isLoadingUserServicesDict: false }))
+    );
+    this.setState({ isLoadingVirtualServicePacksDict: true }, () =>
+      this.props
+        .fetchGetDictVirtualServicePacks()
+        .then(() => this.setState({ isLoadingVirtualServicePacksDict: false }))
+    );
   };
 
   componentDidMount() {
@@ -104,10 +125,19 @@ export class Licenses extends Component {
       editGroupServices,
       indexOfService,
       editUserLimit,
-      editUserServices
+      editUserServices,
+      isLoadingServicePacksDict,
+      isLoadingUserServicesDict,
+      isLoadingVirtualServicePacksDict,
     } = this.state;
 
-    if (isLoading || isLoadingTrunk) {
+    if (
+      isLoading ||
+      isLoadingTrunk ||
+      isLoadingServicePacksDict ||
+      isLoadingUserServicesDict ||
+      isLoadingVirtualServicePacksDict
+    ) {
       return <Loading />;
     }
 
@@ -147,7 +177,7 @@ export class Licenses extends Component {
                               className={"edit-pencil"}
                               onClick={() =>
                                 this.setState({
-                                  editTrunkLicenses: true
+                                  editTrunkLicenses: true,
                                 })
                               }
                             />
@@ -315,7 +345,7 @@ export class Licenses extends Component {
                           className={"edit-pencil"}
                           onClick={() =>
                             this.setState({
-                              editUserLimit: true
+                              editUserLimit: true,
                             })
                           }
                         />
@@ -341,7 +371,7 @@ export class Licenses extends Component {
                     }
                     allocated={this.props.group.userCount}
                     value={this.state.newUserLimit}
-                    onChange={value => this.setState({ newUserLimit: value })}
+                    onChange={(value) => this.setState({ newUserLimit: value })}
                     onSave={this.updateUserLimit}
                     licenseTitle={
                       <FormattedMessage
@@ -366,6 +396,10 @@ export class Licenses extends Component {
                     licenses={this.props.servicePacks}
                     showEdit={this.showEditSericePacks}
                     isEditGroup
+                    dict={{
+                      ...this.props.dictServicePacks,
+                      ...this.props.dictVirtualServicePacks,
+                    }}
                   />
                 ) : (
                   <FormattedMessage
@@ -504,6 +538,7 @@ export class Licenses extends Component {
                   showHide={this.showHideAdditionalUserServices}
                   showEdit={this.showEditUserServices}
                   withShowMore
+                  dict={{ ...this.props.dictUserServices }}
                 />
               ) : (
                 <FormattedMessage
@@ -554,7 +589,7 @@ export class Licenses extends Component {
 
   updateUserServices = () => {
     const data = {
-      userServices: this.state.limitedUserServicesGroup
+      userServices: this.state.limitedUserServicesGroup,
     };
 
     this.props
@@ -567,8 +602,8 @@ export class Licenses extends Component {
       .then(() => this.setState({ editUserServices: false }));
   };
 
-  changeUserServicesMaximum = max => {
-    this.setState(prevState => ({
+  changeUserServicesMaximum = (max) => {
+    this.setState((prevState) => ({
       limitedUserServicesGroup: [
         ...prevState.limitedUserServicesGroup.slice(
           0,
@@ -579,18 +614,18 @@ export class Licenses extends Component {
           allocated: {
             ...prevState.limitedUserServicesGroup[this.state.indexOfService]
               .allocated,
-            maximum: Number(max)
-          }
+            maximum: Number(max),
+          },
         },
         ...prevState.limitedUserServicesGroup.slice(
           this.state.indexOfService + 1
-        )
-      ]
+        ),
+      ],
     }));
   };
 
-  changeUserServicesUnlimeted = checked => {
-    this.setState(prevState => ({
+  changeUserServicesUnlimeted = (checked) => {
+    this.setState((prevState) => ({
       limitedUserServicesGroup: [
         ...prevState.limitedUserServicesGroup.slice(
           0,
@@ -601,73 +636,73 @@ export class Licenses extends Component {
           allocated: {
             ...prevState.limitedUserServicesGroup[this.state.indexOfService]
               .allocated,
-            unlimited: checked
-          }
+            unlimited: checked,
+          },
         },
         ...prevState.limitedUserServicesGroup.slice(
           this.state.indexOfService + 1
-        )
-      ]
+        ),
+      ],
     }));
   };
 
-  showEditUserServices = index => {
+  showEditUserServices = (index) => {
     this.setState({ indexOfService: index }, () =>
       this.setState({ editUserServices: true })
     );
   };
 
-  showHideAdditionalUserServices = status => {
+  showHideAdditionalUserServices = (status) => {
     this.setState({ showMoreUserServices: status });
     this.props.showHideAdditionalUserServicesGroup(status);
   };
 
-  showEditGroupServices = index => {
+  showEditGroupServices = (index) => {
     this.setState({ indexOfService: index }, () =>
       this.setState({ editGroupServices: true })
     );
   };
 
-  showEditSericePacks = index => {
+  showEditSericePacks = (index) => {
     this.setState({ indexOfService: index }, () =>
       this.setState({ editServicePacks: true })
     );
   };
 
-  changeMaxBurstingValue = value => {
-    this.setState(prevState => ({
+  changeMaxBurstingValue = (value) => {
+    this.setState((prevState) => ({
       trunkGroups: {
         ...prevState.trunkGroups,
         burstingMaxActiveCalls: {
           ...prevState.trunkGroups.burstingMaxActiveCalls,
-          maximum: Number(value)
-        }
-      }
+          maximum: Number(value),
+        },
+      },
     }));
   };
 
   changeMaxBurstingInfinity = () => {
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       trunkGroups: {
         ...prevState.trunkGroups,
         burstingMaxActiveCalls: {
           ...prevState.trunkGroups.burstingMaxActiveCalls,
-          unlimited: !prevState.trunkGroups.burstingMaxActiveCalls.unlimited
-        }
-      }
+          unlimited: !prevState.trunkGroups.burstingMaxActiveCalls.unlimited,
+        },
+      },
     }));
   };
 
-  changeTrunkingLicenses = value => {
-    this.setState(prevState => ({
+  changeTrunkingLicenses = (value) => {
+    this.setState((prevState) => ({
       trunkGroups: {
         ...prevState.trunkGroups,
-        maxActiveCalls: Number(value)
-      }
+        maxActiveCalls: Number(value),
+      },
     }));
   };
 
-  showHideAdditionalServices = status => {
+  showHideAdditionalServices = (status) => {
     this.setState({ showMore: status });
     this.props.showHideAdditionalServiceGroup(status);
   };
@@ -678,7 +713,7 @@ export class Licenses extends Component {
 
   updateServicePacks = () => {
     const data = {
-      servicePacks: this.state.servicePacks
+      servicePacks: this.state.servicePacks,
     };
 
     this.props
@@ -691,41 +726,41 @@ export class Licenses extends Component {
       .then(() => this.setState({ editServicePacks: false }));
   };
 
-  changeServicePacksUnlimeted = checked => {
-    this.setState(prevState => ({
+  changeServicePacksUnlimeted = (checked) => {
+    this.setState((prevState) => ({
       servicePacks: [
         ...prevState.servicePacks.slice(0, this.state.indexOfService),
         {
           ...prevState.servicePacks[this.state.indexOfService],
           allocated: {
             ...prevState.servicePacks[this.state.indexOfService].allocated,
-            unlimited: checked
-          }
+            unlimited: checked,
+          },
         },
-        ...prevState.servicePacks.slice(this.state.indexOfService + 1)
-      ]
+        ...prevState.servicePacks.slice(this.state.indexOfService + 1),
+      ],
     }));
   };
 
-  changeServicePacksMaximum = max => {
-    this.setState(prevState => ({
+  changeServicePacksMaximum = (max) => {
+    this.setState((prevState) => ({
       servicePacks: [
         ...prevState.servicePacks.slice(0, this.state.indexOfService),
         {
           ...prevState.servicePacks[this.state.indexOfService],
           allocated: {
             ...prevState.servicePacks[this.state.indexOfService].allocated,
-            maximum: Number(max)
-          }
+            maximum: Number(max),
+          },
         },
-        ...prevState.servicePacks.slice(this.state.indexOfService + 1)
-      ]
+        ...prevState.servicePacks.slice(this.state.indexOfService + 1),
+      ],
     }));
   };
 
   updateGroupServices = () => {
     const data = {
-      groupServices: this.state.groupServices
+      groupServices: this.state.groupServices,
     };
 
     const authorisedServices = {
@@ -737,7 +772,7 @@ export class Licenses extends Component {
           return prev;
         }
         return prev;
-      }, [])
+      }, []),
     };
 
     this.props
@@ -757,35 +792,35 @@ export class Licenses extends Component {
       .then(() => this.setState({ editGroupServices: false }));
   };
 
-  changeGroupServicesUnlimeted = checked => {
-    this.setState(prevState => ({
+  changeGroupServicesUnlimeted = (checked) => {
+    this.setState((prevState) => ({
       groupServices: [
         ...prevState.groupServices.slice(0, this.state.indexOfService),
         {
           ...prevState.groupServices[this.state.indexOfService],
           allocated: {
             ...prevState.groupServices[this.state.indexOfService].allocated,
-            unlimited: checked
-          }
+            unlimited: checked,
+          },
         },
-        ...prevState.groupServices.slice(this.state.indexOfService + 1)
-      ]
+        ...prevState.groupServices.slice(this.state.indexOfService + 1),
+      ],
     }));
   };
 
-  changeGroupServicesMaximum = max => {
-    this.setState(prevState => ({
+  changeGroupServicesMaximum = (max) => {
+    this.setState((prevState) => ({
       groupServices: [
         ...prevState.groupServices.slice(0, this.state.indexOfService),
         {
           ...prevState.groupServices[this.state.indexOfService],
           allocated: {
             ...prevState.groupServices[this.state.indexOfService].allocated,
-            maximum: Number(max)
-          }
+            maximum: Number(max),
+          },
         },
-        ...prevState.groupServices.slice(this.state.indexOfService + 1)
-      ]
+        ...prevState.groupServices.slice(this.state.indexOfService + 1),
+      ],
     }));
   };
 
@@ -793,7 +828,7 @@ export class Licenses extends Component {
     const data = {
       userLimit: this.state.newUserLimit
         ? parseInt(this.state.newUserLimit, 10)
-        : this.props.group.userLimit
+        : this.props.group.userLimit,
     };
 
     this.props
@@ -810,7 +845,7 @@ export class Licenses extends Component {
   updateTrunkCapacity = () => {
     const data = {
       maxActiveCalls: this.state.trunkGroups.maxActiveCalls,
-      burstingMaxActiveCalls: this.state.trunkGroups.burstingMaxActiveCalls
+      burstingMaxActiveCalls: this.state.trunkGroups.burstingMaxActiveCalls,
     };
 
     this.props
@@ -825,7 +860,7 @@ export class Licenses extends Component {
   };
 }
 
-const mapStateToProps = state => ({
+const mapStateToProps = (state) => ({
   group: state.group,
   servicePacks: state.servicePacks,
   groupServices: state.groupServices,
@@ -835,7 +870,10 @@ const mapStateToProps = state => ({
   fetchTrunksGroupsFail: state.fetchTrunksGroupsFail,
   tenantServicePack: state.tenantServicePack,
   tenantGroupService: state.tenantGroupService,
-  limitedUserServicesGroup: state.limitedUserServicesGroup
+  limitedUserServicesGroup: state.limitedUserServicesGroup,
+  dictServicePacks: state.dictServicePacks,
+  dictUserServices: state.dictUserServices,
+  dictVirtualServicePacks: state.dictVirtualServicePacks,
 });
 
 const mapDispatchToProps = {
@@ -850,12 +888,12 @@ const mapDispatchToProps = {
   fetchGetTenantServicePack,
   showHideAdditionalServiceGroup,
   fetchGetTenantGroupService,
-  showHideAdditionalUserServicesGroup
+  showHideAdditionalUserServicesGroup,
+  fetchGetDictServicePacks,
+  fetchGetDictUserServices,
+  fetchGetDictVirtualServicePacks,
 };
 
 export default withRouter(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(Licenses)
+  connect(mapStateToProps, mapDispatchToProps)(Licenses)
 );

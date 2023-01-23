@@ -162,6 +162,9 @@ const initialState = {
     enabled: false,
     spendingLimit: 0,
   },
+  dictServicePacks: {},
+  dictUserServices: {},
+  dictVirtualServicePacks: {},
 };
 
 function mainReducer(state = initialState, action) {
@@ -909,6 +912,36 @@ function mainReducer(state = initialState, action) {
       return {
         ...state,
         tenantOnlineCharging: action.data,
+      };
+    }
+    case actionType.GET_DICT_SERVICE_PACKS: {
+      return {
+        ...state,
+        dictServicePacks: action.data.service_packs.reduce((prev, curr) => {
+          prev[curr.technical_name] = curr;
+          return prev;
+        }, {}),
+      };
+    }
+    case actionType.GET_DICT_USER_SERVICES: {
+      return {
+        ...state,
+        dictUserServices: action.data.user_services.reduce((prev, curr) => {
+          prev[curr.technical_name] = curr;
+          return prev;
+        }, {}),
+      };
+    }
+    case actionType.GET_DICT_VIRTUAL_SERVICE_PACKS: {
+      return {
+        ...state,
+        dictVirtualServicePacks: action.data.virtual_service_packs.reduce(
+          (prev, curr) => {
+            prev[curr.technical_name] = curr;
+            return prev;
+          },
+          {}
+        ),
       };
     }
     case actionType.POST_CREATE_GROUP_ADMIN: {

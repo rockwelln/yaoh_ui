@@ -18,7 +18,8 @@ import { FormattedMessage } from "react-intl";
 import {
   fetchGetUserServicesByUserId,
   fetchPostAssignUserServices,
-  fetchDeleteAssignUserServices
+  fetchDeleteAssignUserServices,
+  fetchGetDictUserServices,
 } from "../../../../store/actions";
 import { countsPerPages } from "../../../../constants";
 
@@ -40,17 +41,23 @@ export class Services extends Component {
     servicesForDelete: [],
     postServices: false,
     deleteServices: false,
-    updateMessage: ""
+    updateMessage: "",
+    isLoadingUserServicesDict: false,
   };
 
   fetchServices = () => {
+    this.setState({ isLoadingUserServicesDict: true }, () =>
+      this.props
+        .fetchGetDictUserServices()
+        .then(() => this.setState({ isLoadingUserServicesDict: false }))
+    );
     return this.props
       .fetchGetUserServicesByUserId(
         this.props.match.params.tenantId,
         this.props.match.params.groupId,
         this.props.match.params.userName
       )
-      .then(data =>
+      .then((data) =>
         this.setState(
           {
             services: this.props.userServices.sort((a, b) => {
@@ -59,7 +66,7 @@ export class Services extends Component {
               return 0;
             }),
             isLoading: data ? false : true,
-            sortedBy: "name"
+            sortedBy: "name",
           },
           () => this.pagination()
         )
@@ -79,7 +86,7 @@ export class Services extends Component {
         this.setState({
           postServices: false,
           deleteServices: false,
-          updateMessage: "Services is updated"
+          updateMessage: "Services is updated",
         })
       );
     }
@@ -98,9 +105,10 @@ export class Services extends Component {
       countPerPage,
       paginationServices,
       page,
-      updateMessage
+      updateMessage,
+      isLoadingUserServicesDict,
     } = this.state;
-    if (isLoading) {
+    if (isLoading || isLoadingUserServicesDict) {
       return <Loading />;
     }
 
@@ -116,15 +124,15 @@ export class Services extends Component {
                 id="search_placeholder"
                 defaultMessage="Service"
               >
-                {placeholder => (
+                {(placeholder) => (
                   <FormControl
                     type="text"
                     value={this.state.searchValue}
                     placeholder={placeholder}
-                    onChange={e =>
+                    onChange={(e) =>
                       this.setState(
                         {
-                          searchValue: e.target.value
+                          searchValue: e.target.value,
                         },
                         () => this.filterBySearchValue()
                       )
@@ -164,7 +172,7 @@ export class Services extends Component {
                       className={"margin-left-1"}
                       onChange={this.changeCoutOnPage}
                     >
-                      {countsPerPages.map(counts => (
+                      {countsPerPages.map((counts) => (
                         <option key={counts.value} value={counts.value}>
                           {counts.title}
                         </option>
@@ -208,13 +216,14 @@ export class Services extends Component {
                   <tbody>
                     {paginationServices[page].map((service, i) => (
                       <Service
-                        key={i}
+                        key={service.name}
                         index={i}
                         tenantId={this.props.tenantId}
                         service={service}
                         handleSingleCheckboxClick={
                           this.handleSingleCheckboxClick
                         }
+                        dict={this.props.dictUserServices}
                         onReload={() =>
                           this.props.fetchGetUserServicesByUserId(
                             this.props.match.params.tenantId,
@@ -284,22 +293,22 @@ export class Services extends Component {
   updateSevices = () => {
     const { services } = this.state;
     const servicesToPost = services
-      .filter(service => service.serviceChecked === true)
-      .map(service => {
+      .filter((service) => service.serviceChecked === true)
+      .map((service) => {
         let data = { name: service.name };
         return data;
       });
     const postData = {
-      services: servicesToPost
+      services: servicesToPost,
     };
     const servicesToDelete = services
-      .filter(service => service.serviceChecked === false)
-      .map(service => {
+      .filter((service) => service.serviceChecked === false)
+      .map((service) => {
         let data = { name: service.name };
         return data;
       });
     const deleteData = {
-      services: servicesToDelete
+      services: servicesToDelete,
     };
     this.setState({ updateMessage: "Loading..." }, () => {
       this.props
@@ -321,7 +330,7 @@ export class Services extends Component {
     });
   };
 
-  changeCoutOnPage = e => {
+  changeCoutOnPage = (e) => {
     this.setState({ countPerPage: Number(e.target.value), page: 0 }, () =>
       this.pagination()
     );
@@ -363,25 +372,25 @@ export class Services extends Component {
       paginationServices: paginationItems,
       pagination: false,
       countPages,
-      page: this.state.page
+      page: this.state.page,
     });
   };
 
-  handleSelectAllClick = e => {
+  handleSelectAllClick = (e) => {
     const isChecked = e.target.checked;
-    const newArr = this.state.services.map(el => ({
+    const newArr = this.state.services.map((el) => ({
       ...el,
-      serviceChecked: isChecked
+      serviceChecked: isChecked,
     }));
     this.setState({ services: newArr, selectAll: !this.state.selectAll }, () =>
       this.pagination()
     );
   };
 
-  handleSingleCheckboxClick = index => {
+  handleSingleCheckboxClick = (index) => {
     const newArr = this.state.services.map((el, i) => ({
       ...el,
-      serviceChecked: index === i ? !el.serviceChecked : el.serviceChecked
+      serviceChecked: index === i ? !el.serviceChecked : el.serviceChecked,
     }));
     this.setState({ services: newArr, selectAll: false }, () =>
       this.pagination()
@@ -391,10 +400,10 @@ export class Services extends Component {
   filterBySearchValue = () => {
     const { searchValue } = this.state;
     const SearchArray = this.props.userServices
-      .filter(service =>
+      .filter((service) =>
         service.name.toLowerCase().includes(searchValue.toLowerCase())
       )
-      .map(service => service);
+      .map((service) => service);
     this.setState({ services: SearchArray }, () => this.pagination());
   };
 
@@ -451,17 +460,18 @@ export class Services extends Component {
   };
 }
 
-const mapStateToProps = state => ({ userServices: state.userServices });
+const mapStateToProps = (state) => ({
+  userServices: state.userServices,
+  dictUserServices: state.dictUserServices,
+});
 
 const mapDispatchToProps = {
   fetchGetUserServicesByUserId,
   fetchPostAssignUserServices,
-  fetchDeleteAssignUserServices
+  fetchDeleteAssignUserServices,
+  fetchGetDictUserServices,
 };
 
 export default withRouter(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(Services)
+  connect(mapStateToProps, mapDispatchToProps)(Services)
 );
