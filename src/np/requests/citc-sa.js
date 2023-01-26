@@ -1489,6 +1489,26 @@ export class NPTransaction extends Component {
       ))
   }
 
+  onRollback(activity_id, task_id, replay_behaviour) {
+    this.setState({replaying: true});
+    const meta = JSON.stringify({replay_behaviour: replay_behaviour});
+    fetch_put(`/api/v01/transactions/${activity_id}/tasks/${task_id}?meta=${meta}`, {})
+      .then(() => {
+        !this.cancelLoad && this.setState({replaying: false});
+        this.fetchTxDetails(false);
+        NotificationsManager.success(
+          <FormattedMessage id="rollback-triggered" defaultMessage="{action} triggered!" values={{action: replay_behaviour}}/>,
+        );
+      })
+      .catch(error => {
+        !this.cancelLoad && this.setState({replaying: false});
+        NotificationsManager.error(
+          <FormattedMessage id="rollback-failed" defaultMessage="{action} failed!" values={{action: replay_behaviour}}/>,
+          error.message
+        );
+      })
+  }
+
   changeTxStatus(new_status) {
     fetch_put(`/api/v01/transactions/${this.state.tx.id}`, { status: new_status })
       .then(() => {
@@ -1799,6 +1819,7 @@ export class NPTransaction extends Component {
                   tasks={tx.tasks}
                   definition={JSON.parse(tx.definition)}
                   onReplay={this.onReplay}
+                  onRollback={this.onRollback}
                   user_can_replay={can_act && tx.status === 'ACTIVE'}
                   tx_id={tx.id}
                   userInfo={user_info}
