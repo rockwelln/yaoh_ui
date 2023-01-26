@@ -1381,6 +1381,7 @@ export class NPTransaction extends Component {
     this.cancelLoad = false;
 
     this.onReplay = this.onReplay.bind(this);
+    this.onRollback = this.onRollback.bind(this);
     this.onForceClose = this.onForceClose.bind(this);
     this.fetchTxDetails = this.fetchTxDetails.bind(this);
     this.actionList = this.actionList.bind(this);
