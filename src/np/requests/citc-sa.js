@@ -1797,7 +1797,7 @@ export class NPTransaction extends Component {
                 <TransactionFlow definition={tx.definition} states={tx.tasks} />
                 <TasksTable
                   tasks={tx.tasks}
-                  definition={tx.definition}
+                  definition={JSON.parse(tx.definition)}
                   onReplay={this.onReplay}
                   user_can_replay={can_act && tx.status === 'ACTIVE'}
                   tx_id={tx.id}
