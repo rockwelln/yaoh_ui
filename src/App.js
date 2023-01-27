@@ -490,12 +490,12 @@ function AsyncApioNavBar({user_info, logoutUser, database_status}){
               </LinkContainer>
             </>
             }
-            {//localUser.canSee(pages.system_logs) &&
-             // <LinkContainer to={"/system/logs"} key="logs">
-             //   <MenuItem>
-             //     <FormattedMessage id="logs" defaultMessage="Logs"/>
-             //   </MenuItem>
-             // </LinkContainer>
+            {/*localUser.canSee(pages.system_logs) &&*/
+              <LinkContainer to={"/system/logs"} key="logs">
+                <MenuItem>
+                  <FormattedMessage id="logs" defaultMessage="Logs"/>
+                </MenuItem>
+              </LinkContainer>
             }
             {localUser.isAllowed(accesses.settings_alarms) &&
               <LinkContainer to={"/system/alarms"} key="alarms">

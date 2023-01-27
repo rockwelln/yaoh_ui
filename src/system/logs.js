@@ -67,8 +67,13 @@ class FollowLog extends React.Component {
     }
 
     updateContent(event) {
-        const msg = JSON.parse(event.data);
-        this.setState({content: this.state.content + msg.content});
+        let msg = ""
+        try {
+          msg = JSON.parse(event.data).content;
+        } catch(e) {
+          msg = event.data;
+        }
+        this.setState({content: this.state.content + msg});
     }
 
     fetchContent() {
