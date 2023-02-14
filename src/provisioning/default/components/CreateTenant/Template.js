@@ -121,7 +121,7 @@ export class Template extends Component {
     const filteredDataCreateTenant = removeEmpty(this.props.createTenant);
     if (this.props?.config?.reseller?.tenant) {
       filteredDataCreateTenant.resellerId =
-        this.props.createTenant.resellerId.value;
+        this.props.createTenant?.resellerId?.value;
     } else {
       delete filteredDataCreateTenant.resellerId;
     }
