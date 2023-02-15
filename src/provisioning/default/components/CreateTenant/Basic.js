@@ -129,9 +129,9 @@ export class Basic extends Component {
                   <Checkbox
                     checked={this.props.createTenant.useCustomRoutingProfile}
                     onChange={(e) => {
-                      this.setState({
-                        turnOnSyncLDAP: e.target.checked,
-                      });
+                      this.props.changeCustomRoutingProfileOfTenant(
+                        e.target.checked
+                      );
                     }}
                     className={"margin-top-0"}
                   >
