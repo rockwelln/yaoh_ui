@@ -1826,6 +1826,15 @@ function mainReducer(state = initialState, action) {
         isDisabledGroupSuspensionStatusButton: true,
       };
     }
+    case actionType.CHANGE_CUSTOM_ROUTING_PROFILE_OF_TENANT: {
+      return {
+        ...state,
+        createTenant: {
+          ...state.createTenant,
+          useCustomRoutingProfile: action.data,
+        },
+      };
+    }
     default:
       return state;
   }

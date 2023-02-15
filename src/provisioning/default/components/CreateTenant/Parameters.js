@@ -64,7 +64,9 @@ export class TenantParameters extends Component {
           </Row>
         </div>
         <div class="panel-body">
-          {this.props.createdTenant.type === "Enterprise" && (
+          {(this.props.createdTenant.type === "Enterprise" ||
+            (this.props.createdTenant.type === "ServiceProvider" &&
+              this.props.createdTenant.useCustomRoutingProfile)) && (
             <Row>
               <Col md={12} className={"flex-row"}>
                 <div className={"width-100p"}>
@@ -75,8 +77,8 @@ export class TenantParameters extends Component {
                       if (e.target.checked) {
                         this.setState({
                           useCustomRouting: e.target.checked,
-                          selectedRoutingProfile: this.props
-                            .listOfRoutingProfiles[0],
+                          selectedRoutingProfile:
+                            this.props.listOfRoutingProfiles[0],
                         });
                       } else {
                         this.setState({
@@ -86,7 +88,7 @@ export class TenantParameters extends Component {
                       }
                     }}
                   >
-                    Use custom routing profile
+                    Use a routing profile
                   </Checkbox>
                   {this.state.useCustomRouting && (
                     <React.Fragment>
@@ -317,6 +319,15 @@ export class TenantParameters extends Component {
   };
 
   saveRoutingProfile = () => {
+    if (this.props.createdTenant.useCustomRoutingProfile) {
+      this.props
+        .fetchPutUpdateTenantRoutingProfile(this.props.createdTenant.tenantId, {
+          routingProfile: this.state.selectedRoutingProfile,
+        })
+        .then(() => this.setState({ skipNextButtonName: "Next" }));
+      return;
+    }
+
     this.props
       .fetchPutUpdateTenantDetails(this.props.createdTenant.tenantId, {
         useCustomRoutingProfile: true,

@@ -823,6 +823,11 @@ export const changeDetailsOfTenant = (data) => ({
   data,
 });
 
+export const changeCustomRoutingProfileOfTenant = (data) => ({
+  type: actionType.CHANGE_CUSTOM_ROUTING_PROFILE_OF_TENANT,
+  data,
+});
+
 export const refuseCreateGroup = () => ({
   type: actionType.REFUSE_CREATE_GROUP,
 });
@@ -2185,7 +2190,7 @@ export function fetchGetResellers() {
           <FormattedMessage
             id="fetch-resellers-failed"
             defaultMessage="Failed to fetch resellers"
-            />,
+          />,
           error.message
         );
       });
@@ -2221,7 +2226,7 @@ export function fetchGetReseller(name) {
           <FormattedMessage
             id="fetch-reseller-failed"
             defaultMessage="Failed to fetch reseller"
-                      />,
+          />,
           error.message
         );
       });

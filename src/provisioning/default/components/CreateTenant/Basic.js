@@ -34,6 +34,7 @@ import {
   getTenantOU,
   fetchGetResellers,
   changeResellerIdOfTenant,
+  changeCustomRoutingProfileOfTenant,
 } from "../../store/actions";
 import Loading from "../../common/Loading";
 
@@ -122,6 +123,23 @@ export class Basic extends Component {
                 </ToggleButton>
               </ToggleButtonGroup>
             </Col>
+            {this.props.createTenant.type === "ServiceProvider" && (
+              <Col>
+                <div>
+                  <Checkbox
+                    checked={this.props.createTenant.useCustomRoutingProfile}
+                    onChange={(e) => {
+                      this.setState({
+                        turnOnSyncLDAP: e.target.checked,
+                      });
+                    }}
+                    className={"margin-top-0"}
+                  >
+                    Use custom routing profile
+                  </Checkbox>
+                </div>
+              </Col>
+            )}
             {this.props.ldapBackends.length &&
             this.props.createTenant.type === "Enterprise" ? (
               <Col>
@@ -461,6 +479,10 @@ export class Basic extends Component {
       this.props.changeBackendOfTenant("");
       this.props.changeDetailsOfTenant("");
       this.setState({ turnOnSyncLDAP: false });
+      this.props.changeCustomRoutingProfileOfTenant(true);
+    }
+    if (value === "Enterprise") {
+      this.props.changeCustomRoutingProfileOfTenant(false);
     }
     this.setState({ errorMessage: "" });
   };
@@ -513,6 +535,7 @@ const mapDispatchToProps = {
   getTenantOU,
   fetchGetResellers,
   changeResellerIdOfTenant,
+  changeCustomRoutingProfileOfTenant,
 };
 
 export default withRouter(connect(mapStateToProps, mapDispatchToProps)(Basic));
