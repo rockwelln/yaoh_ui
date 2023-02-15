@@ -83,6 +83,32 @@ function SessionHolderInput({value, onChange}) {
   )
 }
 
+function TcpSessionHolderInput({value, onChange}) {
+  const [holders, setHolders] = useState([]);
+  useEffect(() => {
+    fetchConfiguration(
+      c => c.gateways_tcp &&
+        setHolders(Object.entries(c.gateways_tcp)
+          .map(([name, params]) => params.session_holder)
+          .filter(s => s !== undefined)
+          .sort((a, b) => a.localeCompare(b))
+        )
+    )
+  }, []);
+  return (
+    <Creatable
+      value={{value: value, label: value}}
+      isClearable
+      isSearchable
+      name="session-holder"
+      onChange={(value, action) => {
+        if(["select-option", "create-option", "clear"].includes(action.action)) {
+          onChange(value && value.value);
+        }
+      }}
+      options={holders.map(h => ({value: h, label: h}))} />
+  )
+}
 
 function TaskInput(props) {
   const {cells, value, onChange} = props;
@@ -779,6 +805,9 @@ export function Param2Input({param, activity, staticParams, cells, value, onChan
   switch(param.nature) {
     case 'session_holder':
       i = <SessionHolderInput value={value} onChange={e => onChange(e)} />
+      break;
+    case 'tcp_session_holder':
+      i = <TcpSessionHolderInput value={value} onChange={e => onChange(e)} />
       break;
     case 'datastore':
       i = <DataStoreInput value={value} onChange={e => onChange(e)} />

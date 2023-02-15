@@ -873,6 +873,343 @@ function GatewaysPanel(props) {
   )
 }
 
+const newTcpGw = {
+  name: "",
+  url: "",
+  timeout: 10,
+  session_holder: "",
+  auth: "default",
+  tls_verify: true,
+  client_tls_cert: null,
+  client_tls_key: null,
+};
+
+function NewTcpGwModal({show, onHide}) {
+  const [entry, setEntry] = useState(newTcpGw);
+
+  useEffect(() => {
+    if(!show) {
+      setEntry(newTcpGw);
+    }
+  }, [show]);
+
+  return (
+    <Modal show={show} onHide={() => onHide(undefined)} backdrop={false} bsSize={"large"}>
+      <Modal.Header closeButton>
+        <Modal.Title>
+          New gateway
+        </Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Form horizontal>
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="name" defaultMessage="Name"/>
+            </Col>
+
+            <Col sm={9}>
+              <FormControl
+                componentClass="input"
+                value={entry.name}
+                onChange={e => setEntry(update(entry, {$merge: {name: e.target.value}}))}/>
+
+            </Col>
+          </FormGroup>
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="url" defaultMessage="URL"/>
+            </Col>
+
+            <Col sm={9}>
+              <FormControl
+                componentClass="input"
+                value={entry.url}
+                onChange={e => setEntry(update(entry, {$merge: {url: e.target.value}}))}/>
+            </Col>
+          </FormGroup>
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="tls-verify" defaultMessage="TLS verify"/>
+            </Col>
+
+            <Col sm={9}>
+              <Checkbox
+                checked={entry.tls_verify}
+                onChange={e => setEntry(update(entry, {$merge: {tls_verify: e.target.checked}}))}/>
+            </Col>
+          </FormGroup>
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="session-holder" defaultMessage="Session holder"/>
+            </Col>
+
+            <Col sm={9}>
+              <FormControl
+                componentClass="input"
+                value={entry.session_holder}
+                onChange={e => setEntry(update(entry, {$merge: {session_holder: e.target.value}}))}/>
+              <HelpBlock>
+                A session holder is a name letting workflows getting a prepared session (with auto-login etc...)
+                to make some calls.
+              </HelpBlock>
+            </Col>
+          </FormGroup>
+          {
+            entry.url.startsWith("oci") &&
+              <>
+                <FormGroup>
+                  <Col componentClass={ControlLabel} sm={2}>
+                    <FormattedMessage id="username" defaultMessage="Username"/>
+                  </Col>
+
+                  <Col sm={9}>
+                    <FormControl
+                      componentClass="input"
+                      value={entry.username}
+                      onChange={e => setEntry(update(entry, {$merge: {username: e.target.value}}))}/>
+                  </Col>
+                </FormGroup>
+                <FormGroup>
+                  <Col componentClass={ControlLabel} sm={2}>
+                    <FormattedMessage id="password" defaultMessage="Password"/>
+                  </Col>
+
+                  <Col sm={9}>
+                    <FormControl
+                      componentClass="input"
+                      value={entry.password}
+                      onChange={e => setEntry(update(entry, {$merge: {password: e.target.value}}))}/>
+                  </Col>
+                </FormGroup>
+              </>
+          }
+          {
+            entry.url.startsWith("ocips") &&
+            <>
+              <hr/>
+
+              <FormGroup>
+                <Col componentClass={ControlLabel} sm={2}>
+                  <FormattedMessage id="tls client cert" defaultMessage="TLS client certificate"/>
+                </Col>
+
+                <Col sm={9}>
+                  <FormControl
+                    componentClass="textarea"
+                    rows={10}
+                    placeholder={"fill only to use mTLS"}
+                    style={{resize: "vertical"}}
+                    value={entry.client_tls_cert || ""}
+                    onChange={e => setEntry(update(entry, {$merge: {client_tls_cert: e.target.value}}))}/>
+                </Col>
+              </FormGroup>
+
+              <FormGroup>
+                <Col componentClass={ControlLabel} sm={2}>
+                  <FormattedMessage id="tls client key" defaultMessage="TLS client key"/>
+                </Col>
+
+                <Col sm={9}>
+                  <FormControl
+                    componentClass="textarea"
+                    rows={10}
+                    placeholder={"fill only to use mTLS"}
+                    style={{resize: "vertical"}}
+                    value={entry.client_tls_key || ""}
+                    onChange={e => setEntry(update(entry, {$merge: {client_tls_key: e.target.value}}))}/>
+                </Col>
+              </FormGroup>
+            </>
+          }
+        </Form>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button onClick={() => onHide(entry)}
+                disabled={!entry.name || entry.url.length === 0 || entry.name.length === 0}
+                bsStyle="primary"><FormattedMessage id="save" defaultMessage="Save"/></Button>
+        <Button onClick={() => onHide(undefined)}><FormattedMessage id="cancel" defaultMessage="Cancel"/></Button>
+      </Modal.Footer>
+    </Modal>
+  )
+}
+
+function TcpGwsPanel({onChange, gateways}) {
+  const [showNew, setShowNew] = useState(false);
+
+  return (
+    <>
+      <HelpBlock>
+        This panel contains information about TCP gateways.
+      </HelpBlock>
+      {
+        Object
+          .keys(gateways)
+          .sort((a, b) => a.localeCompare(b))
+          .map(g => {
+            const gateway = gateways[g];
+            return (
+              <Panel key={`gw-${g}`}>
+                <Panel.Heading>
+                  <Panel.Title toggle>{g}</Panel.Title>
+                </Panel.Heading>
+                <Panel.Body collapsible>
+                  <Form horizontal>
+                    <FormGroup>
+                      <Col componentClass={ControlLabel} sm={2}>
+                        <FormattedMessage id="url" defaultMessage="URL"/>
+                      </Col>
+
+                      <Col sm={9}>
+                        <FormControl
+                          componentClass="input"
+                          value={gateway.url}
+                          onChange={e => onChange(update(gateways, {[g]: {$merge: {url: e.target.value}}}))}/>
+                        <HelpBlock>
+                          URL scheme refer the protocol to use (e.g ocip, ocips, ...)
+                        </HelpBlock>
+                      </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                      <Col componentClass={ControlLabel} sm={2}>
+                        <FormattedMessage id="tls-verify" defaultMessage="TLS verify"/>
+                      </Col>
+
+                      <Col sm={9}>
+                        <Checkbox
+                          checked={gateway.tls_verify}
+                          onChange={e => onChange(update(gateways, {[g]: {$merge: {tls_verify: e.target.checked}}}))}/>
+                      </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                      <Col componentClass={ControlLabel} sm={2}>
+                        <FormattedMessage id="session-holder" defaultMessage="Session holder"/>
+                      </Col>
+
+                      <Col sm={9}>
+                        <FormControl
+                          componentClass="input"
+                          value={gateway.session_holder}
+                          onChange={e => onChange(update(gateways, {[g]: {$merge: {session_holder: e.target.value}}}))}/>
+                        <HelpBlock>
+                          A session holder is a name letting workflows getting a prepared session (with auto-login
+                          etc...)
+                          to make some calls.
+                        </HelpBlock>
+                      </Col>
+                    </FormGroup>
+
+                    {
+                      gateway.url.startsWith("oci") &&
+                        <>
+                          <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                              <FormattedMessage id="username" defaultMessage="Username"/>
+                            </Col>
+
+                            <Col sm={9}>
+                              <FormControl
+                                componentClass="input"
+                                value={gateway.username}
+                                onChange={e => onChange(update(gateways, {[g]: {$merge: {username: e.target.value}}}))}/>
+                            </Col>
+                          </FormGroup>
+
+                          <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                              <FormattedMessage id="password" defaultMessage="Password"/>
+                            </Col>
+
+                            <Col sm={9}>
+                              <FormControl
+                                componentClass="input"
+                                value={gateway.password}
+                                onChange={e => onChange(update(gateways, {[g]: {$merge: {password: e.target.value}}}))}/>
+
+                            </Col>
+                          </FormGroup>
+                        </>
+                    }
+                    {
+                      gateway.url.startsWith("ocips") &&
+                        <>
+                          <hr/>
+
+                          <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                              <FormattedMessage id="tls client cert" defaultMessage="TLS client certificate"/>
+                            </Col>
+
+                            <Col sm={9}>
+                              <FormControl
+                                componentClass="textarea"
+                                rows={10}
+                                placeholder={"fill only to use mTLS"}
+                                style={{resize: "vertical"}}
+                                value={gateway.client_tls_cert || ""}
+                                onChange={e => onChange(update(gateways, {[g]: {$merge: {client_tls_cert: e.target.value}}}))}/>
+                            </Col>
+                          </FormGroup>
+
+                          <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                              <FormattedMessage id="tls client key" defaultMessage="TLS client key"/>
+                            </Col>
+
+                            <Col sm={9}>
+                              <FormControl
+                                componentClass="textarea"
+                                rows={10}
+                                placeholder={"fill only to use mTLS"}
+                                style={{resize: "vertical"}}
+                                value={gateway.client_tls_key || ""}
+                                onChange={e => onChange(update(gateways, {[g]: {$merge: {client_tls_key: e.target.value}}}))}/>
+                            </Col>
+                          </FormGroup>
+                        </>
+                    }
+
+                    <FormGroup>
+                      <Col smOffset={2} sm={9}>
+                        <ButtonToolbar>
+                          <Button bsStyle="danger" onClick={() => onChange(update(gateways, {$unset: [g]}))}>
+                            <FormattedMessage id="delete" defaultMessage="Delete"/>
+                          </Button>
+                        </ButtonToolbar>
+                      </Col>
+                    </FormGroup>
+                  </Form>
+                </Panel.Body>
+              </Panel>
+            )
+          })
+      }
+
+      <Panel>
+        <Panel.Body>
+          <ButtonToolbar>
+            <Button onClick={() => setShowNew(true)} bsStyle="primary">
+              <FormattedMessage id="new" defaultMessage="New"/>
+            </Button>
+          </ButtonToolbar>
+          <NewTcpGwModal
+            show={showNew}
+            onHide={newEntry => {
+              setShowNew(false);
+              if (newEntry !== undefined) {
+                const name = newEntry.name;
+                delete newEntry.name;
+                onChange(update(gateways, {[name]: {$set: newEntry}}))
+              }
+            }}
+          />
+        </Panel.Body>
+      </Panel>
+    </>
+  )
+}
+
 
 function GuiForm(props) {
   const { gui, onChange } = props;
@@ -3927,6 +4264,11 @@ export default function Configuration({userInfo, history}) {
           <GatewaysPanel
             gateways={config.content.gateways}
             onChange={v => setConfig(update(config, {content: {gateways: {$set: v}}}))}/>
+        </Tab>
+        <Tab eventKey={"TCP"} title="TCP">
+          <TcpGwsPanel
+            gateways={config.content.gateways_tcp || {} }
+            onChange={v => setConfig(update(config, {content: {gateways_tcp: {$set: v}}}))}/>
         </Tab>
         <Tab eventKey={"Datastore"} title="Data Stores">
           <DataStoresPanel
