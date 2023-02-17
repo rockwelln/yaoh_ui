@@ -3791,7 +3791,7 @@ function SMTPForm(props) {
 
             <Col sm={9}>
               <Checkbox
-                checked={smtp.ssl}
+                checked={smtp.ssl === true}
                 onChange={e => onChange(update(smtp, {$merge: {ssl: e.target.checked}}))}/>
             </Col>
           </FormGroup>
