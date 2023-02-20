@@ -281,6 +281,7 @@ const AddResellerModal = ({
                       options={tenants.map((el) => {
                         return { label: el.tenantId, value: el.tenantId };
                       })}
+                      isDisabled={mode === "Edit"}
                       menuPlacement="top"
                     />
                   </Col>
