@@ -85,7 +85,9 @@ class Details extends Component {
             isLoading: false,
           })
         );
-        this.props.tenant.type === "Enterprise"
+        this.props.tenant.type === "Enterprise" ||
+        (this.props.tenant.type === "ServiceProvider" &&
+          this.props.tenant.useCustomRoutingProfile)
           ? this.props
               .fetchGetTenantRoutingProfile(this.props.tenantId)
               .then(() => {
@@ -360,7 +362,7 @@ class Details extends Component {
                         }
                       }}
                     >
-                      Use custom routing profile
+                      Use a routing profile
                     </Checkbox>
                   </Col>
                 </FormGroup>
