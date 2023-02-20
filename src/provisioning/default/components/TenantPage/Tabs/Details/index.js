@@ -85,7 +85,9 @@ class Details extends Component {
             isLoading: false,
           })
         );
-        this.props.tenant.type === "Enterprise"
+        this.props.tenant.type === "Enterprise" ||
+        (this.props.tenant.type === "ServiceProvider" &&
+          this.props.tenant.useCustomRoutingProfile)
           ? this.props
               .fetchGetTenantRoutingProfile(this.props.tenantId)
               .then(() => {
@@ -339,7 +341,9 @@ class Details extends Component {
                 </div>
               </Col>
             </FormGroup>
-            {this.props.tenant.type === "Enterprise" && (
+            {(this.props.tenant.type === "Enterprise" ||
+              (this.props.tenant.type === "ServiceProvider" &&
+                this.props.tenant.useCustomRoutingProfile)) && (
               <>
                 <FormGroup controlId="useCustomRoutingProfile">
                   <Col mdOffset={3} md={9}>
@@ -358,7 +362,7 @@ class Details extends Component {
                         }
                       }}
                     >
-                      Use custom routing profile
+                      Use a routing profile
                     </Checkbox>
                   </Col>
                 </FormGroup>
@@ -403,25 +407,24 @@ class Details extends Component {
                     </Col>
                   </FormGroup>
                 )}
-                {((this.state.tenantRoutingProfile !==
+                {this.state.tenantRoutingProfile !==
                   this.props.tenantRoutingProfile &&
-                  !this.state.useCustomRoutingProfile) ||
-                  this.props.tenant.type === "ServiceProvider") && (
-                  <FormGroup>
-                    <Col md={12}>
-                      <div class="button-row margin-right-0">
-                        <div className="pull-right">
-                          <Button
-                            className={"btn-primary"}
-                            onClick={this.saveRoutingProfile}
-                          >
-                            Save
-                          </Button>
+                  !this.state.useCustomRoutingProfile && (
+                    <FormGroup>
+                      <Col md={12}>
+                        <div class="button-row margin-right-0">
+                          <div className="pull-right">
+                            <Button
+                              className={"btn-primary"}
+                              onClick={this.saveRoutingProfile}
+                            >
+                              Save
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    </Col>
-                  </FormGroup>
-                )}
+                      </Col>
+                    </FormGroup>
+                  )}
               </>
             )}
             {Object.keys(this.props.tenantVoiceMessaging).length ? (
@@ -753,19 +756,9 @@ class Details extends Component {
   };
 
   saveRoutingProfile = () => {
-    this.props
-      .fetchPutUpdateTenantDetails(this.state.tenant.tenantId, {
-        useCustomRoutingProfile: true,
-      })
-      .then(() => {
-        this.props.tenant.type === "Enterprise" &&
-          this.props.fetchPutUpdateTenantRoutingProfile(
-            this.state.tenant.tenantId,
-            {
-              routingProfile: this.state.tenantRoutingProfile,
-            }
-          );
-      });
+    this.props.fetchPutUpdateTenantRoutingProfile(this.state.tenant.tenantId, {
+      routingProfile: this.state.tenantRoutingProfile,
+    });
   };
 
   saveVoiceMessaging = () => {
