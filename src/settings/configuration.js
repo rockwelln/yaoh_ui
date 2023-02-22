@@ -1397,7 +1397,7 @@ function UserCreationRules({entries, onChange}) {
       <tbody>
       {
         entries.map((entry, i) => (
-          <tr>
+          <tr key={`user-crea-rules-${i}`}>
             <td>
               <FormControl
                 componentClass="input"
@@ -2163,7 +2163,7 @@ function SamlParametersV2({params, onChange}) {
             <tbody>
               {
                 params.validRedirects?.map((r, i) =>
-                  <tr>
+                  <tr key={`saml-params${i}`}>
                     <td>{r}</td>
                     <td>
                       <Button
@@ -3363,7 +3363,7 @@ function LicenseGenerator({onNewLicense}) {
                   onNewLicense && onNewLicense(license);
                 })
               }}
-              bsStyle="secondary" >
+              bsStyle="primary" >
               Generate
             </Button>
           </Col>
