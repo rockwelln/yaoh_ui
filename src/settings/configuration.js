@@ -878,8 +878,8 @@ const newTcpGw = {
   url: "",
   timeout: 10,
   session_holder: "",
-  auth: "default",
-  tls_verify: true,
+  auth: "",
+  tls_verify: false,
   client_tls_cert: null,
   client_tls_key: null,
 };
@@ -951,6 +951,21 @@ function NewTcpGwModal({show, onHide}) {
               <HelpBlock>
                 A session holder is a name letting workflows getting a prepared session (with auto-login etc...)
                 to make some calls.
+              </HelpBlock>
+            </Col>
+          </FormGroup>
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="timeout" defaultMessage="Timeout"/>
+            </Col>
+
+            <Col sm={9}>
+              <FormControl
+                componentClass="input"
+                value={entry.timeout}
+                onChange={e => setEntry(update(entry, {$merge: {timeout: e.target.value && parseInt(e.target.value)}}))}/>
+              <HelpBlock>
+                Timeout in seconds
               </HelpBlock>
             </Col>
           </FormGroup>
@@ -1096,6 +1111,22 @@ function TcpGwsPanel({onChange, gateways}) {
                           A session holder is a name letting workflows getting a prepared session (with auto-login
                           etc...)
                           to make some calls.
+                        </HelpBlock>
+                      </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                      <Col componentClass={ControlLabel} sm={2}>
+                        <FormattedMessage id="timeout" defaultMessage="Timeout"/>
+                      </Col>
+
+                      <Col sm={9}>
+                        <FormControl
+                          componentClass="input"
+                          value={gateway.timeout}
+                          onChange={e => onChange(update(gateways, {[g]: {$merge: {timeout: e.target.value && parseInt(e.target.value)}}}))}/>
+                        <HelpBlock>
+                          Timeout in seconds
                         </HelpBlock>
                       </Col>
                     </FormGroup>
