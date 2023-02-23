@@ -939,6 +939,12 @@ function NewCellModal({show, onHide, cells, activity})  {
       }
     }, [show]);
 
+    useEffect(() => {
+      if(name.length === 0 && definition && ["or_outputs", "sync_outputs"].includes(definition.original_name)) {
+        setName(definition.original_name.split("_")[0] + "_" + crypto.randomUUID())
+      }
+    }, [definition, name])
+
     const params = definition && definition.params && definition
       .params
       .sort((a, b) => a.ui_order - b.ui_order)
