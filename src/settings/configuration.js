@@ -970,6 +970,49 @@ function NewTcpGwModal({show, onHide}) {
             </Col>
           </FormGroup>
           {
+            entry.url.startsWith("ssh") &&
+              <>
+                <FormGroup>
+                  <Col componentClass={ControlLabel} sm={2}>
+                    <FormattedMessage id="username" defaultMessage="Username"/>
+                  </Col>
+
+                  <Col sm={9}>
+                    <FormControl
+                      componentClass="input"
+                      value={entry.username}
+                      onChange={e => setEntry(update(entry, {$merge: {username: e.target.value}}))}/>
+                  </Col>
+                </FormGroup>
+                <FormGroup>
+                  <Col componentClass={ControlLabel} sm={2}>
+                    <FormattedMessage id="password" defaultMessage="Password"/>
+                  </Col>
+
+                  <Col sm={9}>
+                    <FormControl
+                      componentClass="input"
+                      value={entry.password}
+                      onChange={e => setEntry(update(entry, {$merge: {password: e.target.value}}))}/>
+                  </Col>
+                </FormGroup>
+                <FormGroup>
+                  <Col componentClass={ControlLabel} sm={2}>
+                    <FormattedMessage id="private-key" defaultMessage="Private key"/>
+                  </Col>
+
+                  <Col sm={9}>
+                    <FormControl
+                      componentClass="textarea"
+                      rows={10}
+                      style={{resize: "vertical"}}
+                      value={entry.client_tls_key || ""}
+                      onChange={e => setEntry(update(entry, {$merge: {client_tls_key: e.target.value}}))}/>
+                  </Col>
+                </FormGroup>
+              </>
+          }
+          {
             entry.url.startsWith("oci") &&
               <>
                 <FormGroup>
@@ -1080,7 +1123,7 @@ function TcpGwsPanel({onChange, gateways}) {
                           value={gateway.url}
                           onChange={e => onChange(update(gateways, {[g]: {$merge: {url: e.target.value}}}))}/>
                         <HelpBlock>
-                          URL scheme refer the protocol to use (e.g ocip, ocips, ...)
+                          URL scheme refer the protocol to use (e.g tcp, ssh, ocip, ocips, ...)
                         </HelpBlock>
                       </Col>
                     </FormGroup>
@@ -1131,6 +1174,51 @@ function TcpGwsPanel({onChange, gateways}) {
                       </Col>
                     </FormGroup>
 
+                    {
+                      gateway.url.startsWith("ssh") &&
+                        <>
+                          <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                              <FormattedMessage id="username" defaultMessage="Username"/>
+                            </Col>
+
+                            <Col sm={9}>
+                              <FormControl
+                                componentClass="input"
+                                value={gateway.username}
+                                onChange={e => onChange(update(gateways, {[g]: {$merge: {username: e.target.value}}}))}/>
+                            </Col>
+                          </FormGroup>
+
+                          <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                              <FormattedMessage id="password" defaultMessage="Password"/>
+                            </Col>
+
+                            <Col sm={9}>
+                              <FormControl
+                                componentClass="input"
+                                value={gateway.password}
+                                onChange={e => onChange(update(gateways, {[g]: {$merge: {password: e.target.value}}}))}/>
+
+                            </Col>
+                          </FormGroup>
+                          <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                              <FormattedMessage id="private-key" defaultMessage="Private key"/>
+                            </Col>
+
+                            <Col sm={9}>
+                              <FormControl
+                                componentClass="textarea"
+                                rows={10}
+                                style={{resize: "vertical"}}
+                                value={gateway.client_tls_key || ""}
+                                onChange={e => onChange(update(gateways, {[g]: {$merge: {client_tls_key: e.target.value}}}))}/>
+                            </Col>
+                          </FormGroup>
+                        </>
+                    }
                     {
                       gateway.url.startsWith("oci") &&
                         <>
