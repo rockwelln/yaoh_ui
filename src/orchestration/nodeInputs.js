@@ -31,7 +31,7 @@ export function fetchConfiguration(onSuccess) {
         .catch(console.error);
 }
 
-function  DataStoreInput({value, onChange}) {
+function  DataStoreInput({value, onChange, readOnly}) {
   const [stores, setStores] = useState([]);
   useEffect(() => {
     fetchConfiguration(
@@ -56,7 +56,7 @@ function  DataStoreInput({value, onChange}) {
   )
 }
 
-function SessionHolderInput({value, onChange}) {
+function SessionHolderInput({value, readOnly, onChange}) {
   const [holders, setHolders] = useState([]);
   useEffect(() => {
     fetchConfiguration(
@@ -71,11 +71,11 @@ function SessionHolderInput({value, onChange}) {
   return (
     <Creatable
       value={{value: value, label: value}}
-      isClearable
-      isSearchable
+      isClearable={!readOnly}
+      isSearchable={!readOnly}
       name="session-holder"
       onChange={(value, action) => {
-        if(["select-option", "create-option", "clear"].includes(action.action)) {
+        if(["select-option", "create-option", "clear"].includes(action.action) && !readOnly) {
           onChange(value && value.value);
         }
       }}
@@ -83,7 +83,7 @@ function SessionHolderInput({value, onChange}) {
   )
 }
 
-function TcpSessionHolderInput({value, onChange}) {
+function TcpSessionHolderInput({value, onChange, readOnly}) {
   const [holders, setHolders] = useState([]);
   useEffect(() => {
     fetchConfiguration(
@@ -110,13 +110,13 @@ function TcpSessionHolderInput({value, onChange}) {
   )
 }
 
-function TaskInput(props) {
-  const {cells, value, onChange} = props;
-
+function TaskInput({cells, value, onChange, readOnly}) {
   return (
     <FormControl
         componentClass="select"
         value={value}
+        readOnly={readOnly}
+        disabled={readOnly}
         onChange={e => onChange(e.target.value)}
     >
       <option value={""}/>
@@ -130,7 +130,7 @@ function TaskInput(props) {
 }
 
 
-function ActivityInput({value, onChange}) {
+function ActivityInput({value, onChange, readOnly}) {
   const [activities, setActivities] = useState([]);
 
   useEffect(() => {
@@ -170,8 +170,7 @@ function ActivityInput({value, onChange}) {
 }
 
 
-function UserRoleInput(props) {
-  const {value, onChange} = props;
+function UserRoleInput({value, onChange, readOnly}) {
   const [roles, setRoles] = useState([]);
 
   useEffect(() => {
@@ -182,6 +181,8 @@ function UserRoleInput(props) {
     <FormControl
         componentClass="select"
         value={value}
+        readOnly={readOnly}
+        disabled={readOnly}
         onChange={e => onChange(e.target.value)}
     >
       <option value={""}/>
@@ -194,8 +195,7 @@ function UserRoleInput(props) {
 }
 
 
-function UserProfileInput(props) {
-  const {value, onChange} = props;
+function UserProfileInput({value, onChange, readOnly}) {
   const [profiles, setProfiles] = useState([]);
 
   useEffect(() => {
@@ -206,6 +206,8 @@ function UserProfileInput(props) {
     <FormControl
         componentClass="select"
         value={value}
+        readOnly={readOnly}
+        disabled={readOnly}
         onChange={e => onChange(e.target.value)}
     >
       <option value={""}/>
@@ -218,12 +220,13 @@ function UserProfileInput(props) {
 }
 
 
-function ListInput(props) {
-    const {options, value, onChange} = props;
+function ListInput({options, value, onChange, readOnly}) {
     return (
       <FormControl
           componentClass="select"
           value={value}
+          readOnly={readOnly}
+          disabled={readOnly}
           onChange={e => onChange(e.target.value)}
       >
         <option value={""}/>
@@ -236,22 +239,22 @@ function ListInput(props) {
 }
 
 
-function TextareaInput(props) {
+function TextareaInput({value, onChange, cells, rows, readOnly}) {
   // todo can become a "list" of key (string) + value (jinja code)
-  const {value, onChange, cells, rows} = props;
   return (
     <FormControl
         componentClass={MentionExample}
         cells={cells}
         value={value}
         onChange={onChange}
+        readOnly={readOnly}
         rows={rows}
     />
   )
 }
 
 
-function ContextKey({value, onChange}) {
+function ContextKey({value, onChange, readOnly}) {
   const invalidOutput = value && value.includes(" ");
 
   let cleanupFlag = false;
@@ -271,8 +274,9 @@ function ContextKey({value, onChange}) {
       <FormControl
         style={{color: invalidOutput?"red":"black"}}
         value={key}
+        disabled={readOnly}
         onChange={e => onChange(JSON.stringify({key: e.target.value, cleanup: cleanupFlag}))} />
-      <Checkbox checked={cleanupFlag} onChange={e => onChange(JSON.stringify({key: key, cleanup: e.target.checked}))}>
+      <Checkbox checked={cleanupFlag} onChange={e => onChange(JSON.stringify({key: key, cleanup: e.target.checked}))} disabled={readOnly}>
         Delete key on workflow ending
       </Checkbox>
     </>
@@ -280,7 +284,7 @@ function ContextKey({value, onChange}) {
 }
 
 
-function ContextKeyValues({value, onChange}) {
+function ContextKeyValues({value, onChange, readOnly}) {
   const [newEntry, setNewEntry] = useState({key: "", value: "", cleanup: false});
 
   const addNewEntry = () => {
@@ -312,13 +316,16 @@ function ContextKeyValues({value, onChange}) {
             <td style={{width: "15%"}}>
               {e.cleanup?"✔️":""}
             </td>
-            <td>
-              <Button onClick={() => {
-                onChange(update(value, {$splice: [[i, 1]]}))
-              }}>{"-"}</Button>
-            </td>
+            {!readOnly &&
+              <td>
+                <Button onClick={() => {
+                  onChange(update(value, {$splice: [[i, 1]]}))
+                }}>{"-"}</Button>
+              </td>
+            }
           </tr>)
       }
+      { !readOnly &&
         <tr>
           <td style={{width: "40%"}}>
             <FormControl
@@ -345,14 +352,14 @@ function ContextKeyValues({value, onChange}) {
             >{"+"}</Button>
           </td>
         </tr>
+      }
       </tbody>
     </Table>
   )
 }
 
 
-export function HttpHeaders(props) {
-  const {value, onChange} = props;
+export function HttpHeaders({value, onChange, readOnly}) {
   const [newHeader, setNewHeader] = useState(["", ""])
 
   let headers = [];
@@ -376,13 +383,15 @@ export function HttpHeaders(props) {
             <td style={{width: "20%"}}>{head[0]}</td>
             <td>{" : "}</td>
             <td style={{width: "70%"}}>{head[1]}</td>
-            <td><Button onClick={() => {
-              const hs = headers.filter(h => h[0] !== head[0] && h[1] !== head[1]);
-              onChange(JSON.stringify(hs))
-            }}>{"-"}</Button></td>
+            {
+              !readOnly && <td><Button onClick={() => {
+                const hs = headers.filter(h => h[0] !== head[0] && h[1] !== head[1]);
+                onChange(JSON.stringify(hs))
+              }}>{"-"}</Button></td>
+            }
           </tr>)
       }
-      {
+      { !readOnly &&
         <tr>
           <td style={{width: "20%"}}>
             <FormControl
@@ -411,14 +420,15 @@ export function HttpHeaders(props) {
 
 
 const TIMER = 2;
-function TimerInput(props) {
-  const {cells, cellsDef, value, onChange} = props;
+function TimerInput({cells, cellsDef, value, onChange, readOnly}) {
   const allTimers = cellsDef.filter(c => c.type === TIMER).map(c => c.name);
 
   return (
     <FormControl
         componentClass="select"
         value={value}
+        readOnly={readOnly}
+        disabled={readOnly}
         onChange={e => onChange(e.target.value)}
     >
       <option value={""}/>
@@ -433,17 +443,17 @@ function TimerInput(props) {
 }
 
 
-function BoolInput(props) {
-  const {value, defaultChecked, onChange} = props;
+function BoolInput({value, defaultChecked, onChange, readOnly}) {
   return (
     <Checkbox
       checked={(value !== undefined && value !== "")?value === "true":defaultChecked}
+      disabled={readOnly}
       onChange={e => onChange(e.target.checked?"true":"false")} />
   )
 }
 
 
-function WorkflowEnds({value, onChange, workflow}) {
+function WorkflowEnds({value, onChange, workflow, readOnly}) {
   const [newOutput, setNewOutput] = useState("");
   const [ends, setEnds] = useState([]);
   const outputs = value ? value.split(",") : [];
@@ -470,12 +480,13 @@ function WorkflowEnds({value, onChange, workflow}) {
           outputs.map(o =>
             <tr key={o}>
               <td>{o}</td>
-              <td><Button onClick={() => {
-                onChange(outputs.filter(output => output !== o).join(","), outputs.filter(output => output !== o))
-              }}>{"-"}</Button></td>
+              {!readOnly && <td><Button onClick={() => {
+                  onChange(outputs.filter(output => output !== o).join(","), outputs.filter(output => output !== o))
+                }}>{"-"}</Button></td>
+              }
             </tr>)
         }
-        {
+        {!readOnly &&
           <tr>
             <td style={{width: "100px"}}>
               <FormControl
@@ -505,8 +516,7 @@ function WorkflowEnds({value, onChange, workflow}) {
 }
 
 
-function DynamicOutputs(props) {
-  const {value, onChange, regexp} = props;
+function DynamicOutputs({value, onChange, regexp, readOnly}) {
   const [newOutput, setNewOutput] = useState("");
   const outputs = value ? value.split(",") : [];
   const invalidOutput = regexp && !newOutput.match(regexp);
@@ -518,12 +528,13 @@ function DynamicOutputs(props) {
         outputs.map(o =>
           <tr key={o}>
             <td>{o}</td>
-            <td><Button onClick={() => {
-              onChange(outputs.filter(output => output !== o).join(","), outputs.filter(output => output !== o))
-            }}>{"-"}</Button></td>
+            { !readOnly && <td><Button onClick={() => {
+                onChange(outputs.filter(output => output !== o).join(","), outputs.filter(output => output !== o))
+              }}>{"-"}</Button></td>
+            }
           </tr>)
       }
-      {
+      { !readOnly &&
         <tr>
           <td style={{width: "100px"}}>
             <FormControl
@@ -548,7 +559,7 @@ function DynamicOutputs(props) {
   )
 }
 
-function TypedValues({value, onChange}) {
+function TypedValues({value, onChange, readOnly}) {
   const [newValue, setNewValue] = useState({value: "", type: "string"});
 
   const addNewEntry = () => {
@@ -576,13 +587,16 @@ function TypedValues({value, onChange}) {
             <td style={{width: "30%"}}>
               {e.type}
             </td>
-            <td>
-              <Button onClick={() => {
-                onChange(update(value, {$splice: [[i, 1]]}))
-              }}>{"-"}</Button>
-            </td>
+            { !readOnly &&
+              <td>
+                <Button onClick={() => {
+                  onChange(update(value, {$splice: [[i, 1]]}))
+                }}>{"-"}</Button>
+              </td>
+            }
           </tr>)
       }
+      { !readOnly &&
         <tr>
           <td style={{width: "70%"}}>
             <FormControl
@@ -603,12 +617,13 @@ function TypedValues({value, onChange}) {
             >{"+"}</Button>
           </td>
         </tr>
+      }
       </tbody>
     </Table>
   )
 }
 
-function SwitchOutputs({value, onChange}) {
+function SwitchOutputs({value, onChange, readOnly}) {
   const [newExpression, setNewExpression] = useState(["", ""]);
   let expressions = [];
   try {
@@ -633,16 +648,18 @@ function SwitchOutputs({value, onChange}) {
             <td style={{width: "50%"}}>{exp[0]}</td>
             <td>{" : "}</td>
             <td style={{width: "80px"}}>{exp[1]}</td>
-            <td><Button onClick={() => {
-              const es = expressions.filter(e => e[0] !== exp[0] && e[1] !== exp[1]);
-              onChange(
-                JSON.stringify(es),
-                es.map(e => e[1]),
-              )
-            }}>{"-"}</Button></td>
+            { !readOnly &&
+              <td><Button onClick={() => {
+                const es = expressions.filter(e => e[0] !== exp[0] && e[1] !== exp[1]);
+                onChange(
+                  JSON.stringify(es),
+                  es.map(e => e[1]),
+                )
+              }}>{"-"}</Button></td>
+            }
           </tr>)
       }
-      {
+      { !readOnly &&
         <tr>
           <td>{"case "}</td>
           <td style={{width: "50%"}}>
@@ -671,9 +688,7 @@ function SwitchOutputs({value, onChange}) {
 }
 
 
-function JsonSchemaFormFields(props) {
-  const {value, onChange} = props;
-
+function JsonSchemaFormFields({value, onChange, readOnly}) {
   const [newField, setNewField] = useState(["", {type: "string", minLength: 1}, false]);
   let fields = {
     "$schema": "http://json-schema.org/schema#",
@@ -711,6 +726,8 @@ function JsonSchemaFormFields(props) {
             <td style={{width: "40%"}}>
               <FormControl
                 componentClass="select"
+                disabled={readOnly}
+                readOnly={readOnly}
                 value={props.format || props.type}
                 onChange={e => {
                   let prop = {};
@@ -736,16 +753,18 @@ function JsonSchemaFormFields(props) {
               </FormControl>
             </td>
             <td>{fields.required && fields.required.includes(name)?"*":""}</td>
-            <td><Button onClick={() => {
-              if(fields.required && fields.required.includes(name)) {
-                onChange(JSON.stringify(update(fields, {properties: {$unset: [name]}, required: {$splice: [[fields.required.findIndex(e => e===name), 1]]}})))
-              } else {
-                onChange(JSON.stringify(update(fields, {properties: {$unset: [name]}})))
-              }
-            }}>{"-"}</Button></td>
+            { !readOnly &&
+              <td><Button onClick={() => {
+                if(fields.required && fields.required.includes(name)) {
+                  onChange(JSON.stringify(update(fields, {properties: {$unset: [name]}, required: {$splice: [[fields.required.findIndex(e => e===name), 1]]}})))
+                } else {
+                  onChange(JSON.stringify(update(fields, {properties: {$unset: [name]}})))
+                }
+              }}>{"-"}</Button></td>
+            }
           </tr>)
       }
-      {
+      { !readOnly &&
         <tr>
           <td style={{width: "50%"}}>
             <FormControl
@@ -800,38 +819,38 @@ function JsonSchemaFormFields(props) {
 }
 
 
-export function Param2Input({param, activity, staticParams, cells, value, onChange}) {
+export function Param2Input({param, activity, staticParams, cells, value, readOnly, onChange}) {
   let i;
   switch(param.nature) {
     case 'session_holder':
-      i = <SessionHolderInput value={value} onChange={e => onChange(e)} />
+      i = <SessionHolderInput value={value} readOnly={readOnly} onChange={e => onChange(e)} />
       break;
     case 'tcp_session_holder':
-      i = <TcpSessionHolderInput value={value} onChange={e => onChange(e)} />
+      i = <TcpSessionHolderInput value={value} readOnly={readOnly} onChange={e => onChange(e)} />
       break;
     case 'datastore':
-      i = <DataStoreInput value={value} onChange={e => onChange(e)} />
+      i = <DataStoreInput value={value} readOnly={readOnly} onChange={e => onChange(e)} />
       break;
     case 'typed_values':
-      i = <TypedValues value={value || []} onChange={e => onChange(e)} />
+      i = <TypedValues value={value || []} readOnly={readOnly} onChange={e => onChange(e)} />
       break;
     case 'task':
-      i = <TaskInput cells={activity.definition.cells} value={value} onChange={e => onChange(e)} />
+      i = <TaskInput cells={activity.definition.cells} readOnly={readOnly} value={value} onChange={e => onChange(e)} />
       break;
     case 'activity':
-      i = <ActivityInput value={value} onChange={e => onChange(e)} />
+      i = <ActivityInput value={value} readOnly={readOnly} onChange={e => onChange(e)} />
       break;
     case 'user_role':
-      i = <UserRoleInput value={value} onChange={e => onChange(e)} />
+      i = <UserRoleInput value={value} readOnly={readOnly} onChange={e => onChange(e)} />
       break;
     case 'user_profile':
-      i = <UserProfileInput value={value} onChange={e => onChange(e)} />
+      i = <UserProfileInput value={value} readOnly={readOnly} onChange={e => onChange(e)} />
       break;
     case 'timer':
-      i = <TimerInput cells={activity.definition.cells} cellsDef={cells} value={value} onChange={e => onChange(e)} />
+      i = <TimerInput cells={activity.definition.cells} readOnly={readOnly} cellsDef={cells} value={value} onChange={e => onChange(e)} />
       break;
     case 'list':
-      i = <ListInput options={param.values} value={value} onChange={e => onChange(e)} />
+      i = <ListInput options={param.values} readOnly={readOnly} value={value} onChange={e => onChange(e)} />
       break;
     case 'jinja':
     case 'python':
@@ -839,17 +858,18 @@ export function Param2Input({param, activity, staticParams, cells, value, onChan
     case 'user_properties':
     case 'json':
     case 'xml':
-      i = <TextareaInput rows={10} value={value} onChange={e => onChange(e)} cells={activity.definition.cells} />
+      i = <TextareaInput rows={10} value={value} readOnly={readOnly} onChange={e => onChange(e)} cells={activity.definition.cells} />
       break;
     case 'jsonschema_form_fields':
-      i = <JsonSchemaFormFields value={value} onChange={e => onChange(e)} />
+      i = <JsonSchemaFormFields value={value} readOnly={readOnly} onChange={e => onChange(e)} />
       break;
     case 'boolean':
-      i = <BoolInput value={value} defaultChecked={param.default} onChange={e => onChange(e)} />
+      i = <BoolInput value={value} defaultChecked={param.default} readOnly={readOnly} onChange={e => onChange(e)} />
       break;
     case 'python_switch':
       i = <SwitchOutputs
         value={value}
+        readOnly={readOnly}
         onChange={(e, outputs) => {
           onChange(e, outputs);
         }} />
@@ -857,6 +877,7 @@ export function Param2Input({param, activity, staticParams, cells, value, onChan
     case 'outputs':
       i = <DynamicOutputs
         value={value}
+        readOnly={readOnly}
         regexp={param.regexp || (param.schema && param.schema.items.pattern)}
         onChange={(e, outputs) => {
           onChange(e, outputs);
@@ -865,22 +886,23 @@ export function Param2Input({param, activity, staticParams, cells, value, onChan
     case 'workflow_ends':
       i = <WorkflowEnds
         value={value}
+        readOnly={readOnly}
         workflow={staticParams && staticParams[param.origin || 'workflow']}
         onChange={(e, outputs) => {
           onChange(e, outputs);
         }} />
       break;
     case 'http_headers':
-      i = <HttpHeaders value={value} onChange={e => onChange(e)} />
+      i = <HttpHeaders value={value} onChange={e => onChange(e)} readOnly={readOnly} />
       break;
     case 'context_key':
-      i = <ContextKey value={value} onChange={e => onChange(e)} />
+      i = <ContextKey value={value} onChange={e => onChange(e)} readOnly={readOnly} />
       break;
     case 'context_keys':
-      i = <ContextKeyValues value={value} onChange={e => onChange(e)} />
+      i = <ContextKeyValues value={value} onChange={e => onChange(e)} readOnly={readOnly} />
       break;
     default:
-      i = <BasicInput value={value} onChange={e => onChange(e.target.value)} />
+      i = <BasicInput value={value} onChange={e => onChange(e.target.value)} readOnly={readOnly} />
       break;
   }
   return i;

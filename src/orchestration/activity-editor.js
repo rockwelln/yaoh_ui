@@ -37,7 +37,15 @@ import SplitButton from "react-bootstrap/lib/SplitButton";
 import MenuItem from "react-bootstrap/lib/MenuItem";
 import {DeleteConfirmButton} from "../utils/deleteConfirm";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {faArrowDown, faArrowUp, faChartBar, faCopy, faDownload, faSpinner} from "@fortawesome/free-solid-svg-icons";
+import {
+  faArrowDown,
+  faArrowUp, faBell, faBellSlash,
+  faChartBar, faCog,
+  faCopy, faDatabase, faDirections,
+  faDownload, faEnvelope, faHome, faPaste, faPlay, faPowerOff, faSearch,
+  faSpinner, faStop, faStopwatch, faStream,
+  faUserCog, faUsers
+} from "@fortawesome/free-solid-svg-icons";
 import {Link} from "react-router-dom";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 import {fetchConfiguration, Param2Input} from "./nodeInputs";
@@ -647,12 +655,276 @@ function NewNameModal(props) {
     )
 }
 
+const sortedNodes = [
+  "start",
+  "end",
+  "http_call",
+  "rest_call",
+  "json_call",
+  "async_json_call",
+  "xml_call",
+  "bsft_call",
+  "proxy_session_call",
+  "proxy_call",
+  "tcp_call",
+  "context_setter",
+  "multi_context_setter",
+  "sync_response",
+  "callback_response",
+  "trigger_manual_action",
+  "cancel_manual_action",
+  "send_email_template",
+  "sql_exec",
+  "sql_exec_with_return",
+  "sql_select",
+  "boolean_expression",
+  "switch",
+  "or_outputs",
+  "sync_outputs",
+  "timer",
+  "context_timer",
+  "stop_timer",
+  "generate_ott",
+  "generate_random_string",
+  "set_request_status",
+  "set_task_status",
+  "macro",
+  "trigger_subworkflows",
+  "create_user",
+  "update_user",
+  "delete_user",
+  "get_owner",
+  "search_transactions",
+  "entity",
+];
+
+function nodeLabel(name, size) {
+  let s = {style:{}, label: name, name: name};
+  switch(size) {
+    case "big":
+      s.style = {fontSize: '40px'}
+      break;
+  }
+
+  switch(name) {
+    case "start":
+      s.style.color = "blue";
+      s.icon=faPlay;
+      s.label = "Start";
+      break;
+    case "end":
+      s.style.color = "blue";
+      s.icon=faPowerOff;
+      s.label = "End";
+      break;
+    case "rest_call":
+      s.style.color = "blue";
+      s.icon=faStream;
+      s.label = "REST call";
+      break;
+    case "json_call":
+      s.style.color = "blue";
+      s.icon=faStream;
+      s.label = "JSON call [deprecated]";
+      break;
+    case "async_json_call":
+      s.style.color = "blue";
+      s.icon=faStream;
+      s.label = "Asynchronous JSON call";
+      break;
+    case "http_call":
+      s.style.color = "blue";
+      s.icon=faStream;
+      s.label = "HTTP call";
+      break;
+    case "xml_call":
+      s.style.color = "blue";
+      s.icon=faStream;
+      s.label = "XML call";
+      break;
+    case "bsft_call":
+      s.style.color = "orange";
+      s.icon=faStream
+      s.label = "Broadsoft XSP/ADP call [experimental]";
+      break;
+    case "proxy_session_call":
+      s.style.color = "orange";
+      s.icon=faStream
+      s.label = "Broadsoft proxy session call";
+      break;
+    case "proxy_call":
+      s.style.color = "blue";
+      s.icon=faStream
+      s.label = "Proxy HTTP call";
+      break;
+    case "tcp_call":
+      s.style.color = "purple";
+      s.icon=faStream
+      s.label = "TCP call [experimental]";
+      break;
+    case "context_setter":
+      s.style.color = "purple";
+      s.icon=faPaste;
+      s.label = "Context setter";
+      break;
+    case "sync_response":
+      s.style.color = "purple";
+      s.icon=faPaste;
+      s.label = "Synchronous response";
+      break;
+    case "callback_response":
+      s.style.color = "purple";
+      s.icon=faPaste;
+      s.label = "Callback response";
+      break;
+    case "multi_context_setter":
+      s.style.color = "purple";
+      s.icon=faPaste;
+      s.label = "Multiple context setter";
+      break;
+    case "cancel_manual_action":
+      s.style.color = "green";
+      s.icon=faBellSlash;
+      s.label = "Cancel manual action";
+      break;
+    case "trigger_manual_action":
+      s.style.color = "green";
+      s.icon=faBell;
+      s.label = "Trigger manual action";
+      break;
+    case "send_email_template":
+      s.style.color = "blue";
+      s.icon=faEnvelope;
+      s.label = "Send email";
+      break;
+    case "sql_exec":
+      s.style.color = "cyan";
+      s.icon=faDatabase;
+      s.label = "SQL Exec";
+      break;
+    case "sql_exec_with_return":
+      s.style.color = "cyan";
+      s.icon=faDatabase;
+      s.label = "SQL Exec with return";
+      break;
+    case "sql_select":
+      s.style.color = "cyan";
+      s.icon=faDatabase;
+      s.label = "SQL Select";
+      break;
+    case "boolean_expression":
+      s.style.color = "#FF8C00";
+      s.icon = faDirections;
+      s.label ="Boolean expression";
+      break;
+    case "switch":
+      s.style.color = "#FF8C00";
+      s.icon = faDirections;
+      s.label ="Switch";
+      break;
+    case "or_outputs":
+      s.style.color = "#2F4F4F";
+      s.icon = faCog;
+      s.label= "Or";
+      break;
+    case "sync_outputs":
+      s.style.color = "#2F4F4F";
+      s.icon = faCog;
+      s.label= "Join";
+      break;
+    case "timer":
+      s.style.color = "#E5D83DFF";
+      s.icon = faStopwatch;
+      s.label = "Timer";
+      break;
+    case "stop_timer":
+      s.style.color = "#E5D83DFF";
+      s.icon = faStop;
+      s.label = "Stop timer";
+      break;
+    case "context_timer":
+      s.style.color = "#E5D83DFF";
+      s.icon = faStopwatch;
+      s.label ="Context timer";
+      break;
+    case "generate_ott":
+      s.style.color = "#5ce53d";
+      s.icon = faCog;
+      s.label = "Genrate OTT";
+      break;
+    case "generate_random_string":
+      s.style.color = "#5ce53d";
+      s.icon = faCog;
+      s.label = "Genrate random string";
+      break;
+    case "set_request_status":
+      s.style.color = "#5ce53d";
+      s.icon = faCog;
+      s.label = "Set request status";
+      break;
+    case "set_task_status":
+      s.style.color = "#5ce53d";
+      s.icon = faCog;
+      s.label = "Set task status";
+      break;
+    case "macro":
+      s.style.color = "blue";
+      s.icon = faCog;
+      s.label = "Macro";
+      break;
+    case "trigger_subworkflows":
+      s.style.color = "blue";
+      s.icon = faCog;
+      s.label = "Suborkflow";
+      break;
+    case "create_user":
+      s.style.color = "red";
+      s.icon = faUsers;
+      s.label = "Create user";
+      break;
+    case "update_user":
+      s.style.color = "red";
+      s.icon = faUsers;
+      s.label = "Update user";
+      break;
+    case "delete_user":
+      s.style.color = "red";
+      s.icon = faUsers;
+      s.label = "Delete user";
+      break;
+    case "get_owner":
+      s.style.color = "purple";
+      s.icon = faUserCog;
+      s.label = "Get Owner";
+      break;
+    case "search_transactions":
+      s.style.color = "pink";
+      s.icon = faSearch;
+      s.label = "Search transactions";
+      break;
+    case "entity":
+      s.style.color = "blue";
+      s.icon = faHome;
+      s.label = "Entity";
+      break;
+  }
+
+  return (
+    <>
+      <div>
+        <FontAwesomeIcon icon={s.icon} style={s.style} />
+      </div>
+      {s.label}
+      {size === "big" && <div className={"pull-right"} style={{opacity: "0.5"}}>[{s.name}]</div>}
+    </>
+  );
+}
+
 const miscDefs = {
   entity: {original_name: "entity", params: [{"name": "events", "nature": "outputs"}], outputs: []},
 }
 
-function NewCellModal(props)  {
-    const {show, onHide, cells, activity} = props;
+function NewCellModal({show, onHide, cells, activity})  {
     const [name, setName] = useState("");
     const [definition, setDefinition] = useState({});
     const [staticParams, setStaticParams] = useState({});
@@ -706,6 +978,19 @@ function NewCellModal(props)  {
     const invalidParams = definition && definition.params && definition
       .params
       .filter(p => isValid(p, staticParams[p.name || p] || "") !== null) || [];
+    let currentDefinition = undefined;
+    if(definition.original_name || definition.name) {
+      currentDefinition = {
+        value: definition.original_name || definition.name,
+        label: nodeLabel(definition.original_name || definition.name, "small")
+      }
+    }
+
+    const nodes = Object.values(cells
+      .sort((a, b) => sortedNodes.indexOf(a.original_name) - sortedNodes.indexOf(b.original_name))
+      .map(cell => ({value: cell.original_name, label: nodeLabel(cell.original_name, "big")})
+    ))
+    nodes.push({value: "entity", label: nodeLabel("entity", "big")});
 
     return (
         <Modal show={show} onHide={() => onHide(null)} bsSize={"large"}>
@@ -739,36 +1024,20 @@ function NewCellModal(props)  {
                         </Col>
 
                         <Col sm={9}>
-                            <FormControl
-                                componentClass="select"
-                                value={definition.original_name || definition.name}
-                                onChange={e => {
-                                  const cellDef = cells.find(c => c.original_name === e.target.value);
-                                  setDefinition(cellDef?cellDef:miscDefs[e.target.value])
-                                }}>
-                                <option value=""/>
-                                <optgroup label="Misc.">
-                                  <option value={"entity"}>Entity</option>
-                                </optgroup>
-                                {
-                                Object.entries(cells
-                                  .sort((a, b) => a.category.localeCompare(b.category))
-                                  .reduce((o, item) => {
-                                    const key = item["category"] || "direct processing";
-                                    if (!o.hasOwnProperty(key)) {
-                                      o[key] = [];
-                                    }
-                                    o[key].push(item);
-                                    return o
-                                  }, {}))
-                                  .map(([category, cells])=> (
-                                    <optgroup label={category} key={category}>
-                                      { cells.map(c => <option value={c.original_name} key={c.original_name}>{c.original_name}</option>)}
-                                    </optgroup>
-                                    ))
-                                  })
-                                }
-                            </FormControl>
+                            <Select
+                                className="basic-single"
+                                classNamePrefix="select"
+                                value={currentDefinition}
+                                isSearchable={true}
+                                name="nodes"
+                                onChange={(value, action) => {
+                                  if(action.action === "select-option") {
+                                    const cellDef = cells.find(c => c.original_name === value.value);
+                                    setDefinition(cellDef ? cellDef : miscDefs[value.value])
+                                  }
+                                }}
+                                options={nodes}
+                            />
                             {
                                 definition && definition.doc && <HelpBlock>{definition.doc}</HelpBlock>
                             }
@@ -821,7 +1090,7 @@ function offsetIndex(from, to, arr = []) {
 
 
 function OutputsTable(props) {
-  let {rows, usedRows, onDragEnd} = props;
+  let {rows, usedRows, onDragEnd, readOnly} = props;
   const [dragState, setDragState] = useState({...defaultDragState});
   const preview = useRef(null);
 
@@ -837,7 +1106,7 @@ function OutputsTable(props) {
             return (
               <tr
                 key={i}
-                draggable
+                draggable={!readOnly}
                 style={{
                   cursor: dragState.direction ? "move" : "grab",
                   opacity: dragState.dropIndex === i ? 0.5 : 1
@@ -880,12 +1149,13 @@ function OutputsTable(props) {
                   <Checkbox
                     checked={output.visible}
                     onChange={e => onDragEnd(update(rows, {[i]: {$merge: {visible: e.target.checked}}}))}
-                    disabled={usedRows.includes(output.value) || output.custom} />
+                    disabled={readOnly || usedRows.includes(output.value) || output.custom} />
                 </td>
                 <td>{output.value}</td>
                 <td>
                   <Checkbox
                     checked={output.errorPath}
+                    disabled={readOnly}
                     onChange={e => onDragEnd(update(rows, {[i]: {$merge: {errorPath: e.target.checked}}}))} >
                     Error path
                   </Checkbox>
@@ -1032,30 +1302,34 @@ export function EditCellModal(props) {
         <Modal.Body>
           <Form horizontal>
             <FormGroup>
+                <Col smOffset={2} sm={9}>
+                  {nodeLabel(originalName, "big")}
+                </Col>
+            </FormGroup>
+
+            { cellDef && cellDef.doc &&
+              <FormGroup>
+                <Col smOffset={2} sm={9}>
+                  <p><i>{ cellDef.doc }</i></p>
+                </Col>
+              </FormGroup>
+            }
+
+            <hr/>
+
+            <FormGroup>
                 <Col componentClass={ControlLabel} sm={2}>
-                    <FormattedMessage id="new-name" defaultMessage="New name" />
+                    <FormattedMessage id="name" defaultMessage="Name" />
                 </Col>
 
                 <Col sm={9}>
                     <FormControl
                         componentClass="input"
+                        readOnly={readOnly}
                         value={name}
                         onChange={e => setName(e.target.value)} />
                 </Col>
             </FormGroup>
-            <FormGroup>
-                <Col componentClass={ControlLabel} sm={2}>
-                    <FormattedMessage id="implementation" defaultMessage="Implementation" />
-                </Col>
-
-                <Col sm={9}>
-                    <FormControl
-                        componentClass="input"
-                        value={originalName}
-                        readOnly />
-                </Col>
-            </FormGroup>
-            <p><i>{ cellDef && cellDef.doc }</i></p>
 
             { params }
 
@@ -1068,6 +1342,7 @@ export function EditCellModal(props) {
 
                 <Col sm={9}>
                   <OutputsTable
+                    readOnly={readOnly}
                     rows={outputs} /* visible + invisible */
                     usedRows={usedRows} /* used are checked and disabled */
                     onDragEnd={setOutputs}/>
