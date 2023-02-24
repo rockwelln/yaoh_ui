@@ -15,6 +15,8 @@ import Panel from "react-bootstrap/lib/Panel";
 import Modal from "react-bootstrap/lib/Modal";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 import ButtonGroup from "react-bootstrap/lib/ButtonGroup";
+import {faSpinner} from "@fortawesome/free-solid-svg-icons";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 
 
 function signIn(username, password, onSuccess, onError) {
@@ -190,12 +192,15 @@ export function LoginForm({onLogin}) {
     const [password, setPassword] = useState("");
     const [error, setError] = useState(undefined);
     const [loading, setLoading] = useState(false);
+    const [loadingDetails, setLoadingDetails] = useState(false);
     const [loginResp, setLoginResp] = useState(null);
     const [sso, setSso] = useState([]);
 
     useEffect(() => {
+      setLoadingDetails(true);
       fetchPlatformDetails(data => {
-         data.auth && data.auth.SSO && setSso(data.auth.SSO)
+         setLoadingDetails(false);
+         data.auth?.SSO && setSso(data.auth.SSO)
       })
     }, []);
 
@@ -203,6 +208,17 @@ export function LoginForm({onLogin}) {
 
     return (
         <>
+          { loadingDetails && (
+            <Row>
+              <Col smOffset={1} sm={10}>
+                <ButtonGroup vertical block>
+                  <Button disabled>
+                    <FontAwesomeIcon icon={faSpinner} aria-hidden="true" style={{'fontSize': '24px'}} spin />
+                  </Button>
+                </ButtonGroup>
+              </Col>
+            </Row>
+          )}
           { sso.length > 0 && (
             <Row>
               <Col smOffset={1} sm={10}>
@@ -292,6 +308,9 @@ export function LoginForm({onLogin}) {
                                     e => {setLoading(false); setError(e);}
                                 );
                             }} disabled={username.length === 0 || password.length === 0 || loading}>
+                                {
+                                  loading && <FontAwesomeIcon icon={faSpinner} aria-hidden="true" spin />
+                                }
                                 <FormattedMessage id="sign-in" defaultMessage="Sign in" />
                             </Button>
                             <LinkContainer to={`/reset-password`}>
