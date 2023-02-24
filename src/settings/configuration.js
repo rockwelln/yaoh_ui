@@ -3437,9 +3437,8 @@ function generateLicense(details, onSuccess) {
 }
 
 function LicenseGenerator({onNewLicense}) {
+    const [newLicense, setNewLicense] = useState({customer: "", days: 365})
     const [key, setKey] = useState("");
-    const [customerName, setCustomerName] = useState("");
-    const [days, setDays] = useState(365);
 
     return (
       <>
@@ -3450,8 +3449,8 @@ function LicenseGenerator({onNewLicense}) {
           <Col sm={9}>
             <FormControl
               componentClass="input"
-              value={days}
-              onChange={e => setDays(parseInt(e.target.value ? e.target.value: "0", 10))}/>
+              value={newLicense.days}
+              onChange={e => setNewLicense(update(newLicense, {"$merge": {days: parseInt(e.target.value ? e.target.value: "0", 10)}}))}/>
           </Col>
         </FormGroup>
         <FormGroup>
@@ -3461,8 +3460,8 @@ function LicenseGenerator({onNewLicense}) {
           <Col sm={9}>
             <FormControl
               componentClass="input"
-              value={customerName}
-              onChange={e => setCustomerName(e.target.value)}/>
+              value={newLicense.customer}
+              onChange={e => setNewLicense(update(newLicense, {"$merge": {customer: e.target.value}}))} />
           </Col>
         </FormGroup>
         <FormGroup>
@@ -3478,7 +3477,7 @@ function LicenseGenerator({onNewLicense}) {
               <hr/>
             <Button
               onClick={() => {
-                generateLicense({key: key, customer: customerName, days: days}, license => {
+                generateLicense(Object.assign({key: key}, newLicense), license => {
                   onNewLicense && onNewLicense(license);
                 })
               }}
@@ -3504,7 +3503,7 @@ function LicensePanel(props) {
     <Panel>
       <Panel.Body>
         <Form horizontal>
-          <StaticControl label="Valid until" value={current.valid_until}/>
+          <StaticControl label="Valid until" value={current.valid_until || "n/a"}/>
           <StaticControl label="Assigned to" value={current.customer_name}/>
           <StaticControl label="Demo" value={current.demo ? "yes": "no"}/>
           <FormGroup>
@@ -3536,8 +3535,9 @@ function LicensePanel(props) {
               </Button>
             </Col>
           </FormGroup>
+          <hr/>
           {
-            current.customer_name && current.customer_name.startsWith("netaxis") &&
+            current.customer_name?.startsWith("netaxis") &&
               <LicenseGenerator onNewLicense={setNewLicense} />
           }
         </Form>
