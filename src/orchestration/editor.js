@@ -252,6 +252,8 @@ function new_editor() {
     // Installs automatic validation (use editor.validation = true if you are using an mxEditor instance)
     editor.validation = true;
     configureStylesheet(graph);
+    // put edges behind cells (despite they are drawn after)
+    graph.keepEdgesInBackground = true;
     return editor;
 }
 
