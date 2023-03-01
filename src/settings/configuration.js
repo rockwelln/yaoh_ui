@@ -3496,7 +3496,7 @@ function LicensePanel(props) {
     const [current, setCurrent] = useState({});
 
     useEffect(() => {
-      fetchLicenseDetails(setCurrent);
+      fetchLicenseDetails(setCurrent).catch(console.error);
     }, []);
 
     return (
