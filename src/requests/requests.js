@@ -2146,6 +2146,16 @@ export class Transaction extends Component {
                             }
                         </Col>
                         <Col xs={12} sm={12} md={12} lg={12}>
+                          <Panel>
+                            <Panel.Heading>
+                              <Panel.Title><FormattedMessage id="attachments" defaultMessage="Attachments" /></Panel.Title>
+                            </Panel.Heading>
+                            <Panel.Body>
+                              <Attachments txId={tx.id} userInfo={user_info}/>
+                            </Panel.Body>
+                          </Panel>
+                        </Col>
+                        <Col xs={12} sm={12} md={12} lg={12}>
                             <Panel>
                                 <Panel.Heading>
                                     <Panel.Title><FormattedMessage id="comments" defaultMessage="Comments" /></Panel.Title>
