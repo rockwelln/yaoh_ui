@@ -941,69 +941,6 @@ function GuiForm(props) {
   )
 }
 
-function UserCreationRules({entries, onChange}) {
-  return (
-    <Table>
-      <thead>
-        <tr>
-          <th>Condition</th>
-          <th>Profile</th>
-          <th>Ui Profile</th>
-          <th>Is system</th>
-          <th/>
-        </tr>
-      </thead>
-      <tbody>
-      {
-        entries.map((entry, i) => (
-          <tr>
-            <td>
-              <FormControl
-                componentClass="input"
-                value={entry.rule}
-                onChange={e => onChange(update(entries, {[i]: {$merge: {rule: e.target.value}}}))}/>
-            </td>
-            <td>
-              <FormControl
-                componentClass="input"
-                value={entry.user_profile}
-                onChange={e => onChange(update(entries, {[i]: {$merge: {user_profile: e.target.value}}}))}/>
-            </td>
-            <td>
-              <FormControl
-                componentClass="input"
-                value={entry.ui_profile}
-                onChange={e => onChange(update(entries, {[i]: {$merge: {ui_profile: e.target.value}}}))}/>
-            </td>
-            <td>
-              <Checkbox
-                checked={entry.is_system}
-                onChange={e => onChange(update(entries, {[i]: {$merge: {is_system: e.target.checked}}}))}/>
-            </td>
-            <td>
-              <Button
-                onClick={() => onChange(update(entries, {$splice: [[i, 1]]}))}>
-                {"-"}
-              </Button>
-            </td>
-          </tr>
-        ))
-      }
-      </tbody>
-      <tfoot>
-        <tr>
-          <td>
-            <Button
-              onClick={() => onChange(update(entries, {$push: [{"rule": "true", "ui_profile": "", "user_profile": "", "is_system": false}]}))}>
-              {"+"}
-            </Button>
-          </td>
-          <td colSpan={4}/>
-        </tr>
-      </tfoot>
-    </Table>
-  )
-}
 
 function mergeDeep(...objects) {
   const isObject = obj => obj && typeof obj === 'object';
@@ -1255,20 +1192,54 @@ function NewSsoModal({show, onHide, gateways, enabledMods}) {
 
           <FormGroup>
             <Col componentClass={ControlLabel} sm={2}>
-              <FormattedMessage id="user-creation-rules" defaultMessage="Users creation rules"/>
+              <FormattedMessage id="auto-create-users" defaultMessage="Auto create users"/>
             </Col>
 
             <Col sm={9}>
-              <UserCreationRules
-                entries={entry.user_creation_rules || []}
-                onChange={e => setEntry(update(entry, {$merge: {user_creation_rules: e}}))}/>
-              <HelpBlock>
-                If the user is <b>not</b> known, the rules are checked one-by-one to find a match and auto-create the user with
-                the appropriate profile.<br/>
-                The condition rule is a boolean expression which can use the token response body.
-                (ref. <a href={"https://github.com/antonmedv/expr/blob/master/docs/Language-Definition.md"}>language definition</a>)<br/>
-                If no match is found, the authentication is rejected as the user is unknown.
-              </HelpBlock>
+              <Checkbox
+                checked={entry.auto_create_user}
+                onChange={e => setEntry(update(entry, {$merge: {auto_create_user: e.target.checked}}))}/>
+            </Col>
+          </FormGroup>
+
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="default_user_profile" defaultMessage="Default user profile"/>
+            </Col>
+
+            <Col sm={9}>
+              <FormControl
+                componentClass="input"
+                value={entry.default_user_profile}
+                readOnly={!entry.auto_create_user}
+                onChange={e => setEntry(update(entry, {$merge: {default_user_profile: e.target.value}}))}/>
+            </Col>
+          </FormGroup>
+
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="default_user_ui_profile" defaultMessage="Default user UI profile"/>
+            </Col>
+
+            <Col sm={9}>
+              <FormControl
+                componentClass="input"
+                value={entry.default_user_ui_profile}
+                readOnly={!entry.auto_create_user}
+                onChange={e => setEntry(update(entry, {$merge: {default_user_ui_profile: e.target.value}}))}/>
+            </Col>
+          </FormGroup>
+
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="default_user_is_system" defaultMessage="Default is-system flag"/>
+            </Col>
+
+            <Col sm={9}>
+              <Checkbox
+                checked={entry.default_user_is_system}
+                readOnly={!entry.auto_create_user}
+                onChange={e => setEntry(update(entry, {$merge: {default_user_is_system: e.target.checked}}))}/>
             </Col>
           </FormGroup>
 
@@ -2442,20 +2413,54 @@ function SSOPanel({sso, gateways, onChange, enabledMods}) {
 
                     <FormGroup>
                       <Col componentClass={ControlLabel} sm={2}>
-                        <FormattedMessage id="user-creation-rules" defaultMessage="Users creation rules"/>
+                        <FormattedMessage id="auto-create-users" defaultMessage="Auto create users"/>
                       </Col>
 
                       <Col sm={9}>
-                        <UserCreationRules
-                          entries={p.user_creation_rules || []}
-                          onChange={e => onChange(update(sso, {[i]: {$merge: {user_creation_rules: e}}}))}/>
-                        <HelpBlock>
-                          If the user is <b>not</b> known, the rules are checked one-by-one to find a match and auto-create the user with
-                          the appropriate profile.<br/>
-                          The condition rule is a boolean expression which can use the token response body.
-                          (ref. <a href={"https://github.com/antonmedv/expr/blob/master/docs/Language-Definition.md"}>language definition</a>)<br/>
-                          If no match is found, the authentication is rejected as the user is unknown.
-                        </HelpBlock>
+                        <Checkbox
+                          checked={p.auto_create_user}
+                          onChange={e => onChange(update(sso, {[i]: {$merge: {auto_create_user: e.target.checked}}}))}/>
+                      </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                      <Col componentClass={ControlLabel} sm={2}>
+                        <FormattedMessage id="default_user_profile" defaultMessage="Default user profile"/>
+                      </Col>
+
+                      <Col sm={9}>
+                        <FormControl
+                          componentClass="input"
+                          value={p.default_user_profile}
+                          readOnly={!p.auto_create_user}
+                          onChange={e => onChange(update(sso, {[i]: {$merge: {default_user_profile: e.target.value}}}))}/>
+                      </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                      <Col componentClass={ControlLabel} sm={2}>
+                        <FormattedMessage id="default_user_ui_profile" defaultMessage="Default user UI profile"/>
+                      </Col>
+
+                      <Col sm={9}>
+                        <FormControl
+                          componentClass="input"
+                          value={p.default_user_ui_profile}
+                          readOnly={!p.auto_create_user}
+                          onChange={e => onChange(update(sso, {[i]: {$merge: {default_user_ui_profile: e.target.value}}}))}/>
+                      </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                      <Col componentClass={ControlLabel} sm={2}>
+                        <FormattedMessage id="default_user_is_system" defaultMessage="Default is-system flag"/>
+                      </Col>
+
+                      <Col sm={9}>
+                        <Checkbox
+                          checked={p.default_user_is_system}
+                          readOnly={!p.auto_create_user}
+                          onChange={e => onChange(update(sso, {[i]: {$merge: {default_user_is_system: e.target.checked}}}))}/>
                       </Col>
                     </FormGroup>
 
