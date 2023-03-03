@@ -31,7 +31,7 @@ export class CreateTenant extends Component {
             <Row>
               <Breadcrumb />
             </Row>
-            <Row className={"panel panel-default"}>{this.returnStep()}</Row>
+            <div className={"panel panel-default"}>{this.returnStep()}</div>
           </Col>
         </Row>
       </React.Fragment>

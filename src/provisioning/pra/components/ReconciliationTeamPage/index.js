@@ -22,9 +22,9 @@ const ReconciliationTeamPage = () => {
           <Row>
             <Breadcrumb />
           </Row>
-          <Row className={"panel panel-default"}>
+          <div className={"panel panel-default"}>
             <ReconciliationTeam />
-          </Row>
+          </div>
         </Col>
       </Row>
     </React.Fragment>

@@ -23,9 +23,9 @@ const UpdateAdminComponent = () => {
           <Row>
             <Breadcrumb />
           </Row>
-          <Row className={"panel panel-default"}>
+          <div className={"panel panel-default"}>
             <UpdateAdminPage />
-          </Row>
+          </div>
         </Col>
       </Row>
     </React.Fragment>

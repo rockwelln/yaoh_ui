@@ -25,9 +25,9 @@ export class AddPhoneNumberTenant extends Component {
             <Row>
               <Breadcrumb />
             </Row>
-            <Row className={"panel panel-default"}>
+            <div className={"panel panel-default"}>
               <Steps />
-            </Row>
+            </div>
           </Col>
         </Row>
       </React.Fragment>

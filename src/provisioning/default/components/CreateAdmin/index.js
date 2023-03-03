@@ -22,9 +22,9 @@ const CreateAdminComponent = () => {
           <Row>
             <Breadcrumb />
           </Row>
-          <Row className={"panel panel-default"}>
+          <div className={"panel panel-default"}>
             <CreateAdminPage />
-          </Row>
+          </div>
         </Col>
       </Row>
     </React.Fragment>

@@ -22,9 +22,9 @@ const ConfigComponent = props => {
           <Row>
             <Breadcrumb />
           </Row>
-          <Row className={"panel panel-default"}>
+          <div className={"panel panel-default"}>
             <Reconciliations />
-          </Row>
+          </div>
         </Col>
       </Row>
     </React.Fragment>

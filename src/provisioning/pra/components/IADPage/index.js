@@ -22,9 +22,9 @@ const GroupComponent = () => {
           <Row>
             <Breadcrumb hash={"#iads"} />
           </Row>
-          <Row className={"panel panel-default"}>
+          <div className={"panel panel-default"}>
             <IADPage />
-          </Row>
+          </div>
         </Col>
       </Row>
     </React.Fragment>

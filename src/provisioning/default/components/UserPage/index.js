@@ -23,9 +23,9 @@ const GroupComponent = () => {
           <Row>
             <Breadcrumb />
           </Row>
-          <Row className={"panel panel-default"}>
+          <div className={"panel panel-default"}>
             <UserPage />
-          </Row>
+          </div>
         </Col>
       </Row>
     </React.Fragment>

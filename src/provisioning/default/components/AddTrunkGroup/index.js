@@ -23,9 +23,9 @@ const AddTrunkGroupComponent = props => {
           <Row>
             <Breadcrumb />
           </Row>
-          <Row className={"panel panel-default"}>
+          <div className={"panel panel-default"}>
             <AddTrunkGroup />
-          </Row>
+          </div>
         </Col>
       </Row>
     </React.Fragment>

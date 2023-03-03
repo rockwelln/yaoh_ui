@@ -24,9 +24,9 @@ export class AddPhoneNumberGroup extends Component {
             <Row>
               <Breadcrumb />
             </Row>
-            <Row className={"panel panel-default"}>
+            <div className={"panel panel-default"}>
               <AddPhoneNumberPage />
-            </Row>
+            </div>
           </Col>
         </Row>
       </React.Fragment>

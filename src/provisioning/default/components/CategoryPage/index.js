@@ -23,9 +23,9 @@ const CategoryComponent = props => {
           <Row>
             <Breadcrumb />
           </Row>
-          <Row className={"panel panel-default"}>
+          <div className={"panel panel-default"}>
             <CategoryPage />
-          </Row>
+          </div>
         </Col>
       </Row>
     </React.Fragment>

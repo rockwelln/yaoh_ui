@@ -23,9 +23,9 @@ const CrealtePlatformComponent = (props) => {
           <Row>
             <Breadcrumb />
           </Row>
-          <Row className={"panel panel-default"}>
+          <div className={"panel panel-default"}>
             <CreatePlatform />
-          </Row>
+          </div>
         </Col>
       </Row>
     </React.Fragment>

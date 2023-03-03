@@ -23,9 +23,9 @@ const TemplateComponent = props => {
           <Row>
             <Breadcrumb />
           </Row>
-          <Row className={"panel panel-default"}>
+          <div className={"panel panel-default"}>
             <AddLocalUserPage />
-          </Row>
+          </div>
         </Col>
       </Row>
     </React.Fragment>

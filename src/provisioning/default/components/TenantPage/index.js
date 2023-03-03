@@ -24,9 +24,9 @@ const TenantComponent = props => {
           <Row>
             <Breadcrumb />
           </Row>
-          <Row className={"panel panel-default"}>
+          <div className={"panel panel-default"}>
             <TenantPage {...props} />
-          </Row>
+          </div>
         </Col>
       </Row>
     </React.Fragment>

@@ -22,9 +22,9 @@ const GroupComponent = () => {
           <Row>
             <Breadcrumb hash={"#sites"} />
           </Row>
-          <Row className={"panel panel-default"}>
+          <div className={"panel panel-default"}>
             <GroupPage />
-          </Row>
+          </div>
         </Col>
       </Row>
     </React.Fragment>

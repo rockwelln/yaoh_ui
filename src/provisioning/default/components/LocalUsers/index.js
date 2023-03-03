@@ -18,9 +18,9 @@ const LocalUsersComponent = props => {
           <Sidebar />
         </Col>
         <Col md={10} className={"padding-left-3 padding-right-3"}>
-          <Row className={"panel panel-default"}>
+          <div className={"panel panel-default"}>
             <LocalUsers />
-          </Row>
+          </div>
         </Col>
       </Row>
     </React.Fragment>

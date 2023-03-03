@@ -24,9 +24,9 @@ export class EnterpriseTrunkPage extends Component {
             <Row>
               <Breadcrumb hash={"#routingNumbers"} />
             </Row>
-            <Row className={"panel panel-default"}>
+            <div className={"panel panel-default"}>
               <EnterpriseTrunk />
-            </Row>
+            </div>
           </Col>
         </Row>
       </React.Fragment>

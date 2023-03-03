@@ -1803,7 +1803,7 @@ export function ActivityEditor(props) {
             </Row>
             <hr />
             <Row>
-                <Col>
+                <Col sm={12}>
                     <Table>
                         <thead>
                             <tr>
@@ -1833,7 +1833,7 @@ export function ActivityEditor(props) {
             </Row>
             <hr />
             <Row>
-                <Col>
+                <Col sm={12}>
                     <Table>
                       <thead>
                         <tr>

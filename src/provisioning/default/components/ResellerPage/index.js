@@ -23,9 +23,9 @@ const ResellerPage = () => {
           <Row>
             <Breadcrumb />
           </Row>
-          <Row className={"panel panel-default"}>
+          <div className={"panel panel-default"}>
             <Reseller />
-          </Row>
+          </div>
         </Col>
       </Row>
     </>
