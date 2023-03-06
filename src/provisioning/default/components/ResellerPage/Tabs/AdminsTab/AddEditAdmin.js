@@ -72,6 +72,13 @@ const AddResellerModal = ({
     setStateAdmin(temp);
   };
 
+  const isDisabledOption = ({ level }) => {
+    if (mode === "Edit") {
+      return level !== stateAdmin.userProfileType.level;
+    }
+    return false;
+  };
+
   useEffect(() => {
     if (!isLoadingTypes && mode === "Edit") {
       const userProfile = userProfileTypes.find(
@@ -86,6 +93,7 @@ const AddResellerModal = ({
         },
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoadingTypes]);
 
   useEffect(() => {
@@ -258,6 +266,7 @@ const AddResellerModal = ({
                           value: el.userType,
                           label: el.description,
                           level: el.userLevel,
+                          isDisabled: isDisabledOption({ level: el.userLevel }),
                         };
                       })}
                       menuPlacement="top"
