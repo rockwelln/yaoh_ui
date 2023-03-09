@@ -850,12 +850,12 @@ function nodeLabel(name, size) {
     case "generate_ott":
       s.style.color = "#5ce53d";
       s.icon = faCog;
-      s.label = "Genrate OTT";
+      s.label = "Generate OTT";
       break;
     case "generate_random_string":
       s.style.color = "#5ce53d";
       s.icon = faCog;
-      s.label = "Genrate random string";
+      s.label = "Generate random string";
       break;
     case "set_request_status":
       s.style.color = "#5ce53d";
