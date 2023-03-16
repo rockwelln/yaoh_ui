@@ -1414,6 +1414,69 @@ function EditDescriptionModal({show, value, onChange, onHide}) {
     )
 }
 
+function CompareDefinitionModal({show, onHide}) {
+  const [value, setValue] = useState("");
+  const [parseError, setParseError] = useState();
+
+  useEffect(() => {
+    if(!show) {
+      setValue("");
+      setParseError();
+    }
+  }, [show]);
+
+  useEffect(() => {
+    if(value.length === 0) {
+      setParseError();
+      return
+    }
+    try {
+      JSON.parse(value);
+      setParseError();
+    } catch(e) {
+      setParseError(e)
+    }
+  }, [value]);
+
+  return (
+    <Modal show={show} onHide={() => onHide(false)} bsSize="large">
+      <Modal.Header closeButton>
+        <Modal.Title>Definition</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Form horizontal>
+          {
+            parseError && <Alert bsStyle="danger">{parseError.message}</Alert>
+          }
+          <FormGroup>
+            <Col sm={12}>
+              <FormControl componentClass="textarea"
+                value={value || ""}
+                rows={15}
+                placeholder={"Definition to compare"}
+                autoFocus
+                onChange={e => setValue(e.target.value)} />
+            </Col>
+          </FormGroup>
+          <FormGroup>
+            <Col sm={12}>
+              <Button onClick={() => {
+                try {
+                  onHide(JSON.parse(value));
+                } catch (e) {
+                  setParseError(e)
+                }
+              }} bsStyle={"primary"}>
+                Ok
+              </Button>
+            </Col>
+          </FormGroup>
+        </Form>
+      </Modal.Body>
+    </Modal>
+  )
+}
+
 function commitVersion(id, label, message, onSuccess) {
   fetch_post(`/api/v01/activities/${id}/versions`, {label: label, message: message})
     .then(onSuccess)
@@ -1478,7 +1541,7 @@ function downloadDefinition(activity) {
   downloadJson(activity.name, activity.definition);
 }
 
-function compareActivitiesDef(a, b) {
+function equalActivitiesDef(a, b) {
   return (b.definition &&
     (
       typeof b.definition === "string" &&
@@ -1535,6 +1598,8 @@ export function ActivityEditor(props) {
     const [versions, setVersions] = useState([]);
     const [usage, setUsage] = useState({});
     const [width, height] = useWindowSize();
+    const [cmpWith, setCmpWith] = useState();
+    const [showCmpDefinition, setShowCmpDefinition] = useState();
 
     useEffect(() => {
         fetchConfiguration(setConfiguration);
@@ -1621,6 +1686,16 @@ export function ActivityEditor(props) {
       }
     }, [versionId]);
 
+    // useEffect(() => {
+    //   if(!cmpWith) {
+    //     return
+    //   }
+    //   const def_ = editor.getDefinition(ReactDOM.findDOMNode(titleRef.current).value);
+    //   // const diffActivity = compareActivitiesDef(currentActivity, cmpWith);
+    //   // console.log("merge definition", diffActivity);
+    //   setActivity(diffActivity);
+    // }, [cmpWith]);
+
     const versionsOptions = versions.map(ov => {
       const v = Object.assign({}, ov);
       v.value = v.label || "";
@@ -1637,7 +1712,7 @@ export function ActivityEditor(props) {
         const i = setInterval(() => {
           fetchActivityVersions(activityId, r => {
             const v = r.find(v => v.id === currentVersion.id);
-            setAlertNewVersion(compareActivitiesDef(v, currentVersion));
+            setAlertNewVersion(equalActivitiesDef(v, currentVersion));
           })
         }, 3000);
         return () => clearInterval(i);
@@ -1764,7 +1839,7 @@ export function ActivityEditor(props) {
                       name="activity-version"
                       onChange={(value, action) => {
                           if(["select-option"].includes(action.action)) {
-                            if(compareActivitiesDef(currentVersion, editor.getDefinition().activity)) {
+                            if(equalActivitiesDef(currentVersion, editor.getDefinition().activity)) {
                               if(window.confirm("You have pending / unsaved changes, do you want to lose them?")) {
                                 setVersionId(value.id);
                               }
@@ -1775,7 +1850,7 @@ export function ActivityEditor(props) {
                       }}
                       options={versionsOptions} />
               </Col>
-              <Col md={8}>
+              <Col md={4}>
                 <Button disabled={!canCommit} onClick={() => {
                   save() && setShowCommit(true)
                 }}>Commit</Button>
@@ -1787,6 +1862,24 @@ export function ActivityEditor(props) {
                       setVersionId((r.find(v => v.active) || {}).id);
                     });
                   })}>Activate</Button>
+              </Col>
+              <Col md={2}>
+                <Select
+                  className="basic-single"
+                  classNamePrefix="select"
+                  value={cmpWith ? {value: cmpWith.name, label: cmpWith.name}: null}
+                  isSearchable={true}
+                  name="cmp-with-activity-version"
+                  onChange={(value, action) => {
+                    if(["select-option"].includes(action.action)) {
+                      if(value.value === "From clipboard...") {
+                        setShowCmpDefinition(true);
+                      } else {
+                        setCmpWith({id: value.id})
+                      }
+                    }
+                  }}
+                  options={[{value: "From clipboard...", label: "From clipboard..."}, ...versionsOptions]} />
               </Col>
             </Row>
             {
@@ -1972,6 +2065,16 @@ export function ActivityEditor(props) {
                   }
                   import("./editor").then(e => e.updateGraphModel(editor, activity, {clear: true, nofit: true}));
                 }} />
+
+          <CompareDefinitionModal
+            show={showCmpDefinition}
+            onHide={d => {
+              if(d) {
+                setCmpWith({name: "From clipboard...", definition: d})
+              }
+              setShowCmpDefinition(false);
+            }}
+            />
         </>
     );
 }

@@ -1,4 +1,5 @@
 import Ajv from "ajv";
+import deepEqual from "../utils/deepEqual";
 
 const okPic = require("../images/ok.png");
 const errPic = require("../images/error.png");
@@ -257,6 +258,18 @@ function new_editor() {
     return editor;
 }
 
+export function cmpWith(editor, diffActivity) {
+    const activity = getDefinition(editor, "").activity;
+
+    // merge & diff current definition with the other one
+    let merged = compareActivitiesDef(activity, diffActivity);
+
+    const graph = editor.graph;
+    graph.setEnabled(false);
+
+    
+}
+
 
 export function updateGraphModel(editor, activity, options) {
     // Adds activity (cells) to the model.
@@ -330,7 +343,11 @@ export function updateGraphModel(editor, activity, options) {
                     endpoints.push([name, v10]);
                     break;
                 default:
-                    v = graph.insertVertex(parent, null, node, c.x, c.y, min_cell_height(c, name), baseY + (20 * c.outputs.length) + 15);
+                    let cls = undefined;
+                    if(c.diffStatus) {
+                        cls = "cell_" + c.diffStatus;
+                    }
+                    v = graph.insertVertex(parent, null, node, c.x, c.y, min_cell_height(c, name), baseY + (20 * c.outputs.length) + 15, cls);
                     v.setConnectable(false);
 
                     v10 = graph.insertVertex(v, null, targetNode.cloneNode(true), 0, 0, 10, 10, 'port;target;spacingLeft=18', true);
@@ -900,6 +917,21 @@ function configureStylesheet(graph)
     style[mxConstants.STYLE_ARCSIZE] = 6;
     graph.getStylesheet().putDefaultVertexStyle(style);
 
+    style = Object.assign({}, style);
+    style[mxConstants.STYLE_STROKECOLOR] = 'red';
+    style[mxConstants.STYLE_STROKEWIDTH] = 5;
+    graph.getStylesheet().putCellStyle('cell_removed', style);
+
+    style = Object.assign({}, style);
+    style[mxConstants.STYLE_STROKECOLOR] = 'orange';
+    style[mxConstants.STYLE_STROKEWIDTH] = 5;
+    graph.getStylesheet().putCellStyle('cell_changed', style);
+
+    style = Object.assign({}, style);
+    style[mxConstants.STYLE_STROKECOLOR] = 'green';
+    style[mxConstants.STYLE_STROKEWIDTH] = 5;
+    graph.getStylesheet().putCellStyle('cell_new', style);
+
     style = {};
     style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_ELLIPSE;
     style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter;
@@ -1058,4 +1090,42 @@ function addToolbarButton(editor, toolbar, action, label, image, isTransparent, 
     toolbar.appendChild(button);
 }
 
-// module.exports = draw_editor;
+function compareActivitiesDef(a, b) {
+    let aDef = typeof a.definition === "string" ? JSON.parse(a.definition): a.definition;
+    let bDef = typeof b.definition === "string" ? JSON.parse(b.definition): b.definition;
+  
+    Object.entries(bDef.cells).forEach(([name, opt]) => {
+      let aCell = aDef.cells[name]
+      
+      if(aCell === undefined) {
+        aDef.cells[name] = {...opt, diffStatus: "new"}
+      } else {
+        
+        aDef.cells[name].diffStatus = equalCellParams(aCell, opt) ? "eq": "changed";
+      }
+    })
+    Object.values(aDef.cells).forEach((opt) => {
+      if(opt.diffStatus === undefined) {
+        opt.diffStatus = "removed";
+      }
+    })
+  
+    if(bDef.transitions) {
+      bDef.transitions.map(t => {
+        if(!aDef.transitions.find(([s, d]) => t[0] === s && t[1] === d)) {
+          aDef.transitions.push(t);
+        }
+      })
+    }
+    return {...a, definition: aDef};
+}
+
+function equalCellParams(a, b) {
+    if (a.name) {
+        delete a.name
+    }
+    if (b.name) {
+        delete b.name
+    }
+    return deepEqual(a, b);
+}
