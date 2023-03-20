@@ -516,20 +516,20 @@ function WorkflowEnds({value, onChange, workflow, readOnly}) {
 }
 
 
-function DynamicOutputs({value, onChange, regexp, readOnly}) {
-  const [newOutput, setNewOutput] = useState("");
-  const outputs = value ? value.split(",") : [];
-  const invalidOutput = regexp && !newOutput.match(regexp);
+function Strings({value, onChange, regexp, readOnly}) {
+  const [newEntry, setNewEntry] = useState("");
+  const values = value ? value.split(",") : [];
+  const isInvalid = regexp && !newEntry.match(regexp);
 
   return (
     <Table>
       <tbody>
       {
-        outputs.map(o =>
+        values.map(o =>
           <tr key={o}>
             <td>{o}</td>
             { !readOnly && <td><Button onClick={() => {
-                onChange(outputs.filter(output => output !== o).join(","), outputs.filter(output => output !== o))
+                onChange(values.filter(output => output !== o).join(","), values.filter(output => output !== o))
               }}>{"-"}</Button></td>
             }
           </tr>)
@@ -538,18 +538,18 @@ function DynamicOutputs({value, onChange, regexp, readOnly}) {
         <tr>
           <td style={{width: "100px"}}>
             <FormControl
-              style={{color: invalidOutput?"red":"black"}}
-              value={newOutput}
-              onChange={e => setNewOutput(e.target.value)} />
+              style={{color: isInvalid?"red":"black"}}
+              value={newEntry}
+              onChange={e => setNewEntry(e.target.value)} />
             {" "}
           </td>
           <td>
             <Button
               onClick={() => {
-                onChange([...outputs, newOutput].join(","), [...outputs, newOutput])
-                setNewOutput("");
+                onChange([...values, newEntry].join(","), [...values, newEntry])
+                setNewEntry("");
               }}
-              disabled={invalidOutput}
+              disabled={isInvalid}
             >{"+"}</Button>
           </td>
         </tr>
@@ -875,13 +875,20 @@ export function Param2Input({param, activity, staticParams, cells, value, readOn
         }} />
       break;
     case 'outputs':
-      i = <DynamicOutputs
+      i = <Strings
         value={value}
         readOnly={readOnly}
         regexp={param.regexp || (param.schema && param.schema.items.pattern)}
         onChange={(e, outputs) => {
           onChange(e, outputs);
         }} />
+      break;
+    case 'strings':
+      i = <Strings
+        value={value}
+        readOnly={readOnly}
+        regexp={param.regexp || (param.schema && param.schema.items.pattern)}
+        onChange={e => onChange(e)} />
       break;
     case 'workflow_ends':
       i = <WorkflowEnds

@@ -1,7 +1,7 @@
 import React, {useCallback, useEffect, useRef, useState} from "react";
-import {downloadJson, fetch_delete, fetch_get, fetch_post, fetch_put, NotificationsManager, parseJSON} from "../utils";
+import {API_URL_PREFIX, AuthServiceManager, fetch_delete, fetch_get, fetch_post, fetch_put, NotificationsManager, parseJSON} from "../utils";
 import {FormattedMessage} from "react-intl";
-import {Panel} from "react-bootstrap";
+import {MenuItem, Modal, Panel, SplitButton} from "react-bootstrap";
 import Form from "react-bootstrap/lib/Form";
 import FormGroup from "react-bootstrap/lib/FormGroup";
 import Col from "react-bootstrap/lib/Col";
@@ -12,15 +12,17 @@ import update from "immutability-helper";
 import Button from "react-bootstrap/lib/Button";
 import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
+import { useDropzone } from "react-dropzone";
 
 import "./template.css";
-import {faFile, faMinus, faPlus, faFolder} from "@fortawesome/free-solid-svg-icons";
+import {faFile, faMinus, faPlus, faFolder, faDownload, faUpload} from "@fortawesome/free-solid-svg-icons";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import ButtonGroup from "react-bootstrap/lib/ButtonGroup";
 import ReactDOM from "react-dom";
 import {DeleteConfirmButton} from "../utils/deleteConfirm";
 import {readFile} from "../orchestration/startup_events";
 import {FoldableButton} from "../utils/button";
+import { Base64 } from "js-base64";
 
 
 // helpers
@@ -66,7 +68,7 @@ function deleteTemplate(template_id) {
 
 function updateTemplate(template_id, data, onSuccess) {
     const data_ = Object.keys(data).reduce((a, b) => {
-            if(["key", "template"].includes(b)) {
+            if(["key", "template", "type"].includes(b)) {
                 a[b] = data[b];
             }
             return a;
@@ -96,20 +98,26 @@ function newTemplate(data, onSuccess) {
 
 
 // React components
-function Template({label, id, onDelete, onUpdate, onExport, onImport}) {
+function Template({label, id, type, onDelete, onUpdate, onExport, onRawExport}) {
   const [template, setTemplate] = useState({});
-  const fileUploader = useRef(null);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   useEffect(() => {
-    fetchTemplate(id).then(t => setTemplate(t.template))
-  }, [label, id]);
+    if(type === "jinja") {
+      fetchTemplate(id).then(({template}) => {
+        setTemplate(template)
+      })
+    } else {
+      setTemplate({id: id, key: label, type: type})
+    }
+  }, [label, id, type]);
 
   return (
     <Panel>
       <Panel.Heading>
-          <Panel.Title toggle>
-              {template.key}
-          </Panel.Title>
+        <Panel.Title toggle>
+          {template.key}
+        </Panel.Title>
       </Panel.Heading>
       <Panel.Body>
         <Form horizontal>
@@ -122,29 +130,29 @@ function Template({label, id, onDelete, onUpdate, onExport, onImport}) {
               <FormControl
                 type="text"
                 onChange={e => setTemplate(update(template, {$merge: {key: e.target.value}}))}
-                value={template.key} />
+                value={template.key || ""} />
             </Col>
 
             <Col>
               <ButtonToolbar>
                 <ButtonGroup>
                   <Button
-                    onClick={() => fileUploader.current.click()}
+                    onClick={() => setShowImportModal(true)}
                     bsStyle={"warning"}>
-                    Import
+                    <FontAwesomeIcon icon={faUpload}/> Import
                   </Button>
-                  <input
-                    type="file"
-                    id="file"
-                    ref={fileUploader}
-                    onChange={e => onImport(e.target.files[0])}
-                    style={{display: "none"}}/>
 
-                  <Button
-                    onClick={() => onExport(template)}
-                    bsStyle={"warning"}>
-                    Export
-                  </Button>
+                  <SplitButton
+                    id={"export-template"}
+                    bsStyle="warning"
+                    title={<><FontAwesomeIcon icon={faDownload}/> Export</>}
+                    onClick={() => onExport(template)}>
+                      <MenuItem
+                        id={"export-template-raw"}
+                        onClick={() => onRawExport(template)}>
+                        <FormattedMessage id="raw" defaultMessage="Raw" />
+                      </MenuItem>
+                  </SplitButton>
                 </ButtonGroup>
 
                 <ButtonGroup>
@@ -156,10 +164,25 @@ function Template({label, id, onDelete, onUpdate, onExport, onImport}) {
 
                 <ButtonGroup>
                   <Button
-                    onClick={() => updateTemplate(id, template, onUpdate)}
+                    onClick={() => {
+                      const o = Object.assign({}, template)
+                      if(o.type !== "jinja" && o.template !== undefined) {
+                        delete o.template
+                      } else if(o.type === "jinja") {
+                        o.template = Base64.encode(o.template)
+                      }
+                      updateTemplate(id, o, onUpdate)
+                    }}
                     bsStyle={"primary"}>
                     Save
                   </Button>
+                </ButtonGroup>
+
+                <ButtonGroup>
+                  <FormControl
+                    type="text"
+                    readOnly={true}
+                    value={template.type || ""} />
                 </ButtonGroup>
               </ButtonToolbar>
             </Col>
@@ -167,24 +190,62 @@ function Template({label, id, onDelete, onUpdate, onExport, onImport}) {
 
           <FormGroup>
             <Col sm={12}>
-              <FormControl
-                componentClass="textarea"
-                style={{resize: "vertical"}}
-                rows={25}
-                placeholder={TEMPLATE_SAMPLE}
-                onChange={e => setTemplate(update(template, {$merge: {template: e.target.value}}))}
-                value={template.template} />
+              { template.type === "jinja" ? <FormControl
+                  componentClass="textarea"
+                  style={{resize: "vertical"}}
+                  rows={25}
+                  placeholder={TEMPLATE_SAMPLE}
+                  onChange={e => setTemplate(update(template, {$merge: {template: e.target.value}}))}
+                  value={template.template} /> :
+                <div style={{position: "relative", height: 250}}>
+                  <div style={{ 
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    }}>
+                    <FontAwesomeIcon icon={faFile} aria-hidden="true" style={{'fontSize': '60px', color: "grey"}} />
+                  </div>
+                </div>
+              }
             </Col>
           </FormGroup>
         </Form>
+        
+        <ImportTemplateModal
+          show={showImportModal}
+          onHide={() => setShowImportModal(false)}
+          onImport={(name, type, content) => {
+            if(type === "text/plain") {
+              type = "jinja";
+            }
+            if(name && name !== template.key) {
+              NotificationsManager.error(`template name don't match ${name} vs ${template.key}`)
+              return
+            }
+            updateTemplate(
+              template.id,
+              {type: type, template: content},
+              () => {
+                if(type === "jinja") {
+                  fetchTemplate(id).then(({template}) => {
+                    setTemplate(template)
+                  })
+                } else {
+                  setTemplate({id: id, key: label, type: type})
+                }
+                setShowImportModal(false);
+              },
+            );
+          }} />
       </Panel.Body>
     </Panel>
   )
 }
 
-function TemplateParent({label, onDelete, onRename, onExport, onImport}) {
+function TemplateParent({label, onDelete, onRename, onImport}) {
   const [path, setPath] = useState(label);
-  const fileUploader = useRef(null);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   useEffect(() => setPath(label), [label])
 
@@ -213,22 +274,12 @@ function TemplateParent({label, onDelete, onRename, onExport, onImport}) {
               <ButtonToolbar>
                 <ButtonGroup>
                   <Button
-                    onClick={() => fileUploader.current.click()}
+                    onClick={() => setShowImportModal(true)}
                     bsStyle={"warning"}>
-                    Import
+                    <FontAwesomeIcon icon={faUpload}/> Import
                   </Button>
-                  <input
-                    type="file"
-                    id="file"
-                    ref={fileUploader}
-                    onChange={e => onImport(e.target.files[0])}
-                    style={{display: "none"}}/>
-
-                  <Button
-                    onClick={() => onExport(label)}
-                    bsStyle={"warning"}>Export</Button>
                 </ButtonGroup>
-
+                
                 <ButtonGroup>
                   <DeleteConfirmButton
                     resourceName={`${label} and all its children`}
@@ -243,6 +294,11 @@ function TemplateParent({label, onDelete, onRename, onExport, onImport}) {
             </Col>
           </FormGroup>
         </Form>
+
+        <ImportTemplatesModal
+          show={showImportModal}
+          onHide={() => setShowImportModal(false)}
+          onImport={onImport} />
       </Panel.Body>
     </Panel>
   )
@@ -368,6 +424,7 @@ function TemplateTree({
             .sort((a, b) => a[0].localeCompare(b[0]))
             .map(([key, value]) =>
             <TemplateTree
+              key={key}
               parent={path}
               title={key}
               children={value}
@@ -438,6 +495,134 @@ function findTemplate(templates, key) {
   return undefined
 }
 
+function ImportTemplatesModal({show, onHide, onImport}) {
+  const onDropRejected = useCallback(() => {
+    NotificationsManager.error("File type rejected");
+  }, []);
+
+  const onDrop = useCallback((files) => {
+    files.forEach(file => {
+      onImport(file)
+    });
+  }, [onImport]);
+
+  const {
+    getRootProps,
+    getInputProps,
+  } = useDropzone({    
+    onDrop,
+    accept: ['.json'],
+    onDropRejected,
+  });
+
+  return (
+    <Modal show={show} onHide={() => onHide(true)} backdrop={false} bsSize="large">
+      <Modal.Header closeButton>
+          <Modal.Title>
+              <FormattedMessage id="import" defaultMessage="Import"/>
+          </Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Form>
+          <section className="dropcontainer" >
+            <div {...getRootProps({className: 'dropzone'})} >
+              <input {...getInputProps()} />
+              <p>Drag 'n' drop some files here, or click to select files</p>
+            </div>
+          </section>
+        </Form>
+      </Modal.Body>
+    </Modal>
+  )
+}
+	
+function arrayBufferToBase64( buffer ) {
+	var binary = '';
+	var bytes = new Uint8Array( buffer );
+	var len = bytes.byteLength;
+	for (var i = 0; i < len; i++) {
+		binary += String.fromCharCode( bytes[ i ] );
+	}
+	return window.btoa( binary );
+}
+
+function ImportTemplateModal({show, onHide, onImport}) {
+  const onDropRejected = useCallback(() => {
+    NotificationsManager.error("file type rejected");
+  }, []);
+  const onDrop = useCallback((files) => {
+    files.forEach(file => {
+      if(![
+        "text/plain",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "application/json",
+      ].includes(file.type)) {
+        console.log(file.type);
+        NotificationsManager.error("Import failed", `${file.type} is not allowed (only plain text and excel files)`)
+        return
+      }
+
+      if(file.size > 1000000) {
+        NotificationsManager.error(`File too big (should be < 1MB)`)
+        return
+      }
+
+      const reader = new FileReader()
+
+      reader.onabort = () => console.error('file reading was aborted')
+      reader.onerror = () => console.error('file reading has failed')
+      
+
+      if(file.type === "application/json") {
+        reader.onload = () => {
+          try {
+            const o = JSON.parse(reader.result).template;
+            onImport(o.key, o.type || "jinja", o.template);
+          } catch (e) {
+            NotificationsManager.error("Failed to import", e.message);
+          }
+        }
+        reader.readAsText(file);
+      } else {
+        reader.onload = () => {
+          onImport(null, file.type, arrayBufferToBase64(reader.result))
+        }
+        reader.readAsArrayBuffer(file);
+      }
+    });
+  }, [onImport]);
+
+  const {
+    getRootProps,
+    getInputProps,
+  } = useDropzone({    
+    maxFiles:1,
+    onDrop,
+    accept: ['.xlsx', '.txt', '.jinja2', '.jinja', '.json'],
+    onDropRejected,
+  });
+
+  return (
+    <Modal show={show} onHide={() => onHide(true)} backdrop={false} bsSize="large">
+      <Modal.Header closeButton>
+          <Modal.Title>
+              <FormattedMessage id="import" defaultMessage="Import"/>
+          </Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Form>
+          <section className="dropcontainer" >
+            <div {...getRootProps({className: 'dropzone'})} >
+              <input {...getInputProps()} />
+              <p>Drag 'n' drop some files here, or click to select files</p>
+            </div>
+          </section>
+        </Form>
+      </Modal.Body>
+    </Modal>
+  )
+}
+
 export default function Templates() {
     const [templates, setTemplates] = useState({});
     const [showTemplate, setShowTemplate] = useState();
@@ -459,16 +644,18 @@ export default function Templates() {
 
     const importFile = useCallback(f => {
       readFile(f).then(r => JSON.parse(r)).then(c => {
-        Promise.all(c.templates.map(t => {
+        let templates = c.templates || [c.template];
+        
+        Promise.all(templates?.map(t => {
           const tmpl = findTemplate(templates, t.key);
           if(tmpl !== undefined) {
             return updateTemplate(tmpl.id, {template: t.template})
           } else {
-            return newTemplate({key: t.key, template: t.template})
+            return newTemplate({key: t.key, template: t.template, type: t.type || "jinja"})
           }
         })).then(() => refresh())
       }).catch(error => {
-        NotificationsManager.error(<FormattedMessage id="fail-import-templates" defaultMessage="Fail to import templates"/>, error)
+        NotificationsManager.error(<FormattedMessage id="fail-import-templates" defaultMessage="Fail to import templates"/>, error.message)
       })
     }, [templates])
 
@@ -491,10 +678,11 @@ export default function Templates() {
                           .map(([key, value]) => (
                           // templateTree(key, value)
                           <TemplateTree
+                            key={key}
                             title={key}
                             children={value}
                             onNewTemplate={path => {
-                              const newT = {key: path, template: ""};
+                              const newT = {key: path, template: "", type: "jinja"};
 
                               newTemplate(newT, id => {
                                 refresh();
@@ -525,14 +713,18 @@ export default function Templates() {
                     <Template
                       label={showTemplate.key}
                       id={showTemplate.id}
+                      type={showTemplate.type}
                       onUpdate={() => refresh()}
                       onDelete={() => refresh().then(() => setShowTemplate(undefined))}
-                      onImport={importFile}
                       onExport={template =>
-                        downloadJson(
-                          `template_${template.key.replaceAll(".", "-")}`,
-                          {templates: [{template: template.template, key: template.key}]},
-                        )
+                        AuthServiceManager.getValidToken().then(token => {
+                          window.location=`${API_URL_PREFIX}/api/v01/templates/${template.id}?as=json&auth_token=${token}`
+                        })
+                      }
+                      onRawExport={template =>
+                        AuthServiceManager.getValidToken().then(token => {
+                          window.location=`${API_URL_PREFIX}/api/v01/templates/${template.id}?as=raw&auth_token=${token}`
+                        })
                       }
                     />
                   }
@@ -556,15 +748,6 @@ export default function Templates() {
                           .then(() => setShowTemplate(undefined));
                       }}
                       onImport={importFile}
-                      onExport={path => {
-                        // get templates under node
-                        Promise.all(getTemplatesUnderNode(templates, path).map(t =>
-                          // loop over, compile them
-                          fetchTemplate(t.id)
-                        )).then(results =>
-                          downloadJson(`templates_${path}`, {templates: results.map(r => r.template)})
-                        )
-                      }}
                     />
                   }
                 </Col>
