@@ -7,17 +7,11 @@ import Glyphicon from "react-bootstrap/lib/Glyphicon";
 
 import DeleteModal from "./DeleteModal";
 
-const TrunkGroup = props => {
+const TrunkGroup = (props) => {
   const [showDelete, setShowDelete] = useState(false);
   return (
     <tr>
-      <td>
-        <Link
-          to={`/provisioning/${props.match.params.gwName}/tenants/${props.match.params.tenantId}/trunkgroup/${props.trunkGroup.name}`}
-        >
-          {props.trunkGroup.name}
-        </Link>
-      </td>
+      <td>{props.trunkGroup.name}</td>
       <td>{props.trunkGroup.routingMode}</td>
       <td>
         <ButtonToolbar>

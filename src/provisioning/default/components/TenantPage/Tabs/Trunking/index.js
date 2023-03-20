@@ -21,7 +21,7 @@ import { FormattedMessage } from "react-intl";
 import { countsPerPages } from "../../../../constants";
 import Loading from "../../../../common/Loading";
 
-const Trunking = props => {
+const Trunking = (props) => {
   const [trunkGroups, setTrunkGroups] = useState([]);
   const [countPerPage, setCountPerPage] = useState(25);
   const [paginationTrunksGroups, setPaginationTrunksGroups] = useState([]);
@@ -31,7 +31,7 @@ const Trunking = props => {
   const [isLoading, setIsLoading] = useState(true);
   const [sortedBy, setSortedBy] = useState("");
 
-  const propsTrunkGroup = useSelector(state => state.trunkGroupsByTenant);
+  const propsTrunkGroup = useSelector((state) => state.trunkGroupsByTenant);
 
   const dispatch = useDispatch();
 
@@ -50,7 +50,7 @@ const Trunking = props => {
   }, [trunkGroups, countPerPage]);
 
   useEffect(() => {
-    const searchArray = propsTrunkGroup.filter(trunk =>
+    const searchArray = propsTrunkGroup.filter((trunk) =>
       trunk.name.toLowerCase().includes(searchValue.toLowerCase())
     );
     setTrunkGroups(searchArray);
@@ -87,7 +87,7 @@ const Trunking = props => {
     setPage(page);
   };
 
-  const changeCoutOnPage = e => {
+  const changeCoutOnPage = (e) => {
     setCountPerPage(Number(e.target.value));
     setPage(0);
   };
@@ -149,47 +149,23 @@ const Trunking = props => {
   return (
     <React.Fragment>
       <Row className={"margin-top-2"}>
-        <Col mdOffset={1} md={10}>
+        <Col mdOffset={1} md={11}>
           <InputGroup>
             <InputGroup.Addon>
               <Glyphicon glyph="lyphicon glyphicon-search" />
             </InputGroup.Addon>
             <FormattedMessage id="search_placeholder" defaultMessage="Name">
-              {placeholder => (
+              {(placeholder) => (
                 <FormControl
                   type="text"
                   value={searchValue}
                   placeholder={placeholder}
-                  onChange={e => setSearchValue(e.target.value)}
+                  onChange={(e) => setSearchValue(e.target.value)}
                 />
               )}
             </FormattedMessage>
           </InputGroup>
         </Col>
-        <Col md={1}>
-          <Glyphicon
-            className={"x-large"}
-            glyph="glyphicon glyphicon-plus-sign"
-            //onClick={this.addTrunkGroup}
-          />
-        </Col>
-        {/* <Modal
-      show={this.state.showErrorCreate}
-      onHide={() => this.setState({ showErrorCreate: false })}
-      container={this}
-    >
-      <Modal.Header closeButton>
-        <Modal.Title id="contained-modal-title">
-          Excess of limit
-        </Modal.Title>
-      </Modal.Header>
-      <Modal.Body>Text info</Modal.Body>
-      <Modal.Footer>
-        <Button onClick={() => this.setState({ showErrorCreate: false })}>
-          Close
-        </Button>
-      </Modal.Footer>
-    </Modal> */}
       </Row>
       <Row>
         <Col md={11}>
@@ -202,7 +178,7 @@ const Trunking = props => {
               className={"margin-left-1"}
               onChange={changeCoutOnPage}
             >
-              {countsPerPages.map(counts => (
+              {countsPerPages.map((counts) => (
                 <option key={counts.value} value={counts.value}>
                   {counts.title}
                 </option>
