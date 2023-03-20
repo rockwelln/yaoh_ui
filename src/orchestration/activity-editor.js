@@ -1893,7 +1893,7 @@ export function ActivityEditor(props) {
                     if(c.customOutputs) {
                       c_def.outputs = c.def.outputs.concat(c.customOutputs).reduce((u, i) => u.includes(i) ? u : [...u, i], []);
                     }
-                    import("./editor").then(e => e.addNode(editor, c_def, c.name, c.params));
+                    import("./editor").then(e => e.addNode(editor.graph, c_def, c.name, c.params));
                   }
                 }}
             />
@@ -1914,7 +1914,7 @@ export function ActivityEditor(props) {
                         c_def.x = cell.geometry.x + 10;
                         c_def.y = cell.geometry.y + 10;
                         const params = (cell.getAttribute('attrList') || "").split(",").reduce((xa, a) => {xa[a] = cell.value.params[a]; return xa;}, {});
-                        e.addNode(editor, c_def, newName, params);
+                        e.addNode(editor.graph, c_def, newName, params);
                     }
                 })} />
 
