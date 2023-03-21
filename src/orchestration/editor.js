@@ -1,4 +1,5 @@
 import Ajv from "ajv";
+import { toast } from "react-toastify";
 
 const okPic = require("../images/ok.png");
 const errPic = require("../images/error.png");
@@ -152,11 +153,23 @@ function getClass(def) {
     }
 }
 
+function addEdge(graph, source, target) {
+    const parent = graph.getDefaultParent();
+    graph.getModel().beginUpdate();
+    try{
+        graph.insertEdge(parent, null, '',  source, target);
+    } finally {
+        graph.getModel().endUpdate();
+    }
+}
+
 export function addNode(graph, def, name, paramsFields) {
     const cls = getClass(def);
     const c = def;
     const value = def.original_name || def.name;
     let parent = graph.getDefaultParent();
+    let endpoints = {};
+    let v = undefined;
     graph.getModel().beginUpdate();
     try{
         let node = document.createElement('cell');
@@ -172,16 +185,21 @@ export function addNode(graph, def, name, paramsFields) {
             node.params[param_name] = paramsFields[param_name] || '';
             return null;
         });
-        let v = undefined;
         let v10 = undefined;
         let baseY = BASE_Y;
         switch(node.getAttribute('original_name')) {
+            case 'start':
+                v = graph.insertVertex(parent, null, node, c.x, c.y, c.height || 100, 25, 'start');
+                v.setConnectable(false);
+                baseY = 7;
+                break;
             case 'end':
                 v = graph.insertVertex(parent, null, node, c.x, c.y, c.height || 100, 25, 'end');
                 v.setConnectable(false);
 
                 v10 = graph.insertVertex(v, null, document.createElement('Target'), 0, 0, 10, 10, 'port;target;spacingLeft=18', true);
                 v10.geometry.offset = new mxPoint(-5, 9);
+                endpoints[name] = v10;
                 break;
             case 'sync_outputs':
             case 'or_outputs':
@@ -190,6 +208,7 @@ export function addNode(graph, def, name, paramsFields) {
 
                 v10 = graph.insertVertex(v, null, document.createElement('Target'), 0, 0, 10, 10, 'port;target;spacingLeft=18', true);
                 v10.geometry.offset = new mxPoint(-5, -5);
+                endpoints[name] = v10;
                 break;
             default:
                 v = graph.insertVertex(parent, null, node, c.x, c.y, min_cell_height(c, name), baseY + (20 * c.outputs.length) + 15, cls);
@@ -197,6 +216,7 @@ export function addNode(graph, def, name, paramsFields) {
 
                 v10 = graph.insertVertex(v, null, document.createElement('Target'), 0, 0, 10, 10, 'port;target;spacingLeft=18', true);
                 v10.geometry.offset = new mxPoint(-5, 15);
+                endpoints[name] = v10;
                 break
         }
 
@@ -210,10 +230,12 @@ export function addNode(graph, def, name, paramsFields) {
             } else {
               p.geometry.offset = new mxPoint(-5, baseY + (i * 20));
             }
+            endpoints[name + '.' + o] = p;
         }
     }finally {
         graph.getModel().endUpdate();
     }
+    return {cell: v, endpoints:endpoints};
 }
 
 
@@ -395,23 +417,51 @@ function supportClipboard(graph) {
             // Standard paste via control-v
             if (json_.substring(0, 1) == '{')
             {
-                var cell;
+                var o;
                 try {
-                    cell = JSON.parse(json_);
+                    o = JSON.parse(json_);
                 } catch(e) {
                     console.error(json_, e)
+                    toast.error(e.message)
                     return
                 }
 
-                // addNode expects to receive the definition of the cell
-                // so trick the attributes a bit
-                const paramValues = Object.assign({}, cell.params);
-                cell.params = Object.keys(cell.params);
-                // slightly shift a new clone
-                cell.x += gx;
-                cell.y += gy;
-                addNode(graph, cell, cell.name, paramValues);
-                // graph.scrollCellToVisible(graph.getSelectionCell());
+                const {cells, transitions} = o;
+                const newVertex = [];
+                const endpoints = cells.map(cell => {
+                    // addNode expects to receive the definition of the cell
+                    // so trick the attributes a bit
+                    const paramValues = Object.assign({}, cell.params);
+                    cell.params = Object.keys(cell.params);
+                    // slightly shift a new clone (if necessary)
+                    cell.x += gx;
+                    cell.y += gy;
+                    // add copy to the node name if it already exists
+                    if (Object.values(graph.getModel().cells).findIndex(c => c.getAttribute('label') === cell.name) !== -1) {
+                        const newName = cell.name + " (copy)";
+                        
+                        transitions.forEach(t => {
+                            if(t[0].startsWith(cell.name + ".")) {
+                                t[0] = t[0].replace(cell.name + ".", newName + ".")
+                            }
+                            if(t[1] === cell.name) {
+                                t[1] = newName
+                            }
+                        });
+                        cell.name = newName;
+                    }
+                    
+                    const {endpoints, cell: cl} = addNode(graph, cell, cell.name, paramValues);
+                    // graph.scrollCellToVisible(graph.getSelectionCell());
+                    newVertex.push(cl);
+                    return endpoints
+                }).reduce(Object.assign, {});
+
+                transitions.forEach(transition => {
+                    addEdge(graph, endpoints[transition[0]], endpoints[transition[1]]);
+                });
+
+                graph.setSelectionCells(newVertex);
             }
         }
     };
