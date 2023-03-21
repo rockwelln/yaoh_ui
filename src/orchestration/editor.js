@@ -1,4 +1,5 @@
 import Ajv from "ajv";
+import { toast } from "react-toastify";
 
 const okPic = require("../images/ok.png");
 const errPic = require("../images/error.png");
@@ -11,6 +12,7 @@ const mxnspace = require("mxgraph")({
     mxImageBasePath: "mxgraph/javascript/src/images",
     mxBasePath: "mxgraph/javascript/src"
 });
+require("mxgraph/javascript/src/css/common.css")
 
 const {
     mxUtils,
@@ -25,7 +27,8 @@ const {
     mxEvent,
     mxPoint,
     mxImage,
-    mxCellOverlay
+    mxCellOverlay,
+    mxKeyHandler,
 } = mxnspace;
 
 
@@ -150,12 +153,23 @@ function getClass(def) {
     }
 }
 
-export function addNode(editor, def, name, paramsFields) {
+function addEdge(graph, source, target) {
+    const parent = graph.getDefaultParent();
+    graph.getModel().beginUpdate();
+    try{
+        graph.insertEdge(parent, null, '',  source, target);
+    } finally {
+        graph.getModel().endUpdate();
+    }
+}
+
+export function addNode(graph, def, name, paramsFields) {
     const cls = getClass(def);
     const c = def;
     const value = def.original_name || def.name;
-    let graph = editor.graph;
     let parent = graph.getDefaultParent();
+    let endpoints = {};
+    let v = undefined;
     graph.getModel().beginUpdate();
     try{
         let node = document.createElement('cell');
@@ -171,16 +185,21 @@ export function addNode(editor, def, name, paramsFields) {
             node.params[param_name] = paramsFields[param_name] || '';
             return null;
         });
-        let v = undefined;
         let v10 = undefined;
         let baseY = BASE_Y;
         switch(node.getAttribute('original_name')) {
+            case 'start':
+                v = graph.insertVertex(parent, null, node, c.x, c.y, c.height || 100, 25, 'start');
+                v.setConnectable(false);
+                baseY = 7;
+                break;
             case 'end':
                 v = graph.insertVertex(parent, null, node, c.x, c.y, c.height || 100, 25, 'end');
                 v.setConnectable(false);
 
                 v10 = graph.insertVertex(v, null, document.createElement('Target'), 0, 0, 10, 10, 'port;target;spacingLeft=18', true);
                 v10.geometry.offset = new mxPoint(-5, 9);
+                endpoints[name] = v10;
                 break;
             case 'sync_outputs':
             case 'or_outputs':
@@ -189,6 +208,7 @@ export function addNode(editor, def, name, paramsFields) {
 
                 v10 = graph.insertVertex(v, null, document.createElement('Target'), 0, 0, 10, 10, 'port;target;spacingLeft=18', true);
                 v10.geometry.offset = new mxPoint(-5, -5);
+                endpoints[name] = v10;
                 break;
             default:
                 v = graph.insertVertex(parent, null, node, c.x, c.y, min_cell_height(c, name), baseY + (20 * c.outputs.length) + 15, cls);
@@ -196,6 +216,7 @@ export function addNode(editor, def, name, paramsFields) {
 
                 v10 = graph.insertVertex(v, null, document.createElement('Target'), 0, 0, 10, 10, 'port;target;spacingLeft=18', true);
                 v10.geometry.offset = new mxPoint(-5, 15);
+                endpoints[name] = v10;
                 break
         }
 
@@ -209,10 +230,12 @@ export function addNode(editor, def, name, paramsFields) {
             } else {
               p.geometry.offset = new mxPoint(-5, baseY + (i * 20));
             }
+            endpoints[name + '.' + o] = p;
         }
     }finally {
         graph.getModel().endUpdate();
     }
+    return {cell: v, endpoints:endpoints};
 }
 
 
@@ -254,7 +277,274 @@ function new_editor() {
     configureStylesheet(graph);
     // put edges behind cells (despite they are drawn after)
     graph.keepEdgesInBackground = true;
+    // hook on key pressed
+    var keyHandler = new mxKeyHandler(graph);
+    keyHandler.getFunction = (evt) =>
+    {
+      if (evt != null && graph.isEnabled())
+      {
+        // delete cell(s) using "delete" key
+        const isCtrlBackspace = (mxEvent.isControlDown(evt) || (mxClient.IS_MAC && evt.metaKey)) && evt.keyCode === 8;
+        const isDelete = evt.keyCode === 46;
+        if(isCtrlBackspace || isDelete) {
+            graph.removeCells()
+        }
+        const isSave = (mxEvent.isControlDown(evt) || (mxClient.IS_MAC && evt.metaKey)) && evt.keyCode === 83;
+        if(isSave) {
+            console.log("click save")
+            evt.preventDefault();
+        }
+
+      }
+      return null;
+    }
+
+    supportClipboard(graph);
+
     return editor;
+}
+
+function supportClipboard(graph) {
+    // Focused but invisible textarea during control or meta key events
+    var textInput = document.createElement('textarea');
+    mxUtils.setOpacity(textInput, 0);
+    textInput.style.width = '1px';
+    textInput.style.height = '1px';
+    var gs = graph.gridSize;
+    var gx = 0;
+    var gy = 0;
+    var restoreFocus = false;
+    var lastPaste = null;
+
+    // Workaround for no copy event in IE/FF if empty
+    textInput.value = ' ';
+    
+    // Inserts the JSON for the given cells into the text input for copy
+    var copyCells = function(graph, cells)
+    {
+        if (cells.length > 0)
+        {
+            let m = "";
+            let nodes = [];
+            let transitions = [];
+            
+            // Cell => JSON
+            // currently, only 1 (the last one) cell will be considered
+            for (var i = 0; i < cells.length; i++)
+            {
+                let cell = cells[i];
+                if (cell.edge) {
+                    const {source, target, style} = cell;
+
+                    let sourcePortId = style.split(';')
+                        .map(s => s.split('='))
+                        .filter(s => s[0] === 'sourcePort')[0][1];
+
+                    if(cells.includes(source) && cells.includes(target)) {
+                        transitions.push([source.getAttribute('label') + '.' + source.children.find(c => c.id === sourcePortId).value,
+                            target.getAttribute('label')
+                        ])
+                    }
+                } else if (!cell.connectable) {
+                    let outputs = cell.getAttribute('outputs') || "";
+                    let errOuts = (cell.getAttribute('error_outputs') || "").split(",").filter(o => o !== "");
+
+                    let c = {
+                        name: cell.getAttribute('label'),
+                        original_name: cell.getAttribute('original_name'),
+                        x: cell.geometry.x,
+                        y: cell.geometry.y,
+                        params: {},
+                        outputs: outputs.split(",").filter(o => o !== ""),
+                    };
+                    if(errOuts.length > 0) {
+                        c.error_outputs = errOuts;
+                    }
+
+                    if(cell.hasAttribute('attrList') && cell.getAttribute('attrList') !== undefined) {
+                        c.params = cell.getAttribute('attrList').split(",").reduce((xa, a) => {xa[a] = cell.value.params[a]; return xa;}, {});
+                    }
+
+                    nodes.push(c);
+                }
+            }
+            textInput.value = JSON.stringify({
+                cells: nodes,
+                transitions: transitions,
+            }, null, 2);
+        }
+        textInput.select();
+        lastPaste = textInput.value;
+        gx = 0;
+        gy = 0;
+    };
+
+    // Cross-browser function to fetch text from paste events
+    var extractGraphModelFromEvent = function(evt)
+    {
+        var data = null;
+        if (evt != null)
+        {
+            var provider = (evt.dataTransfer != null) ? evt.dataTransfer : evt.clipboardData;
+            if (provider != null) {
+                if (document.documentMode == 10 || document.documentMode == 11) {
+                    data = provider.getData('Text');
+                } else {
+                    data = (mxUtils.indexOf(provider.types, 'text/html') >= 0) ? provider.getData('text/html') : null;
+                    if (mxUtils.indexOf(provider.types, 'text/plain' && (data == null || data.length == 0))) {
+                        data = provider.getData('text/plain');
+                    }
+                }		
+            }
+        }
+        return data;
+    };
+
+    var pasteText = function(text) {
+        var json_ = mxUtils.trim(text);
+        
+        if (json_.length > 0)
+        {
+            if (lastPaste != json_) {
+                lastPaste = json_;
+                gx = 0;
+                gy = 0;
+            } else {
+                gx += gs;
+                gy += gs;
+            }
+
+            // Standard paste via control-v
+            if (json_.substring(0, 1) == '{')
+            {
+                var o;
+                try {
+                    o = JSON.parse(json_);
+                } catch(e) {
+                    console.error(json_, e)
+                    toast.error(e.message)
+                    return
+                }
+
+                const {cells, transitions} = o;
+                const newVertex = [];
+                const endpoints = cells.map(cell => {
+                    // addNode expects to receive the definition of the cell
+                    // so trick the attributes a bit
+                    const paramValues = Object.assign({}, cell.params);
+                    cell.params = Object.keys(cell.params);
+                    // slightly shift a new clone (if necessary)
+                    cell.x += gx;
+                    cell.y += gy;
+                    // add copy to the node name if it already exists
+                    if (Object.values(graph.getModel().cells).findIndex(c => c.getAttribute('label') === cell.name) !== -1) {
+                        const newName = cell.name + " (copy)";
+                        
+                        transitions.forEach(t => {
+                            if(t[0].startsWith(cell.name + ".")) {
+                                t[0] = t[0].replace(cell.name + ".", newName + ".")
+                            }
+                            if(t[1] === cell.name) {
+                                t[1] = newName
+                            }
+                        });
+                        cell.name = newName;
+                    }
+                    
+                    const {endpoints, cell: cl} = addNode(graph, cell, cell.name, paramValues);
+                    // graph.scrollCellToVisible(graph.getSelectionCell());
+                    newVertex.push(cl);
+                    return endpoints
+                }).reduce(Object.assign, {});
+
+                transitions.forEach(transition => {
+                    addEdge(graph, endpoints[transition[0]], endpoints[transition[1]]);
+                });
+
+                graph.setSelectionCells(newVertex);
+            }
+        }
+    };
+
+    // Shows a textare when control/cmd is pressed to handle native clipboard actions
+    mxEvent.addListener(document, 'keydown', (evt) =>
+    {
+        // No dialog visible
+        var source = mxEvent.getSource(evt);
+        
+        if (graph.isEnabled() && !graph.isMouseDown && !graph.isEditing() && source.nodeName != 'INPUT')
+        {
+            if (evt.keyCode == 224 /* FF */ || (!mxClient.IS_MAC && evt.keyCode == 17 /* Control */) ||
+                (mxClient.IS_MAC && (evt.keyCode == 91 || evt.keyCode == 93) /* Left/Right Meta */))
+            {
+                // Cannot use parentNode for check in IE
+                if (!restoreFocus)
+                {
+                    // Avoid autoscroll but allow handling of events
+                    textInput.style.position = 'absolute';
+                    textInput.style.left = (graph.container.scrollLeft + 10) + 'px';
+                    textInput.style.top = (graph.container.scrollTop + 10) + 'px';
+                    graph.container.appendChild(textInput);
+
+                    restoreFocus = true;
+                    textInput.focus();
+                    textInput.select();
+                }
+            }
+        }
+    });
+
+    // Restores focus on graph container and removes text input from DOM
+    mxEvent.addListener(document, 'keyup', (evt) =>
+    {
+        if (restoreFocus && (evt.keyCode == 224 /* FF */ || evt.keyCode == 17 /* Control */ ||
+            evt.keyCode == 91 || evt.keyCode == 93 /* Meta */))
+        {
+            restoreFocus = false;
+            
+            if (!graph.isEditing())
+            {
+                graph.container.focus();
+            }
+            
+            textInput.parentNode.removeChild(textInput);
+        }
+    });
+
+    // Handles copy event by putting XML for current selection into text input
+    mxEvent.addListener(textInput, 'copy', mxUtils.bind(this, (evt) =>
+    {
+        if (graph.isEnabled() && !graph.isSelectionEmpty())
+        {
+            copyCells(graph, mxUtils.sortCells(graph.model.getTopmostCells(graph.getSelectionCells())));
+        }
+    }));
+
+    // Handles paste event by parsing and inserting XML
+    mxEvent.addListener(textInput, 'paste', function(evt)
+    {
+        // Clears existing contents before paste - should not be needed
+        // because all text is selected, but doesn't hurt since the
+        // actual pasting of the new text is delayed in all cases.
+        textInput.value = '';
+
+        if (graph.isEnabled())
+        {
+            console.log(evt)
+            var json_ = extractGraphModelFromEvent(evt);
+            if (json_ != null && json_.length > 0) {
+                pasteText(json_);
+            } else {
+                // Timeout for new value to appear
+                window.setTimeout(mxUtils.bind(this, function()
+                {
+                    pasteText(textInput.value);
+                }), 0);
+            }
+        }
+
+        textInput.select();
+    });
 }
 
 

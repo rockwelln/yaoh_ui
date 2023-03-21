@@ -1684,7 +1684,7 @@ export function ActivityEditor(props) {
             <Row>
               <Col sm={11}>
                 <p style={descriptionStyle}>
-                  { currentActivity && (currentActivity.description || "no description").split("\n").map(d => <>{d}<br/></>) }
+                  { currentActivity && (currentActivity.description || "no description").split("\n").map((d, i) => <React.Fragment key={`desc-line-${i}`}>{d}<br/></React.Fragment>) }
                 </p>
                 {descriptionStyle.height ?
                   <Button bsStyle={"link"} onClick={() => setDescriptionStyle(ExpandedDescriptionStyle)}>show
@@ -1813,7 +1813,7 @@ export function ActivityEditor(props) {
                         <tbody>
                         {
                           usage.routes?.map(r => (
-                            <tr>
+                            <tr key={`${r.method}${r.route}`}>
                               <td>{r.method.toUpperCase()}</td>
                               <td>{r.route}</td>
                             </tr>
@@ -1821,7 +1821,7 @@ export function ActivityEditor(props) {
                         }
                         {
                           usage.parents?.map(p => (
-                            <tr>
+                            <tr key={p.id}>
                               <td>{p.id}</td>
                               <td><Link to={`/transactions/config/activities/editor/${p.id}`}>{p.name}</Link></td>
                             </tr>
@@ -1850,7 +1850,7 @@ export function ActivityEditor(props) {
                       <tbody>
                       {
                         versions.sort((a, b) => b.id - a.id).map((v, i) => (
-                          <tr>
+                          <tr key={`version-${i}`}>
                             <td>{i+1}</td>
                             <td>{v.label || WORKING_VERSION_LABEL}</td>
                             <td>{v.message ? v.message.split("\n").map(m => <>{m}<br/></>) : "-"}</td>
@@ -1893,7 +1893,7 @@ export function ActivityEditor(props) {
                     if(c.customOutputs) {
                       c_def.outputs = c.def.outputs.concat(c.customOutputs).reduce((u, i) => u.includes(i) ? u : [...u, i], []);
                     }
-                    import("./editor").then(e => e.addNode(editor, c_def, c.name, c.params));
+                    import("./editor").then(e => e.addNode(editor.graph, c_def, c.name, c.params));
                   }
                 }}
             />
@@ -1914,7 +1914,7 @@ export function ActivityEditor(props) {
                         c_def.x = cell.geometry.x + 10;
                         c_def.y = cell.geometry.y + 10;
                         const params = (cell.getAttribute('attrList') || "").split(",").reduce((xa, a) => {xa[a] = cell.value.params[a]; return xa;}, {});
-                        e.addNode(editor, c_def, newName, params);
+                        e.addNode(editor.graph, c_def, newName, params);
                     }
                 })} />
 
