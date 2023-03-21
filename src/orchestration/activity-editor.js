@@ -42,7 +42,7 @@ import {
   faArrowUp, faBell, faBellSlash,
   faChartBar, faCog,
   faCopy, faDatabase, faDirections,
-  faDownload, faEnvelope, faHome, faPaste, faPlay, faPowerOff, faSearch,
+  faDownload, faEnvelope, faFileCsv, faFileExcel, faHome, faPaste, faPlay, faPowerOff, faSearch,
   faSpinner, faStop, faStopwatch, faStream,
   faUserCog, faUsers
 } from "@fortawesome/free-solid-svg-icons";
@@ -695,6 +695,8 @@ const sortedNodes = [
   "delete_user",
   "get_owner",
   "search_transactions",
+  "create_csv",
+  "create_excel_sheet",
   "entity",
 ];
 
@@ -901,6 +903,16 @@ function nodeLabel(name, size) {
       s.style.color = "pink";
       s.icon = faSearch;
       s.label = "Search transactions";
+      break;
+    case "create_csv":
+      s.style.color = "green";
+      s.icon = faFileCsv;
+      s.label = "CSV file";
+      break;
+    case "create_excel_sheet":
+      s.style.color = "green";
+      s.icon = faFileExcel;
+      s.label = "Excel file";
       break;
     case "entity":
       s.style.color = "blue";
