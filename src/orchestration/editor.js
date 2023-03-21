@@ -472,7 +472,7 @@ function supportClipboard(graph) {
         // No dialog visible
         var source = mxEvent.getSource(evt);
         
-        if (graph.isEnabled() && !graph.isMouseDown && !graph.isEditing() && source.nodeName != 'INPUT')
+        if (graph.isEnabled() && !graph.isMouseDown && !graph.isEditing() && source.nodeName != 'INPUT' && source.nodeName != 'TEXTAREA')
         {
             if (evt.keyCode == 224 /* FF */ || (!mxClient.IS_MAC && evt.keyCode == 17 /* Control */) ||
                 (mxClient.IS_MAC && (evt.keyCode == 91 || evt.keyCode == 93) /* Left/Right Meta */))

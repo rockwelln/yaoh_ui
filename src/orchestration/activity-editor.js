@@ -532,9 +532,7 @@ export function Activities({user_info}) {
     )
 }
 
-
-function ActivityStatsModal(props) {
-    const {show, onHide, id} = props;
+function ActivityStatsModal({show, onHide, id}) {
     const [stats, setStats] = useState({});
 
     useEffect(() => {
@@ -1735,28 +1733,28 @@ export function ActivityEditor(props) {
                             <Button onClick={() => save()} disabled={!canSave}>Save</Button>
                         </ButtonGroup>
                         <ButtonGroup style={{paddingLeft: '1rem'}}>
-                            <Button onClick={() => editor && editor.execute("add_process")} disabled={!canSave} title={"add a node"}>+</Button>
-                            <Button onClick={() => editor && editor.execute("clone_process")} disabled={!canSave} title={"clone a node"}>🐑</Button>
-                            <Button onClick={() => editor && editor.execute("delete")} disabled={!canSave} title={"delete"}>✘</Button>
+                            <Button onClick={() => editor?.execute("add_process")} disabled={!canSave} title={"add a node"}>+</Button>
+                            <Button onClick={() => editor?.execute("clone_process")} disabled={!canSave} title={"clone a node"}>🐑</Button>
+                            <Button onClick={() => editor?.execute("delete")} disabled={!canSave} title={"delete"}>✘</Button>
                         </ButtonGroup>
                         <ButtonGroup style={{paddingLeft: '1rem'}}>
-                            <Button onClick={() => editor && editor.execute("undo")} disabled={!canSave} title={"undo"}>⤾</Button>
-                            <Button onClick={() => editor && editor.execute("redo")} disabled={!canSave} title={"redo"}>⤿</Button>
+                            <Button onClick={() => editor?.execute("undo")} disabled={!canSave} title={"undo"}>⤾</Button>
+                            <Button onClick={() => editor?.execute("redo")} disabled={!canSave} title={"redo"}>⤿</Button>
                         </ButtonGroup>
                         <ButtonGroup style={{paddingLeft: '1rem'}}>
-                            <Button onClick={() => editor && editor.execute("zoomIn")} title={"zoom in"}>🔍 +</Button>
-                            <Button onClick={() => editor && editor.execute("zoomOut")} title={"zoom out"}>🔍 -</Button>
+                            <Button onClick={() => editor?.execute("zoomIn")} title={"zoom in"}>🔍 +</Button>
+                            <Button onClick={() => editor?.execute("zoomOut")} title={"zoom out"}>🔍 -</Button>
                         </ButtonGroup>
                         <ButtonGroup style={{paddingLeft: '1rem'}}>
-                            <Button onClick={() => editor && editor.execute("fit")}>fit</Button>
-                            <Button onClick={() => editor && editor.execute("show")} title={"show"}>👓</Button>
-                            <Button onClick={() => editor && editor.execute("showDefinition")} title={"show definition"}>txt</Button>
+                            <Button onClick={() => editor?.execute("fit")}>fit</Button>
+                            <Button onClick={() => editor?.execute("show")} title={"show"}>👓</Button>
+                            <Button onClick={() => editor?.execute("showDefinition")} >txt 1</Button>
                             <Button onClick={() => {
                               editor && downloadDefinition(editor.getDefinition(ReactDOM.findDOMNode(titleRef.current).value).activity);
                             }} title={"download definition"}>
                               <FontAwesomeIcon icon={faArrowDown} />
                             </Button>
-                            <Button onClick={() => editor && editor.execute("upload_definition")} disabled={!canSave} title={"upload definition"}>
+                            <Button onClick={() => editor?.execute("upload_definition")} disabled={!canSave} title={"upload definition"}>
                               <FontAwesomeIcon icon={faArrowUp} />
                             </Button>
                             <Button onClick={() => setShowStats(true)} title={"show stats"}>
