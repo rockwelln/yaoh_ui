@@ -40,9 +40,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowDown,
   faArrowUp, faBell, faBellSlash,
+  faBolt,
   faChartBar, faCog,
   faCopy, faDatabase, faDirections,
-  faDownload, faEnvelope, faFileCsv, faFileExcel, faHome, faPaste, faPlay, faPowerOff, faSearch,
+  faDownload, faEnvelope, faFileCsv, faFileExcel, faFileMedicalAlt, faHome, faPaste, faPlay, faPowerOff, faSearch,
   faSpinner, faStop, faStopwatch, faStream,
   faUserCog, faUsers
 } from "@fortawesome/free-solid-svg-icons";
@@ -695,6 +696,8 @@ const sortedNodes = [
   "search_transactions",
   "create_csv",
   "create_excel_sheet",
+  "powershell",
+  "ftp",
   "entity",
 ];
 
@@ -912,6 +915,16 @@ function nodeLabel(name, size) {
       s.icon = faFileExcel;
       s.label = "Excel file";
       break;
+    case "powershell":
+        s.style.color = "blue";
+        s.icon = faBolt;
+        s.label = "Powershell";
+        break;
+  case "ftp":
+        s.style.color = "green";
+        s.icon = faFileMedicalAlt;
+        s.label = "sFTP";
+        break;
     case "entity":
       s.style.color = "blue";
       s.icon = faHome;
@@ -1055,7 +1068,7 @@ function NewCellModal({show, onHide, cells, activity})  {
                                 options={nodes}
                             />
                             {
-                                definition && definition.doc && <HelpBlock>{definition.doc}</HelpBlock>
+                              definition?.doc && <HelpBlock>{ definition.doc.split("\n").map(m => <>{m}<br/></>) }</HelpBlock>
                             }
                         </Col>
                     </FormGroup>
@@ -1323,10 +1336,10 @@ export function EditCellModal(props) {
                 </Col>
             </FormGroup>
 
-            { cellDef && cellDef.doc &&
+            { cellDef?.doc &&
               <FormGroup>
                 <Col smOffset={2} sm={9}>
-                  <p><i>{ cellDef.doc }</i></p>
+                  <p><i>{ cellDef.doc.split("\n").map(m => <>{m}<br/></>) }</i></p>
                 </Col>
               </FormGroup>
             }
