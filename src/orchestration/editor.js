@@ -472,7 +472,10 @@ function supportClipboard(graph) {
         // No dialog visible
         var source = mxEvent.getSource(evt);
         
-        if (graph.isEnabled() && !graph.isMouseDown && !graph.isEditing() && source.nodeName != 'INPUT' && source.nodeName != 'TEXTAREA')
+        // note: source.nodeName should probably be "BODY" when the ctrl key need to be intercepted
+        // I excuded INPUT, TEXTAREA and DIV to allow ctrl-c/v on form fields from nodes
+        // I probably could simplify by using source.nodeName == "BODY" but not sure 
+        if (graph.isEnabled() && !graph.isMouseDown && !graph.isEditing() && source.nodeName != 'INPUT' && source.nodeName != 'TEXTAREA' && source.nodeName != 'DIV')
         {
             if (evt.keyCode == 224 /* FF */ || (!mxClient.IS_MAC && evt.keyCode == 17 /* Control */) ||
                 (mxClient.IS_MAC && (evt.keyCode == 91 || evt.keyCode == 93) /* Left/Right Meta */))
