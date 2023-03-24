@@ -103,7 +103,35 @@ function TcpSessionHolderInput({value, onChange, readOnly}) {
       name="session-holder"
       onChange={(value, action) => {
         if(["select-option", "create-option", "clear"].includes(action.action)) {
-          onChange(value && value.value);
+          onChange(value?.value);
+        }
+      }}
+      options={holders.map(h => ({value: h, label: h}))} />
+  )
+}
+
+function FtpSessionHolderInput({value, onChange, readOnly}) {
+  const [holders, setHolders] = useState([]);
+  useEffect(() => {
+    fetchConfiguration(
+      c => c.gateways_tcp &&
+        setHolders(Object.entries(c.gateways_tcp)
+          .filter(([name, params]) => params.url.startsWith("sftp") || params.url.startsWith("ssh"))
+          .map(([name, params]) => params.session_holder)
+          .filter(s => s !== undefined)
+          .sort((a, b) => a.localeCompare(b))
+        )
+    )
+  }, []);
+  return (
+    <Creatable
+      value={{value: value, label: value}}
+      isClearable
+      isSearchable
+      name="session-holder"
+      onChange={(value, action) => {
+        if(["select-option", "create-option", "clear"].includes(action.action)) {
+          onChange(value?.value);
         }
       }}
       options={holders.map(h => ({value: h, label: h}))} />
@@ -488,7 +516,7 @@ function WorkflowEnds({value, onChange, workflow, readOnly}) {
         }
         {!readOnly &&
           <tr>
-            <td style={{width: "100px"}}>
+            <td style={{width: "250px"}}>
               <FormControl
                 value={newOutput}
                 onChange={e => setNewOutput(e.target.value)} />
@@ -536,7 +564,7 @@ function Strings({value, onChange, regexp, readOnly}) {
       }
       { !readOnly &&
         <tr>
-          <td style={{width: "100px"}}>
+          <td style={{width: "250px"}}>
             <FormControl
               style={{color: isInvalid?"red":"black"}}
               value={newEntry}
@@ -827,6 +855,9 @@ export function Param2Input({param, activity, staticParams, cells, value, readOn
       break;
     case 'tcp_session_holder':
       i = <TcpSessionHolderInput value={value} readOnly={readOnly} onChange={e => onChange(e)} />
+      break;
+    case 'ftp_session_holder':
+      i = <FtpSessionHolderInput value={value} readOnly={readOnly} onChange={e => onChange(e)} />
       break;
     case 'datastore':
       i = <DataStoreInput value={value} readOnly={readOnly} onChange={e => onChange(e)} />
