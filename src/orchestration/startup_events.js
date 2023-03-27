@@ -51,6 +51,35 @@ const JSON_SCHEMA_SAMPLE = (
     "additionalProperties": false
 }`
 );
+const OUTPUT_JSON_SCHEMA_SAMPLE = (
+  `{
+      "200": {
+        "description": "entity created",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "number"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "entity name"
+                }
+              }
+            }
+          }
+        }
+      },
+      "403": {
+        "description": "operation forbidden"
+      },
+      "404": {
+        "description": "entity not found"
+      }
+  }`
+  );
 
 function fetchStartupEvents(onSuccess) {
     fetch_get('/api/v01/transactions/startup_events')
@@ -189,7 +218,7 @@ function DedicatedEvents(props) {
 }
 
 const isObject = value => value && typeof value === 'object' && value.constructor === Object;
-const newRoute = {method: "get", sync: false, public: false, enabled:true, route: "", schema: null, support_bulk: false, bulk_options: null, group: null};
+const newRoute = {method: "get", sync: false, public: false, enabled:true, route: "", schema: null, output_schema: null, support_bulk: false, bulk_options: null, group: null};
 
 
 function updateCustomRoute(routeId, entry, onSuccess) {
@@ -197,6 +226,11 @@ function updateCustomRoute(routeId, entry, onSuccess) {
         entry.schema = JSON.parse(entry.schema);
     } else if(typeof entry.schema === "string" && entry.schema.length === 0) {
         entry.schema = null;
+    }
+    if(entry.output_schema) {
+      entry.output_schema = JSON.parse(entry.output_schema);
+    } else if(typeof entry.output_schema === "string" && entry.output_schema.length === 0) {
+      entry.output_schema = null;
     }
     fetch_put(`/api/v01/custom_routes/${routeId}`, entry)
         .then(() => {
@@ -235,6 +269,9 @@ function createCustomRoute(route, onSuccess) {
     if(route.schema) {
         route.schema = JSON.parse(route.schema);
     }
+    if(route.output_schema) {
+      route.output_schema = JSON.parse(route.output_schema);
+    }
     fetch_post('/api/v01/custom_routes', route)
         .then(() => {
             NotificationsManager.success(
@@ -268,6 +305,15 @@ function NewCustomRoute({show, onHide, groups, activities}) {
             validSchema = "error";
         }
     }
+    let validOutputSchema = null;
+    if(route.output_schema) {
+        try {
+            JSON.parse(route.output_schema);
+            validOutputSchema = "success";
+        } catch {
+          validOutputSchema = "error";
+        }
+    }
     let validOptions = null;
     if(route.bulk_options) {
         try {
@@ -277,7 +323,7 @@ function NewCustomRoute({show, onHide, groups, activities}) {
             validOptions = "error";
         }
     }
-    const validNewRouteForm = validRoute === "success" && validSchema !== "error" && validOptions !== "error";
+    const validNewRouteForm = validRoute === "success" && validSchema !== "error" && validOutputSchema !== "error" && validOptions !== "error";
     const activitiesOptions = activities
       .sort((a, b) => a.name.localeCompare(b.name))
       .map(a => ({value: a.id, label: `${a.name} (${!a.version_label?WORKING_VERSION_LABEL:a.version_label})`}));
@@ -374,6 +420,34 @@ function NewCustomRoute({show, onHide, groups, activities}) {
 
                              <HelpBlock>
                                  <FormattedMessage id="custom-route-schema" defaultMessage="When set, the body is systematically checked against the schema associated to the route."/>
+                             </HelpBlock>
+                         </Col>
+                     </FormGroup>
+
+                     <FormGroup validationState={validOutputSchema}>
+                         <Col componentClass={ControlLabel} sm={2}>
+                             <FormattedMessage id="output-json-schema" defaultMessage="Output JSON Schema (optional)" />
+                         </Col>
+
+                         <Col sm={9}>
+                             <Button
+                                 bsSize="small"
+                                 style={{
+                                     position: "absolute",
+                                     right: "20px",
+                                     top: "5px",
+                                 }}
+                                 onClick={() => setRoute(update(route, {$merge: {output_schema: OUTPUT_JSON_SCHEMA_SAMPLE}}))}>
+                                 <FormattedMessage id="sample" defaultMessage="Sample"/>
+                             </Button>
+                             <FormControl componentClass="textarea"
+                                 value={route.output_schema || ""}
+                                 rows={5}
+                                 placeholder={"ex: " + OUTPUT_JSON_SCHEMA_SAMPLE}
+                                 onChange={e => setRoute(update(route, {$merge: {output_schema: e.target.value}}))} />
+
+                             <HelpBlock>
+                                 <FormattedMessage id="output-custom-route-schema" defaultMessage="Inform in the custom route doc generation about the structure and the rules of the answer of this endpoint."/>
                              </HelpBlock>
                          </Col>
                      </FormGroup>
@@ -522,6 +596,7 @@ function UpdateCustomRouteModal({show, entry, onHide, groups, activities}) {
 
     const localEntry = update(entry, {$merge: diffEntry});
     let validUpdateSchema = null;
+    let validUpdateOutputSchema = null;
 
     const r = localEntry.route;
     const validRoute = !r || r.length<5 ? null : (
@@ -535,6 +610,14 @@ function UpdateCustomRouteModal({show, entry, onHide, groups, activities}) {
             validUpdateSchema = "error";
         }
     }
+    if(diffEntry.output_schema) {
+      try {
+          JSON.parse(diffEntry.output_schema);
+          validUpdateOutputSchema = "success";
+      } catch {
+         validUpdateOutputSchema = "error";
+      }
+  }
     let validOptions = null;
     if(diffEntry.bulk_options) {
         try {
@@ -550,7 +633,7 @@ function UpdateCustomRouteModal({show, entry, onHide, groups, activities}) {
       .map(a => ({value: a.id, label: `${a.name} (${!a.version_label?WORKING_VERSION_LABEL:a.version_label})`}));
 
     return (
-        <Modal show={show} onHide={() => onHide(false)} backdrop={false}>
+        <Modal show={show} onHide={() => onHide(false)} backdrop={false} bsSize="large">
             <Modal.Header closeButton>
                 <Modal.Title>
                     <FormattedMessage id="update" defaultMessage="Update"/>
@@ -643,6 +726,34 @@ function UpdateCustomRouteModal({show, entry, onHide, groups, activities}) {
 
                              <HelpBlock>
                                  <FormattedMessage id="custom-route-schema" defaultMessage="When set, the body is systematically checked against the schema associated to the route."/>
+                             </HelpBlock>
+                         </Col>
+                     </FormGroup>
+
+                     <FormGroup validationState={validUpdateOutputSchema}>
+                         <Col componentClass={ControlLabel} sm={2}>
+                             <FormattedMessage id="output-json-schema" defaultMessage="Output JSON Schema (optional)" />
+                         </Col>
+
+                         <Col sm={9}>
+                             <Button
+                                 bsSize="small"
+                                 style={{
+                                     position: "absolute",
+                                     right: "20px",
+                                     top: "5px",
+                                 }}
+                                 onClick={() => setDiffEntry(update(diffEntry, {$merge: {output_schema: OUTPUT_JSON_SCHEMA_SAMPLE}}))}>
+                                 <FormattedMessage id="sample" defaultMessage="Sample"/>
+                             </Button>
+                             <FormControl componentClass="textarea"
+                                 value={isObject(localEntry.output_schema)?JSON.stringify(localEntry.output_schema, null, 2):localEntry.output_schema || ""}
+                                 rows={5}
+                                 placeholder={"ex: " + OUTPUT_JSON_SCHEMA_SAMPLE}
+                                 onChange={e => setDiffEntry(update(diffEntry, {$merge: {output_schema: e.target.value}}))} />
+
+                             <HelpBlock>
+                             <FormattedMessage id="output-custom-route-schema" defaultMessage="Inform in the custom route doc generation about the structure and the rules of the answer of this endpoint."/>
                              </HelpBlock>
                          </Col>
                      </FormGroup>
