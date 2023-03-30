@@ -102,6 +102,43 @@ function check2fa(code, payload, trust, onSuccess, onError) {
         .catch(e => onError(e))
 }
 
+function check2faTotp(code, payload) {
+    return fetch(API_URL_PREFIX + '/api/v01/auth/2fa_totp', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            code: code,
+            "2fa_payload": payload,
+        }),
+    }).then(response => {
+        if(response.status >= 200 && response.status < 300) {
+            return response;
+        }
+        const contentType = response.headers.get("content-type");
+        if(contentType && contentType.indexOf("application/json") !== -1) {
+            return response.json().then(function(json) {
+              const message =
+                  (json.errors && json.errors[0] && json.errors[0].message) ?
+                      `${json.errors[0].message}. Status Code: ${response.status}` :
+                      (json.error || response.statusText);
+              let error = new Error(message);
+              error.response = response;
+              if(json.errors) {
+                  error.errors = json.errors;
+              }
+              throw error;
+            });
+        }
+
+        let error = new Error(response.statusText);
+        error.response = response;
+        throw error;
+    })
+        .then(parseJSON)
+}
+
 
 export function fetchPlatformDetails(onSuccess) {
     fetch_get('/api/v01/system/configuration/public')
@@ -109,14 +146,74 @@ export function fetchPlatformDetails(onSuccess) {
         .catch(console.error);
 }
 
+function TwoFaTotpModal({show, onSuccess, loginResp}) {
+    const [code, setCode] = useState("");
+    const [error, setError] = useState();
+    const [loading, setLoading] = useState(false);
 
-function TwoFaModal(props) {
+    useEffect(() => {
+        if(code.length !== 6) {
+            return
+        }
+
+        setLoading(true);
+        setError();
+
+        check2faTotp(
+            code,
+            loginResp["2fa_payload"],
+        ).then(
+            r => {
+                onSuccess({...loginResp, ...r});
+                setLoading(false);
+            }
+        ).catch(
+            e => {setLoading(false); setError(e);}
+        );
+    }, [code]);
+
+    return (
+        <Modal show={show}>
+            <Modal.Header>
+                <Modal.Title><FormattedMessage id="2FA-totp" defaultMessage="A second authentication is required" /></Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                {
+                    error &&
+                        <Alert bsStyle="danger">
+                            Your code is invalid ({error.message?.toLowerCase()})
+                        </Alert>
+                }
+                {
+                    loading && <FontAwesomeIcon icon={faSpinner} aria-hidden="true" style={{'fontSize': '24px'}} spin />
+                }
+                <Form>
+                    <FormControl.Static>
+                        Use your phone app to have your 2FA code.
+                    </FormControl.Static>
+                    <FormGroup validationState={error === undefined?null:"error"}>
+                        
+                        <FormControl
+                            componentClass="input"
+                            value={code}
+                            placeholder={"your 2FA code"}
+                            onChange={e => setCode(e.target.value)}
+                            number
+                        />
+                    </FormGroup>
+                    
+                </Form>
+            </Modal.Body>
+        </Modal>
+    )
+}
+
+
+function TwoFaModal({show, onSuccess, onError, loginResp}) {
     const [code, setCode] = useState("");
     const [error, setError] = useState(undefined);
     const [loading, setLoading] = useState(false);
     const [trust, setTrust] = useState(false);
-
-    const {show, onSuccess, onError, loginResp} = props;
 
     return (
         <Modal show={show}>
@@ -322,7 +419,12 @@ export function LoginForm({onLogin}) {
                     </Col>
                 </FormGroup>
                 <TwoFaModal
-                    show={loginResp !== null && loginResp["2fa_payload"]}
+                    show={loginResp !== null && (loginResp.option === "email" || (loginResp.option === undefined && loginResp["2fa_payload"]))}
+                    loginResp={loginResp}
+                    onSuccess={r => onLogin(r)}
+                    onError={error => setError(error)} />
+                <TwoFaTotpModal
+                    show={loginResp !== null && loginResp.option === "totp"}
                     loginResp={loginResp}
                     onSuccess={r => onLogin(r)}
                     onError={error => setError(error)} />

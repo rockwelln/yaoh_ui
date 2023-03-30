@@ -1416,7 +1416,7 @@ function GuiForm(props) {
 
             <FormGroup>
               <Col componentClass={ControlLabel} sm={2}>
-                <FormattedMessage id="activate 2fa" defaultMessage="Activate 2-factor auth."/>
+                <FormattedMessage id="activate 2fa" defaultMessage="Force 2-factor auth."/>
               </Col>
 
               <Col sm={9}>
@@ -1424,7 +1424,7 @@ function GuiForm(props) {
                   checked={(gui["2fa"] || {}).active}
                   onChange={e => onChange(update(gui, {$merge: {"2fa": update(gui["2fa"] || {}, {$merge: {active: e.target.checked}})}}))}/>
                 <HelpBlock>
-                  Activating the 2-factor auth. requires a mail template to be properly set.
+                  Force 2-factor auth. by email for all local users with a known email.
                 </HelpBlock>
               </Col>
             </FormGroup>
@@ -1457,6 +1457,22 @@ function GuiForm(props) {
                   onChange={e => onChange(update(gui, {$merge: {"2fa": update(gui["2fa"] || {}, {$merge: {http_header: e.target.value}})}}))}/>
                 <HelpBlock>
                   The 2-factor auth. process use the client IP, if the platform is behind a proxy, the client IP has be forwarded in an HTTP header (e.g X-FORWARDED-FOR-IP). Otherwise, use the request source IP.
+                </HelpBlock>
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="totp-issuer" defaultMessage="2-factor auth. TOTP issuer"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="input"
+                  value={(gui["2fa"] || {}).totp_issuer}
+                  onChange={e => onChange(update(gui, {$merge: {"2fa": update(gui["2fa"] || {}, {$merge: {totp_issuer: e.target.value}})}}))}/>
+                <HelpBlock>
+                  The 2-factor auth. process using TOTP require an issuer (visible in the auth. app).
                 </HelpBlock>
               </Col>
             </FormGroup>

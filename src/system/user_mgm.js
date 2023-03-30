@@ -37,7 +37,7 @@ import Select from "react-select";
 // helper functions
 
 function updateLocalUser(data, onSuccess) {
-    const updatable_field = k => ['language', 'password', 'old_password', 'timezone'].includes(k);
+    const updatable_field = k => ['language', 'password', 'old_password', 'timezone', 'two_fa_option'].includes(k);
     fetch_put(
         '/api/v01/system/users/local',
         Object.keys(data).filter(updatable_field).reduce(
@@ -148,6 +148,8 @@ export function LocalUserProfile({onUserInfoChanged}) {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [language, setLanguage] = useState(user_info.language);
     const [timezone, setTimezone] = useState(user_info.timezone);
+    const [twoFaOption, setTwoFaOption] = useState(user_info.two_fa_option);
+    const [showTotpModal, setShowTotpModal] = useState(false);
 
     const delta = {};
     if(onePassword.length !== 0) {
@@ -162,6 +164,9 @@ export function LocalUserProfile({onUserInfoChanged}) {
     if(timezone !== user_info.timezone) {
         delta.timezone = timezone;
     }
+    if(twoFaOption !== user_info.two_fa_option) {
+        delta.two_fa_option = twoFaOption;
+    }
     useEffect(() => {
       fetchLocalUser(setUserInfo);
       document.title = "User";
@@ -169,10 +174,12 @@ export function LocalUserProfile({onUserInfoChanged}) {
     useEffect(() => {
       setLanguage(user_info.language);
       setTimezone(user_info.timezone);
+      setTwoFaOption(user_info.two_fa_option);
     }, [user_info]);
     const validPassword = (onePassword === '')?null:(onePassword.length >= 7)?"success":"error";
     const validRepPassword = (onePassword === '')?null:(confirmPassword === onePassword)?"success":"error";
     const validCurrentPassword = (onePassword === '')?null:currentPassword.length > 0?"success":"error";
+    const validTwoFaOption = (delta.two_fa_option === ''?null:delta.two_fa_option === "email" && user_info.email?.length === 0?"error":"success")
     const validForm = validPassword !== 'error' && validRepPassword !== 'error' && validCurrentPassword !== "error" && Object.keys(delta).length !== 0;
     return (
         <Panel>
@@ -254,7 +261,7 @@ export function LocalUserProfile({onUserInfoChanged}) {
                                         </thead>
                                         <tbody>
                                         {
-                                          user_info.admin_of && user_info.admin_of.map(a => <tr>
+                                          user_info.admin_of?.map(a => <tr>
                                             <td>{a.level}</td>
                                             <td>{a.reference}</td>
                                           </tr>)
@@ -362,11 +369,32 @@ export function LocalUserProfile({onUserInfoChanged}) {
                         </FormGroup>
                         <FormGroup>
                             <Col componentClass={ControlLabel} sm={2}>
-                                <FormattedMessage id='token' defaultMessage='Token' />
+                                <FormattedMessage id='m2m-token' defaultMessage='M2M Token' />
                             </Col>
 
                             <Col sm={9}>
-                                <UserToken value={user_info.token} onRefresh={() => refreshLocalUserApiToken(() => fetchLocalUser(setUserInfo))} />
+                                <UserToken value={user_info.token || "*not set*"} onRefresh={() => refreshLocalUserApiToken(() => fetchLocalUser(setUserInfo))} />
+                            </Col>
+                        </FormGroup>
+                        <FormGroup validationState={validTwoFaOption}>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="two-fa-option" defaultMessage="2FA option" />
+                            </Col>
+
+                            <Col sm={9} lg={2}>
+                                <Select
+                                    isClearable
+                                    placeholder={"not set"}
+                                    value={twoFaOption && {label: twoFaOption, value: twoFaOption}}
+                                    options={["email", "totp"].map(o => ({label: o, value: o}))}
+                                    onChange={v => {
+                                        if(v?.value === "totp" && user_info.two_fa_option !== "totp") {
+                                            setShowTotpModal(true)
+                                        } else {
+                                            setTwoFaOption(v?.value || null)
+                                        }
+                                    }}
+                                    />
                             </Col>
                         </FormGroup>
                         <FormGroup>
@@ -390,7 +418,95 @@ export function LocalUserProfile({onUserInfoChanged}) {
                 </Tab>
             </Tabs>
             </Panel.Body>
+            <TotpRegistrationModal
+                show={showTotpModal}
+                onHide={r => {
+                    r && onUserInfoChanged();
+                    setShowTotpModal(false);
+                }} />
         </Panel>
+    )
+}
+
+function fetchTotpKey(onSuccess, onError) {
+    return fetch_get('/api/v01/system/users/local/totp')
+    .then(r => onSuccess && onSuccess(r))
+    .catch(error => onError && onError(error.message))
+}
+
+function registerTotp(url, code, hmac) {
+    return fetch_put('/api/v01/system/users/local/totp', {code: code, url: url, hmac: hmac})
+}
+
+function getSecretFromTotpUrl(url) {
+    if(url === undefined || url.length === 0) {
+        return ""
+    }
+
+    const u = new URL(url)
+    return u.searchParams.get("secret")
+}
+
+function TotpRegistrationModal({show, onHide}) {
+    const [key, setKey] = useState({});
+    const [twoFaCode, setTwoFaCode] = useState("");
+    const [error, setError] = useState()
+
+    useEffect(() => {
+        if(show) {
+            fetchTotpKey(setKey);
+            setTwoFaCode("");
+            setError();
+        }
+    }, [show]);
+
+    useEffect(() => {
+        if(twoFaCode.length === 6) {
+            registerTotp(key?.url, twoFaCode, key?.hmac).then(() => {
+                NotificationsManager.success("Registration succesful");
+                onHide(true);
+            }).catch(e => setError(e.message))
+        }
+    }, [twoFaCode]);
+
+    return (
+        <Modal show={show} onHide={() => onHide(false)} bsSize="lg" backdrop={false}>
+            <Modal.Header closeButton>
+                <Modal.Title>
+                    <FormattedMessage id="update-a-user" defaultMessage="Register your app" />
+                </Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <Form>
+                    <FormControl.Static>
+                        Use a phone app like 1Password, Authy, Google authenticator, or Microsoft Authenticator etc. to get 2FA codes when prompted during sign-in.
+                    </FormControl.Static>
+                    <FormControl.Static>
+                        <b>Scan the QR code</b>
+                        <p>Use the authenticator app from your phone to scan. If you are unable to scan, enter {getSecretFromTotpUrl(key?.url)} instead.</p>
+                    </FormControl.Static>
+                    <FormControl.Static>
+                        <img src={ "data:image/png;base64,"+key?.img }></img>
+                    </FormControl.Static>
+                    <FormControl.Static>
+                        Complete your registration, enter your 2FA code:
+                    </FormControl.Static>
+                    <FormGroup>
+                        {
+                        error && <Alert bsStyle="danger">{error}</Alert>
+                        }
+                        <FormControl
+                            componentClass="input"
+                            value={twoFaCode}
+                            onChange={e => setTwoFaCode(e.target.value)}
+                            placeholder="your 2FA code" />
+                    </FormGroup>
+                    <FormGroup>
+                        <Button onClick={() => onHide(false)}>Cancel</Button>
+                    </FormGroup>
+                </Form>
+            </Modal.Body>
+        </Modal>
     )
 }
 
