@@ -3849,9 +3849,7 @@ function PasswordPanel({password, onChange}) {
 }
 
 
-function SMTPForm(props) {
-  const {smtp, onChange} = props;
-
+function SMTPForm({smtp, onChange}) {
   return (
     <Panel>
       <Panel.Body>
@@ -3933,6 +3931,77 @@ function SMTPForm(props) {
         </Form>
       </Panel.Body>
     </Panel>
+  )
+}
+
+function SMPPForm({smpp, onChange}) {
+  return (
+    <>
+      <HelpBlock>
+        Configuration for SMPP service. This service is used to send SMS through an SMS gateway.
+      </HelpBlock>
+      <Panel>
+        <Panel.Body>
+          <Form horizontal>
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="host" defaultMessage="Host"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="input"
+                  value={smpp.host || ""}
+                  placeholder='localhost:2775'
+                  onChange={e => onChange(update(smpp, {$merge: {host: e.target.value}}))}/>
+              </Col>
+            </FormGroup>
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="system-ID" defaultMessage="System ID"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="input"
+                  value={smpp.systemID || ""}
+                  placeholder='169994'
+                  onChange={e => onChange(update(smpp, {$merge: {systemID: e.target.value}}))}/>
+              </Col>
+            </FormGroup>
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="password" defaultMessage="Password"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="input"
+                  value={smpp.password || ""}
+                  placeholder='secret'
+                  onChange={e => onChange(update(smpp, {$merge: {password: e.target.value}}))}/>
+              </Col>
+            </FormGroup>
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="system type" defaultMessage="System Type"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="input"
+                  value={smpp.systemType || ""}
+                  onChange={e => onChange(update(smpp, {$merge: {systemType: e.target.value}}))}/>
+                <HelpBlock>
+                  Optional
+                </HelpBlock>
+              </Col>
+            </FormGroup>
+            
+          </Form>
+        </Panel.Body>
+      </Panel>
+    </>
   )
 }
 
@@ -4419,6 +4488,12 @@ export default function Configuration({userInfo, history}) {
           <SMTPForm
             smtp={config.content.smtp}
             onChange={v => setConfig(update(config, {content: {smtp: {$merge: v}}}))}
+          />
+        </Tab>
+        <Tab eventKey={"SMPP"} title="SMPP">
+          <SMPPForm
+            smpp={config.content.smpp || {}}
+            onChange={v => setConfig(update(config, {content: {smpp: {$set: v}}}))}
           />
         </Tab>
         <Tab eventKey={"Provisioning"} title="Provisioning">
