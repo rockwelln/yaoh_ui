@@ -5,7 +5,7 @@ import {FormattedMessage} from "react-intl";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import Table from "react-bootstrap/lib/Table";
 import Form from "react-bootstrap/lib/Form";
-import {API_URL_PREFIX, fetch_get, fetch_put, NotificationsManager} from "../utils";
+import {API_URL_PREFIX, API_WS_URL, AuthServiceManager, fetch_get, fetch_put, NotificationsManager} from "../utils";
 import Col from "react-bootstrap/lib/Col";
 import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import FormControl from "react-bootstrap/lib/FormControl";
@@ -13,6 +13,8 @@ import update from "immutability-helper";
 import FormGroup from "react-bootstrap/lib/FormGroup";
 import Select from "react-select";
 import Button from "react-bootstrap/lib/Button";
+import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
+import {LinkContainer} from 'react-router-bootstrap';
 import DatePicker from "react-datepicker";
 import {localUser} from "../utils/user";
 import queryString from "query-string";
@@ -40,6 +42,120 @@ export function fetchAlarms(criteria, paging, sorting, onDone, onSuccess, onErro
       onDone && onDone();
       onError && onError(error);
     })
+}
+
+export function AlarmCounters() {
+  const [socket, setSocket] = useState(null);
+  const [counters, setCounters] = useState({info: 0, major: 0, critical: 0});
+  const [workedOnce, setWorkedOnce] = useState(false);
+  const [reconnect, setReconnect] = useState(false);
+  const [fallback, setFallback] = useState(false);
+
+  useEffect(() => {
+    if(!socket) return;
+
+    socket.onmessage = event => {
+      let cc = {info: 0, major: 0, critical: 0}
+      event.data.split(";").forEach(d => {
+        const elts = d.split("=")
+        cc[elts[0]] = parseInt(elts[1])
+      });
+      setCounters(cc);
+    };
+    
+    return () => socket.close();
+  }, [socket]);
+
+  useEffect(() => {
+    if(!socket) return;
+
+    socket.onopen = () => {
+      console.log("alarms ws connected");
+      setWorkedOnce(true);
+    };
+
+    socket.onerror = e => {
+      console.log("error on alarms ws", e);
+      if(!workedOnce) {
+        setFallback(true);
+        setSocket(null);
+      }
+    }
+
+    socket.onclose = e => {
+      console.log("closing alarms ws", e);
+      if(workedOnce) {
+        setTimeout(() => setReconnect(e => !e), 5000);
+      }
+    };
+
+  }, [socket, workedOnce]);
+
+  useEffect(() => {
+    if(!fallback) return;
+
+    const handler = setTimeout(() => {
+      fetchAlarms(
+        {field: "active", op: "eq", value: true},
+        null, 
+        null,
+        null,
+        a => {
+          let cc = {info: 0, major: 0, critical: 0} ;
+          a.alarms.forEach(a => {cc[a.level]++});
+          setCounters(cc);
+        },
+        () => setCounters({...counters})
+      )
+    }, 5000);
+    return () => clearTimeout(handler);
+  }, [fallback, counters])
+
+  useEffect(() => {
+    AuthServiceManager.getValidToken().then(
+      token => {
+        const s = new WebSocket(`${API_WS_URL}/api/v01/alarms/active/ws?auth_token=${token}`);
+        setSocket(s);
+      }
+    ).catch(() => {
+      setTimeout(() => setReconnect(e => !e), 5000);
+    })
+  }, [reconnect]);
+
+  return (
+    <ButtonToolbar>
+      <LinkContainer to={
+        `/system/alarms?filter=${JSON.stringify({
+          active: {"value": true, "op": "eq"},
+          level: {"value": "info", "op": "eq"}
+        })}&t=${moment.utc().unix()}`
+      }>
+        <Button>
+          {counters["info"]}
+        </Button>
+      </LinkContainer>
+      <LinkContainer to={
+        `/system/alarms?filter=${JSON.stringify({
+          active: {"value": true, "op": "eq"},
+          level: {"value": "major", "op": "eq"}
+        })}&t=${moment.utc().unix()}`
+      }>
+        <Button bsStyle="warning">
+          {counters["major"]}
+        </Button>
+      </LinkContainer>
+      <LinkContainer to={
+        `/system/alarms?filter=${JSON.stringify({
+          active: {"value": true, "op": "eq"},
+          level: {"value": "critical", "op": "eq"}
+        })}&t=${moment.utc().unix()}`
+      }>
+        <Button bsStyle="danger">
+          {counters["critical"]}
+        </Button>
+      </LinkContainer>
+    </ButtonToolbar>
+  )
 }
 
 function clearAlarm(aID, onSuccess) {

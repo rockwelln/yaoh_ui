@@ -83,7 +83,7 @@ import {NPEmergencyNotificationRequest} from "./np/emergency-notification";
 import TemplatePlayground from "./help/templatePlayground";
 import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 import Button from "react-bootstrap/lib/Button";
-import AlarmManagement, {fetchAlarms} from "./system/alarms";
+import AlarmManagement, {AlarmCounters, fetchAlarms} from "./system/alarms";
 import moment from "moment";
 import Clients from "./system/clients_mgm";
 
@@ -180,17 +180,6 @@ const LimitedNavBar = ({user_info, logoutUser, database_status}) => (
 
 
 function AsyncApioNavBar({user_info, logoutUser, database_status}){
-  const [alarms, setAlarms] = useState([]);
-
-  useEffect(() => {
-    fetchAlarms({field: "active", op: "eq", value: true}, null, null, null, a => setAlarms(a.alarms), () => setAlarms([...alarms]));
-  }, []);
-
-  useEffect(() => {
-    const handler = setTimeout(() => fetchAlarms({field: "active", op: "eq", value: true}, null, null, null, a => setAlarms(a.alarms), () => setAlarms([...alarms])), 5000);
-    return () => clearTimeout(handler)
-  }, [alarms]);
-
   return (
     <Navbar staticTop collapseOnSelect inverse>
       <Navbar.Header>
@@ -567,38 +556,7 @@ function AsyncApioNavBar({user_info, logoutUser, database_status}){
             </Navbar.Text>
           }
           <Navbar.Text style={{marginTop: "8px", marginBottom: "5px"}}>
-            <ButtonToolbar>
-              <LinkContainer to={
-                `/system/alarms?filter=${JSON.stringify({
-                  active: {"value": true, "op": "eq"},
-                  level: {"value": "info", "op": "eq"}
-                })}&t=${moment.utc().unix()}`
-              }>
-                <Button>
-                  {alarms.filter(a => a.level === "info").length}
-                </Button>
-              </LinkContainer>
-              <LinkContainer to={
-                `/system/alarms?filter=${JSON.stringify({
-                  active: {"value": true, "op": "eq"},
-                  level: {"value": "major", "op": "eq"}
-                })}&t=${moment.utc().unix()}`
-              }>
-                <Button bsStyle="warning">
-                  {alarms.filter(a => a.level === "major").length}
-                </Button>
-              </LinkContainer>
-              <LinkContainer to={
-                `/system/alarms?filter=${JSON.stringify({
-                  active: {"value": true, "op": "eq"},
-                  level: {"value": "critical", "op": "eq"}
-                })}&t=${moment.utc().unix()}`
-              }>
-                <Button bsStyle="danger">
-                  {alarms.filter(a => a.level === "critical").length}
-                </Button>
-              </LinkContainer>
-            </ButtonToolbar>
+            <AlarmCounters />
           </Navbar.Text>
         </Nav>
       </Navbar.Collapse>
