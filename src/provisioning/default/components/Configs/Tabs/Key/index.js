@@ -6,7 +6,7 @@ import {
   fetchGetKeysByApplication,
   fetchGetValueOfKey,
   fetchPutUpdateKey,
-  fetchDeleteKey
+  fetchDeleteKey,
 } from "../../../../store/actions";
 
 import FormControl from "react-bootstrap/lib/FormControl";
@@ -25,13 +25,13 @@ export class KeyTab extends Component {
     applicationKeys: [],
     selectedKey: "none",
     keyValue: null,
-    data: ""
+    data: "",
   };
   componentDidMount() {
     this.props.fetchGetApplications().then(() =>
       this.setState({
         isLoading: false,
-        applications: this.props.applications
+        applications: this.props.applications,
       })
     );
   }
@@ -68,7 +68,7 @@ export class KeyTab extends Component {
               <FormControl
                 componentClass="select"
                 value={this.state.selectedApplication}
-                onChange={e =>
+                onChange={(e) =>
                   this.setState(
                     { selectedApplication: e.target.value },
                     () =>
@@ -79,16 +79,18 @@ export class KeyTab extends Component {
                         )
                         .then(() =>
                           this.setState({
-                            applicationKeys: this.props.applicationKeys
+                            applicationKeys: this.props.applicationKeys,
                           })
                         )
                   )
                 }
               >
-                <option key={"none"} value={"none"}>
-                  {"none"}
-                </option>
-                {this.state.applications.map(app => (
+                {this.state.selectedApplication === "none" && (
+                  <option key={"none"} value={"none"}>
+                    {"none"}
+                  </option>
+                )}
+                {this.state.applications.map((app) => (
                   <option key={app.applicationId} value={app.applicationId}>
                     {app.applicationId}
                   </option>
@@ -109,7 +111,7 @@ export class KeyTab extends Component {
                     <FormControl
                       componentClass="select"
                       value={this.state.selectedKey}
-                      onChange={e =>
+                      onChange={(e) =>
                         this.setState({ selectedKey: e.target.value }, () =>
                           this.props
                             .fetchGetValueOfKey(
@@ -119,16 +121,18 @@ export class KeyTab extends Component {
                             .then(() =>
                               this.setState({
                                 keyValue: this.props.keyValue,
-                                data: this.props.keyValue.data
+                                data: this.props.keyValue.data,
                               })
                             )
                         )
                       }
                     >
-                      <option key={"none"} value={"none"}>
-                        {"none"}
-                      </option>
-                      {this.state.applicationKeys.map(key => (
+                      {this.state.selectedKey === "none" && (
+                        <option key={"none"} value={"none"}>
+                          {"none"}
+                        </option>
+                      )}
+                      {this.state.applicationKeys.map((key) => (
                         <option key={key.key} value={key.key}>
                           {key.key}
                         </option>
@@ -137,6 +141,7 @@ export class KeyTab extends Component {
                   </div>
                 </Col>
               </Row>
+
               <Row>
                 <Col md={12}>
                   <div className="button-row">
@@ -164,9 +169,9 @@ export class KeyTab extends Component {
                           componentClass="textarea"
                           className={"height-30"}
                           value={this.state.data}
-                          onChange={e => {
+                          onChange={(e) => {
                             this.setState({
-                              data: e.target.value
+                              data: e.target.value,
                             });
                           }}
                         />
@@ -205,42 +210,95 @@ export class KeyTab extends Component {
               )}
             </React.Fragment>
           )}
+        {this.state.selectedApplication === "none" && (
+          <Row>
+            <Col md={12}>
+              <div className="button-row">
+                <div className="pull-left">
+                  <Button
+                    className={"btn-primary"}
+                    onClick={() => this.setState({ showModal: true })}
+                  >
+                    {"Add Application & Key"}
+                  </Button>
+                </div>
+              </div>
+            </Col>
+          </Row>
+        )}
         <AddKeyForm
           show={this.state.showModal}
+          title={
+            this.state.selectedApplication === "none"
+              ? "Add Application & Key"
+              : "Add Key Form"
+          }
           application={this.state.selectedApplication}
           onClose={() => this.setState({ showModal: false })}
-          onAdd={() =>
-            this.setState({ showModal: false }, () =>
-              this.props
-                .fetchGetKeysByApplication(this.state.selectedApplication)
-                .then(() =>
-                  this.setState({
-                    applicationKeys: this.props.applicationKeys
-                  })
-                )
-            )
-          }
+          onAdd={this.onAdd}
         />
       </React.Fragment>
     );
   }
+
+  onAdd = (appName) => {
+    if (this.state.selectedApplication === "none") {
+      this.props.fetchGetApplications().then(() =>
+        this.setState(
+          {
+            isLoading: false,
+            applications: this.props.applications,
+            selectedApplication: appName,
+          },
+          () => {
+            this.props.fetchGetKeysByApplication(appName).then(() =>
+              this.setState({
+                applicationKeys: this.props.applicationKeys,
+              })
+            );
+          }
+        )
+      );
+    }
+    this.setState({ showModal: false }, () =>
+      this.props.fetchGetKeysByApplication(appName).then(() =>
+        this.setState({
+          selectedApplication: appName,
+          applicationKeys: this.props.applicationKeys,
+        })
+      )
+    );
+  };
+
   onDelete = () => {
     this.props
       .fetchDeleteKey(this.state.selectedApplication, this.state.selectedKey)
       .then(
-        res =>
+        (res) =>
           res === "deleted" &&
-          this.setState({ selectedKey: "none", keyValue: null }, () =>
-            this.props.fetchGetKeysByApplication(this.state.selectedApplication)
+          this.setState(
+            {
+              selectedKey: "none",
+              selectedApplication:
+                this.props.applicationKeys.length === 1
+                  ? "none"
+                  : this.state.selectedApplication,
+              keyValue: null,
+            },
+            () =>
+              this.props.applicationKeys.length > 1 &&
+              this.props.fetchGetKeysByApplication(
+                this.state.selectedApplication
+              )
           )
       );
   };
 }
 
-const mapStateToProps = state => ({
+const mapStateToProps = (state) => ({
   applications: state.applications,
   applicationKeys: state.applicationKeys,
-  keyValue: state.keyValue
+  keyValue: state.keyValue,
 });
 
 const mapDispatchToProps = {
@@ -248,10 +306,7 @@ const mapDispatchToProps = {
   fetchGetKeysByApplication,
   fetchGetValueOfKey,
   fetchPutUpdateKey,
-  fetchDeleteKey
+  fetchDeleteKey,
 };
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(KeyTab);
+export default connect(mapStateToProps, mapDispatchToProps)(KeyTab);

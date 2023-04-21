@@ -15,16 +15,22 @@ import { fetchPostAddKeyToApplication } from "../../../../store/actions";
 export class AddKeyForm extends Component {
   state = {
     key: "",
-    data: ""
+    data: "",
+    application: "",
   };
 
   render() {
+    const disabledAddButton =
+      this.props.application === "none"
+        ? !this.state.application || !this.state.key || !this.state.data
+        : !this.state.key || !this.state.data;
+
     return (
       <Modal show={this.props.show}>
         <Panel className={"margin-0"}>
           <Panel.Heading>
             <div className={"header"}>
-              Add Key Form
+              {this.props.title}
               <Button
                 className={"margin-left-1 btn-danger"}
                 onClick={() => this.props.onClose()}
@@ -34,6 +40,26 @@ export class AddKeyForm extends Component {
             </div>
           </Panel.Heading>
           <Panel.Body>
+            {this.props.application === "none" && (
+              <Row className={"margin-top-1"}>
+                <Col md={12} className={"flex align-items-center"}>
+                  <div className={"margin-right-1 flex flex-basis-33"}>
+                    Application
+                  </div>
+                  <div className={"width-100p"}>
+                    <FormControl
+                      type="text"
+                      value={this.state.application}
+                      onChange={(e) => {
+                        this.setState({
+                          application: e.target.value,
+                        });
+                      }}
+                    />
+                  </div>
+                </Col>
+              </Row>
+            )}
             <Row className={"margin-top-1"}>
               <Col md={12} className={"flex align-items-center"}>
                 <div className={"margin-right-1 flex flex-basis-33"}>Key</div>
@@ -41,9 +67,9 @@ export class AddKeyForm extends Component {
                   <FormControl
                     type="text"
                     value={this.state.key}
-                    onChange={e => {
+                    onChange={(e) => {
                       this.setState({
-                        key: e.target.value
+                        key: e.target.value,
                       });
                     }}
                   />
@@ -57,9 +83,9 @@ export class AddKeyForm extends Component {
                   <FormControl
                     componentClass="textarea"
                     value={this.state.data}
-                    onChange={e => {
+                    onChange={(e) => {
                       this.setState({
-                        data: e.target.value
+                        data: e.target.value,
                       });
                     }}
                   />
@@ -71,7 +97,7 @@ export class AddKeyForm extends Component {
                 <div className="button-row">
                   <div className="pull-right">
                     <Button
-                      disabled={!(this.state.key && this.state.data)}
+                      disabled={disabledAddButton}
                       className={"btn-primary width-12"}
                       onClick={this.addKey}
                     >
@@ -90,21 +116,22 @@ export class AddKeyForm extends Component {
   addKey = () => {
     const data = {
       key: this.state.key,
-      data: this.state.data
+      data: this.state.data,
     };
+    const application =
+      this.props.application === "none"
+        ? this.state.application
+        : this.props.application;
     this.props
-      .fetchPostAddKeyToApplication(this.props.application, data)
-      .then(res => res && this.props.onAdd());
+      .fetchPostAddKeyToApplication(application, data)
+      .then((res) => res && this.props.onAdd(application));
   };
 }
 
-const mapStateToProps = state => ({});
+const mapStateToProps = (state) => ({});
 
 const mapDispatchToProps = { fetchPostAddKeyToApplication };
 
 export default withRouter(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(AddKeyForm)
+  connect(mapStateToProps, mapDispatchToProps)(AddKeyForm)
 );
