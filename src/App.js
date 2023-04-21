@@ -86,6 +86,7 @@ import Button from "react-bootstrap/lib/Button";
 import AlarmManagement, {AlarmCounters, fetchAlarms} from "./system/alarms";
 import moment from "moment";
 import Clients from "./system/clients_mgm";
+import { SfrNemoCustomer, SfrNemoCustomers } from "./externals/sfr/nemo/reports";
 
 const ListProvisioningGateways=React.lazy(() => import("./provisioning/ListProvisioningGateways"))
 
@@ -147,6 +148,10 @@ const LimitedNavBar = ({user_info, logoutUser, database_status}) => (
                 </MenuItem>
               </LinkContainer>
             )
+          }
+          {
+            user_info.modules.includes(modules.provisioning_nemo_reports_sfr) &&
+            <MenuItem>NEMO Reports</MenuItem>
           }
         </NavDropdown>
         }
@@ -347,6 +352,15 @@ function AsyncApioNavBar({user_info, logoutUser, database_status}){
                   </MenuItem>
                 </LinkContainer>
               )
+            }
+            {
+              user_info.modules.includes(modules.provisioning_nemo_reports_sfr) &&
+              <>
+                <hr/>
+                <LinkContainer to={"/externals/nemo/customers"} key={"nemo-report"}>
+                  <MenuItem>NEMO Reports</MenuItem>
+                </LinkContainer>
+              </>
             }
           </NavDropdown>
           }
@@ -1221,6 +1235,14 @@ class App extends Component {
                                            {...props} /> :
                                        <NotAllowed/>
                                )} />
+                        <Route path="/externals/nemo/customers" component={() => (
+                          localUser.isAllowed(accesses.provisioning_nemo_reports_sfr) ?
+                          <SfrNemoCustomers/>:<NotAllowed/>
+                          )} exact/>
+                        <Route path="/externals/nemo/customers/:id" component={props => (
+                          localUser.isAllowed(accesses.provisioning_nemo_reports_sfr) ?
+                          <SfrNemoCustomer customerID={props.match.params.id} />:<NotAllowed/>
+                          )} exact/>
                         <Route path="/auth-silent-callback" component={AuthSilentCallback} exact/>
                         <Route path="/" exact>
                             <Redirect to={localUser.getHomePage()} />
