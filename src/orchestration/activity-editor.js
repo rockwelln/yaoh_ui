@@ -673,6 +673,7 @@ const sortedNodes = [
   "trigger_manual_action",
   "cancel_manual_action",
   "send_email_template",
+  "send_sms",
   "sql_exec",
   "sql_exec_with_return",
   "sql_select",
@@ -800,6 +801,11 @@ function nodeLabel(name, size) {
       s.icon=faEnvelope;
       s.label = "Send email";
       break;
+    case "send_sms":
+      s.style.color = "blue";
+      s.icon=faEnvelope;
+      s.label = "Send SMS";
+      break;
     case "sql_exec":
       s.style.color = "cyan";
       s.icon=faDatabase;
@@ -916,15 +922,15 @@ function nodeLabel(name, size) {
       s.label = "Excel file";
       break;
     case "powershell":
-        s.style.color = "blue";
-        s.icon = faBolt;
-        s.label = "Powershell";
-        break;
-  case "ftp":
-        s.style.color = "green";
-        s.icon = faFileMedicalAlt;
-        s.label = "sFTP";
-        break;
+      s.style.color = "blue";
+      s.icon = faBolt;
+      s.label = "Powershell";
+      break;
+    case "ftp":
+      s.style.color = "green";
+      s.icon = faFileMedicalAlt;
+      s.label = "sFTP";
+      break;
     case "entity":
       s.style.color = "blue";
       s.icon = faHome;
@@ -1761,7 +1767,7 @@ export function ActivityEditor(props) {
                         <ButtonGroup style={{paddingLeft: '1rem'}}>
                             <Button onClick={() => editor?.execute("fit")}>fit</Button>
                             <Button onClick={() => editor?.execute("show")} title={"show"}>👓</Button>
-                            <Button onClick={() => editor?.execute("showDefinition")} >txt 1</Button>
+                            <Button onClick={() => editor?.execute("showDefinition")} >txt</Button>
                             <Button onClick={() => {
                               editor && downloadDefinition(editor.getDefinition(ReactDOM.findDOMNode(titleRef.current).value).activity);
                             }} title={"download definition"}>

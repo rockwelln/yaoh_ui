@@ -11,7 +11,7 @@ import FormGroup from 'react-bootstrap/lib/FormGroup';
 import Panel from 'react-bootstrap/lib/Panel';
 import Glyphicon from 'react-bootstrap/lib/Glyphicon';
 import Modal from 'react-bootstrap/lib/Modal';
-import Table, {tbody, th, tr} from 'react-bootstrap/lib/Table';
+import Table from 'react-bootstrap/lib/Table';
 import Tab from 'react-bootstrap/lib/Tab';
 import Tabs from 'react-bootstrap/lib/Tabs';
 import Badge from 'react-bootstrap/lib/Badge';
