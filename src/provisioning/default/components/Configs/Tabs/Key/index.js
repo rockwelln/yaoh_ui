@@ -80,6 +80,8 @@ export class KeyTab extends Component {
                         .then(() =>
                           this.setState({
                             applicationKeys: this.props.applicationKeys,
+                            selectedKey: "none",
+                            data: "",
                           })
                         )
                   )
