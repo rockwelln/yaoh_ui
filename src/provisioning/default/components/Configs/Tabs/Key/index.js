@@ -85,11 +85,9 @@ export class KeyTab extends Component {
                   )
                 }
               >
-                {this.state.selectedApplication === "none" && (
-                  <option key={"none"} value={"none"}>
-                    {"none"}
-                  </option>
-                )}
+                <option key={"none"} value={"none"}>
+                  {"none"}
+                </option>
                 {this.state.applications.map((app) => (
                   <option key={app.applicationId} value={app.applicationId}>
                     {app.applicationId}
@@ -113,17 +111,7 @@ export class KeyTab extends Component {
                       value={this.state.selectedKey}
                       onChange={(e) =>
                         this.setState({ selectedKey: e.target.value }, () =>
-                          this.props
-                            .fetchGetValueOfKey(
-                              this.state.selectedApplication,
-                              this.state.selectedKey
-                            )
-                            .then(() =>
-                              this.setState({
-                                keyValue: this.props.keyValue,
-                                data: this.props.keyValue.data,
-                              })
-                            )
+                          this.setKeyCallback()
                         )
                       }
                     >
@@ -226,20 +214,36 @@ export class KeyTab extends Component {
             </Col>
           </Row>
         )}
-        <AddKeyForm
-          show={this.state.showModal}
-          title={
-            this.state.selectedApplication === "none"
-              ? "Add Application & Key"
-              : "Add Key Form"
-          }
-          application={this.state.selectedApplication}
-          onClose={() => this.setState({ showModal: false })}
-          onAdd={this.onAdd}
-        />
+        {this.state.showModal && (
+          <AddKeyForm
+            show={this.state.showModal}
+            title={
+              this.state.selectedApplication === "none"
+                ? "Add Application & Key"
+                : "Add Key Form"
+            }
+            application={this.state.selectedApplication}
+            onClose={() => this.setState({ showModal: false })}
+            onAdd={this.onAdd}
+          />
+        )}
       </React.Fragment>
     );
   }
+
+  setKeyCallback = () => {
+    this.props
+      .fetchGetValueOfKey(
+        this.state.selectedApplication,
+        this.state.selectedKey
+      )
+      .then(() =>
+        this.setState({
+          keyValue: this.props.keyValue,
+          data: this.props.keyValue.data,
+        })
+      );
+  };
 
   onAdd = (appName) => {
     if (this.state.selectedApplication === "none") {
@@ -252,9 +256,13 @@ export class KeyTab extends Component {
           },
           () => {
             this.props.fetchGetKeysByApplication(appName).then(() =>
-              this.setState({
-                applicationKeys: this.props.applicationKeys,
-              })
+              this.setState(
+                {
+                  applicationKeys: this.props.applicationKeys,
+                  selectedKey: this.props.applicationKeys[0].key,
+                },
+                () => this.setKeyCallback()
+              )
             );
           }
         )
