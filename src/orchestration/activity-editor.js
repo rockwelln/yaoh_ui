@@ -699,7 +699,6 @@ const sortedNodes = [
   "create_excel_sheet",
   "powershell",
   "ftp",
-  "sftp_custom_call",
   "entity",
 ];
 
@@ -931,11 +930,6 @@ function nodeLabel(name, size) {
       s.style.color = "green";
       s.icon = faFileMedicalAlt;
       s.label = "sFTP";
-      break;
-    case "sftp_custom_call":
-      s.style.color = "green";
-      s.icon = faFileMedicalAlt;
-      s.label = "sFTP custom call";
       break;
     case "entity":
       s.style.color = "blue";
