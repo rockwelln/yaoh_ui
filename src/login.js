@@ -17,6 +17,7 @@ import Checkbox from "react-bootstrap/lib/Checkbox";
 import ButtonGroup from "react-bootstrap/lib/ButtonGroup";
 import {faSpinner} from "@fortawesome/free-solid-svg-icons";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import { conditionalWebauthN } from "./utils/webauthn";
 
 
 function signIn(username, password, onSuccess, onError) {
@@ -283,7 +284,6 @@ function TwoFaModal({show, onSuccess, onError, loginResp}) {
     )
 }
 
-
 export function LoginForm({onLogin}) {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
@@ -292,16 +292,29 @@ export function LoginForm({onLogin}) {
     const [loadingDetails, setLoadingDetails] = useState(false);
     const [loginResp, setLoginResp] = useState(null);
     const [sso, setSso] = useState([]);
+    const [supportWebauthn, setSupportWebauthn] = useState(false);
 
     useEffect(() => {
       setLoadingDetails(true);
       fetchPlatformDetails(data => {
-         setLoadingDetails(false);
-         data.auth?.SSO && setSso(data.auth.SSO)
+        setLoadingDetails(false);
+        data.auth?.SSO && setSso(data.auth.SSO);
+        setSupportWebauthn(data.gui?.webauthn?.enabled);
       })
     }, []);
 
     useEffect(() => {setError(undefined);}, [username, password]);
+
+    useEffect(() => {
+        if(!supportWebauthn) return;
+        conditionalWebauthN()
+        .then(parseJSON)
+        .then(r => {
+            setLoading(false);
+            onLogin(r);
+        })
+        .catch(e => {setLoading(false); e.message !== "not supported" && setError(e);});
+    }, [supportWebauthn]);
 
     return (
         <>
@@ -364,6 +377,8 @@ export function LoginForm({onLogin}) {
                     <Col sm={8}>
                         <FormControl
                             type="text"
+                            autocomplete="username webauthn"
+                            name="username"
                             value={username}
                             onChange={e => setUsername(e.target.value)}
                             autoFocus
@@ -378,6 +393,7 @@ export function LoginForm({onLogin}) {
                     <Col sm={8}>
                         <FormControl
                             type="password"
+                            name="password"
                             value={password}
                             onChange={e => setPassword(e.target.value)}
                         />

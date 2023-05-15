@@ -9,6 +9,7 @@
     "@fortawesome/react-fontawesome": "^0.1.15",
     "@webscopeio/react-textarea-autocomplete": "^4.7.3",
     "ajv": "^6.12.5",
+    "base64url": "^3.0.1",
     "chart.js": "^3.1.0",
     "chartjs-adapter-moment": "^1.0.0",
     "color-hash": "^2.0.1",

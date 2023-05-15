@@ -23,6 +23,8 @@ import {DeleteConfirmButton} from "../utils/deleteConfirm";
 import {readFile} from "../orchestration/startup_events";
 import {FoldableButton} from "../utils/button";
 import { Base64 } from "js-base64";
+import { arrayBufferToBase64 } from "../utils/webauthn";
+import base64url from "base64url";
 
 
 // helpers
@@ -535,16 +537,6 @@ function ImportTemplatesModal({show, onHide, onImport}) {
     </Modal>
   )
 }
-	
-function arrayBufferToBase64( buffer ) {
-	var binary = '';
-	var bytes = new Uint8Array( buffer );
-	var len = bytes.byteLength;
-	for (var i = 0; i < len; i++) {
-		binary += String.fromCharCode( bytes[ i ] );
-	}
-	return window.btoa( binary );
-}
 
 function ImportTemplateModal({show, onHide, onImport}) {
   const onDropRejected = useCallback(() => {
@@ -585,7 +577,7 @@ function ImportTemplateModal({show, onHide, onImport}) {
         reader.readAsText(file);
       } else {
         reader.onload = () => {
-          onImport(null, file.type, arrayBufferToBase64(reader.result))
+          onImport(null, file.type, base64url.encode(reader.result))
         }
         reader.readAsArrayBuffer(file);
       }

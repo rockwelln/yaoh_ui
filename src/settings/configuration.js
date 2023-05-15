@@ -1510,10 +1510,117 @@ function GuiForm(props) {
                 </HelpBlock>
               </Col>
             </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="webauthn-enabled" defaultMessage="Enable Webauthn passkeys"/>
+              </Col>
+
+              <Col sm={9}>
+                <Checkbox
+                  checked={(gui["webauthn"] || {}).enabled}
+                  onChange={e => onChange(update(gui, {$merge: {"webauthn": update(gui["webauthn"] || {}, {$merge: {enabled: e.target.checked}})}}))}/>
+                <HelpBlock>
+                  Webauthn allow (local) users only to use passkeys instead of passwords if their device supports it.
+                </HelpBlock>
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="webauthn-display_name" defaultMessage="Webauthn display name"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="input"
+                  value={(gui["webauthn"] || {}).display_name}
+                  onChange={e => onChange(update(gui, {$merge: {"webauthn": update(gui["webauthn"] || {}, {$merge: {display_name: e.target.value}})}}))}/>
+                <HelpBlock>
+                  Display name [RFU]
+                </HelpBlock>
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="webauthn-rp_id" defaultMessage="Webauthn RP ID"/>
+              </Col>
+
+              <Col sm={9}>
+                <FormControl
+                  componentClass="input"
+                  value={(gui["webauthn"] || {}).rp_id}
+                  onChange={e => onChange(update(gui, {$merge: {"webauthn": update(gui["webauthn"] || {}, {$merge: {rp_id: e.target.value}})}}))}/>
+                <HelpBlock>
+                  Relying party ID
+                </HelpBlock>
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="webauthn-rp_origins" defaultMessage="Webauthn RP Origins"/>
+              </Col>
+
+              <Col sm={9}>
+                <WebauthnAllowedOrigins
+                  origins={(gui["webauthn"] || {}).rp_origins}
+                  onChange={origins => (
+                    onChange(update(gui, {$merge: {"webauthn": update(gui["webauthn"] || {}, {$set: {rp_origins: origins}})}}))
+                  )} />
+                <HelpBlock>
+                  Relying party origins allowed
+                </HelpBlock>
+              </Col>
+            </FormGroup>
           </Form>
         </Panel.Body>
       </Panel>
     </>
+  )
+}
+
+function WebauthnAllowedOrigins({origins, onChange}) {
+  const [newOrigin, setNewOrigin] = useState("");
+
+  return (
+    <Table>
+      <tbody>
+        {
+          (origins?.map((o, i) => (
+            <tr key={o}>
+              <td>{o}</td>
+              <td><Button
+                onClick={() => (
+                  onChange(update(origins || [], {$splice: [[i, 1]]}))
+                )}
+                bsStyle="danger">-</Button></td>
+            </tr>
+          )))
+        }
+        <tr>
+          <td>
+            <FormControl
+              componentClass="input"
+              value={newOrigin || ""}
+              onChange={e => setNewOrigin(e.target.value)}
+              />
+          </td>
+          <td>
+            <Button
+              disabled={newOrigin.length === 0}
+              onClick={() => {
+                onChange(update(origins || [], {$push: [newOrigin]}));
+                setNewOrigin("");
+              }}
+              bsStyle="primary">
+              +
+            </Button>
+          </td>
+        </tr>
+      </tbody>
+    </Table>
   )
 }
 

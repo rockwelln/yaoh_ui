@@ -23,7 +23,7 @@ import {FormattedMessage} from 'react-intl';
 // import 'font-awesome/css/font-awesome.min.css';
 import update from 'immutability-helper';
 
-import {fetch_post, fetch_get, fetch_delete, fetch_put, NotificationsManager} from "../utils";
+import {fetch_post, fetch_get, fetch_delete, fetch_put, NotificationsManager, userLocalizeUtcDate} from "../utils";
 import {ApioDatatable} from "../utils/datatable";
 import { LinkContainer } from 'react-router-bootstrap';
 import {INTERNAL_HELP_LINKS} from "../help/async-apio-help";
@@ -32,6 +32,9 @@ import {CallbackHandler} from "./callbacks";
 import {get_ui_profiles, modules, localUser as localUserMod} from "../utils/user";
 import {TrustedLocationsTable} from "./user_trusted_locs";
 import Select from "react-select";
+import { deletePasskey, deleteUserPasskey, getWebauthnOptions, isWebauthnAvailable, registerWebauthn } from '../utils/webauthn';
+import { DeleteConfirmButton } from '../utils/deleteConfirm';
+import moment from 'moment';
 
 
 // helper functions
@@ -150,6 +153,7 @@ export function LocalUserProfile({onUserInfoChanged}) {
     const [timezone, setTimezone] = useState(user_info.timezone);
     const [twoFaOption, setTwoFaOption] = useState(user_info.two_fa_option);
     const [showTotpModal, setShowTotpModal] = useState(false);
+    const [enableWebAuthn, setEnableWebAuthn] = useState(false);
 
     const delta = {};
     if(onePassword.length !== 0) {
@@ -170,6 +174,8 @@ export function LocalUserProfile({onUserInfoChanged}) {
     useEffect(() => {
       fetchLocalUser(setUserInfo);
       document.title = "User";
+
+      isWebauthnAvailable().then(a => a && setEnableWebAuthn(true));
     }, []);
     useEffect(() => {
       setLanguage(user_info.language);
@@ -237,7 +243,7 @@ export function LocalUserProfile({onUserInfoChanged}) {
                             <Col sm={2}>
                                 <FormControl
                                     componentClass="select"
-                                    value={timezone}
+                                    value={timezone || ""}
                                     onChange={(e) => setTimezone(e.target.value)}>
                                     <option value="">* local *</option>
                                     {
@@ -398,6 +404,58 @@ export function LocalUserProfile({onUserInfoChanged}) {
                             </Col>
                         </FormGroup>
                         <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="passkeys" defaultMessage="Passkeys" />
+                            </Col>
+
+                            <Col sm={9}>
+                                <Table>
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Object</th>
+                                            <th>Registration</th>
+                                            <th>Last use</th>
+                                            <th/>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    {
+                                        user_info.passkeys?.sort((a, b) => a.id - b.id).map(
+                                            r => <tr key={r.id}>
+                                                <td>{r.credential_id}</td>
+                                                <td>
+                                                    <pre style={{wordWrap: 'break-word', whiteSpace: 'pre-wrap'}}>
+                                                        {JSON.stringify(JSON.parse(r.credential_object), null, 2)}
+                                                    </pre>
+                                                </td>
+                                                <td>{userLocalizeUtcDate(moment.utc(r.created_on), user_info).format()}</td>
+                                                <td>{userLocalizeUtcDate(moment.utc(r.last_use), user_info).format()}</td>
+                                                <td>
+                                                    <DeleteConfirmButton
+                                                        resourceName={`passkey ${r.credential_id}`}
+                                                        style={{width: '40px'}}
+                                                        onConfirm={() => deletePasskey(r.id).then(() => onUserInfoChanged())} />
+                                                </td>
+                                            </tr>
+                                        )
+                                    }
+                                    </tbody>
+                                </Table>
+                                {
+                                    user_info.local_user &&
+                                    <Button disabled={!enableWebAuthn} onClick={() => {
+                                        getWebauthnOptions().then(o =>
+                                            navigator.credentials.create(o)
+                                        ).then(cred => registerWebauthn(cred))
+                                        .then(() => onUserInfoChanged())
+                                        .catch(err => console.error(err));
+                                    }}>Register</Button>
+                                }
+                                
+                            </Col>
+                        </FormGroup>
+                        <FormGroup>
                             <Col smOffset={2} sm={9}>
                                 <Button bsStyle="primary" onClick={() => updateLocalUser(delta, onUserInfoChanged)} disabled={!validForm}>
                                     <FormattedMessage id="save" defaultMessage="Save" />
@@ -512,13 +570,18 @@ function TotpRegistrationModal({show, onHide}) {
 
 function UserToken({value, onRefresh}) {
   const [copied, setCopied] = useState(false);
+  if(value === true) {
+    value = "* generated *"
+  } else if (value === false) {
+    value = "* not set *"
+  }
 
   return (
       <FormControl.Static>
           {value}
           {" "}
           {
-              value?.length > 10 && <Button onClick={() => {
+              value?.length > 20 && <Button onClick={() => {
                   navigator.clipboard.writeText(value);
                   setCopied(true);
                   setTimeout(() => setCopied(false), 2000);
@@ -960,6 +1023,41 @@ function UpdateUser(props) {
                                       value={localUser.token}
                                       onRefresh={() => updateUser(user.id, {token: true}, () => loadFullUser(user.id))} />
                                 </FormControl.Static>
+                            </Col>
+                        </FormGroup>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="passkeys" defaultMessage="Passkeys" />
+                            </Col>
+
+                            <Col sm={9}>
+                                <Table>
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Registration</th>
+                                            <th>Last use</th>
+                                            <th/>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    {
+                                        localUser.passkeys?.sort((a, b) => a.id - b.id).map(
+                                            r => <tr key={r.id}>
+                                                <td>{r.credential_id}</td>
+                                                <td>{userLocalizeUtcDate(moment.utc(r.created_on), localUser).format()}</td>
+                                                <td>{userLocalizeUtcDate(moment.utc(r.last_use), localUser).format()}</td>
+                                                <td>
+                                                    <DeleteConfirmButton
+                                                        resourceName={`passkey ${r.credential_id} of user ${user.username}`}
+                                                        style={{width: '40px'}}
+                                                        onConfirm={() => deleteUserPasskey(user.id, r.id).then(() => onClose())} />
+                                                </td>
+                                            </tr>
+                                        )
+                                    }
+                                    </tbody>
+                                </Table>
                             </Col>
                         </FormGroup>
                         <FormGroup validationState={"error"}>
