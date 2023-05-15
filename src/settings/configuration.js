@@ -1535,7 +1535,7 @@ function GuiForm(props) {
                 <FormControl
                   componentClass="input"
                   value={(gui["webauthn"] || {}).display_name}
-                  onChange={e => onChange(update(gui, {$merge: {"webauthn": update(gui["webauthn"] || {}, {$merge: {display_name: e.target.value}})}}))}/>
+                  onChange={e => onChange(update(gui, {$set: {"webauthn": update(gui["webauthn"] || {}, {$merge: {display_name: e.target.value}})}}))}/>
                 <HelpBlock>
                   Display name [RFU]
                 </HelpBlock>
@@ -1551,7 +1551,7 @@ function GuiForm(props) {
                 <FormControl
                   componentClass="input"
                   value={(gui["webauthn"] || {}).rp_id}
-                  onChange={e => onChange(update(gui, {$merge: {"webauthn": update(gui["webauthn"] || {}, {$merge: {rp_id: e.target.value}})}}))}/>
+                  onChange={e => onChange(update(gui, {$set: {"webauthn": update(gui["webauthn"] || {}, {$merge: {rp_id: e.target.value}})}}))}/>
                 <HelpBlock>
                   Relying party ID
                 </HelpBlock>
@@ -1567,7 +1567,7 @@ function GuiForm(props) {
                 <WebauthnAllowedOrigins
                   origins={(gui["webauthn"] || {}).rp_origins}
                   onChange={origins => (
-                    onChange(update(gui, {$merge: {"webauthn": update(gui["webauthn"] || {}, {$set: {rp_origins: origins}})}}))
+                    onChange(update(gui, {$set: {"webauthn": update(gui["webauthn"] || {}, {$merge: {rp_origins: origins}})}}))
                   )} />
                 <HelpBlock>
                   Relying party origins allowed
