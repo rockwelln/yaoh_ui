@@ -18,7 +18,7 @@ export function deleteUserPasskey(uid, id) {
     return fetch_delete(`/api/v01/system/users/${uid}/webauthn/${id}`)
 }
 
-export function registerWebauthn(cred) {
+export function registerWebauthn(name, cred) {
     const credential = {};
     credential.id = cred.id;
     credential.raw_id = base64url.encode(cred.rawId);
@@ -37,7 +37,7 @@ export function registerWebauthn(cred) {
 
     // Store the credential ID locally so that you can use it for authentication when the user comes back
     localStorage.setItem(`credId`, credential.id);
-    return fetch_post(`/api/v01/system/users/local/webauthn`, credential);
+    return fetch_post(`/api/v01/system/users/local/webauthn?name=${encodeURIComponent(name)}`, credential);
 }
 
 async function signIn(credential) {

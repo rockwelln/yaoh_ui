@@ -17,6 +17,8 @@ import Breadcrumb from 'react-bootstrap/lib/Breadcrumb';
 import Tab from 'react-bootstrap/lib/Tab';
 import Tabs from 'react-bootstrap/lib/Tabs';
 import Table from 'react-bootstrap/lib/Table';
+import InputGroup from 'react-bootstrap/lib/InputGroup';
+import InputGroupButton from 'react-bootstrap/lib/InputGroupButton';
 
 import {FormattedMessage} from 'react-intl';
 
@@ -154,6 +156,7 @@ export function LocalUserProfile({onUserInfoChanged}) {
     const [twoFaOption, setTwoFaOption] = useState(user_info.two_fa_option);
     const [showTotpModal, setShowTotpModal] = useState(false);
     const [enableWebAuthn, setEnableWebAuthn] = useState(false);
+    const [newPasskey, setNewPasskey] = useState("");
 
     const delta = {};
     if(onePassword.length !== 0) {
@@ -413,7 +416,8 @@ export function LocalUserProfile({onUserInfoChanged}) {
                                     <thead>
                                         <tr>
                                             <th>ID</th>
-                                            <th>Object</th>
+                                            <th>Name</th>
+                                            <th className='visible-lg'>Object</th>
                                             <th>Registration</th>
                                             <th>Last use</th>
                                             <th/>
@@ -424,7 +428,8 @@ export function LocalUserProfile({onUserInfoChanged}) {
                                         user_info.passkeys?.sort((a, b) => a.id - b.id).map(
                                             r => <tr key={r.id}>
                                                 <td>{r.credential_id}</td>
-                                                <td>
+                                                <td>{r.name}</td>
+                                                <td className='visible-lg'>
                                                     <pre style={{wordWrap: 'break-word', whiteSpace: 'pre-wrap'}}>
                                                         {JSON.stringify(JSON.parse(r.credential_object), null, 2)}
                                                     </pre>
@@ -442,17 +447,37 @@ export function LocalUserProfile({onUserInfoChanged}) {
                                     }
                                     </tbody>
                                 </Table>
+                                <Col sm={12} md={4}>
                                 {
-                                    user_info.local_user &&
-                                    <Button disabled={!enableWebAuthn} onClick={() => {
-                                        getWebauthnOptions().then(o =>
-                                            navigator.credentials.create(o)
-                                        ).then(cred => registerWebauthn(cred))
-                                        .then(() => onUserInfoChanged())
-                                        .catch(err => console.error(err));
-                                    }}>Register</Button>
+                                    user_info.local_user && (
+                                    <InputGroup>
+                                        <FormControl
+                                            type="text"
+                                            value={newPasskey}
+                                            placeholder="access name"
+                                            onChange={e => setNewPasskey(e.target.value)} />
+                                        <InputGroupButton>
+                                            <Button 
+                                                disabled={!enableWebAuthn || newPasskey.length === 0}
+                                                onClick={() => {
+                                                    getWebauthnOptions().then(o =>
+                                                        navigator.credentials.create(o)
+                                                    ).then(cred => registerWebauthn(newPasskey, cred))
+                                                    .then(() => setNewPasskey(""))
+                                                    .then(() => onUserInfoChanged())
+                                                    .catch(err => {
+                                                        console.error(err);
+                                                    });
+                                            }}>Register</Button>
+                                        </InputGroupButton>
+                                    </InputGroup>
+                                    )
                                 }
-                                
+                                {
+                                    !enableWebAuthn &&
+                                    <HelpBlock>Sadly, your browser doesn't support passkeys.</HelpBlock>
+                                }
+                                </Col>
                             </Col>
                         </FormGroup>
                         <FormGroup>
@@ -1035,6 +1060,7 @@ function UpdateUser(props) {
                                     <thead>
                                         <tr>
                                             <th>ID</th>
+                                            <th>Name</th>
                                             <th>Registration</th>
                                             <th>Last use</th>
                                             <th/>
@@ -1045,6 +1071,7 @@ function UpdateUser(props) {
                                         localUser.passkeys?.sort((a, b) => a.id - b.id).map(
                                             r => <tr key={r.id}>
                                                 <td>{r.credential_id}</td>
+                                                <td>{r.name}</td>
                                                 <td>{userLocalizeUtcDate(moment.utc(r.created_on), localUser).format()}</td>
                                                 <td>{userLocalizeUtcDate(moment.utc(r.last_use), localUser).format()}</td>
                                                 <td>
