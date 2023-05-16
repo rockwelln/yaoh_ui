@@ -60,6 +60,7 @@ function saveConfiguration(entry, onSuccess) {
 const newGateway = {
   name: "",
   url: "",
+  backup_urls: [],
   timeout: 10,
   session_holder: "",
   auth: "default",
@@ -75,6 +76,7 @@ function NewGatewayModal(props) {
   const {show, onHide} = props;
   const [entry, setEntry] = useState(newGateway);
   const [newProp, setNewProp] = useState({key: "", value: ""});
+  const [newBackupUrl, setNewBackupUrl] = useState("");
 
   useEffect(() => {
     if(!show) {
@@ -115,6 +117,53 @@ function NewGatewayModal(props) {
                 componentClass="input"
                 value={entry.url}
                 onChange={e => setEntry(update(entry, {$merge: {url: e.target.value}}))}/>
+            </Col>
+          </FormGroup>
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="backup-urls" defaultMessage="Backup URL's"/>
+            </Col>
+
+            <Col sm={9}>
+              <Table>
+                <tbody>
+                  {
+                    entry.backup_urls.map((u, i) => (
+                      <tr key={`${u}-${i}`}>
+                        <td>
+                          {u}
+                        </td>
+                        <td>
+                          <Button onClick={() => {
+                            setEntry(update(entry, {$merge: {backup_urls: {$splice: [[i, 1]]}}}))
+                            }}>-</Button>
+                        </td>
+                      </tr>
+                    ))
+                  }
+                  <tr>
+                    <td>
+                      <FormControl
+                        componentClass="input"
+                        value={newBackupUrl}
+                        placeholder="backup url"
+                        onChange={e => setNewBackupUrl(e.target.value)}/>
+                    </td>
+                    <td>
+                      <Button 
+                        disabled={newBackupUrl.length === 0 || entry.backup_urls.length >= 3}
+                        onClick={() => {
+                          setEntry(update(entry, {$merge: {backup_urls: {$push: [newBackupUrl]}}}));
+                        setNewBackupUrl("");
+                      }}>+</Button>
+                    </td>
+                  </tr>
+                </tbody>
+              </Table>
+              <HelpBlock>
+                Backup url's are used in order following a network error event.<br/>
+                There is no retry mechanism in place (as we can't assume the operation was succesful or not).
+              </HelpBlock>
             </Col>
           </FormGroup>
           <FormGroup>
@@ -444,6 +493,7 @@ function GatewaysPanel(props) {
   const {onChange, gateways} = props;
   const [showNew, setShowNew] = useState(false);
   const [newProp, setNewProp] = useState({key: "", value: ""});
+  const [newBackupUrl, setNewBackupUrl] = useState("");
 
   return (
     <>
@@ -476,6 +526,58 @@ function GatewaysPanel(props) {
                           onChange={e => onChange(update(gateways, {[g]: {$merge: {url: e.target.value}}}))}/>
                         <HelpBlock>
                           URL with the '/' at end to reach the gateway
+                        </HelpBlock>
+                      </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                      <Col componentClass={ControlLabel} sm={2}>
+                        <FormattedMessage id="backup-urls" defaultMessage="Backup URL's"/>
+                      </Col>
+
+                      <Col sm={9}>
+                        <Table>
+                          <tbody>
+                            {
+                              gateway.backup_urls?.map((u, i) => (
+                                <tr key={`${u}-${i}`}>
+                                  <td>
+                                    {u}
+                                  </td>
+                                  <td>
+                                    <Button onClick={() => {
+                                      onChange(update(gateways, {[g]: {backup_urls: {$splice: [[i, 1]]}}}))
+                                      }}>-</Button>
+                                  </td>
+                                </tr>
+                              ))
+                            }
+                            <tr>
+                              <td>
+                                <FormControl
+                                  componentClass="input"
+                                  value={newBackupUrl}
+                                  placeholder="backup url"
+                                  onChange={e => setNewBackupUrl(e.target.value)}/>
+                              </td>
+                              <td>
+                                <Button 
+                                  disabled={newBackupUrl.length === 0 || gateway.backup_urls?.length >= 3}
+                                  onClick={() => {
+                                  if(gateway.backup_urls === undefined) {
+                                    onChange(update(gateways, {[g]: {$merge: {backup_urls: [newBackupUrl]}}}))
+                                  } else {
+                                    onChange(update(gateways, {[g]: {backup_urls: {$push: [newBackupUrl]}}}))
+                                  }
+                                  setNewBackupUrl("");
+                                }}>+</Button>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </Table>
+                        <HelpBlock>
+                          Backup url's are used in order following a network error event.<br/>
+                          There is no retry mechanism in place (as we can't assume the operation was succesful or not).
                         </HelpBlock>
                       </Col>
                     </FormGroup>
