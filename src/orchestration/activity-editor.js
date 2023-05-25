@@ -55,6 +55,8 @@ import Select from "react-select";
 import ButtonGroup from "react-bootstrap/lib/ButtonGroup";
 import moment from "moment";
 import deepEqual from "../utils/deepEqual";
+import { readFile } from './startup_events';
+import { useDropzone } from 'react-dropzone';
 
 
 const NEW_ACTIVITY = {
@@ -349,6 +351,7 @@ export function Activities({user_info}) {
     const [filter, setFilter] = useState("");
     const [duplicateActivity, setDuplicateActivity] = useState();
     const [selected, setSelected] = useState([]);
+    const [showImport, setShowImport] = useState(false);
 
     const loadActivities = () => {
       setLoading(true);
@@ -396,6 +399,10 @@ export function Activities({user_info}) {
                           }}>
                           <FormattedMessage id="delete" defaultMessage="Delete" />
                         </DeleteConfirmButton>
+
+                        <Button bsStyle='primary' onClick={() => setShowImport(true)}>
+                            <FormattedMessage id="import" defaultMessage="Import" />
+                        </Button>
                     </ButtonToolbar>
 
                     <NewActivity
@@ -527,11 +534,203 @@ export function Activities({user_info}) {
                               });
                             })
                         }} />
+                    <ImportActivitiesModal
+                      show={showImport}
+                      onHide={() => setShowImport(false)} />
                 </Panel.Body>
             </Panel>
         </>
     )
 }
+
+async function importActivity(data, options) {
+  const url = new URL(API_URL_PREFIX + `/api/v01/activities/import`);
+  Object.entries(options).map(([k, v]) => url.searchParams.append(k, v));
+  return fetch_post(url, data);
+}
+
+async function importActivities(inputFiles, options, onSuccess, onError) {
+  for(let i = 0; i <inputFiles.length; i++) {
+    const inputFile = inputFiles[i];
+
+    try {
+      const c = await readFile(inputFile);
+      const body = JSON.parse(c);
+      if(body.activity !== undefined && body.versions !== undefined) {
+        body=body.activity;
+      }
+      await importActivity(body, options)
+
+      onSuccess(i)
+    } catch(e) {
+      console.error("failed to import route", e)
+      onError && onError(i, e)
+    }
+  }
+}
+
+function ImportActivitiesModal({show, onHide}) {
+  const [errors, setErrors] = useState([]);
+  const [loaded, setLoaded] = useState([]);
+  const {
+    acceptedFiles,
+    fileRejections,
+    getRootProps,
+    getInputProps,
+  } = useDropzone({accept: 'application/json'});
+  const [options, setOptions] = useState({activateNewVersion: true});
+
+  useEffect(() => {
+    if(!show) {
+      setErrors([]);
+      setLoaded([]);
+      setOptions({activateNewVersion: true});
+    }
+  }, [show])
+
+  const acceptedFileItems = acceptedFiles.map((file, i) => (
+    <li key={file.path}>
+      {file.path} - {file.size} bytes
+      <ul style={{color: "green"}}>
+      {
+        loaded.includes(i) && <li>Loaded</li>
+      }
+      </ul>
+      <ul style={{color: "red"}}>
+      {
+        errors.filter(e => e.id === i).map(e => <li color={"red"}>{e.error}</li>)
+      }
+      </ul>
+    </li>
+  ));
+
+  const fileRejectionItems = fileRejections.map(({ file, errors }) => (
+    <li key={file.path}>
+      {file.path} - {file.size} bytes
+      <ul>
+        {errors.map(e => (
+          <li key={e.code}>{e.message}</li>
+        ))}
+      </ul>
+    </li>
+  ));
+
+  return (
+    <Modal show={show} onHide={() => {
+      onHide(true);
+      setErrors([]);
+      setLoaded([]);
+    }} backdrop={false} bsSize="large">
+      <Modal.Header closeButton>
+          <Modal.Title>
+              <FormattedMessage id="import" defaultMessage="Import"/>
+          </Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Form horizontal>
+          <FormGroup>
+            <section className="dropcontainer" >
+              <div {...getRootProps({className: 'dropzone'})} >
+                <input {...getInputProps()} />
+                <p>Drag 'n' drop some files here, or click to select files</p>
+              </div>
+            </section>
+          </FormGroup>
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              Rejected
+            </Col>
+            <Col sm={9}>
+              <ul style={{color: "red"}}>{fileRejectionItems}</ul>
+            </Col>
+          </FormGroup>
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              Files
+            </Col>
+            <Col sm={9}>
+              <ul>{acceptedFileItems}</ul>
+            </Col>
+          </FormGroup>
+
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              Merging options
+            </Col>
+            <Col sm={9}>
+              <Checkbox
+                checked={options.replaceWorkingVersion}
+                onChange={e => setOptions(update(options, {$merge: {replaceWorkingVersion: e.target.checked}}))}>
+                <FormattedMessage
+                  id="replace-working-version"
+                  defaultMessage='Replace working versions'/>
+              </Checkbox>
+              <HelpBlock>
+                Replace the working version in-place.
+                Otherwise if no matching definition is found, the import is rejected
+              </HelpBlock>
+
+              <Checkbox
+                disabled={!options.replaceWorkingVersion}
+                checked={options.commitCurrentWorkingVersion}
+                onChange={e => setOptions(update(options, {$merge: {commitCurrentWorkingVersion: e.target.checked}}))}>
+                <FormattedMessage
+                  id="commit-current-working-version"
+                  defaultMessage='Commit current working version'/>
+                <FormControl
+                  disabled={!options.commitCurrentWorkingVersion}
+                  componentClass="input"
+                  value={options.commitCurrentWorkingVersionLabel || ""}
+                  onChange={e => setOptions(update(options, {$merge: {commitCurrentWorkingVersionLabel: e.target.value}}))}
+                  placeholder="commit label" />
+              </Checkbox>
+              <HelpBlock>
+                Save the current working version in a commit.
+                (The saved version remain activated)
+              </HelpBlock>
+
+              <Checkbox
+                checked={options.activateNewVersion}
+                onChange={e => setOptions(update(options, {$merge: {activateNewVersion: e.target.checked}}))}>
+                <FormattedMessage
+                  id="activate-new-version"
+                  defaultMessage='Activate new version'/>
+              </Checkbox>
+              <HelpBlock>
+                Activate the new working version if not yet active.
+              </HelpBlock>
+            </Col>
+          </FormGroup>
+
+          <FormGroup>
+            <Col smOffset={2} sm={10}>
+              <ButtonToolbar>
+                <Button
+                  type="submit"
+                  bsStyle="primary"
+                  onClick={e => {
+                    e.preventDefault();
+                    setErrors([]);
+                    setLoaded([]);
+
+                    importActivities(
+                      acceptedFiles,
+                      options,
+                      i => setLoaded(l => update(l, {$push: [i]})),
+                      (i, e) => setErrors(es => update(es, {$push: [{id: i, error: e.message}]})),
+                    )
+                  }} >
+                  Save
+                </Button>
+              </ButtonToolbar>
+            </Col>
+          </FormGroup>
+        </Form>
+      </Modal.Body>
+    </Modal>
+  )
+}
+
 
 function ActivityStatsModal({show, onHide, id}) {
     const [stats, setStats] = useState({});
