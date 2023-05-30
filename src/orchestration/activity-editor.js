@@ -169,6 +169,10 @@ function fetchActivityStats(id, onSuccess) {
         });
 }
 
+function updateVersion(activity_id, version_id, diff) {
+  return fetch_put(`/api/v01/activities/${activity_id}/versions/${version_id}`, diff);
+}
+
 function fetchActivityUsage(id, onSuccess) {
     fetch_get(`/api/v01/activities/${id}/usage`)
         .then(resp => onSuccess(resp))
@@ -182,6 +186,17 @@ function fetchActivityVersions(id, onSuccess) {
         .then(resp => onSuccess(resp.activity_versions))
         .catch(error => {
             console.error("Failed to fetch versions", error);
+        });
+}
+
+function deleteVersion(id, versionId, onSuccess) {
+    fetch_delete(`/api/v01/activities/${id}/versions/${versionId}`)
+        .then(resp => {
+            NotificationsManager.success(`Version ${versionId} deleted`)
+            onSuccess && onSuccess()
+        })
+        .catch(error => {
+            NotificationsManager.error(`Failed to delete the version ${versionId}`, error.message);
         });
 }
 
@@ -556,10 +571,11 @@ async function importActivities(inputFiles, options, onSuccess, onError) {
     try {
       const c = await readFile(inputFile);
       const body = JSON.parse(c);
+      // if the exports contains all versions, only import the active one
       if(body.activity !== undefined && body.versions !== undefined) {
         body=body.activity;
       }
-      await importActivity(body, options)
+      await importActivity(body, options);
 
       onSuccess(i)
     } catch(e) {
@@ -804,6 +820,71 @@ function ActivityStatsModal({show, onHide, id}) {
     )
 }
 
+function EditVersionModal({show, activityID, version, onHide}) {
+  const [diff, setDiff] = useState({});
+
+  const localVersion = update(version, {$merge: diff});
+
+  return (
+    <Modal show={show} onHide={() => {
+      setDiff({});
+      onHide();
+    }}>
+      <Modal.Header closeButton>
+        <Modal.Title>Edit version</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Form horizontal onSubmit={e =>  {
+          e.preventDefault();
+          updateVersion(activityID, version.id, diff).then(() => {
+            setDiff({});
+            onHide(true);
+          }).catch(e => {
+            NotificationsManager.error(
+              <FormattedMessage
+                id="edit-version-error" 
+                defaultMessage="Error while editing version: {error}"
+                values={{error: e.message}}/>,
+              e.message
+            );
+          });
+        }}>
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="label" defaultMessage="Label" />
+            </Col>
+            <Col sm={10}>
+              <FormControl
+                type="text"
+                value={localVersion.label}
+                onChange={e => setDiff(update(diff, {$merge: {label: e.target.value}}))} />
+            </Col>
+          </FormGroup>
+
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="message" defaultMessage="Message" />
+            </Col>
+            <Col sm={10}>
+              <FormControl
+                type="text"
+                value={localVersion.message}
+                onChange={e => setDiff(update(diff, {$merge: {message: e.target.value}}))} />
+            </Col>
+          </FormGroup>
+          
+          <FormGroup>
+            <Col smOffset={2} sm={10}>
+              <Button type={"submit"} >
+                Save
+              </Button>
+            </Col>
+          </FormGroup>
+        </Form>
+      </Modal.Body> 
+    </Modal>
+  )
+}
 
 function NewNameModal(props) {
     const {show, title, onHide, isValidName} = props;
@@ -1761,6 +1842,7 @@ export function ActivityEditor(props) {
     const [descriptionStyle, setDescriptionStyle] = useState(DefaultDescriptionStyle);
     const [versionId, setVersionId] = useState();
     const [versions, setVersions] = useState([]);
+    const [showVersion, setShowVersion] = useState();
     const [usage, setUsage] = useState({});
     const [width, height] = useWindowSize();
 
@@ -2073,6 +2155,7 @@ export function ActivityEditor(props) {
                           <th>Message</th>
                           <th>Username</th>
                           <th>Date</th>
+                          <th/>
                         </tr>
                       </thead>
                       <tbody>
@@ -2084,6 +2167,25 @@ export function ActivityEditor(props) {
                             <td>{v.message ? v.message.split("\n").map(m => <>{m}<br/></>) : "-"}</td>
                             <td>{v.username ? `${v.username} (${v.email})` : "-"}</td>
                             <td>{userLocalizeUtcDate(moment.utc(v.updated_on), props.user_info).format()}</td>
+                            <td>
+                              { v.label &&
+                                <ButtonGroup>
+                                  <Button 
+                                    onClick={() => setShowVersion(v)}
+                                    bsStyle="primary">
+                                    <Glyphicon glyph="pencil"/>
+                                  </Button>
+                                  <DeleteConfirmButton
+                                    onConfirm={() => deleteVersion(activityId, v.id, () => {
+                                      fetchActivityVersions(activityId, r => {
+                                        setVersions(r);
+                                        setVersionId((r.find(v => v.active) || {}).id);
+                                      });
+                                    })}
+                                    resourceName={`version labelled ${v.label}`} />
+                                </ButtonGroup>
+                              }
+                            </td>
                           </tr>
                         ))
                       }
@@ -2145,6 +2247,21 @@ export function ActivityEditor(props) {
                         e.addNode(editor.graph, c_def, newName, params);
                     }
                 })} />
+            
+            <EditVersionModal
+              show={showVersion !== undefined}
+              activityID={activityId}
+              version={showVersion || {}}
+              onHide={refresh => {
+                if(refresh) {
+                  fetchActivityVersions(activityId, r => {
+                    setVersions(r);
+                    setVersionId((r.find(v => v.active) || {}).id);
+                  });
+                }
+                setShowVersion(undefined);
+              }}
+              />
 
             <EditCellModal
                 cell={editedCell}
