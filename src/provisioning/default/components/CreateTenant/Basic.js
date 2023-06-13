@@ -141,7 +141,8 @@ export class Basic extends Component {
               </Col>
             )}
             {this.props.ldapBackends.length &&
-            this.props.createTenant.type === "Enterprise" ? (
+            this.props.createTenant.type === "Enterprise" &&
+            this.props?.selfcareUrl?.modules?.ldap_synchronization ? (
               <Col>
                 <div>
                   <Checkbox
