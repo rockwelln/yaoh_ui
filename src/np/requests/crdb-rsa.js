@@ -54,6 +54,9 @@ import {SubTransactionsPanel} from "../../requests/components";
 import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
 import {LinkContainer} from "react-router-bootstrap";
 import {fetchActivities} from "../../orchestration/activity-editor";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import {faUpload} from "@fortawesome/free-solid-svg-icons/faUpload";
+import {faSpinner} from "@fortawesome/free-solid-svg-icons/faSpinner";
 
 // export const DEFAULT_RECIPIENT = "MTNBSGNP";
 export const rejection_codes = [];
@@ -116,6 +119,7 @@ function newRequest(request, onSuccess, onError) {
 }
 
 export function RangeOrNumbersInput({ ranges, onChange, multipleRanges }) {
+  const [showImportNumbersModal, setShowImportNumbersModal] = useState(false);
   const rangeNumbers = (r) => {
     if(r.to.length <= 0) return 1;
     const t = parseInt(r.to, 10);
@@ -188,6 +192,12 @@ export function RangeOrNumbersInput({ ranges, onChange, multipleRanges }) {
                 }>
                 +
               </Button>
+              {" "}
+              <Button
+                onClick={() => setShowImportNumbersModal(true)}
+                bsStyle={"primary"}>
+                <FontAwesomeIcon icon={faUpload}/>
+              </Button>
             </td>
           </tr>
         )}
@@ -198,7 +208,96 @@ export function RangeOrNumbersInput({ ranges, onChange, multipleRanges }) {
           id="range-one-number-note"
           defaultMessage="CRDB accepts a set of numbers or a *single* number range."/>
       </HelpBlock>
+
+      <ImportRangeModal
+        show={showImportNumbersModal}
+        onHide={() => setShowImportNumbersModal(false)}
+        onChange={rngs => {
+          const data = rngs.map(rng => ({from: rng.from, to: rng.to || rng.from, data_number: '', fax_number: ''}));
+          if (ranges.length === 1 && ranges[0].from === '' && ranges[0].to === '') {
+            onChange(data);
+          } else {
+            onChange(update(ranges, {$push: data}))
+          }
+        }}/>
     </>
+  )
+}
+
+function ImportRangeModal({show, onHide, onChange}) {
+  const [file, setFile] = useState(null);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const onFileChange = e => {
+    const f = e.target.files[0];
+    setFile(f);
+    setError(null);
+  }
+
+  const onFileUpload = () => {
+    setLoading(true);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const lines = reader.result.split('\n');
+      let error = null;
+      const ranges = lines.filter(l => l.trim().length !== 0).map((l, i) => {
+        l = l.trim();
+        // a range is a line with two numbers separated by a comma or a single number
+        if (!/^\d+(,\d+)?$/.test(l)) {
+          error = `Invalid range: ${l} on line ${i}`;
+          return null;
+        }
+
+        const [from, to] = l.split(',');
+        return {from, to};
+      });
+
+      if (error) {
+        setError(error);
+        setLoading(false);
+        return;
+      } else if (ranges.length === 0) {
+        setError("No numbers found");
+        setLoading(false);
+        return;
+      } else if (ranges.length > 1000) {
+        setError("Too many numbers (>1000)");
+        setLoading(false);
+        return;
+      }
+
+      onChange(ranges);
+      setLoading(false);
+      onHide();
+    }
+    reader.readAsText(file);
+  }
+
+  return (
+    <Modal show={show} onHide={onHide} backdrop={false}>
+      <Modal.Header closeButton>
+        <Modal.Title>Import Numbers</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <FormGroup>
+          <ControlLabel>File</ControlLabel>
+          <FormControl type="file" onChange={onFileChange}/>
+          {error && <HelpBlock style={{ color: "red" }}>{error}</HelpBlock>}
+          <HelpBlock>
+            <FormattedMessage
+              id="import-numbers-help"
+              defaultMessage="Import a list of numbers, one per line. A range is a line with two numbers separated by a comma. Example: 123,456"/>
+          </HelpBlock>
+        </FormGroup>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button disabled={loading || !file} onClick={onFileUpload} bsStyle="primary">
+          {loading ? <FontAwesomeIcon icon={faSpinner} spin/> : "Upload"}
+        </Button>
+        <Button onClick={onHide}>Cancel</Button>
+      </Modal.Footer>
+    </Modal>
   )
 }
 
@@ -1592,7 +1691,7 @@ export class NPTransaction extends Component {
   fetchTxDetails(reload, onSuccess, onError) {
     this.setState({ error: undefined });
     const txId = this.props.match.params.txId;
-    fetch_get(`/api/v01/transactions/${this.props.match.params.txId}`, this.props.auth_token)
+    fetch_get(`/api/v01/transactions/${this.props.match.params.txId}`)
       .then(data => {
         if (this.cancelLoad) {
           onSuccess && onSuccess();
@@ -1605,12 +1704,15 @@ export class NPTransaction extends Component {
         }
         this.setState(diffState);
 
-        !data.callback_task_id && fetch_get(`/api/v01/npact/np_requests/${data.original_request_id}`, this.props.auth_token)
-          .then(data => {
-            !this.cancelLoad && this.setState({ request: data });
-            document.title = `Request ${data.crdc_id}`;
-          })
-          .catch(error => !this.cancelLoad && this.setState({ error: error }));
+        {
+          const request_id = data.callback_task_id ? data.super_instance?.original_request_id : data.original_request_id;
+          fetch_get(`/api/v01/npact/np_requests/${request_id}`)
+            .then(data => {
+              !this.cancelLoad && this.setState({request: data});
+              document.title = `Request ${data.crdc_id}`;
+            })
+            .catch(error => !this.cancelLoad && this.setState({error: error}));
+        }
 
         fetch_get(`/api/v01/transactions/${txId}/manual_actions`)
           .then(data => !this.cancelLoad && this.setState({manualActions: data.manual_actions}))
@@ -1957,14 +2059,18 @@ export class NPTransaction extends Component {
           <LinkContainer to={`/transactions/list`}>
             <Breadcrumb.Item><FormattedMessage id="apio-requests" defaultMessage="Ports"/></Breadcrumb.Item>
           </LinkContainer>
+          <Breadcrumb.Item active>{request?.crdc_id || "-"}</Breadcrumb.Item>
           {
-            tx.super_instance_chain && tx.super_instance_chain.map(sup_i => (
-              <LinkContainer to={`/transactions/${sup_i.id}`} key={`sup-${sup_i.id}`}>
-                <Breadcrumb.Item>{sup_i.id}</Breadcrumb.Item>
-              </LinkContainer>
-            ))
+            tx.super_instance_chain?.map((sup_i, i) => {
+              if(i === 0) return;
+              return (
+                <LinkContainer to={`/transactions/${sup_i.id}`} key={`sup-${sup_i.id}`}>
+                  <Breadcrumb.Item>{sup_i.id}</Breadcrumb.Item>
+                </LinkContainer>
+              )
+            })
           }
-          <Breadcrumb.Item active>{(request && request.crdc_id) ? request.crdc_id : tx.id}</Breadcrumb.Item>
+
         </Breadcrumb>
         {alerts}
         <Row>
