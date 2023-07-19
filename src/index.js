@@ -8,7 +8,7 @@ import register from './registerServiceWorker';
 
 
 import fr_FR from './translations/fr.json';
-import {createCookie, getCookie, removeCookie} from "./utils";
+import {getCookie} from "./utils";
 import AutoReload from "./utils/autoReload";
 
 
