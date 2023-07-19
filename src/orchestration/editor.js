@@ -76,6 +76,23 @@ const SCHEMA_DEFINITION = {
   "additionalProperties": false
 };
 
+function note_heigth(cell) {
+    const l = cell.params.note?.length;
+    if(l === undefined) return 150;
+
+    const longest = Math.max(...cell.params.note.split("\n").map(l => l.length));
+
+    return Math.min(250, Math.max(longest * CHAR_HEIGHT_APPROX, 100));
+}
+
+function note_width(cell) {
+    const l = cell.params.note?.length;
+    if(l === undefined) return 100;
+
+    const lines = cell.params.note.split("\n").length;
+    return (lines * 15) + 35;
+}
+
 function min_cell_height(cell, name) {
     let c_height = cell.outputs.reduce(
         (height, output) => output.length * CHAR_HEIGHT_APPROX > height?output.length * CHAR_HEIGHT_APPROX:height, cell.height || BASIC_CELL_HEIGHT
@@ -227,6 +244,12 @@ export function addNode(graph, def, name, paramsFields) {
                 v10 = graph.insertVertex(v, null, document.createElement('Target'), 0, 0, 10, 10, 'port;target;spacingLeft=18', true);
                 v10.geometry.offset = new mxPoint(-5, -5);
                 endpoints[name] = v10;
+                break;
+            case 'note':
+                const height = note_heigth(c)
+                v = graph.insertVertex(parent, null, node, c.x, c.y, height, note_width(c), 'note;'+getCustomStyle(c.style));
+                v.setConnectable(false);
+
                 break;
             default:
                 v = graph.insertVertex(parent, null, node, c.x, c.y, min_cell_height(c, name), baseY + (20 * c.outputs.length) + 15, cls+";"+getCustomStyle(c.style));
@@ -644,6 +667,12 @@ export function updateGraphModel(editor, activity, options) {
                     v10.geometry.offset = new mxPoint(-5, -5);
                     endpoints.push([name, v10]);
                     break;
+                case 'note':
+                    const height = note_heigth(c);
+                    v = graph.insertVertex(parent, null, node, c.x, c.y, height, note_width(c), 'note;'+getCustomStyle(c.style));
+                    v.setConnectable(false);
+    
+                    break;
                 default:
                     v = graph.insertVertex(parent, null, node, c.x, c.y, min_cell_height(c, name), baseY + (20 * c.outputs.length) + 15, getCustomStyle(c.style));
                     v.setConnectable(false);
@@ -876,22 +905,40 @@ export default function draw_editor(container, handlers, placeholders, props) {
     {
       if (mxUtils.isNode(cell.value))
       {
-        if(cell.getAttribute('original_name', '') === 'start' || cell.getAttribute('original_name', '') === 'end')
-            return cell.getAttribute('label', '');
-        else if(cell.getAttribute('original_name', '') === 'sync_outputs'){
-            return "<div style='transform: scale(var(--scale)) rotate(45deg)'>+</div>";
-        }
-        else if(cell.getAttribute('original_name', '') === 'or_outputs'){
-            return "<div style='font-size: 10rem; margin-top: -1.5rem'>&cir;</div>";
-        }
-        else {
-            let div = document.createElement('div');
-            div.innerHTML = cell.getAttribute('label');
-            mxUtils.br(div);
-            let i = document.createElement('i');
-            i.innerHTML = '&lt;' + cell.getAttribute('original_name', '') + '&gt;';
-            div.appendChild(i);
-            return div;
+        switch(cell.getAttribute('original_name', '')) {
+            case 'start':
+            case 'end':
+                return cell.getAttribute('label', '');
+            case 'sync_outputs':
+                return "<div style='transform: scale(var(--scale)) rotate(45deg)'>+</div>";
+            case 'or_outputs':
+                return "<div style='font-size: 10rem; margin-top: -1.5rem'>&cir;</div>";
+            case 'note':
+                {
+                    let div = document.createElement('div');
+                    div.style.textAlign = 'center';
+                    div.innerHTML = 'Note'
+                    mxUtils.br(div);
+                    let subDiv = document.createElement('div');
+                    // subDiv.style.fontSize = '1.3rem';
+                    subDiv.style.color = 'gray';
+                    subDiv.style.marginTop = '0.3rem';
+                    subDiv.style.marginLeft = '0.3rem';
+                    subDiv.style.textAlign = 'left';
+                    subDiv.innerHTML = cell.value.params['note'].split("\n").join("<br/>");
+                    div.appendChild(subDiv);
+                    return div;
+                }
+            default:
+                {
+                    let div = document.createElement('div');
+                    div.innerHTML = cell.getAttribute('label');
+                    mxUtils.br(div);
+                    let i = document.createElement('i');
+                    i.innerHTML = '&lt;' + cell.getAttribute('original_name', '') + '&gt;';
+                    div.appendChild(i);
+                    return div;
+                }
         }
       } else if(cell.getParent() && cell.getParent().getAttribute('original_name', '') === 'sync_outputs' || cell.getParent().getAttribute('original_name', '') === 'or_outputs') {
           return "";
@@ -1309,6 +1356,21 @@ function configureStylesheet(graph)
     style[mxConstants.STYLE_IMAGE_WIDTH] = '48';
     style[mxConstants.STYLE_IMAGE_HEIGHT] = '48';
     graph.getStylesheet().putCellStyle('entity', style);
+
+    style = {};
+    style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_RECTANGLE;
+    style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter;
+    style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_CENTER;
+    style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_TOP;
+    style[mxConstants.STYLE_FILLCOLOR] = '#7fffd4';
+    style[mxConstants.STYLE_STROKECOLOR] = '#1B78C8';
+    style[mxConstants.STYLE_FONTCOLOR] = '#000000';
+    style[mxConstants.STYLE_OPACITY] = '80';
+    style[mxConstants.STYLE_FONTSIZE] = 12;
+    style[mxConstants.STYLE_FONTSTYLE] = 1;
+    style[mxConstants.STYLE_IMAGE_WIDTH] = '48';
+    style[mxConstants.STYLE_IMAGE_HEIGHT] = '48';
+    graph.getStylesheet().putCellStyle('note', style);
 
     style = {};
     style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_RECTANGLE;

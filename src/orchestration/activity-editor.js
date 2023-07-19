@@ -44,7 +44,7 @@ import {
   faChartBar, faCog,
   faCopy, faDatabase, faDirections,
   faDownload, faEnvelope, faFileCsv, faFileExcel, faFileMedicalAlt, faHome, faPaste, faPlay, faPowerOff, faSearch,
-  faSpinner, faStop, faStopwatch, faStream,
+  faSpinner, faStickyNote, faStop, faStopwatch, faStream,
   faUserCog, faUsers
 } from "@fortawesome/free-solid-svg-icons";
 import {Link} from "react-router-dom";
@@ -979,6 +979,7 @@ const sortedNodes = [
   "create_excel_sheet",
   "powershell",
   "ftp",
+  "note",
   "entity",
 ];
 
@@ -1211,6 +1212,11 @@ function nodeLabel(name, size) {
       s.icon = faFileMedicalAlt;
       s.label = "sFTP";
       break;
+    case "note":
+      s.style.color = "white";
+      s.icon = faStickyNote;
+      s.label = "Note";
+      break;
     case "entity":
       s.style.color = "blue";
       s.icon = faHome;
@@ -1249,7 +1255,7 @@ function NewCellModal({show, onHide, cells, activity})  {
     }, [show]);
 
     useEffect(() => {
-      if(name.length === 0 && definition && ["or_outputs", "sync_outputs"].includes(definition.original_name)) {
+      if(name.length === 0 && definition && ["or_outputs", "sync_outputs", "note"].includes(definition.original_name)) {
         setName(definition.original_name.split("_")[0] + "_" + crypto.randomUUID())
       }
     }, [definition, name])
@@ -1404,7 +1410,14 @@ function offsetIndex(from, to, arr = []) {
 }
 
 
-function StyleItems({data, disabled, onChange}) {
+function StyleItems({data, disabled, originalName, onChange}) {
+  let backgroundColor = "#8CCDF5";
+  
+  switch(originalName) {
+    case "note":
+      backgroundColor = "#7fffd4";
+  }
+
   return (
     <>
       <Table>
@@ -1415,7 +1428,7 @@ function StyleItems({data, disabled, onChange}) {
               <input
               type="color"
               id="color-picker"
-              defaultValue='#8CCDF5'
+              defaultValue={backgroundColor}
               value={data.background_color}
               disabled={disabled}
               onChange={e => onChange && onChange({...data, background_color: e.target.value})} /></td>
@@ -1538,6 +1551,7 @@ export function EditCellModal({show, cell, cells, activity, onHide, readOnly = f
         setStyle({});
       }
     }, [show]);
+
     useEffect(() => {
       if(cell) {
         if(cell.value.getAttribute('label')) {
@@ -1702,6 +1716,7 @@ export function EditCellModal({show, cell, cells, activity, onHide, readOnly = f
                   <StyleItems
                     disabled={readOnly}
                     onChange={setStyle}
+                    originalName={originalName}
                     data={style} />
                 </Col>
               </FormGroup>
