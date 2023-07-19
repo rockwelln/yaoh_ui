@@ -1404,8 +1404,30 @@ function offsetIndex(from, to, arr = []) {
 }
 
 
-function OutputsTable(props) {
-  let {rows, usedRows, onDragEnd, readOnly} = props;
+function StyleItems({data, disabled, onChange}) {
+  return (
+    <>
+      <Table>
+        <tbody>
+          <tr>
+            <td>Background color</td>
+            <td>
+              <input
+              type="color"
+              id="color-picker"
+              defaultValue='#8CCDF5'
+              value={data.background_color}
+              disabled={disabled}
+              onChange={e => onChange && onChange({...data, background_color: e.target.value})} /></td>
+          </tr>
+        </tbody>
+      </Table>
+    </>
+  )
+}
+
+
+function OutputsTable({rows, usedRows, onDragEnd, readOnly}) {
   const [dragState, setDragState] = useState({...defaultDragState});
   const preview = useRef(null);
 
@@ -1495,11 +1517,11 @@ function OutputsTable(props) {
 }
 
 
-export function EditCellModal(props) {
-    const {show, cell, cells, activity, onHide, readOnly = false} = props;
+export function EditCellModal({show, cell, cells, activity, onHide, readOnly = false}) {
     const [staticParams, setStaticParams] = useState({});
     const [name, setName] = useState("");
     const [outputs, setOutputs] = useState([]);
+    const [style, setStyle] = useState({});
 
     const originalName = cell && cell.value.getAttribute('original_name');
     const attrsStr = cell && cell.value.getAttribute('attrList');
@@ -1513,6 +1535,7 @@ export function EditCellModal(props) {
       if(!show) {
         setStaticParams({});
         setOutputs([]);
+        setStyle({});
       }
     }, [show]);
     useEffect(() => {
@@ -1525,6 +1548,9 @@ export function EditCellModal(props) {
             o[a] = cell.value.params[a];
             return o;
           }, {}))
+        }
+        if(cell.value.getAttribute("style")) {
+          setStyle(JSON.parse(cell.value.getAttribute('style')));
         }
         if(cell.value.getAttribute("outputs") !== undefined && cellDef) {
           /*
@@ -1665,6 +1691,22 @@ export function EditCellModal(props) {
               </FormGroup>
             }
 
+            <hr/>
+            { originalName !== "start" && originalName !== "end" &&
+              <FormGroup>
+                <Col componentClass={ControlLabel} sm={2}>
+                  <FormattedMessage id="style" defaultMessage="Style"/>
+                </Col>
+
+                <Col sm={9}>
+                  <StyleItems
+                    disabled={readOnly}
+                    onChange={setStyle}
+                    data={style} />
+                </Col>
+              </FormGroup>
+            }
+
             {!readOnly &&
               <FormGroup>
                 <Col smOffset={2} sm={10}>
@@ -1678,10 +1720,11 @@ export function EditCellModal(props) {
                         params: staticParams,
                         outputs: outputs.filter(o => o.visible).map(o => o.value),
                         errorPaths: outputs.filter(o => o.errorPath).map(o => o.value),
+                        style: style,
                       });
                     }}
                   >
-                    Save
+                    Apply
                   </Button>
                 </Col>
               </FormGroup>
@@ -2243,6 +2286,7 @@ export function ActivityEditor(props) {
                         c_def.error_outputs = (cell.getAttribute('error_outputs') || "").split(",");
                         c_def.x = cell.geometry.x + 10;
                         c_def.y = cell.geometry.y + 10;
+                        c_def.style = cell.getAttribute('style') || "";
                         const params = (cell.getAttribute('attrList') || "").split(",").reduce((xa, a) => {xa[a] = cell.value.params[a]; return xa;}, {});
                         e.addNode(editor.graph, c_def, newName, params);
                     }
@@ -2290,6 +2334,9 @@ export function ActivityEditor(props) {
                     }
                     if(c.errorPaths !== undefined) {
                       activity.definition.cells[c.oldName]["error_outputs"] = c.errorPaths;
+                    }
+                    if(c.style !== undefined) {
+                      activity.definition.cells[c.oldName]["style"] = c.style;
                     }
                   }
                   if(c.name !== c.oldName) {

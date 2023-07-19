@@ -46,7 +46,8 @@ const SCHEMA_DEFINITION = {
                   "y": {"type": "number"},
                   "params": {"type": "object"},
                   "outputs": {"type": "array", "items": {"type": "string"}},
-                  "error_outputs": {"type": "array", "items": {"type": "string"}}
+                  "error_outputs": {"type": "array", "items": {"type": "string"}},
+                  "style": {"type": "object"}
               },
               "required": ["original_name", "x", "y"],
               "additionalProperties": false
@@ -112,6 +113,7 @@ export function getDefinition(editor, title) {
                 y: c.geometry.y,
                 params: {},
                 outputs: outputs.split(",").filter(o => o !== ""),
+                style: c.getAttribute('style') && JSON.parse(c.getAttribute('style')),
             };
             if(errOuts.length > 0) {
                cell.error_outputs = errOuts;
@@ -163,6 +165,21 @@ function addEdge(graph, source, target) {
     }
 }
 
+function getCustomStyle(def) {
+    return Object.entries(def || {}).reduce((p, [k, v]) => {
+        let graphKey = k;
+        switch(k) {
+            case 'background_color':
+                graphKey = mxConstants.STYLE_FILLCOLOR;
+                break;
+            default:
+                return p;
+        }
+
+        return `${p};${graphKey}=${v}`;
+    }, "default") || "";
+}
+
 export function addNode(graph, def, name, paramsFields) {
     const cls = getClass(def);
     const c = def;
@@ -177,6 +194,7 @@ export function addNode(graph, def, name, paramsFields) {
         node.setAttribute('original_name', value);
         node.setAttribute('outputs', c.outputs);
         node.setAttribute('error_outputs', c.error_outputs || "");
+        node.setAttribute('style', c.style && JSON.stringify(c.style) || "{}");
         node.setAttribute('attrList', (c.params && c.params.map(p => p.name || p).join(',')) || '');
         node.params = {};
         c.params && c.params.map(p => {
@@ -211,7 +229,7 @@ export function addNode(graph, def, name, paramsFields) {
                 endpoints[name] = v10;
                 break;
             default:
-                v = graph.insertVertex(parent, null, node, c.x, c.y, min_cell_height(c, name), baseY + (20 * c.outputs.length) + 15, cls);
+                v = graph.insertVertex(parent, null, node, c.x, c.y, min_cell_height(c, name), baseY + (20 * c.outputs.length) + 15, cls+";"+getCustomStyle(c.style));
                 v.setConnectable(false);
 
                 v10 = graph.insertVertex(v, null, document.createElement('Target'), 0, 0, 10, 10, 'port;target;spacingLeft=18', true);
@@ -356,6 +374,7 @@ function supportClipboard(graph) {
                         y: cell.geometry.y,
                         params: {},
                         outputs: outputs.split(",").filter(o => o !== ""),
+                        style: cell.getAttribute('style') && JSON.parse(cell.getAttribute('style')) || {},
                     };
                     if(errOuts.length > 0) {
                         c.error_outputs = errOuts;
@@ -436,6 +455,8 @@ function supportClipboard(graph) {
                     // slightly shift a new clone (if necessary)
                     cell.x += gx;
                     cell.y += gy;
+                    // copy the style (if any)
+                    cell.style = cell.style && Object.assign({}, cell.style);
                     // add copy to the node name if it already exists
                     if (Object.values(graph.getModel().cells).findIndex(c => c.getAttribute('label') === cell.name) !== -1) {
                         const newName = cell.name + " (copy)";
@@ -587,6 +608,7 @@ export function updateGraphModel(editor, activity, options) {
             node.setAttribute('original_name', c.original_name);
             node.setAttribute('outputs', c.outputs);
             node.setAttribute('error_outputs', c.error_outputs || "");
+            node.setAttribute('style', c.style && JSON.stringify(c.style) || "{}");
             node.params = {};
             if(c.params !== undefined && Object.keys(c.params).length !== 0) {
                 node.setAttribute('attrList', Object.keys(c.params).filter(p => p).map(param_name => {
@@ -623,7 +645,7 @@ export function updateGraphModel(editor, activity, options) {
                     endpoints.push([name, v10]);
                     break;
                 default:
-                    v = graph.insertVertex(parent, null, node, c.x, c.y, min_cell_height(c, name), baseY + (20 * c.outputs.length) + 15);
+                    v = graph.insertVertex(parent, null, node, c.x, c.y, min_cell_height(c, name), baseY + (20 * c.outputs.length) + 15, getCustomStyle(c.style));
                     v.setConnectable(false);
 
                     v10 = graph.insertVertex(v, null, targetNode.cloneNode(true), 0, 0, 10, 10, 'port;target;spacingLeft=18', true);
