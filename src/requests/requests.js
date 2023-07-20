@@ -107,11 +107,12 @@ const pp_as_json = (s) => {
 };
 
 
-export function TransactionFlow({definition, states, activityId}) {
+export function TransactionFlow({definition, states, activityId, updateDefinition}) {
   const [editedCell, setEditedCell] = useState();
   const [cells, setCells] = useState([]);
   const [editor, setEditor] = useState(null);
   const [prevStates, setPrevStates] = useState(null);
+  const [prevDef, setPrevDef] = useState(null);
   const [width, height] = useWindowSize();
   const flowGraphRef = useRef(null);
   const toolbarRef = useRef(null);
@@ -127,6 +128,7 @@ export function TransactionFlow({definition, states, activityId}) {
             ReactDOM.findDOMNode(flowGraphRef.current),
             {
                 onEdit: cell => setEditedCell(cell),
+                updateDefinition: updateDefinition,
             },
             {
                 toolbar: ReactDOM.findDOMNode(toolbarRef.current),
@@ -148,14 +150,16 @@ export function TransactionFlow({definition, states, activityId}) {
     // devnote: compare the states after removing duplicates (if any) (to find out if there is a real change)
     const currentStates = states.reduce((o, c) => {o[c.cell_id] = c;return o;}, {});
     const prevStates_ = prevStates && prevStates.reduce((o, c) => {o[c.cell_id] = c;return o;}, {});
-    if(prevStates && JSON.stringify(currentStates) === JSON.stringify(prevStates_)) return;
+    const statesChanged = !prevStates || JSON.stringify(currentStates) !== JSON.stringify(prevStates_);
+    if(!statesChanged && definition === prevDef) return;
 
-    console.log("refresh for states!!");
+    console.log("refresh for states or definition change!!");
 
     import ("../orchestration/editor").then(editorScript => {
         editorScript.updateGraphModel(editor, { definition: workableDefinition(JSON.parse(definition), Object.values(currentStates)) }, {clear: true});
     })
     setPrevStates(states);
+    setPrevDef(definition);
   }, [editor, states, definition]);
 
   useEffect(() => {
@@ -1467,6 +1471,7 @@ export class Transaction extends Component {
 
         this.onReplay = this.onReplay.bind(this);
         this.onRollback = this.onRollback.bind(this);
+        this.onUpdateDefinition = this.onUpdateDefinition.bind(this);
         this.onForceClose = this.onForceClose.bind(this);
         this.fetchTxDetails = this.fetchTxDetails.bind(this);
         this.completeTx = this.completeTx.bind(this);
@@ -1778,6 +1783,30 @@ export class Transaction extends Component {
       }
     }
 
+    onUpdateDefinition() {
+        const {tx} = this.state;
+        fetch_get(`/api/v01/activities/${tx.activity_id}`).then(
+            data => {
+                fetch_put(`/api/v01/transactions/${tx.id}`, {definition: JSON.stringify(data.activity.definition)}).then(() => {
+                    NotificationsManager.success(
+                        <FormattedMessage id="definition-updated" defaultMessage="Definition updated!"/>
+                    );
+                    this.fetchTxDetails(false, true);
+                }).catch(error => {
+                    NotificationsManager.error(
+                        <FormattedMessage id="definition-update-failed" defaultMessage="Definition update failed!"/>,
+                        error.message
+                    );
+                });
+            }
+        ).catch(error => {
+            NotificationsManager.error(
+                <FormattedMessage id="fetch-definition-failed" defaultMessage="Fetch definition failed!"/>,
+                error.message
+            );
+        });
+    }
+
     refreshMessages() {
         this.state.tx.tasks.map(t => {
             const task_name = t.cell_id;
@@ -1860,7 +1889,7 @@ export class Transaction extends Component {
     }
 
     changeTxStatus(new_status) {
-        fetch_put(`/api/v01/transactions/${this.state.tx.id}`, {status: new_status}, this.props.auth_token)
+        fetch_put(`/api/v01/transactions/${this.state.tx.id}`, {status: new_status})
             .then(() =>
                 this.state.tx.original_request_id ?
                 fetch_put(`/api/v01/apio/requests/${this.state.tx.original_request_id}`, {status: new_status === "CLOSED_IN_ERROR"?"ERROR":new_status}, this.props.auth_token)
@@ -1922,8 +1951,7 @@ export class Transaction extends Component {
                 trigger_type: trigger_type,
                 value: value,
                 ...extra,
-            },
-            this.props.auth_token
+            }
         )
         .then(() => {
             this.caseUpdated();
@@ -2187,7 +2215,11 @@ export class Transaction extends Component {
                                 <Panel.Title><FormattedMessage id="tasks" defaultMessage="Tasks" /></Panel.Title>
                             </Panel.Heading>
                             <Panel.Body>
-                                <TransactionFlow definition={tx.definition} states={tx.tasks} activityId={tx.activity_id} />
+                                <TransactionFlow 
+                                    definition={tx.definition} 
+                                    states={tx.tasks} 
+                                    activityId={tx.activity_id}
+                                    updateDefinition={this.onUpdateDefinition} />
                                 <TasksTable
                                     tasks={tx.tasks}
                                     definition={JSON.parse(tx.definition)}
