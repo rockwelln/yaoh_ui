@@ -548,6 +548,7 @@ function NewEvent({show, onClose}) {
                                     onChange={e => setEvent(update(event, {$merge: {method: e.target.value}}))}>
                                     <option value="post">post</option>
                                     <option value="put">put</option>
+                                    <option value="patch">patch</option>
                                     <option value="delete">delete</option>
                                 </FormControl>
                             </Col>
@@ -634,6 +635,7 @@ function UpdateEvent({entry, show, onHide}) {
                                 onChange={e => setDiff(update(diff, {$merge: {method: e.target.value}}))}>
                                 <option value="post">post</option>
                                 <option value="put">put</option>
+                                <option value="patch">patch</option>
                                 <option value="delete">delete</option>
                             </FormControl>
                         </Col>

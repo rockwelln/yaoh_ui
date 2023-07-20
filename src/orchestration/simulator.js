@@ -209,6 +209,7 @@ export function SimulatorPanel(props) {
                                 <option value={"get"}>get</option>
                                 <option value={"post"}>post</option>
                                 <option value={"put"}>put</option>
+                                <option value={"patch"}>patch</option>
                                 <option value={"delete"}>delete</option>
                             </FormControl>
                         </Col>

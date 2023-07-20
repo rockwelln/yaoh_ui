@@ -78,7 +78,7 @@ function Settings({show, filter, onChange, onHide}) {
               <Select
                 value={{value: localFilter.method, label: localFilter.method}}
                 name="method"
-                options={["get", "post", "put", "delete"].map(k => ({value: k, label: k}))}
+                options={["get", "post", "put", "patch", "delete"].map(k => ({value: k, label: k}))}
                 onChange={v => {
                   setDiff(update(diff, {$merge: {method: v.value}}))
                 }}
@@ -128,6 +128,7 @@ function getMethodLabel(m) {
       s = "primary";
       break
     case "put":
+    case "patch":
       s = "warning";
       break
     case "delete":
