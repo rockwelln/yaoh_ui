@@ -668,10 +668,17 @@ export function updateGraphModel(editor, activity, options) {
                     endpoints.push([name, v10]);
                     break;
                 case 'note':
-                    const height = note_heigth(c);
-                    v = graph.insertVertex(parent, null, node, c.x, c.y, height, note_width(c), 'note;'+getCustomStyle(c.style));
+                    v = graph.insertVertex(parent, null, node, c.x, c.y, note_heigth(c), note_width(c), 'note;'+getCustomStyle(c.style));
                     v.setConnectable(false);
     
+                    break;
+                case 'goto':
+                    v = graph.insertVertex(parent, null, node, c.x, c.y, 20, 30, 'goto');
+                    v.setConnectable(false);
+
+                    v10 = graph.insertVertex(v, null, targetNode.cloneNode(true), 0, 0, 10, 10, 'port;target;spacingLeft=18', true);
+                    v10.geometry.offset = new mxPoint(-5, 9);
+                    endpoints.push([name, v10]);
                     break;
                 default:
                     v = graph.insertVertex(parent, null, node, c.x, c.y, min_cell_height(c, name), baseY + (20 * c.outputs.length) + 15, getCustomStyle(c.style));
@@ -919,6 +926,14 @@ export default function draw_editor(container, handlers, placeholders, props) {
                 return "<div style='transform: scale(var(--scale)) rotate(45deg)'>+</div>";
             case 'or_outputs':
                 return "<div style='font-size: 10rem; margin-top: -1.5rem'>&cir;</div>";
+            case 'goto':
+                {
+                    let div = document.createElement('div');
+                    div.style.textAlign = 'left';
+                    div.style.marginLeft = '1.3rem';
+                    div.innerHTML = cell.value.params['task'];
+                    return div;
+                }
             case 'note':
                 {
                     let div = document.createElement('div');
@@ -1346,6 +1361,22 @@ function configureStylesheet(graph)
     style[mxConstants.STYLE_IMAGE_WIDTH] = '48';
     style[mxConstants.STYLE_IMAGE_HEIGHT] = '48';
     graph.getStylesheet().putCellStyle('end', style);
+
+    style = {};
+    style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_TRIANGLE;
+    style[mxConstants.STYLE_PERIMETER] = mxPerimeter.TrianglePerimeter;
+    style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_LEFT;
+    style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_TOP;
+    style[mxConstants.STYLE_GRADIENTCOLOR] = 'white';
+    style[mxConstants.STYLE_FILLCOLOR] = 'green';
+    style[mxConstants.STYLE_STROKECOLOR] = '#1B78C8';
+    style[mxConstants.STYLE_FONTCOLOR] = '#000000';
+    style[mxConstants.STYLE_OPACITY] = '80';
+    style[mxConstants.STYLE_FONTSIZE] = 12;
+    style[mxConstants.STYLE_FONTSTYLE] = 1;
+    style[mxConstants.STYLE_IMAGE_WIDTH] = '48';
+    style[mxConstants.STYLE_IMAGE_HEIGHT] = '48';
+    graph.getStylesheet().putCellStyle('goto', style);
 
     style = {};
     style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_RECTANGLE;

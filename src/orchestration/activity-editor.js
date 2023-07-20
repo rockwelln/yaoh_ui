@@ -45,7 +45,7 @@ import {
   faCopy, faDatabase, faDirections,
   faDownload, faEnvelope, faFileCsv, faFileExcel, faFileMedicalAlt, faHome, faPaste, faPlay, faPowerOff, faSearch,
   faSpinner, faStickyNote, faStop, faStopwatch, faStream,
-  faUserCog, faUsers
+  faUserCog, faUsers, faArrowRight
 } from "@fortawesome/free-solid-svg-icons";
 import {Link} from "react-router-dom";
 import Checkbox from "react-bootstrap/lib/Checkbox";
@@ -961,6 +961,7 @@ const sortedNodes = [
   "switch",
   "or_outputs",
   "sync_outputs",
+  "goto",
   "timer",
   "context_timer",
   "stop_timer",
@@ -1217,6 +1218,11 @@ function nodeLabel(name, size) {
       s.icon = faStickyNote;
       s.label = "Note";
       break;
+    case "goto":
+      s.style.color = "#2F4F4F";
+      s.icon = faArrowRight;
+      s.label = "Go to";
+      break;
     case "entity":
       s.style.color = "blue";
       s.icon = faHome;
@@ -1255,7 +1261,7 @@ function NewCellModal({show, onHide, cells, activity})  {
     }, [show]);
 
     useEffect(() => {
-      if(name.length === 0 && definition && ["or_outputs", "sync_outputs", "note"].includes(definition.original_name)) {
+      if(name.length === 0 && definition && ["or_outputs", "sync_outputs", "note", "goto"].includes(definition.original_name)) {
         setName(definition.original_name.split("_")[0] + "_" + crypto.randomUUID())
       }
     }, [definition, name])
@@ -1706,7 +1712,7 @@ export function EditCellModal({show, cell, cells, activity, onHide, readOnly = f
             }
 
             <hr/>
-            { originalName !== "start" && originalName !== "end" &&
+            { !["or_outputs", "sync_outputs", "goto", "start", "end"].includes(originalName) &&
               <FormGroup>
                 <Col componentClass={ControlLabel} sm={2}>
                   <FormattedMessage id="style" defaultMessage="Style"/>

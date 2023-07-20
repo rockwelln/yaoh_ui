@@ -150,6 +150,7 @@ function TaskInput({cells, value, onChange, readOnly}) {
       <option value={""}/>
       {
         Object.keys(cells)
+          .filter(t => !["or_outputs", "sync_outputs", "note", "goto", "start"].includes(cells[t].original_name))
           .sort((a, b) => a.localeCompare(b))
           .map(t => <option value={t} key={t}>{t}</option>)
       }
