@@ -1,0 +1,15 @@
+{
+  "title": "Administration",
+  "slug": "/category/administration",
+  "permalink": "/apio-core-docs/docs/category/administration",
+  "navigation": {
+    "previous": {
+      "title": "Timers",
+      "permalink": "/apio-core-docs/docs/history/timers"
+    },
+    "next": {
+      "title": "Setup",
+      "permalink": "/apio-core-docs/docs/administration/setup"
+    }
+  }
+}

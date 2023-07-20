@@ -1,0 +1,4027 @@
+openapi: 3.0.0
+info:
+  description: ""
+  version: 1.0.0
+  title: APIO core API v02
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+paths:
+  /api/v01/auth/login:
+    post:
+      description: |+
+        Authenticate the user with username and password and provides the security means for further API calls.
+        When an IdP is configured in the platform and if the user authentication is delegated to that IdP,
+        the body response is enriched with the IdP response.
+        When the user is authenticated, at least a couple of JWT is returned.
+        * An access_token, valid for a short period of time (minutes), can be used to fetch API calls.
+        This can be used in the standard http header Authorization as Authorization: Bearer <access-token>
+        * A refresh_token, valid for a relatively long period (day(s)), can be used *only* to fetch new access tokens.
+        This can be used in the standard http header Authorization as Authorization: Bearer <access-token>
+      summary: authenticate users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: "object"
+              properties:
+                username:
+                  type: string
+                  maxLength: 200
+                password:
+                  type: string
+                  maxLength: 200
+                proxy:
+                  type: string
+                  maxLength: 70
+                  description: if multiple IdP's are configured, this can be used to refer directly to the right IdP
+              additionalProperties: false
+              required:
+                - username
+                - password
+
+      responses:
+        200:
+          description: the user is authenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    nullable: true
+                    type: string
+                    description: >+
+                      this token is meant for API calls machine-2-machine and is available
+                      if the user choose to generate one.
+                      This token never expires and is valid as long as it is not regenerated.
+                      (usual situations when the API token is regenerated:
+                      reset password, user account revocation, user choose generate a new token)
+                  ui_profile:
+                    type: string
+                    description: UI profile to be displayed for this user.
+                  2fa_payload:
+                    type: string
+                    description: >+
+                      if the credentials are accepted but the origin of the client is not trusted
+                      a code has been sent to the user to confirm its origin.
+                      (this behaviour is only applicable if the user has a mail defined and
+                      the 2FA flag is enable in the platform configuration)
+                  access_token:
+                    type: string
+                    description: This JWT can be used to make further API calls.
+                  refresh_token:
+                    type: string
+                    description: This JWT can be used to request a new access_token.
+                  email_set:
+                    type: boolean
+                    description: Indicates if the user has a mail set of not
+        401:
+          description: the user credentials are rejected
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: error message
+  /api/v01/apio/transactions/{instance_id}/tasks/{task_id}/traces:
+    parameters:
+      - name: instance_id
+        in: path
+        schema:
+          type: string
+        description: the instance index or instance GUID
+        required: true
+      - name: task_id
+        in: path
+        schema:
+          type: number
+        description: the task index
+        required: true
+    get:
+      summary: task traces
+      description: |+
+        Serves the traces related to a certain task. Including messages emitted and receives from other parties.
+      responses:
+        200:
+          description: task traces
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  traces:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: number
+                        task_id:
+                          type: number
+                        label:
+                          type: string
+                        status:
+                          type: string
+                        input:
+                          type: string
+                        output:
+                          type: string
+                        external_id:
+                          type: string
+                        request_id:
+                          type: number
+                        created_on:
+                          type: string
+                          format: date-time
+                        updated_on:
+                          type: string
+                          format: date-time
+
+  /api/v01/auth/2fa:
+    post:
+      summary: validate 2FA response
+      description: |+
+        This endpoint can used to complete the 2FA process when the user confirm its origin using the code provided.
+        When the user authentication is validated, the response contains also the IdP additional data if applicable.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                2fa_payload:
+                  type: string
+                  description: the JWT returned by the API call to the login endpoint
+                code:
+                  type: string
+                  description: the code provided to the user
+                trust:
+                  type: boolean
+                  description: "mark the host has trusted, so the 2FA process will not take place next time. (default: false)"
+              required:
+                - "2fa_payload"
+                - "code"
+      responses:
+        200:
+          description: the user is authenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    nullable: true
+                    type: string
+                    description: >+
+                      this token is meant for API calls machine-2-machine and is available
+                      if the user choose to generate one.
+                      This token never expires and is valid as long as it is not regenerated.
+                      (usual situations when the API token is regenerated:
+                      reset password, user account revocation, user choose generate a new token)
+                  ui_profile:
+                    type: string
+                    description: UI profile to be displayed for this user.
+                  access_token:
+                    type: string
+                    description: This JWT can be used to make further API calls.
+                  refresh_token:
+                    type: string
+                    description: This JWT can be used to request a new access_token.
+        400:
+          description: the input data are rejected
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: error message
+
+  /api/v01/auth/access_token:
+    get:
+      summary: fetch a new access token
+      description: |+
+        This endpoint is used to request a new access token.
+        It must be called using the *refresh_token* in the Authorization header.
+      responses:
+        200:
+          description: the user is authenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    description: a JWT to be used for further API calls
+        401:
+          description: the refresh token is expired or revoked, a new login should take place
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: error message
+
+  /api/v01/auth/login_{name}:
+    post:
+      summary: authenticate users using SSO
+      description: >+
+        Using the configuration, the API will try to authenticate / authorize the user.
+        Depending on the implementation of the SSO protocol, different attributes might be requested from the request:
+        - OIDC: code (string); state (optional string)
+        - OIDC-implicit: access_token (string); token_type (string)
+        - WebSeal: RFU
+        - SAML: SAMLResponse (string); RelayState (string)
+      responses:
+        default:
+          description: ok
+      parameters:
+        - name: name
+          in: path
+          schema:
+            type: string
+          required: true
+          description: the SSO configuration name
+
+  /api/v01/auth/webauthn:
+    parameters:
+      - name: cred_id
+        in: query
+        schema:
+          type: string
+        required: false
+        description: the credential ID to be pre-selected (optional)
+    get:
+      summary: WebauthN login options using passkeys
+      responses:
+        200:
+          description: login options
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  publicKey:
+                    description: publicKey options
+    post:
+      summary: authenticate using WebauthN passkey
+      responses:
+        200:
+          description: login performed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    nullable: true
+                    type: string
+                    description: >+
+                      this token is meant for API calls machine-2-machine and is available
+                      if the user choose to generate one.
+                      This token never expires and is valid as long as it is not regenerated.
+                      (usual situations when the API token is regenerated:
+                      reset password, user account revocation, user choose generate a new token)
+                  ui_profile:
+                    type: string
+                    description: UI profile to be displayed for this user.
+                  access_token:
+                    type: string
+                    description: This JWT can be used to make further API calls.
+                  refresh_token:
+                    type: string
+                    description: This JWT can be used to request a new access_token.
+        401:
+          description: authentication rejected
+  
+  /api/v01/auth/oidc/loginRequest:
+    get:
+      summary: sign OIDC login request
+      description: >+
+        Returns a properly formatted URL to login based on the platform configuration.
+        This can be used to redirect the user browser to the IdP with the information signed.
+      parameters:
+        - name: name
+          in: query
+          schema:
+            type: string
+          description: SSO configuration name
+          required: true
+        - name: state
+          in: query
+          schema:
+            type: string
+          description: the state to be sent through the auth process
+          required: false
+      responses:
+        default:
+          description: ok
+  
+  /api/v01/auth/saml/loginRequest:
+    get:
+      summary: sign SAML login request
+      description: >+
+        Returns a properly formatted URL to login based on the platform configuration.
+        This can be used to redirect the user browser to the IdP with the information signed.
+      parameters:
+        - name: name
+          in: query
+          schema:
+            type: string
+          description: SSO configuration name
+          required: true
+        - name: state
+          in: query
+          schema:
+            type: string
+          description: the state to be sent through the auth process (usually the URL to redirect to after the login)
+          required: true
+      responses:
+        default:
+          description: ok
+
+  /api/v01/auth/logout:
+    get:
+      summary: logout the current user.
+      parameters:
+        - name: sign
+          in: query
+          schema:
+            type: string
+          description: |+
+            The refresh_token of the user signed with sha-1.
+            If provided, the token is discarded and cannot be used.
+          required: false
+      responses:
+        200:
+          description: user logged out
+
+  /api/v01/auth/reset-password:
+    post:
+      summary: trigger a new reset password mail.
+      description: |+
+        If successful, the user account is deactivated until the password is actually changed.
+        A mail is sent to user's email with a unique link to let him change his password.
+      responses:
+        200:
+          description: the reset password mail is sent.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                proxy:
+                  type: string
+                  description: suggest against which proxy the request should be played
+                ui_id:
+                  type: string
+                ui_language:
+                  type: string
+              additionalProperties: false
+              required:
+                - username
+
+  /api/v01/auth/reset-password/{token}:
+    put:
+      summary: reset the password of a user.
+      description: |+
+        Reset the password of a user.
+        If a IdP is configured and if the user is delegated to this IdP, the password is changed directly in the IdP.
+        Note: Because this API doesn't require authentication,
+        in case of trouble, the response is not as explicit to avoid exposing platform details.
+        (if the problem persists, don't hesitate to contact support)
+      parameters:
+        - name: token
+          in: path
+          schema:
+            type: string
+          description: the one-time-token used for reset password.
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                password:
+                  type: string
+                ui_id:
+                  type: string
+                ui_language:
+                  type: string
+              additionalProperties: false
+              required:
+                - password
+      responses:
+        200:
+          description: the password is updated.
+        400:
+          description: the inputs are invalid
+        500:
+          description: internal server error
+
+  /api/v01/auth/password-rules/{token}:
+    get:
+      summary: get password rules
+      description: |+
+        Expose the password rules applicable to the user.
+        Because users can be proxied through another IdP or locally defined.
+        The rules might be structured in very different ways.
+      parameters:
+        - name: token
+          in: path
+          schema:
+            type: string
+          description: reset password token
+          required: true
+      responses:
+        200:
+          description: user password rules
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  system:
+                    description: rules defined in the local platform
+                    type: object
+                  idp:
+                    description: |+
+                      rules defined by the idp (if applicable).
+                      see http://apio-docs.bxl.netaxis.be/system/password_rules.html#retrieve-password-rules for details
+                    type: object
+        403:
+          description: invalid user or invalid token
+
+  /api/v01/auth/users/{user_id}/revoke:
+    put:
+      summary: revoke user access
+      description: |+
+        Revoke the user access means the user still exists but has no right to interact with the API anymore.
+      parameters:
+        - name: user_id
+          in: path
+          schema:
+            type: integer
+          description: the user id
+          required: true
+      responses:
+        204:
+          description: user access is revoked
+        404:
+          description: user not found
+
+  /api/v01/auth/users/{user_id}/unrevoke:
+    put:
+      summary: un-revoke user access
+      description: |+
+        Restore the user access means can interact with the API again.
+        Note: this trigger a renewal of the API token if previously defined.
+      parameters:
+        - name: user_id
+          in: path
+          schema:
+            type: integer
+          description: the user id
+          required: true
+      responses:
+        204:
+          description: user access is restaured
+        403:
+          description: forbidden or you try to un-revoke your own account.
+        404:
+          description: user not found
+
+  /api/v01/logs:
+    get:
+      summary: list log files
+      description: list log files available in the log API
+      responses:
+        200:
+          description: log files
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  logs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        log_id:
+                          type: string
+                        filename:
+                          type: string
+                        relatives:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              filename:
+                                type: string
+                              size:
+                                type: number
+                              date:
+                                type: string
+                                format: date-time
+        403:
+          description: access not allowed
+  
+  /api/v01/logs/{file_id}/{name}:
+    get:
+      description: serve log file
+      responses:
+        200:
+          description: log file
+
+  /api/v01/logs/{file_id}/ws:
+    get:
+      description: follow log file content (tail -F)
+      responses:
+        101:
+          description: connection upgrade to websocket
+
+  /api/v01/reports:
+    get:
+      summary: list reports
+      description: list reports configured on the platform
+      responses:
+        200:
+          description: reports
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reports:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: number
+                        name:
+                          type: string
+                        active:
+                          type: boolean
+                        type:
+                          type: string
+                        period_range:
+                          type: number
+                        destination:
+                          type: string
+    post:
+      summary: new report
+      description: create a new report
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                active:
+                  type: boolean
+                type:
+                  type: string
+                period_range:
+                  type: number
+                destination:
+                  type: string
+              additionalProperties: false
+      responses:
+        200:
+          description: report created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+
+  /api/v01/reports/:id:
+    parameters:
+      - name: id
+        in: query
+        schema:
+          type: number
+        required: true
+    put:
+      summary: update report
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                active:
+                  type: boolean
+                type:
+                  type: string
+                period_range:
+                  type: number
+                destination:
+                  type: string
+              additionalProperties: false
+      responses:
+        "200":
+          description: report updated
+
+    delete:
+      summary: delete report
+      responses:
+        "200":
+          description: report deleted
+
+  /api/v01/timers:
+    get:
+      summary: search for timers
+      description: search for timers running in the platform
+      responses:
+        200:
+          description: timers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: number
+                        name:
+                          type: string
+                        key:
+                          type: string
+                        instance_id:
+                          type: number
+                        status:
+                          type: string
+                        at:
+                          type: string
+                          format: date-time
+                        created_on:
+                          type: string
+                          format: date-time
+                  pagination:
+                    type: array
+                    items:
+                      type: number
+                    minItems: 4
+                    maxItems: 4
+                  sorting:
+                    type: array
+                    items:
+                      type: object
+                  limit:
+                    type: number
+                  offset:
+                    type: number
+
+  /api/v01/timers/:id:
+    parameters:
+      - name: id
+        in: query
+        schema:
+          type: number
+        required: true
+
+    put:
+      summary: update timer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                at:
+                  type: string
+                  format: date-time
+      responses:
+        200:
+          description: timer updated
+
+    delete:
+      summary: cancel timer
+      responses:
+        200:
+          description: timer cancelled
+
+  /api/v01/timers/cron:
+    get:
+      summary: list scheduled timers
+      responses:
+        200:
+          description: scheduled timers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: number
+                        job_id:
+                          type: string
+                        enabled:
+                          type: boolean
+                        year:
+                          type: string
+                        month:
+                          type: string
+                        day:
+                          type: string
+                        week:
+                          type: string
+                        day_of_week:
+                          type: string
+                        hour:
+                          type: string
+                        minute:
+                          type: string
+                        second:
+                          type: string
+                        activity_id:
+                          type: number
+                        request_body:
+                          type: string
+    post:
+      summary: new scheduled timer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                job_id:
+                  type: string
+                enabled:
+                  type: boolean
+                year:
+                  type: string
+                month:
+                  type: string
+                day:
+                  type: string
+                week:
+                  type: string
+                day_of_week:
+                  type: string
+                hour:
+                  type: string
+                minute:
+                  type: string
+                second:
+                  type: string
+                activity_id:
+                  type: number
+                request_body:
+                  type: string
+              required:
+                - job_id
+                - activity_id
+              additionalProperties: false
+      responses:
+        200:
+          description: timer created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: number
+
+  /api/v01/timers/cron/:id:
+    parameters:
+      - name: id
+        in: query
+        schema:
+          type: number
+        required: true
+
+    put:
+      summary: update scheduled timer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                job_id:
+                  type: string
+                enabled:
+                  type: boolean
+                year:
+                  type: string
+                month:
+                  type: string
+                day:
+                  type: string
+                week:
+                  type: string
+                day_of_week:
+                  type: string
+                hour:
+                  type: string
+                minute:
+                  type: string
+                second:
+                  type: string
+                activity_id:
+                  type: number
+                request_body:
+                  type: string
+              additionalProperties: false
+      responses:
+        200:
+          description: timer updated
+
+    delete:
+      summary: delete scheduled timer
+      responses:
+        "200":
+          description: timer deleted
+
+  /api/v01/bulks:
+    get:
+      summary: search for bulk jobs
+      description: search for bulk jobs run in the platform
+      parameters:
+        - name: filter
+          in: query
+          schema:
+            type: object
+          description: the filter criteria.
+        - name: paging
+          in: query
+          schema:
+            type: object
+          description: the paging details.
+        - name: sorting
+          in: query
+          schema:
+            type: object
+          description: the sorting details.
+      responses:
+        200:
+          description: bulk jobs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bulks:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        bulk_id:
+                          type: number
+                        label:
+                          type: string
+                        action_id:
+                          type: number
+                        status:
+                          type: string
+                        created_on:
+                          type: string
+                          format: date-time
+                        updated_on:
+                          type: string
+                          format: date-time
+                  pagination:
+                    type: array
+                    items:
+                      type: number
+                  sorting:
+                    type: object
+                  total_count:
+                    type: integer
+                    description: number of jobs matching the criteria
+                  limit:
+                    type: integer
+                    description: the limit applied in the search query
+                  offset:
+                    type: integer
+                    description: the offset applied in the search query
+
+    post:
+      summary: new bulk job
+      description: trigger a new bulk job (delegated...)
+      responses:
+        200:
+          description: bulk job created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    description: the bulk id just created
+  
+  /api/v01/bulks/validate:
+    post:
+      summary: validate bulk input
+      description: validate bulk input file again bulk action rules. this call is recommended before trigger a new job.
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                iput_file:
+                  type: string
+                  format: binary
+                  description: the file
+                action:
+                  type: integer
+                  description: the action id
+      responses:
+        200:
+          description: bulk job validated
+  
+  /api/v01/bulks/:id:
+    delete:
+      summary: delete bulk job
+      responses:
+        200:
+          description: bulk job deleted
+  
+  /api/v01/bulks/:id/stats:
+    get:
+      summary: bulk job statistics
+      description: bulk job statistics
+      responses:
+        200:
+          description: bulk job statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  stats:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        cell_id:
+                          type: string
+                        status:
+                          type: string
+                        count_1:
+                          type: number
+  
+  /api/v01/bulks/{id}/results:
+    parameters:
+      - name: id
+        in: path
+        schema:
+            type: number
+        description: the bulk identifier
+        required: true
+
+    get:
+      summary: bulk job results
+      description: bulk job results
+      responses:
+        200:
+          description: bulk job results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        bulk_result_id:
+                          type: integer
+                          description: bulk result identifier
+                        bulk_id:
+                          type: integer
+                          description: bulk unique identifier
+                        instance_id:
+                          nullable: true
+                          type: integer
+                          description: related workflow instance (applicable for orchestrated bulk actions)
+                        input_ref:
+                          type: string
+                          description: original csv row
+                        status:
+                          type: string
+                          description: status of the processing of the individual row
+                        trace:
+                          nullable: true
+                          type: string
+                          description: some debug information about processing the row
+                        back_link:
+                          nullable: true
+                          type: string
+                          description: a link
+                        created_on:
+                          type: string
+                          format: date-time
+                        updated_on:
+                          nullable: true
+                          type: string
+                          format: date-time
+                        instance:
+                          nullable: true
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                            guid:
+                              type: string
+                            status:
+                              type: string
+                            activity_id:
+                              type: integer
+                            original_request_id:
+                              type: integer
+                            callback_task_id:
+                              type: integer
+                            user_id:
+                              type: integer
+                            label:
+                              type: string
+                            created_on:
+                              type: string
+                              format: date-time
+                            updated_on:
+                              type: string
+                              format: date-time
+                            errors:
+                              type: integer
+                              description: the number of tasks with error status
+                        response:
+                          type: string
+                          description: content of the context key *response* (usually used to store the workflow outcome).
+
+  /api/v01/bulks/actions:
+    get:
+      summary: list bulk actions
+      responses:
+        200:
+          description: bulk actions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  actions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: number
+                          description: action unique identifier
+                        name:
+                          type: string
+                          description: logic name of the action
+                        activity_id:
+                          nullable: true
+                          type: string
+                          description: link to the workflow to be triggered (in case of orchestrated action)
+                        method:
+                          nullable: true
+                          type: string
+                          description: HTTP method to be used (in case of API call action)
+                          enum:
+                              - get
+                              - post
+                              - put
+                              - delete
+                        url:
+                          nullable: true
+                          type: string
+                          description: |+
+                              URL to be called (in case of API call action).
+                              This URL might be a template with placeholders coming from the CSV rows.
+                        header_1:
+                          nullable: true
+                          type: string
+                          description: additional headers to be set in the API call
+                        header_2:
+                          nullable: true
+                          type: string
+                          description: additional headers to be set in the API call
+                        header_3:
+                          nullable: true
+                          type: string
+                          description: additional headers to be set in the API call
+                        options:
+                          type: object
+                          description: set of instruction to drive the transformation from CSV row into JSON
+                        validation_schema:
+                          nullable: true
+                          type: string
+                          description: jsonschema configured to validate a csv row transformed into JSON
+                        sample_input:
+                          nullable: true
+                          type: string
+                          description: sample input which can used to help input file composition
+                        sequence_timeout:
+                          nullable: true
+                          type: number
+                          description: indicate the timeout (in seconds) for processing entries in sequence
+                        created_on:
+                          type: string
+                          format: date-time
+                        updated_on:
+                          type: string
+                          format: date-time
+    
+    post:
+      summary: add bulk action
+      description: Create a new bulk action
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: logic name of the action
+                activity_id:
+                  nullable: true
+                  type: string
+                  description: link to the workflow to be triggered (in case of orchestrated action)
+                method:
+                  nullable: true
+                  type: string
+                  description: HTTP method to be used (in case of API call action)
+                  enum:
+                      - get
+                      - post
+                      - put
+                      - delete
+                url:
+                  nullable: true
+                  type: string
+                  description: |+
+                      URL to be called (in case of API call action).
+                      This URL might be a template with placeholders coming from the CSV rows.
+                header_1:
+                  nullable: true
+                  type: string
+                  description: additional headers to be set in the API call
+                header_2:
+                  nullable: true
+                  type: string
+                  description: additional headers to be set in the API call
+                header_3:
+                  nullable: true
+                  type: string
+                  description: additional headers to be set in the API call
+                options:
+                  type: object
+                  description: set of instruction to drive the transformation from CSV row into JSON
+                validation_schema:
+                  nullable: true
+                  type: string
+                  description: jsonschema configured to validate a csv row transformed into JSON
+                sample_input:
+                  nullable: true
+                  type: string
+                  description: sample input which can used to help input file composition
+                sequence_timeout:
+                  nullable: true
+                  type: number
+                  description: indicate the timeout (in seconds) for processing entries in sequence
+              additionalProperties: false
+              required:
+                - name
+      responses:
+        200:
+          description: bulk action created
+          content:
+            application/json:
+              schema:
+                properties:
+                  id:
+                    type: integer
+                    description: bulk action unique identifier just assigned
+        400:
+          description: invalid request
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    description: error message
+    
+  /api/v01/bulks/actions/{bulk_action_id}:
+    parameters:
+      - name: bulk_action_id
+        in: path
+        schema:
+            type: number
+        description: the bulk action identifier
+        required: true
+
+    put:
+      summary: update bulk action
+      description: Update bulk action
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                activity_id:
+                  nullable: true
+                  type: string
+                method:
+                  nullable: true
+                  type: string
+                  enum:
+                      - get
+                      - post
+                      - put
+                      - delete
+                url:
+                  nullable: true
+                  type: string
+                header_1:
+                  nullable: true
+                  type: string
+                header_2:
+                  nullable: true
+                  type: string
+                header_3:
+                  nullable: true
+                  type: string
+                options:
+                  type: object
+                validation_schema:
+                  nullable: true
+                  type: string
+                sample_input:
+                  nullable: true
+                  type: string
+                sequence_timeout:
+                  nullable: true
+                  type: number
+              additionalProperties: false
+      responses:
+        200:
+          description: bulk action updated
+        400:
+          description: invalid request
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    description: error message
+        404:
+          description: not found
+    
+    delete:
+      summary: delete bulk action
+      description: Delete bulk action
+      responses:
+          200:
+              description: bulk action deleted
+          404:
+              description: not found
+
+  /api/v01/custom_routes:
+    get:
+      summary: list custom routes
+      responses:
+        200:
+          description: custom routes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  routes:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        route_id:
+                          type: number
+                        route:
+                          type: string
+                        method:
+                          type: string
+                          enum:
+                            - GET
+                            - PUT
+                            - POST
+                            - DELETE
+                        schema:
+                          nullable: true
+                          type: object
+                        output_schema:
+                          nullable: true
+                          type: object
+                        activity_id:
+                          nullable: true
+                          type: number
+                        err_activity_id:
+                          nullable: true
+                          type: number
+                        sync:
+                          type: boolean
+                        enabled:
+                          type: boolean
+                        public:
+                          type: boolean
+                        support_bulk:
+                          type: boolean
+                        group:
+                          nullable: true
+                          type: string
+                        bulk_options:
+                          type: object
+                          nullable: true
+                        created_on:
+                          type: string
+                          format: date-time
+                        updated_on:
+                          nullable: true
+                          type: string
+                          format: date-time
+    post:
+      summary: new custom routes
+      description: create a new custom route
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                method:
+                  type: string
+                  enum:
+                    - get
+                    - post
+                    - put
+                    - delete
+                route:
+                  type: string
+                  minLength: 4
+                  description: a URL which might also include regular expression(s) and placeholders (e.g /api/users/{user_id}/address)
+                activity_id:
+                  type: number
+                  nullable: true
+                err_activity_id:
+                  type: number
+                  nullable: true
+                schema:
+                  type: object
+                  nullable: true
+                output_schema:
+                  type: object
+                  nullable: true
+                sync:
+                  type: boolean
+                enabled:
+                  type: boolean
+                public:
+                  type: boolean
+                support_bulk:
+                  type: boolean
+                bulk_options:
+                  type: object
+                  nullable: true
+                group:
+                  type: string
+                  nullable: true
+              required:
+                - route
+                - method
+              additionalProperties: false
+
+      responses:
+        200:
+          description: custom route created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  route_id:
+                    type: number
+        403:
+          description: operation forbidden
+  
+  /api/v01/custom_routes/{id}:
+    parameters:
+      - name: id
+        required: true
+        in: path
+        schema:
+          type: number
+        description: custom route id
+
+    put:
+      summary: update custom route
+      responses:
+        "200":
+          description: route updated
+    
+    delete:
+      summary: delete a custom route
+      responses:
+        "200":
+          description: route deleted
+  
+  /api/v01/custom_routes/groups/{name}:
+    parameters:
+      - name: name
+        required: true
+        in: path
+        schema:
+          type: string
+        description: group name
+    
+    put:
+      summary: rename custom route group
+      responses:
+        "200":
+          description: group renamed
+
+  /api/v01/filters:
+    get:
+      summary: list search filters
+      description: list filters available for the current user
+      responses:
+        200:
+          description: search filters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  filters:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        visibility:
+                          type: string
+                        filter:
+                          type: object
+                        created_by:
+                          type: number
+                        columns:
+                          type: array
+                          items:
+                            type: object
+                          nullable: true
+
+    post:
+      summary: new search filter
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                visibility:
+                  type: string
+                filter:
+                  type: object
+                columns:
+                  type: array
+                  items:
+                    type: object
+                  nullable: true
+              additionalProperties: false
+      responses:
+        200:
+          description: filter created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+
+  /api/v01/filters/:id:
+    parameters:
+      - name: id
+        in: query
+        schema:
+          type: number
+        required: true
+
+    get:
+      summary: get filter details
+      responses:
+        "200":
+          description: filter details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  filter:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      visibility:
+                        type: string
+                      filter:
+                        type: object
+                      created_by:
+                        type: number
+                      columns:
+                        type: array
+                        items:
+                          type: object
+                        nullable: true
+
+    put:
+      summary: update search filter
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                visibility:
+                  type: string
+                filter:
+                  type: object
+                columns:
+                  type: array
+                  items:
+                    type: object
+                  nullable: true
+              additionalProperties: false
+      responses:
+        "200":
+          description: filter updated
+
+    delete:
+      summary: delete search filter
+      responses:
+        "200":
+          description: filter deleted
+
+  /api/v01/system/users/{user_id}/locs/{ip}:
+    parameters:
+      - name: user_id
+        in: path
+        schema:
+          type: integer
+        description: the user id
+        required: true
+      - name: ip
+        in: path
+        schema:
+          type: string
+        description: trusted ip
+        required: true
+    delete:
+      summary: delete user locations
+      responses:
+        200:
+          description: location deleted
+
+  /api/v01/system/users/{user_id}/callbacks:
+    parameters:
+      - name: user_id
+        in: path
+        schema:
+          type: integer
+        description: the user id
+        required: true
+    get:
+      summary: list user callbacks
+      responses:
+        200:
+          description: user callbacks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  callbacks:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        callback_id:
+                          type: number
+                        user_id:
+                          type: number
+                        endpoint:
+                          type: string
+                        endpoint_extra:
+                          type: object
+                          nullable: true
+                        event_category:
+                          type: string
+                        scope:
+                          type: string
+                          enum:
+                            - user
+                            - group
+                            - platform
+                        created_on:
+                          type: string
+                          format: date-time
+                        updated_on:
+                          type: string
+                          format: date-time
+        403:
+          description: not allowed
+        404:
+          description: user not found
+
+    post:
+      summary: add a user callback
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                endpoint:
+                  type: string
+                  minLength: 4
+                  maxLength: 2000
+                endpoint_extra:
+                  type: object
+                  nullable: true
+                scope:
+                  type: string
+                  enum:
+                    - user
+                    - group
+                    - platform
+                event_category:
+                  type: string
+              additionalProperties: false
+              required:
+                - endpoint
+                - scope
+                - event_category
+      responses:
+        200:
+          description: user callback created
+
+  /api/v01/system/users/{user_id}/callbacks/{id}:
+    parameters:
+      - name: user_id
+        in: path
+        schema:
+          type: integer
+        description: the user id
+        required: true
+      - name: id
+        in: path
+        schema:
+          type: integer
+        description: user callback id
+        required: true
+
+    put:
+      summary: update user callback
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                endpoint:
+                  type: string
+                  minLength: 4
+                  maxLength: 2000
+                endpoint_extra:
+                  type: object
+                  nullable: true
+                scope:
+                  type: string
+                  enum:
+                    - user
+                    - group
+                    - platform
+                event_category:
+                  type: string
+              additionalProperties: false
+      responses:
+        200:
+          description: callback updated
+        403:
+          description: not allowed
+        404:
+          description: user or callback not found
+
+    delete:
+      summary: delete user callback
+      responses:
+        200:
+          description: callback deleted
+        403:
+          description: not allowed
+        404:
+          description: user or callback not found
+
+  /api/v01/system/users/audit:
+    get:
+      summary: search for audit records
+      parameters:
+        - name: filter
+          in: query
+          schema:
+            type: object
+          description: the filter criteria.
+        - name: paging
+          in: query
+          schema:
+            type: object
+          description: the paging details.
+        - name: sorting
+          in: query
+          schema:
+            type: object
+          description: the sorting details.
+      responses:
+        200:
+          description: audit records
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  records:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: number
+                        user_id:
+                          type: number
+                        channel:
+                          type: string
+                        target:
+                          type: string
+                        target_type:
+                          type: string
+                        extra_info:
+                          type: string
+                        when:
+                          type: string
+                        created_on:
+                          type: string
+                  total_count:
+                    type: integer
+                    description: number of users matching the criteria
+                  limit:
+                    type: integer
+                    description: the limit applied in the search query
+                  offset:
+                    type: integer
+                    description: the offset applied in the search query
+                  sorting:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        direction:
+                          type: string
+                          enum:
+                            - asc
+                            - desc
+                        field:
+                          type: string
+                        model:
+                          type: string
+                      required:
+                        - direction
+                        - field
+
+  /api/v01/system/users/local:
+    get:
+      summary: get the current user attributes
+      responses:
+        200:
+          description: user details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  username:
+                    type: string
+                  email:
+                    type: string
+                  is_system:
+                    type: boolean
+                  ui_profile:
+                    type: string
+                    description: Indication for the UI about the available pages of the user.
+                  ui_data:
+                    type: object
+                    description: A set of opaque data to store UI information.
+                  groups:
+                    type: array
+                    items:
+                      type: string
+                    description: RFU
+                  language:
+                    type: string
+                    description: Preferred language of the user.
+                  registered_on:
+                    type: string
+                    description: date time of user registration.
+                  local_user:
+                    type: boolean
+                    description: the user is managed locally or by another system.
+                  modules:
+                    type: array
+                    items:
+                      type: string
+                    description: the list of modules available to the user.
+                  profile_id:
+                    type: number
+                  profile:
+                    type: object
+                  roles:
+                    type: array
+                    items:
+                      type: object
+                    description: the list of roles given to the user
+                  passkeys:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: number
+                        credential_id:
+                          type: string
+                        credential_object:
+                          type: string
+                        created_on:
+                          type: string
+                          format: date-time
+                        last_use:
+                          type: string
+                          format: date-time
+                    description: the list of passkeys
+                  token:
+                    type: string
+                    description: persistent token for API calls
+                  timezone:
+                    type: string
+                    description: timezone associated to the user (if any)
+    put:
+      summary: update user own attributes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                language:
+                  type: string
+                  enum:
+                    - en
+                    - fr
+                    - de
+                ui_data:
+                  type: object
+                password:
+                  type: string
+                old_password:
+                  type: string
+                timezone:
+                  type: string
+                token:
+                  type: boolean
+              additionalProperties: false
+      responses:
+        200:
+          description: user updated
+        400:
+          description: invalid attributes
+        401:
+          description: invalid credentials
+
+  /api/v01/system/users:
+    get:
+      summary: search for users
+      parameters:
+        - name: filter
+          in: query
+          schema:
+            type: object
+          description: the filter criteria.
+        - name: paging
+          in: query
+          schema:
+            type: object
+          description: the paging details.
+        - name: sorting
+          in: query
+          schema:
+            type: object
+          description: the sorting details.
+      responses:
+        200:
+          description: list of users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: number
+                        username:
+                          type: string
+                        language:
+                          type: string
+                        email:
+                          type: string
+                        first_name:
+                          type: string
+                        last_name:
+                          type: string
+                        mobile_number:
+                          type: string
+                        ui_profile:
+                          type: string
+                        created_on:
+                          type: string
+                          format: date-time
+                        updated_on:
+                          type: string
+                          format: date-time
+                  total_count:
+                    type: integer
+                    description: number of users matching the criteria
+                  limit:
+                    type: integer
+                    description: the limit applied in the search query
+                  offset:
+                    type: integer
+                    description: the offset applied in the search query
+                  sorting:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        direction:
+                          type: string
+                          enum:
+                            - asc
+                            - desc
+                        field:
+                          type: string
+                        model:
+                          type: string
+                      required:
+                        - direction
+                        - field
+
+    post:
+      summary: create user
+      description: Create a new local user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username":
+                  type: string
+                  minLength: 4
+                  maxLength: 255
+                email:
+                  type: string
+                is_system:
+                  type: boolean
+                profile_id:
+                  type: number
+                  nullable: true
+                ui_profile:
+                  type: string
+                language:
+                  type: string
+                  enum:
+                    - en
+                password:
+                  type: string
+                status:
+                  type: string
+                  enum:
+                    - ACTIVE
+                    - INATIVE
+                properties:
+                  type: object
+                timezone:
+                  type: string
+                  nullable: true
+                entity:
+                  type: string
+                  nullable: true
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                mobile_number:
+                  type: string
+                groups:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - username
+                - email
+                - language
+              additionalProperties: false
+      responses:
+        200:
+          description: user created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: number
+
+  /api/v01/system/users/{user_id}:
+    parameters:
+      - name: user_id
+        in: path
+        schema:
+          type: integer
+        description: the user id
+        required: true
+    get:
+      summary: return user details
+      responses:
+        200:
+          description: user details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  username:
+                    type: string
+                  email:
+                    type: string
+                  is_system:
+                    type: boolean
+                  ui_profile:
+                    type: string
+                    description: Indication for the UI about the available pages of the user.
+                  ui_data:
+                    type: object
+                    description: A set of opaque data to store UI information.
+                  groups:
+                    type: array
+                    items:
+                      type: string
+                    description: RFU
+                  language:
+                    type: string
+                    description: Preferred language of the user.
+                  registered_on:
+                    type: string
+                    description: date time of user registration.
+                  local_user:
+                    type: boolean
+                    description: the user is managed locally or by another system.
+                  modules:
+                    type: array
+                    items:
+                      type: string
+                    description: the list of modules available to the user.
+                  profile_id:
+                    type: number
+                  profile:
+                    type: object
+                  roles:
+                    type: array
+                    items:
+                      type: object
+                    description: the list of roles given to the user
+                  passkeys:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: number
+                        credential_id:
+                          type: string
+                        credential_object:
+                          type: string
+                        created_on:
+                          type: string
+                          format: date-time
+                        last_use:
+                          type: string
+                          format: date-time
+                    description: the list of passkeys
+                  token:
+                    type: string
+                    description: persistent token for API calls
+                  timezone:
+                    type: string
+                    description: timezone associated to the user (if any)
+                  first_name:
+                    type: string
+                    description: user first name
+                  last_name:
+                    type: string
+                    description: user last name
+                  mobile_number:
+                    type: string
+                    description: user mobile number
+                  admin_of:
+                    type: array
+                    items:
+                      type: object
+                    description: list of references on which the user is administrator
+    put:
+      summary: update user details
+      responses:
+        200:
+          description: user updated
+    delete:
+      summary: delete user
+      responses:
+        200:
+          description: user deleted
+
+  /api/v01/system/users/local/manual_actions:
+    get:
+      summary: manual actions pending
+      description: list the manual actions pending grouped by user role assigned to the local user
+      responses:
+        200:
+          description: pending manual actions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  manual_actions_per_role:
+                    type: object
+                    description: each property represent a user role with an array of pending manual action
+
+  /api/v01/system/users/local/webauthn:
+    get:
+      summary: prepare registration request
+      responses:
+        "200":
+          description: returned registration options
+
+    post:
+      summary: register a passkey
+      responses:
+        "200":
+          description: passkey registered
+  
+  /api/v01/system/users/local/webauthn/{id}:
+    parameters:
+      - name: id
+        in: path
+        schema:
+          type: integer
+        description: the credential id
+        required: true
+
+    delete:
+      summary: delete a webauthn passkey
+      responses:
+        "200":
+          description: credential deleted
+
+  /api/v01/system/user_roles:
+    get:
+      summary: list user roles
+      responses:
+        200:
+          description: user roles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  roles:
+                    type: array
+                    items:
+                      type: object
+    post:
+      summary: create user role
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+              additionalProperties: false
+      responses:
+        200:
+          description: user role created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: number
+
+  /api/v01/system/user_roles/{id}:
+    parameters:
+      - name: id
+        in: path
+        schema:
+          type: integer
+        description: the role id
+        required: true
+    get:
+      summary: details of user role
+      responses:
+        200:
+          description: user role details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: number
+                  name:
+                    type: string
+                  description:
+                    type: string
+    put:
+      summary: update user role
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+              additionalProperties: false
+      responses:
+        200:
+          description: user role updated
+    delete:
+      summary: delete user role
+      responses:
+        200:
+          description: user role deleted
+
+  /api/v01/system/users/{user_id}/roles/{id}:
+    parameters:
+      - name: user_id
+        in: path
+        schema:
+          type: integer
+        description: the user id
+        required: true
+      - name: id
+        in: path
+        schema:
+          type: integer
+        description: the role id
+        required: true
+    post:
+      summary: assign role
+      responses:
+        200:
+          description: user role assigned
+    delete:
+      summary: deassign role
+      responses:
+        200:
+          description: user role de-assigned
+  
+  /api/v01/system/users/{user_id}/webauthn/{id}:
+    parameters:
+      - name: user_id
+        in: path
+        schema:
+          type: integer
+        description: the user id
+        required: true
+      - name: id
+        in: path
+        schema:
+          type: integer
+        description: the credential id
+        required: true
+    
+    delete:
+      summary: delete credential
+      responses:
+        200:
+          description: credential deleted
+
+  /api/v01/system/user_profiles:
+    get:
+      summary: list user profiles
+      responses:
+        200:
+          description: user profiles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profiles:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: number
+                        name:
+                          type: string
+                        home:
+                          type: string
+                        available:
+                          type: boolean
+    post:
+      summary: create user profile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                available:
+                  type: boolean
+                api_rules:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      method:
+                        type: string
+                      url:
+                        type: string
+                      allowed:
+                        type: boolean
+                      name:
+                        type: string
+                    required:
+                      - method
+                      - url
+                      - allowed
+                accesses:
+                  type: array
+                  items:
+                    type: string
+                home:
+                  type: string
+                  nullable: true
+              required:
+                - name
+                - available
+                - api_rules
+                - accesses
+              additionalProperties: false
+      responses:
+        200:
+          description: user profile created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: number
+
+  /api/v01/system/user_profiles/{id}:
+    parameters:
+      - name: id
+        in: path
+        schema:
+          type: integer
+        description: the user profile id
+        required: true
+    get:
+      summary: get user profile details
+      responses:
+        200:
+          description: user profile details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  available:
+                    type: boolean
+                  api_rules:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        method:
+                          type: string
+                        url:
+                          type: string
+                        allowed:
+                          type: boolean
+                        name:
+                          type: string
+                  accesses:
+                    type: array
+                    items:
+                      type: string
+                  home:
+                    type: string
+                    nullable: true
+        404:
+          description: user profile not found
+    put:
+      summary: update user profile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                available:
+                  type: boolean
+                api_rules:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      method:
+                        type: string
+                      url:
+                        type: string
+                      allowed:
+                        type: boolean
+                      name:
+                        type: string
+                    required:
+                      - method
+                      - url
+                      - allowed
+                accesses:
+                  type: array
+                  items:
+                    type: string
+                home:
+                  type: string
+                  nullable: true
+              additionalProperties: false
+      responses:
+        200:
+          description: user profile updated
+        404:
+          description: user profile not found
+    delete:
+      summary: delete user profile
+      responses:
+        200:
+          description: user profile deleted
+        404:
+          description: user profile not found
+
+  /api/v01/templates:
+    get:
+      summary: list templates
+      responses:
+        200:
+          description: templates
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  templates:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: number
+                        key:
+                          type: string
+                        type:
+                          type: string
+    post:
+      summary: create a new template
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                key:
+                  type: string
+                template:
+                  type: string
+                type:
+                  type: string
+                  enum:
+                    - jinja
+              required:
+                - key
+                - template
+              additionalProperties: false
+      responses:
+        200:
+          description: template created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: number
+
+  /api/v01/templates/{id}:
+    parameters:
+      - name: id
+        in: path
+        schema:
+          type: integer
+        description: the template id
+        required: true
+    get:
+      summary: template details
+      responses:
+        200:
+          description: template details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: number
+                  key:
+                    type: string
+                  template:
+                    type: string
+                  type:
+                    type: string
+    put:
+      summary: update template
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                key:
+                  type: string
+                template:
+                  type: string
+                type:
+                  type: string
+              additionalProperties: false
+      responses:
+        200:
+          description: template updated
+        404:
+          description: template not found
+    delete:
+      summary: delete template
+      responses:
+        200:
+          description: template deleted
+        404:
+          description: template not found
+
+  /api/v01/apio/requests:
+    get:
+      summary: search for requests
+      description: list and search for requests / instances
+      parameters:
+        - name: filter
+          in: query
+          schema:
+            type: object
+          description: the filter criteria.
+        - name: paging
+          in: query
+          schema:
+            type: object
+          description: the paging details.
+        - name: sorting
+          in: query
+          schema:
+            type: object
+          description: the sorting details.
+      responses:
+        200:
+          description: requests matching criteria
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requests:
+                    type: array
+                    items:
+                      type: object
+                  pagination:
+                    type: object
+                  sorting:
+                    type: object
+                  total_count:
+                    type: integer
+                    description: number of requests matching the criteria
+                  limit:
+                    type: integer
+                    description: the limit applied in the search query
+                  offset:
+                    type: integer
+                    description: the offset applied in the search query
+
+    put:
+      summary: update requests
+      description: update a batch of requests in a transaction
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+      responses:
+        200:
+          description: requests updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  updated:
+                    type: integer
+
+  /api/v01/apio/requests/{request_id}:
+    parameters:
+      - name: request_id
+        in: path
+        schema:
+          type: integer
+        description: the request id
+        required: true
+
+    get:
+      summary: request details
+      description: return the request details by request id
+      responses:
+        200:
+          description: request details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  request:
+                    type: object
+
+    put:
+      description: update request details (currently only force closure is implemented)
+      responses:
+        "200":
+          description: request updated
+
+  /api/v01/apio/requests/{request_id}/traces:
+    parameters:
+      - name: request_id
+        in: path
+        schema:
+          type: integer
+        description: the request id
+        required: true
+
+    get:
+      summary: request traces
+      description: serve the request internal traces
+      responses:
+        200:
+          description: request traces
+
+  /api/v01/activities:
+    get:
+      summary: list activities
+      description: list the activities defined in the platform
+      responses:
+        200:
+          description: activities
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  activities:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        name:
+                          type: string
+                        description:
+                          type: string
+                        created_on:
+                          type: string
+                          format: date-time
+                        updated_on:
+                          type: string
+                          format: date-time
+                        version_id:
+                          type: integer
+                        version_label:
+                          type: string
+    post:
+      summary: create an activity
+      description: setup a new activity
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                definition:
+                  type: string
+      responses:
+        200:
+          description: activity updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+
+  /api/v01/activities/{activity_id}:
+    parameters:
+      - name: activity_id
+        in: path
+        schema:
+          type: integer
+        description: the activity index
+        required: true
+    get:
+      summary: activity details
+      description: get the activity details incl. active version id, label and definition.
+      responses:
+        200:
+          description: activity
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  activity:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        name:
+                          type: string
+                        description:
+                          type: string
+                        created_on:
+                          type: string
+                          format: date-time
+                        updated_on:
+                          type: string
+                          format: date-time
+                        version_id:
+                          type: integer
+                        version_label:
+                          type: string
+                        definition:
+                          type: string
+    delete:
+      summary: delete a activity
+      description: remove an activity definition.
+      responses:
+        200:
+          description: activity deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+        404:
+          description: activity not found
+    put:
+      summary: update an activity
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                definition:
+                  type: string
+      responses:
+        200:
+          description: activity updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+        404:
+          description: activity not found
+
+  /api/v01/activities/{activity_id}/versions:
+    parameters:
+      - name: activity_id
+        in: path
+        required: true
+        description: the activity index
+        schema:
+          type: integer
+    get:
+      summary: activity versions
+      description: list the versions created for a certain activity
+      responses:
+        200:
+          description: versions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  versions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: number
+                        label:
+                          type: string
+                        definition:
+                          type: string
+                        active:
+                          type: boolean
+                          description: there is always 1 and only 1 active versions per activity
+                        message:
+                          type: string
+                        user_id:
+                          type: number
+                          description: user id of the user who commit the version
+                        username:
+                          type: string
+                          description: username of the user who commit the version
+                        email:
+                          type: string
+                          description: email of the user who commit the version
+                        created_on:
+                          type: string
+                          format: date-time
+                        updated_on:
+                          type: string
+                          format: date-time
+    post:
+      summary: commit activity version
+      description: commit the current working version (a version committed cannot be changed)
+      responses:
+        200:
+          description: version commited
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                label:
+                  type: string
+              required:
+                - label
+              additionalProperties: false
+
+  /api/v01/activities/{activity_id}/versions/export:
+    get:
+      summary: export activity versions
+      parameters:
+        - name: activity_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: activity versions
+
+  /api/v01/activities/{activity_id}/stats:
+    get:
+      summary: activity running statistics
+      parameters:
+        - name: activity_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: activity stats
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  first_run:
+                    type: object
+                    properties:
+                      instance_id:
+                        type: integer
+                      created_on:
+                        type: string
+                        format: date-time
+                  last_run:
+                    type: object
+                    properties:
+                      instance_id:
+                        type: integer
+                      created_on:
+                        type: string
+                        format: date-time
+                  run_count:
+                    type: integer
+                  tasks:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        cell_id:
+                          type: string
+                        min_runtime:
+                          type: number
+                        max_runtime:
+                          type: number
+                        avg_runtime:
+                          type: number
+
+  /api/v01/activities/{activity_id}/usage:
+    get:
+      summary: activity usage in custom routes and other workflows
+      parameters:
+        - name: activity_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: activity usage
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  routes:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        method:
+                          type: string
+                        route:
+                          type: string
+                  parents:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: number
+                        name:
+                          type: string
+
+  /api/v01/activities/{activity_id}/versions/{version_id}:
+    parameters:
+      - name: activity_id
+        in: path
+        required: true
+        description: the activity index
+        schema:
+          type: integer
+      - name: version_id
+        in: path
+        required: true
+        description: the version index
+        schema:
+          type: integer
+    delete:
+      summary: delete activity version
+      description: remove an activity version.
+      responses:
+        200:
+          description: activity version deleted
+        404:
+          description: activity version not found
+
+  /api/v01/activities/{activity_id}/versions/{version_id}/activate:
+    put:
+      summary: activate activity version
+      description: deactivate the previous version and activate the new one
+      parameters:
+        - name: activity_id
+          in: path
+          schema:
+            type: number
+          required: true
+        - name: version_id
+          in: path
+          schema:
+            type: number
+          required: true
+      responses:
+        200:
+          description: the version is activated
+
+  /api/v01/alarms:
+    get:
+      summary: search for alarms
+      description: search or list for alarms
+      parameters:
+        - name: filter
+          in: query
+          schema:
+            type: object
+          description: the filter criteria.
+        - name: paging
+          in: query
+          schema:
+            type: object
+          description: the paging details.
+        - name: sorting
+          in: query
+          schema:
+            type: object
+          description: the sorting details.
+      responses:
+        200:
+          description: alarms
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  alarms:
+                    type: array
+                    items:
+                      type: object
+                  total_count:
+                    type: integer
+                    description: number of alarms matching the criteria
+                  limit:
+                    type: integer
+                    description: the limit applied in the search query
+                  offset:
+                    type: integer
+                    description: the offset applied in the search query
+
+  /api/v01/alarms/keys:
+    get:
+      summary: active alarm keys
+      description: return the alarm keys
+      responses:
+        200:
+          description: alarms keys
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /api/v01/alarms/{alarm_id}:
+    put:
+      summary: clear alarm
+      parameters:
+        - name: alarm_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: the alarm is cleared
+
+  /api/v01/system/configuration/public:
+    get:
+      summary: public configuration
+      description: public configuration information
+      responses:
+        200:
+          description: public configuration
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  password:
+                    type: object
+                    description: password validity rules configured in the platform
+                    properties:
+                      digits:
+                        type: boolean
+                      duplicate_limit:
+                        type: number
+                      min_length:
+                        type: number
+                      min_entropy:
+                        type: number
+                      uppercase:
+                        type: boolean
+                      special_chars:
+                        type: boolean
+                  auth:
+                    type: object
+                    properties:
+                      SSO:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            protocol:
+                              type: string
+                  gui:
+                    type: object
+                    properties:
+                      prod:
+                        type: boolean
+                      modules:
+                        type: array
+                        description: the list of activated modules supported by the platform
+                        items:
+                          type: string
+                  gateways:
+                    description: gateway provisioning prefixes configured on the platform
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        prefix:
+                          type: string
+
+  /api/v01/system/configuration:
+    get:
+      summary: raw configuration
+      description: raw configuration
+      responses:
+        200:
+          description: configuration
+
+  /api/v01/system/configuration/validate:
+    get:
+      summary: configuration validation schema
+      description: serve the validation schema for the configuration object
+      responses:
+        200:
+          description: validation schema
+          content:
+            application/json:
+              schema:
+                type: object
+  
+  /api/v01/system/configuration/license:
+    get:
+      summary: license information
+      description: license information
+      responses:
+        200:
+          description: license information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customer_name:
+                    type: string
+                  label:
+                    type: string
+                  demo:
+                    type: boolean
+                  dev:
+                    type: boolean
+                  valid_until:
+                    type: string
+                    format: date-time
+                  fields:
+                    type: object
+    
+    put:
+      summary: update license
+      description: update license
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                license:
+                  type: string
+                  minLength: 4
+              additionalProperties: false
+      responses:
+        200:
+          description: license updated
+
+    post:
+      summary: generate a license
+      description: Generate a new license
+      responses:
+        200:
+          description: license generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  license:
+                    type: string
+
+  /api/v01/transactions/{id}/comments:
+    parameters:
+      - name: id
+        in: path
+        schema:
+          type: number
+        required: true
+
+    get:
+      summary: get transaction comments
+      responses:
+        200:
+          description: comments
+
+    post:
+      summary: new transaction comment
+      responses:
+        200:
+          description: comment added
+
+  /api/v01/transactions/{id}/context:
+    parameters:
+      - name: id
+        in: path
+        schema:
+          type: number
+        required: true
+
+    put:
+      summary: update transaction context
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                key:
+                  type: string
+                  minLength: 1
+                value:
+                  description: the value associated to the key
+              required:
+                - key
+                - value
+              additionalProperties: false
+      responses:
+        200:
+          description: updated
+
+  /api/v01/transactions/{id}/documents:
+    parameters:
+      - name: id
+        in: path
+        schema:
+          type: number
+        required: true
+    
+    get:
+      summary: get transaction documents
+      responses:
+        200:
+          description: documents
+    post:
+      summary: new transaction document
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                  format: binary
+                  description: the document file
+                description:
+                  type: string
+                  description: the document description
+                created_by:
+                  type: string
+                  description: the document creator (only possible if the authenticated user is an entity)
+      responses:
+        200:
+          description: document added
+      
+  /api/v01/transactions/{id}/documents/{document_id}:
+    parameters:
+      - name: id
+        in: path
+        schema:
+          type: number
+        required: true
+      - name: document_id
+        in: path
+        schema:
+          type: number
+        required: true
+    
+    get:
+      summary: download document
+      responses:
+        200:
+          description: document
+        403:
+            description: the user is not allowed to consult the document
+        404:
+            description: the instance or the document doesn't exist
+    
+    delete:
+      summary: delete document
+      responses:
+        200:
+          description: document deleted
+        404:
+            description: the document or the instance doesn't exist
+        403:
+            description: the user is not allowed to delete the document
+
+  /api/v01/transactions/{id}/events:
+    parameters:
+      - name: id
+        in: path
+        schema:
+          type: number
+        required: true
+      
+    get:
+      summary: get transaction events
+      responses:
+        200:
+          description: events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        event_id:
+                          type: integer
+                        source_entity:
+                          type: string
+                        username:
+                          type: string
+                        key:
+                          type: string
+                        content:
+                          type: string
+                        processing_result:
+                          type: string
+                        status:
+                          type: string
+                        created_on:
+                          type: string
+                          format: date-time
+                        extra:
+                          type: object
+
+  /api/v01/transactions/{id}/logs:
+    parameters:
+      - name: id
+        in: path
+        schema:
+          type: number
+        required: true
+
+    get:
+      summary: get transaction logs
+      responses:
+        "200":
+          description: transactions logs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  logs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        log_id:
+                          type: number
+                        source:
+                          type: string
+                        message:
+                          type: string
+                        created_on:
+                          type: string
+                          format: date-time
+
+  /api/v01/transactions/{id}/manual_actions:
+    parameters:
+      - name: id
+        in: path
+        schema:
+          type: number
+        required: true
+
+    get:
+      summary: get manual actions
+      description: get manual actions associated to the transaction
+      responses:
+        "200":
+          description: manual actions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  manual_actions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: number
+                        role_id:
+                          type: number
+                        description:
+                          type: string
+                        possible_outputs:
+                          type: string
+                          nullable: true
+                        input_form:
+                          type: string
+                          nullable: true
+                        form_values:
+                          type: object
+                          nullable: true
+                        priority:
+                          type: string
+                        created_by_task_id:
+                          type: number
+                        handled_by_user_id:
+                          type: number
+                          nullable: true
+                        handled_by_username:
+                          type: string
+                          nullable: true
+                        output:
+                          type: string
+                          nullable: true
+                        created_on:
+                          type: string
+                          format: date-time
+                        updated_on:
+                          type: string
+                          format: date-time
+
+  /api/v01/transactions/{id}/sub_transactions:
+    parameters:
+      - name: id
+        in: path
+        schema:
+          type: number
+        required: true
+  
+    get:
+      summary: get sub transactions
+      description: search for sub transactions associated to the transaction
+      parameters:
+        - name: filter
+          in: query
+          schema:
+            type: object
+          description: the filter criteria.
+        - name: paging
+          in: query
+          schema:
+            type: object
+          description: the paging details.
+        - name: sorting
+          in: query
+          schema:
+            type: object
+          description: the sorting details.
+      responses:
+        200:
+          description: sub transactions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_count:
+                    type: number
+                  instances:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: number
+                        original_request_id:
+                          type: number
+                        status:
+                          type: string
+                        activity_id:
+                          type: number
+                        callback_task_id:
+                          type: number
+                        label:
+                          type: string
+                        error_count:
+                          type: number
+                        tasks:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: number
+                              status:
+                                type: string
+                              cell_id:
+                                type: string
+                  pagination:
+                    type: array
+                    items:
+                      type: number
+                    minItems: 4
+                    maxItems: 4
+                  sorting:
+                    type: array
+                    items:
+                      type: object
+                  limit:
+                    type: number
+                  offset:
+                    type: number
+                  filter:
+                    type: string
+
+  /api/v01/transactions/{id}/timers:
+    parameters:
+      - name: id
+        in: path
+        schema:
+          type: number
+        required: true
+
+    get:
+      summary: get timers
+      description: get timers associated to the transaction
+      responses:
+        "200":
+          description: timers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: number
+                        name:
+                          type: string
+                        status:
+                          type: string
+                        at:
+                          type: string
+                          format: date-time
+                        type:
+                          type: string
+                        key:
+                          type: string
+                        output:
+                          type: string
+                        created_on:
+                          type: string
+                          format: date-time
+
+  /api/v01/transactions/{id}/traces:
+    parameters:
+      - name: id
+        in: path
+        schema:
+          type: number
+        required: true
+      - name: c
+        description: request to reveal hidden details
+        in: query
+        schema:
+          type: number
+        required: false
+      - name: details
+        description: request to fetch external details if any
+        in: query
+        schema:
+          type: number
+        required: false
+
+    get:
+      summary: get traces
+      description: get processing traces associated to the transaction. usually contains messages exchanges with external platforms.
+      responses:
+        "200":
+          description: traces
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  traces:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        processing_trace_id:
+                          type: number
+                        task_id:
+                          type: number
+                        label:
+                          type: string
+                        status:
+                          type: string
+                        input:
+                          type: string
+                        output:
+                          type: string
+                        external_id:
+                          type: string
+                        cache_hit:
+                          type: boolean
+                        created_on:
+                          type: string
+                          format: date-time
+                        updated_on:
+                          type: string
+                          format: date-time
+  
+  /api/v01/webhooks:
+    get:
+      summary: list webhooks
+      description: list webhooks
+      responses:
+        200:
+          description: webhooks
+    
+    post:
+      summary: create webhook
+      description: create a new webhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                target:
+                  type: string
+                format:
+                  type: string
+                  enum:
+                    - json
+                secret:
+                  type: string
+                active:
+                  type: boolean
+                custom_header:
+                  type: string
+                custom_header_value:
+                  type: string
+                username:
+                  type: string
+                password:
+                  type: string
+                events:
+                  type: array
+                  items:
+                    type: number
+              additionalProperties: false
+              required:
+                - name
+                - target
+      responses:
+        200:
+          description: webhook created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: number
+
+  /api/v01/webhooks/{id}:
+    parameters:
+      - name: id
+        in: path
+        schema:
+          type: number
+        required: true
+    
+    put:
+      summary: update webhook
+      description: update a webhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                target:
+                  type: string
+                format:
+                  type: string
+                  enum:
+                    - json
+                secret:
+                  type: string
+                active:
+                  type: boolean
+                custom_header:
+                  type: string
+                custom_header_value:
+                  type: string
+                username:
+                  type: string
+                password:
+                  type: string
+                events:
+                  type: array
+                  items:
+                    type: number
+              additionalProperties: false
+      responses:
+        200:
+          description: webhook updated
+  
+    delete:
+      summary: delete webhook
+      description: delete a webhook
+      responses:
+        200:
+          description: webhook deleted
+  
+  /api/v01/webhooks/{id}/history:
+    parameters:
+      - name: id
+        in: path
+        schema:
+          type: number
+        required: true
+
+    get:
+      summary: get webhook trigger history
+      description: get webhook trigger history
+      responses:
+        200:
+          description: webhook history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  history:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        history_id:
+                          type: number
+                        unique_id:
+                          type: string
+                        webhook_id:
+                          type: number
+                        event_id:
+                          type: number
+                        request:
+                          type: object
+                        response:
+                          type: object                
+                        created_on:
+                          type: string
+                          format: date-time
+                        updated_on:
+                          type: string
+                          format: date-time
+
+  /api/v01/webhooks/{id}/test:
+    parameters:
+      - name: id
+        in: path
+        schema:
+          type: number
+        required: true
+
+    post:
+      summary: test webhook
+      description: generate a fake event to the webhook endpoint
+      responses:
+        200:
+          description: trigger sent
+  
+  /api/v01/webhooks/events:
+    get:
+      summary: list webhook events
+      description: list webhook events
+      responses:
+        200:
+          description: webhook events
+    
+    post:
+      summary: create webhook event
+      description: create a new webhook event
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                label:
+                  type: string
+                tag:
+                  type: string
+                method:
+                  type: string
+                  enum:
+                    - put
+                    - post
+                    - delete
+                url:
+                  type: string
+              additionalProperties: false
+              required:
+                - label
+                - tag
+                - method
+                - url
+      responses:
+        200:
+          description: webhook event created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: number
+
+  /api/v01/webhooks/events/{id}:
+    parameters:
+      - name: id
+        in: path
+        schema:
+          type: number
+        required: true
+    
+    put:
+      summary: update webhook event
+      description: update a webhook event
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                label:
+                  type: string
+                tag:
+                  type: string
+                method:
+                  type: string
+                  enum:
+                    - put
+                    - post
+                    - delete
+                url:
+                  type: string
+              additionalProperties: false
+      responses:
+        200:
+          description: webhook event updated
+  
+    delete:
+      summary: delete webhook event
+      description: delete a webhook event
+      responses:
+        200:
+          description: webhook event deleted

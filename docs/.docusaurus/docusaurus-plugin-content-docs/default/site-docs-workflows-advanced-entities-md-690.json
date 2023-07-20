@@ -1,0 +1,26 @@
+{
+  "unversionedId": "workflows/advanced/entities",
+  "id": "workflows/advanced/entities",
+  "title": "Entities",
+  "description": "Entities are special nodes that can be used to represent an external process or system which is not managed by APIO but which can interract with the workflow.",
+  "source": "@site/docs/workflows/advanced/entities.md",
+  "sourceDirName": "workflows/advanced",
+  "slug": "/workflows/advanced/entities",
+  "permalink": "/static/docs/docs/workflows/advanced/entities",
+  "draft": false,
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 2,
+  "frontMatter": {
+    "sidebar_position": 2
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Manual actions",
+    "permalink": "/static/docs/docs/workflows/advanced/manual_actions"
+  },
+  "next": {
+    "title": "Versions",
+    "permalink": "/static/docs/docs/workflows/advanced/versioning"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "title": "Triggers",
+  "slug": "/category/triggers",
+  "permalink": "/apio-core-docs/docs/category/triggers",
+  "navigation": {
+    "previous": {
+      "title": "Versions",
+      "permalink": "/apio-core-docs/docs/workflows/advanced/versioning"
+    },
+    "next": {
+      "title": "Custom routes",
+      "permalink": "/apio-core-docs/docs/triggers/custom_routes"
+    }
+  }
+}

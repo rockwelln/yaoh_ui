@@ -1,0 +1,26 @@
+{
+  "unversionedId": "triggers/scheduled_jobs",
+  "id": "triggers/scheduled_jobs",
+  "title": "Scheduled jobs",
+  "description": "A scheduled job is a job that is executed periodically. It is used to execute a task periodically. (e.g reporting, data synchronization, etc.)",
+  "source": "@site/docs/triggers/scheduled_jobs.md",
+  "sourceDirName": "triggers",
+  "slug": "/triggers/scheduled_jobs",
+  "permalink": "/static/docs/docs/triggers/scheduled_jobs",
+  "draft": false,
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 2,
+  "frontMatter": {
+    "sidebar_position": 2
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Custom routes",
+    "permalink": "/static/docs/docs/triggers/custom_routes"
+  },
+  "next": {
+    "title": "Bulks",
+    "permalink": "/static/docs/docs/triggers/bulk"
+  }
+}

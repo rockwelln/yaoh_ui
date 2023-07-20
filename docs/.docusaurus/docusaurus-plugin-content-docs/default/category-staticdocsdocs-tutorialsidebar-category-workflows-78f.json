@@ -1,0 +1,16 @@
+{
+  "title": "Workflows",
+  "description": "5 minutes to learn the most important concepts.",
+  "slug": "/category/workflows",
+  "permalink": "/static/docs/docs/category/workflows",
+  "navigation": {
+    "previous": {
+      "title": "Authentication",
+      "permalink": "/static/docs/docs/auth"
+    },
+    "next": {
+      "title": "Nodes",
+      "permalink": "/static/docs/docs/workflows/nodes"
+    }
+  }
+}

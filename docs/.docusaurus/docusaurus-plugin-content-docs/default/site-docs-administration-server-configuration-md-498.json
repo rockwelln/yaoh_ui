@@ -1,0 +1,26 @@
+{
+  "unversionedId": "administration/server_configuration",
+  "id": "administration/server_configuration",
+  "title": "Server configuration",
+  "description": "Most configuration sits in the database, only a few parameters are stored as environment variables.",
+  "source": "@site/docs/administration/server_configuration.md",
+  "sourceDirName": "administration",
+  "slug": "/administration/server_configuration",
+  "permalink": "/static/docs/docs/administration/server_configuration",
+  "draft": false,
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 2,
+  "frontMatter": {
+    "sidebar_position": 2
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Setup",
+    "permalink": "/static/docs/docs/administration/setup"
+  },
+  "next": {
+    "title": "Webhooks",
+    "permalink": "/static/docs/docs/administration/webhooks"
+  }
+}

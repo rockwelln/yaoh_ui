@@ -1,0 +1,26 @@
+{
+  "unversionedId": "triggers/bulk",
+  "id": "triggers/bulk",
+  "title": "Bulks",
+  "description": "Bulk jobs are a way to run a workflow on a set of data. For example, you might want to send an email to all users who signed up in the last week. You can do this by creating a bulk job that runs a job on all users who signed up in the last week.",
+  "source": "@site/docs/triggers/bulk.md",
+  "sourceDirName": "triggers",
+  "slug": "/triggers/bulk",
+  "permalink": "/static/docs/docs/triggers/bulk",
+  "draft": false,
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 3,
+  "frontMatter": {
+    "sidebar_position": 3
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Scheduled jobs",
+    "permalink": "/static/docs/docs/triggers/scheduled_jobs"
+  },
+  "next": {
+    "title": "Configuration",
+    "permalink": "/static/docs/docs/category/configuration"
+  }
+}

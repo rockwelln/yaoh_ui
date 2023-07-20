@@ -1,0 +1,16 @@
+{
+  "title": "Configuration",
+  "description": "Describe the different parts in the configuration page > Settings > Configuration (/system/config).",
+  "slug": "/category/configuration",
+  "permalink": "/apio-core-docs/docs/category/configuration",
+  "navigation": {
+    "previous": {
+      "title": "Bulks",
+      "permalink": "/apio-core-docs/docs/triggers/bulk"
+    },
+    "next": {
+      "title": "HTTP clients (a.k.a Gateways)",
+      "permalink": "/apio-core-docs/docs/configuration/gateways"
+    }
+  }
+}

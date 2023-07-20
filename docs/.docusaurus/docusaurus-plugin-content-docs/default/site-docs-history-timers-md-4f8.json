@@ -1,0 +1,26 @@
+{
+  "unversionedId": "history/timers",
+  "id": "history/timers",
+  "title": "Timers",
+  "description": "",
+  "source": "@site/docs/history/timers.md",
+  "sourceDirName": "history",
+  "slug": "/history/timers",
+  "permalink": "/static/docs/docs/history/timers",
+  "draft": false,
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 3,
+  "frontMatter": {
+    "sidebar_position": 3
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Scheduled jobs",
+    "permalink": "/static/docs/docs/history/scheduled_jobs"
+  },
+  "next": {
+    "title": "Administration",
+    "permalink": "/static/docs/docs/category/administration"
+  }
+}

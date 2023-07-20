@@ -1,0 +1,26 @@
+{
+  "unversionedId": "workflows/advanced/manual_actions",
+  "id": "workflows/advanced/manual_actions",
+  "title": "Manual actions",
+  "description": "Manual actions are used to pause the workflow and wait for a user to perform an action.",
+  "source": "@site/docs/workflows/advanced/manual_actions.md",
+  "sourceDirName": "workflows/advanced",
+  "slug": "/workflows/advanced/manual_actions",
+  "permalink": "/static/docs/docs/workflows/advanced/manual_actions",
+  "draft": false,
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 1,
+  "frontMatter": {
+    "sidebar_position": 1
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Advanced",
+    "permalink": "/static/docs/docs/category/advanced"
+  },
+  "next": {
+    "title": "Entities",
+    "permalink": "/static/docs/docs/workflows/advanced/entities"
+  }
+}

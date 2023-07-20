@@ -1,0 +1,15 @@
+{
+  "title": "Administration",
+  "slug": "/category/administration",
+  "permalink": "/static/docs/docs/category/administration",
+  "navigation": {
+    "previous": {
+      "title": "Timers",
+      "permalink": "/static/docs/docs/history/timers"
+    },
+    "next": {
+      "title": "Setup",
+      "permalink": "/static/docs/docs/administration/setup"
+    }
+  }
+}

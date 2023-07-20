@@ -1,0 +1,16 @@
+{
+  "title": "Workflows",
+  "description": "5 minutes to learn the most important concepts.",
+  "slug": "/category/workflows",
+  "permalink": "/apio-core-docs/docs/category/workflows",
+  "navigation": {
+    "previous": {
+      "title": "Authentication",
+      "permalink": "/apio-core-docs/docs/auth"
+    },
+    "next": {
+      "title": "Nodes",
+      "permalink": "/apio-core-docs/docs/workflows/nodes"
+    }
+  }
+}

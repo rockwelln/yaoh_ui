@@ -1,0 +1,26 @@
+{
+  "unversionedId": "administration/webhooks",
+  "id": "administration/webhooks",
+  "title": "Webhooks",
+  "description": "Some requests processed by APIO core can trigger webhooks. A webhook is a HTTP request sent to a specific URL. The URL is configured in the Webhooks section of the settings menu.",
+  "source": "@site/docs/administration/webhooks.md",
+  "sourceDirName": "administration",
+  "slug": "/administration/webhooks",
+  "permalink": "/static/docs/docs/administration/webhooks",
+  "draft": false,
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 3,
+  "frontMatter": {
+    "sidebar_position": 3
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Server configuration",
+    "permalink": "/static/docs/docs/administration/server_configuration"
+  },
+  "next": {
+    "title": "Templates",
+    "permalink": "/static/docs/docs/administration/templates"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "unversionedId": "configuration/smpp",
+  "id": "configuration/smpp",
+  "title": "SMPP",
+  "description": "APIO core engine can use an SMPP server to send sms from workflows.",
+  "source": "@site/docs/configuration/smpp.md",
+  "sourceDirName": "configuration",
+  "slug": "/configuration/smpp",
+  "permalink": "/static/docs/docs/configuration/smpp",
+  "draft": false,
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 6,
+  "frontMatter": {
+    "sidebar_position": 6
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "SMTP",
+    "permalink": "/static/docs/docs/configuration/smtp"
+  },
+  "next": {
+    "title": "Provisioning",
+    "permalink": "/static/docs/docs/configuration/provisioning"
+  }
+}

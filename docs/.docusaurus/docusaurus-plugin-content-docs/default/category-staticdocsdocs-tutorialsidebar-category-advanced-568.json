@@ -1,0 +1,16 @@
+{
+  "title": "Advanced",
+  "description": "Beyond simple workflows...",
+  "slug": "/category/advanced",
+  "permalink": "/static/docs/docs/category/advanced",
+  "navigation": {
+    "previous": {
+      "title": "Zen",
+      "permalink": "/static/docs/docs/workflows/zen"
+    },
+    "next": {
+      "title": "Manual actions",
+      "permalink": "/static/docs/docs/workflows/advanced/manual_actions"
+    }
+  }
+}

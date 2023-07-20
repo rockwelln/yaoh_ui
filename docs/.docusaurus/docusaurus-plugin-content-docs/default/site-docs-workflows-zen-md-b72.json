@@ -1,0 +1,26 @@
+{
+  "unversionedId": "workflows/zen",
+  "id": "workflows/zen",
+  "title": "Zen",
+  "description": "Keep your workflow clean",
+  "source": "@site/docs/workflows/zen.md",
+  "sourceDirName": "workflows",
+  "slug": "/workflows/zen",
+  "permalink": "/static/docs/docs/workflows/zen",
+  "draft": false,
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 3,
+  "frontMatter": {
+    "sidebar_position": 3
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Templates",
+    "permalink": "/static/docs/docs/workflows/templates"
+  },
+  "next": {
+    "title": "Advanced",
+    "permalink": "/static/docs/docs/category/advanced"
+  }
+}

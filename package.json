@@ -52,8 +52,8 @@
     "build-pra": "sed -i.bkp '/\\/\\/ default/,/\\/\\/ end/d' src/provisioning/index.js; react-scripts build; mv src/provisioning/index.js.bkp src/provisioning/index.js",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "docs": "markdown-folder-to-html docs/admin; markdown-folder-to-html docs/user_guide",
-    "build-docs": "npm run docs; rm -rf public/static/docs/; mkdir -p public/static/docs; mv docs/_* public/static/docs/"
+    "docs": "cd docs; npm run build; cd ..",
+    "build-docs": "npm run docs; rm -rf public/static/docs/; mkdir -p public/static/docs; mv docs/build/* public/static/docs/"
   },
   "eslintConfig": {
     "extends": "react-app"

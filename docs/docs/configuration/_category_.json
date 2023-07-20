@@ -1,0 +1,8 @@
+{
+  "label": "Configuration",
+  "position": 5,
+  "link": {
+    "description": "Describe the different parts in the configuration page > Settings > Configuration (/system/config).",
+    "type": "generated-index"
+  }
+}

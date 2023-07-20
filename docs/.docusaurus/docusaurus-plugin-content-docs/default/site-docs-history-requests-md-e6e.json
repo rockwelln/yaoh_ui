@@ -1,0 +1,26 @@
+{
+  "unversionedId": "history/requests",
+  "id": "history/requests",
+  "title": "Requests",
+  "description": "Every request sent to APIO core is logged in the database. So a user can see the history of the requests. Search for activities or issues and see the details of each request.",
+  "source": "@site/docs/history/requests.md",
+  "sourceDirName": "history",
+  "slug": "/history/requests",
+  "permalink": "/static/docs/docs/history/requests",
+  "draft": false,
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 1,
+  "frontMatter": {
+    "sidebar_position": 1
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "History",
+    "permalink": "/static/docs/docs/category/history"
+  },
+  "next": {
+    "title": "Scheduled jobs",
+    "permalink": "/static/docs/docs/history/scheduled_jobs"
+  }
+}

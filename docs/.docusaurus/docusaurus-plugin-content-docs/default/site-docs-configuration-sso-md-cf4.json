@@ -1,0 +1,26 @@
+{
+  "unversionedId": "configuration/sso",
+  "id": "configuration/sso",
+  "title": "SSO",
+  "description": "APIO core supports SSO (Single Sign-On) via a bunch of protocols.",
+  "source": "@site/docs/configuration/sso.md",
+  "sourceDirName": "configuration",
+  "slug": "/configuration/sso",
+  "permalink": "/static/docs/docs/configuration/sso",
+  "draft": false,
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 9,
+  "frontMatter": {
+    "sidebar_position": 9
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Password",
+    "permalink": "/static/docs/docs/configuration/password"
+  },
+  "next": {
+    "title": "Alarms",
+    "permalink": "/static/docs/docs/configuration/alarms"
+  }
+}

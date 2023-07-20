@@ -1,0 +1,26 @@
+{
+  "unversionedId": "workflows/advanced/versioning",
+  "id": "workflows/advanced/versioning",
+  "title": "Versions",
+  "description": "It can be useful to keep track of the different versions of a workflow. For example, you might want to keep a version of a workflow that is currently in production or which you are certain it is working, and a version that is being tested.",
+  "source": "@site/docs/workflows/advanced/versioning.md",
+  "sourceDirName": "workflows/advanced",
+  "slug": "/workflows/advanced/versioning",
+  "permalink": "/static/docs/docs/workflows/advanced/versioning",
+  "draft": false,
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 3,
+  "frontMatter": {
+    "sidebar_position": 3
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Entities",
+    "permalink": "/static/docs/docs/workflows/advanced/entities"
+  },
+  "next": {
+    "title": "Triggers",
+    "permalink": "/static/docs/docs/category/triggers"
+  }
+}

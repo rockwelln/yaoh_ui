@@ -1,0 +1,26 @@
+{
+  "unversionedId": "configuration/smtp",
+  "id": "configuration/smtp",
+  "title": "SMTP",
+  "description": "APIO core engine can use an SMTP server to send emails either from workflows or from internal processes (e.g. Two-Factor Authentication, reset password, etc...).",
+  "source": "@site/docs/configuration/smtp.md",
+  "sourceDirName": "configuration",
+  "slug": "/configuration/smtp",
+  "permalink": "/static/docs/docs/configuration/smtp",
+  "draft": false,
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 5,
+  "frontMatter": {
+    "sidebar_position": 5
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Gui",
+    "permalink": "/static/docs/docs/configuration/gui"
+  },
+  "next": {
+    "title": "SMPP",
+    "permalink": "/static/docs/docs/configuration/smpp"
+  }
+}

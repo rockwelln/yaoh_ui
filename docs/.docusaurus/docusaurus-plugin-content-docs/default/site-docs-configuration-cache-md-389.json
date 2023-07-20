@@ -1,0 +1,26 @@
+{
+  "unversionedId": "configuration/cache",
+  "id": "configuration/cache",
+  "title": "Cache",
+  "description": "APIO core nodes can use a Redis server or its internal memory to cache some data.",
+  "source": "@site/docs/configuration/cache.md",
+  "sourceDirName": "configuration",
+  "slug": "/configuration/cache",
+  "permalink": "/static/docs/docs/configuration/cache",
+  "draft": false,
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 14,
+  "frontMatter": {
+    "sidebar_position": 14
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Environment variables",
+    "permalink": "/static/docs/docs/configuration/env"
+  },
+  "next": {
+    "title": "History",
+    "permalink": "/static/docs/docs/category/history"
+  }
+}
