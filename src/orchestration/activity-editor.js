@@ -1842,6 +1842,11 @@ function CommitVersionModal({show, onHide, id}) {
 }
 
 function downloadDefinition(activity) {
+  Object.entries(activity.definition.cells).map(([k, v]) => {
+    if(v.style && Object.keys(v.style).length === 0) {
+      v.style = undefined
+    }
+  })
   downloadJson(activity.name, activity.definition);
 }
 
