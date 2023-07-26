@@ -21,7 +21,7 @@ import moment from "moment";
 const REFRESH_CYCLE = 60;
 
 function fetchSlowApis({from, to, limit, method}, onSuccess) {
-    fetch_get(`/api/v02/statistics/top_slow_api?f=${from.toISOString()}&t=${to.toISOString()}&l=${limit}&m=${method}`)
+    fetch_get(`/api/v01/statistics/top_slow_api?f=${from.toISOString()}&t=${to.toISOString()}&l=${limit}&m=${method}`)
         .then(r => onSuccess(r))
         .catch(error => NotificationsManager.error("Failed to get slow API's", error.message))
 }

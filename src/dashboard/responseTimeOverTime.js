@@ -23,7 +23,7 @@ function fetchResponseTime({from, to, method}, onSuccess) {
     to = new Date;
   }
   fetch_get(
-    `/api/v02/statistics/api_resp_time?f=${from.toISOString()}&t=${to.toISOString()}&m=${method||""}`
+    `/api/v01/statistics/api_resp_time?f=${from.toISOString()}&t=${to.toISOString()}&m=${method||""}`
     )
     .then(data => onSuccess(data))
     .catch(console.error);
