@@ -141,6 +141,11 @@ export class Licenses extends Component {
       return <Loading />;
     }
 
+    const dictForLicenses = {
+      ...this.props.dictServicePacks,
+      ...this.props.dictVirtualServicePacks,
+    };
+
     return (
       <Row className={"margin-top-2 margin-left-8"}>
         <Col md={5}>
@@ -396,10 +401,7 @@ export class Licenses extends Component {
                     licenses={this.props.servicePacks}
                     showEdit={this.showEditSericePacks}
                     isEditGroup
-                    dict={{
-                      ...this.props.dictServicePacks,
-                      ...this.props.dictVirtualServicePacks,
-                    }}
+                    dict={dictForLicenses}
                   />
                 ) : (
                   <FormattedMessage
@@ -426,7 +428,12 @@ export class Licenses extends Component {
                         this.fetchData()
                       )
                     }
-                    licenseTitle={this.state.servicePacks[indexOfService].name}
+                    licenseTitle={
+                      dictForLicenses[
+                        this.state.servicePacks[indexOfService].name
+                      ]?.display_name ||
+                      this.state.servicePacks[indexOfService].name
+                    }
                     allocated={
                       this.state.servicePacks[indexOfService].inUse || 0
                     }
@@ -562,6 +569,9 @@ export class Licenses extends Component {
                     )
                   }
                   licenseTitle={
+                    this.props.dictUserServices[
+                      this.state.limitedUserServicesGroup[indexOfService].name
+                    ] ||
                     this.state.limitedUserServicesGroup[indexOfService].name
                   }
                   allocated={

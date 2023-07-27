@@ -153,6 +153,11 @@ export class Limits extends Component {
       return <Loading />;
     }
 
+    const dictForLicenses = {
+      ...this.props.dictServicePacks,
+      ...this.props.dictVirtualServicePacks,
+    };
+
     return (
       <React.Fragment>
         <div className={"panel-heading"}>
@@ -357,10 +362,7 @@ export class Limits extends Component {
                             <LicensesPanel
                               licenses={this.props.tenantServicePacks}
                               showEdit={this.showEditSericePacks}
-                              dict={{
-                                ...this.props.dictServicePacks,
-                                ...this.props.dictVirtualServicePacks,
-                              }}
+                              dict={dictForLicenses}
                             />
                           ) : (
                             <FormattedMessage
@@ -384,6 +386,9 @@ export class Limits extends Component {
                                 )
                               }
                               licenseTitle={
+                                dictForLicenses[
+                                  this.state.servicePacks[indexOfService].name
+                                ]?.display_name ||
                                 this.state.servicePacks[indexOfService].name
                               }
                               allocated={
