@@ -883,6 +883,9 @@ export function Param2Input({param, activity, staticParams, cells, value, readOn
     case 'list':
       i = <ListInput options={param.values} readOnly={readOnly} value={value} onChange={e => onChange(e)} />
       break;
+    case 'smtp_config':
+      i = <TextareaInput rows={1} value={value} readOnly={readOnly} onChange={e => onChange(e)} cells={activity.definition.cells} />
+      break;
     case 'jinja':
     case 'python':
     case 'python_bool':
