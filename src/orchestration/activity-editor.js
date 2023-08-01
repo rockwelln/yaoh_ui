@@ -1851,14 +1851,19 @@ function downloadDefinition(activity) {
 }
 
 function compareActivitiesDef(a, b) {
-  return (b.definition &&
-    (
-      typeof b.definition === "string" &&
-        !deepEqual(JSON.parse(a.definition), JSON.parse(b.definition)) ||
-      typeof b.definition === "object" &&
-        !deepEqual(JSON.parse(a.definition), b.definition)
-    )
-  )
+  const aDef = JSON.parse(a.definition);
+  let bDef = b.definition;
+
+  if(typeof b.definition === "string") {
+    bDef = JSON.parse(b.definition);
+  }
+  
+  Object.values(bDef.cells).map(c => {
+    if(c.style && Object.keys(c.style).length === 0) {
+      delete c.style;
+    }
+  })
+  return !deepEqual(aDef, bDef);
 }
 
 const DefaultDescriptionStyle = {
@@ -2136,8 +2141,8 @@ export function ActivityEditor(props) {
                       isSearchable={true}
                       name="activity-version"
                       onChange={(value, action) => {
-                          if(["select-option"].includes(action.action)) {
-                            if(compareActivitiesDef(currentVersion, editor.getDefinition().activity)) {
+                          if(action.action === "select-option") {
+                            if(compareActivitiesDef(currentVersion, editor.getDefinition().activity) && currentVersion.value === "") {
                               if(window.confirm("You have pending / unsaved changes, do you want to lose them?")) {
                                 setVersionId(value.id);
                               }
