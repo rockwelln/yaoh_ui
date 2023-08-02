@@ -1,6 +1,6 @@
 import React from "react";
 import { Base64 } from 'js-base64';
-import crypto from "crypto";
+import {SHA1} from "crypto-js";
 import {toast} from 'react-toastify';
 
 const BASE_LOC = process.env.REACT_APP_BASE_URL ? new URL(process.env.REACT_APP_BASE_URL): window.location;
@@ -125,7 +125,7 @@ class AuthService {
     getLogoutSignature() {
         const refreshToken = localStorage.getItem("refreshToken");
         if(!refreshToken) return null;
-        return "sha1:" + crypto.createHash("sha1").update(refreshToken).digest("hex")
+        return "sha1:" + SHA1(refreshToken).toString();
     }
 
     logout() {
