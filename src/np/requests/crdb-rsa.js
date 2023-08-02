@@ -1683,6 +1683,7 @@ export class NPTransaction extends Component {
     this.onReopen = this.onReopen.bind(this);
     this.sendEvent = this.sendEvent.bind(this);
     this.onEdit = this.onEdit.bind(this);
+    this.onUpdateDefinition = this.onUpdateDefinition.bind(this);
     this.caseUpdated = this.caseUpdated.bind(this);
     this.caseUpdateFailure = this.caseUpdateFailure.bind(this);
     this.refreshMessages = this.refreshMessages.bind(this);
@@ -1793,6 +1794,30 @@ export class NPTransaction extends Component {
           error.message
         )
       })
+  }
+
+  onUpdateDefinition() {
+      const {tx} = this.state;
+      fetch_get(`/api/v01/activities/${tx.activity_id}`).then(
+          data => {
+              fetch_put(`/api/v01/transactions/${tx.id}`, {definition: data.activity.definition}).then(() => {
+                  NotificationsManager.success(
+                      <FormattedMessage id="definition-updated" defaultMessage="Definition updated!"/>
+                  );
+                  this.fetchTxDetails(false);
+              }).catch(error => {
+                  NotificationsManager.error(
+                      <FormattedMessage id="definition-update-failed" defaultMessage="Definition update failed!"/>,
+                      error.message
+                  );
+              });
+          }
+      ).catch(error => {
+          NotificationsManager.error(
+              <FormattedMessage id="fetch-definition-failed" defaultMessage="Fetch definition failed!"/>,
+              error.message
+          );
+      });
   }
 
   onRollback(activity_id, task_id, replay_behaviour) {
@@ -2151,7 +2176,11 @@ export class NPTransaction extends Component {
                 <Panel.Title><FormattedMessage id="tasks" defaultMessage="Tasks" /></Panel.Title>
               </Panel.Heading>
               <Panel.Body>
-                <TransactionFlow definition={tx.definition} states={tx.tasks} activityId={tx.activity_id} />
+                <TransactionFlow
+                  definition={tx.definition}
+                  states={tx.tasks}
+                  activityId={tx.activity_id}
+                  updateDefinition={this.onUpdateDefinition} />
                 <TasksTable
                   tasks={tx.tasks}
                   definition={JSON.parse(tx.definition)}

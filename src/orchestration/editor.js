@@ -465,11 +465,17 @@ function setup_toolbar(editor, container, spacer, handlers, props) {
     const {activityId} = props;
     addToolbarButton(editor, container, 'zoomIn', '🔍 +', null, false, null, 'zoom in');
     addToolbarButton(editor, container, 'zoomOut', '🔍 -', null, false, null, 'zoom out');
-    addToolbarButton(editor, container, 'show', '👓');
+    // addToolbarButton(editor, container, 'show', '👓');
     addToolbarButton(editor, container, 'showDefinition', 'txt');
-    activityId && addToolbarButton(editor, container, null, 'def', null, false, () => {
-        window.open(`/transactions/config/activities/editor/${activityId}`, '_blank').focus();
-    });
+    if(activityId) {
+        addToolbarButton(editor, container, null, 'def', null, false, () => {
+            window.open(`/transactions/config/activities/editor/${activityId}`, '_blank').focus();
+        });
+        handlers.updateDefinition && 
+            addToolbarButton(editor, container, null, '↓', null, false, () => {
+                handlers.updateDefinition();
+            }, "update definition");
+    }
 }
 
 
