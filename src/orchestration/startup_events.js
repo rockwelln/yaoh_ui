@@ -38,6 +38,8 @@ import Creatable from "react-select/creatable";
 import MenuItem from "react-bootstrap/lib/MenuItem";
 import {deleteActivity, NewActivity, WORKING_VERSION_LABEL} from "./activity-editor";
 
+import "./loading.css";
+
 const CUSTOM_ROUTE_PREFIX = "https://<target>/api/v01/custom";
 const JSON_SCHEMA_SAMPLE = (
 `{
@@ -1319,9 +1321,18 @@ function CustomRoutesGroup({routes, group, activities, groups, onChange, onSelec
   const [showUpdateModal, setShowUpdateModal] = useState(undefined);
   const [showRename, setShowRename] = useState(false);
   const [showNewActivity, setShowNewActivity] = useState(undefined);
+  const [loadedRoutes, setLoadedRoutes] = useState([]);
+  const [loadingRoutes, setLoadingRoutes] = useState(true);
   const activitiesOptions = activities
     .sort((a, b) => a.name.localeCompare(b.name))
     .map(a => ({value: a.id, label: `${a.name} (${!a.version_label?WORKING_VERSION_LABEL:a.version_label})`}));
+  
+  useEffect(() => {
+    setTimeout(() => {
+      setLoadedRoutes(routes);
+      setLoadingRoutes(false);
+    }, 0);
+  }, []);
   return (
     <Panel style={{ minWidth: "min-content" }}>
       <Panel.Heading>
@@ -1380,8 +1391,33 @@ function CustomRoutesGroup({routes, group, activities, groups, onChange, onSelec
             </tr>
           </thead>
           <tbody>
+          {loadingRoutes &&
+            <>
+              <tr>
+                <td colSpan={8}>
+                  <div className="loading-animated">
+                    <div className="background-masker btn-divide-left"></div>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td colSpan={8}>
+                  <div className="loading-animated">
+                    <div className="background-masker btn-divide-left"></div>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td colSpan={8}>
+                  <div className="loading-animated">
+                    <div className="background-masker btn-divide-left"></div>
+                  </div>
+                </td>
+              </tr>
+            </>
+          }
           {
-            routes.map((route, i) => (
+            loadedRoutes.map((route, i) => (
               <tr key={i} style={{ backgroundColor: route.public ? '#B0FDACFF' : '#ffffffff' }}>
                 <td
                   draggable
