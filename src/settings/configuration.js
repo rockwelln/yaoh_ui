@@ -2034,7 +2034,7 @@ function NewSsoModal({show, onHide, gateways, enabledMods}) {
               <FormControl
                 componentClass="input"
                 value={entry.extra_auth_rules && entry.extra_auth_rules[0]}
-                onChange={e => setEntry(update(entry, {$merge: {extra_auth_rules: [e.target.value]}}))}/>
+                onChange={e => setEntry(update(entry, {$merge: {extra_auth_rules: e.target.value.length === 0 ? [] : [e.target.value]}}))}/>
             </Col>
           </FormGroup>
 
@@ -3243,7 +3243,7 @@ function SSOPanel({sso, gateways, onChange, enabledMods}) {
                         <FormControl
                           componentClass="input"
                           value={p.extra_auth_rules && p.extra_auth_rules[0]}
-                          onChange={e => onChange(update(sso, {[i]: {$merge: {extra_auth_rules: [e.target.value]}}}))}/>
+                          onChange={e => onChange(update(sso, {[i]: {$merge: {extra_auth_rules: e.target.value.length === 0 ? [] : [e.target.value]}}}))}/>
                         <HelpBlock>
                           When the authentication is confirmed, this rule can be applied to validate the request with custom specifications.<br/>
                           The IdP authentication token is decoded and directly available in the rule eval. context. The request query string is also available in a variable named "qs".<br/>
