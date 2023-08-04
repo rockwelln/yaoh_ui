@@ -77,6 +77,9 @@ class FollowLog extends React.Component {
     }
 
     fetchContent() {
+        if(!this.props) {
+            return;
+        }
         const {log} = this.props;
         this.setState({connectionStatus: "connecting"});
         this.websocket = new WebSocket(`${API_WS_URL}/api/v01/logs/${log.log_id}/ws?auth_token=${AuthServiceManager.getToken()}`);
