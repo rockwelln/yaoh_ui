@@ -41,6 +41,7 @@ import {deleteActivity, NewActivity, WORKING_VERSION_LABEL} from "./activity-edi
 import "./loading.css";
 
 const CUSTOM_ROUTE_PREFIX = "https://<target>/api/v01/custom";
+const PUBLIC_ROUTE_PREFIX = "https://<target>/api/v01/public";
 const JSON_SCHEMA_SAMPLE = (
 `{
     "$schema": "http://json-schema.org/schema#",
@@ -355,7 +356,7 @@ function NewCustomRoute({show, onHide, groups, activities}) {
                         <Col smOffset={2} sm={10}>
                             <HelpBlock>
                                 <FormattedMessage id="custom-route-help" defaultMessage="The final endpoint will be: " />
-                                {`${route.route && route.route.startsWith("/api/v01/p")?'https://<target>':CUSTOM_ROUTE_PREFIX}${route.route || ''}`}
+                                {`${route.route && route.route.startsWith("/api/v01/")?'https://<target>':CUSTOM_ROUTE_PREFIX}${route.route || ''}`}
                             </HelpBlock>
                         </Col>
                     </FormGroup>
@@ -634,6 +635,8 @@ function UpdateCustomRouteModal({show, entry, onHide, groups, activities}) {
       .sort((a, b) => a.name.localeCompare(b.name))
       .map(a => ({value: a.id, label: `${a.name} (${!a.version_label?WORKING_VERSION_LABEL:a.version_label})`}));
 
+    const endpointPfx = localEntry.public ? PUBLIC_ROUTE_PREFIX : entry.route?.startsWith("/api/v01/") ? 'https://<target>' : CUSTOM_ROUTE_PREFIX;
+
     return (
         <Modal show={show} onHide={() => onHide(false)} backdrop={false} bsSize="large">
             <Modal.Header closeButton>
@@ -661,7 +664,7 @@ function UpdateCustomRouteModal({show, entry, onHide, groups, activities}) {
                         <Col smOffset={2} sm={10}>
                             <HelpBlock>
                                 <FormattedMessage id="custom-route-help" defaultMessage="The final endpoint will be: " />
-                                {`${entry.route && entry.route.startsWith("/api/v01/p")?'https://<target>':CUSTOM_ROUTE_PREFIX}${entry.route || ''}`}
+                                {`${endpointPfx}${entry.route || ''}`}
                             </HelpBlock>
                         </Col>
                     </FormGroup>
