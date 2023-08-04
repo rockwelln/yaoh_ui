@@ -1331,11 +1331,12 @@ function CustomRoutesGroup({routes, group, activities, groups, onChange, onSelec
     .map(a => ({value: a.id, label: `${a.name} (${!a.version_label?WORKING_VERSION_LABEL:a.version_label})`}));
   
   useEffect(() => {
+    setLoadingRoutes(r => r && true);
     setTimeout(() => {
       setLoadedRoutes(routes);
       setLoadingRoutes(false);
     }, 0);
-  }, []);
+  }, [routes]);
   return (
     <Panel style={{ minWidth: "min-content" }}>
       <Panel.Heading>
