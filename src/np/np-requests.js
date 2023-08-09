@@ -1060,6 +1060,9 @@ function getHeaders() {
   if (localUser.isModuleEnabled(modules.npact_citc)) {
     return CitcHeaders;
   }
+  if (localUser.isModuleEnabled(modules.npact_crdb_dd)) {
+    return CrdbDdHeaders;
+  }
   return DefaultHeaders;
 }
 
@@ -1081,6 +1084,48 @@ const DefaultHeaders = [
   { title: <FormattedMessage id="donor" defaultMessage="Donor" />, field: 'donor_name', className: 'visible-md visible-lg' },
   { title: <FormattedMessage id="recipient" defaultMessage="Recipient" />, field: 'recipient_name', className: 'visible-md visible-lg' },
   { title: <FormattedMessage id="customer-id" defaultMessage="Customer ID" />, field: 'customer_id', render: n => n.nprequest.customer_id, className: 'visible-md visible-lg' },
+  {
+    title: <FormattedMessage id="ranges" defaultMessage="Ranges" />, render: n => (
+      n.nprequest.ranges.map((r, key) => (
+        <span key={key}>
+          {r.range_from}-{r.range_to}{r.reject_code && <p style={{"color": "red"}}>{r.reject_code}</p>}
+          <br />
+        </span>
+      )
+      )),
+    className: 'visible-md visible-lg',
+  },
+  {
+    title: <FormattedMessage id="due-date" defaultMessage="Due date" />, field: 'due_date', model: 'NPRequest',
+    render: n => n.nprequest.due_date?localUser.localizeUtcDate(moment.utc(n.nprequest.due_date)).format():"-",
+    sortable: true,
+    className: 'visible-md visible-lg',
+  },
+  {
+    title: <FormattedMessage id="created-on" defaultMessage="Created on" />, field: 'created_on', model: 'NPRequest',
+    render: n => localUser.localizeUtcDate(moment.utc(n.created_on)).format(),
+    sortable: true,
+  },
+];
+
+const CrdbDdHeaders = [
+  { title: '', render: n => getIcon(n.nprequest.kind), style: { width: '40px' } },
+  {
+    title: '#', field: 'crdc_id', model: 'NPRequest',
+    render: n => <Link to={`/transactions/${n.id}`}>{n.nprequest.crdc_id || n.id}</Link>,
+    sortable: true
+  },
+  {
+    title: <FormattedMessage id="status" defaultMessage="Status" />,
+    field: 'status',
+    model: 'NPRequest',
+    render: n => n.nprequest.status,
+    sortable: true,
+    className: 'visible-md visible-lg',
+  },
+  { title: <FormattedMessage id="donor" defaultMessage="Donor" />, field: 'donor_name', className: 'visible-md visible-lg' },
+  { title: <FormattedMessage id="recipient" defaultMessage="Recipient" />, field: 'recipient_name', className: 'visible-md visible-lg' },
+  { title: <FormattedMessage id="tenant" defaultMessage="Tenant" />, field: 'tenant', render: n => n.nprequest.tenant, className: 'visible-lg' },
   {
     title: <FormattedMessage id="ranges" defaultMessage="Ranges" />, render: n => (
       n.nprequest.ranges.map((r, key) => (

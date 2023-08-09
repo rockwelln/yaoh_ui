@@ -57,6 +57,7 @@ import {fetchActivities} from "../../orchestration/activity-editor";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faUpload} from "@fortawesome/free-solid-svg-icons/faUpload";
 import {faSpinner} from "@fortawesome/free-solid-svg-icons/faSpinner";
+import Timers from "../../requests/timers";
 
 // export const DEFAULT_RECIPIENT = "MTNBSGNP";
 export const rejection_codes = [];
@@ -322,6 +323,7 @@ const emptyRequest = issuer => {
     change_addr_installation_porting_id: '',
     isB2B: false,
     crdc_id: generateNewPortId(issuer),
+    tenant: "INTERSOL",
     service_type: 'GEOGRAPHIC',
     routing_info: '',
     subscriber_data: {
@@ -351,7 +353,7 @@ export function NPPortInRequest({userInfo, defaultRecipient}) {
     if (o) {
       setRequest(r => update(r, { $merge: { recipient: o.id, donor: o.id } }))
     }
-  }, [operators]);
+  }, [operators, defaultRecipient]);
 
   const validRanges = request.ranges.length === 1 && request.ranges[0].from === '' && request.ranges[0].to === '' ? "error" : validateRanges(request.ranges).length === 0 && rangeError === undefined ? "success" : "error";
   const validRecipient = request.recipient !== null && request.recipient !== undefined && request.recipient !== "" ? "success" : null;
@@ -1066,18 +1068,6 @@ function AbortPortRequest(props) {
 }
 
 
-function disabledAction(action, output, request) {
-  if(!request) {
-    return true;
-  }
-  switch (action.description) {
-    case "Plan port":
-      return !request.due_date || request.due_date.length === 0;
-    default:
-      return false;
-  }
-}
-
 function getRangeFlags(actions, ranges) {
   const canAccept = actions.find(a => a.output === null && a.description.toLowerCase() === "port-out approval") !== undefined;
   const canNotif = actions.find(a => a.output === null && a.description.toLowerCase() === "plan port") !== undefined;
@@ -1134,6 +1124,7 @@ function RequestTable(props) {
             <tbody>
               <tr><th><FormattedMessage id="id" defaultMessage="ID" /></th><td colSpan={rangeNbCols}>{req.id}</td></tr>
               <tr><th><FormattedMessage id="kind" defaultMessage="Kind" /></th><td colSpan={rangeNbCols}>{req.kind}</td></tr>
+              <tr><th><FormattedMessage id="tenant" defaultMessage="Tenant" /></th><td>{req.tenant}</td></tr>
               <tr><th><FormattedMessage id="status" defaultMessage="Status" /></th><td colSpan={rangeNbCols}>{req.status}</td></tr>
               <tr><th><FormattedMessage id="port-id" defaultMessage="Port ID" /></th><td colSpan={rangeNbCols}>{req.crdc_id}</td></tr>
               <tr>
@@ -1666,6 +1657,7 @@ export class NPTransaction extends Component {
       manualActions: [],
       logs: [],
       events: [],
+      timers: [],
       messages: [],
       showCancel: false,
       showAbort: false,
@@ -1719,6 +1711,10 @@ export class NPTransaction extends Component {
           .then(data => !this.cancelLoad && this.setState({manualActions: data.manual_actions}))
           .catch(console.error);
 
+        fetch_get(`/api/v01/transactions/${txId}/timers`)
+          .then(data => !this.cancelLoad && this.setState({timers: data.timers}))
+          .catch(error => !this.cancelLoad && this.setState({error: error}));
+
         fetch_get(`/api/v01/transactions/${txId}/events`)
           .then(data => !this.cancelLoad && this.setState({events: data.events}))
           .catch(error => !this.cancelLoad && this.setState({error: error}));
@@ -1770,6 +1766,7 @@ export class NPTransaction extends Component {
         request: undefined,
         logs: [],
         events: [],
+        timers: [],
         externalCallbacks: [],
         manualActions: [],
         messages: [],
@@ -1990,7 +1987,7 @@ export class NPTransaction extends Component {
   }
 
   render() {
-    const { sending, error, tx, request, activeTab, manualActions, events, logs, replaying, messages, messageShown, showActionForm, activities } = this.state;
+    const { sending, error, tx, request, activeTab, manualActions, events, timers, logs, replaying, messages, messageShown, showActionForm, activities } = this.state;
     const {user_info} = this.props;
     let alerts = [];
     error && alerts.push(
@@ -2087,7 +2084,7 @@ export class NPTransaction extends Component {
           <Breadcrumb.Item active>{request?.crdc_id || "-"}</Breadcrumb.Item>
           {
             tx.super_instance_chain?.map((sup_i, i) => {
-              if(i === 0) return;
+              if(i === 0) return <></>;
               return (
                 <LinkContainer to={`/transactions/${sup_i.id}`} key={`sup-${sup_i.id}`}>
                   <Breadcrumb.Item>{sup_i.id}</Breadcrumb.Item>
@@ -2247,6 +2244,21 @@ export class NPTransaction extends Component {
                             <ManualActions actions={manualActions} tasks={tx.tasks}/>
                         </Panel.Body>
                     </Panel>
+                )
+            }
+
+            {
+                timers.length !== 0 && (
+                  <Panel defaultExpanded={true}>
+                    <Panel.Heading>
+                      <Panel.Title toggle>
+                        <FormattedMessage id="timers" defaultMessage="Timers"/>
+                      </Panel.Title>
+                    </Panel.Heading>
+                    <Panel.Body collapsible>
+                      <Timers timers={timers} onUpdate={() => this.fetchTxDetails(false, true)} />
+                    </Panel.Body>
+                  </Panel>
                 )
             }
 

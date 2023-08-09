@@ -60,7 +60,9 @@ export function getTenants(props) {
   const {user_info} = props
   if(user_info.modules.includes(modules.npact_citc)) {
     return TENANTS;
-  } else {
-    return []
   }
+  if(user_info.modules.includes(modules.npact_crdb_dd)) {
+    return ["INTERSOL", "MWEBCON"];
+  }
+  return [];
 }
