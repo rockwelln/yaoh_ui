@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, useState, useCallback } from 'react';
 
 import Panel from 'react-bootstrap/lib/Panel';
 import Col from 'react-bootstrap/lib/Col';
@@ -11,6 +11,8 @@ import ButtonToolbar from 'react-bootstrap/lib/ButtonToolbar';
 import Glyphicon from 'react-bootstrap/lib/Glyphicon';
 import Modal from 'react-bootstrap/lib/Modal';
 import Breadcrumb from 'react-bootstrap/lib/Breadcrumb';
+import Table from 'react-bootstrap/lib/Table';
+import Alert from "react-bootstrap/lib/Alert";
 
 import { FormattedMessage } from 'react-intl';
 
@@ -20,6 +22,12 @@ import { access_levels, isAllowed, pages } from "../../utils/user";
 import { Search } from "../../utils/common";
 import update from "immutability-helper/index";
 import Checkbox from "react-bootstrap/lib/Checkbox";
+import {readFile} from "../../orchestration/startup_events";
+import {useDropzone} from "react-dropzone";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import {faSpinner} from "@fortawesome/free-solid-svg-icons";
+import HelpBlock from "react-bootstrap/lib/HelpBlock";
+import {DeleteConfirmButton} from "../../utils/deleteConfirm";
 
 
 export function fetchOperators(token, onSuccess, onError) {
@@ -173,6 +181,168 @@ class NewOperator extends Operator {
   }
 }
 
+function ImportOperators({onChange}) {
+  const [show, setShow] = useState(false);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [operators, setOperators] = useState([]);
+  const [acceptedFiles, setAcceptedFiles] = useState([]);
+  const [rejectedFiles, setRejectedFiles] = useState([]);
+
+  const onDrop = useCallback((_acceptedFiles, _rejectedFiles) => {
+    setOperators([]);
+    setRejectedFiles(_rejectedFiles);
+
+    setLoading(true);
+    const promises = [];
+    for (let i = 0; i < _acceptedFiles.length; i++) {
+      const file = _acceptedFiles[i];
+      // read csv file and POST entries 1-by-1 to the server
+      promises.push(readFile(file).then(async content => {
+        const lines = content.split('\n');
+        const ops = [];
+        const headers = ["short_name", "name", "contact_email"];
+        for (let i = 0; i < lines.length; i++) {
+          if (lines[i].trim() === '') {
+            continue;
+          }
+          const values = lines[i].split(',');
+          const operator = {source: file.path + ':' + (i + 1)};
+          for (let j = 0; j < headers.length; j++) {
+            operator[headers[j]] = values[j];
+          }
+          ops.push(operator);
+        }
+
+        for (let i = 0; i < ops.length; i++) {
+          const {short_name, name, context_email} = ops[i];
+          try {
+            await fetch_post('/api/v01/npact/operators', {short_name, name, context_email})
+            ops[i].status = 'success';
+          } catch (error) {
+              ops[i].status = 'error - ' + error.message;
+          }
+        }
+
+        setOperators(o => update(o, {'$push': ops}));
+      }));
+    }
+
+    Promise.all(promises).then(() => {
+      setLoading(false);
+    }).catch(error => {
+      setError(error.message);
+    });
+  }, []);
+
+  const {
+    // acceptedFiles,
+    // fileRejections,
+    getRootProps,
+    getInputProps,
+  } = useDropzone({
+    accept: 'text/csv',
+    onDrop: onDrop,
+  });
+
+  const onClose = () => {
+    setShow(false);
+    setError(null);
+    setLoading(false);
+    setOperators([]);
+    onChange();
+  }
+
+  return (
+    <>
+      <Button bsStyle="primary" onClick={() => setShow(true)}>
+        <FormattedMessage id="import" defaultMessage="Import" />
+      </Button>
+      <Modal show={show} onHide={onClose} backdrop={false}>
+        <Modal.Header closeButton>
+          <Modal.Title>
+            <FormattedMessage id="import-operators" defaultMessage="Import operators" />
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form horizontal>
+            <FormGroup>
+              <section className="dropcontainer" >
+                <div {...getRootProps({className: 'dropzone'})} >
+                  <input {...getInputProps()} />
+                  <p>Drag 'n' drop some files here, or click to select files</p>
+                </div>
+              </section>
+            </FormGroup>
+            <FormGroup>
+              <Col smOffset={2} sm={9}>
+                Files need to be CSV without headers and with columns "name", "short name" and "contact email"
+              </Col>
+            </FormGroup>
+          </Form>
+          {
+            loading &&
+            <Panel>
+              <Panel.Body>
+                <FontAwesomeIcon icon={faSpinner} aria-hidden="true" style={{'fontSize': '24px'}} spin />
+              </Panel.Body>
+            </Panel>
+          }
+          {error && <Alert bsStyle="danger">{error}</Alert>}
+          {(acceptedFiles?.length > 0 || rejectedFiles?.length > 0) && (
+            <Table striped bordered condensed hover>
+              <thead>
+                <tr>
+                  <th><FormattedMessage id="source" defaultMessage="Source" /></th>
+                  <th><FormattedMessage id="size" defaultMessage="Size" /></th>
+                </tr>
+              </thead>
+              <tbody>
+                {rejectedFiles.map(({file, errors}, i) => (
+                  <tr key={`rej-${i}`}>
+                    <td>{file.path}</td>
+                    <td>{errors[0].code} {errors[0].message}</td>
+                  </tr>
+                ))}
+                {acceptedFiles.map((file, i) => (
+                  <tr key={`acc-${i}`}>
+                    <td>{file.path}</td>
+                    <td>{file.size} bytes</td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          )}
+          {operators?.length !== 0 && (
+            <Table striped bordered condensed hover>
+              <thead>
+                <tr>
+                  <th><FormattedMessage id="source" defaultMessage="Source" /></th>
+                  <th><FormattedMessage id="short-name" defaultMessage="Short name" /></th>
+                  <th><FormattedMessage id="name" defaultMessage="Name" /></th>
+                  <th><FormattedMessage id="contact-email" defaultMessage="Contact email" /></th>
+                  <th><FormattedMessage id="status" defaultMessage="Status" /></th>
+                </tr>
+              </thead>
+              <tbody>
+                {operators.map((operator, i) => (
+                  <tr key={i}>
+                    <td>{operator.source}</td>
+                    <td>{operator.short_name}</td>
+                    <td>{operator.name}</td>
+                    <td>{operator.contact_email}</td>
+                    <td>{operator.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          )}
+        </Modal.Body>
+      </Modal>
+    </>
+  )
+}
+
 export default class SearchOperators extends Search {
   static defaultProps = update(Search.defaultProps, {
     '$merge': {
@@ -217,7 +387,7 @@ export default class SearchOperators extends Search {
   }
 
   onDelete(e, opId) {
-    e.preventDefault();
+    e && e.preventDefault();
     fetch_delete(`/api/v01/npact/operators/${opId}`)
       .then(() => {
         NotificationsManager.success(
@@ -262,9 +432,11 @@ export default class SearchOperators extends Search {
                         operator={n}
                         {...this.props} />
 
-                      <Button onClick={e => this.onDelete(e, n.id)} bsStyle="danger">
-                        <Glyphicon glyph="remove-sign" />
-                      </Button>
+                      <DeleteConfirmButton
+                        resourceName={`operator ${n.name}`}
+                        style={{width: '40px'}}
+                        onConfirm={e => this.onDelete(e, n.id)} />
+
                     </ButtonToolbar>
                   )
                 },
@@ -282,9 +454,13 @@ export default class SearchOperators extends Search {
         {isAllowed(this.props.user_info.ui_profile, pages.npact_operators, access_levels.modify) &&
           <Panel>
             <Panel.Body>
-              <NewOperator
-                onClose={() => this._refresh()}
-                {...this.props} />
+              <ButtonToolbar>
+                <NewOperator
+                  onClose={() => this._refresh()}
+                  {...this.props} />
+                <ImportOperators
+                  onChange={() => this._refresh()} />
+              </ButtonToolbar>
             </Panel.Body>
           </Panel>
         }
