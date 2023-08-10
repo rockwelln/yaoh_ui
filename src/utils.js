@@ -372,9 +372,13 @@ export function userLocalizeUtcDate(d, userInfo) {
 }
 
 export function downloadJson(name, content) {
+  downloadFile(`${name}.json`, 'application/json', JSON.stringify(content, null, 2));
+}
+
+export function downloadFile(name, mimeType, content) {
   let element = document.createElement('a');
-  element.setAttribute('href', 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(content, null, 2)));
-  element.setAttribute('download', `${name}.json`);
+  element.setAttribute('href', 'data:'+ mimeType +';charset=utf-8,' + encodeURIComponent(content));
+  element.setAttribute('download', `${name}`);
 
   element.style.display = 'none';
   document.body.appendChild(element);

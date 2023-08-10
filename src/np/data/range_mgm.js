@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, {Component, useCallback, useEffect, useState} from 'react';
 
 import Panel from 'react-bootstrap/lib/Panel';
 import Button from 'react-bootstrap/lib/Button';
@@ -11,15 +11,22 @@ import ControlLabel from 'react-bootstrap/lib/ControlLabel';
 import Glyphicon from 'react-bootstrap/lib/Glyphicon';
 import Modal from 'react-bootstrap/lib/Modal';
 import Breadcrumb from 'react-bootstrap/lib/Breadcrumb';
+import ProgressBar from "react-bootstrap/lib/ProgressBar";
 
 import { FormattedMessage } from 'react-intl';
 
-import {fetch_delete, fetch_post, fetch_put, NotificationsManager} from "../../utils";
+import {downloadFile, fetch_delete, fetch_post, fetch_put, NotificationsManager} from "../../utils";
 import { ApioDatatable } from "../../utils/datatable";
 import update from "immutability-helper";
 import { Search, StaticControl } from "../../utils/common";
 import { access_levels, pages, isAllowed } from "../../utils/user";
 import { fetchOperators } from './operator_mgm';
+import {useDropzone} from "react-dropzone";
+import Alert from "react-bootstrap/lib/Alert";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import {faSpinner} from "@fortawesome/free-solid-svg-icons";
+import {readFile} from "../../orchestration/startup_events";
+import Checkbox from "react-bootstrap/lib/Checkbox";
 
 
 class NewRange extends Component {
@@ -151,6 +158,170 @@ class NewRange extends Component {
       </div>
     )
   }
+}
+
+function ImportRanges({onChange}) {
+  const [show, setShow] = useState(false);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [replace, setReplace] = useState(false);
+  const [responses, setResponses] = useState(null);
+
+  useEffect(() => {
+    if(responses === null) {
+      return;
+    }
+
+    const errors = responses.reduce((o, e) => { o.push(...e.errors); return o; }, []);
+    const total = responses.reduce((t, o) => t + o.counter, 0);
+
+    if(errors.length !== 0) {
+      downloadFile(`import_errors_report.txt`, 'text/plain', errors.join('\n'));
+    }
+
+    NotificationsManager.success(
+      `${total} ranges imported, with ${errors.length} errors`
+    );
+
+    setResponses(null);
+  }, [responses]);
+
+  const onClose = () => {
+    setShow(false);
+    setError(null);
+    setLoading(false);
+    setProgress(0);
+    setReplace(false);
+    setResponses(null);
+    onChange();
+  }
+
+  const onDrop = useCallback((_acceptedFiles, _rejectedFiles) => {
+    if (_rejectedFiles.length > 0) {
+      setError(_rejectedFiles[0].errors[0].message);
+      return;
+    }
+    setError(null);
+    setLoading(true);
+    setProgress(0);
+
+    readFile(_acceptedFiles[0]).then(async (content) => {
+      const lines = content.split('\n');
+      // group lines by 500
+      const ranges = [];
+      let currentRange = [];
+      for (let i = 0; i < lines.length; i++) {
+        const l = lines[i].trim();
+        if (l === '') {
+          continue;
+        }
+        const [number_from, number_to, number_type, operator] = l.split(',');
+        if (number_from === '') {
+          continue;
+        }
+        const nbFrom = parseInt(number_from, 10);
+        if (isNaN(nbFrom)) {
+          setError(`Invalid number from: ${number_from} (line ${i + 1})`)
+          return;
+        }
+        const nbTo = parseInt(number_to, 10);
+        if (isNaN(nbTo)) {
+          setError(`Invalid number to: ${number_to} (line ${i + 1})`)
+          return;
+        }
+        currentRange.push([
+          nbFrom,
+          nbTo,
+          number_type,
+          operator.trim(),
+        ]);
+
+        if (currentRange.length === 2000) {
+          ranges.push(currentRange);
+          currentRange = [];
+        }
+      }
+
+      if (currentRange.length > 0) {
+        ranges.push(currentRange);
+      }
+
+      let responses = [];
+
+      for (let i = 0; i < ranges.length; i++) {
+        let resp = await fetch_post(`/api/v01/npact/ranges?replace=${replace && i===0?"y":"n"}`, {ranges: ranges[i]});
+        let body = await resp.json();
+        responses.push(body);
+        setProgress((i + 1) / ranges.length);
+      }
+
+      setResponses(responses);
+      onClose();
+    }).catch(error => {
+      setError(error.message);
+    }).finally(() => {
+      setLoading(false);
+    });
+  }, [replace, onClose]);
+
+  const {
+    getRootProps,
+    getInputProps,
+  } = useDropzone({
+    accept: 'text/csv',
+    maxFiles: 1,
+    onDrop: onDrop,
+  });
+
+  return (
+    <>
+      <Button bsStyle="primary" onClick={() => setShow(true)}>
+        <FormattedMessage id="import" defaultMessage="Import" />
+      </Button>
+      <Modal show={show} onHide={onClose} backdrop={false}>
+        <Modal.Header closeButton>
+          <Modal.Title>
+            <FormattedMessage id="import-operators" defaultMessage="Import operators" />
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form horizontal>
+            <FormGroup>
+              <section className="dropcontainer" >
+                <div {...getRootProps({className: 'dropzone'})} >
+                  <input {...getInputProps()} />
+                  <p>Drag 'n' drop some files here, or click to select files</p>
+                </div>
+              </section>
+            </FormGroup>
+            <FormGroup>
+              <Col smOffset={2} sm={9}>
+                Files need to be CSV without headers and with columns "range start", "range end", "number type" and "operator name"
+              </Col>
+            </FormGroup>
+            <FormGroup>
+              <Col smOffset={2} sm={9}>
+                <Checkbox checked={replace} onChange={e => setReplace(e.target.checked)}>
+                  <FormattedMessage id="replace-existing" defaultMessage="Replace existing ranges" />
+                </Checkbox>
+              </Col>
+            </FormGroup>
+          </Form>
+          {error && <Alert bsStyle="danger">{error}</Alert>}
+          {
+            loading &&
+            <Panel>
+              <Panel.Body>
+                <FontAwesomeIcon icon={faSpinner} aria-hidden="true" style={{'fontSize': '24px'}} spin />Don't close this window, it may take a while...
+                <ProgressBar now={progress * 100} label={`importing... ${Math.floor(progress * 100)}%`} />
+              </Panel.Body>
+            </Panel>
+          }
+        </Modal.Body>
+      </Modal>
+    </>
+  );
 }
 
 class RangeActions extends Component {
@@ -511,10 +682,14 @@ export default class SearchRange extends Search {
         {isAllowed(this.props.user_info.ui_profile, pages.npact_ranges, access_levels.modify) &&
           <Panel>
             <Panel.Body>
-              <NewRange
-                operators={operators || []}
-                onClose={() => this._refresh()}
-                {...this.props} />
+              <ButtonToolbar>
+                <NewRange
+                  operators={operators || []}
+                  onClose={() => this._refresh()}
+                  {...this.props} />
+                <ImportRanges
+                  onChange={() => this._refresh()} />
+              </ButtonToolbar>
             </Panel.Body>
           </Panel>
         }
