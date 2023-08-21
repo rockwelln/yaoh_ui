@@ -245,6 +245,14 @@ export function addNode(graph, def, name, paramsFields) {
                 v10.geometry.offset = new mxPoint(-5, -5);
                 endpoints[name] = v10;
                 break;
+            case 'goto':
+                v = graph.insertVertex(parent, null, node, c.x, c.y, 20, 30, 'goto');
+                v.setConnectable(false);
+
+                v10 = graph.insertVertex(v, null, document.createElement('Target'), 0, 0, 10, 10, 'port;target;spacingLeft=18', true);
+                v10.geometry.offset = new mxPoint(-5, 9);
+                endpoints[name] = v10;
+                break;
             case 'note':
                 const height = note_heigth(c)
                 v = graph.insertVertex(parent, null, node, c.x, c.y, height, note_width(c), 'note;'+getCustomStyle(c.style));
