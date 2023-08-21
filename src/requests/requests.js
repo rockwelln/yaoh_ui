@@ -67,9 +67,7 @@ const SUB_REQUESTS_PAGE_SIZE = 25;
 const workableDefinition = (definition, states) => {
     let new_def = Object.assign({}, definition);
 
-    Object.keys(definition.cells).map(k => {
-        let c = definition.cells[k];
-        //c.name = k;
+    Object.entries(definition.cells).map(([k, c]) => {
         const state = states && states.find(s => s.cell_id === k);
         if(state !== undefined) {
             c.state = state.status;
@@ -78,9 +76,9 @@ const workableDefinition = (definition, states) => {
         return null;
     });
 
+    let new_transitions = new Array();
     new_def.transitions && states && new_def.transitions.map(t => {
-        const src = t[0];
-        const dst = t[1];
+        const [src, dst] = t;
 
         const state = states && states.find(s => src === `${s.cell_id}.${s.output}`);
         if(state !== undefined) {
@@ -88,10 +86,23 @@ const workableDefinition = (definition, states) => {
             if(dest_state !== undefined) {
                 t[2] = {'status': dest_state.status};
             }
+
+            if(state.status === 'OK') {
+                if(definition.cells[dst]?.original_name === 'goto') {
+                    // devnote: this is a goto transition, so we need to evaluate the transition from the 'goto' to the next cell as well
+                    t[2] = {'status': 'OK'};
+                    // definition.cells[dst].state = 'OK';
+                    const target = definition.cells[dst]?.params["task"];
+                    const target_state = states.find(s => target === s.cell_id);
+                    new_transitions.push([dst, target, {'status': target_state.status}]);
+                }
+            }
         }
 
         return null;
     });
+
+    new_def.transitions.push(...new_transitions);
 
     return new_def;
 };
