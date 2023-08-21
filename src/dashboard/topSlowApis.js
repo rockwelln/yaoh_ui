@@ -14,6 +14,7 @@ import update from 'immutability-helper';
 import Button from "react-bootstrap/lib/Button";
 import FormControl from "react-bootstrap/lib/FormControl";
 import Label from "react-bootstrap/lib/Label";
+import { Link } from 'react-router-dom';
 import Select from "react-select";
 import {localUser} from "../utils/user";
 import moment from "moment";
@@ -139,7 +140,7 @@ function getMethodLabel(m) {
   )
 }
 
-export default function ({props}) {
+export default function () {
   const now = new Date();
   let yesterday = new Date(now.getTime());
   yesterday.setDate(now.getDate() - 1);
@@ -179,13 +180,21 @@ export default function ({props}) {
           stats.map((stat, i) => (
             <>
             <tr>
-              <td>{getMethodLabel(stat.method)}</td>
-              <td style={{wordBreak: "break-word"}}>{stat.url}</td>
+              <td>
+                <Link to={stat.instance_id ? `/transactions/${stat.instance_id}` : `/requests/${stat.request_id}`}>
+                  {getMethodLabel(stat.method)}
+                </Link>
+              </td>
+              <td style={{wordBreak: "break-word"}}>
+                <Link to={stat.instance_id ? `/transactions/${stat.instance_id}` : `/requests/${stat.request_id}`}>
+                {stat.url}
+                </Link>
+              </td>
               <td/>
             </tr>
             <tr>
               <td/>
-              <td>{stat.duration} secs</td>
+              <td>{Math.floor(stat.duration * 1000) / 1000} secs</td>
               <td>{localUser.localizeUtcDate(moment.utc(stat.created_on)).format()}</td>
             </tr>
             </>
