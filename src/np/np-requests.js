@@ -151,8 +151,8 @@ export class NPRequests extends Component {
       donor_id: { model: 'NPRequest', value: '', op: 'eq' },
       recipient_id: { model: 'NPRequest', value: '', op: 'eq' },
       customer_id: { model: 'NPRequest', value: '', op: 'eq' },
-      created_on: { model: 'NPRequest', value: '', op: 'ge' },
-      due_date: { model: 'NPRequest', value: '', op: 'ge' },
+      created_on: { model: 'NPRequest', value: '', value2: '', op: 'ge' },
+      due_date: { model: 'NPRequest', value: '', value2: '', op: 'ge' },
       b2b: { model: 'NPRequest', value: '', op: 'eq' },
       activity_id: { model: 'ActivityInstance', value: '', op: 'eq' },
       role_id: { model: 'manual_actions', value: '', op: 'eq' },
@@ -308,6 +308,22 @@ export class NPRequests extends Component {
             ]};
           case 'created_on':
           case 'due_date':
+            if(op === "between") {
+                return { "and": [
+                    {
+                        model: model,
+                        field: f,
+                        op: "ge",
+                        value: moment.parseZone(filter_criteria[f].value).utc().format()
+                    },
+                    {
+                        model: model,
+                        field: f,
+                        op: "le",
+                        value: filter_criteria[f].value2?moment.parseZone(filter_criteria[f].value2).utc().format():moment.utc().format()
+                    }
+                ]};
+            }
             return {
                 model: model,
                 field: f,
@@ -887,13 +903,14 @@ export class NPRequests extends Component {
                     <option value="ge">&gt;=</option>
                     <option value="lt">&lt;</option>
                     <option value="le">&lt;=</option>
+                    <option value="between">between</option>
                   </FormControl>
                 </Col>
 
                 <Col sm={8}>
                   <DatePicker
                     className="form-control"
-                    selected={filter_criteria.due_date.value.length !== 0 ? userLocalizeUtcDate(moment.utc(filter_criteria.due_date.value), this.props.user_info).toDate() : null}
+                    selected={filter_criteria.due_date.value.length !== 0 ? userLocalizeUtcDate(moment.utc(filter_criteria.due_date.value), user_info).toDate() : null}
                     onChange={d => {
                       this.setState({
                         filter_criteria: update(
@@ -905,6 +922,27 @@ export class NPRequests extends Component {
                     showTimeSelect
                     timeFormat="HH:mm"
                     timeIntervals={60} />
+
+                  {
+                    filter_criteria.due_date.op === "between" &&
+                    <>
+                      {" - "}
+                      <DatePicker
+                          className="form-control"
+                          selected={filter_criteria.due_date.value2.length !== 0 ? userLocalizeUtcDate(moment(filter_criteria.due_date.value2), user_info).toDate() : null}
+                          onChange={d => {
+                            this.setState({
+                              filter_criteria: update(
+                                this.state.filter_criteria,
+                                {due_date: {$merge: {value2: d || ""}}})
+                            })
+                          }}
+                          dateFormat="dd/MM/yyyy HH:mm"
+                          showTimeSelect
+                          timeFormat="HH:mm"
+                          timeIntervals={60}/>
+                    </>
+                  }
                 </Col>
               </FormGroup>
 
