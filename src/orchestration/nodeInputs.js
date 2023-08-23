@@ -448,9 +448,8 @@ export function HttpHeaders({value, onChange, readOnly}) {
 }
 
 
-const TIMER = 2;
 function TimerInput({cells, cellsDef, value, onChange, readOnly}) {
-  const allTimers = cellsDef.filter(c => c.type === TIMER).map(c => c.name);
+  const allTimers = cellsDef.filter(c => c.category === "timers" && c.name !== "stop_timer").map(c => c.name);
 
   return (
     <FormControl
@@ -462,10 +461,10 @@ function TimerInput({cells, cellsDef, value, onChange, readOnly}) {
     >
       <option value={""}/>
       {
-        Object.keys(cells)
-          .filter(allTimers.includes)
-          .sort((a, b) => a.localeCompare(b))
-          .map(t => <option value={t} key={t}>{t}</option>)
+        Object.entries(cells)
+          .filter(([,d]) => allTimers.includes(d.original_name))
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([t]) => <option value={t} key={t}>{t}</option>)
       }
     </FormControl>
   )
