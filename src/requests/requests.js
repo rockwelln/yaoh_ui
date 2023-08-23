@@ -49,7 +49,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import GridPic from "../orchestration/grid.gif";
 import update from 'immutability-helper';
 import {StaticControl} from "../utils/common";
-import {access_levels, isAllowed, modules, pages} from "../utils/user";
+import {access_levels, isAllowed, modules, pages, supportedModule} from "../utils/user";
 import {TimerActions} from "./timers";
 import {fetchRoles} from "../system/user_roles";
 import {LinkContainer} from "react-router-bootstrap";
@@ -3835,7 +3835,11 @@ export class ScheduledRequests extends Component{
             <div>
                 <Breadcrumb>
                     <Breadcrumb.Item active><FormattedMessage id="requests" defaultMessage="Requests"/></Breadcrumb.Item>
-                    <Breadcrumb.Item active><FormattedMessage id="cron-requests" defaultMessage="Cron requests"/></Breadcrumb.Item>
+                  {
+                    supportedModule(modules.npact, user_info.modules) ?
+                      <Breadcrumb.Item active><FormattedMessage id="instances" defaultMessage="Instances"/></Breadcrumb.Item> :
+                      <Breadcrumb.Item active><FormattedMessage id="cron-requests" defaultMessage="Cron requests"/></Breadcrumb.Item>
+                  }
                 </Breadcrumb>
                 <Panel defaultExpanded={false} >
                     <Panel.Heading>
@@ -3993,7 +3997,7 @@ export class ScheduledRequests extends Component{
                             headers={[
                                 {
                                     title: '#', field: 'instance_id', model: 'requests',
-                                    render: n => <Link to={`/transactions/${n.instance_id}`}>I{n.instance_id}</Link>,
+                                    render: n => <Link to={`/instances/${n.instance_id}`}>I{n.instance_id}</Link>,
                                     sortable: true,
                                     style: {width: '50px'}
                                 },

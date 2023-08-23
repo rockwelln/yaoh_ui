@@ -271,6 +271,17 @@ function AsyncApioNavBar({user_info, logoutUser, database_status}){
               </MenuItem>
             </LinkContainer>
 
+            <LinkContainer to={"/custom-transactions/list"} key="custom-requests">
+              <MenuItem>
+                <FormattedMessage id="instances" defaultMessage="Instances"/>
+              </MenuItem>
+            </LinkContainer>
+            <LinkContainer to={"/transactions/timers"} key="timers">
+              <MenuItem>
+                <FormattedMessage id="timers" defaultMessage="Timers"/>
+              </MenuItem>
+            </LinkContainer>
+
           </NavDropdown>
           }
 
@@ -1262,6 +1273,14 @@ class App extends Component {
                                            user_info={user_info}
                                            {...props} /> :
                                        <NotAllowed/>
+                               )} />
+                        <Route path="/instances/:txId"
+                               component={props => (
+                                 localUser.isAllowed(accesses.requests) ?
+                                   <Transaction
+                                       user_info={user_info}
+                                       {...props} /> :
+                                   <NotAllowed/>
                                )} />
                         <Route path="/auth-silent-callback" component={AuthSilentCallback} exact/>
                         <Route path="/" exact>
