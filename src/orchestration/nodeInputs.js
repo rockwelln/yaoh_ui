@@ -390,6 +390,9 @@ const TIMER = 2;
 function TimerInput(props) {
   const {cells, cellsDef, value, onChange} = props;
   const allTimers = cellsDef.filter(c => c.type === TIMER).map(c => c.name);
+  const cs = Object.entries(cells)
+    .filter(([name, info]) => allTimers.includes(info.original_name))
+    .sort(([a], [b]) => a.localeCompare(b));
 
   return (
     <FormControl
@@ -399,10 +402,8 @@ function TimerInput(props) {
     >
       <option value={""}/>
       {
-        Object.keys(cells)
-          .filter(allTimers.includes)
-          .sort((a, b) => a.localeCompare(b))
-          .map(t => <option value={t} key={t}>{t}</option>)
+        cs
+          .map(([t]) => <option value={t} key={t}>{t}</option>)
       }
     </FormControl>
   )
