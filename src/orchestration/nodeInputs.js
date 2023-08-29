@@ -14,6 +14,7 @@ import Select from "react-select";
 import InputGroup from "react-bootstrap/lib/InputGroup";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import HelpBlock from "react-bootstrap/lib/HelpBlock";
+import { FormattedMessage } from "react-intl";
 
 
 function BasicInput(props) {
@@ -544,6 +545,71 @@ function WorkflowEnds({value, onChange, workflow, readOnly}) {
 }
 
 
+function Retry({value, onChange, readOnly, conditionOptions}) {
+  return (
+    <>
+      <Table>
+        <tbody>
+          <tr>
+            <th>
+              <FormattedMessage id="condition" defaultMessage="Conditions" />
+            </th>
+            <td>
+              <Select
+                isMulti
+                isClearable
+                placeholder=""
+                name="retry-conditions"
+                value={value?.conditions?.map(c => ({value: c, label: c}))}
+                onChange={(vv, action) => {
+                  if(["select-option", "create-option", "clear", "remove-value"].includes(action.action)) {
+                    onChange(update(value, {$merge: {conditions: vv?vv.map(v => v.value):[]}}));
+                  }
+                }}
+                options={conditionOptions.map(e => ({value: e, label: e}))} />
+            </td>
+          </tr>
+          <tr>
+            <th>
+              <FormattedMessage id="delay" defaultMessage="Delay" />
+            </th>
+            <td>
+              <Select
+                isClearable
+                placeholder="time between 2 attempts"
+                name="retry-delay"
+                value={{value: value?.delay, label: value?.delay}}
+                onChange={(value, action) => {
+                  if(["select-option", "create-option", "clear"].includes(action.action)) {
+                    onChange(update(value, {$merge: {delay: value?value.value:""}}));
+                  }
+                }}
+                options={["immediate", "10s", "5m", "10m", "30m", "1h", "24h"].map(e => ({value: e, label: e}))} />
+            </td>
+          </tr>
+          <tr>
+            <th>
+              <FormattedMessage id="max" defaultMessage="Max time" />
+            </th>
+            <td>
+            <FormControl
+              value={value?.max}
+              onChange={e => onChange(update(value, {$merge: {max: e.target.value && parseInt(e.target.value, 10)}}))} />
+            </td>
+          </tr>
+        </tbody>
+      </Table>
+      <HelpBlock>
+        This node support some retry policy.<br/>
+        If the delay between 2 attempts is not "immediate", the processing is deffered using a timer.<br/>
+        (meaning, the processing may continue on a different processing node, !this is not suitable for "synchronous" routes!)
+        The max time is the maximum time the node can be in retry mode.<br/>
+      </HelpBlock>
+    </>
+  );
+}
+
+
 function Strings({value, onChange, regexp, readOnly}) {
   const [newEntry, setNewEntry] = useState("");
   const values = value ? value.split(",") : [];
@@ -907,6 +973,13 @@ export function Param2Input({param, activity, staticParams, cells, value, readOn
         onChange={(e, outputs) => {
           onChange(e, outputs);
         }} />
+      break;
+    case 'retry':
+      i = <Retry 
+        value={value} 
+        readOnly={readOnly}
+        conditionOptions={param.values}
+        onChange={e => onChange(e)} />
       break;
     case 'outputs':
       i = <Strings
