@@ -563,7 +563,7 @@ function Retry({value, onChange, readOnly, conditionOptions}) {
                 value={value?.conditions?.map(c => ({value: c, label: c}))}
                 onChange={(vv, action) => {
                   if(["select-option", "create-option", "clear", "remove-value"].includes(action.action)) {
-                    onChange(update(value, {$merge: {conditions: vv?vv.map(v => v.value):[]}}));
+                    onChange(update(value || {}, {$merge: {conditions: vv?vv.map(v => v.value):[]}}));
                   }
                 }}
                 options={conditionOptions.map(e => ({value: e, label: e}))} />
@@ -579,9 +579,9 @@ function Retry({value, onChange, readOnly, conditionOptions}) {
                 placeholder="time between 2 attempts"
                 name="retry-delay"
                 value={{value: value?.delay, label: value?.delay}}
-                onChange={(value, action) => {
+                onChange={(vv, action) => {
                   if(["select-option", "create-option", "clear"].includes(action.action)) {
-                    onChange(update(value, {$merge: {delay: value?value.value:""}}));
+                    onChange(update(value || {}, {$merge: {delay: vv?vv.value:""}}));
                   }
                 }}
                 options={["immediate", "10s", "5m", "10m", "30m", "1h", "24h"].map(e => ({value: e, label: e}))} />
@@ -594,7 +594,7 @@ function Retry({value, onChange, readOnly, conditionOptions}) {
             <td>
             <FormControl
               value={value?.max}
-              onChange={e => onChange(update(value, {$merge: {max: e.target.value && parseInt(e.target.value, 10)}}))} />
+              onChange={e => onChange(update(value || {}, {$merge: {max: e.target.value && parseInt(e.target.value, 10)}}))} />
             </td>
           </tr>
         </tbody>
