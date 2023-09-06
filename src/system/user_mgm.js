@@ -28,7 +28,6 @@ import update from 'immutability-helper';
 import {fetch_post, fetch_get, fetch_delete, fetch_put, NotificationsManager, userLocalizeUtcDate} from "../utils";
 import {ApioDatatable} from "../utils/datatable";
 import { LinkContainer } from 'react-router-bootstrap';
-import {INTERNAL_HELP_LINKS} from "../help/async-apio-help";
 import {Search, StaticControl} from "../utils/common";
 import {CallbackHandler} from "./callbacks";
 import {get_ui_profiles, modules, localUser as localUserMod} from "../utils/user";
@@ -813,10 +812,6 @@ function UpdateUser(props) {
                                 </FormControl>
                                 <HelpBlock><FormattedMessage id="app.user.profile.help"
                                                              defaultMessage="The profile has no influence on the rights in the application only the pages the user may see."/></HelpBlock>
-                                <HelpBlock>
-                                    <FormattedMessage id="for-more-information-about-profile-implementation-in-the-right-management-see-" defaultMessage="For more information about profile implementation in the right management see " />
-                                    <a href={INTERNAL_HELP_LINKS.profile_rights.url}><FormattedMessage id="here" defaultMessage="here"/></a>
-                                </HelpBlock>
                             </Col>
                         </FormGroup>
                         <FormGroup>
@@ -1318,10 +1313,6 @@ function NewUser(props) {
                             </FormControl>
                             <HelpBlock><FormattedMessage id="app.user.profile.help"
                                                          defaultMessage="The profile has no influence on the rights in the application only the pages the user may see."/></HelpBlock>
-                            <HelpBlock>
-                                <FormattedMessage id="for-more-information-about-profile-implementation-in-the-right-management-see-" defaultMessage="For more information about profile implementation in the right management see " />
-                                <a href={INTERNAL_HELP_LINKS.profile_rights.url}><FormattedMessage id="here" defaultMessage="here"/></a>
-                            </HelpBlock>
                         </Col>
                     </FormGroup>
                     <FormGroup>
