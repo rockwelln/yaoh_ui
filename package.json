@@ -52,7 +52,7 @@
     "build-pra": "sed -i.bkp '/\\/\\/ default/,/\\/\\/ end/d' src/provisioning/index.js; react-scripts build; mv src/provisioning/index.js.bkp src/provisioning/index.js",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "docs": "cd docs; npm run build; cd ..",
+    "docs": "cd docs; sed -i.bkp 's/\\/apio-core-docs/\\/static\\/docs/' docusaurus.config.js; npm run build; mv docusaurus.config.js.bkp docusaurus.config.js; cd ..",
     "build-docs": "npm run docs; rm -rf public/static/docs/; mkdir -p public/static/docs; mv docs/build/* public/static/docs/"
   },
   "eslintConfig": {
