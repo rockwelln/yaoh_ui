@@ -175,11 +175,22 @@ Public routes are useful when you want to expose your workflows to external syst
 
 ## Proxied routes
 
-APIO core can be deployed with one or several proxies to intercept and/or forward some traffic to a Broadsoft gateway. In this case, the proxy process will use the custom routes to *overload* or *extend* the Broadsoft gateway API calls.
+APIO core can be deployed with one or several proxies to intercept and/or forward some traffic to a Broadsoft gateway (Netaxis product). In this case, the proxy process will use the custom routes to *overload* or *extend* the Broadsoft gateway API calls.
 
 Proxied routes are usually exposed under the `/api/v01/p{id}` path. For example, the route `/my-route` is exposed as `https://api.example.com/api/v01/p1/my-route`.
 
 All proxied routes require the user to be authenticated.
+
+:::caution
+
+Proxied routes (not overloaded by custom routes) are executed with different user sessions depending of the originating user:
+
+* The user is a Broadsoft user, the route is executed with the user session.
+* The user is an APIO user, the user profile is used to allow or deny the execution of the route. If the user profile is allowed to execute the route, the route is executed with the system level session.
+
+There is no risk of impersonation because the user session is always used for Broadsoft users.
+
+:::
 
 Some nodes are especially usefull in the context of the proxied routes, e.g. [Proxy user session](../workflows/nodes/#broadsoft-proxy-session-call) node, to use the user session to make calls to the Broadsoft gateway.
 

@@ -80,3 +80,29 @@ services:
 +   volumes:
 +     - /var/run/docker.sock:/var/run/docker.sock
 ```
+
+## Time to start
+
+### The Docker way
+
+```bash
+$ docker-compose up -d
+```
+
+## Create the first superuser
+
+When the APIO core platform is started for the first time, you must create the first user. This user will be the administrator of the platform.
+
+### The Docker way
+
+```bash
+$ docker-compose run --rm core /usr/local/go/server -newsuperuser
+```
+
+By default the username is 'netaxis'.
+
+:::caution
+
+The password is automatically generated and displayed in the console. You must copy it and store it in a safe place.
+
+:::
