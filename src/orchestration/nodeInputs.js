@@ -391,7 +391,7 @@ function TimerInput(props) {
   const {cells, cellsDef, value, onChange} = props;
   const allTimers = cellsDef.filter(c => c.type === TIMER).map(c => c.name);
   const cs = Object.entries(cells)
-    .filter(([name, info]) => allTimers.includes(info.original_name))
+    .filter(([, info]) => allTimers.includes(info.original_name))
     .sort(([a], [b]) => a.localeCompare(b));
 
   return (
