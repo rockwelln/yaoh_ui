@@ -40,7 +40,7 @@ import {
   triggerManualAction,
   TxTable
 } from "../../requests/requests";
-import {access_levels, isAllowed, pages} from "../../utils/user";
+import {access_levels, isAllowed, modules, pages} from "../../utils/user";
 import Row from "react-bootstrap/lib/Row";
 import Tabs from "react-bootstrap/lib/Tabs";
 import Tab from "react-bootstrap/lib/Tab";
@@ -94,6 +94,7 @@ function newRequest(request, onSuccess, onError) {
       change_addr_installation_porting_id: request.change_addr_installation_porting_id,
       label: request.label,
       contact_email: request.contact_email,
+      tenant: request.tenant || undefined,
     }
   )
     .then(parseJSON)
@@ -316,14 +317,18 @@ function generateNewPortId(issuer="", prefix="", suffix="") {
   return `${prefix}${now}${issuer}${suffix}${Math.floor(Math.random()*10000)}`
 }
 
-const emptyRequest = issuer => {
+const emptyRequest = (userInfo, issuer) => {
+  let tenant = undefined;
+  if(userInfo.modules.includes(modules.npact_crdb_dd)) {
+    tenant="INTERSOL";
+  }
   return {
     ranges: [{ from: '', to: '' }],
     donor: '',
     change_addr_installation_porting_id: '',
     isB2B: false,
     crdc_id: generateNewPortId(issuer),
-    tenant: "INTERSOL",
+    tenant: tenant,
     service_type: 'GEOGRAPHIC',
     routing_info: '',
     subscriber_data: {
@@ -338,7 +343,7 @@ const emptyRequest = issuer => {
 export function NPPortInRequest({userInfo, defaultRecipient}) {
   const [operators, setOperators] = useState([]);
   const [routes, setRoutes] = useState([]);
-  const [request, setRequest] = useState(emptyRequest(defaultRecipient));
+  const [request, setRequest] = useState(emptyRequest(userInfo, defaultRecipient));
   const [redirect, setRedirect] = useState(false);
   const [loading, setLoading] = useState(false);
   const [rangeError, setRangeError] = useState(undefined);
