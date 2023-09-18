@@ -3691,6 +3691,17 @@ function LicenseGenerator({onNewLicense}) {
         </FormGroup>
         <FormGroup>
           <Col componentClass={ControlLabel} sm={2}>
+            <FormattedMessage id="max-activities" defaultMessage="Max activities"/>
+          </Col>
+          <Col sm={9}>
+            <FormControl
+              componentClass="input"
+              value={newLicense.max_activities || ""}
+              onChange={e => setNewLicense(update(newLicense, {"$merge": {max_activities: e.target.value ? parseInt(e.target.value) : undefined}}))} />
+          </Col>
+        </FormGroup>
+        <FormGroup>
+          <Col componentClass={ControlLabel} sm={2}>
             <FormattedMessage id="license key" defaultMessage="License key"/>
           </Col>
           <Col sm={9}>
@@ -3731,6 +3742,7 @@ function LicensePanel(props) {
           <StaticControl label="Valid until" value={current.valid_until || "n/a"}/>
           <StaticControl label="Assigned to" value={current.customer_name}/>
           <StaticControl label="Demo" value={current.demo ? "yes": "no"}/>
+          <StaticControl label="Max activities" value={current.fields?.max_activities || "*not set*"}/>
           <FormGroup>
             <Col componentClass={ControlLabel} sm={2}>
               <FormattedMessage id="new_license" defaultMessage="New license"/>
