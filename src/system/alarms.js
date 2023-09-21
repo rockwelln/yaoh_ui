@@ -171,7 +171,7 @@ function clearAlarm(aID, onSuccess) {
 function fetchAlarmKeys(onSuccess) {
   fetch_get("/api/v01/alarms/keys")
     .then(r => {
-      onSuccess && onSuccess(r.keys);
+      onSuccess && r.keys && onSuccess(r.keys);
     })
     .catch(error => {
       NotificationsManager.error("Failed to fetch alarm keys", error.message);
