@@ -58,6 +58,8 @@ import deepEqual from "../utils/deepEqual";
 import { readFile } from './startup_events';
 import { useDropzone } from 'react-dropzone';
 import { ApioDatatable } from '../utils/datatable';
+import Tabs from 'react-bootstrap/lib/Tabs';
+import Tab, { Container } from 'react-bootstrap/lib/Tab';
 
 
 const NEW_ACTIVITY = {
@@ -2230,38 +2232,47 @@ export function ActivityEditor(props) {
             <hr />
             <Row>
               <Col sm={12}>
-                <ApioDatatable
-                  data={applySortingSpec(versions)}
-                  sorting_spec={sortingSpec}
-                  onSort={s => setSortingSpec([s])}
-                  headers={[
-                    {title: "#", field: 'id', sortable: true, render: n => n.id},
-                    {title: <FormattedMessage id="label" defaultMessage="Label" />, render: n => n.label || WORKING_VERSION_LABEL},
-                    {title: <FormattedMessage id="message" defaultMessage="Message" />, render: n => n.message || "-"},
-                    {title: <FormattedMessage id="username" defaultMessage="Username" />, field: 'username', sortable: true, render: n => n.username ? `${n.username} (${n.email})` : "-"},
-                    {title: <FormattedMessage id="date" defaultMessage="Date" />, field: 'updated_on', sortable: true, render: n => userLocalizeUtcDate(moment.utc(n.updated_on), props.user_info).format()},
-                    {
-                        title: '', render: v => (
-                          v.label &&
-                            <ButtonGroup>
-                              <Button 
-                                onClick={() => setShowVersion(v)}
-                                bsStyle="primary">
-                                <Glyphicon glyph="pencil"/>
-                              </Button>
-                              <DeleteConfirmButton
-                                onConfirm={() => deleteVersion(activityId, v.id, () => {
-                                  fetchActivityVersions(activityId, r => {
-                                    setVersions(r);
-                                    setVersionId((r.find(v => v.active) || {}).id);
-                                  });
-                                })}
-                                resourceName={`version labelled ${v.label}`} />
-                            </ButtonGroup>
-                        )
-                    },
-                ]}
-                  />
+                <Tabs defaultActiveKey={1} id="activity-versions">
+                  <Tab eventKey={1} title={<FormattedMessage id="versions" defaultMessage="Versions" />}>
+                    <ApioDatatable
+                      data={applySortingSpec(versions)}
+                      sorting_spec={sortingSpec}
+                      onSort={s => setSortingSpec([s])}
+                      headers={[
+                        {title: "#", field: 'id', sortable: true, render: n => n.id},
+                        {title: <FormattedMessage id="label" defaultMessage="Label" />, render: n => n.label || WORKING_VERSION_LABEL},
+                        {title: <FormattedMessage id="message" defaultMessage="Message" />, render: n => n.message || "-"},
+                        {title: <FormattedMessage id="username" defaultMessage="Username" />, field: 'username', sortable: true, render: n => n.username ? `${n.username} (${n.email})` : "-"},
+                        {title: <FormattedMessage id="date" defaultMessage="Date" />, field: 'updated_on', sortable: true, render: n => userLocalizeUtcDate(moment.utc(n.updated_on), props.user_info).format()},
+                        {
+                            title: '', render: v => (
+                              v.label &&
+                                <ButtonGroup>
+                                  <Button 
+                                    onClick={() => setShowVersion(v)}
+                                    bsStyle="primary">
+                                    <Glyphicon glyph="pencil"/>
+                                  </Button>
+                                  <DeleteConfirmButton
+                                    onConfirm={() => deleteVersion(activityId, v.id, () => {
+                                      fetchActivityVersions(activityId, r => {
+                                        setVersions(r);
+                                        setVersionId((r.find(v => v.active) || {}).id);
+                                      });
+                                    })}
+                                    resourceName={`version labelled ${v.label}`} />
+                                </ButtonGroup>
+                            )
+                        },
+                    ]}
+                      />
+                  </Tab>
+                  <Tab eventKey={2} title={<FormattedMessage id="trigger" defaultMessage="Trigger" />}>
+                    <Container>
+                      <TriggerWorkflow />
+                    </Container>
+                  </Tab>
+                </Tabs>
               </Col>
             </Row>
 
@@ -2394,4 +2405,173 @@ export function ActivityEditor(props) {
                 }} />
         </>
     );
+}
+
+function TriggerWorkflow({definition, activity_id}) {
+  const [request, setRequest] = useState({
+    method: "GET",
+    url: "/trigger",
+    body: "",
+    subworkflows_mapping: {},
+  });
+  const [response, setResponse] = useState();
+  const [error, setError] = useState();
+
+  const submit = useCallback(() => {
+    fetch_post('/api/v01/activities/simulate', {
+      url: request.url,
+      body: request.body,
+      method: request.method,
+      definition: definition,
+      activity_id: activity_id,
+      subworkflows_mapping: request.subworkflows_mapping,
+    })
+      .then(r => setResponse(r))
+      .catch(e => setError(e));
+  }, [request, definition, activity_id]);
+
+  return (
+    <Form horizontal onSubmit={() => submit()}>
+      <FormGroup>
+        <Col sm={2}>
+          <FormControl componentClass="select" value={request.method} onChange={e => setRequest(update(request, {$merge: {method: e.target.value}}))}>
+            <option value={"GET"}>GET</option>
+            <option value={"POST"}>POST</option>
+            <option value={"PUT"}>PUT</option>
+            <option value={"DELETE"}>DELETE</option>
+          </FormControl>
+        </Col>
+        <Col sm={10}>
+          <FormControl
+            componentClass="input"
+            value={request.url}
+            placeholder="/some_url"
+            onChange={e => setRequest(update(request, {$merge: {url: e.target.value}}))} />
+        </Col>
+      </FormGroup>
+      <FormGroup>
+        <Col sm={12}>
+          <FormControl
+            componentClass="textarea"
+            value={request.body}
+            placeholder="Some body..."
+            rows={20}
+            onChange={e => setRequest(update(request, {$merge: {body: e.target.value}}))} />
+        </Col>
+      </FormGroup>
+      <FormGroup>
+        <Col sm={12}>
+          <SubworkflowMapping
+            mapping={request.subworkflows_mapping}
+            onChange={m => setRequest(update(request, {$merge: {subworkflows_mapping: m}}))} />
+        </Col>
+      </FormGroup>
+      <FormGroup>
+        <Col sm={12}>
+          <Button bsStyle="primary" type="submit">Send</Button>
+        </Col>
+      </FormGroup>
+
+      <FormGroup>
+        <Col sm={12}>
+          {response && <pre>{JSON.stringify(response, null, 2)}</pre>}
+          {error && <pre>{JSON.stringify(error, null, 2)}</pre>}
+        </Col>
+      </FormGroup>
+    </Form>
+  );
+}
+
+function SubworkflowMapping({mapping, onChange}) {
+  const [newEntry, setNewEntry] = useState({workflow: "", version: ""});
+  const [activities, setActivities] = useState([]);
+  const [versions, setVersions] = useState([]);
+  const [refresh, setRefresh] = useState(false);
+
+  useEffect(() => {
+    fetchActivities(setActivities);
+    setRefresh(false);
+  }, [refresh]);
+
+  useEffect(() => {
+    if(newEntry.workflow.length) {
+      const aId = activities.find(a => a.name === newEntry.workflow)?.id;
+      fetchActivityVersions(aId, setVersions);
+    }
+  }, [newEntry.workflow, activities]);
+
+  return (
+    <Table>
+      <thead>
+        <tr>
+          <th>Overloaded workflow</th>
+          <th>Version</th>
+          <th/>
+        </tr>
+      </thead>
+      <tbody>
+        {
+          Object.entries(mapping).map(([k, v]) => (
+            <tr key={k}>
+              <td>{k}</td>
+              <td>{v || WORKING_VERSION_LABEL}</td>
+              <td>
+                <Button
+                  bsStyle={"danger"}
+                  onClick={() => onChange(update(mapping, {$unset: [k]}))}>
+                  <Glyphicon glyph="remove"/>
+                </Button>
+              </td>
+            </tr>
+          ))
+        }
+        <tr>
+          <td>
+            <Select
+              value={{label: newEntry.workflow, value: newEntry.workflow}}
+              isSearchable={true}
+              name="workflow"
+              onChange={(value, action) => {
+                if(action.action === "select-option") {
+                  setNewEntry(update(newEntry, {$merge: {workflow: value.value, version: ""}}));
+                }
+              }}
+              options={activities.map(a => ({value: a.name, label: a.name}))} />
+          </td>
+          <td>
+            <Select
+              value={{label: newEntry.version || WORKING_VERSION_LABEL, value: newEntry.version}}
+              isSearchable={true}
+              isDisabled={!newEntry.workflow.length}
+              name="version"
+              onChange={(value, action) => {
+                if(action.action === "select-option") {
+                  setNewEntry(update(newEntry, {$merge: {version: value.value}}));
+                }
+              }}
+              options={versions.map(v => ({value: v.label || "", label: v.label || WORKING_VERSION_LABEL}))} />
+          </td>
+          <td>
+            <Button
+              bsStyle={"success"}
+              disabled={!newEntry.workflow.length}
+              onClick={() => {
+                onChange(update(mapping, {$merge: {[newEntry.workflow]: newEntry.version}}));
+                setNewEntry({workflow: "", version: ""});
+              }}>
+              <Glyphicon glyph="plus"/>
+            </Button>
+            {" "}
+            <Button
+              bsStyle={"primary"}
+              onClick={() => {
+                setRefresh(true);
+              }}>
+              <Glyphicon glyph="refresh"/>
+            </Button>
+          </td>
+        </tr>
+      </tbody>
+    </Table>
+  );
 }
