@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef, useLayoutEffect} from 'react';
+import React, {useState, useEffect, useRef, useLayoutEffect, useCallback} from 'react';
 import ReactDOM from 'react-dom';
 import {Redirect} from "react-router";
 import {
@@ -57,6 +57,7 @@ import moment from "moment";
 import deepEqual from "../utils/deepEqual";
 import { readFile } from './startup_events';
 import { useDropzone } from 'react-dropzone';
+import { ApioDatatable } from '../utils/datatable';
 
 
 const NEW_ACTIVITY = {
@@ -1918,6 +1919,7 @@ export function ActivityEditor(props) {
     const [versions, setVersions] = useState([]);
     const [showVersion, setShowVersion] = useState();
     const [usage, setUsage] = useState({});
+    const [sortingSpec, setSortingSpec] = useState([{field: "id", direction: "desc"}]);
     const [width, height] = useWindowSize();
 
     useEffect(() => {
@@ -2027,6 +2029,16 @@ export function ActivityEditor(props) {
         return () => clearInterval(i);
       }
     }, [activityId, currentVersion]);
+
+    const applySortingSpec = useCallback(v => {
+      const f = sortingSpec[0]?.field;
+      const d = sortingSpec[0]?.direction;
+      return v.sort((a, b) => {
+        if(a[f] < b[f]) return d === "asc"?-1:1;
+        if(a[f] > b[f]) return d === "asc"?1:-1;
+        return 0;
+      });
+    }, [sortingSpec]);
 
     const save = () => {
       const r = editor.getDefinition(ReactDOM.findDOMNode(titleRef.current).value);
@@ -2217,55 +2229,40 @@ export function ActivityEditor(props) {
             </Row>
             <hr />
             <Row>
-                <Col sm={12}>
-                    <Table>
-                      <thead>
-                        <tr>
-                          <th colSpan={5}>History</th>
-                        </tr>
-                        <tr>
-                          <th>#</th>
-                          <th>Label</th>
-                          <th>Message</th>
-                          <th>Username</th>
-                          <th>Date</th>
-                          <th/>
-                        </tr>
-                      </thead>
-                      <tbody>
-                      {
-                        versions.sort((a, b) => b.id - a.id).map((v, i) => (
-                          <tr key={`version-${i}`}>
-                            <td>{i+1}</td>
-                            <td>{v.label || WORKING_VERSION_LABEL}</td>
-                            <td>{v.message ? v.message.split("\n").map(m => <>{m}<br/></>) : "-"}</td>
-                            <td>{v.username ? `${v.username} (${v.email})` : "-"}</td>
-                            <td>{userLocalizeUtcDate(moment.utc(v.updated_on), props.user_info).format()}</td>
-                            <td>
-                              { v.label &&
-                                <ButtonGroup>
-                                  <Button 
-                                    onClick={() => setShowVersion(v)}
-                                    bsStyle="primary">
-                                    <Glyphicon glyph="pencil"/>
-                                  </Button>
-                                  <DeleteConfirmButton
-                                    onConfirm={() => deleteVersion(activityId, v.id, () => {
-                                      fetchActivityVersions(activityId, r => {
-                                        setVersions(r);
-                                        setVersionId((r.find(v => v.active) || {}).id);
-                                      });
-                                    })}
-                                    resourceName={`version labelled ${v.label}`} />
-                                </ButtonGroup>
-                              }
-                            </td>
-                          </tr>
-                        ))
-                      }
-                      </tbody>
-                    </Table>
-                </Col>
+              <Col sm={12}>
+                <ApioDatatable
+                  data={applySortingSpec(versions)}
+                  sorting_spec={sortingSpec}
+                  onSort={s => setSortingSpec([s])}
+                  headers={[
+                    {title: "#", field: 'id', sortable: true, render: n => n.id},
+                    {title: <FormattedMessage id="label" defaultMessage="Label" />, render: n => n.label || WORKING_VERSION_LABEL},
+                    {title: <FormattedMessage id="message" defaultMessage="Message" />, render: n => n.message || "-"},
+                    {title: <FormattedMessage id="username" defaultMessage="Username" />, field: 'username', sortable: true, render: n => n.username ? `${n.username} (${n.email})` : "-"},
+                    {title: <FormattedMessage id="date" defaultMessage="Date" />, field: 'updated_on', sortable: true, render: n => userLocalizeUtcDate(moment.utc(n.updated_on), props.user_info).format()},
+                    {
+                        title: '', render: v => (
+                          v.label &&
+                            <ButtonGroup>
+                              <Button 
+                                onClick={() => setShowVersion(v)}
+                                bsStyle="primary">
+                                <Glyphicon glyph="pencil"/>
+                              </Button>
+                              <DeleteConfirmButton
+                                onConfirm={() => deleteVersion(activityId, v.id, () => {
+                                  fetchActivityVersions(activityId, r => {
+                                    setVersions(r);
+                                    setVersionId((r.find(v => v.active) || {}).id);
+                                  });
+                                })}
+                                resourceName={`version labelled ${v.label}`} />
+                            </ButtonGroup>
+                        )
+                    },
+                ]}
+                  />
+              </Col>
             </Row>
 
             <CommitVersionModal

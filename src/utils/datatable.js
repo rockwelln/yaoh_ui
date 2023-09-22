@@ -156,7 +156,7 @@ export const ApioDatatable = ({sorting_spec, headers, pagination, data, labels, 
                         total_results={pagination.total_results}
                     />
             }
-            <Table style={{tableLayout: 'fixed'}}>
+            <Table>
                 <thead>
                     <tr>
                         {
