@@ -1,4 +1,5 @@
 import React from 'react';
+import {useEffect, useState} from 'react';
 import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import FormGroup from "react-bootstrap/lib/FormGroup";
 import FormControl from "react-bootstrap/lib/FormControl";
@@ -187,4 +188,16 @@ export class Search extends React.Component {
                 }
             });
     }
+}
+
+export function useSearchDebounce(delay = 350) {
+  const [search, setSearch] = useState(null);
+  const [searchQuery, setSearchQuery] = useState(null);
+
+  useEffect(() => {
+    const delayFn = setTimeout(() => setSearch(searchQuery), delay);
+    return () => clearTimeout(delayFn);
+  }, [searchQuery, delay]);
+
+  return [search, setSearchQuery];
 }

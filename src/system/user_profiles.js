@@ -31,6 +31,7 @@ import Papa from "papaparse";
 import Tabs from "react-bootstrap/lib/Tabs";
 import Tab from "react-bootstrap/lib/Tab";
 import {DeleteConfirmButton} from "../utils/deleteConfirm";
+import { useSearchDebounce } from '../utils/common';
 
 
 // few helper functions
@@ -415,6 +416,8 @@ function UpdateProfile(props) {
     const [profile, setProfile] = useState(props.profile);
     const [loadErrors, setLoadErrors] = useState([]);
     const [showUploadRulesDialog, setShowUploadRulesDialog] = useState(false);
+    const [checkPath, setCheckPath] = useSearchDebounce();
+    const [checkPathStatus, setCheckPathStatus] = useState();
     const refresh = () => fetchProfileDetails(props.profile.id).then(data => setProfile(data.profile));
     const validName = null;
 
@@ -425,6 +428,16 @@ function UpdateProfile(props) {
       checked ?
         setProfile(update(profile, {accesses: {$push: [right]}})) :
         setProfile(update(profile, {accesses: {$splice: [[profile.accesses.findIndex(a => a === right), 1]]}}));
+
+    useEffect(() => {
+        if(checkPath) {
+            fetch_get(`/api/v01/system/user_profiles/${profile.id}/check_path?p=${checkPath}`)
+                .then(data => setCheckPathStatus(data.valid))
+                .catch(error => NotificationsManager.error(<FormattedMessage id="failed-check-path" defaultMessage="Failed to check path"/>, error.message))
+        } else {
+            setCheckPathStatus(undefined);
+        }
+    }, [checkPath]);
 
     return (
         <Panel
@@ -670,6 +683,23 @@ function UpdateProfile(props) {
                                             <Glyphicon glyph="open"/>
                                         </Button>
                                     </ButtonToolbar>
+                                </Col>
+                            </FormGroup>
+                            <FormGroup validationState={checkPathStatus === undefined?null:checkPathStatus?"success":"error"}>
+                                <Col componentClass={ControlLabel} sm={2}>
+                                    <FormattedMessage id="check-is-allowed" defaultMessage="Path is allowed?" />
+                                </Col>
+
+                                <Col sm={9}>
+                                    <FormControl
+                                        componentClass="input"
+                                        placeholder="/users/1"
+                                        style={{ color: checkPathStatus === undefined ? 'black' : checkPathStatus ? 'green' : 'red' }}
+                                        onChange={e => setCheckPath(e.target.value)} />
+                                    <HelpBlock>
+                                        Check if the path is allowed by the user profile rules <i>saved</i>.<br/>
+                                        The path is the part of the URL after the prefix (e.g /api/v01/p1).<br/>
+                                    </HelpBlock>
                                 </Col>
                             </FormGroup>
                             <UploadFileModal
