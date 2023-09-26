@@ -197,6 +197,44 @@ function getCustomStyle(def) {
     }, "default") || "";
 }
 
+export function clearStates(graph) {
+    graph.getModel().beginUpdate();
+    try {
+        for(let cellId in graph.getModel().cells) {
+            if(graph.getModel().cells.hasOwnProperty(cellId)) {
+                let cell = graph.getModel().cells[cellId];
+                if(cell.edge) continue;
+                graph.removeCellOverlays(cell);
+            }
+        }
+    } finally {
+        graph.getModel().endUpdate();
+    }
+}
+
+export function updateStates(graph, states) {
+    graph.getModel().beginUpdate();
+    try {
+        let model = graph.getModel();
+        for(let cellId in model.cells) {
+            if(model.cells.hasOwnProperty(cellId)) {
+                let cell = model.cells[cellId];
+                if(cell.edge) continue;
+                graph.removeCellOverlays(cell);
+                switch(states[cell.getAttribute('label')]) {
+                    case 'WAIT':
+                    case 'RUN': graph.addCellOverlay(cell, createOverlay(new mxImage(runPic, 32, 32), states[cell.getAttribute('label')])); break;
+                    case 'ERROR': graph.addCellOverlay(cell, createOverlay(new mxImage(errPic, 32, 32), states[cell.getAttribute('label')])); break;
+                    case 'OK': graph.addCellOverlay(cell, createOverlay(new mxImage(okPic, 32, 32), states[cell.getAttribute('label')])); break;
+                    default: break;
+                }
+            }
+        }
+    } finally {
+        graph.getModel().endUpdate();
+    }
+}
+
 export function addNode(graph, def, name, paramsFields) {
     const cls = getClass(def);
     const c = def;

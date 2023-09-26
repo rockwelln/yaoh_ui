@@ -60,6 +60,7 @@ import { useDropzone } from 'react-dropzone';
 import { ApioDatatable } from '../utils/datatable';
 import Tabs from 'react-bootstrap/lib/Tabs';
 import Tab, { Container } from 'react-bootstrap/lib/Tab';
+import { TransactionFlow } from '../requests/requests';
 
 
 const NEW_ACTIVITY = {
@@ -2269,7 +2270,13 @@ export function ActivityEditor(props) {
                   </Tab>
                   <Tab eventKey={2} title={<FormattedMessage id="trigger" defaultMessage="Trigger" />}>
                     <Container>
-                      <TriggerWorkflow />
+                      <TriggerWorkflow
+                        activityId={activityId}
+                        getDefinition={() => editor.getDefinition().activity}
+                        onStatesChange={s => {
+                          import("./editor").then(e => editor && e.updateStates(editor.graph, s));
+                        }}
+                       />
                     </Container>
                   </Tab>
                 </Tabs>
@@ -2407,7 +2414,7 @@ export function ActivityEditor(props) {
     );
 }
 
-function TriggerWorkflow({definition, activity_id}) {
+function TriggerWorkflow({getDefinition, activity_id, onStatesChange = () => {}}) {
   const [request, setRequest] = useState({
     method: "GET",
     url: "/trigger",
@@ -2417,21 +2424,32 @@ function TriggerWorkflow({definition, activity_id}) {
   const [response, setResponse] = useState();
   const [error, setError] = useState();
 
-  const submit = useCallback(() => {
+  useEffect(() => {
+    response?.instance && onStatesChange(response.instance.tasks.reduce((s, t) => {
+      s[t.cell_id] = t.status;
+      return s;
+    }, {}) || {});
+  }, [response]);
+
+  const submit = useCallback(e => {
+    e.preventDefault();
+    setResponse(undefined);
+    setError(undefined);
     fetch_post('/api/v01/activities/simulate', {
       url: request.url,
       body: request.body,
       method: request.method,
-      definition: definition,
+      definition: getDefinition().definition,
       activity_id: activity_id,
       subworkflows_mapping: request.subworkflows_mapping,
     })
-      .then(r => setResponse(r))
-      .catch(e => setError(e));
-  }, [request, definition, activity_id]);
+    .then(r => r.json())
+    .then(r => setResponse(r))
+    .catch(e => setError(e));
+  }, [request, getDefinition, activity_id]);
 
   return (
-    <Form horizontal onSubmit={() => submit()}>
+    <Form horizontal onSubmit={submit}>
       <FormGroup>
         <Col sm={2}>
           <FormControl componentClass="select" value={request.method} onChange={e => setRequest(update(request, {$merge: {method: e.target.value}}))}>
@@ -2474,12 +2492,114 @@ function TriggerWorkflow({definition, activity_id}) {
 
       <FormGroup>
         <Col sm={12}>
-          {response && <pre>{JSON.stringify(response, null, 2)}</pre>}
-          {error && <pre>{JSON.stringify(error, null, 2)}</pre>}
+          {
+            error &&
+              <Alert bsStyle={"danger"}>
+                {error.message}
+              </Alert>
+          }
+          {
+            response &&
+              <SimulatedInstance response={response} />
+          }
         </Col>
       </FormGroup>
     </Form>
   );
+}
+
+function SimulatedInstance({response}) {
+  return (
+    <>
+      <Table>
+        <tbody>
+          <tr>
+            <th>Status</th>
+            <td>{response?.instance.instance.status}</td>
+          </tr>
+          <tr>
+            <th>GUID</th>
+            <td>{response?.instance.instance.guid}</td>
+          </tr>
+        </tbody>
+      </Table>
+
+      <Panel>
+        <Panel.Heading>
+          <Panel.Title>Tasks</Panel.Title>
+        </Panel.Heading>
+        <Panel.Body>
+          {/*
+          <TransactionFlow
+            definition={JSON.stringify(response?.instance?.instance.definition || "{}")}
+            states={response?.instance.tasks || []} />*/}
+          <Table>
+            <thead>
+              <tr>
+                <th/>
+                <th>Task</th>
+                <th>Status</th>
+                <th>Output</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Runtime</th>
+              </tr>
+            </thead>
+            <tbody>
+              {
+                response?.instance?.tasks?.map(t => {
+                  return <SimulatedTask
+                    task={t}
+                    subinstances={response?.instance?.subinstances}
+                    errors={response?.insatance?.errors} />  
+                })
+              }
+            </tbody>
+          </Table>
+        </Panel.Body>
+      </Panel>
+    </>
+  )
+}
+
+function SimulatedTask({subinstances, errors, task}) {
+  const [expand, setExpand] = useState(false);
+
+  const subs = subinstances?.filter(s => s.callback_task_id === task.task_id);
+  const errs = errors?.filter(s => s.cell_id === task.cell_id);
+
+  let dLabel = subs?.length ? `${subs?.length} subinstances` : '';
+  dLabel += errs?.length ? ` ${errs?.length} errors` : '';
+  return (
+    <>
+    <tr key={task}>
+      <td>
+        { (subs?.length > 0 || errs?.length > 0) &&
+            <Button
+              bsStyle={"warning"}
+              onClick={() => setExpand(true)}>
+              <Glyphicon glyph="plus-sign"/>
+              {dLabel}
+            </Button>
+        }
+      </td>
+      <td>{task.cell_id}</td>
+      <td style={{color: task.status==="OK"?"green":task.status==="ERROR"?"red":"orangered"}}>{task.status}</td>
+      <td>{task.output}</td>
+      <td>{task.created_on}</td>
+      <td>{task.updated_on}</td>
+      <td>{task.runtime?.toFixed(3)} sec(s)</td>
+    </tr>
+    {
+      expand && (
+        <tr>
+          <td/>
+
+        </tr>
+      )
+    }
+  </>
+)
 }
 
 function SubworkflowMapping({mapping, onChange}) {
