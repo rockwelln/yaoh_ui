@@ -19,6 +19,7 @@ import Tabs from 'react-bootstrap/lib/Tabs';
 import Table from 'react-bootstrap/lib/Table';
 import InputGroup from 'react-bootstrap/lib/InputGroup';
 import InputGroupButton from 'react-bootstrap/lib/InputGroupButton';
+import {Link} from "react-router-dom";
 
 import {FormattedMessage} from 'react-intl';
 
@@ -36,6 +37,7 @@ import Select from "react-select";
 import { deletePasskey, deleteUserPasskey, getWebauthnOptions, isWebauthnAvailable, registerWebauthn } from '../utils/webauthn';
 import { DeleteConfirmButton } from '../utils/deleteConfirm';
 import moment from 'moment';
+import queryString from 'query-string';
 
 
 // helper functions
@@ -1496,6 +1498,15 @@ function UserActions(props) {
                         style={{marginLeft: '5px', marginRight: '5px'}}>
                     <Glyphicon glyph="remove-sign"/>
                 </Button>
+                <Link to={{
+                    pathname: "/transactions/list", search: queryString.stringify({
+                      filter: JSON.stringify({'owner': {model: 'instances', value: props.user.username, op: 'eq'}})
+                    })
+                  }} role="button">
+                    <Button bsStyle="primary" style={{marginLeft: '5px', marginRight: '5px'}}>
+                        <Glyphicon glyph="send"/>
+                    </Button>
+                </Link>
             </ButtonToolbar>
             <UpdateUser show={showUpdate} onClose={() => {setShowUpdate(false); props.onUserUpdate();}} {...props} />
             <DeleteUser show={showDelete} onClose={() => {setShowDelete(false); props.onUserDelete();}} {...props} />
