@@ -11,6 +11,9 @@ import fr_FR from './translations/fr.json';
 import {getCookie} from "./utils";
 import AutoReload from "./utils/autoReload";
 
+// polyfill for Buffer
+window.Buffer = window.Buffer || require("buffer").Buffer;
+
 
 function getMessages(locale) {
   switch(locale) {
