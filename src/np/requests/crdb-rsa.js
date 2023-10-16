@@ -511,6 +511,26 @@ export function NPPortInRequest({userInfo, defaultRecipient}) {
 
       <FormGroup>
         <Col componentClass={ControlLabel} sm={2}>
+          <FormattedMessage id="internal-reference" defaultMessage="Internal reference" />
+        </Col>
+
+        <Col sm={5}>
+          <FormControl componentClass="input"
+            value={request.subscriber_data.internal_reference}
+            onChange={e => (
+              setRequest(update(request, {
+                $merge: {
+                  subscriber_data: {
+                    internal_reference: e.target.value
+                  }
+                }
+              }))
+            )} />
+        </Col>
+      </FormGroup>
+
+      <FormGroup>
+        <Col componentClass={ControlLabel} sm={2}>
           <FormattedMessage id="account-type" defaultMessage="Account type" />
           {'*'}
         </Col>
