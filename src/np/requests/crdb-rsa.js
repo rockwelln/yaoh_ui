@@ -517,15 +517,16 @@ export function NPPortInRequest({userInfo, defaultRecipient}) {
         <Col sm={5}>
           <FormControl componentClass="input"
             value={request.subscriber_data.internal_reference}
-            onChange={e => (
-              setRequest(update(request, {
-                $merge: {
-                  subscriber_data: {
-                    internal_reference: e.target.value
-                  }
-                }
-              }))
-            )} />
+            onChange={e => setRequest(update(request, {
+              $merge: {
+                subscriber_data:
+                  update(request.subscriber_data, {
+                    $merge: {
+                      internal_reference: e.target.value
+                    }
+                  })
+              }
+            }))} />
         </Col>
       </FormGroup>
 
