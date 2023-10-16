@@ -2030,7 +2030,7 @@ export class NPTransaction extends Component {
       manualActions
           .filter(a => !a.output && user_info.roles.find(ur => ur.id === a.role_id))
           .map(a => alerts.push(
-              <Alert bsStyle="warning" key={`request-action-${a.id}`}>
+              <Alert bsStyle="action" key={`request-action-${a.id}`}>
                   Action required for {user_info.roles.find(ur => ur.id === a.role_id).name}<br/>
                   {a.description} <br/>
                   <ButtonToolbar>
@@ -2069,7 +2069,7 @@ export class NPTransaction extends Component {
     const can_act = isAllowed(this.props.user_info.ui_profile, pages.requests_nprequests, access_levels.modify);
 
     if (tx.context.find(c => c.key === "donor_approval" && c.value === "waiting") !== undefined) {
-      actions_required.push(<Alert bsStyle="warning">
+      actions_required.push(<Alert bsStyle="action">
         <FormattedMessage id="request-need-approval" defaultMessage="This request need your approval" />
         {can_act &&
           <ButtonToolbar>
@@ -2091,7 +2091,7 @@ export class NPTransaction extends Component {
     }
     if (tx.context.find(c => c.key === "manual_rfs" && (c.value === "waiting" || c.value === "nonrfs")) !== undefined) {
       actions_required.push(
-        <Alert bsStyle="warning">
+        <Alert bsStyle="action">
           <FormattedMessage id="manual-rfs" defaultMessage="Manual RFS" />
           <ButtonToolbar>
             <Button bsSize="xsmall" onClick={() => this.sendEvent('', 'API.recipient.rfs')} disabled={!can_act || sending}><FormattedMessage id="rfs" defaultMessage="RFS" /></Button>
@@ -2101,6 +2101,15 @@ export class NPTransaction extends Component {
 
     return (
       <>
+        <style type="text/css">
+          {`
+            .alert-action {
+              color: #a94442;
+              background-color: #ffa500;
+              border-color: #ebccd1;
+            }
+          `}
+        </style>
         <Breadcrumb>
           <Breadcrumb.Item active><FormattedMessage id="requests" defaultMessage="Requests"/></Breadcrumb.Item>
           <LinkContainer to={`/transactions/list`}>
