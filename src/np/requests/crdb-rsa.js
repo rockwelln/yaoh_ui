@@ -362,7 +362,7 @@ export function NPPortInRequest({userInfo, defaultRecipient}) {
 
   const validRanges = request.ranges.length === 1 && request.ranges[0].from === '' && request.ranges[0].to === '' ? "error" : validateRanges(request.ranges).length === 0 && rangeError === undefined ? "success" : "error";
   const validRecipient = request.recipient !== null && request.recipient !== undefined && request.recipient !== "" ? "success" : null;
-  const validAccountNum = request.subscriber_data.AccountPayType === "PostPaid" && (request.subscriber_data.AccountNum === undefined || request.subscriber_data.AccountNum.length === 0 || request.subscriber_data.AccountNum.length > 20) ? "error" : null;
+  const validAccountNum = request.subscriber_data.AccountPayType === "PostPaid" && (request.subscriber_data.AccountNum === undefined || request.subscriber_data.AccountNum.length === 0 || request.subscriber_data.AccountNum.length > 50) ? "error" : null;
   const validManagedPerson = request.subscriber_data.ProcessType === "Individual" || (request.subscriber_data.ProcessType === "Managed" && request.subscriber_data.ManagedContactPerson !== undefined && request.subscriber_data.ManagedContactPerson.length !== 0) ? "success" : "error";
   const validManagedPhone = request.subscriber_data.ProcessType === "Individual" || (request.subscriber_data.ProcessType === "Managed" && request.subscriber_data.ManagedContactPhone !== undefined && request.subscriber_data.ManagedContactPhone.length !== 0) ? "success" : "error";
 
