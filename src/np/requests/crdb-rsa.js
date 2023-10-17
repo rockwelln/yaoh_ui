@@ -79,7 +79,7 @@ function updateRequestRange(requestId, rangeId, diffEntry, onSuccess) {
     .catch(error => NotificationsManager.error("Failed to update range", error.message));
 }
 
-function newRequest(request, onSuccess, onError) {
+function newRequest(request, operators, onSuccess, onError) {
   fetch_post(
     '/api/v01/npact/np_requests/port_in',
     {
@@ -109,6 +109,15 @@ function newRequest(request, onSuccess, onError) {
         NotificationsManager.error(
           <FormattedMessage id="create-portin-duplicated" defaultMessage="Duplicate port-in"/>,
           <Link to={`/transactions/${error.body?.id}`}>{error.body?.crdc_id}</Link>
+        );
+      } else if(error.message === "inconsistent donor amongst the numbers") {
+        const getOperator = (id) => {
+          const operator = operators.find(o => o.id === id);
+          return operator ? operator.name : id;
+        }
+        NotificationsManager.error(
+          <FormattedMessage id="inconsistent donor amongst the numbers" defaultMessage="inconsistent donor amongst the numbers"/>,
+          `${error.body?.number} has donor ${getOperator(error.body?.found)} but other numbers have donor ${getOperator(error.body?.expected)}`
         );
       } else {
         NotificationsManager.error(
@@ -842,6 +851,7 @@ export function NPPortInRequest({userInfo, defaultRecipient}) {
               setRangeError(undefined);
               newRequest(
                 request,
+                operators,
                 id => {
                   setLoading(false);
                   setRedirect(id);
