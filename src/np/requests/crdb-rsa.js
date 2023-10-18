@@ -83,7 +83,7 @@ function newRequest(request, operators, onSuccess, onError) {
   fetch_post(
     '/api/v01/npact/np_requests/port_in',
     {
-      crdc_id: request.crdc_id || undefined,
+      crdc_id: request.crdc_id?.trim() || undefined,
       ranges: request.ranges,
       recipient_id: request.recipient,
       service_type: request.service_type,
@@ -93,7 +93,7 @@ function newRequest(request, operators, onSuccess, onError) {
       due_date: request.due_date,
       change_addr_installation_porting_id: request.change_addr_installation_porting_id,
       label: request.label,
-      contact_email: request.contact_email,
+      contact_email: request.contact_email?.trim(),
       tenant: request.tenant || undefined,
     }
   )
