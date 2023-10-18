@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, {Component, useCallback, useEffect, useState} from 'react';
 
 import Panel from 'react-bootstrap/lib/Panel';
 import Button from 'react-bootstrap/lib/Button';
@@ -10,6 +10,7 @@ import FormControl from 'react-bootstrap/lib/FormControl';
 import ControlLabel from 'react-bootstrap/lib/ControlLabel';
 import Glyphicon from 'react-bootstrap/lib/Glyphicon';
 import Modal from 'react-bootstrap/lib/Modal';
+import Table from 'react-bootstrap/lib/Table';
 import Alert from 'react-bootstrap/lib/Alert';
 import Breadcrumb from 'react-bootstrap/lib/Breadcrumb';
 import update from 'immutability-helper';
@@ -25,14 +26,16 @@ import {
   fetch_delete,
   fetch_post,
   fetch_put,
+  fetch_get,
   userLocalizeUtcDate,
-  NotificationsManager
+  NotificationsManager,
 } from "../utils";
 import { ApioDatatable } from '../utils/datatable';
 import { Search, StaticControl } from "../utils/common";
 import { access_levels, pages, isAllowed } from "../utils/user";
 import { fetchOperators } from './data/operator_mgm';
 import {DeleteConfirmButton} from "../utils/deleteConfirm";
+import {useDropzone} from "react-dropzone";
 
 /*
 function ownedCase(c) {
@@ -493,6 +496,110 @@ class NewNumberPorting extends Component {
   }
 }
 
+function readFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsText(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = error => reject(error);
+  })
+}
+
+function NumberSituationModal({show, onClose}) {
+  const [outputs, setOutputs] = useState([]);
+
+  useEffect(() => {
+    show && setOutputs([]);
+  }, [show]);
+  const onDropRejected = useCallback(() => {
+    NotificationsManager.error("File type rejected");
+  }, []);
+
+  const onDrop = useCallback((files) => {
+    files.forEach(file => {
+      readFile(file).then(content => {
+        const lines = content.split('\n');
+        const numbers = lines.map(line => line.trim().split(',')[0]);
+
+        let promises = [];
+        let results = [];
+        for(let i = 0; i < numbers.length; i += 1) {
+          const n = numbers[i];
+          if(n === "") {
+            continue
+          } else if(!/^\d+$/.test(n) || n.length < 5 || n.length > 20) {
+            results[i] = [n, "", "", "", "invalid entry"]
+            continue;
+          }
+          let p = fetch_get(`/api/v01/npact/number/${n}`)
+            .then(data => {
+              results[i] = [data.number, data.routing_info || "-", data.operator?.name || "not found", data.ported, ""];
+            })
+            .catch(error => {
+              results[i] = [n, "", "", "", error.message]
+            });
+          promises.push(p);
+        }
+
+        return Promise.all(promises).then(() => {
+          setOutputs(results);
+        });
+      })
+    });
+  }, []);
+
+  const {
+    getRootProps,
+    getInputProps,
+  } = useDropzone({
+    onDrop,
+    accept: ['.csv'],
+    onDropRejected,
+  });
+  return (
+    <Modal show={show} onHide={onClose} backdrop={false} bsSize={"large"}>
+      <Modal.Header closeButton>
+        <Modal.Title><FormattedMessage id="number-situation" defaultMessage="Number situation" /></Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Form>
+          <section className="dropcontainer" >
+            <div {...getRootProps({className: 'dropzone'})} >
+              <input {...getInputProps()} />
+              <p>Drag 'n' drop some files here, or click to select files.</p><br/>
+              <p>File has to be a csv with the first column containing numbers.</p>
+            </div>
+          </section>
+        </Form>
+        <Table>
+          <thead>
+            <tr>
+              <th><FormattedMessage id="number" defaultMessage="Number" /></th>
+              <th><FormattedMessage id="routing-info" defaultMessage="Routing info" /></th>
+              <th><FormattedMessage id="operator" defaultMessage="Operator" /></th>
+              <th><FormattedMessage id="ported" defaultMessage="Ported" /></th>
+              <th><FormattedMessage id="error" defaultMessage="Error" /></th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              outputs.map((o, i) => (
+                <tr key={i}>
+                  {
+                    o.map((v, j) => (
+                      <td key={j}>{v}</td>
+                    ))
+                  }
+                </tr>
+              ))
+            }
+          </tbody>
+        </Table>
+      </Modal.Body>
+    </Modal>
+  )
+}
+
 class PortingCaseActions extends Component {
   constructor(props) {
     super(props);
@@ -810,23 +917,32 @@ export default class SearchPortingCases extends Search {
           </Panel.Body>
         </Panel>
 
-        {isAllowed(this.props.user_info.ui_profile, pages.npact_porting_cases, access_levels.modify) &&
-          <Panel>
-            <Panel.Body>
+
+        <Panel>
+          <Panel.Body>
+            {isAllowed(this.props.user_info.ui_profile, pages.npact_porting_cases, access_levels.modify) &&
               <Button bsStyle="primary" onClick={() => this.setState({ showAdd: true })}>
                 <FormattedMessage id="add" defaultMessage="Add" />
               </Button>
-              <NewNumberPorting
-                show={this.state.showAdd}
-                operators={operators || []}
-                onClose={(r) => {
-                  this.setState({ showAdd: false });
-                  r && this._refresh();
-                }}
-                {...this.props} />
-            </Panel.Body>
-          </Panel>
-        }
+            }
+            <Button bsStyle="primary" onClick={() => this.setState({ showBulkSituation: true })} style={{marginLeft: "1rem"}}>
+              <FormattedMessage id="bulk" defaultMessage="Bulk" />
+            </Button>
+            <NewNumberPorting
+              show={this.state.showAdd}
+              operators={operators || []}
+              onClose={(r) => {
+                this.setState({ showAdd: false });
+                r && this._refresh();
+              }}
+              {...this.props} />
+            <NumberSituationModal
+              show={this.state.showBulkSituation}
+              onClose={() => this.setState({ showBulkSituation: false })}
+              operators={operators || []} />
+          </Panel.Body>
+        </Panel>
+
       </div>
     )
   }
