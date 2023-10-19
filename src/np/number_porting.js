@@ -20,7 +20,6 @@ import { FormattedMessage } from 'react-intl';
 import moment from 'moment';
 import DatePicker from 'react-datepicker';
 
-import { DATE_FORMAT } from './np-requests';
 import {
   parseJSON,
   fetch_delete,
@@ -36,6 +35,8 @@ import { access_levels, pages, isAllowed } from "../utils/user";
 import { fetchOperators } from './data/operator_mgm';
 import {DeleteConfirmButton} from "../utils/deleteConfirm";
 import {useDropzone} from "react-dropzone";
+import {faSpinner} from "@fortawesome/free-solid-svg-icons/faSpinner";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 
 /*
 function ownedCase(c) {
@@ -507,9 +508,11 @@ function readFile(file) {
 
 function NumberSituationModal({show, onClose}) {
   const [outputs, setOutputs] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    show && setOutputs([]);
+    setOutputs([]);
+    setLoading(false);
   }, [show]);
   const onDropRejected = useCallback(() => {
     NotificationsManager.error("File type rejected");
@@ -517,32 +520,47 @@ function NumberSituationModal({show, onClose}) {
 
   const onDrop = useCallback((files) => {
     files.forEach(file => {
+      setLoading(true);
       readFile(file).then(content => {
         const lines = content.split('\n');
-        const numbers = lines.map(line => line.trim().split(',')[0]);
+        const numbers = lines.map(line => {
+          // line can contain 1 number or 2 numbers to identify a range of numbers
+          const numbers = line.trim().split(',');
+          if(numbers.length === 1) {
+            return [numbers[0], numbers[0]];
+          }
+          return numbers;
+        });
+
+        const validNumber = (n) => (/^\d+$/.test(n) && n.length > 5 && n.length < 20);
 
         let promises = [];
         let results = [];
         for(let i = 0; i < numbers.length; i += 1) {
-          const n = numbers[i];
-          if(n === "") {
+          const [a, b] = numbers[i];
+          if(a === "") {
             continue
-          } else if(!/^\d+$/.test(n) || n.length < 5 || n.length > 20) {
-            results[i] = [n, "", "", "", "invalid entry"]
+          } else if(!validNumber(a) || !validNumber(b)) {
+            results.push([i+1, `${a} - ${b}`, "", "", "", "invalid entry"])
             continue;
           }
-          let p = fetch_get(`/api/v01/npact/number/${n}`)
-            .then(data => {
-              results[i] = [data.number, data.routing_info || "-", data.operator?.name || "not found", data.ported, ""];
-            })
-            .catch(error => {
-              results[i] = [n, "", "", "", error.message]
-            });
-          promises.push(p);
+
+          for(let n = parseInt(a); n <= parseInt(b); n += 1) {
+            let p = fetch_get(`/api/v01/npact/number/${n}`)
+              .then(data => {
+                results.push([i+1, data.number, data.routing_info || "-", data.operator?.name || "not found", data.ported, ""]);
+              })
+              .catch(error => {
+                results.push([i+1, n, "", "", "", error.message]);
+              });
+            promises.push(p);
+          }
         }
 
         return Promise.all(promises).then(() => {
           setOutputs(results);
+        }).finally(() => {
+          setLoading(false);
         });
       })
     });
@@ -556,6 +574,7 @@ function NumberSituationModal({show, onClose}) {
     accept: ['.csv'],
     onDropRejected,
   });
+
   return (
     <Modal show={show} onHide={onClose} backdrop={false} bsSize={"large"}>
       <Modal.Header closeButton>
@@ -567,13 +586,15 @@ function NumberSituationModal({show, onClose}) {
             <div {...getRootProps({className: 'dropzone'})} >
               <input {...getInputProps()} />
               <p>Drag 'n' drop some files here, or click to select files.</p><br/>
-              <p>File has to be a csv with the first column containing numbers.</p>
+              <p>File has to be a csv with the first column containing numbers, and eventually a second column with the range end.</p>
             </div>
           </section>
         </Form>
+        {loading && <Alert bsStyle="warning"><FontAwesomeIcon icon={faSpinner} spin/>{" "}Loading...</Alert>}
         <Table>
           <thead>
             <tr>
+              <th>#</th>
               <th><FormattedMessage id="number" defaultMessage="Number" /></th>
               <th><FormattedMessage id="routing-info" defaultMessage="Routing info" /></th>
               <th><FormattedMessage id="operator" defaultMessage="Operator" /></th>
@@ -583,7 +604,7 @@ function NumberSituationModal({show, onClose}) {
           </thead>
           <tbody>
             {
-              outputs.map((o, i) => (
+              outputs.sort((a, b) => a[0] - b[0]).map((o, i) => (
                 <tr key={i}>
                   {
                     o.map((v, j) => (
