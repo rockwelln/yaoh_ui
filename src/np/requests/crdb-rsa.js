@@ -908,7 +908,7 @@ const cancelReasonCodes = [
   {"id": "SP004", "summary": "The classification of the account does not match."},
   {"id": "SP005", "summary": "Subscriber in suspension of outgoing or incoming calls due to failure to pay a bill"},
   {"id": "SP006", "summary": "MSISDN or DN/DN Range not valid on SP."},
-  {"id": "SP007", "summary": "MSISDN, Account Number, Corporate Registration Number do not match, or Port Request is unauthorized."},
+  {"id": "SP007", "serviceType": "MOBILE", "summary": "MSISDN, Account Number, Corporate Registration Number do not match, or Port Request is unauthorized."},
   {"id": "SP008", "summary": "Port Request is for an inter-SP port; for this NO, inter-SP ports are handled outside the CRDB."},
   {"id": "SP009", "summary": "Other reasons."},
 ];
@@ -932,8 +932,7 @@ const rejectionReasonCodes = [
 const errorCodes = [...rejectionReasonCodes, ...abortReasonCodes];
 
 
-function CancelPortRequest(props) {
-  const {show, onHide, instanceId, ranges} = props;
+function CancelPortRequest({show, onHide, instanceId, ranges, serviceType}) {
   const [reasonCode, setReasonCode] = useState("");
   const [cancelledRanges, setCancelledRanges] = useState([]);
 
@@ -1000,7 +999,9 @@ function CancelPortRequest(props) {
                 onChange={e => setReasonCode(e.target.value)} >
                 <option value={null} />
                 {
-                  cancelReasonCodes.map(r => <option key={r.id} value={r.id}>{r.id} - {r.summary}</option>)
+                  cancelReasonCodes
+                    .filter(r => r.serviceType === undefined || r.serviceType === serviceType)
+                    .map(r => <option key={r.id} value={r.id}>{r.id} - {r.summary}</option>)
                 }
               </FormControl>
             </Col>
@@ -1104,7 +1105,7 @@ function AbortPortRequest(props) {
 }
 
 
-function getRangeFlags(actions, ranges) {
+function getRangeFlags(actions, ranges, serviceType) {
   const canAccept = actions.find(a => a.output === null && a.description.toLowerCase() === "port-out approval") !== undefined;
   const canNotif = actions.find(a => a.output === null && a.description.toLowerCase() === "plan port") !== undefined;
   const canActivate = actions.find(a => a.output === null && a.description.toLowerCase() === "activate numbers") !== undefined;
@@ -1115,7 +1116,7 @@ function getRangeFlags(actions, ranges) {
   if (canAccept || ranges.find(r => r.accepted !== null)){
     let col = {header: "Acc.", disabled: !canAccept, flag: "accepted"};
     if(canAccept) {
-      col["rejectCodes"] = rejectionReasonCodes;
+      col["rejectCodes"] = rejectionReasonCodes.filter(r => r.serviceType === undefined || r.serviceType === serviceType);
     }
     cols.push(col);
   }
@@ -1131,8 +1132,7 @@ function getRangeFlags(actions, ranges) {
   return cols;
 }
 
-function RequestTable(props) {
-  const {onChangeRequest, onChangeRange, actions, request, events, userInfo} = props;
+function RequestTable({onChangeRequest, onChangeRange, actions, request, events, userInfo}) {
   const [operators, setOperators] = useState([]);
   const [diffSubscriberData, setDiffSubscriberData] = useState({});
 
@@ -1147,7 +1147,7 @@ function RequestTable(props) {
   const req = request;
   const donor = operators.find(d => d.id === parseInt(req.donor_id, 10));
   const recipient = operators.find(d => d.id === parseInt(req.recipient_id, 10));
-  const rangeFlags = getRangeFlags(actions, req.ranges);
+  const rangeFlags = getRangeFlags(actions, req.ranges, req.service_type);
   const activeFlag = rangeFlags.find(rf => !rf.disabled && rf.rejectCodes);
   // const activeRejectCodes = rangeFlags.find(rf => !rf.disabled && rf.rejectCodes) && rangeFlags.find(rf => !rf.disabled && rf.rejectCodes).rejectCodes;
   const rangeNbCols = 2 + rangeFlags.length;
@@ -1230,7 +1230,7 @@ function RequestTable(props) {
                               placement="right"
                               overlay={
                                 <Popover id="popover-error-code-desc" title={r.reject_code}>
-                                  <p>{errorCodes.find(e => e.id === r.reject_code) && errorCodes.find(e => e.id === r.reject_code).summary}</p>
+                                  <p>{errorCodes.find(e => e.id === r.reject_code)?.summary}</p>
                                 </Popover>
                               }>
                               <p>{r.reject_code}</p>
@@ -2325,8 +2325,9 @@ export class NPTransaction extends Component {
 
         <CancelPortRequest
           show={this.state.showCancel}
-          ranges={(request && request.ranges) || []}
-          instanceId={tx && tx.id}
+          ranges={request?.ranges || []}
+          instanceId={tx?.id}
+          serviceType={request?.service_type}
           onHide={r => {
             this.setState({showCancel: false});
             r && this.fetchTxDetails(false);
