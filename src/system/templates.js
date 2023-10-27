@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useRef, useState} from "react";
-import {API_URL_PREFIX, AuthServiceManager, fetch_delete, fetch_get, fetch_post, fetch_put, NotificationsManager, parseJSON} from "../utils";
+import {API_URL_PREFIX, AuthServiceManager, fetch_delete, fetch_get, fetch_post_raw, fetch_put_raw, NotificationsManager, parseJSON} from "../utils";
 import {FormattedMessage} from "react-intl";
 import {MenuItem, Modal, Panel, SplitButton} from "react-bootstrap";
 import Form from "react-bootstrap/lib/Form";
@@ -22,9 +22,6 @@ import ReactDOM from "react-dom";
 import {DeleteConfirmButton} from "../utils/deleteConfirm";
 import {readFile} from "../orchestration/startup_events";
 import {FoldableButton} from "../utils/button";
-import { Base64 } from "js-base64";
-import { arrayBufferToBase64 } from "../utils/webauthn";
-import base64url from "base64url";
 
 
 // helpers
@@ -68,15 +65,18 @@ function deleteTemplate(template_id) {
 }
 
 
-function updateTemplate(template_id, data, onSuccess) {
-    const data_ = Object.keys(data).reduce((a, b) => {
-            if(["key", "template", "type"].includes(b)) {
-                a[b] = data[b];
-            }
-            return a;
-        }, {}
-    );
-    return fetch_put(`/api/v01/templates/${template_id}`, data_)
+function updateTemplate(template_id, {key, template, type}, onSuccess) {
+    let data = new FormData();
+    if(key !== undefined) {
+        data.append("key", key);
+    }
+    if(template !== undefined) {
+        data.append("template", template);
+    }
+    if(type !== undefined) {
+        data.append("type", type);
+    }
+    return fetch_put_raw(`/api/v01/templates/${template_id}`, data)
         .then(r => {
             NotificationsManager.success(<FormattedMessage id="updated" defaultMessage="Updated"/>);
             onSuccess && onSuccess();
@@ -87,8 +87,12 @@ function updateTemplate(template_id, data, onSuccess) {
 }
 
 
-function newTemplate(data, onSuccess) {
-    return fetch_post("/api/v01/templates", data)
+function newTemplate({key, template, type}, onSuccess) {
+    let data = new FormData();
+    data.append("key", key);
+    data.append("template", template);
+    data.append("type", type);
+    return fetch_post_raw("/api/v01/templates", data)
       .then(parseJSON)
       .then(resp => {
           NotificationsManager.success(<FormattedMessage id="template-created" defaultMessage="Template created"/>);
@@ -141,10 +145,10 @@ function Template({label, id, type, onDelete, onUpdate, onExport, onRawExport}) 
                   <Button
                     onClick={() => setShowImportModal(true)}
                     bsStyle={"warning"}>
-                    <FontAwesomeIcon icon={faUpload}/> Import
+                    <FontAwesomeIcon icon={faUpload}/> Upload
                   </Button>
 
-                  <SplitButton
+                  {/*<SplitButton
                     id={"export-template"}
                     bsStyle="warning"
                     title={<><FontAwesomeIcon icon={faDownload}/> Export</>}
@@ -154,7 +158,13 @@ function Template({label, id, type, onDelete, onUpdate, onExport, onRawExport}) 
                         onClick={() => onRawExport(template)}>
                         <FormattedMessage id="raw" defaultMessage="Raw" />
                       </MenuItem>
-                  </SplitButton>
+                  </SplitButton>*/}
+
+                  <Button
+                    onClick={() => onRawExport(template)}
+                    bsStyle={"warning"}>
+                    <FontAwesomeIcon icon={faDownload}/> Download
+                  </Button>
                 </ButtonGroup>
 
                 <ButtonGroup>
@@ -170,8 +180,6 @@ function Template({label, id, type, onDelete, onUpdate, onExport, onRawExport}) 
                       const o = Object.assign({}, template)
                       if(o.type !== "jinja" && o.template !== undefined) {
                         delete o.template
-                      } else if(o.type === "jinja") {
-                        o.template = Base64.encode(o.template)
                       }
                       updateTemplate(id, o, onUpdate)
                     }}
@@ -216,30 +224,19 @@ function Template({label, id, type, onDelete, onUpdate, onExport, onRawExport}) 
         
         <ImportTemplateModal
           show={showImportModal}
-          onHide={() => setShowImportModal(false)}
-          onImport={(name, type, content) => {
-            if(type === "text/plain") {
-              type = "jinja";
+          onHide={r => {
+            setShowImportModal(false);
+            if(r) {
+              if(type === "jinja") {
+                fetchTemplate(id).then(({template}) => {
+                  setTemplate(template)
+                })
+              } else {
+                setTemplate({id: id, key: label, type: type})
+              }
             }
-            if(name && name !== template.key) {
-              NotificationsManager.error(`template name don't match ${name} vs ${template.key}`)
-              return
-            }
-            updateTemplate(
-              template.id,
-              {type: type, template: content},
-              () => {
-                if(type === "jinja") {
-                  fetchTemplate(id).then(({template}) => {
-                    setTemplate(template)
-                  })
-                } else {
-                  setTemplate({id: id, key: label, type: type})
-                }
-                setShowImportModal(false);
-              },
-            );
-          }} />
+          }}
+          id={template.id} />
       </Panel.Body>
     </Panel>
   )
@@ -538,7 +535,7 @@ function ImportTemplatesModal({show, onHide, onImport}) {
   )
 }
 
-function ImportTemplateModal({show, onHide, onImport}) {
+function ImportTemplateModal({show, id, onHide}) {
   const onDropRejected = useCallback(() => {
     NotificationsManager.error("file type rejected");
   }, []);
@@ -559,30 +556,19 @@ function ImportTemplateModal({show, onHide, onImport}) {
         return
       }
 
-      const reader = new FileReader()
+      let data = new FormData();
+      data.append('template', file, file.source);
+      data.append('type', file.type==="text/plain"?"jinja":file.type);
+      fetch_put_raw(`/api/v01/templates/${id}`, data).then(() => {
+        NotificationsManager.success("imported")
+        onHide(true)
+      }).catch(error => {
+        NotificationsManager.error("import failed", error.message)
+      })
 
-      reader.onabort = () => console.error('file reading was aborted')
-      reader.onerror = () => console.error('file reading has failed')
-      
-
-      if(file.type === "application/json") {
-        reader.onload = () => {
-          try {
-            const o = JSON.parse(reader.result).template;
-            onImport(o.key, o.type || "jinja", o.template);
-          } catch (e) {
-            NotificationsManager.error("Failed to import", e.message);
-          }
-        }
-        reader.readAsText(file);
-      } else {
-        reader.onload = () => {
-          onImport(null, file.type, base64url.encode(reader.result))
-        }
-        reader.readAsArrayBuffer(file);
-      }
+      return
     });
-  }, [onImport]);
+  }, [onHide]);
 
   const {
     getRootProps,

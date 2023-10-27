@@ -354,6 +354,23 @@ export function fetch_post_raw(url, raw_body, token, content_type) {
         ).then(checkStatus)
 }
 
+export function fetch_put_raw(url, raw_body, content_type) {
+    // const token_ = AuthServiceManager.getToken();
+    const full_url = url.href?url:url.startsWith('http')?url:API_URL_PREFIX + url;
+    let headers = {};
+    if(content_type) {
+        headers['content-type'] = content_type
+    }
+    return AuthServiceManager.getValidToken()
+        .then(
+            token_ => fetch(full_url, {
+                method: 'PUT',
+                headers: {...headers, 'Authorization': `Bearer ${token_}`},
+                body: raw_body
+            })
+        ).then(checkStatus)
+}
+
 export function fetch_delete(url, body) {
     // const token_ = AuthServiceManager.getToken();
     const full_url = url.href?url:url.startsWith('http')?url:API_URL_PREFIX + url;
