@@ -1132,11 +1132,12 @@ function getRangeFlags(actions, ranges, serviceType) {
   return cols;
 }
 
-function RequestTable({onChangeRequest, onChangeRange, actions, request, events, userInfo}) {
+function RequestTable({onChangeRequest, onChangeRange, actions, request, events, userInfo, editMode}) {
   const [operators, setOperators] = useState([]);
   const [diffSubscriberData, setDiffSubscriberData] = useState({});
 
   useEffect(() => {
+    setDiffSubscriberData({});
     fetchOperators(null, setOperators);
   }, []);
 
@@ -1336,7 +1337,18 @@ function RequestTable({onChangeRequest, onChangeRange, actions, request, events,
                 })
               }
               <tr><th><FormattedMessage id="external-id" defaultMessage="External id" /></th><td colSpan={rangeNbCols}>{req.external_id}</td></tr>
-              <tr><th><FormattedMessage id="label" defaultMessage="Label" /></th><td colSpan={rangeNbCols}>{req.label}</td></tr>
+              <tr>
+                <th><FormattedMessage id="label" defaultMessage="Label" /></th>
+                <td colSpan={rangeNbCols}>
+                  {
+                    !editMode ? req.label :
+                    <FormControl
+                      componentClass="input"
+                      value={req.label || ""}
+                      onChange={e => onChangeRequest({label: e.target.value})} />
+                  }
+                </td>
+              </tr>
               <tr><th><FormattedMessage id="contact-email" defaultMessage="Contact email" /></th><td colSpan={rangeNbCols}>{req.contact_email}</td></tr>
             </tbody>
           </Table>
@@ -1688,6 +1700,7 @@ export class NPTransaction extends Component {
     super(props);
     this.state = {
       error: undefined,
+      diffRequest: {},
       sending: false,
       activeTab: 1,
       manualActions: [],
@@ -1800,6 +1813,7 @@ export class NPTransaction extends Component {
         activeTab: 1,
         tx: undefined,
         request: undefined,
+        diffRequest: {},
         logs: [],
         events: [],
         timers: [],
@@ -2025,6 +2039,7 @@ export class NPTransaction extends Component {
   render() {
     const { sending, error, tx, request, activeTab, manualActions, events, timers, logs, replaying, messages, messageShown, showActionForm, activities } = this.state;
     const {user_info} = this.props;
+    const canEdit = isAllowed(user_info.ui_profile, pages.requests_nprequests, access_levels.modify);
     let alerts = [];
     error && alerts.push(
       <Alert bsStyle="danger" key='fail-fetch-tx'>
@@ -2146,20 +2161,41 @@ export class NPTransaction extends Component {
         <Tabs defaultActiveKey={1} activeKey={activeTab} onSelect={e => this.setState({ activeTab: e })} id="np-request-tabs">
           <Tab eventKey={1} title={<FormattedMessage id="request" defaultMessage="Request" />}>
             <Col xs={12} sm={6} md={8} lg={8}>
-              <RequestTable
-                request={request}
-                actions={manualActions}
-                events={events}
-                onChangeRequest={r => {
-                  this.setState({sending: true})
-                  updateRequest(request.id, r, () => this.fetchTxDetails(false, () => this.setState({sending: false}), () => this.setState({sending: false})));
-                }}
-                onChangeRange={(range_id, r) => {
-                  updateRequestRange(request.id, range_id, r, () => this.fetchTxDetails(false));
-                }}
-                userInfo={user_info}
-              />
-
+              <Panel>
+                <Panel.Body>
+                  <RequestTable
+                    request={request && update(request, {$merge: this.state.diffRequest || {}})}
+                    actions={manualActions}
+                    events={events}
+                    editMode={canEdit}
+                    onChangeRequest={r => {
+                      r && this.setState({diffRequest: update(this.state.diffRequest, {$merge: r || {}})});
+                    }}
+                    onChangeRange={(range_id, r) => {
+                      updateRequestRange(request.id, range_id, r, () => this.fetchTxDetails(false));
+                    }}
+                    userInfo={user_info}
+                  />
+                  <ButtonToolbar>
+                    <Button onClick={() => {
+                      this.setState({sending: true})
+                      updateRequest(
+                        request.id,
+                        this.state.diffRequest,
+                        () => this.fetchTxDetails(
+                          false,
+                          () => this.setState({sending: false, diffRequest: {}}),
+                          () => this.setState({sending: false}))
+                      );
+                    }} bsStyle="primary" disabled={this.state.sending}>
+                      <FormattedMessage id="save" defaultMessage="Save" />
+                    </Button>
+                    <Button onClick={() => this.setState({diffRequest: {}})} disabled={this.state.sending}>
+                      <FormattedMessage id="cancel" defaultMessage="Cancel" />
+                    </Button>
+                  </ButtonToolbar>
+                </Panel.Body>
+              </Panel>
             </Col>
             <Col xs={12} sm={6} md={4} lg={4}>
               {can_act &&
