@@ -1253,7 +1253,7 @@ function RequestTable({onChangeRequest, onChangeRange, actions, request, events,
               <tr>
                 <th><FormattedMessage id="port-date-time" defaultMessage="Port date time" /></th>
                 <td colSpan={rangeNbCols}>
-                  { rangeFlags.find(rf => rf.flag === "notif_ordered" && !rf.disabled) ?
+                  { !rangeFlags.find(rf => rf.flag === "notif_ordered" && !rf.disabled) ?
                     <DatePicker
                       className="form-control"
                       selected={req.due_date ? userLocalizeUtcDate(moment.utc(req.due_date), userInfo).toDate() : null}
