@@ -13,6 +13,7 @@ import {DashboardCard} from "./dashboard-tiles";
 import FormGroup from "react-bootstrap/lib/FormGroup";
 import Col from "react-bootstrap/lib/Col";
 import ControlLabel from "react-bootstrap/lib/ControlLabel";
+import Alert from "react-bootstrap/lib/Alert";
 import Form from "react-bootstrap/lib/Form";
 import update from "immutability-helper";
 import FormControl from "react-bootstrap/lib/FormControl";
@@ -128,7 +129,7 @@ function NPManualActionsModal({actions, role, show, onHide}) {
     )
 }
 
-function ManualActionInput({type, value, onChange}) {
+function ManualActionInput({type, value, options, onChange}) {
   switch(type) {
     case "boolean":
       return <Checkbox
@@ -141,25 +142,52 @@ function ManualActionInput({type, value, onChange}) {
         onChange={d => onChange(d.toISOString())}
         dateFormat="yyyy-MM-dd" />
     default:
-      return <FormControl
-        componentClass="input"
-        value={value}
-        onChange={e => onChange(e.target.value)} />
+      break;
   }
+
+  if(options) {
+    return (
+      <FormControl
+        componentClass="select"
+        value={value}
+        onChange={e => onChange(e.target.value)}>
+        <option value={""}>- Select an option -</option>
+      {
+        options.map(o => <option key={o} value={o}>{o}</option>)
+      }
+      </FormControl>
+    );
+  }
+
+  return (
+    <FormControl
+      componentClass="input"
+      value={value}
+      onChange={e => onChange(e.target.value)} />
+  );
 }
 
-export function ManualActionInputForm(props) {
-    const {onTrigger, show, action, output, onHide} = props;
+export function ManualActionInputForm({onTrigger, show, action, output, onHide}) {
     const [values, setValues] = useState({});
+
+    if(!action.input_form) {
+      return <></>
+    }
 
     let input_form;
     try{
       input_form = JSON.parse(action.input_form)
-    } catch(e) {}
+    } catch(e) {
+      console.error("Failed to parse input form", e, action.input_form)
+    }
 
     let ajv = Ajv({allErrors: true});
     const validInputs = input_form?ajv.validate(input_form, values):true;
-    console.log(ajv.errors, input_form, values)
+    let errors = [];
+    if(!validInputs) {
+      console.log(ajv.errors, input_form, values)
+      errors = ajv.errors.filter(e => !e.message.startsWith("should have required property")).map(e => <div>{e.dataPath} {e.message}</div>)
+    }
     return (
         <Modal show={show} onHide={onHide} dialogClassName='large-modal'>
             <Modal.Header closeButton>
@@ -170,6 +198,11 @@ export function ManualActionInputForm(props) {
             <Modal.Body>
                 <p>Some inputs are possible/required for this action.</p>
                 <Form horizontal>
+                    { errors.length !== 0 &&
+                      <Alert bsStyle={"danger"}>
+                        {errors}
+                      </Alert>
+                    }
                     {
                         input_form && input_form.properties && Object.entries(input_form.properties).map(([key, v]) => {
                             return (
@@ -179,14 +212,15 @@ export function ManualActionInputForm(props) {
                                     </Col>
 
                                     <Col sm={9}>
-                                        {
-                                            <ManualActionInput
-                                                type={v.format || v.type}
-                                                value={values[key]}
-                                                onChange={v => setValues(
-                                                    update(values,{$merge: {[key] : v}})
-                                                )} />
-                                        }
+                                    {
+                                      <ManualActionInput
+                                          type={v.format || v.type}
+                                          value={values[key]}
+                                          options={v.enum}
+                                          onChange={v => setValues(
+                                              update(values,{$merge: {[key] : v}})
+                                          )} />
+                                    }
                                     </Col>
                                 </FormGroup>
                             )

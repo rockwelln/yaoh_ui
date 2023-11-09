@@ -683,35 +683,10 @@ function JsonSchemaFormFields(props) {
       <tbody>
       {
         Object.entries(fields.properties).map(([name, props]) =>
+          <>
           <tr key={name}>
             <td style={{width: "50%"}}>{name}</td>
-            <td style={{width: "40%"}}>
-              <FormControl
-                componentClass="select"
-                value={props.format || props.type}
-                onChange={e => {
-                  let prop = {};
-                  switch(e.target.value) {
-                    case "string":
-                      prop = {type: e.target.value, minLength: 1};
-                      break;
-                    case "boolean":
-                      prop = {type: e.target.value, enum: [true]};
-                      break;
-                    case "date-time":
-                      prop = {type: "string", format: "date-time"};
-                      break;
-                    default:
-                      prop = {type: e.target.value};
-                      break;
-                  }
-                  onChange(JSON.stringify(update(fields, {properties: {[name]: {$merge: prop}}})))
-                }}>
-                    <option value="string">string</option>
-                    <option value="boolean">boolean</option>
-                    <option value="date-time">datetime</option>
-              </FormControl>
-            </td>
+            <td style={{width: "40%"}}>{props.format || props.type}</td>
             <td>{fields.required && fields.required.includes(name)?"*":""}</td>
             <td><Button onClick={() => {
               if(fields.required && fields.required.includes(name)) {
@@ -720,7 +695,22 @@ function JsonSchemaFormFields(props) {
                 onChange(JSON.stringify(update(fields, {properties: {$unset: [name]}})))
               }
             }}>{"-"}</Button></td>
-          </tr>)
+          </tr>
+          { props.type === "string" && !props.format &&
+            <tr>
+              <td style={{borderTopWidth: 0}}>Possible values:</td>
+              <td style={{borderTopWidth: 0}}>
+                {
+                  props.type === "string" && !props.format &&
+                  props.enum || "*free text*"
+                }
+              </td>
+              <td style={{borderTopWidth: 0}}/>
+              <td style={{borderTopWidth: 0}}/>
+            </tr>
+          }
+          </>
+        )
       }
       {
         <tr>
@@ -737,7 +727,7 @@ function JsonSchemaFormFields(props) {
                 let prop = {};
                   switch(e.target.value) {
                   case "string":
-                    prop = {type: e.target.value, minLength: 1};
+                    prop = {type: "string", minLength: 1};
                     break;
                   case "boolean":
                     prop = {type: e.target.value, enum: [true]};
@@ -769,6 +759,21 @@ function JsonSchemaFormFields(props) {
               disabled={!newField[0] || !newField[1]}
             >{"+"}</Button>
           </td>
+        </tr>
+      }
+      {
+        !newField[1]?.format && newField[1]?.type === "string" &&
+        <tr>
+          <td style={{borderTopWidth: 0}}>Possible values:</td>
+          <td colSpan={2} style={{borderTopWidth: 0}}>
+            <FormControl
+              componentClass="input"
+              placeholder="options as template list"
+              value={newField[1]?.enum || ""}
+              onChange={e => setNewField(update(newField, {[1]: {$merge: {enum: e.target.value || undefined}}}))}
+              />
+          </td>
+          <td style={{borderTopWidth: 0}}/>
         </tr>
       }
       </tbody>
