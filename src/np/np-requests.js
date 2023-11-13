@@ -111,6 +111,49 @@ export class NPRequests extends Component {
   constructor(props) {
     super(props);
     this.cancelLoad = false;
+    let cols = [
+      "nprequest.kind",
+      "nprequest.status",
+      "nprequest.crdc_id",
+      "nprequest.donor_id",
+      "nprequest.recipient_id",
+      "nprequest.customer_id",
+      "ranges.range_from",
+      "ranges.range_to",
+      "nprequest.due_date",
+      "nprequest.created_on",
+    ];
+    // if (localUser.isModuleEnabled(modules.npact_coin)) {
+    //   cols = [
+    //   ];
+    // }
+    if (localUser.isModuleEnabled(modules.npact_citc)) {
+      cols = [
+        "nprequest.kind",
+        "nprequest.status",
+        "nprequest.crdc_id",
+        "nprequest.donor_id",
+        "nprequest.recipient_id",
+        "nprequest.tenant",
+        "ranges.range_from",
+        "ranges.range_to",
+        "nprequest.created_on",
+      ];
+    }
+    if (localUser.isModuleEnabled(modules.npact_crdb_dd)) {
+      cols = [
+        "nprequest.kind",
+        "nprequest.status",
+        "nprequest.crdc_id",
+        "nprequest.donor_id",
+        "nprequest.recipient_id",
+        "nprequest.tenant",
+        "ranges.range_from",
+        "ranges.range_to",
+        "ranges.reject_code",
+        "nprequest.created_on",
+      ];
+    }
     this.state = {
       filter_criteria: NPRequests.criteria_from_params(this.props.location.search),
       paging_info: {
@@ -119,7 +162,8 @@ export class NPRequests extends Component {
       sorting_spec: [{
         model: 'NPRequest', field: 'created_on', direction: 'desc'
       }],
-
+      cols: cols,
+      reqCols: [],
       requests: [],
       request_statuses: [],
       operators: [],
@@ -215,7 +259,7 @@ export class NPRequests extends Component {
   _prepare_url(paging_spec, sorting_spec, format) {
     let url = new URL(API_URL_PREFIX + '/api/v01/npact/np_requests/search');
     // filter
-    const { filter_criteria } = this.state;
+    const { filter_criteria, cols } = this.state;
     let filter_spec = Object.keys(filter_criteria)
       .filter(f =>
         filter_criteria[f] &&
@@ -358,6 +402,8 @@ export class NPRequests extends Component {
     if (sorting_spec !== undefined) {
       url.searchParams.append('sorting', JSON.stringify(sorting_spec));
     }
+    // cols
+    url.searchParams.append('cols', cols.join(","))
     //formatting
     if (format !== undefined) {
       url.searchParams.append('as', format);
@@ -427,6 +473,7 @@ export class NPRequests extends Component {
             total_results: data.pagination[3],
           },
           sorting_spec: data.sorting || [],
+          reqCols: data.cols?.split(",") || [],
           export_url: export_url.href
         });
       })
@@ -434,7 +481,7 @@ export class NPRequests extends Component {
   }
 
   render() {
-    const { filter_criteria, requests, operators, export_url, roles, searchExpanded, activities } = this.state;
+    const { filter_criteria, requests, operators, export_url, roles, searchExpanded, activities, cols, reqCols } = this.state;
     const { user_info } = this.props;
     requests && requests.forEach(r => {
       const donor = operators.find(o => o.id === r.nprequest.donor_id);
@@ -1049,6 +1096,47 @@ export class NPRequests extends Component {
               </FormGroup>
 
               <FormGroup>
+                <Col componentClass={ControlLabel} sm={2}>
+                  <FormattedMessage id="columns" defaultMessage="Columns" />
+                </Col>
+
+                <Col smOffset={1} sm={5} md={3}>
+                  <Checkbox
+                    checked={cols.includes('nprequest.tenant')}
+                    onChange={e => this.setState({
+                      cols: e.target.checked ?
+                        [...cols, 'nprequest.tenant'] :
+                        cols.filter(c => c !== 'nprequest.tenant')
+                    })} >
+                    <FormattedMessage id="tenant" defaultMessage="Tenant" />
+                  </Checkbox>
+
+                  <Checkbox
+                    checked={cols.includes('nprequest.customer_id')}
+                    onChange={e => this.setState({
+                      cols: e.target.checked ?
+                        [...cols, 'nprequest.customer_id'] :
+                        cols.filter(c => c !== 'nprequest.customer_id')
+                    })} >
+                    <FormattedMessage id="customer-id" defaultMessage="Customer ID" />
+                  </Checkbox>
+                </Col>
+
+                <Col smOffset={1} sm={5} md={3}>
+                  <Checkbox
+                    checked={cols.includes('nprequest.due_date')}
+                    onChange={e => this.setState({
+                      cols: e.target.checked ?
+                        [...cols, 'nprequest.due_date'] :
+                        cols.filter(c => c !== 'nprequest.due_date')
+                    })} >
+                    <FormattedMessage id="due-date" defaultMessage="Due date" />
+                  </Checkbox>
+                </Col>
+
+              </FormGroup>
+
+              <FormGroup>
                 <Col smOffset={1} sm={1}>
                   <Button bsStyle="info" onClick={() => this._refresh({ page_number: 1 })} disabled={invalid_created_on}>
                     <FormattedMessage id="search" defaultMessage="Search" />
@@ -1063,7 +1151,7 @@ export class NPRequests extends Component {
           <Panel.Body>
             <ApioDatatable
               sorting_spec={this.state.sorting_spec}
-              headers={getHeaders()}
+              headers={getHeaders(reqCols)}
               pagination={this.state.pagination}
               data={requests}
               onSort={s => this._refresh(undefined, s)}
@@ -1091,17 +1179,73 @@ export class NPRequests extends Component {
   }
 }
 
-function getHeaders() {
-  if (localUser.isModuleEnabled(modules.npact_coin)) {
-    return CoinHeaders;
+function getHeaders(cols) {
+  let headers = [
+    { title: '', render: n => getIcon(n.nprequest.kind), style: { width: '40px' } },
+    {
+      title: '#', field: 'crdc_id', model: 'NPRequest',
+      render: n => <Link to={`/transactions/${n.id}`}>{n.nprequest.crdc_id || n.id}</Link>,
+      sortable: true
+    },
+    {
+      title: <FormattedMessage id="status" defaultMessage="Status" />,
+      field: 'status',
+      model: 'NPRequest',
+      render: n => n.nprequest.status,
+      sortable: true,
+      className: 'visible-md visible-lg',
+    },
+    { title: <FormattedMessage id="donor" defaultMessage="Donor" />, field: 'donor_name', className: 'visible-md visible-lg' },
+    { title: <FormattedMessage id="recipient" defaultMessage="Recipient" />, field: 'recipient_name', className: 'visible-md visible-lg' },
+  ];
+
+  if (cols?.includes('nprequest.tenant')) {
+    headers.push({ title: <FormattedMessage id="tenant" defaultMessage="Tenant" />, field: 'tenant', render: n => n.nprequest.tenant, className: 'visible-lg' });
   }
-  if (localUser.isModuleEnabled(modules.npact_citc)) {
-    return CitcHeaders;
+
+  headers.push({
+    title: <FormattedMessage id="ranges" defaultMessage="Ranges" />, render: n => (
+      n.nprequest.ranges.map((r, key) => (
+        <span key={key}>
+          {r.range_from}-{r.range_to}{r.reject_code && <p style={{"color": "red"}}>{r.reject_code}</p>}
+          <br />
+        </span>
+      )
+      )),
+    className: 'visible-md visible-lg',
+  });
+
+  if (cols?.includes('nprequest.customer_id')) {
+    headers.push({ title: <FormattedMessage id="customer-id" defaultMessage="Customer ID" />, field: 'customer_id', render: n => n.nprequest.customer_id, className: 'visible-md visible-lg' });
   }
-  if (localUser.isModuleEnabled(modules.npact_crdb_dd)) {
-    return CrdbDdHeaders;
+
+  if (cols?.includes('nprequest.due_date')) {
+    headers.push({
+      title: <FormattedMessage id="due-date" defaultMessage="Due date" />, field: 'due_date', model: 'NPRequest',
+      render: n => n.nprequest.due_date?localUser.localizeUtcDate(moment.utc(n.nprequest.due_date)).format():"-",
+      sortable: true,
+      className: 'visible-md visible-lg',
+    });
   }
-  return DefaultHeaders;
+
+  headers.push({
+    title: <FormattedMessage id="created-on" defaultMessage="Created on" />, field: 'created_on', model: 'NPRequest',
+    render: n => localUser.localizeUtcDate(moment.utc(n.created_on)).format(),
+    sortable: true,
+  });
+
+  return headers;
+
+  // if (localUser.isModuleEnabled(modules.npact_coin)) {
+  //   return CoinHeaders;
+  // }
+  // if (localUser.isModuleEnabled(modules.npact_citc)) {
+  //   return CitcHeaders;
+  // }
+  // if (localUser.isModuleEnabled(modules.npact_crdb_dd)) {
+  //   return CrdbDdHeaders;
+  // }
+  // return DefaultHeaders;
 }
 
 const DefaultHeaders = [
