@@ -947,7 +947,7 @@ class App extends Component {
                   }
                 </div>
 
-                <Col mdOffset={1} md={10}>
+                <Col className="container-fluid">
                   <Suspense fallback={<div>Loading...</div>}>
                     <Switch>
                         <Route path="/help"
