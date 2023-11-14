@@ -1787,7 +1787,7 @@ export class Transaction extends Component {
         const {tx} = this.state;
         fetch_get(`/api/v01/activities/${tx.activity_id}`).then(
             data => {
-                fetch_put(`/api/v01/transactions/${tx.id}`, {definition: JSON.stringify(data.activity.definition)}).then(() => {
+                fetch_put(`/api/v01/transactions/${tx.id}`, {definition: data.activity.definition}).then(() => {
                     NotificationsManager.success(
                         <FormattedMessage id="definition-updated" defaultMessage="Definition updated!"/>
                     );
