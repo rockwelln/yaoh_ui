@@ -9,6 +9,7 @@ import {FormattedMessage} from 'react-intl';
 import {DashboardCard} from "./dashboard-tiles";
 import queryString from "query-string";
 import {Link} from "react-router-dom";
+import {localUser} from "../utils/user";
 
 const REFRESH_CYCLE = 60;
 
@@ -21,7 +22,7 @@ export default function ActiveTransactionsPerWorkflow() {
 
     const refresh = useCallback(() => {
         setLoading(true);
-        fetch_get('/api/v01/system/stats_active_per_wf')
+        fetch_get('/api/v01/system/stats_active_per_wf?with_requests_only=1')
             .then(data => {
                 setData(data.requests);
                 setLoading(false);
@@ -38,9 +39,13 @@ export default function ActiveTransactionsPerWorkflow() {
         return () => clearInterval(interval);
     }, []);
 
+    const isNpact = localUser.isModuleEnabled('npact');
+
     return (
         <DashboardPanel
-            title={<FormattedMessage id='act-tx-workflow' defaultMessage='Active transactions / workflow'/>} >
+            title={isNpact?
+              <FormattedMessage id='act-ports' defaultMessage='Active ports'/>
+              :<FormattedMessage id='act-tx-workflow' defaultMessage='Active transactions / workflow'/>} >
             {
                 data.sort((a, b) => b.counter - a.counter).map(d => (
                   <Link to={{
