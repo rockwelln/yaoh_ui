@@ -3701,6 +3701,29 @@ function LicenseGenerator({onNewLicense}) {
           </Col>
         </FormGroup>
         <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="visible_groups" defaultMessage="Visible custom route groups"/>
+            </Col>
+            <Col sm={9}>
+              <ul>
+                {
+                  newLicense.fields?.visible_custom_route_groups.map(g => 
+                    <li key={g}>
+                      {g}
+                      {" "}
+                      <Button>{"-"}</Button>
+                    </li>
+                  )
+                }
+                <li>
+                  <FormControl
+                    componentClass="input" />
+                  <Button>{"+"}</Button>
+                </li>
+              </ul>
+            </Col>
+          </FormGroup>
+        <FormGroup>
           <Col componentClass={ControlLabel} sm={2}>
             <FormattedMessage id="license key" defaultMessage="License key"/>
           </Col>
@@ -3726,7 +3749,7 @@ function LicenseGenerator({onNewLicense}) {
     )
 }
 
-function LicensePanel(props) {
+function LicensePanel() {
     const [newLicense, setNewLicense] = useState("");
     const [newDetails, setNewDetails] = useState(null);
     const [current, setCurrent] = useState({});
@@ -3743,6 +3766,21 @@ function LicensePanel(props) {
           <StaticControl label="Assigned to" value={current.customer_name}/>
           <StaticControl label="Demo" value={current.demo ? "yes": "no"}/>
           <StaticControl label="Max activities" value={current.fields?.max_activities || "*not set*"}/>
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="visible_groups" defaultMessage="Visible custom route groups"/>
+            </Col>
+            <Col sm={9}>
+              {
+                current.fields?.visible_custom_route_groups === undefined ? "* not set *" :
+                <ul>
+                  {
+                    current.fields?.visible_custom_route_groups.map(g => <li key={g}>{g}</li>)
+                  }
+                </ul>
+              }
+            </Col>
+          </FormGroup>
           <FormGroup>
             <Col componentClass={ControlLabel} sm={2}>
               <FormattedMessage id="new_license" defaultMessage="New license"/>
