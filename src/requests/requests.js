@@ -1450,9 +1450,9 @@ function fetchInstance(instanceID, onSuccess, onError) {
 }
 
 const RELOAD_TX = 10 * 1000;
-let USE_WS = false;
+let USE_WS = true;
 try {
-    USE_WS = window.location.href ? window.location.href.includes("ws=1") : document.location.href.includes("ws=1");
+    USE_WS = window.location.href?.includes("ws=1") || document.location.href?.includes("ws=1") || USE_WS;
 } catch {
     console.error("USE_WS not set");
 }
@@ -1545,27 +1545,35 @@ export class Transaction extends Component {
     }
 
     fetchDetails() {
-        this.websocket = new WebSocket(`${API_WS_URL}/api/v01/transactions/${this.props.match.params.txId}/ws?auth_token=${this.props.auth_token}`);
-        this.websocket.onopen = () => this.setState({error: undefined});
-        this.websocket.onmessage = this.completeTx;
-        this.websocket.onerror = () => this.setState({error: "Failed to fetch details"});
-        this.websocket.onclose = e => {
-            switch (e.code) {
-                case 4001:
-                    this.setState({error: "Not found ..."});
-                    break;
-                case 4002:
-                    this.setState({error: "You are not allowed to see this request!"});
-                    break;
-                case 1000:	// CLOSE_NORMAL
-                    console.log("WebSocket: closed");
-                    break;
-                default:	// Abnormal closure
-                    this.setState({error: "Trying to reconnect..."});
-                    setTimeout(this.fetchDetails, 1000);
-                    break;
+        AuthServiceManager.getValidToken().then(token => {
+            this.websocket = new WebSocket(`${API_WS_URL}/api/v01/transactions/${this.props.match.params.txId}/ws?auth_token=${token}`);
+            this.websocket.onopen = () => this.setState({error: undefined});
+            this.websocket.onmessage = this.completeTx;
+            this.websocket.onerror = () => this.setState({error: "Failed to fetch details"});
+            this.websocket.onclose = e => {
+                switch (e.code) {
+                    case 4001:
+                        this.setState({error: "Not found ..."});
+                        break;
+                    case 4002:
+                        this.setState({error: "You are not allowed to see this request!"});
+                        break;
+                    case 1000:	// CLOSE_NORMAL
+                        console.log("WebSocket: closed");
+                        break;
+                    case 1006:
+                        console.log("WebSocket: not available");
+                        USE_WS = false;
+                        this.fetchTxDetails(true);
+                        break;
+                    default:	// Abnormal closure
+                        console.log("websocket error", e)
+                        this.setState({error: "Trying to reconnect..."});
+                        setTimeout(this.fetchDetails, 1000);
+                        break;
+                }
             }
-        }
+        });
     }
 
     fetchTxDetails(reload, full) {
