@@ -576,7 +576,7 @@ function ImportTemplateModal({show, id, onHide}) {
   } = useDropzone({    
     maxFiles:1,
     onDrop,
-    accept: ['.xlsx', '.txt', '.jinja2', '.jinja', '.json'],
+    accept: ['.xlsx', '.xlst', '.txt', '.jinja2', '.jinja', '.json'],
     onDropRejected,
   });
 
