@@ -153,7 +153,7 @@ function ManualActionInput({type, value, options, onChange}) {
         onChange={e => onChange(e.target.value)}>
         <option value={""}>- Select an option -</option>
       {
-        options.map(o => <option key={o} value={o}>{o}</option>)
+        options.map(([value, label]) => <option key={value} value={value}>{label}</option>)
       }
       </FormControl>
     );
@@ -216,7 +216,7 @@ export function ManualActionInputForm({onTrigger, show, action, output, onHide})
                                       <ManualActionInput
                                           type={v.format || v.type}
                                           value={values[key]}
-                                          options={v.enum}
+                                          options={v.mapping_values || v.enum?.map(e => [e, e]) }
                                           onChange={v => setValues(
                                               update(values,{$merge: {[key] : v}})
                                           )} />
