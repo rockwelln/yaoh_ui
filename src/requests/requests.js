@@ -66,9 +66,11 @@ const SUB_REQUESTS_PAGE_SIZE = 25;
 
 const workableDefinition = (definition, states) => {
     let new_def = Object.assign({}, definition);
+    // sort the states by id (descending) to get the latest state first for each cell
+    let ss = states?.sort((a, b) => b.id - a.id);
 
     Object.entries(definition.cells).map(([k, c]) => {
-        const state = states && states.find(s => s.cell_id === k);
+        const state = ss?.find(s => s.cell_id === k);
         if(state !== undefined) {
             c.state = state.status;
         }
@@ -77,12 +79,12 @@ const workableDefinition = (definition, states) => {
     });
 
     let new_transitions = new Array();
-    new_def.transitions && states && new_def.transitions.map(t => {
+    states && new_def.transitions?.map(t => {
         const [src, dst] = t;
 
-        const state = states && states.find(s => src === `${s.cell_id}.${s.output}`);
+        const state = ss?.find(s => src === `${s.cell_id}.${s.output}`);
         if(state !== undefined) {
-            const dest_state = states.find(s => dst === s.cell_id);
+            const dest_state = ss?.find(s => dst === s.cell_id);
             if(dest_state !== undefined) {
                 t[2] = {'status': dest_state.status};
             }
@@ -93,7 +95,7 @@ const workableDefinition = (definition, states) => {
                     t[2] = {'status': 'OK'};
                     // definition.cells[dst].state = 'OK';
                     const target = definition.cells[dst]?.params["task"];
-                    const target_state = states.find(s => target === s.cell_id);
+                    const target_state = ss?.find(s => target === s.cell_id);
                     new_transitions.push([dst, target, {'status': target_state.status}]);
                 }
             }
