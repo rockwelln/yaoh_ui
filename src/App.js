@@ -42,7 +42,6 @@ import {
     createCookie,
     fetch_get,
     getCookie,
-    NotificationsManager,
     parseJSON,
     ProvProxiesManager,
     removeCookie,
@@ -77,14 +76,12 @@ import RangesManagement from "./np/data/range_mgm";
 import RoutingInfoManagement from "./np/data/routing_info_mgm";
 import SearchPortingCases from "./np/number_porting";
 import SearchMVNO from "./np/mvno_mgm";
+import SouthboundCalls from "./requests/southCalls";
 import {LoginPage, LoginForm, fetchPlatformDetails} from "./login";
 import {RESET_PASSWORD_PREFIX, ResetPasswordRequestForm, ResetPasswordForm} from "./reset_password";
 import {NPEmergencyNotificationRequest} from "./np/emergency-notification";
 import TemplatePlayground from "./help/templatePlayground";
-import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
-import Button from "react-bootstrap/lib/Button";
 import AlarmManagement, {AlarmCounters, fetchAlarms} from "./system/alarms";
-import moment from "moment";
 import Clients from "./system/clients_mgm";
 
 const ListProvisioningGateways=React.lazy(() => import("./provisioning/ListProvisioningGateways"))
@@ -289,6 +286,16 @@ function AsyncApioNavBar({user_info, logoutUser, database_status}){
                 </MenuItem>
               </LinkContainer>
             </>
+            }
+            {
+              (!user_info.modules || localUser.isSystem()) &&
+              <>
+                <LinkContainer to={"/transactions/south_calls"} key="south_calls">
+                  <MenuItem>
+                    <FormattedMessage id="south-calls" defaultMessage="Southbound calls"/>
+                  </MenuItem>
+                </LinkContainer>
+              </>
             }
             {(!user_info.modules || user_info.modules.includes(modules.orange)) && localUser.canSee(pages.requests_ndg) &&
             <>
@@ -939,9 +946,16 @@ class App extends Component {
                                )}
                                exact />
                         <Route path="/transactions/timers"
-                               component={props => (
+                               component={() => (
                                    localUser.isAllowed(accesses.requests) ?
                                    <Timers /> :
+                                   <NotAllowed/>
+                               )}
+                               exact />
+                        <Route path="/transactions/south_calls"
+                               component={() => (
+                                   localUser.isAllowed(accesses.requests) ?
+                                   <SouthboundCalls /> :
                                    <NotAllowed/>
                                )}
                                exact />
