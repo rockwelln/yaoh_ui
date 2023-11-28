@@ -10,6 +10,7 @@ import Col from "react-bootstrap/lib/Col";
 import Table from "react-bootstrap/lib/Table";
 import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import FormControl from "react-bootstrap/lib/FormControl";
+import Alert from "react-bootstrap/lib/Alert";
 
 import {Link} from "react-router-dom";
 import { FormattedMessage } from "react-intl";
@@ -34,9 +35,11 @@ export default function SouthCalls() {
   const [pendingFilter, setPendingFilter] = useState({});
   const [data, setData] = useState();
   const [page, setPage] = useState(1); // current page
+  const [loading, setLoading] = useState(false);
   const [sort, setSort] = useState({field: "processing_trace_id", direction: "desc"});
 
   const _refresh = useCallback(() => {
+    setLoading(true);
     search({filter: filter, paging: {page_number: page, page_size: 50}, sort: [sort]}).then((data) => {
       setData(data);
     }).catch((error) => {
@@ -44,6 +47,8 @@ export default function SouthCalls() {
         <FormattedMessage id="fetch-error" defaultMessage="Fetch error" />,
         error.message
       );
+    }).finally(() => {
+      setLoading(false);
     });
   }, [page, sort, filter]);
 
@@ -75,19 +80,22 @@ export default function SouthCalls() {
         </Panel.Heading>
         <Panel.Body collapsible>
           <Form horizontal>
-            
+
             <SearchFilters filter={pendingFilter} onChange={setPendingFilter} />
 
             <FormGroup>
               <Col smOffset={1} sm={1}>
-                <Button bsStyle="info" onClick={() => {
-                  setPage(1);
-                  setFilter(
-                    Object.entries(pendingFilter)
-                    .filter((a) => a[1].value !== "" && a[1].value !== null && a[1].value !== undefined)
-                    .map(([k, v]) => ({field: k, op: v.op, value: v.value}))
-                  );
-                }}>
+                <Button
+                  bsStyle="info"
+                  disabled={loading}
+                  onClick={() => {
+                    setPage(1);
+                    setFilter(
+                      Object.entries(pendingFilter)
+                      .filter((a) => a[1].value !== "" && a[1].value !== null && a[1].value !== undefined)
+                      .map(([k, v]) => ({field: k, op: v.op, value: v.value}))
+                    );
+                  }}>
                   <FormattedMessage id="search" defaultMessage="Search" />
                 </Button>
               </Col>
@@ -98,6 +106,13 @@ export default function SouthCalls() {
 
       <Panel>
         <Panel.Body>
+          {
+            loading && (
+              <Alert bsStyle="info">
+                <FormattedMessage id="loading" defaultMessage="Loading..." />
+              </Alert>
+            )
+          }
 
           <DataTable
             data={data}
