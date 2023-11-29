@@ -38,6 +38,7 @@ import { deletePasskey, deleteUserPasskey, getWebauthnOptions, isWebauthnAvailab
 import { DeleteConfirmButton } from '../utils/deleteConfirm';
 import moment from 'moment';
 import queryString from 'query-string';
+import UserLoginAttempts from './user_login_attempts';
 
 
 // helper functions
@@ -499,6 +500,10 @@ export function LocalUserProfile({onUserInfoChanged}) {
                        locations={user_info.trusted_locs}
                        userInfo={user_info}
                        onChange={onUserInfoChanged} />
+                </Tab>
+                <Tab eventKey={"login-attempts"} title={<FormattedMessage id="login-attempts" defaultMessage="Login Attempts" />}>
+                     <UserLoginAttempts
+                        attempts={userInfo.login_attempts} />
                 </Tab>
             </Tabs>
             </Panel.Body>
@@ -1152,6 +1157,10 @@ function UpdateUser(props) {
                           locations={fullUser.trusted_locs}
                           userInfo={fullUser}
                           onChange={() => loadFullUser(user.id)} />
+                    </Tab>
+                    <Tab eventKey={"login-attempts"} title={<FormattedMessage id="login-attempts" defaultMessage="Login Attempts" />}>
+                        <UserLoginAttempts
+                            attempts={fullUser.login_attempts} />
                     </Tab>
                 </Tabs>
             </Modal.Body>

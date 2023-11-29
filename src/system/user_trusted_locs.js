@@ -20,9 +20,7 @@ function deleteUserTrustedLocation(userId, locationIp, onSuccess, onError) {
     })
 }
 
-export function TrustedLocationsTable(props) {
-  const {userId, locations, userInfo, onChange} = props;
-
+export function TrustedLocationsTable({userId, locations, userInfo, onChange}) {
   return (
     <Table>
       <thead>
