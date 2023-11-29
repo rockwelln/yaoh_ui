@@ -536,9 +536,12 @@ function Message(props) {
             <td style={{width: '1%'}}>{expIco}</td>
             <td style={{width: '1%'}}>{`${p+1}. `}</td>
             <td style={{width: '2%'}}><Glyphicon style={{color: statusColor}} glyph={entry.status < 400?"ok":"remove"}/></td>
-            <td style={{width: '16%'}}>{entry.label}</td>
+            <td style={{width: '11%'}}>{entry.label}</td>
+            <td style={{width: '6%'}}>{entry.session_holder}</td>
             <td style={{width: '5%'}}>{entry.status}</td>
-            <td style={{width: '60%'}}>{userLocalizeUtcDate(moment.utc(entry.created_on), userInfo).format()}</td>
+            <td style={{width: '5%'}}>{entry.http_method}</td>
+            <td style={{width: '45%'}}>{entry.http_url}</td>
+            <td style={{width: '20%'}}>{userLocalizeUtcDate(moment.utc(entry.created_on), userInfo).format()}</td>
             <td style={{width: '15%'}}><Badge>{entry.task_name}</Badge></td>
         </tr>
     ];
@@ -547,7 +550,7 @@ function Message(props) {
         rows.push(
             <tr key={`message_input_${entry.processing_trace_id}`}>
                 <td><Glyphicon glyph="forward"/></td>
-                <td colSpan={6}>
+                <td colSpan={9}>
                     <pre style={{wordWrap: 'break-word', whiteSpace: 'pre-wrap'}}>
                         # request <br/>
                         {pp_as_json(entry.input)}
@@ -560,14 +563,14 @@ function Message(props) {
     if (loading) {
         rows.push(
             <tr key={`message_loading_${entry.processing_trace_id}`}>
-                <td colSpan={7}><FormattedMessage id="loading" defaultMessage="Loading..."/></td>
+                <td colSpan={10}><FormattedMessage id="loading" defaultMessage="Loading..."/></td>
             </tr>
         )
     } else if (expanded) {
         rows.push(
             <tr key={`message_details_${entry.processing_trace_id}`}>
                 <td><Glyphicon glyph="backward"/></td>
-                <td colSpan={6}>
+                <td colSpan={9}>
                     <pre style={{wordWrap: 'break-word', whiteSpace: 'pre-wrap'}}>
                         # response <br/>
                         {pp_as_json(entry.output)}
@@ -579,7 +582,7 @@ function Message(props) {
         try {
             syncDetails && rows.push(
                 <tr key={`message_flow_sync_${entry.processing_trace_id}`}>
-                    <td colSpan={7}>
+                    <td colSpan={10}>
                         <Tabs defaultActiveKey={1} id="syn-messages-flow">
                             <Tab eventKey={1} title={<FormattedMessage id="flows" defaultMessage="Flows" />}>
                                 <SyncMessagesFlow data={JSON.parse(syncDetails.south_data)} />
