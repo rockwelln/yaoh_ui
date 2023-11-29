@@ -90,11 +90,7 @@ export default function SouthCalls() {
                   disabled={loading}
                   onClick={() => {
                     setPage(1);
-                    setFilter(
-                      Object.entries(pendingFilter)
-                      .filter((a) => a[1].value !== "" && a[1].value !== null && a[1].value !== undefined)
-                      .map(([k, v]) => ({field: k, op: v.op, value: v.value}))
-                    );
+                    setFilter(pendingFilterToFilter(pendingFilter));
                   }}>
                   <FormattedMessage id="search" defaultMessage="Search" />
                 </Button>
@@ -124,6 +120,20 @@ export default function SouthCalls() {
   )
 }
 
+function pendingFilterToFilter(pendingFilter) {
+  return Object.entries(pendingFilter)
+  .filter((a) => a[1].value !== "" && a[1].value !== null && a[1].value !== undefined)
+  .map(([k, v]) => {
+    if (v.value instanceof Array) {
+      if (v.op === "eq") {
+        return { "or": v.value.map(vv => ({field: k, op: v.op, value: vv})) }
+      } else if (v.op === "ne") {
+        return { "and": v.value.map(vv => ({field: k, op: v.op, value: vv})) }
+      }
+    }
+    return {field: k, op: v.op, value: v.value}
+  })
+}
 
 function DataTable({data, onPageChange}) {
   return (
@@ -150,7 +160,7 @@ function DataTable({data, onPageChange}) {
                   }
                 </td>
                 <td>{row.session_holder || "-"} ({row.host || "-"})</td>
-                <td>{row.status}</td>
+                <td style={{color:colorForStatus(row.status)}}>{row.status === "0" ? "-" : row.status}</td>
                 <td>{row.method}</td>
                 <td>{row.url}</td>
                 <td>{localUser.localizeUtcDate(row.created_on).format()}</td>
@@ -167,6 +177,20 @@ function DataTable({data, onPageChange}) {
         total_results={data?.pagination[3]} />
     </Form>
   )
+}
+
+function colorForStatus(status) {
+  let statusInt = parseInt(status);
+  if (statusInt !== NaN && statusInt >= 200) {
+    if (statusInt < 300) {
+      return "green";
+    } else if (statusInt < 400) {
+      return "orange";
+    } else {
+      return "red";
+    }
+  }
+  return "black";
 }
 
 
@@ -267,17 +291,24 @@ function SearchFilters({filter, onChange}) {
         </Col>
         <Col sm={3}>
           <ReactSelect
-            value={{value: filter.http_method?.value || "", label: filter.http_method?.value || ""}}
+            isMulti={true}
+            isClearable={true}
+            value={filter.http_method?.value ? filter.http_method?.value.map(m => ({value: m, label: m})) : []}
             placeholder=""
-            onChange={e => onChange(
-              !filter.http_method ? update(filter, {http_method: {$set: {op: "eq", value: e.value}}}) :
-              update(filter, {http_method: {$merge: {value: e.value}}})
+            onChange={v => onChange(
+              !filter.http_method ? update(filter, {http_method: {$set: {op: "eq", value: v.map(e => e.value)}}}) :
+              update(filter, {http_method: {$merge: {value: v.map(e => e.value)}}})
             )}
+            onClear={() => onChange(update(filter, {http_method: {$set: null}}))}
             options={[
               {value: "", label: ""},
               {value: "GET", label: "GET"},
               {value: "POST", label: "POST"},
               {value: "PUT", label: "PUT"},
+              {value: "DELETE", label: "DELETE"},
+              {value: "SELECT", label: "SELECT"},
+              {value: "INSERT", label: "INSERT"},
+              {value: "UPDATE", label: "UPDATE"},
               {value: "DELETE", label: "DELETE"},
             ]} />
         </Col>
