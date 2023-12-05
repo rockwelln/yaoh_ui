@@ -298,7 +298,8 @@ function TextareaInput({value, onChange, readOnly}) {
         componentClass="textarea"
         className="code-input"
         ref={editorRef}
-        onChange={e => onChange(e.target.value)}
+        onChange={e => !readOnly && onChange(e.target.value)}
+        disabled={readOnly}
         value={value}
         onScroll={onScroll} >
       </FormControl>
