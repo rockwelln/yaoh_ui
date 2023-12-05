@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from "react";
+import React, {useCallback, useEffect, useRef, useState} from "react";
 import ReactDOM from "react-dom";
 import FormControl from "react-bootstrap/lib/FormControl";
 import {fetchRoles} from "../system/user_roles";
@@ -280,40 +280,27 @@ function TextareaInput({value, onChange, readOnly}) {
   const outputRef = useRef(null);
 
   useEffect(() => {
-    value && setTimeout(() => {
-      const inputNode = ReactDOM.findDOMNode(editorRef.current);
-      const outputNode = ReactDOM.findDOMNode(outputRef.current);
-      inputNode.innerHTML = renderOutput(value);
-      outputNode.innerHTML = renderOutput(value);
-      Prism.highlightAll();
-    }, 100);
-  }, [value]);
+    if(value === undefined) return
+    const outputNode = ReactDOM.findDOMNode(outputRef.current);
+    outputNode.innerHTML = renderOutput(value);
+    Prism.highlightElement(outputNode);
+  }, [editorRef, outputRef, value]);
+
+  const onScroll = useCallback(() => {
+    const node = ReactDOM.findDOMNode(editorRef.current);
+    const outputNode = ReactDOM.findDOMNode(outputRef.current);
+    outputNode.parentElement.scrollTop = node.scrollTop;
+  }, []);
 
   return (
     <div className="editor">
       <FormControl
-      componentClass="textarea"
-      className="code-input"
-      ref={editorRef}
-      onInput={() => {
-        const inputNode = ReactDOM.findDOMNode(editorRef.current);
-        const outputNode = ReactDOM.findDOMNode(outputRef.current);
-        outputNode.innerHTML = renderOutput(inputNode.value);
-        Prism.highlightAll();
-      }}
-      onKeyDown={() => {
-        const inputNode = ReactDOM.findDOMNode(editorRef.current);
-        const outputNode = ReactDOM.findDOMNode(outputRef.current);
-        outputNode.innerHTML = renderOutput(inputNode.value);
-        Prism.highlightAll();
-      }}
-      onScroll={() => {
-        const node = ReactDOM.findDOMNode(editorRef.current);
-        const outputNode = ReactDOM.findDOMNode(outputRef.current);
-        outputNode.parentElement.scrollTop = node.scrollTop;
-      }}
-      >
-        {value}
+        componentClass="textarea"
+        className="code-input"
+        ref={editorRef}
+        onChange={e => onChange(e.target.value)}
+        value={value}
+        onScroll={onScroll} >
       </FormControl>
       <pre className="code-output">
         <code ref={outputRef} className="language-django">
