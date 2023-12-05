@@ -15,6 +15,9 @@ import Select from "react-select";
 import InputGroup from "react-bootstrap/lib/InputGroup";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import HelpBlock from "react-bootstrap/lib/HelpBlock";
+import Prism from 'prismjs';
+import 'prismjs/components/prism-markup-templating';
+import 'prismjs/components/prism-django';
 import { FormattedMessage } from "react-intl";
 
 import "./editor.css";
@@ -272,84 +275,58 @@ function ListInput({options, value, onChange, readOnly}) {
 }
 
 
-function TextareaInput_({value, onChange, cells, rows, readOnly}) {
-  // todo can become a "list" of key (string) + value (jinja code)
-  return (
-    <FormControl
-        componentClass={MentionExample}
-        cells={cells}
-        value={value}
-        onChange={onChange}
-        readOnly={readOnly}
-        rows={rows}
-    />
-  )
-}
-
-
 function TextareaInput({value, onChange, readOnly}) {
   const editorRef = useRef(null);
-  const content = addColors(value || "");
+  const outputRef = useRef(null);
+
+  useEffect(() => {
+    value && setTimeout(() => {
+      const inputNode = ReactDOM.findDOMNode(editorRef.current);
+      const outputNode = ReactDOM.findDOMNode(outputRef.current);
+      inputNode.innerHTML = renderOutput(value);
+      outputNode.innerHTML = renderOutput(value);
+      Prism.highlightAll();
+    }, 100);
+  }, [value]);
+
   return (
-    <div className="jinja-template">
-      <div class="jinja-template_colors">Type &lt;here&gt;</div>
-      <div 
-        ref={editorRef}
-        className={"jinja-template_editable"}
-        contentEditable={!readOnly}
-        spellCheck={false}
-        autoCorrect={"off"}
-        autoCapitalize={"off"}
-        onInput={() => {
-          const node = ReactDOM.findDOMNode(editorRef.current);
-          const v = node.innerHTML;
-          node.previousElementSibling.innerHTML = addColors(v);
-          syncScroll(node);
-        }}
-        onScroll={() => {
-          const node = ReactDOM.findDOMNode(editorRef.current);
-          syncScroll(node);
-        }}
-        >
-        Type &lt;here&gt;
-      </div>
+    <div className="editor">
+      <FormControl
+      componentClass="textarea"
+      className="code-input"
+      ref={editorRef}
+      onInput={() => {
+        const inputNode = ReactDOM.findDOMNode(editorRef.current);
+        const outputNode = ReactDOM.findDOMNode(outputRef.current);
+        outputNode.innerHTML = renderOutput(inputNode.value);
+        Prism.highlightAll();
+      }}
+      onKeyDown={() => {
+        const inputNode = ReactDOM.findDOMNode(editorRef.current);
+        const outputNode = ReactDOM.findDOMNode(outputRef.current);
+        outputNode.innerHTML = renderOutput(inputNode.value);
+        Prism.highlightAll();
+      }}
+      onScroll={() => {
+        const node = ReactDOM.findDOMNode(editorRef.current);
+        const outputNode = ReactDOM.findDOMNode(outputRef.current);
+        outputNode.parentElement.scrollTop = node.scrollTop;
+      }}
+      >
+        {value}
+      </FormControl>
+      <pre className="code-output">
+        <code ref={outputRef} className="language-django">
+          
+        </code>
+      </pre>
     </div>
-    
   )
 }
 
-function syncScroll(node) {
-  // node.previousElementSibling.scrollLeft = node.scrollLeft;
-  node.previousElementSibling.scrollTop = node.scrollTop;
-}
-
-function addColors(value) {
-  return value
-  const colors = {
-    "jinja": "blue",
-    "python": "green",
-  }
-
-  const lines = value.split("\n");
-  const newLines = [];
-  let currentColor = null;
-  let currentLine = "";
-  for(let i=0; i<lines.length; i++) {
-    const line = lines[i];
-    if(line.startsWith("{%") || line.startsWith("{{")) {
-      if(currentLine.length > 0) {
-        newLines.push(<span style={{color: colors[currentColor]}}>{currentLine}</span>);
-      }
-      currentLine = line;
-      currentColor = line.startsWith("{%")?"jinja":"python";
-    } else {
-      currentLine += "\n" + line;
-    }
-  }
-  if(currentLine.length > 0) {
-    newLines.push(<span style={{color: colors[currentColor]}}>{currentLine}</span>);
-  }
-  return newLines.join(<br/>);
+function renderOutput(value) {
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;")
+				.replace(/>/g, "&gt;") + "\n";
 }
 
 

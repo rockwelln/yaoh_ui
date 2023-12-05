@@ -1,48 +1,78 @@
-.jinja-template_editable {
-  width: 400px;
-  height: 200px;
-  border-radius: 3px;
-  border: 1px solid #eee;
-  padding: 5px;
-  overflow: scroll;
+.editor {
+  position:relative;
+  height:300px;
 }
 
-.jinja-template {
-  position: relative;
-  /*background: hsl(220, 16%, 14%);*/
-}
-
-.jinja-template_colors,
-.jinja-template_editable {
-  padding: 5px;
+.editor .code-input, .editor .code-output{
+  position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
+  width: 100%;
+  height: 100%;
+  padding: 1rem;
+  border: none;
+  font-family: 'PT Mono', monospace;
+  font-size: 1.3rem;
+  background: transparent;
   white-space: pre-wrap;
-  font-family: monospace;
-  /* font-size: 13px; */
+  line-height: 1.5em;
+  word-wrap: break-word;
+  word-break: normal;
 }
 
-/* THE OVERLAYING CONTENTEDITABLE WITH TRANSPARENT TEXT */
-.jinja-template_editable {
-  position: relative;
-  color: transparent; /* Make text invisible */
-  caret-color: hsl(0, 0%, 0%); /* But keep caret visible */
-}
-.jinja-template_editable:focus {
-  outline: 1px solid hsl(200, 91%, 73%);
-}
-.jinja-template_editable::selection {
-  background: hsla(200, 94%, 51%, 0.5);
+.editor .code-input{
+  opacity: 0.7;
+  margin: 0;
+  color: #000000;
+  resize: none;
 }
 
-/* THE UNDERLAYING ONE WITH HIGHLIGHT COLORS */
-.jinja-template_colors {
+.editor .code-output{
+  pointer-events: none;
+  z-index: 3;
+  margin: 0;
+  overflow-y: auto;
+}
+
+.editor .code-output code{
   position: absolute;
-  user-select: none;
+  top: 0;
+  left: 0;
+  margin: 0;
+  padding: 1rem;
+  display: block;
+  color: #666;
+  font-size: 1.3rem;
+  font-family: 'PT Mono', monospace;
 }
 
-.jinja-template_colors i {
-  font-style: normal;
+/* JS */
+
+a.token {
+  text-decoration: none;
+}
+.token.selector,
+.token.punctuation,
+.token.keyword {
+  color: PaleVioletRed;
+}
+.token.property,
+.token.number,
+.token.string,
+.token.punctuation,
+.token.tag-id {
+  color: DodgerBlue;
+}
+.token.function,
+.token.attr-name {
+  color: CadetBlue;
+}
+.token.atrule .atrule-id {
+  color: BlueViolet;
+}
+.token.boolean {
+  color: LightSlateGray;
+}
+.token.comment {
+  color: DarkGrey;
 }
