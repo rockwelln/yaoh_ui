@@ -1,4 +1,5 @@
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
+import ReactDOM from "react-dom";
 import FormControl from "react-bootstrap/lib/FormControl";
 import {fetchRoles} from "../system/user_roles";
 import {fetchProfiles} from "../system/user_profiles";
@@ -15,6 +16,8 @@ import InputGroup from "react-bootstrap/lib/InputGroup";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import HelpBlock from "react-bootstrap/lib/HelpBlock";
 import { FormattedMessage } from "react-intl";
+
+import "./editor.css";
 
 
 function BasicInput(props) {
@@ -269,7 +272,7 @@ function ListInput({options, value, onChange, readOnly}) {
 }
 
 
-function TextareaInput({value, onChange, cells, rows, readOnly}) {
+function TextareaInput_({value, onChange, cells, rows, readOnly}) {
   // todo can become a "list" of key (string) + value (jinja code)
   return (
     <FormControl
@@ -281,6 +284,72 @@ function TextareaInput({value, onChange, cells, rows, readOnly}) {
         rows={rows}
     />
   )
+}
+
+
+function TextareaInput({value, onChange, readOnly}) {
+  const editorRef = useRef(null);
+  const content = addColors(value || "");
+  return (
+    <div className="jinja-template">
+      <div class="jinja-template_colors">Type &lt;here&gt;</div>
+      <div 
+        ref={editorRef}
+        className={"jinja-template_editable"}
+        contentEditable={!readOnly}
+        spellCheck={false}
+        autoCorrect={"off"}
+        autoCapitalize={"off"}
+        onInput={() => {
+          const node = ReactDOM.findDOMNode(editorRef.current);
+          const v = node.innerHTML;
+          node.previousElementSibling.innerHTML = addColors(v);
+          syncScroll(node);
+        }}
+        onScroll={() => {
+          const node = ReactDOM.findDOMNode(editorRef.current);
+          syncScroll(node);
+        }}
+        >
+        Type &lt;here&gt;
+      </div>
+    </div>
+    
+  )
+}
+
+function syncScroll(node) {
+  // node.previousElementSibling.scrollLeft = node.scrollLeft;
+  node.previousElementSibling.scrollTop = node.scrollTop;
+}
+
+function addColors(value) {
+  return value
+  const colors = {
+    "jinja": "blue",
+    "python": "green",
+  }
+
+  const lines = value.split("\n");
+  const newLines = [];
+  let currentColor = null;
+  let currentLine = "";
+  for(let i=0; i<lines.length; i++) {
+    const line = lines[i];
+    if(line.startsWith("{%") || line.startsWith("{{")) {
+      if(currentLine.length > 0) {
+        newLines.push(<span style={{color: colors[currentColor]}}>{currentLine}</span>);
+      }
+      currentLine = line;
+      currentColor = line.startsWith("{%")?"jinja":"python";
+    } else {
+      currentLine += "\n" + line;
+    }
+  }
+  if(currentLine.length > 0) {
+    newLines.push(<span style={{color: colors[currentColor]}}>{currentLine}</span>);
+  }
+  return newLines.join(<br/>);
 }
 
 

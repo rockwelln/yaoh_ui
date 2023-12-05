@@ -1,0 +1,48 @@
+.jinja-template_editable {
+  width: 400px;
+  height: 200px;
+  border-radius: 3px;
+  border: 1px solid #eee;
+  padding: 5px;
+  overflow: scroll;
+}
+
+.jinja-template {
+  position: relative;
+  /*background: hsl(220, 16%, 14%);*/
+}
+
+.jinja-template_colors,
+.jinja-template_editable {
+  padding: 5px;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  white-space: pre-wrap;
+  font-family: monospace;
+  /* font-size: 13px; */
+}
+
+/* THE OVERLAYING CONTENTEDITABLE WITH TRANSPARENT TEXT */
+.jinja-template_editable {
+  position: relative;
+  color: transparent; /* Make text invisible */
+  caret-color: hsl(0, 0%, 0%); /* But keep caret visible */
+}
+.jinja-template_editable:focus {
+  outline: 1px solid hsl(200, 91%, 73%);
+}
+.jinja-template_editable::selection {
+  background: hsla(200, 94%, 51%, 0.5);
+}
+
+/* THE UNDERLAYING ONE WITH HIGHLIGHT COLORS */
+.jinja-template_colors {
+  position: absolute;
+  user-select: none;
+}
+
+.jinja-template_colors i {
+  font-style: normal;
+}
