@@ -736,19 +736,25 @@ function SwitchOutputs({value, onChange, readOnly}) {
     <Table>
       <tbody>
       {
-        expressions.map((exp, i) =>
+        expressions.map(([exp, output], i) =>
           <tr key={i}>
             <td>{"case "}</td>
-            <td style={{width: "50%"}}>{exp[0]}</td>
+            <td style={{width: "50%"}}>
+              <FormControl
+                value={exp}
+                readOnly={readOnly}
+                onChange={e => {
+                  const es = update(expressions, {[i]: {$merge: {[0]: e.target.value}}});
+                  onChange(JSON.stringify(es), es.map(e => e[1]))
+                }} />
+            </td>
             <td>{" : "}</td>
-            <td style={{width: "80px"}}>{exp[1]}</td>
+            <td style={{width: "80px"}}>{output}</td>
             { !readOnly &&
               <td><Button onClick={() => {
-                const es = expressions.filter(e => e[0] !== exp[0] && e[1] !== exp[1]);
-                onChange(
-                  JSON.stringify(es),
-                  es.map(e => e[1]),
-                )
+                // remove the entry i from the expression list
+                expressions.splice(i, 1);
+                onChange(JSON.stringify(expressions), expressions.map(e => e[1]));
               }}>{"-"}</Button></td>
             }
           </tr>)
