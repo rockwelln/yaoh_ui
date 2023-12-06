@@ -275,9 +275,10 @@ function ListInput({options, value, onChange, readOnly}) {
 }
 
 
-function TextareaInput({value, onChange, readOnly}) {
+function TextareaInput({value, onChange, readOnly, cells}) {
   const editorRef = useRef(null);
   const outputRef = useRef(null);
+  const [contextVars, setContextVars] = useState([]);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -288,11 +289,36 @@ function TextareaInput({value, onChange, readOnly}) {
   }, [editorRef, outputRef, value]);
 
   useEffect(() => {
+    const contextVars = [];
+    if(cells) {
+      Object.values(cells).forEach(options => {
+        let v = null;
+        if(options.original_name === "context_setter") {
+          v = options.params.key;
+        } else if(options.params?.output_context_key) {
+          v = options.params.output_context_key;
+        }
+
+        if(v) {
+          if(v && v[0] === "{") {
+            contextVars.push(JSON.parse(v).key)
+          } else {
+            contextVars.push(v)
+          }
+        }
+      });
+    }
+    setContextVars(contextVars);
+    console.log("contextVars", contextVars);
+  }, [cells]);
+
+  useEffect(() => {
     // check:
     // - there is the same number of {{ and }} in the template
     // - there is the same number of {% and %} in the template
     // - there is the same number of { and } in the template
 
+    setError(null);
     if(value === undefined) return;
     const nbOpenBraces = (value.match(/{/g) || []).length;
     const nbCloseBraces = (value.match(/}/g) || []).length;
@@ -307,8 +333,19 @@ function TextareaInput({value, onChange, readOnly}) {
       setError("The number of '{%' and '%}' must be the same");
     } else if(nbOpenJinja !== nbCloseJinja) {
       setError("The number of '{{' and '}}' must be the same");
-    } else {
-      setError(null);
+    }
+
+    // search for unknown context keys
+    const re = /context\.([a-zA-Z0-9_\-]+)/g;
+    let m;
+    while ((m = re.exec(value)) !== null) {
+      console.log(m)
+      // This is necessary to avoid infinite loops with zero-width matches
+      if (m.index === re.lastIndex) re.lastIndex++;
+      if(!contextVars.includes(m[1])) {
+        setError(`'${m[1]}' seems not known (yet?)`);
+        return;
+      }
     }
   }, [value]);
 
