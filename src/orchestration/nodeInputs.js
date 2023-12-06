@@ -1,4 +1,5 @@
-import React, {useEffect, useState} from "react";
+import React, {useCallback, useEffect, useRef, useState} from "react";
+import ReactDOM from "react-dom";
 import FormControl from "react-bootstrap/lib/FormControl";
 import {fetchRoles} from "../system/user_roles";
 import {fetchProfiles} from "../system/user_profiles";
@@ -14,7 +15,12 @@ import Select from "react-select";
 import InputGroup from "react-bootstrap/lib/InputGroup";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import HelpBlock from "react-bootstrap/lib/HelpBlock";
+import Prism from 'prismjs';
+import 'prismjs/components/prism-markup-templating';
+import 'prismjs/components/prism-django';
 import { FormattedMessage } from "react-intl";
+
+import "./editor.css";
 
 
 function BasicInput(props) {
@@ -269,18 +275,107 @@ function ListInput({options, value, onChange, readOnly}) {
 }
 
 
-function TextareaInput({value, onChange, cells, rows, readOnly}) {
-  // todo can become a "list" of key (string) + value (jinja code)
+function TextareaInput({value, onChange, readOnly, cells}) {
+  const editorRef = useRef(null);
+  const outputRef = useRef(null);
+  const [contextVars, setContextVars] = useState([]);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if(value === undefined) return
+    const outputNode = ReactDOM.findDOMNode(outputRef.current);
+    outputNode.innerHTML = renderOutput(value);
+    Prism.highlightElement(outputNode);
+  }, [editorRef, outputRef, value]);
+
+  useEffect(() => {
+    const contextVars = [];
+    if(cells) {
+      Object.values(cells).forEach(options => {
+        let v = null;
+        if(options.original_name === "context_setter") {
+          v = options.params.key;
+        } else if(options.params?.output_context_key) {
+          v = options.params.output_context_key;
+        }
+
+        if(v) {
+          contextVars.push(v[0] === "{" ? JSON.parse(v).key : v)
+        }
+      });
+    }
+    setContextVars(contextVars);
+  }, [cells]);
+
+  useEffect(() => {
+    // check:
+    // - there is the same number of {{ and }} in the template
+    // - there is the same number of {% and %} in the template
+    // - there is the same number of { and } in the template
+
+    setError(null);
+    if(value === undefined) return;
+    const nbOpenBraces = (value.match(/{/g) || []).length;
+    const nbCloseBraces = (value.match(/}/g) || []).length;
+    const nbOpenDjango = (value.match(/{%/g) || []).length;
+    const nbCloseDjango = (value.match(/%}/g) || []).length;
+    const nbOpenJinja = (value.match(/{{/g) || []).length;
+    const nbCloseJinja = (value.match(/}}/g) || []).length;
+
+    if(nbOpenBraces !== nbCloseBraces) {
+      setError("The number of '{' and '}' must be the same");
+    } else if(nbOpenDjango !== nbCloseDjango) {
+      setError("The number of '{%' and '%}' must be the same");
+    } else if(nbOpenJinja !== nbCloseJinja) {
+      setError("The number of '{{' and '}}' must be the same");
+    }
+
+    // search for unknown context keys
+    const re = /context\.([a-zA-Z0-9_\-]+)/g;
+    let m;
+    while ((m = re.exec(value)) !== null) {
+      // This is necessary to avoid infinite loops with zero-width matches
+      if (m.index === re.lastIndex) re.lastIndex++;
+      if(!contextVars.includes(m[1])) {
+        setError(`'${m[1]}' seems not known (yet?)`);
+        return;
+      }
+    }
+  }, [value]);
+
+  const onScroll = useCallback(() => {
+    const node = ReactDOM.findDOMNode(editorRef.current);
+    const outputNode = ReactDOM.findDOMNode(outputRef.current);
+    outputNode.parentElement.scrollTop = node.scrollTop;
+    outputNode.parentElement.scrollLeft = node.scrollLeft;
+  }, []);
+
   return (
-    <FormControl
-        componentClass={MentionExample}
-        cells={cells}
-        value={value}
-        onChange={onChange}
-        readOnly={readOnly}
-        rows={rows}
-    />
+    <>
+      <div className="editor">
+        <FormControl
+          componentClass="textarea"
+          className="code-input"
+          ref={editorRef}
+          onChange={e => !readOnly && onChange(e.target.value)}
+          disabled={readOnly}
+          value={value}
+          onScroll={onScroll} >
+        </FormControl>
+        <pre className="code-output">
+          <code ref={outputRef} className="language-django">
+            
+          </code>
+        </pre>
+      </div>
+      {error && <div style={{color: "red"}}>{error}</div>}
+    </>
   )
+}
+
+function renderOutput(value) {
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;")
+				.replace(/>/g, "&gt;") + "\n";
 }
 
 
