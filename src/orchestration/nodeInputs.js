@@ -305,7 +305,6 @@ function TextareaInput({value, onChange, readOnly, cells}) {
       });
     }
     setContextVars(contextVars);
-    console.log("contextVars", contextVars);
   }, [cells]);
 
   useEffect(() => {
@@ -335,7 +334,6 @@ function TextareaInput({value, onChange, readOnly, cells}) {
     const re = /context\.([a-zA-Z0-9_\-]+)/g;
     let m;
     while ((m = re.exec(value)) !== null) {
-      console.log(m)
       // This is necessary to avoid infinite loops with zero-width matches
       if (m.index === re.lastIndex) re.lastIndex++;
       if(!contextVars.includes(m[1])) {
