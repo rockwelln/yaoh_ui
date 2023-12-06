@@ -8,7 +8,11 @@ import {
   fetch_put,
   NotificationsManager,
   AuthServiceManager,
-  API_URL_PREFIX, userLocalizeUtcDate, downloadJson
+  API_URL_PREFIX,
+  userLocalizeUtcDate,
+  downloadJson,
+  checkStatus,
+  parseJSON,
 } from "../utils";
 
 import Col from 'react-bootstrap/lib/Col';
@@ -368,6 +372,8 @@ export function Activities({user_info}) {
     const [duplicateActivity, setDuplicateActivity] = useState();
     const [selected, setSelected] = useState([]);
     const [showImport, setShowImport] = useState(false);
+    const [running , setRunning] = useState(false);
+    const [redirect, setRedirect] = useState(null);
 
     const loadActivities = () => {
       setLoading(true);
@@ -380,6 +386,20 @@ export function Activities({user_info}) {
     useEffect(() => {
         loadActivities();
         document.title = "Activities";
+    }, []);
+
+    const runNow = useCallback((activityId) => {
+      setRunning(true);
+      fetch_post(`/api/v01/activities/${activityId}/run`)
+        .then(checkStatus)
+        .then(parseJSON)
+        .then(r => {
+          setRedirect(r.guid)
+        })
+        .catch(e => {
+          NotificationsManager.error("Failed to run now", e.message);
+        })
+        .finally(() => setRunning(false));
     }, []);
 
     const filteredActivities = activities.filter(a => filter.length === 0 || a.name.includes(filter));
@@ -519,6 +539,12 @@ export function Activities({user_info}) {
                                                         defaultMessage="Def. only (compat. <0.18)" />
                                                     </MenuItem>
                                                 </SplitButton>
+
+                                                <Button
+                                                  onClick={() => runNow(a.id)}
+                                                  bsStyle="primary">
+                                                  <FontAwesomeIcon icon={faPlay}/>
+                                                </Button>
                                             </ButtonToolbar>
                                         </td>
                                     </tr>
@@ -555,6 +581,19 @@ export function Activities({user_info}) {
                       onHide={() => setShowImport(false)} />
                 </Panel.Body>
             </Panel>
+
+            <Modal show={running}>
+                <Modal.Header>
+                    <Modal.Title>Running...</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Alert bsStyle={"info"}>
+                        The activity is running...
+                    </Alert>
+                </Modal.Body>
+            </Modal>
+
+            {redirect && <Redirect to={`/transactions/${redirect}`} />}
         </>
     )
 }
