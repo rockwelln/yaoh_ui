@@ -300,11 +300,7 @@ function TextareaInput({value, onChange, readOnly, cells}) {
         }
 
         if(v) {
-          if(v && v[0] === "{") {
-            contextVars.push(JSON.parse(v).key)
-          } else {
-            contextVars.push(v)
-          }
+          contextVars.push(v[0] === "{" ? JSON.parse(v).key : v)
         }
       });
     }
