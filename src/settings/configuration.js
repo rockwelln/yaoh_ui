@@ -2051,7 +2051,7 @@ function NewSsoModal({show, onHide, gateways, enabledMods}) {
                 If the user is <b>not</b> known, the rules are checked one-by-one to find a match and auto-create the user with
                 the appropriate profile.<br/>
                 The condition rule is a boolean expression which can use the token response body.
-                (ref. <a href={"https://github.com/antonmedv/expr/blob/master/docs/Language-Definition.md"}>language definition</a>)<br/>
+                (ref. <a href={"https://github.com/expr-lang/expr/blob/master/docs/Language-Definition.md"}>language definition</a>)<br/>
                 If no match is found, the authentication is rejected as the user is unknown.
               </HelpBlock>
             </Col>
@@ -3266,7 +3266,7 @@ function SSOPanel({sso, gateways, onChange, enabledMods}) {
                           If the user is <b>not</b> known, the rules are checked one-by-one to find a match and auto-create the user with
                           the appropriate profile.<br/>
                           The condition rule is a boolean expression which can use the token response body.
-                          (ref. <a href={"https://github.com/antonmedv/expr/blob/master/docs/Language-Definition.md"}>language definition</a>)<br/>
+                          (ref. <a href={"https://github.com/expr-lang/expr/blob/master/docs/Language-Definition.md"}>language definition</a>)<br/>
                           If no match is found, the authentication is rejected as the user is unknown.
                         </HelpBlock>
                       </Col>
