@@ -760,9 +760,14 @@ const SubRequest = ({req, tasks, colOffset, onRollback, onReplay}) => {
             statusGlyph = 'play';
     }
     const callback_task = tasks && tasks.find(t => t.id === instance_.callback_task_id);
+    const isErrorHandling = request.label === "error handling" && callback_task?.cell_id === "start";
+    var rowStyle = {};
+    if(isErrorHandling) {
+        rowStyle = {backgroundColor: '#ff080820'};
+    }
 
     return (
-        <tr key={`message_sub_flow_sync_${instance_.id}`}>
+        <tr key={`message_sub_flow_sync_${instance_.id}`} style={rowStyle}>
             {
                 colOffset && <td colSpan={colOffset}/>
             }
@@ -2067,7 +2072,18 @@ export class Transaction extends Component {
                 </Alert>
             );
         }
-        if(tx && tx.super_instance) {
+        if(subrequests?.length !== 0) {
+            const r = subrequests.filter(s => s.request.label === "error handling");
+            if(r.length !== 0 && r[0].instance.id !== 0) {
+                alerts.push(
+                    <Alert bsStyle="warning" key='error-handling'>
+                        <FormattedMessage id="error-handling" defaultMessage="The instance continued in the error handler: "/>
+                        <Link to={`/transactions/${r[0].instance.id}`}>{r[0].instance.id}</Link>
+                    </Alert>
+                );
+            }
+        }
+        if(tx?.super_instance) {
             alerts.push(
                 <Alert bsStyle="info" key='super-instance'>
                     <FormattedMessage id="super-instance-link" defaultMessage="The request is a sub-instance of the request: "/>
