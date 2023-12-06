@@ -278,6 +278,7 @@ function ListInput({options, value, onChange, readOnly}) {
 function TextareaInput({value, onChange, readOnly}) {
   const editorRef = useRef(null);
   const outputRef = useRef(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if(value === undefined) return
@@ -286,29 +287,58 @@ function TextareaInput({value, onChange, readOnly}) {
     Prism.highlightElement(outputNode);
   }, [editorRef, outputRef, value]);
 
+  useEffect(() => {
+    // check:
+    // - there is the same number of {{ and }} in the template
+    // - there is the same number of {% and %} in the template
+    // - there is the same number of { and } in the template
+
+    if(value === undefined) return;
+    const nbOpenBraces = (value.match(/{/g) || []).length;
+    const nbCloseBraces = (value.match(/}/g) || []).length;
+    const nbOpenDjango = (value.match(/{%/g) || []).length;
+    const nbCloseDjango = (value.match(/%}/g) || []).length;
+    const nbOpenJinja = (value.match(/{{/g) || []).length;
+    const nbCloseJinja = (value.match(/}}/g) || []).length;
+
+    if(nbOpenBraces !== nbCloseBraces) {
+      setError("The number of '{' and '}' must be the same");
+    } else if(nbOpenDjango !== nbCloseDjango) {
+      setError("The number of '{%' and '%}' must be the same");
+    } else if(nbOpenJinja !== nbCloseJinja) {
+      setError("The number of '{{' and '}}' must be the same");
+    } else {
+      setError(null);
+    }
+  }, [value]);
+
   const onScroll = useCallback(() => {
     const node = ReactDOM.findDOMNode(editorRef.current);
     const outputNode = ReactDOM.findDOMNode(outputRef.current);
     outputNode.parentElement.scrollTop = node.scrollTop;
+    outputNode.parentElement.scrollLeft = node.scrollLeft;
   }, []);
 
   return (
-    <div className="editor">
-      <FormControl
-        componentClass="textarea"
-        className="code-input"
-        ref={editorRef}
-        onChange={e => !readOnly && onChange(e.target.value)}
-        disabled={readOnly}
-        value={value}
-        onScroll={onScroll} >
-      </FormControl>
-      <pre className="code-output">
-        <code ref={outputRef} className="language-django">
-          
-        </code>
-      </pre>
-    </div>
+    <>
+      <div className="editor">
+        <FormControl
+          componentClass="textarea"
+          className="code-input"
+          ref={editorRef}
+          onChange={e => !readOnly && onChange(e.target.value)}
+          disabled={readOnly}
+          value={value}
+          onScroll={onScroll} >
+        </FormControl>
+        <pre className="code-output">
+          <code ref={outputRef} className="language-django">
+            
+          </code>
+        </pre>
+      </div>
+      {error && <div style={{color: "red"}}>{error}</div>}
+    </>
   )
 }
 
