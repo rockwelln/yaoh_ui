@@ -53,7 +53,7 @@ function PlaygroundOutput({title, error, value, defaultExpand=true}) {
             {title}
           </i>
           {
-            error && <div style={{color: "red"}}>{error}</div>
+            error && <pre style={{color: "red"}}>{error}</pre>
           }
         </h4>
         {
