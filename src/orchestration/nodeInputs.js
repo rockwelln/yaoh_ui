@@ -358,7 +358,7 @@ function TextareaInput({value, onChange, readOnly, cells}) {
           className="code-input"
           ref={editorRef}
           onChange={e => !readOnly && onChange(e.target.value)}
-          disabled={readOnly}
+          readOnly={readOnly}
           value={value}
           onScroll={onScroll} >
         </FormControl>
