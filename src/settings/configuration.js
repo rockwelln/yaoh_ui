@@ -3702,6 +3702,53 @@ function LicenseGenerator({onNewLicense}) {
         </FormGroup>
         <FormGroup>
           <Col componentClass={ControlLabel} sm={2}>
+            <FormattedMessage id="counters" defaultMessage="Counters"/>
+          </Col>
+          <Col sm={9}>
+            <Table>
+              <thead>
+                <tr>
+                  <th>Counter</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>users</td>
+                  <td>
+                    <FormControl
+                      componentClass="input"
+                      value={newLicense.counters?.users || ""}
+                      onChange={e => setNewLicense(
+                        newLicense.counters ?
+                          update(newLicense, {counters: {$merge: {users: e.target.value ? parseInt(e.target.value) : undefined}}}) :
+                          update(newLicense, {$merge: {counters: {users: e.target.value ? parseInt(e.target.value) : undefined}}})
+                      )} />
+                  </td>
+                </tr>
+                <tr>
+                  <td>instances</td>
+                  <td>
+                    <FormControl
+                      componentClass="input"
+                      value={newLicense.counters?.instances || ""}
+                      onChange={e => setNewLicense(
+                        newLicense.counters ?
+                          update(newLicense, {counters: {$merge: {instances: e.target.value ? parseInt(e.target.value) : undefined}}}) :
+                          update(newLicense, {$merge: {counters: {instances: e.target.value ? parseInt(e.target.value) : undefined}}})
+                      )} />
+                  </td>
+                </tr>
+                <tr>
+                  <td>something else?</td>
+                  <td>&gt; check with product owner!</td>
+                </tr>
+              </tbody>
+            </Table>
+          </Col>
+        </FormGroup>
+        <FormGroup>
+          <Col componentClass={ControlLabel} sm={2}>
             <FormattedMessage id="license key" defaultMessage="License key"/>
           </Col>
           <Col sm={9}>
@@ -3726,7 +3773,7 @@ function LicenseGenerator({onNewLicense}) {
     )
 }
 
-function LicensePanel(props) {
+function LicensePanel() {
     const [newLicense, setNewLicense] = useState("");
     const [newDetails, setNewDetails] = useState(null);
     const [current, setCurrent] = useState({});
@@ -3743,6 +3790,20 @@ function LicensePanel(props) {
           <StaticControl label="Assigned to" value={current.customer_name}/>
           <StaticControl label="Demo" value={current.demo ? "yes": "no"}/>
           <StaticControl label="Max activities" value={current.fields?.max_activities || "*not set*"}/>
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="counters" defaultMessage="Counters"/>
+            </Col>
+
+            <Col sm={9}>
+              {
+                current.fields?.counters &&
+                Object.entries(current.fields.counters).map(([k, v]) => (
+                  <StaticControl key={`counter-${k}`} label={k} value={v}/>
+                ))
+              }
+            </Col>
+          </FormGroup>
           <FormGroup>
             <Col componentClass={ControlLabel} sm={2}>
               <FormattedMessage id="new_license" defaultMessage="New license"/>

@@ -3,8 +3,7 @@ import React, {useCallback, useEffect, useState} from 'react';
 import Col from 'react-bootstrap/lib/Col';
 import Row from 'react-bootstrap/lib/Row';
 
-import {FormattedMessage} from 'react-intl';
-import {fetch_get, NotificationsManager} from "../utils";
+import {fetch_get} from "../utils";
 
 import TransactionsOverTime from './tx-over-time';
 import SuccessRateOverTime from './tx-success-rate-over-time';
@@ -15,7 +14,7 @@ import ManualActionsBox, {ManualActionsTile, NPManualActionsBox} from "./manualA
 // import {TransactionsNeedApprovalTile} from "../np/dashboard_tiles";
 
 import './dashboard.css';
-import {localUser, modules, supportedModule} from "../utils/user";
+import {localUser, modules} from "../utils/user";
 import {Link} from "react-router-dom";
 import {activeCriteria, errorCriteria} from "../requests/requests";
 import {activeCriteria as npActiveCriteria, errorCriteria as npErrorCriteria} from "../np/np-requests";
@@ -23,37 +22,47 @@ import queryString from 'query-string';
 import update from "immutability-helper";
 import TopSlowApis from "./topSlowApis";
 import ResponseTimeOvertime from "./responseTimeOverTime";
-import NPLicenseBox from "./license";
+import NPLicenseBox, {LicenseCounters} from "./license";
 
 const REFRESH_CYCLE = 10;
 
 
 function fetch_gateways(onSuccess) {
-    fetch_get('/api/v01/gateways')
-        .then(data => onSuccess(data.gateways))
-        .catch(error => console.error("Failed to fetch gateways", error));
+  fetch_get('/api/v01/gateways')
+    .then(data => onSuccess(data.gateways))
+    .catch(error => console.error("Failed to fetch gateways", error));
 }
 
 
 function fetch_stats(isNpact, onSuccess) {
-    fetch_get(`/api/v01/${isNpact?"npact":"apio"}/stats`)
-        .then(data => onSuccess(data))
-        .catch(error => console.error("Failed to fetch statistics", error));
+  fetch_get(`/api/v01/${isNpact?"npact":"apio"}/stats`)
+    .then(data => onSuccess(data))
+    .catch(error => console.error("Failed to fetch statistics", error));
+}
+
+
+function fetchLicenseCounters(onSuccess) {
+  return fetch_get('/api/v01//system/configuration/license/counters')
+    .then(data => onSuccess(data))
+    .catch(error => console.error("Failed to fetch license counters", error));
 }
 
 export default function Dashboard(props) {
     const [stats, setStats] = useState({active: {}});
     const [gateways, setGateways] = useState({});
+    const [licenseCounters, setLicenseCounters] = useState({});
     const isManual = localUser.isModuleEnabled(modules.manualActions);
     const isNpact = localUser.isModuleEnabled(modules.npact); // supportedModule(modules.npact, props.user_info.modules);
     const isNpactItc = localUser.isModuleEnabled(modules.npact_citc);
 
     const fetch_gw = useCallback(() => fetch_gateways(setGateways), []);
     const fetch_s = useCallback(() => fetch_stats(isNpact, setStats), [isNpact]);
+    const fetch_liCnts = useCallback(() => fetchLicenseCounters(setLicenseCounters), []);
 
     useEffect(() => {
         document.title = "Dashboard";
         fetch_gateways(setGateways);
+        fetchLicenseCounters(setLicenseCounters);
         const interval = setInterval(fetch_gw, REFRESH_CYCLE * 1000);
         return () => clearInterval(interval);
     }, []);
@@ -66,6 +75,11 @@ export default function Dashboard(props) {
         const h = setTimeout(fetch_s, REFRESH_CYCLE * 1000);
         return () => clearTimeout(h);
     }, [stats]);
+
+    useEffect(() => {
+        const h = setTimeout(fetch_liCnts, REFRESH_CYCLE * 6 * 60000); // every hour
+        return () => clearTimeout(h);
+    }, [licenseCounters]);
 
     let statsPanels = [
         <TransactionsOverTime {...props} />
@@ -85,6 +99,10 @@ export default function Dashboard(props) {
         } else {
           statsPanels.push(<ManualActionsBox/>);
         }
+    }
+
+    if(licenseCounters?.last_load) {
+      statsPanels.push(<LicenseCounters counters={licenseCounters} />)
     }
 
     let activeCriteriaQuery = activeCriteria;

@@ -4,6 +4,7 @@ import {DashboardPanel} from "./dashboard-panel";
 import {fetch_get} from "../utils";
 import ProgressBar from "react-bootstrap/lib/ProgressBar";
 import Table from "react-bootstrap/lib/Table";
+import moment from "moment";
 
 
 function fetchLicenseNP(onSuccess) {
@@ -52,6 +53,46 @@ export default function NPLicenseBox() {
             </>)
           })
         }
+        </tbody>
+      </Table>
+    </DashboardPanel>
+  )
+}
+
+
+export function LicenseCounters({ counters }) {
+  const lastLoad = moment(counters.last_load);
+  if(lastLoad.year() < 2000) {
+    return <div/>
+  }
+  return (
+    <DashboardPanel title={<FormattedMessage id='license' defaultMessage='License' />}>
+      <Table condensed>
+        <tbody>
+          {
+            Object.entries(counters.counters).map(([name, [limit, value]]) => {
+              if (limit === 0) {
+                return <></>
+              }
+
+              const perc = Math.floor((value / limit) * 100);
+
+              if (perc < 15) {
+                name = name + ` ${value} / ${limit} (${perc}%)`
+              }
+              return (<>
+                <tr>{name}</tr>
+                <tr>
+                  <ProgressBar bsStyle={bsStyle(perc)} now={perc} label={`${value} / ${limit} (${perc}%)`} />
+                </tr>
+              </>)
+            })
+          }
+          <tr>
+            <td colSpan={2}>
+              <FormattedMessage id='last_load' defaultMessage='Last load' />: {lastLoad.format("YYYY-MM-DD HH:mm:ss")}
+            </td>
+          </tr>
         </tbody>
       </Table>
     </DashboardPanel>
