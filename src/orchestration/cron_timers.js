@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from "react";
+import React, {useState, useEffect, useCallback} from "react";
 import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
 import {FormattedMessage} from "react-intl";
 import Panel from "react-bootstrap/lib/Panel";
@@ -13,7 +13,7 @@ import FormGroup from "react-bootstrap/lib/FormGroup";
 import Col from "react-bootstrap/lib/Col";
 import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import FormControl from "react-bootstrap/lib/FormControl";
-import Table, {th, tr, td} from "react-bootstrap/lib/Table";
+import Table from "react-bootstrap/lib/Table";
 import HelpBlock from "react-bootstrap/lib/HelpBlock";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import Select from "react-select";
@@ -47,393 +47,391 @@ const validateCronEntry = (timer) => {
     return true;
 };
 
-class NewCronTimer extends React.Component {
-    state = {
-        show: false,
-        new_timer: NewCronTimer.new_timer()
-    };
+function createCronTimer(timer) {
+    return fetch_post("/api/v01/timers/cron", timer)
+        .then(() => {
+            NotificationsManager.success(<FormattedMessage id="new-timer-created" defaultMessage="New timer created" />);
+        })
+        .catch(error => {
+            NotificationsManager.error(
+                <FormattedMessage id="new-timer-failed" defaultMessage="Failed to create new timer" />,
+                error.message
+            );
+            throw error;
+        })
+}
 
-    static new_timer() {
-        return {
-            job_id: "",
-            request_body: "",
-            enabled: true
+const defaultCronTimer = {
+    job_id: "",
+    request_body: "",
+    enabled: true,
+    activity_id: null,
+};
+
+function NewCronTimerModal({show, onClose}) {
+    const [timer, setTimer] = useState(defaultCronTimer);
+    const [activities, setActivities] = useState([]);
+
+    useEffect(() => {
+        if (show) {
+            setTimer(defaultCronTimer);
+            fetchActivities(setActivities);
         }
-    }
+    }, [show]);
 
-    onSubmit() {
-        const {new_timer} = this.state;
-        fetch_post("/api/v01/timers/cron", new_timer)
-            .then(() => {
-                NotificationsManager.success(<FormattedMessage id="new-timer-created" defaultMessage="New timer created" />);
-                this.setState({show: false, new_timer: NewCronTimer.new_timer()});
-                this.props.onClose();
-            })
-            .catch(error =>
-                NotificationsManager.error(
-                    <FormattedMessage id="new-timer-failed" defaultMessage="Failed to create new timer" />,
-                    error.message
-                )
-            )
-    }
+    const onSubmit = useCallback(e => {
+        e.preventDefault();
+        createCronTimer(timer).then(() => onClose(true))
+    }, [timer]);
 
-    static getDerivedStateFromProps(props, state) {
-        if (props.activities && props.activities.length > 0 && state.new_timer && state.new_timer.activity_id === undefined) {
-            return {
-                new_timer: update(state.new_timer, {$merge: {activity_id: props.activities[0]["id"]}})
-            };
-        }
-        // Return null to indicate no change to state.
-        return null;
-    }
+    const activitiesOptions = activities.sort((a, b) => a.name.localeCompare(b.name)).map(a => ({value: a.id, label: a.name}));
+    const validCronEntry = validateCronEntry(timer) ? null :"error";
+    const validJobId = timer.job_id?.length > 0 ? "success": null;
+    const validForm = validJobId === "success" && validCronEntry !== "error" && timer.activity_id;
 
-    render() {
-        const {show, new_timer} = this.state;
-        const {activities} = this.props;
-        const hideNewTimer = () => this.setState({show: false, new_timer: NewCronTimer.new_timer()});
-        const validJobId = new_timer.job_id && new_timer.job_id.length > 0 ? "success": null;
-        const validCronEntry = validateCronEntry(new_timer) ? null :"error";
-        const validForm = validJobId === "success" && validCronEntry !== "error";
+    return (
+        <Modal show={show} onHide={() => onClose(false)} backdrop={false} onSubmit={onSubmit}>
+            <Modal.Header closeButton>
+                <Modal.Title><FormattedMessage id="new-timer" defaultMessage="New timer" /></Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <Form horizontal>
+                    <FormGroup validationState={validJobId}>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="job-id" defaultMessage="Job id" />
+                        </Col>
 
-        const activitiesOptions = activities.sort((a, b) => a.name.localeCompare(b.name)).map(a => ({value: a.id, label: a.name}));
-        return (
-            <div>
-                <Button onClick={() => this.setState({show: true})} bsStyle={"primary"}>
-                    <FormattedMessage id="new-timer" defaultMessage="New timer" />
-                </Button>
-                <Modal show={show} onHide={hideNewTimer} backdrop={false}>
-                    <Modal.Header closeButton>
-                        <Modal.Title><FormattedMessage id="new-timer" defaultMessage="New timer" /></Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <Form horizontal>
-                            <FormGroup validationState={validJobId}>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="job-id" defaultMessage="Job id" />
-                                </Col>
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="input"
+                                value={timer.job_id}
+                                placeholder="job label"
+                                onChange={e => setTimer({...timer, job_id: e.target.value})}/>
+                        </Col>
+                    </FormGroup>
 
-                                <Col sm={9}>
-                                    <FormControl
-                                        componentClass="input"
-                                        value={new_timer.job_id}
-                                        placeholder="job label"
-                                        onChange={e => this.setState({new_timer: update(new_timer, {$merge: {job_id: e.target.value}})})}/>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="enabled" defaultMessage="Enabled" />
-                                </Col>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="enabled" defaultMessage="Enabled" />
+                        </Col>
 
-                                <Col sm={9}>
-                                    <Checkbox
-                                         checked={new_timer.enabled}
-                                         onChange={e => this.setState({new_timer: update(new_timer, {$merge: {enabled: e.target.checked}})})}/>
-                                </Col>
-                            </FormGroup>
+                        <Col sm={9}>
+                            <Checkbox
+                                checked={timer.enabled}
+                                onChange={e => setTimer({...timer, enabled: e.target.checked})}/>
+                        </Col>
+                    </FormGroup>
 
-                            <FormGroup validationState={validCronEntry}>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="scheduler-entry" defaultMessage="Scheduler entry" />
-                                </Col>
+                    <FormGroup validationState={validCronEntry}>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="scheduler-entry" defaultMessage="Scheduler entry" />
+                        </Col>
 
-                                <Col sm={9}>
-                                    <Table>
-                                        <thead>
-                                            <tr>
-                                                <th><FormattedMessage id="minute" defaultMessage="minute" /></th>
-                                                <th><FormattedMessage id="hour" defaultMessage="hour" /></th>
-                                                <th><FormattedMessage id="day" defaultMessage="day" /></th>
-                                                <th><FormattedMessage id="month" defaultMessage="month" /></th>
-                                                <th><FormattedMessage id="year" defaultMessage="year" /></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td>
-                                                    <FormControl
-                                                        componentClass="input"
-                                                        value={new_timer.minute || ""}
-                                                        placeholder="*"
-                                                        onChange={e => this.setState({new_timer: update(new_timer, {$merge: {minute: e.target.value}})})}/>
-                                                </td>
-                                                <td>
-                                                    <FormControl
-                                                        componentClass="input"
-                                                        value={new_timer.hour || ""}
-                                                        placeholder="*"
-                                                        onChange={e => this.setState({new_timer: update(new_timer, {$merge: {hour: e.target.value}})})}/>
-                                                </td>
-                                                <td>
-                                                    <FormControl
-                                                        componentClass="input"
-                                                        value={new_timer.day || ""}
-                                                        placeholder="*"
-                                                        onChange={e => this.setState({new_timer: update(new_timer, {$merge: {day: e.target.value}})})}/>
-                                                </td>
-                                                <td>
-                                                    <FormControl
-                                                        componentClass="input"
-                                                        value={new_timer.month || ""}
-                                                        placeholder="*"
-                                                        onChange={e => this.setState({new_timer: update(new_timer, {$merge: {month: e.target.value}})})}/>
-                                                </td>
-                                                <td>
-                                                    <FormControl
-                                                        componentClass="input"
-                                                        value={new_timer.year || ""}
-                                                        placeholder="*"
-                                                        onChange={e => this.setState({new_timer: update(new_timer, {$merge: {year: e.target.value}})})}/>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </Table>
-                                    <HelpBlock>
-                                         <FormattedMessage id="cron-entry-help-fil" defaultMessage="the possible values may be a number (restricted by the category, ex: minute has to be between 0 and 60) or * (any) or left empty."/>
-                                         <br/>
-                                         <FormattedMessage id="cron-entry-help-cols" defaultMessage="notice the columns left empty on the right are defaulted to '*' (any) and columns left empty on the left are considered as 0"/>
-                                     </HelpBlock>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="activity" defaultMessage="Activity" />
-                                </Col>
+                        <Col sm={9}>
+                            <Table>
+                                <thead>
+                                    <tr>
+                                        <th><FormattedMessage id="minute" defaultMessage="minute" /></th>
+                                        <th><FormattedMessage id="hour" defaultMessage="hour" /></th>
+                                        <th><FormattedMessage id="day" defaultMessage="day" /></th>
+                                        <th><FormattedMessage id="month" defaultMessage="month" /></th>
+                                        <th><FormattedMessage id="year" defaultMessage="year" /></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <FormControl
+                                                componentClass="input"
+                                                value={timer.minute || ""}
+                                                placeholder="*"
+                                                onChange={e => setTimer({...timer, minute: e.target.value})}/>
+                                        </td>
+                                        <td>
+                                            <FormControl
+                                                componentClass="input"
+                                                value={timer.hour || ""}
+                                                placeholder="*"
+                                                onChange={e => setTimer({...timer, hour: e.target.value})}/>
+                                        </td>
+                                        <td>
+                                            <FormControl
+                                                componentClass="input"
+                                                value={timer.day || ""}
+                                                placeholder="*"
+                                                onChange={e => setTimer({...timer, day: e.target.value})}/>
+                                        </td>
+                                        <td>
+                                            <FormControl
+                                                componentClass="input"
+                                                value={timer.month || ""}
+                                                placeholder="*"
+                                                onChange={e => setTimer({...timer, month: e.target.value})}/>
+                                        </td>
+                                        <td>
+                                            <FormControl
+                                                componentClass="input"
+                                                value={timer.year || ""}
+                                                placeholder="*"
+                                                onChange={e => setTimer({...timer, year: e.target.value})}/>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </Table>
+                            <HelpBlock>
+                                <FormattedMessage id="cron-entry-help-fil" defaultMessage="the possible values may be a number (restricted by the category, ex: minute has to be between 0 and 60) or * (any) or left empty."/>
+                                <br/>
+                                <FormattedMessage id="cron-entry-help-cols" defaultMessage="notice the columns left empty on the right are defaulted to '*' (any) and columns left empty on the left are considered as 0"/>
+                            </HelpBlock>
+                        </Col>
+                    </FormGroup>
 
-                                <Col sm={9}>
-                                    <Select
-                                        className="basic-single"
-                                        classNamePrefix="select"
-                                        value={new_timer.activity_id && activitiesOptions.find(a => a.value === new_timer.activity_id)}
-                                        isClearable={false}
-                                        isSearchable={true}
-                                        name="activity"
-                                        onChange={(value, action) => {
-                                            if(["select-option", "clear"].includes(action.action)) {
-                                              this.setState({new_timer: update(new_timer, {$merge: {activity_id: value.value}})})
-                                            }
-                                        }}
-                                        options={activitiesOptions} />
-                                </Col>
-                            </FormGroup>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="request-body" defaultMessage="Request body" />
-                                </Col>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="activity" defaultMessage="Activity" />
+                        </Col>
 
-                                <Col sm={9}>
-                                    <FormControl
-                                        componentClass="textarea"
-                                        value={new_timer.request_body}
-                                        placeholder='{"body": {"username": "fool"}}'
-                                        onChange={e => this.setState({new_timer: update(new_timer, {$merge: {request_body: e.target.value}})})}/>
-                                </Col>
-                            </FormGroup>
-                        </Form>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button
-                            onClick={this.onSubmit.bind(this)}
-                            disabled={!validForm}
-                            bsStyle="primary"
-                            autoFocus >
-                            <FormattedMessage id="save" defaultMessage="Save"/>
-                        </Button>
-                        <Button onClick={hideNewTimer}>
-                            <FormattedMessage id="cancel" defaultMessage="Cancel"/>
-                        </Button>
-                    </Modal.Footer>
-                </Modal>
-            </div>
-        )
-    }
+                        <Col sm={9}>
+                            <Select
+                                className="basic-single"
+                                classNamePrefix="select"
+                                value={timer.activity_id && activitiesOptions.find(a => a.value === timer.activity_id)}
+                                isClearable={true}
+                                isSearchable={true}
+                                name="activity"
+                                onChange={(value, action) => {
+                                    if(["select-option", "clear"].includes(action.action)) {
+                                        setTimer({...timer, activity_id: value?.value})
+                                    }
+                                }}
+                                options={activitiesOptions} />
+                        </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="request-body" defaultMessage="Request body" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="textarea"
+                                value={timer.request_body}
+                                placeholder='{"body": {"username": "fool"}}'
+                                onChange={e => setTimer({...timer, request_body: e.target.value})}/>
+                        </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                        <Col smOffset={2} sm={9}>
+                            <ButtonToolbar>
+                                <Button
+                                    type="submit"
+                                    disabled={!validForm}
+                                    bsStyle="primary"
+                                    autoFocus >
+                                    <FormattedMessage id="save" defaultMessage="Save"/>
+                                </Button>
+                                <Button onClick={() => onClose(false)}>
+                                    <FormattedMessage id="cancel" defaultMessage="Cancel"/>
+                                </Button>
+                            </ButtonToolbar>
+                        </Col>
+                    </FormGroup>
+                </Form>
+            </Modal.Body>
+        </Modal>
+    );
 }
 
 
-class UpdateTimer extends React.Component {
-    state = {
-        show: false,
-        diff_timer: {},
-    };
-
-    onSubmit() {
-        const {diff_timer} = this.state;
-        const {timer} = this.props;
-        fetch_put(`/api/v01/timers/cron/${timer.id}`, diff_timer)
-            .then(() => {
-                NotificationsManager.success(<FormattedMessage id="timer-updated" defaultMessage="Timer updated" />);
-                this.setState({show: false, diff_timer: {}});
-                this.props.onClose();
-            })
-            .catch(error =>
-                NotificationsManager.error(
-                    <FormattedMessage id="timer-update-failed" defaultMessage="Failed to update timer" />,
-                    error.message
-                )
+function updateTimer({id, diffTimer}) {
+    return fetch_put(`/api/v01/timers/cron/${id}`, diffTimer)
+        .then(() => {
+            NotificationsManager.success(<FormattedMessage id="timer-updated" defaultMessage="Timer updated" />);
+        })
+        .catch(error =>
+            NotificationsManager.error(
+                <FormattedMessage id="timer-update-failed" defaultMessage="Failed to update timer" />,
+                error.message
             )
-    }
-
-    render() {
-        const {show, diff_timer} = this.state;
-        const {activities, timer} = this.props;
-        const onClose = () => this.setState({show: false, diff_timer: {}});
-        const new_timer = update(timer, {$merge: diff_timer});
-        const validJobId = !new_timer.job_id || new_timer.job_id.length === 0 ? "error": null;
-        const validCronEntry = validateCronEntry(new_timer) ? null :"error";
-        const validForm = validJobId !== "error" && validCronEntry !== "error";
-        const activitiesOptions = activities.sort((a, b) => a.name.localeCompare(b.name)).map(a => ({value: a.id, label: a.name}));
-
-        return (
-            <div>
-                <Button onClick={() => this.setState({show: true})} bsStyle="primary" style={{marginLeft: '5px', marginRight: '5px'}}>
-                    <Glyphicon glyph="pencil"/>
-                </Button>
-                <Modal show={show} onHide={onClose} backdrop={false}>
-                    <Modal.Header closeButton>
-                        <Modal.Title><FormattedMessage id="update-timer" defaultMessage="Update timer" /></Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <Form horizontal>
-                            <FormGroup validationState={validJobId}>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="job-id" defaultMessage="Job id" />
-                                </Col>
-
-                                <Col sm={9}>
-                                    <FormControl
-                                        componentClass="input"
-                                        value={new_timer.job_id}
-                                        placeholder="job label"
-                                        onChange={e => this.setState({diff_timer: update(diff_timer, {$merge: {job_id: e.target.value}})})}/>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="enabled" defaultMessage="Enabled" />
-                                </Col>
-
-                                <Col sm={9}>
-                                    <Checkbox
-                                         checked={new_timer.enabled}
-                                         onChange={e => this.setState({diff_timer: update(diff_timer, {$merge: {enabled: e.target.checked}})})}/>
-                                </Col>
-                            </FormGroup>
-
-                            <FormGroup validationState={validCronEntry}>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="scheduler-entry" defaultMessage="Scheduler entry" />
-                                </Col>
-
-                                <Col sm={9}>
-                                    <Table>
-                                        <thead>
-                                            <tr>
-                                                <th><FormattedMessage id="minute" defaultMessage="minute" /></th>
-                                                <th><FormattedMessage id="hour" defaultMessage="hour" /></th>
-                                                <th><FormattedMessage id="day" defaultMessage="day" /></th>
-                                                <th><FormattedMessage id="month" defaultMessage="month" /></th>
-                                                <th><FormattedMessage id="year" defaultMessage="year" /></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td>
-                                                    <FormControl
-                                                        componentClass="input"
-                                                        value={new_timer.minute || ""}
-                                                        placeholder="*"
-                                                        onChange={e => this.setState({diff_timer: update(diff_timer, {$merge: {minute: e.target.value}})})}/>
-                                                </td>
-                                                <td>
-                                                    <FormControl
-                                                        componentClass="input"
-                                                        value={new_timer.hour || ""}
-                                                        placeholder="*"
-                                                        onChange={e => this.setState({diff_timer: update(diff_timer, {$merge: {hour: e.target.value}})})}/>
-                                                </td>
-                                                <td>
-                                                    <FormControl
-                                                        componentClass="input"
-                                                        value={new_timer.day || ""}
-                                                        placeholder="*"
-                                                        onChange={e => this.setState({diff_timer: update(diff_timer, {$merge: {day: e.target.value}})})}/>
-                                                </td>
-                                                <td>
-                                                    <FormControl
-                                                        componentClass="input"
-                                                        value={new_timer.month || ""}
-                                                        placeholder="*"
-                                                        onChange={e => this.setState({diff_timer: update(diff_timer, {$merge: {month: e.target.value}})})}/>
-                                                </td>
-                                                <td>
-                                                    <FormControl
-                                                        componentClass="input"
-                                                        value={new_timer.year || ""}
-                                                        placeholder="*"
-                                                        onChange={e => this.setState({diff_timer: update(diff_timer, {$merge: {year: e.target.value}})})}/>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </Table>
-                                    <HelpBlock>
-                                         <FormattedMessage id="cron-entry-help-fil" defaultMessage="the possible values may be a number (restricted by the category, ex: minute has to be between 0 and 60) or * (any) or left empty."/>
-                                         <br/>
-                                         <FormattedMessage id="cron-entry-help-cols" defaultMessage="notice the columns left empty on the right are defaulted to '*' (any) and columns left empty on the left are considered as 0"/>
-                                     </HelpBlock>
-                                </Col>
-                            </FormGroup>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="activity" defaultMessage="Activity" />
-                                </Col>
-
-                                <Col sm={9}>
-                                    <Select
-                                        className="basic-single"
-                                        classNamePrefix="select"
-                                        value={new_timer.activity_id && activitiesOptions.find(a => a.value === new_timer.activity_id)}
-                                        isClearable={false}
-                                        isSearchable={true}
-                                        name="activity"
-                                        onChange={(value, action) => {
-                                            if(["select-option", "clear"].includes(action.action)) {
-                                              this.setState({diff_timer: update(diff_timer, {$merge: {activity_id: value.value}})})
-                                            }
-                                        }}
-                                        options={activitiesOptions} />
-                                </Col>
-                            </FormGroup>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={2}>
-                                    <FormattedMessage id="request-body" defaultMessage="Request body" />
-                                </Col>
-
-                                <Col sm={9}>
-                                    <FormControl
-                                        componentClass="textarea"
-                                        value={new_timer.request_body}
-                                        placeholder='{"body": {"username": "fool"}}'
-                                        onChange={e => this.setState({diff_timer: update(diff_timer, {$merge: {request_body: e.target.value}})})}/>
-                                </Col>
-                            </FormGroup>
-                        </Form>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button
-                            onClick={this.onSubmit.bind(this)}
-                            disabled={!validForm}
-                            bsStyle="primary"
-                            autoFocus >
-                            <FormattedMessage id="save" defaultMessage="Save"/>
-                        </Button>
-                        <Button onClick={onClose}>
-                            <FormattedMessage id="cancel" defaultMessage="Cancel"/>
-                        </Button>
-                    </Modal.Footer>
-                </Modal>
-            </div>
         )
-    }
+}
+
+
+function UpdateTimerModal({show, onClose, timer}) {
+    const [diffTimer, setDiffTimer] = useState({});
+    const [activities, setActivities] = useState([]);
+
+    useEffect(() => {
+        if (show) {
+            setDiffTimer({});
+            fetchActivities(setActivities);
+        }
+    }, [show]);
+
+    const onSubmit = useCallback((e) => {
+        e.preventDefault();
+        updateTimer({id: timer.id, diffTimer}).then(() => onClose(true))
+    }, [timer, diffTimer]);
+
+    if (!timer) return null;
+
+    const localTimer = update(timer, {$merge: diffTimer});
+    const validCronEntry = validateCronEntry(localTimer) ? null :"error";
+    const activitiesOptions = activities.sort((a, b) => a.name.localeCompare(b.name)).map(a => ({value: a.id, label: a.name}));
+
+    return (
+        <Modal show={show} onHide={() => onClose(false)} backdrop={false}>
+            <Modal.Header closeButton>
+                <Modal.Title><FormattedMessage id="update-timer" defaultMessage="Update timer" /></Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <Form horizontal onSubmit={e => onSubmit(e)}>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="job-id" defaultMessage="Job id" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="input"
+                                value={localTimer.job_id}
+                                placeholder="job label"
+                                onChange={e => setDiffTimer({...diffTimer, job_id: e.target.value})}/>
+                        </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="enabled" defaultMessage="Enabled" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <Checkbox
+                                checked={localTimer.enabled}
+                                onChange={e => setDiffTimer({...diffTimer, enabled: e.target.checked})}/>
+                        </Col>
+                    </FormGroup>
+
+                    <FormGroup validationState={validCronEntry}>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="scheduler-entry" defaultMessage="Scheduler entry" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <Table>
+                                <thead>
+                                    <tr>
+                                        <th><FormattedMessage id="minute" defaultMessage="minute" /></th>
+                                        <th><FormattedMessage id="hour" defaultMessage="hour" /></th>
+                                        <th><FormattedMessage id="day" defaultMessage="day" /></th>
+                                        <th><FormattedMessage id="month" defaultMessage="month" /></th>
+                                        <th><FormattedMessage id="year" defaultMessage="year" /></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <FormControl
+                                                componentClass="input"
+                                                value={localTimer.minute || ""}
+                                                placeholder="*"
+                                                onChange={e => setDiffTimer({...diffTimer, minute: e.target.value})}/>
+                                        </td>
+                                        <td>
+                                            <FormControl
+                                                componentClass="input"
+                                                value={localTimer.hour || ""}
+                                                placeholder="*"
+                                                onChange={e => setDiffTimer({...diffTimer, hour: e.target.value})}/>
+                                        </td>
+                                        <td>
+                                            <FormControl
+                                                componentClass="input"
+                                                value={localTimer.day || ""}
+                                                placeholder="*"
+                                                onChange={e => setDiffTimer({...diffTimer, day: e.target.value})}/>
+                                        </td>
+                                        <td>
+                                            <FormControl
+                                                componentClass="input"
+                                                value={localTimer.month || ""}
+                                                placeholder="*"
+                                                onChange={e => setDiffTimer({...diffTimer, month: e.target.value})}/>
+                                        </td>
+                                        <td>
+                                            <FormControl
+                                                componentClass="input"
+                                                value={localTimer.year || ""}
+                                                placeholder="*"
+                                                onChange={e => setDiffTimer({...diffTimer, year: e.target.value})}/>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </Table>
+                            <HelpBlock>
+                                <FormattedMessage id="cron-entry-help-fil" defaultMessage="the possible values may be a number (restricted by the category, ex: minute has to be between 0 and 60) or * (any) or left empty."/>
+                                <br/>
+                                <FormattedMessage id="cron-entry-help-cols" defaultMessage="notice the columns left empty on the right are defaulted to '*' (any) and columns left empty on the left are considered as 0"/>
+                            </HelpBlock>
+
+                        </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="activity" defaultMessage="Activity" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <Select
+                                className="basic-single"
+                                classNamePrefix="select"
+                                value={localTimer.activity_id && activitiesOptions.find(a => a.value === localTimer.activity_id)}
+                                isClearable={false}
+                                isSearchable={true}
+                                name="activity"
+                                onChange={(value, action) => {
+                                    if(["select-option", "clear"].includes(action.action)) {
+                                        setDiffTimer({...diffTimer, activity_id: value.value})
+                                    }
+                                }}
+                                options={activitiesOptions} />
+                        </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="request-body" defaultMessage="Request body" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <FormControl
+                                componentClass="textarea"
+                                value={localTimer.request_body}
+                                placeholder='{"body": {"username": "fool"}}'
+                                onChange={e => setDiffTimer({...diffTimer, request_body: e.target.value})}/>
+                        </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                        <Col smOffset={2} sm={9}>
+                            <Button
+                                type="submit"
+                                bsStyle="primary"
+                                autoFocus >
+                                <FormattedMessage id="save" defaultMessage="Save"/>
+                            </Button>
+                            <Button onClick={() => onClose(false)}>
+                                <FormattedMessage id="cancel" defaultMessage="Cancel"/>
+                            </Button>
+                        </Col>
+                    </FormGroup>
+                </Form>
+            </Modal.Body>
+        </Modal>
+    );
 }
 
 
@@ -491,6 +489,8 @@ function selectActivity(timer_id, activity_id, onSuccess) {
 export default function CronTimers() {
   const [timers, setTimers] = useState([]);
   const [activities, setActivities] = useState([]);
+  const [showNew, setShowNew] = useState(false);
+  const [showUpdate, setShowUpdate] = useState(null);
 
   useEffect(() => {
     fetchActivities(setActivities);
@@ -510,7 +510,13 @@ export default function CronTimers() {
           <Panel>
               <Panel.Body>
                   <ButtonToolbar>
-                      <NewCronTimer onClose={() => _refresh()} activities={activities} />
+                    <Button bsStyle="primary" onClick={() => setShowNew(true)}>
+                        <FormattedMessage id="new-timer" defaultMessage="New timer" />
+                    </Button>
+                    <NewCronTimerModal show={showNew} onClose={r => {
+                        r && _refresh();
+                        setShowNew(false);
+                    }} />
                   </ButtonToolbar>
               </Panel.Body>
           </Panel>
@@ -536,7 +542,7 @@ export default function CronTimers() {
                     </thead>
                     <tbody>
                     {
-                      timers.map((n, i) => (
+                      timers.sort((a, b) => a.id - b.id).map((n, i) => (
                         <tr>
                           <td>
                             <Checkbox
@@ -585,11 +591,16 @@ export default function CronTimers() {
                           </td>
                           <td style={{width: "200px"}}>
                             <ButtonToolbar>
-                              <UpdateTimer onClose={() => _refresh()} timer={n}  activities={activities} />
-                              <DeleteConfirmButton
-                                  resourceName={n.job_id}
-                                  style={{marginLeft: '5px', marginRight: '5px'}}
-                                  onConfirm={() => deleteCronTimer(n.id, () => _refresh())} />
+                                <Button
+                                    bsStyle="primary"
+                                    onClick={() => setShowUpdate(n)}
+                                    style={{marginLeft: '5px', marginRight: '5px'}}>
+                                    <Glyphicon glyph="pencil"/>
+                                </Button>
+                                <DeleteConfirmButton
+                                    resourceName={n.job_id}
+                                    style={{marginLeft: '5px', marginRight: '5px'}}
+                                    onConfirm={() => deleteCronTimer(n.id, () => _refresh())} />
                             </ButtonToolbar>
                           </td>
                         </tr>
@@ -599,6 +610,13 @@ export default function CronTimers() {
                   </Table>
               </Panel.Body>
           </Panel>
+          <UpdateTimerModal
+            show={showUpdate !== null}
+            onClose={r => {
+                r && _refresh();
+                setShowUpdate(null);
+            }}
+            timer={showUpdate} />
       </div>
   )
 }
