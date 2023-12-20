@@ -902,8 +902,19 @@ export class Licenses extends Component {
   };
 
   updateServicePacks = (servicePack) => {
+    let servicePackName = "";
+    const dictForLicenses = {
+      ...this.props.dictServicePacks,
+      ...this.props.dictVirtualServicePacks,
+    };
+    Object.keys(dictForLicenses).forEach((key) => {
+      if (dictForLicenses[key].display_name === servicePack) {
+        servicePackName = key;
+        return;
+      }
+    });
     const packs = [...this.state.servicePacks].filter(
-      (pack) => pack.name === servicePack
+      (pack) => pack.name === servicePackName || pack.name === servicePack
     );
     const arrayOfPromise = [];
     packs.forEach((pack) => {

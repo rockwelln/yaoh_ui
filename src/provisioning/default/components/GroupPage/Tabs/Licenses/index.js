@@ -434,6 +434,9 @@ export class Licenses extends Component {
                       ]?.display_name ||
                       this.state.servicePacks[indexOfService].name
                     }
+                    technicalTitle={
+                      this.state.servicePacks[indexOfService].name
+                    }
                     allocated={
                       this.state.servicePacks[indexOfService].inUse || 0
                     }
