@@ -21,7 +21,6 @@ import Form from "react-bootstrap/lib/Form";
 import HelpBlock from "react-bootstrap/lib/HelpBlock";
 import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import FormControl from "react-bootstrap/lib/FormControl";
-import update from 'immutability-helper';
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 import Alert from "react-bootstrap/lib/Alert";
@@ -348,7 +347,7 @@ function NewCustomRoute({show, onHide, groups, activities}) {
                                 componentClass="input"
                                 value={route.route}
                                 placeholder="ex: /clients/{client_id:\d+}/addresses"
-                                onChange={e => setRoute(update(route, {$merge: {route: e.target.value}}))}/>
+                                onChange={e => setRoute({...route, route: e.target.value})}/>
                         </Col>
                     </FormGroup>
 
@@ -370,7 +369,7 @@ function NewCustomRoute({show, onHide, groups, activities}) {
                             <FormControl
                                 componentClass="select"
                                 value={route.method}
-                                onChange={e => setRoute(update(route, {$merge: {method: e.target.value}}))}>
+                                onChange={e => setRoute({...route, method: e.target.value})}>
                                 <option value="get">get</option>
                                 <option value="post">post</option>
                                 <option value="put">put</option>
@@ -392,7 +391,7 @@ function NewCustomRoute({show, onHide, groups, activities}) {
                               name="groups"
                               onChange={(value, action) => {
                                 if(["select-option", "create-option", "clear"].includes(action.action)) {
-                                  setRoute(update(route, {$merge: {group: value ? value.value: null}}));
+                                  setRoute({...route, group: value ? value.value: null});
                                 }
                               }}
                               options={groups.map(g => ({value: g, label: g}))} />
@@ -412,14 +411,14 @@ function NewCustomRoute({show, onHide, groups, activities}) {
                                      right: "20px",
                                      top: "5px",
                                  }}
-                                 onClick={() => setRoute(update(route, {$merge: {schema: JSON_SCHEMA_SAMPLE}}))}>
+                                 onClick={() => setRoute({...route, schema: JSON_SCHEMA_SAMPLE})}>
                                  <FormattedMessage id="sample" defaultMessage="Sample"/>
                              </Button>
                              <FormControl componentClass="textarea"
                                  value={route.schema || ""}
                                  rows={5}
                                  placeholder={"ex: " + JSON_SCHEMA_SAMPLE}
-                                 onChange={e => setRoute(update(route, {$merge: {schema: e.target.value}}))} />
+                                 onChange={e => setRoute({...route, schema: e.target.value})} />
 
                              <HelpBlock>
                                  <FormattedMessage id="custom-route-schema" defaultMessage="When set, the body is systematically checked against the schema associated to the route."/>
@@ -440,14 +439,14 @@ function NewCustomRoute({show, onHide, groups, activities}) {
                                      right: "20px",
                                      top: "5px",
                                  }}
-                                 onClick={() => setRoute(update(route, {$merge: {output_schema: OUTPUT_JSON_SCHEMA_SAMPLE}}))}>
+                                 onClick={() => setRoute({...route, output_schema: OUTPUT_JSON_SCHEMA_SAMPLE})}>
                                  <FormattedMessage id="sample" defaultMessage="Sample"/>
                              </Button>
                              <FormControl componentClass="textarea"
                                  value={route.output_schema || ""}
                                  rows={5}
                                  placeholder={"ex: " + OUTPUT_JSON_SCHEMA_SAMPLE}
-                                 onChange={e => setRoute(update(route, {$merge: {output_schema: e.target.value}}))} />
+                                 onChange={e => setRoute({...route, output_schema: e.target.value})} />
 
                              <HelpBlock>
                                  <FormattedMessage id="output-custom-route-schema" defaultMessage="Inform in the custom route doc generation about the structure and the rules of the answer of this endpoint."/>
@@ -470,7 +469,7 @@ function NewCustomRoute({show, onHide, groups, activities}) {
                               name="err-activity"
                               onChange={(value, action) => {
                                   if(["select-option", "clear"].includes(action.action)) {
-                                    setRoute(update(route, {$merge: {err_activity_id: value && value.value}}));
+                                    setRoute({...route, err_activity_id: value?.value});
                                   }
                               }}
                               options={activitiesOptions} />
@@ -485,7 +484,7 @@ function NewCustomRoute({show, onHide, groups, activities}) {
                          <Col sm={9}>
                              <Checkbox
                                  checked={route.enabled}
-                                 onChange={e => setRoute(update(route, {$merge: {enabled: e.target.checked}}))}/>
+                                 onChange={e => setRoute({...route, enabled: e.target.checked})}/>
                          </Col>
                      </FormGroup>
 
@@ -497,7 +496,7 @@ function NewCustomRoute({show, onHide, groups, activities}) {
                          <Col sm={9}>
                              <Checkbox
                                  checked={route.sync}
-                                 onChange={e => setRoute(update(route, {$merge: {sync: e.target.checked}}))}/>
+                                 onChange={e => setRoute({...route, sync: e.target.checked})}/>
 
                              <HelpBlock>
                                  <FormattedMessage id="custom-route-sync" defaultMessage="When set, the call to this API is synchronous and the response is returned directly. Otherwise, only an instance id is returned and the associated job is spawned asynchronously."/>
@@ -513,7 +512,7 @@ function NewCustomRoute({show, onHide, groups, activities}) {
                          <Col sm={9}>
                              <Checkbox
                                  checked={route.public}
-                                 onChange={e => setRoute(update(route, {$merge: {public: e.target.checked}}))}/>
+                                 onChange={e => setRoute({...route, public: e.target.checked})}/>
 
                              <HelpBlock>
                                  <FormattedMessage id="custom-route-public" defaultMessage="Whether the route is public or not. (when public the route is exposed as /api/v0x/public/... and require no authentication at all)"/>
@@ -529,7 +528,7 @@ function NewCustomRoute({show, onHide, groups, activities}) {
                         <Col sm={9}>
                             <Checkbox
                                checked={route.support_bulk}
-                               onChange={e => setRoute(update(route, {$merge: {support_bulk: e.target.checked}}))}/>
+                               onChange={e => setRoute({...route, support_bulk: e.target.checked})}/>
 
                             <HelpBlock>
                                <FormattedMessage id="custom-route-support-bulk" defaultMessage="When set, the API will serve additionally a route with '/bulk' append to the custom URL. This endpoint support form-data body with a 'label' and a file content 'input_file' with a CSV structure (1 line per requests to be created)"/>
@@ -550,7 +549,7 @@ function NewCustomRoute({show, onHide, groups, activities}) {
                                     right: "20px",
                                     top: "5px",
                                 }}
-                                onClick={() => setRoute(update(route, {$merge: {bulk_options: JSON_TRANS_OPTIONS_SAMPLE}}))}>
+                                onClick={() => setRoute({...route, bulk_options: JSON_TRANS_OPTIONS_SAMPLE})}>
                                 <FormattedMessage id="sample" defaultMessage="Sample"/>
                             </Button>
                             <FormControl
@@ -559,7 +558,7 @@ function NewCustomRoute({show, onHide, groups, activities}) {
                                 rows={5}
                                 placeholder={"ex: " + JSON_TRANS_OPTIONS_SAMPLE}
                                 onChange={e =>
-                                    setRoute(update(route, {$merge: {bulk_options: e.target.value}}))
+                                    setRoute({...route, bulk_options: e.target.value})
                                 } />
                             <HelpBlock>
                                 <FormattedMessage
@@ -597,7 +596,7 @@ function UpdateCustomRouteModal({show, entry, onHide, groups, activities}) {
         !show && setDiffEntry({});
     }, [show]);
 
-    const localEntry = update(entry, {$merge: diffEntry});
+    const localEntry = {...entry, ...diffEntry};
     let validUpdateSchema = null;
     let validUpdateOutputSchema = null;
 
@@ -656,7 +655,7 @@ function UpdateCustomRouteModal({show, entry, onHide, groups, activities}) {
                                 componentClass="input"
                                 value={localEntry.route || ""}
                                 placeholder="ex: /clients/{client_id:\d+}/addresses"
-                                onChange={e => setDiffEntry(update(diffEntry, {$merge: {route: e.target.value}}))}/>
+                                onChange={e => setDiffEntry({...diffEntry, route: e.target.value})}/>
                         </Col>
                     </FormGroup>
 
@@ -678,7 +677,7 @@ function UpdateCustomRouteModal({show, entry, onHide, groups, activities}) {
                             <FormControl
                                 componentClass="select"
                                 value={localEntry.method || ""}
-                                onChange={e => setDiffEntry(update(diffEntry, {$merge: {method: e.target.value}}))}>
+                                onChange={e => setDiffEntry({...diffEntry, method: e.target.value})}>
                                 <option value="get">get</option>
                                 <option value="post">post</option>
                                 <option value="put">put</option>
@@ -700,7 +699,7 @@ function UpdateCustomRouteModal({show, entry, onHide, groups, activities}) {
                               name="groups"
                               onChange={(value, action) => {
                                 if(["select-option", "create-option", "clear"].includes(action.action)) {
-                                  setDiffEntry(update(diffEntry, {$merge: {group: value ? value.value: null}}));
+                                  setDiffEntry({...diffEntry, group: value ? value.value: null});
                                 }
                               }}
                               options={groups.map(g => ({value: g, label: g}))} />
@@ -720,14 +719,14 @@ function UpdateCustomRouteModal({show, entry, onHide, groups, activities}) {
                                      right: "20px",
                                      top: "5px",
                                  }}
-                                 onClick={() => setDiffEntry(update(diffEntry, {$merge: {schema: JSON_SCHEMA_SAMPLE}}))}>
+                                 onClick={() => setDiffEntry({...diffEntry, schema: JSON_SCHEMA_SAMPLE})}>
                                  <FormattedMessage id="sample" defaultMessage="Sample"/>
                              </Button>
                              <FormControl componentClass="textarea"
                                  value={isObject(localEntry.schema)?JSON.stringify(localEntry.schema, null, 2):localEntry.schema || ""}
                                  rows={5}
                                  placeholder={"ex: " + JSON_SCHEMA_SAMPLE}
-                                 onChange={e => setDiffEntry(update(diffEntry, {$merge: {schema: e.target.value}}))} />
+                                 onChange={e => setDiffEntry({...diffEntry, schema: e.target.value})} />
 
                              <HelpBlock>
                                  <FormattedMessage id="custom-route-schema" defaultMessage="When set, the body is systematically checked against the schema associated to the route."/>
@@ -748,14 +747,14 @@ function UpdateCustomRouteModal({show, entry, onHide, groups, activities}) {
                                      right: "20px",
                                      top: "5px",
                                  }}
-                                 onClick={() => setDiffEntry(update(diffEntry, {$merge: {output_schema: OUTPUT_JSON_SCHEMA_SAMPLE}}))}>
+                                 onClick={() => setDiffEntry({...diffEntry, output_schema: OUTPUT_JSON_SCHEMA_SAMPLE})}>
                                  <FormattedMessage id="sample" defaultMessage="Sample"/>
                              </Button>
                              <FormControl componentClass="textarea"
                                  value={isObject(localEntry.output_schema)?JSON.stringify(localEntry.output_schema, null, 2):localEntry.output_schema || ""}
                                  rows={5}
                                  placeholder={"ex: " + OUTPUT_JSON_SCHEMA_SAMPLE}
-                                 onChange={e => setDiffEntry(update(diffEntry, {$merge: {output_schema: e.target.value}}))} />
+                                 onChange={e => setDiffEntry({...diffEntry, output_schema: e.target.value})} />
 
                              <HelpBlock>
                              <FormattedMessage id="output-custom-route-schema" defaultMessage="Inform in the custom route doc generation about the structure and the rules of the answer of this endpoint."/>
@@ -778,7 +777,7 @@ function UpdateCustomRouteModal({show, entry, onHide, groups, activities}) {
                               name="err-activity"
                               onChange={(value, action) => {
                                   if(["select-option", "clear"].includes(action.action)) {
-                                    setDiffEntry(update(diffEntry, {$merge: {err_activity_id: value && value.value}}));
+                                    setDiffEntry({...diffEntry, err_activity_id: value?.value});
                                   }
                               }}
                               options={activitiesOptions} />
@@ -793,7 +792,7 @@ function UpdateCustomRouteModal({show, entry, onHide, groups, activities}) {
                          <Col sm={9}>
                              <Checkbox
                                  checked={localEntry.enabled}
-                                 onChange={e => setDiffEntry(update(diffEntry, {$merge: {enabled: e.target.checked}}))}/>
+                                 onChange={e => setDiffEntry({...diffEntry, enabled: e.target.checked})}/>
                          </Col>
                      </FormGroup>
 
@@ -805,7 +804,7 @@ function UpdateCustomRouteModal({show, entry, onHide, groups, activities}) {
                         <Col sm={9}>
                             <Checkbox
                                 checked={localEntry.sync}
-                                onChange={e => setDiffEntry(update(diffEntry, {$merge: {sync: e.target.checked}}))}/>
+                                onChange={e => setDiffEntry({...diffEntry, sync: e.target.checked})}/>
 
                             <HelpBlock>
                                 <FormattedMessage id="custom-route-sync" defaultMessage="When set, the call to this API is synchronous and the response is returned directly. Otherwise, only an instance id is returned and the associated job is spawned asynchronously."/>
@@ -821,7 +820,7 @@ function UpdateCustomRouteModal({show, entry, onHide, groups, activities}) {
                         <Col sm={9}>
                             <Checkbox
                                 checked={localEntry.public}
-                                onChange={e => setDiffEntry(update(diffEntry, {$merge: {public: e.target.checked}}))}/>
+                                onChange={e => setDiffEntry({...diffEntry, public: e.target.checked})}/>
 
                             <HelpBlock>
                                 <FormattedMessage id="custom-route-public" defaultMessage="Whether the route is public or not. (when public the route is exposed as /api/v0x/public/... and require no authentication at all)"/>
@@ -837,7 +836,7 @@ function UpdateCustomRouteModal({show, entry, onHide, groups, activities}) {
                         <Col sm={9}>
                             <Checkbox
                                checked={localEntry.support_bulk}
-                               onChange={e => setDiffEntry(update(diffEntry, {$merge: {support_bulk: e.target.checked}}))}/>
+                               onChange={e => setDiffEntry({...diffEntry, support_bulk: e.target.checked})}/>
 
                             <HelpBlock>
                                <FormattedMessage id="custom-route-support-bulk" defaultMessage="When set, the API will serve additionally a route with '/bulk' append to the custom URL. This endpoint support form-data body with a 'label' and a file content 'input_file' with a CSV structure (1 line per requests to be created)"/>
@@ -858,7 +857,7 @@ function UpdateCustomRouteModal({show, entry, onHide, groups, activities}) {
                                     right: "20px",
                                     top: "5px",
                                 }}
-                                onClick={() => setDiffEntry(update(diffEntry, {$merge: {bulk_options: JSON_TRANS_OPTIONS_SAMPLE}}))}>
+                                onClick={() => setDiffEntry({...diffEntry, bulk_options: JSON_TRANS_OPTIONS_SAMPLE})}>
                                 <FormattedMessage id="sample" defaultMessage="Sample"/>
                             </Button>
                             <FormControl
@@ -867,7 +866,7 @@ function UpdateCustomRouteModal({show, entry, onHide, groups, activities}) {
                                 rows={5}
                                 placeholder={"ex: " + JSON_TRANS_OPTIONS_SAMPLE}
                                 onChange={e =>
-                                    setDiffEntry(update(diffEntry, {$merge: {bulk_options: e.target.value}}))
+                                    setDiffEntry({...diffEntry, bulk_options: e.target.value})
                                 } />
                             <HelpBlock>
                                 <FormattedMessage
@@ -993,7 +992,7 @@ function ImportCustomRouteModal({show, onHide}) {
             <Col sm={9}>
               <Checkbox
                 checked={options.replaceWorkingVersion}
-                onChange={e => setOptions(update(options, {$merge: {replaceWorkingVersion: e.target.checked}}))}>
+                onChange={e => setOptions({...options, replaceWorkingVersion: e.target.checked})}>
                 <FormattedMessage
                   id="replace-working-version"
                   defaultMessage='Replace working versions'/>
@@ -1006,7 +1005,7 @@ function ImportCustomRouteModal({show, onHide}) {
               <Checkbox
                 disabled={!options.replaceWorkingVersion}
                 checked={options.commitCurrentWorkingVersion}
-                onChange={e => setOptions(update(options, {$merge: {commitCurrentWorkingVersion: e.target.checked}}))}>
+                onChange={e => setOptions({...options, commitCurrentWorkingVersion: e.target.checked})}>
                 <FormattedMessage
                   id="commit-current-working-version"
                   defaultMessage='Commit current working version'/>
@@ -1014,7 +1013,7 @@ function ImportCustomRouteModal({show, onHide}) {
                   disabled={!options.commitCurrentWorkingVersion}
                   componentClass="input"
                   value={options.commitCurrentWorkingVersionLabel || ""}
-                  onChange={e => setOptions(update(options, {$merge: {commitCurrentWorkingVersionLabel: e.target.value}}))}
+                  onChange={e => setOptions({...options, commitCurrentWorkingVersionLabel: e.target.value})}
                   placeholder="commit label" />
               </Checkbox>
               <HelpBlock>
@@ -1024,7 +1023,7 @@ function ImportCustomRouteModal({show, onHide}) {
 
               <Checkbox
                 checked={options.activateNewVersion}
-                onChange={e => setOptions(update(options, {$merge: {activateNewVersion: e.target.checked}}))}>
+                onChange={e => setOptions({...options, activateNewVersion: e.target.checked})}>
                 <FormattedMessage
                   id="activate-new-version"
                   defaultMessage='Activate new version'/>
@@ -1049,8 +1048,8 @@ function ImportCustomRouteModal({show, onHide}) {
                     importRoutes(
                       acceptedFiles,
                       options,
-                      i => setLoaded(l => update(l, {$push: [i]})),
-                      (i, e) => setErrors(es => update(es, {$push: [{id: i, error: e.message}]})),
+                      i => setLoaded(l => [...l, i]),
+                      (i, e) => setErrors(es => [...es, {id: i, error: e.message}]),
                     )
                   }} >
                   Save
@@ -1208,6 +1207,8 @@ function DeleteRoutes({show, routes, onHide}) {
 
   const onSubmit = async () => {
     for(const route of routes) {
+      // deleted in sequence to avoid loop on removing activities and routes
+      // eslint-disable-next-line no-await-in-loop
       await deleteCustomRoute(
         route.route_id,
         async () => {
@@ -1648,8 +1649,8 @@ function CustomRoutes() {
             group={group}
             groups={allGroups}
             onSelect={(r, checked) => {
-              checked ? setSelected(s => update(s, {$push: [r]})) :
-                setSelected(s => update(s, {$splice: [[s.findIndex(ro => ro.route_id === r.route_id), 1]]}))
+              checked ? setSelected(s => [...s, r]) :
+                setSelected(s => s.filter(ro => ro.route_id !== r.route_id))
             }}
             />
         )

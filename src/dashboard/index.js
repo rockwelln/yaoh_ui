@@ -3,8 +3,7 @@ import React, {useCallback, useEffect, useState} from 'react';
 import Col from 'react-bootstrap/lib/Col';
 import Row from 'react-bootstrap/lib/Row';
 
-import {FormattedMessage} from 'react-intl';
-import {fetch_get, NotificationsManager} from "../utils";
+import {fetch_get} from "../utils";
 
 import TransactionsOverTime from './tx-over-time';
 import SuccessRateOverTime from './tx-success-rate-over-time';
@@ -15,12 +14,11 @@ import ManualActionsBox, {ManualActionsTile, NPManualActionsBox} from "./manualA
 // import {TransactionsNeedApprovalTile} from "../np/dashboard_tiles";
 
 import './dashboard.css';
-import {localUser, modules, supportedModule} from "../utils/user";
+import {localUser, modules} from "../utils/user";
 import {Link} from "react-router-dom";
 import {activeCriteria, errorCriteria} from "../requests/requests";
 import {activeCriteria as npActiveCriteria, errorCriteria as npErrorCriteria} from "../np/np-requests";
 import queryString from 'query-string';
-import update from "immutability-helper";
 import TopSlowApis from "./topSlowApis";
 import ResponseTimeOvertime from "./responseTimeOverTime";
 import NPLicenseBox from "./license";
@@ -116,7 +114,7 @@ export default function Dashboard(props) {
                 <Col xs={12} md={6} lg={3}>
                   <Link to={{
                     pathname: "/transactions/list", search: queryString.stringify({
-                      filter: JSON.stringify(update(errorCriteriaQuery, {$merge: activeCriteriaQuery}))
+                      filter: JSON.stringify({...errorCriteriaQuery, ...activeCriteriaQuery})
                     })
                   }}>
                     <DashboardCard
@@ -131,7 +129,7 @@ export default function Dashboard(props) {
                 <Col xs={12} md={6} lg={3}>
                   <Link to={{
                     pathname: "/custom-transactions/list", search: queryString.stringify({
-                      filter: JSON.stringify(update(errorCriteriaQuery, {$merge: activeCriteriaQuery}))
+                      filter: JSON.stringify({...errorCriteriaQuery, ...activeCriteriaQuery})
                     })
                   }}>
                     <DashboardCard

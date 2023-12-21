@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 
 import Col from 'react-bootstrap/lib/Col';
 import Panel from 'react-bootstrap/lib/Panel';
-import Table, {tr, td, th, thead, tbody} from 'react-bootstrap/lib/Table';
+import Table from 'react-bootstrap/lib/Table';
 import Breadcrumb from 'react-bootstrap/lib/Breadcrumb';
 
 import {FormattedMessage} from 'react-intl';
@@ -95,7 +95,7 @@ function _refresh(onSuccess) {
         ))
 }
 
-export default function Databases(props) {
+export default function Databases() {
     const [databases, setDatabases] = useState([]);
 
     useEffect(() => {

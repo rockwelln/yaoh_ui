@@ -10,7 +10,6 @@ import FormGroup from "react-bootstrap/lib/FormGroup";
 import Col from "react-bootstrap/lib/Col";
 import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import DatePicker from "react-datepicker";
-import update from 'immutability-helper';
 import Button from "react-bootstrap/lib/Button";
 import FormControl from "react-bootstrap/lib/FormControl";
 import Label from "react-bootstrap/lib/Label";
@@ -32,7 +31,7 @@ function Settings({show, filter, onChange, onHide}) {
 
   useEffect(() => setDiff({}), [show]);
 
-  const localFilter = update(filter, {$merge: diff});
+  const localFilter = {...filter, ...diff};
   return (
     <Modal show={show} onHide={onHide}>
       <Modal.Header closeButton>
@@ -51,7 +50,7 @@ function Settings({show, filter, onChange, onHide}) {
               <DatePicker
                 className="form-control"
                 selected={localFilter.from}
-                onChange={d => setDiff(update(diff, {$merge: {from: d}}))}
+                onChange={d => setDiff({...diff, from: d})}
                 dateFormat="dd/MM/yyyy"
                 locale="fr-fr" />
             </Col>
@@ -65,7 +64,7 @@ function Settings({show, filter, onChange, onHide}) {
               <DatePicker
                 className="form-control"
                 selected={localFilter.to}
-                onChange={d => setDiff(update(diff, {$merge: {to: d}}))}
+                onChange={d => setDiff({...diff, to: d})}
                 dateFormat="dd/MM/yyyy"
                 locale="fr-fr" />
             </Col>
@@ -81,7 +80,7 @@ function Settings({show, filter, onChange, onHide}) {
                 name="method"
                 options={["get", "post", "put", "delete"].map(k => ({value: k, label: k}))}
                 onChange={v => {
-                  setDiff(update(diff, {$merge: {method: v.value}}))
+                  setDiff({...diff, method: v.value})
                 }}
                 className="basic-select"
                 classNamePrefix="select" />
@@ -100,7 +99,7 @@ function Settings({show, filter, onChange, onHide}) {
                 onChange={e => {
                   const i = parseInt(e.target.value, 10);
                   if(!isNaN(i)) {
-                    setDiff(update(diff, {$merge: {limit: i}}))
+                    setDiff({...diff, limit: i})
                   }
                 }}/>
             </Col>

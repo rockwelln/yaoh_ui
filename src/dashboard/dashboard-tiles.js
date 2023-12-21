@@ -1,15 +1,5 @@
 import React from 'react';
-import Glyphicon from 'react-bootstrap/lib/Glyphicon';
-import Col from 'react-bootstrap/lib/Col';
-import update from 'immutability-helper';
 import {Link} from 'react-router-dom';
-import queryString from 'query-string';
-import {FormattedMessage} from 'react-intl';
-
-import {
-    activeCriteria,
-    errorCriteria,
-} from "../requests/requests";
 
 
 export function DashboardCard({className, heading, subheading, number}) {

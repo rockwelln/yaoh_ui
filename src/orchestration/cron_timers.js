@@ -5,7 +5,6 @@ import Panel from "react-bootstrap/lib/Panel";
 import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 import Button from "react-bootstrap/lib/Button";
 import Modal from "react-bootstrap/lib/Modal";
-import update from "immutability-helper";
 import {fetch_delete, fetch_get, fetch_post, fetch_put, NotificationsManager} from "../utils";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 import Form from "react-bootstrap/lib/Form";
@@ -277,7 +276,7 @@ function UpdateTimerModal({show, onClose, timer}) {
 
     if (!timer) return null;
 
-    const localTimer = update(timer, {$merge: diffTimer});
+    const localTimer = {...timer, ...diffTimer};
     const validCronEntry = validateCronEntry(localTimer) ? null :"error";
     const activitiesOptions = activities.sort((a, b) => a.name.localeCompare(b.name)).map(a => ({value: a.id, label: a.name}));
 

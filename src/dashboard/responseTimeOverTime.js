@@ -13,7 +13,6 @@ import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import DatePicker from "react-datepicker";
 import HelpBlock from "react-bootstrap/lib/HelpBlock";
 import Button from "react-bootstrap/lib/Button";
-import update from "immutability-helper";
 
 const DEFAULT_NB_DAYS = 1;
 const REFRESH_CYCLE = 60;
@@ -184,7 +183,7 @@ function ResponseTimeOvertime({props}) {
                               <DatePicker
                                   className="form-control"
                                   selected={filter.from}
-                                  onChange={d => setFilter(update(filter, {$merge: {from: d}}))}
+                                  onChange={d => setFilter({...filter, from: d})}
                                   dateFormat="yyyy-MM-dd HH:mm"
                                   showTimeSelect
                                   locale="fr-fr" />
@@ -199,7 +198,7 @@ function ResponseTimeOvertime({props}) {
                               <DatePicker
                                   className="form-control"
                                   selected={filter.to}
-                                  onChange={d => setFilter(update(filter, {$merge: {to: d}}))}
+                                  onChange={d => setFilter({...filter, to: d})}
                                   dateFormat="yyyy-MM-dd HH:mm"
                                   showTimeSelect
                                   locale="fr-fr" />

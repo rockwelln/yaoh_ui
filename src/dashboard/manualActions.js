@@ -3,18 +3,17 @@ import React, {useState, useEffect} from "react";
 import {DashboardPanel} from "./dashboard-panel";
 import {FormattedMessage} from "react-intl";
 import Table from "react-bootstrap/lib/Table";
-import {fetch_get, NotificationsManager, userLocalizeUtcDate} from "../utils";
+import {fetch_get, NotificationsManager} from "../utils";
 import Modal from "react-bootstrap/lib/Modal";
 import Button from "react-bootstrap/lib/Button";
 import {Link} from "react-router-dom";
 import queryString from "query-string";
-import {activeCriteria, errorCriteria, needActionCriteria} from "../requests/requests";
+import {activeCriteria, needActionCriteria} from "../requests/requests";
 import {DashboardCard} from "./dashboard-tiles";
 import FormGroup from "react-bootstrap/lib/FormGroup";
 import Col from "react-bootstrap/lib/Col";
 import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import Form from "react-bootstrap/lib/Form";
-import update from "immutability-helper";
 import FormControl from "react-bootstrap/lib/FormControl";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 import Ajv from "ajv";
@@ -184,7 +183,7 @@ export function ManualActionInputForm(props) {
                                                 type={v.format || v.type}
                                                 value={values[key]}
                                                 onChange={v => setValues(
-                                                    update(values,{$merge: {[key] : v}})
+                                                    {...values, [key]: v}
                                                 )} />
                                         }
                                     </Col>
@@ -307,7 +306,7 @@ export function ManualActionsTile() {
     return (
       <Link to={{
           pathname: "/transactions/list", search: queryString.stringify({
-            filter: JSON.stringify(update(needActionCriteria, {$merge: activeCriteria}))
+            filter: JSON.stringify({...needActionCriteria, ...activeCriteria})
           })
         }}>
         <DashboardCard
