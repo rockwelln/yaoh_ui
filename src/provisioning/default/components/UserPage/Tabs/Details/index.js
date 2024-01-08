@@ -509,7 +509,7 @@ class Details extends Component {
                           <div>Description:</div>
                         </Col>
                         <Col md={6} className={"text-left word-break-word"}>
-                          <div>{this.props.accessDevice.description}</div>
+                          <div>{this.props.accessDevice?.description}</div>
                         </Col>
                       </Row>
                       <Row className={"text-left"}>
@@ -517,7 +517,7 @@ class Details extends Component {
                           <div>Device type:</div>
                         </Col>
                         <Col md={6} className={"text-left word-break-word"}>
-                          <div>{this.props.accessDevice.deviceType}</div>
+                          <div>{this.props.accessDevice?.deviceType}</div>
                         </Col>
                       </Row>
                       <Row className={"text-left"}>
@@ -525,7 +525,7 @@ class Details extends Component {
                           <div>Mac address:</div>
                         </Col>
                         <Col md={6} className={"text-left word-break-word"}>
-                          <div>{this.props.accessDevice.macAddress}</div>
+                          <div>{this.props.accessDevice?.macAddress}</div>
                         </Col>
                       </Row>
                       <Row className={"text-left"}>
@@ -534,7 +534,7 @@ class Details extends Component {
                         </Col>
                         <Col md={6} className={"text-left word-break-word"}>
                           <div>
-                            {this.props.accessDevice.numberOfAssignedPorts}
+                            {this.props.accessDevice?.numberOfAssignedPorts}
                           </div>
                         </Col>
                       </Row>
@@ -543,7 +543,7 @@ class Details extends Component {
                           <div>Number of ports:</div>
                         </Col>
                         <Col md={6} className={"text-left word-break-word"}>
-                          <div>{this.props.accessDevice.numberOfPorts}</div>
+                          <div>{this.props.accessDevice?.numberOfPorts}</div>
                         </Col>
                       </Row>
                       <Row className={"text-left"}>
@@ -554,7 +554,7 @@ class Details extends Component {
                           <div>
                             {
                               this.props.accessDevice
-                                .outboundProxyServerNetAddress
+                                ?.outboundProxyServerNetAddress
                             }
                           </div>
                         </Col>
@@ -564,7 +564,7 @@ class Details extends Component {
                           <div>Physical location:</div>
                         </Col>
                         <Col md={6} className={"text-left word-break-word"}>
-                          <div>{this.props.accessDevice.physicalLocation}</div>
+                          <div>{this.props.accessDevice?.physicalLocation}</div>
                         </Col>
                       </Row>
                       <Row className={"text-left"}>
@@ -572,7 +572,7 @@ class Details extends Component {
                           <div>Protocol:</div>
                         </Col>
                         <Col md={6} className={"text-left word-break-word"}>
-                          <div>{this.props.accessDevice.protocol}</div>
+                          <div>{this.props.accessDevice?.protocol}</div>
                         </Col>
                       </Row>
                       <Row className={"text-left"}>
@@ -580,7 +580,7 @@ class Details extends Component {
                           <div>Serial number:</div>
                         </Col>
                         <Col md={6} className={"text-left word-break-word"}>
-                          <div>{this.props.accessDevice.serialNumber}</div>
+                          <div>{this.props.accessDevice?.serialNumber}</div>
                         </Col>
                       </Row>
                       <Row className={"text-left"}>
@@ -588,7 +588,7 @@ class Details extends Component {
                           <div>Status:</div>
                         </Col>
                         <Col md={6} className={"text-left word-break-word"}>
-                          <div>{this.props.accessDevice.status}</div>
+                          <div>{this.props.accessDevice?.status}</div>
                         </Col>
                       </Row>
                       <Row className={"text-left"}>
@@ -597,7 +597,7 @@ class Details extends Component {
                         </Col>
                         <Col md={6} className={"text-left word-break-word"}>
                           <div>
-                            {this.props.accessDevice.stunServerNetAddress}
+                            {this.props.accessDevice?.stunServerNetAddress}
                           </div>
                         </Col>
                       </Row>
@@ -606,7 +606,9 @@ class Details extends Component {
                           <div>Transport protocol:</div>
                         </Col>
                         <Col md={6} className={"text-left word-break-word"}>
-                          <div>{this.props.accessDevice.transportProtocol}</div>
+                          <div>
+                            {this.props.accessDevice?.transportProtocol}
+                          </div>
                         </Col>
                       </Row>
                       <Row className={"text-left"}>
@@ -615,7 +617,7 @@ class Details extends Component {
                         </Col>
                         <Col md={6} className={"text-left word-break-word"}>
                           <div>
-                            {this.props.accessDevice.useCustomUserNamePassword
+                            {this.props.accessDevice?.useCustomUserNamePassword
                               ? "Yes"
                               : "No"}
                           </div>
@@ -626,7 +628,7 @@ class Details extends Component {
                           <div>User name:</div>
                         </Col>
                         <Col md={6} className={"text-left word-break-word"}>
-                          <div>{this.props.accessDevice.userName}</div>
+                          <div>{this.props.accessDevice?.userName}</div>
                         </Col>
                       </Row>
                       <Row className={"text-left"}>
@@ -634,7 +636,7 @@ class Details extends Component {
                           <div>Version:</div>
                         </Col>
                         <Col md={6} className={"text-left word-break-word"}>
-                          <div>{this.props.accessDevice.version}</div>
+                          <div>{this.props.accessDevice?.version}</div>
                         </Col>
                       </Row>
                     </Panel.Body>
@@ -664,7 +666,8 @@ class Details extends Component {
   }
 
   validateEmail = (elementValue) => {
-    var emailPattern = /^([0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*@([0-9a-zA-Z][-\w]*[0-9a-zA-Z]\.)+[a-zA-Z]{2,9})$/;
+    var emailPattern =
+      /^([0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*@([0-9a-zA-Z][-\w]*[0-9a-zA-Z]\.)+[a-zA-Z]{2,9})$/;
     return emailPattern.test(elementValue);
   };
 
