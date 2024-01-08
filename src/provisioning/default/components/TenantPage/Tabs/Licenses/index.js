@@ -168,6 +168,11 @@ export class Licenses extends Component {
       return <Loading />;
     }
 
+    const dictForLicenses = {
+      ...this.props.dictServicePacks,
+      ...this.props.dictVirtualServicePacks,
+    };
+
     return (
       <Row className={"margin-top-2 margin-left-8"}>
         <Col md={5}>
@@ -342,10 +347,7 @@ export class Licenses extends Component {
                     showEdit={this.showEditSericePacks}
                     showDelete={this.showDeleteServicePacks}
                     showDeleteIcon={true}
-                    dict={{
-                      ...this.props.dictServicePacks,
-                      ...this.props.dictVirtualServicePacks,
-                    }}
+                    dict={dictForLicenses}
                   />
                 ) : (
                   <FormattedMessage
@@ -390,7 +392,12 @@ export class Licenses extends Component {
                         this.fetchData()
                       )
                     }
-                    licenseTitle={this.state.servicePacks[indexOfService].name}
+                    licenseTitle={
+                      dictForLicenses[
+                        this.state.servicePacks[indexOfService].name
+                      ]?.display_name ||
+                      this.state.servicePacks[indexOfService].name
+                    }
                     allocated={
                       this.state.servicePacks[indexOfService].currentlyAllocated
                     }
@@ -631,6 +638,9 @@ export class Licenses extends Component {
                     )
                   }
                   licenseTitle={
+                    this.props.dictUserServices[
+                      this.state.limitedUserServicesTenant[indexOfService].name
+                    ] ||
                     this.state.limitedUserServicesTenant[indexOfService].name
                   }
                   allocated={
@@ -892,8 +902,19 @@ export class Licenses extends Component {
   };
 
   updateServicePacks = (servicePack) => {
+    let servicePackName = "";
+    const dictForLicenses = {
+      ...this.props.dictServicePacks,
+      ...this.props.dictVirtualServicePacks,
+    };
+    Object.keys(dictForLicenses).forEach((key) => {
+      if (dictForLicenses[key].display_name === servicePack) {
+        servicePackName = key;
+        return;
+      }
+    });
     const packs = [...this.state.servicePacks].filter(
-      (pack) => pack.name === servicePack
+      (pack) => pack.name === servicePackName || pack.name === servicePack
     );
     const arrayOfPromise = [];
     packs.forEach((pack) => {

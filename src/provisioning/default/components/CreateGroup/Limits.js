@@ -133,6 +133,11 @@ export class Licenses extends Component {
       return <Loading />;
     }
 
+    const dictForLicenses = {
+      ...this.props.dictServicePacks,
+      ...this.props.dictVirtualServicePacks,
+    };
+
     return (
       <React.Fragment>
         {/* PANEL HEADER */}
@@ -431,10 +436,7 @@ export class Licenses extends Component {
                         licenses={this.props.servicePacks}
                         showEdit={this.showEditSericePacks}
                         isEditGroup
-                        dict={{
-                          ...this.props.dictServicePacks,
-                          ...this.props.dictVirtualServicePacks,
-                        }}
+                        dict={dictForLicenses}
                       />
                     ) : (
                       <FormattedMessage
@@ -462,6 +464,9 @@ export class Licenses extends Component {
                           )
                         }
                         licenseTitle={
+                          dictForLicenses[
+                            this.state.servicePacks[indexOfService].name
+                          ]?.display_name ||
                           this.state.servicePacks[indexOfService].name
                         }
                         allocated={

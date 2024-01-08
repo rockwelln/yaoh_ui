@@ -11,7 +11,7 @@ import { get } from "../../components/get";
 
 const INFINITY = 8734;
 
-const SingleEdit = props => {
+const SingleEdit = (props) => {
   const {
     title,
     show,
@@ -23,6 +23,7 @@ const SingleEdit = props => {
     isEditMaxBursting,
     onChangeInfinity,
     licenseTitle,
+    technicalTitle = "",
     isEditPacks,
     isEditTunkLicenses,
     allocated,
@@ -31,7 +32,7 @@ const SingleEdit = props => {
     tenantId,
     apiRequest,
     pack,
-    trunkLicensesMax
+    trunkLicensesMax,
   } = props;
 
   const [groupServiceMax, setGroupServiceMax] = useState();
@@ -52,7 +53,9 @@ const SingleEdit = props => {
   }, [pack]);
 
   useEffect(() => {
-    isEditPacks && isEditGroup && apiRequest(tenantId, licenseTitle);
+    isEditPacks &&
+      isEditGroup &&
+      apiRequest(tenantId, technicalTitle || licenseTitle);
   }, []);
 
   return (
@@ -126,7 +129,7 @@ const SingleEdit = props => {
                   className={"width-8 display-table-cell"}
                   disabled={infinity}
                   defaultValue={value}
-                  onChange={e => {
+                  onChange={(e) => {
                     const value = e.target.value;
                     onChange(value);
                   }}
@@ -144,7 +147,7 @@ const SingleEdit = props => {
                     className={"infinity-checkbox"}
                     type="checkbox"
                     checked={infinity}
-                    onChange={e => onChangeInfinity(e.target.checked)}
+                    onChange={(e) => onChangeInfinity(e.target.checked)}
                   />
                 </td>
               )}
