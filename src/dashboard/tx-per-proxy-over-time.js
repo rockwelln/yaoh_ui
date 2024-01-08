@@ -57,7 +57,7 @@ function ProxyRequestsOverTime() {
     };
     const onShowClose = () => setShowBig(false);
 
-    // group by activity_id
+    // group by proxy_gateway_host
     const grouped_data = data ? data.reduce((rv, x) => {
         (rv[x['proxy_gateway_host']] = rv[x['proxy_gateway_host']] || []).push(x);
         return rv;
