@@ -1859,7 +1859,7 @@ export class Transaction extends Component {
         const paging_spec = p === undefined ? subrequests_paging_info : update(subrequests_paging_info, {$merge: p});
         url.searchParams.append('paging', JSON.stringify(paging_spec));
 
-        fetch_get(url, this.props.auth_token)
+        fetch_get(url)
             .then(data => {
                 !this.cancelLoad && this.setState({
                     subrequests: data.requests,

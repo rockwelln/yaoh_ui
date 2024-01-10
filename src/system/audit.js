@@ -109,7 +109,7 @@ export class AuditLogs extends Search {
     }
 
     _fetchUsers() {
-        fetch_get('/api/v01/system/users', this.props.auth_token)
+        fetch_get('/api/v01/system/users')
             .then(data => this.setState({users: data.users}))
             .catch(error => NotificationsManager.error(
               <FormattedMessage id="fetch-users-failed" defaultMessage="Failed to fetch users"/>,

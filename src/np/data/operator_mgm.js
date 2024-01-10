@@ -23,7 +23,7 @@ import Checkbox from "react-bootstrap/lib/Checkbox";
 
 
 export function fetchOperators(token, onSuccess, onError) {
-  fetch_get('/api/v01/npact/operators', token)
+  fetch_get('/api/v01/npact/operators')
     .then(data => (
       onSuccess && onSuccess(data.operators.sort((a, b) => (a.name < b.name) ? -1 : 1))
     ))

@@ -1359,7 +1359,7 @@ export class NPDisconnectRequest extends Component {
     this.setState({ donor: undefined, donor_error: undefined });
     if (number.length < MIN_NUMBER_LENGTH_LOOKUP || number.length >= MAX_NUMBER_LENGTH_LOOKUP) return;
 
-    fetch_get(url, this.props.auth_token)
+    fetch_get(url)
       .then(data => {
         if (data.numbers.length === 0) {
           throw new Error('No case found');
@@ -1589,7 +1589,7 @@ export class NPTransaction extends Component {
   fetchTxDetails(reload, onSuccess, onError) {
     this.setState({ error: undefined });
     const txId = this.props.match.params.txId;
-    fetch_get(`/api/v01/transactions/${this.props.match.params.txId}`, this.props.auth_token)
+    fetch_get(`/api/v01/transactions/${this.props.match.params.txId}`)
       .then(data => {
         if (this.cancelLoad) {
           onSuccess && onSuccess();
@@ -1602,7 +1602,7 @@ export class NPTransaction extends Component {
         }
         this.setState(diffState);
 
-        !data.callback_task_id && fetch_get(`/api/v01/npact/np_requests/${data.original_request_id}`, this.props.auth_token)
+        !data.callback_task_id && fetch_get(`/api/v01/npact/np_requests/${data.original_request_id}`)
           .then(data => {
             !this.cancelLoad && this.setState({ request: data });
             document.title = `Request ${data.crdc_id}`;

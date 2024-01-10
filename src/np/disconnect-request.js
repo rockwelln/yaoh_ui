@@ -92,7 +92,7 @@ export class NPDisconnectRequest extends Component {
     this.setState({ donor: undefined, donor_error: undefined });
     if (number.length < MIN_NUMBER_LENGTH_LOOKUP || number.length >= MAX_NUMBER_LENGTH_LOOKUP) return;
 
-    fetch_get(url, this.props.auth_token)
+    fetch_get(url)
       .then(data => {
         if (data.numbers.length === 0) {
           throw new Error('No case found');
