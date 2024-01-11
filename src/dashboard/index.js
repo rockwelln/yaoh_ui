@@ -103,8 +103,8 @@ export default function Dashboard(props) {
                   }}>
                   <DashboardCard
                     className={"bg-arielle-smile"}
-                    heading={"Active workflows"}
-                    subheading={"Workflows currently open"}
+                    heading={"Active transactions"}
+                    subheading={"Transactions currently open"}
                     number={stats.active.total} />
                 </Link>
               </Col>
@@ -122,7 +122,7 @@ export default function Dashboard(props) {
                         stats.active.with_errors_without_request === 0 &&
                         stats.active.with_errors_with_request === 0 ? "bg-grow-early" : "bg-alert-danger"}
                       heading={"Errors"}
-                      subheading={"Workflows blocked"}
+                      subheading={"Transactions blocked"}
                       number={stats.active.with_errors_with_request} />
                   </Link>
                 </Col> :
@@ -135,7 +135,7 @@ export default function Dashboard(props) {
                     <DashboardCard
                       className={"bg-alert-danger"}
                       heading={"Errors"}
-                      subheading={"Sch./Bulk workflows blocked"}
+                      subheading={"Sch./Bulk transactions blocked"}
                       number={stats.active.with_errors_without_request} />
                   </Link>
                 </Col>
