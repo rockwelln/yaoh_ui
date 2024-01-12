@@ -469,7 +469,7 @@ function NewCustomRoute({show, onHide, groups, activities}) {
                               name="err-activity"
                               onChange={(value, action) => {
                                   if(["select-option", "clear"].includes(action.action)) {
-                                    setRoute({...route, err_activity_id: value?.value});
+                                    setRoute({...route, err_activity_id: value?.value || null});
                                   }
                               }}
                               options={activitiesOptions} />
@@ -777,7 +777,7 @@ function UpdateCustomRouteModal({show, entry, onHide, groups, activities}) {
                               name="err-activity"
                               onChange={(value, action) => {
                                   if(["select-option", "clear"].includes(action.action)) {
-                                    setDiffEntry({...diffEntry, err_activity_id: value?.value});
+                                    setDiffEntry({...diffEntry, err_activity_id: value?.value || null});
                                   }
                               }}
                               options={activitiesOptions} />
