@@ -4002,6 +4002,10 @@ export class ScheduledRequests extends Component{
                             op: criteria.op,
                             value: moment.parseZone(criteria.value).utc().format()
                         };
+                    case 'end_task_status':
+                    case 'task_status':
+                        // filter transparently sent
+                        return filter_criteria[f];
                     default:
                         return {
                             model: criteria.model, // needed in multi-model query
