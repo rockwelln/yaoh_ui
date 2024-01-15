@@ -343,6 +343,26 @@ function TextareaInput({value, onChange, readOnly, cells}) {
     }
   }, [value]);
 
+  useEffect(() => {
+    const resizeObserver = new ResizeObserver((entries) => {
+      const node = ReactDOM.findDOMNode(editorRef.current);
+      const outputNode = ReactDOM.findDOMNode(outputRef.current);
+      // align the size of the output div
+      outputNode.parentElement.scrollTop = node.scrollTop;
+      outputNode.parentElement.scrollLeft = node.scrollLeft;
+      outputNode.parentElement.style.height = node.style.height;
+      outputNode.parentElement.style.width = node.style.width;
+      // align the size of the parent div
+      node.parentElement.style.height = node.style.height;
+      node.parentElement.style.width = node.style.width;
+    });
+    resizeObserver.observe(ReactDOM.findDOMNode(editorRef.current));
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [editorRef]);
+
   const onScroll = useCallback(() => {
     const node = ReactDOM.findDOMNode(editorRef.current);
     const outputNode = ReactDOM.findDOMNode(outputRef.current);
