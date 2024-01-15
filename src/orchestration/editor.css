@@ -23,13 +23,14 @@
 .editor .code-input{
   opacity: 0.7;
   margin: 0;
+  z-index: 0;
   color: #000000;
   resize: none;
 }
 
 .editor .code-output{
   pointer-events: none;
-  z-index: 3;
+  /* z-index: 3; */
   margin: 0;
   overflow-y: auto;
 }
