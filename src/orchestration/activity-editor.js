@@ -13,6 +13,7 @@ import {
   downloadJson,
   checkStatus,
   parseJSON,
+  STATIC_URL_PREFIX,
 } from "../utils";
 
 import Col from 'react-bootstrap/lib/Col';
@@ -1024,249 +1025,304 @@ const sortedNodes = [
   "entity",
 ];
 
-function nodeLabel(name, size) {
+const nodesAttributes = {
+  start: {
+    icon: faPlay,
+    label: "Start",
+    color: "blue",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#start`,
+  },
+  end: {
+    icon: faPowerOff,
+    label: "End",
+    color: "blue",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#end`,
+  },
+  http_call: {
+    icon: faStream,
+    label: "HTTP call",
+    color: "blue",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#http-call`,
+  },
+  rest_call: {
+    icon: faStream,
+    label: "REST call",
+    color: "blue",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#rest-call`,
+  },
+  json_call: {
+    icon: faStream,
+    label: "JSON call [deprecated]",
+    color: "blue",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#json-call`,
+  },
+  async_json_call: {
+    icon: faStream,
+    label: "Asynchronous JSON call",
+    color: "blue",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#async-json-call`,
+  },
+  xml_call: {
+    icon: faStream,
+    label: "XML call",
+    color: "blue",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#xml-call`,
+  },
+  bsft_call: {
+    color: "orange",
+    icon: faStream,
+    label: "Broadsoft XSP/ADP call [experimental]",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#broadsoft-xsp--adp-call-experimental`,
+  },
+  proxy_session_call: {
+    color: "orange",
+    icon: faStream,
+    label: "Broadsoft proxy session call",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#broadsoft-proxy-session-call`,
+  },
+  proxy_call: {
+    color: "blue",
+    icon: faStream,
+    label: "Proxy HTTP call",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#proxy-http-call`,
+  },
+  tcp_call: {
+    color: "purple",
+    icon: faStream,
+    label: "TCP call [experimental]",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#tcp-call-experimental`,
+  },
+  context_setter: {
+    color: "purple",
+    icon: faPaste,
+    label: "Context setter",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#context-setter`,
+  },
+  sync_response: {
+    color: "purple",
+    icon: faPaste,
+    label: "Synchronous response",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#synchronous-response`,
+  },
+  callback_response: {
+    color: "purple",
+    icon: faPaste,
+    label: "Callback response",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#callback-response`,
+  },
+  multi_context_setter: {
+    color: "purple",
+    icon: faPaste,
+    label: "Multiple context setter",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#multiple-context-setter`,
+  },
+  cancel_manual_action: {
+    color: "green",
+    icon: faBellSlash,
+    label: "Cancel manual action",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#cancel-manual-action`,
+  },
+  trigger_manual_action: {
+    color: "green",
+    icon: faBell,
+    label: "Trigger manual action",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#trigger-manual-action`,
+  },
+  send_email_template: {
+    color: "blue",
+    icon: faEnvelope,
+    label: "Send email",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#send-email`,
+  },
+  send_sms: {
+    color: "blue",
+    icon: faEnvelope,
+    label: "Send SMS",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#send-sms`,
+  },
+  sql_exec: {
+    color: "cyan",
+    icon: faDatabase,
+    label: "SQL Exec",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#sql-exec`,
+  },
+  sql_exec_with_return: {
+    color: "cyan",
+    icon: faDatabase,
+    label: "SQL Exec with return",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#sql-exec-with-return`,
+  },
+  sql_select: {
+    color: "cyan",
+    icon: faDatabase,
+    label: "SQL Select",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#sql-select`,
+  },
+  boolean_expression: {
+    color: "#FF8C00",
+    icon: faDirections,
+    label:"Boolean expression",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#boolean-expression`,
+  },
+  switch: {
+    color: "#FF8C00",
+    icon: faDirections,
+    label:"Switch",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#switch`,
+  },
+  or_outputs: {
+    color: "#2F4F4F",
+    icon: faCog,
+    label:"Or",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#or`,
+  },
+  sync_outputs: {
+    color: "#2F4F4F",
+    icon: faCog,
+    label:"Join",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#join`,
+  },
+  timer: {
+    color: "#E5D83DFF",
+    icon: faStopwatch,
+    label: "Timer",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#timer`,
+  },
+  stop_timer: {
+    color: "#E5D83DFF",
+    icon: faStop,
+    label: "Stop timer",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#stop-timer`,
+  },
+  context_timer: {
+    color: "#E5D83DFF",
+    icon: faStopwatch,
+    label:"Context timer",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#context-timer`,
+  },
+  generate_ott: {
+    color: "#5ce53d",
+    icon: faCog,
+    label: "Generate OTT",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#generate-ott`,
+  },
+  generate_random_string: {
+    color: "#5ce53d",
+    icon: faCog,
+    label: "Generate random string",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#generate-random-string`,
+  },
+  set_request_status: {
+    color: "#5ce53d",
+    icon: faCog,
+    label: "Set request status",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#set-request-status`,
+  },
+  set_task_status: {
+    color: "#5ce53d",
+    icon: faCog,
+    label: "Set task status",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#set-task-status`,
+  },
+  macro: {
+    color: "blue",
+    icon: faCog,
+    label: "Macro",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#macro`,
+  },
+  trigger_subworkflows: {
+    color: "blue",
+    icon: faCog,
+    label: "Suborkflow",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#subworkflow`,
+  },
+  create_user: {
+    color: "red",
+    icon: faUsers,
+    label: "Create user",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#create-user`,
+  },
+  update_user: {
+    color: "red",
+    icon: faUsers,
+    label: "Update user",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#update-user`,
+  },
+  delete_user: {
+    color: "red",
+    icon: faUsers,
+    label: "Delete user",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#delete-user`,
+  },
+  get_owner: {
+    color: "purple",
+    icon: faUserCog,
+    label: "Get Owner",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#get-owner`,
+  },
+  search_transactions: {
+    color: "pink",
+    icon: faSearch,
+    label: "Search transactions",
+  },
+  create_csv: {
+    color: "green",
+    icon: faFileCsv,
+    label: "CSV file",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#csv-file`,
+  },
+  create_excel_sheet: {
+    color: "green",
+    icon: faFileExcel,
+    label: "Excel file",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#excel-file`,
+  },
+  powershell: {
+    color: "blue",
+    icon: faBolt,
+    label: "Powershell",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#powershell`,
+  },
+  ftp: {
+    color: "green",
+    icon: faFileMedicalAlt,
+    label: "sFTP",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#sftp`,
+  },
+  note: {
+    color: "white",
+    icon: faStickyNote,
+    label: "Note",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#note`,
+  },
+  goto: {
+    color: "#2F4F4F",
+    icon: faArrowRight,
+    label: "Go to",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#go-to`,
+  },
+  entity: {
+    color: "blue",
+    icon: faHome,
+    label: "Entity",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#entity`,
+  },
+};
+
+function nodeLabel(name, size, showHelp=true) {
   let s = {style:{}, label: name, name: name};
-  switch(size) {
-    case "big":
-      s.style = {fontSize: '40px'}
-      break;
+
+  const {color, help, ...attrs} = nodesAttributes[name]
+  if(attrs) {
+    s = {...s, ...attrs}
+  }
+  if(color) {
+    s.style.color = color
   }
 
-  switch(name) {
-    case "start":
-      s.style.color = "blue";
-      s.icon=faPlay;
-      s.label = "Start";
-      break;
-    case "end":
-      s.style.color = "blue";
-      s.icon=faPowerOff;
-      s.label = "End";
-      break;
-    case "rest_call":
-      s.style.color = "blue";
-      s.icon=faStream;
-      s.label = "REST call";
-      break;
-    case "json_call":
-      s.style.color = "blue";
-      s.icon=faStream;
-      s.label = "JSON call [deprecated]";
-      break;
-    case "async_json_call":
-      s.style.color = "blue";
-      s.icon=faStream;
-      s.label = "Asynchronous JSON call";
-      break;
-    case "http_call":
-      s.style.color = "blue";
-      s.icon=faStream;
-      s.label = "HTTP call";
-      break;
-    case "xml_call":
-      s.style.color = "blue";
-      s.icon=faStream;
-      s.label = "XML call";
-      break;
-    case "bsft_call":
-      s.style.color = "orange";
-      s.icon=faStream
-      s.label = "Broadsoft XSP/ADP call [experimental]";
-      break;
-    case "proxy_session_call":
-      s.style.color = "orange";
-      s.icon=faStream
-      s.label = "Broadsoft proxy session call";
-      break;
-    case "proxy_call":
-      s.style.color = "blue";
-      s.icon=faStream
-      s.label = "Proxy HTTP call";
-      break;
-    case "tcp_call":
-      s.style.color = "purple";
-      s.icon=faStream
-      s.label = "TCP call [experimental]";
-      break;
-    case "context_setter":
-      s.style.color = "purple";
-      s.icon=faPaste;
-      s.label = "Context setter";
-      break;
-    case "sync_response":
-      s.style.color = "purple";
-      s.icon=faPaste;
-      s.label = "Synchronous response";
-      break;
-    case "callback_response":
-      s.style.color = "purple";
-      s.icon=faPaste;
-      s.label = "Callback response";
-      break;
-    case "multi_context_setter":
-      s.style.color = "purple";
-      s.icon=faPaste;
-      s.label = "Multiple context setter";
-      break;
-    case "cancel_manual_action":
-      s.style.color = "green";
-      s.icon=faBellSlash;
-      s.label = "Cancel manual action";
-      break;
-    case "trigger_manual_action":
-      s.style.color = "green";
-      s.icon=faBell;
-      s.label = "Trigger manual action";
-      break;
-    case "send_email_template":
-      s.style.color = "blue";
-      s.icon=faEnvelope;
-      s.label = "Send email";
-      break;
-    case "send_sms":
-      s.style.color = "blue";
-      s.icon=faEnvelope;
-      s.label = "Send SMS";
-      break;
-    case "sql_exec":
-      s.style.color = "cyan";
-      s.icon=faDatabase;
-      s.label = "SQL Exec";
-      break;
-    case "sql_exec_with_return":
-      s.style.color = "cyan";
-      s.icon=faDatabase;
-      s.label = "SQL Exec with return";
-      break;
-    case "sql_select":
-      s.style.color = "cyan";
-      s.icon=faDatabase;
-      s.label = "SQL Select";
-      break;
-    case "boolean_expression":
-      s.style.color = "#FF8C00";
-      s.icon = faDirections;
-      s.label ="Boolean expression";
-      break;
-    case "switch":
-      s.style.color = "#FF8C00";
-      s.icon = faDirections;
-      s.label ="Switch";
-      break;
-    case "or_outputs":
-      s.style.color = "#2F4F4F";
-      s.icon = faCog;
-      s.label= "Or";
-      break;
-    case "sync_outputs":
-      s.style.color = "#2F4F4F";
-      s.icon = faCog;
-      s.label= "Join";
-      break;
-    case "timer":
-      s.style.color = "#E5D83DFF";
-      s.icon = faStopwatch;
-      s.label = "Timer";
-      break;
-    case "stop_timer":
-      s.style.color = "#E5D83DFF";
-      s.icon = faStop;
-      s.label = "Stop timer";
-      break;
-    case "context_timer":
-      s.style.color = "#E5D83DFF";
-      s.icon = faStopwatch;
-      s.label ="Context timer";
-      break;
-    case "generate_ott":
-      s.style.color = "#5ce53d";
-      s.icon = faCog;
-      s.label = "Generate OTT";
-      break;
-    case "generate_random_string":
-      s.style.color = "#5ce53d";
-      s.icon = faCog;
-      s.label = "Generate random string";
-      break;
-    case "set_request_status":
-      s.style.color = "#5ce53d";
-      s.icon = faCog;
-      s.label = "Set request status";
-      break;
-    case "set_task_status":
-      s.style.color = "#5ce53d";
-      s.icon = faCog;
-      s.label = "Set task status";
-      break;
-    case "macro":
-      s.style.color = "blue";
-      s.icon = faCog;
-      s.label = "Macro";
-      break;
-    case "trigger_subworkflows":
-      s.style.color = "blue";
-      s.icon = faCog;
-      s.label = "Suborkflow";
-      break;
-    case "create_user":
-      s.style.color = "red";
-      s.icon = faUsers;
-      s.label = "Create user";
-      break;
-    case "update_user":
-      s.style.color = "red";
-      s.icon = faUsers;
-      s.label = "Update user";
-      break;
-    case "delete_user":
-      s.style.color = "red";
-      s.icon = faUsers;
-      s.label = "Delete user";
-      break;
-    case "get_owner":
-      s.style.color = "purple";
-      s.icon = faUserCog;
-      s.label = "Get Owner";
-      break;
-    case "search_transactions":
-      s.style.color = "pink";
-      s.icon = faSearch;
-      s.label = "Search transactions";
-      break;
-    case "create_csv":
-      s.style.color = "green";
-      s.icon = faFileCsv;
-      s.label = "CSV file";
-      break;
-    case "create_excel_sheet":
-      s.style.color = "green";
-      s.icon = faFileExcel;
-      s.label = "Excel file";
-      break;
-    case "powershell":
-      s.style.color = "blue";
-      s.icon = faBolt;
-      s.label = "Powershell";
-      break;
-    case "ftp":
-      s.style.color = "green";
-      s.icon = faFileMedicalAlt;
-      s.label = "sFTP";
-      break;
-    case "note":
-      s.style.color = "white";
-      s.icon = faStickyNote;
-      s.label = "Note";
-      break;
-    case "goto":
-      s.style.color = "#2F4F4F";
-      s.icon = faArrowRight;
-      s.label = "Go to";
-      break;
-    case "entity":
-      s.style.color = "blue";
-      s.icon = faHome;
-      s.label = "Entity";
+  switch(size) {
+    case "big":
+      s.style.fontSize = '40px';
       break;
   }
 
@@ -1277,6 +1333,12 @@ function nodeLabel(name, size) {
       </div>
       {s.label}
       {size === "big" && <div className={"pull-right"} style={{opacity: "0.5"}}>[{s.name}]</div>}
+      {" "}
+      {
+        showHelp && help && (
+          <a href={help} target="_blank" rel="noopener noreferrer"><Glyphicon glyph="question-sign"/></a>
+        )
+      }
     </>
   );
 }
