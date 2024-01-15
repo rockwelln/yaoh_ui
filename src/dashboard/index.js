@@ -105,7 +105,7 @@ export default function Dashboard(props) {
                     className={"bg-arielle-smile"}
                     heading={"Active transactions"}
                     subheading={"Transactions currently open"}
-                    number={stats.active.total} />
+                    number={stats.active.with_request} />
                 </Link>
               </Col>
               {
@@ -145,6 +145,56 @@ export default function Dashboard(props) {
               </Col>
               <Col xs={12} md={6} lg={3}>
                 <GatewaysStatusTile gateways={gateways} />
+              </Col>
+            </Row>
+            <Row>
+              <Col xs={12} md={6} lg={3}>
+                <Link to={{
+                  pathname: "/custom-transactions/list", search: queryString.stringify({
+                    filter: JSON.stringify(activeCriteriaQuery)
+                  })
+                }}>
+                  <DashboardCard
+                    className={"bg-arielle-smile"}
+                    heading={"Active sch. / bulk transactions"}
+                    subheading={"Transactions currently open"}
+                    number={stats.active.without_request} />
+                </Link>
+              </Col>
+              <Col xs={12} md={6} lg={3}>
+                <Link to={{
+                  pathname: "/custom-transactions/list", search: queryString.stringify({
+                    filter: JSON.stringify({...errorCriteriaQuery, ...activeCriteriaQuery})
+                  })
+                }}>
+                  <DashboardCard
+                    className={stats.active.with_errors_without_request === 0 ? "bg-grow-early" : "bg-alert-danger"}
+                    heading={"Errors"}
+                    subheading={"Sch./Bulk transactions blocked"}
+                    number={stats.active.with_errors_without_request} />
+                </Link>
+              </Col>
+              <Col xs={12} md={6} lg={3}>
+                <Link to={{
+                  pathname: "/system/users"
+                }}>
+                  <DashboardCard
+                    className={"bg-arielle-smile"}
+                    heading={"Users"}
+                    subheading={"-"}
+                    number={stats.users || 0} />
+                </Link>
+              </Col>
+              <Col xs={12} md={6} lg={3}>
+                <Link to={{
+                  pathname: "/transactions/config/activities/editor"
+                }}>
+                  <DashboardCard
+                    className={"bg-arielle-smile"}
+                    heading={"Workflows"}
+                    subheading={"-"}
+                    number={stats.activities || 0} />
+                </Link>
               </Col>
             </Row>
             <Row>
