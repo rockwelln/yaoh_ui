@@ -275,6 +275,14 @@ function ListInput({options, value, onChange, readOnly}) {
 }
 
 
+const contextBuiltIns = [
+  "get",
+  "items",
+  "keys",
+  "values",
+  "update",
+];
+
 function TextareaInput({value, onChange, readOnly, cells}) {
   const editorRef = useRef(null);
   const outputRef = useRef(null);
@@ -336,7 +344,7 @@ function TextareaInput({value, onChange, readOnly, cells}) {
     while ((m = re.exec(value)) !== null) {
       // This is necessary to avoid infinite loops with zero-width matches
       if (m.index === re.lastIndex) re.lastIndex++;
-      if(!contextVars.includes(m[1])) {
+      if(!contextBuiltIns.includes(m[1]) && !contextVars.includes(m[1])) {
         setError(`'${m[1]}' seems not known (yet?)`);
         return;
       }
