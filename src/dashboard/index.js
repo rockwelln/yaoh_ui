@@ -47,6 +47,7 @@ export default function Dashboard(props) {
     const isManual = props.user_info.modules.includes(modules.manualActions);
     const isNpact = localUser.isModuleEnabled(modules.npact); // supportedModule(modules.npact, props.user_info.modules);
     const isNpactItc = localUser.isModuleEnabled(modules.npact_citc);
+    const isNpactDD = localUser.isModuleEnabled(modules.npact_crdb_dd);
 
     const fetch_gw = useCallback(() => fetch_gateways(setGateways), []);
     const fetch_s = useCallback(() => fetch_stats(isNpact, setStats), [isNpact]);
@@ -79,7 +80,7 @@ export default function Dashboard(props) {
     if(isManual) {
         if(isNpact) {
           statsPanels.push(<NPManualActionsBox/>);
-          if(isNpactItc) {
+          if(isNpactItc || isNpactDD) {
             statsPanels.push(<NPLicenseBox/>);
           }
         } else {
