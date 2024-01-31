@@ -28,6 +28,7 @@ import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import Table from "react-bootstrap/lib/Table";
 import {useLocation} from "react-router";
 import {HttpHeaders} from "../orchestration/nodeInputs";
+import { fetchActivities } from '../orchestration/activity-editor';
 
 
 function fetchConfiguration(onSuccess) {
@@ -1432,11 +1433,15 @@ function TcpGwsPanel({onChange, gateways}) {
 }
 
 
-function GuiForm(props) {
-  const { gui, onChange } = props;
+function GuiForm({ gui, onChange }) {
+  const [activities, setActivities] = useState([]);
   if (gui.modules === undefined) {
     gui.modules = [];
   }
+
+  useEffect(() => {
+    fetchActivities(setActivities);
+  }, []);
 
   return (
     <>
@@ -1512,6 +1517,51 @@ function GuiForm(props) {
                 <HelpBlock>
                   The template used for new reset password mail created for users defined in the workflow engine
                   datamodel.
+                </HelpBlock>
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="reset-password-request-workflow"
+                                  defaultMessage="Reset password notification workflow"/>
+              </Col>
+
+              <Col sm={9}>
+                <Select
+                  isClearable
+                  value={{label: gui.reset_password_request_workflow || "", value: gui.reset_password_request_workflow || ""}}
+                  onChange={e => onChange({...gui, reset_password_request_workflow: e?.value})}
+                  onClear={() => onChange(update(gui, {$unset: ["reset_password_request_workflow"]}))}
+                  options={activities.map(a => ({label: a.name, value: a.name}))}
+                />
+                <HelpBlock>
+                  When a user launch a reset password, a token is generated and sent to the
+                  user by email using the default SMTP configuration. When a workflow is set, the mail is not sent and
+                  the workflow is called with the following parameters: username, token and email. The workflow is
+                  responsible to provide the user with the appropriate token.
+                </HelpBlock>
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="reset-password-workflow"
+                                  defaultMessage="Post-reset password workflow"/>
+              </Col>
+
+              <Col sm={9}>
+                <Select
+                  isClearable
+                  value={{label: gui.reset_password_workflow || "", value: gui.reset_password_workflow || ""}}
+                  onChange={e => onChange({...gui, reset_password_workflow: e?.value})}
+                  onClear={() => onChange(update(gui, {$unset: ["reset_password_workflow"]}))}
+                  options={activities.map(a => ({label: a.name, value: a.name}))}
+                />
+                <HelpBlock>
+                  The workflow is triggered when a user reset his password. The workflow is called with the following
+                  parameters: username and password. Note that the workflow is called when the password is changed already, so
+                  the workflow can't change the password, and it can't be used to validate the new password.
                 </HelpBlock>
               </Col>
             </FormGroup>
