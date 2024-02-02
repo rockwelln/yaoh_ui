@@ -50,7 +50,7 @@ import {
   faCopy, faDatabase, faDirections,
   faDownload, faEnvelope, faFileCsv, faFileExcel, faFileMedicalAlt, faHome, faPaste, faPlay, faPowerOff, faSearch,
   faSpinner, faStickyNote, faStop, faStopwatch, faStream,
-  faUserCog, faUsers, faArrowRight
+  faUserCog, faUsers, faArrowRight, faQuestion
 } from "@fortawesome/free-solid-svg-icons";
 import {Link} from "react-router-dom";
 import Checkbox from "react-bootstrap/lib/Checkbox";
@@ -1015,6 +1015,7 @@ const sortedNodes = [
   "create_user",
   "update_user",
   "delete_user",
+  "list_admins",
   "get_owner",
   "search_transactions",
   "create_csv",
@@ -1254,6 +1255,11 @@ const nodesAttributes = {
     label: "Delete user",
     help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#delete-user`,
   },
+  list_admins: { // this is a DRaaS specific node
+    color: "red",
+    icon: faUsers,
+    label: "List admins",
+  },
   get_owner: {
     color: "purple",
     icon: faUserCog,
@@ -1312,7 +1318,11 @@ const nodesAttributes = {
 function nodeLabel(name, size, showHelp=true) {
   let s = {style:{}, label: name, name: name};
 
-  const {color, help, ...attrs} = nodesAttributes[name]
+  const {color, help, ...attrs} = nodesAttributes[name] || {
+    color: "black",
+    icon: faQuestion,
+    label: name,
+  };
   if(attrs) {
     s = {...s, ...attrs}
   }
