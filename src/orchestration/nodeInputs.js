@@ -9,12 +9,13 @@ import Button from "react-bootstrap/lib/Button";
 import update from "immutability-helper";
 import {fetchActivities, fetchActivity} from "./activity-editor";
 import {fetch_get} from "../utils";
-import {MentionExample} from "./templateEditor";
+// import {MentionExample} from "./templateEditor";
 import Creatable from 'react-select/creatable';
 import Select from "react-select";
 import InputGroup from "react-bootstrap/lib/InputGroup";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import HelpBlock from "react-bootstrap/lib/HelpBlock";
+import Alert from "react-bootstrap/lib/Alert";
 import Prism from 'prismjs';
 import 'prismjs/components/prism-markup-templating';
 import 'prismjs/components/prism-django';
@@ -283,7 +284,53 @@ const contextBuiltIns = [
   "update",
 ];
 
-function TextareaInput({value, onChange, readOnly, cells}) {
+function TextareaInput({value, onChange, readOnly, cells, multi}) {
+  const [language, setLanguage] = useState("jinja2");
+
+  useEffect(() => {
+    if(value?.lang) {
+      setLanguage(value.lang);
+    }
+  }, [value]);
+
+  const onValueChange = useCallback((v, language) => {
+    if(language === "jinja2" || !language) {
+      onChange(v);
+    } else {
+      onChange(({lang: language, value: v}));
+    }
+  }, [onChange]);
+
+  let textInput = null;
+  switch(language) {
+    case "jinja2":
+    case "pongo2":
+    default:
+      textInput = <JinjaTextareaInput value={value?.value || value || ""} onChange={v => onValueChange(v, language)} readOnly={readOnly} cells={cells} />;
+      break;
+  }
+
+  return (
+  <>
+    { textInput }
+    {
+      multi && <Select
+        value={{label: language, value: language}}
+        options={["jinja2", "pongo2"].map(l => ({label: l, value: l}))}
+        onChange={e => setLanguage(e.value)} />
+    }
+    {
+      multi && language && language !== "jinja2" && <Alert bsStyle="danger">
+        <strong>Warning!</strong> This node is using a multi-language input. Be sure the destination platform supports it.
+      </Alert>
+    }
+  </>
+  );
+}
+
+
+function JinjaTextareaInput({value, onChange, readOnly, cells}) {
+  const fieldRef = useRef(null);
   const editorRef = useRef(null);
   const outputRef = useRef(null);
   const [contextVars, setContextVars] = useState([]);
@@ -1082,6 +1129,8 @@ export function Param2Input({param, activity, staticParams, cells, value, readOn
       i = <TextareaInput rows={1} value={value} readOnly={readOnly} onChange={e => onChange(e)} cells={activity.definition.cells} />
       break;
     case 'jinja':
+      i = <TextareaInput multi rows={10} value={value} readOnly={readOnly} onChange={e => onChange(e)} cells={activity.definition.cells} />
+      break;
     case 'python':
     case 'python_bool':
     case 'user_properties':
