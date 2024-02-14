@@ -290,7 +290,7 @@ export function addNode(graph, def, name, paramsFields) {
 
 function new_editor() {
     let editor = new mxEditor();
-    let graph = editor.graph;
+    const {graph} = editor;
     // Centers the port icon on the target port
     graph.connectionHandler.targetConnectImage = true;
     // Does not allow dangling edges
@@ -910,8 +910,8 @@ export default function draw_editor(container, handlers, placeholders, props) {
         new mxDivResizer(toolbar);
     }
 
-    let editor = new_editor();
-    let graph = editor.graph;
+    const editor = new_editor();
+    const {graph, undoManager} = editor;
     let readOnly = props.readOnly === undefined ? false : props.readOnly;
     let height = props.height === undefined ? 600 : props.height;
 
@@ -1020,6 +1020,10 @@ export default function draw_editor(container, handlers, placeholders, props) {
     // setup toolbar
     if(toolbar !== undefined) {
         setup_toolbar(editor, toolbar, spacer, handlers, props);
+    }
+
+    if( handlers.onChange !== undefined ){
+        undoManager.addListener(mxEvent.ADD, handlers.onChange);
     }
 
     // if(activity.id) {

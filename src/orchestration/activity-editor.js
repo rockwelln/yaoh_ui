@@ -1,6 +1,6 @@
 import React, {useState, useEffect, useRef, useLayoutEffect, useCallback} from 'react';
 import ReactDOM from 'react-dom';
-import {Redirect} from "react-router";
+import {Redirect, Prompt} from "react-router";
 import {
   fetch_post,
   fetch_get,
@@ -2022,6 +2022,7 @@ export function ActivityEditor(props) {
     const [newName, showNewName] = useState(false);
     const [editedCell, setEditedCell] = useState(undefined);
     const [alertNewVersion, setAlertNewVersion] = useState(false);
+    const [alertUnsavedChanged, setAlertUnsavedChanges] = useState(false);
     const [showEditDescription, setShowEditDescription] = useState(false);
     const [showCommit, setShowCommit] = useState(false);
     const [description, setDescription] = useState("");
@@ -2047,11 +2048,13 @@ export function ActivityEditor(props) {
         import("./editor").then(editor => {
           if(editorRef.current === null) return;
 
+          let ignoreChange = true;
           const e = editor.default(
             ReactDOM.findDOMNode(editorRef.current),
             // newActivity ? NEW_ACTIVITY : currentActivity,
             {
               onEdit: cell => setEditedCell(cell),
+              onChange: () => !ignoreChange && setAlertUnsavedChanges(true),
             },
             {
               title: ReactDOM.findDOMNode(titleRef.current),
@@ -2067,7 +2070,9 @@ export function ActivityEditor(props) {
             return r;
           }
           currentActivity && editor.updateGraphModel(e, currentActivity, {title: ReactDOM.findDOMNode(titleRef.current)});
+          ignoreChange = false;
           setEditor(e);
+          // setAlertUnsavedChanges(false);
         })
     }, [editorRef, titleRef, currentActivity, newActivity, cells]);
 
@@ -2151,7 +2156,7 @@ export function ActivityEditor(props) {
       });
     }, [sortingSpec]);
 
-    const save = () => {
+    const composeActivity = useCallback(() => {
       const r = editor.getDefinition(ReactDOM.findDOMNode(titleRef.current).value);
       if(!r.hasAStart) {
           alert("the workflow need a `start`");
@@ -2164,18 +2169,25 @@ export function ActivityEditor(props) {
       }
       Object.keys(activity.definition.cells).map(c => delete activity.definition.cells[c].name);
       activity.id = currentActivity.id;
+      return activity;
+    }, [editor, titleRef, currentActivity]);
+
+    const save = useCallback(() => {
+      const activity = composeActivity();
+
       saveActivity(
         activity,
         resp => {
           editor.graph.getDefaultParent().originalActivity = activity;
           activity.id = resp.id;
           setCurrentActivity(activity);
+          setAlertUnsavedChanges(false);
           setNewActivity(false);
           fetchActivityVersions(activityId, setVersions);
         }
       )
       return true;
-    }
+    }, [composeActivity]);
 
     return (
         <>
@@ -2210,7 +2222,10 @@ export function ActivityEditor(props) {
                     save ? saveActivity(
                       {id: currentActivity.id, description: description},
                       () => {
-                        setCurrentActivity(a => update(a, {$merge: {description: description}}));
+                        const activity = composeActivity();
+                        // fill the current activity with a definition coming from the editor
+                        // to avoid losing all changes on saving the description
+                        setCurrentActivity(a => ({...activity, description: description}));
                         setShowEditDescription(false);
                       }
                     ) :
@@ -2294,6 +2309,13 @@ export function ActivityEditor(props) {
                       setVersionId((r.find(v => v.active) || {}).id);
                     });
                   })}>Activate</Button>
+                
+                {
+                  alertUnsavedChanged &&
+                    <span style={{color: "red"}}>
+                      {" "}You have unsaved changes.
+                    </span>
+                }
               </Col>
             </Row>
             {
@@ -2430,6 +2452,13 @@ export function ActivityEditor(props) {
                         e.addNode(editor.graph, c_def, newName, params);
                     }
                 })} />
+            
+            <Prompt
+              when={alertUnsavedChanged}
+              message={location => {
+                return "You have unsaved changes. Do you really want to leave?";
+              }}
+            />
             
             <EditVersionModal
               show={showVersion !== undefined}
