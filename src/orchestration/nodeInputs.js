@@ -7,7 +7,7 @@ import Checkbox from "react-bootstrap/lib/Checkbox";
 import Table from "react-bootstrap/lib/Table";
 import Button from "react-bootstrap/lib/Button";
 import update from "immutability-helper";
-import {fetchActivities, fetchActivity} from "./activity-editor";
+import {fetchActivities, fetchActivity, offsetIndex} from "./activity-editor";
 import {fetch_get} from "../utils";
 // import {MentionExample} from "./templateEditor";
 import Creatable from 'react-select/creatable';
@@ -887,13 +887,27 @@ function TypedValues({value, onChange, readOnly}) {
   )
 }
 
+const defaultDragState = {
+  column: -1,
+  row: -1,
+  startPoint: null,
+  direction: "",
+  dropIndex: -1 // drag target
+};
+
 function SwitchOutputs({value, onChange, readOnly}) {
   const [newExpression, setNewExpression] = useState(["", ""]);
+  const [dragState, setDragState] = useState({...defaultDragState});
+  const preview = useRef(null);
   let expressions = [];
   try {
     expressions = JSON.parse(value);
   } catch(e) {
     // console.log(e);
+  }
+
+  if (dragState.direction === "row") {
+    expressions = offsetIndex(dragState.row, dragState.dropIndex, expressions);
   }
 
   const addNewEntry = () => {
@@ -907,8 +921,47 @@ function SwitchOutputs({value, onChange, readOnly}) {
       <tbody>
       {
         expressions.map(([exp, output], i) =>
-          <tr key={i}>
-            <td>{"case "}</td>
+          <tr
+            key={i} 
+            draggable={!readOnly}
+            style={{
+              cursor: dragState.direction ? "move" : "grab",
+              opacity: dragState.dropIndex === i ? 0.5 : 1
+            }}
+            onDragStart={e => {
+              e.dataTransfer.setDragImage(preview.current, 0, 0);
+              setDragState({
+                ...dragState,
+                row: i,
+                startPoint: {
+                  x: e.pageX,
+                  y: e.pageY
+                }
+              });
+            }}
+            onDragEnd={() => {
+              onChange(JSON.stringify(expressions), expressions.map(e => e[1]));
+              setDragState({ ...defaultDragState });
+            }}
+            onDragEnter={e => {
+              if (!dragState.direction) {
+                setDragState({
+                  ...dragState,
+                  direction: "row",
+                  dropIndex: i
+                });
+                return;
+              }
+
+              if (i !== dragState.dropIndex) {
+                setDragState({
+                  ...dragState,
+                  dropIndex: i
+                });
+              }
+            }}
+            >
+            <td><Glyphicon glyph={"menu-hamburger"}/></td>
             <td style={{width: "50%"}}>
               <FormControl
                 value={exp}
@@ -953,6 +1006,15 @@ function SwitchOutputs({value, onChange, readOnly}) {
         </tr>
       }
       </tbody>
+      <div
+        ref={preview}
+        style={{
+          position: "absolute",
+          width: 0,
+          height: 0,
+          overflow: "hidden"
+        }}
+      />
     </Table>
   )
 }

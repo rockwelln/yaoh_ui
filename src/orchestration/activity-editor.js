@@ -1511,7 +1511,7 @@ const defaultDragState = {
 };
 
 
-function offsetIndex(from, to, arr = []) {
+export function offsetIndex(from, to, arr = []) {
   if (from < to) {
     let start = arr.slice(0, from),
       between = arr.slice(from + 1, to + 1),
@@ -1596,6 +1596,9 @@ function OutputsTable({rows, usedRows, onDragEnd, readOnly}) {
                 }}
                 onDragEnter={e => {
                   if (!dragState.direction) {
+                    if (dragState.row === -1) {
+                      return;
+                    }
                     setDragState({
                       ...dragState,
                       direction: "row",
