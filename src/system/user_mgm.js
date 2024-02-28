@@ -12,6 +12,7 @@ import Modal from 'react-bootstrap/lib/Modal';
 import Checkbox from 'react-bootstrap/lib/Checkbox';
 import Glyphicon from 'react-bootstrap/lib/Glyphicon';
 import Col from 'react-bootstrap/lib/Col';
+import Row from 'react-bootstrap/lib/Row';
 import ControlLabel from 'react-bootstrap/lib/ControlLabel';
 import Breadcrumb from 'react-bootstrap/lib/Breadcrumb';
 import Tab from 'react-bootstrap/lib/Tab';
@@ -133,8 +134,24 @@ export function fetchLocalUser(onSuccess, onError) {
 }
 
 
-function refreshLocalUserApiToken(onSuccess) {
-    fetch_put(`/api/v01/system/users/local`, {token: true})
+function refreshLocalUserApiToken(expDate, onSuccess) {
+    var body = {
+        token: true,
+        token_expiry_date: expDate
+    };
+
+    fetch_put(`/api/v01/system/users/local`, body)
+      .then(() => {
+        NotificationsManager.success(<FormattedMessage id="user-updated" defaultMessage="User updated" />);
+        onSuccess && onSuccess();
+    })
+    .catch(error =>
+        NotificationsManager.error(<FormattedMessage id="update-failed" defaultMessage="Update failed" />, error.message)
+    )
+}
+
+function clearLocalUserApiToken(onSuccess) {
+    fetch_put(`/api/v01/system/users/local`, {token: null})
       .then(() => {
         NotificationsManager.success(<FormattedMessage id="user-updated" defaultMessage="User updated" />);
         onSuccess && onSuccess();
@@ -384,7 +401,11 @@ export function LocalUserProfile({onUserInfoChanged}) {
                             </Col>
 
                             <Col sm={9}>
-                                <UserToken value={user_info.token || "*not set*"} onRefresh={() => refreshLocalUserApiToken(() => fetchLocalUser(setUserInfo))} />
+                                <UserToken
+                                    value={user_info.token || "* not set *"}
+                                    expiryDate={user_info.token_expiry_date}
+                                    onClear={() => clearLocalUserApiToken(() => fetchLocalUser(setUserInfo))}
+                                    onRefresh={(expDate) => refreshLocalUserApiToken(expDate, () => fetchLocalUser(setUserInfo))} />
                             </Col>
                         </FormGroup>
                         <FormGroup validationState={validTwoFaOption}>
@@ -599,7 +620,102 @@ function TotpRegistrationModal({show, onHide}) {
     )
 }
 
-function UserToken({value, onRefresh}) {
+const DefaultExpiryDays = 7;
+
+function UserToken({value, expiryDate, onRefresh, onClear}) {
+    const [showRefreshModal, setShowRefreshModal] = useState(false);
+    const [newExpiryDate, setNewExpiryDate] = useState();
+
+    useEffect(() => {
+        if(showRefreshModal) {
+            const exp = new Date();
+            exp.setDate(exp.getDate() + DefaultExpiryDays);
+            setNewExpiryDate(exp.toISOString().split('T')[0]);
+        }
+    }, [showRefreshModal]);
+
+    let expired = false;
+    if(expiryDate) {
+        expiryDate = new Date(expiryDate).toISOString().split('T')[0];
+        expired = new Date(expiryDate) < new Date();
+    }
+
+    return (
+        <>
+            <UserTokenInput value={value} onRefresh={() => setShowRefreshModal(true)} onClear={onClear} />
+                <HelpBlock>
+                    <i>
+                    {
+                    expiryDate && !expired ?
+                        <><FormattedMessage id="expires-on" defaultMessage="Expires on" /> {expiryDate}</> :
+                        !expired && <FormattedMessage id="no-expiry-date" defaultMessage="No expiry date" />
+                    }
+                    {
+                        expired && <Alert bsStyle="warning"><FormattedMessage id="expired" defaultMessage="Expired since" /> {expiryDate}</Alert>
+                    }
+                    </i>
+                </HelpBlock>
+
+            <Modal show={showRefreshModal} onHide={() => setShowRefreshModal(false)}>
+                <Modal.Header closeButton>
+                    <Modal.Title><FormattedMessage id="refresh-token" defaultMessage="Refresh token" /></Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Form horizontal>
+                        {/* propose to set an expiry date optionally */}
+                        <FormGroup as={Row}>
+                            <Col smOffset={2} sm={9}>
+                                <Checkbox
+                                    checked={newExpiryDate !== ""}
+                                    onChange={e => {
+                                        if(e.target.checked) {
+                                            const exp = new Date();
+                                            exp.setDate(exp.getDate() + DefaultExpiryDays);
+                                            return setNewExpiryDate(exp.toISOString().split('T')[0]);
+                                        }
+                                        return setNewExpiryDate("");
+                                    }}>
+                                    <FormattedMessage id="set-expiry-date" defaultMessage="Set an expiry date" />
+                                </Checkbox>
+                                <FormControl
+                                    componentClass="input"
+                                    value={newExpiryDate}
+                                    onChange={e => setNewExpiryDate(e.target.value)}
+                                    min={new Date().toISOString().split('T')[0]}
+                                    type="date" />
+                            </Col>
+                        </FormGroup>
+                        <FormGroup as={Row}>
+                            <Col smOffset={2} sm={9}>
+                                {
+                                    newExpiryDate === "" && <Alert bsStyle="warning">
+                                        <FormattedMessage id="no-expiry-date-warning" defaultMessage="The token will never expire." />
+                                    </Alert>
+                                }
+                            </Col>
+                        </FormGroup>
+                        <FormGroup as={Row}>
+                            <Col smOffset={2} sm={9}>
+                                <Button bsStyle="primary" onClick={() => {
+                                    setShowRefreshModal(false);
+                                    onRefresh(newExpiryDate === "" ? null : newExpiryDate+"T00:00:00Z");
+                                }}>
+                                    <FormattedMessage id="refresh" defaultMessage="Refresh" />
+                                </Button>
+                                {" "}
+                                <Button onClick={() => setShowRefreshModal(false)}>
+                                    <FormattedMessage id="cancel" defaultMessage="Cancel" />
+                                </Button>
+                            </Col>
+                        </FormGroup>
+                    </Form>
+                </Modal.Body>
+            </Modal>
+        </>
+    );
+}
+
+function UserTokenInput({value, onRefresh, onClear}) {
   const [copied, setCopied] = useState(false);
   if(value === true) {
     value = "* generated *"
@@ -607,12 +723,15 @@ function UserToken({value, onRefresh}) {
     value = "* not set *"
   }
 
+  const canCopy = value?.length > 20;
+  const canClear = value !== "* not set *";
+
   return (
       <FormControl.Static>
           {value}
           {" "}
           {
-              value?.length > 20 && <Button onClick={() => {
+              canCopy && <Button onClick={() => {
                   navigator.clipboard.writeText(value);
                   setCopied(true);
                   setTimeout(() => setCopied(false), 2000);
@@ -628,6 +747,12 @@ function UserToken({value, onRefresh}) {
           <Button onClick={() => onRefresh()}>
               <Glyphicon glyph={"refresh"}/>
           </Button>
+          {" "}
+          {
+            canClear && <Button onClick={() => onClear()}>
+                <Glyphicon glyph={"ban-circle"}/>
+            </Button>
+          }
       </FormControl.Static>
   )
 }
@@ -1048,7 +1173,9 @@ function UpdateUser(props) {
                                 <FormControl.Static>
                                     <UserToken
                                       value={localUser.token}
-                                      onRefresh={() => updateUser(user.id, {token: true}, () => loadFullUser(user.id))} />
+                                      expiryDate={localUser.token_expiry_date}
+                                      onClear={() => updateUser(user.id, {token: null, token_expiry_date: null}, () => loadFullUser(user.id))}
+                                      onRefresh={(expDate) => updateUser(user.id, {token: true, token_expiry_date: expDate}, () => loadFullUser(user.id))} />
                                 </FormControl.Static>
                             </Col>
                         </FormGroup>
