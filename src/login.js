@@ -13,6 +13,7 @@ import {API_URL_PREFIX, AuthServiceManager, fetch_get, parseJSON} from "./utils"
 import Row from "react-bootstrap/lib/Row";
 import Panel from "react-bootstrap/lib/Panel";
 import Modal from "react-bootstrap/lib/Modal";
+import HelpBlock from "react-bootstrap/lib/HelpBlock";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 import ButtonGroup from "react-bootstrap/lib/ButtonGroup";
 import {faSpinner} from "@fortawesome/free-solid-svg-icons";
@@ -210,7 +211,7 @@ function TwoFaTotpModal({show, onSuccess, loginResp}) {
 }
 
 
-function TwoFaModal({show, onSuccess, onError, loginResp}) {
+function TwoFaModal({show, onSuccess, loginResp, retentionDays}) {
     const [code, setCode] = useState("");
     const [error, setError] = useState(undefined);
     const [loading, setLoading] = useState(false);
@@ -246,15 +247,20 @@ function TwoFaModal({show, onSuccess, onError, loginResp}) {
                             />
                         </Col>
                     </FormGroup>
-                    <FormGroup validationState={error === undefined?null:"error"}>
-                        <Col sm={8} smOffset={3}>
-                            <Checkbox
-                              checked={trust}
-                              onChange={e => setTrust(e.target.checked)}>
-                                Trust this machine.
-                            </Checkbox>
-                        </Col>
-                    </FormGroup>
+                    {retentionDays !== 0 &&
+                        <FormGroup validationState={error === undefined?null:"error"}>
+                            <Col sm={8} smOffset={3}>
+                                <Checkbox
+                                checked={trust}
+                                onChange={e => setTrust(e.target.checked)}>
+                                    Trust this machine.
+                                </Checkbox>
+                                <HelpBlock>
+                                    If you trust this machine, you won't have to enter the 2FA code again for {retentionDays} day(s).
+                                </HelpBlock>
+                            </Col>
+                        </FormGroup>
+                    }
                     <FormGroup>
                         <Col smOffset={3} sm={10}>
                             <ButtonToolbar>
@@ -293,6 +299,7 @@ export function LoginForm({onLogin}) {
     const [loginResp, setLoginResp] = useState(null);
     const [sso, setSso] = useState([]);
     const [supportWebauthn, setSupportWebauthn] = useState(false);
+    const [userLocsRetentionDays, setUserLocsRetentionDays] = useState();
 
     useEffect(() => {
       setLoadingDetails(true);
@@ -300,6 +307,7 @@ export function LoginForm({onLogin}) {
         setLoadingDetails(false);
         data.auth?.SSO && setSso(data.auth.SSO);
         setSupportWebauthn(data.gui?.webauthn?.enabled);
+        setUserLocsRetentionDays(data.retention?.trusted_locs);
       })
     }, []);
 
@@ -438,7 +446,7 @@ export function LoginForm({onLogin}) {
                     show={loginResp !== null && (loginResp.option === "email" || (loginResp.option === undefined && loginResp["2fa_payload"]))}
                     loginResp={loginResp}
                     onSuccess={r => onLogin(r)}
-                    onError={error => setError(error)} />
+                    retentionDays={userLocsRetentionDays} />
                 <TwoFaTotpModal
                     show={loginResp !== null && loginResp.option === "totp"}
                     loginResp={loginResp}

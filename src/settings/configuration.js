@@ -3687,6 +3687,18 @@ function CleanupPanel({retention, onChange}) {
                   onChange={e => onChange(update(retention, {$merge: {scheduled_jobs: e.target.value && parseInt(e.target.value, 10)}}))}/>
               </Col>
             </FormGroup>
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="trusted-locs-retention" defaultMessage="User trusted locations (days)"/>
+              </Col>
+              
+              <Col sm={9}>
+                <FormControl
+                  componentClass="input"
+                  value={retention.trusted_locs}
+                  onChange={e => onChange(update(retention, {$merge: {trusted_locs: e.target.value && parseInt(e.target.value, 10)}}))}/>
+              </Col>
+            </FormGroup>
           </Form>
         </Panel.Body>
       </Panel>
