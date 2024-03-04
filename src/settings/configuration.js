@@ -31,8 +31,12 @@ import {HttpHeaders} from "../orchestration/nodeInputs";
 import { fetchActivities } from '../orchestration/activity-editor';
 
 
-function fetchConfiguration(onSuccess) {
-  fetch_get('/api/v01/system/configuration')
+function fetchConfiguration(raw, onSuccess) {
+  var u = '/api/v01/system/configuration';
+  if (raw) {
+    u += '?r=true';
+  }
+  return fetch_get(u)
     .then(data => onSuccess(data))
     .catch(error =>
       NotificationsManager.error(
@@ -749,8 +753,7 @@ function GatewaysPanel(props) {
                             </Col>
 
                             <Col sm={9}>
-                              <FormControl
-                                componentClass="input"
+                              <HiddenField
                                 value={gateway.password}
                                 onChange={e => onChange(update(gateways, {[g]: {$merge: {password: e.target.value}}}))}/>
 
@@ -780,8 +783,7 @@ function GatewaysPanel(props) {
                           </Col>
 
                           <Col sm={9}>
-                            <FormControl
-                              componentClass="input"
+                            <HiddenField
                               value={gateway.client_secret}
                               onChange={e => onChange(update(gateways, {[g]: {$merge: {client_secret: e.target.value}}}))}/>
                           </Col>
@@ -923,8 +925,7 @@ function GatewaysPanel(props) {
                           </Col>
 
                           <Col sm={9}>
-                            <FormControl
-                              componentClass="textarea"
+                            <HiddenTextarea
                               rows={10}
                               placeholder={"fill only to use mTLS"}
                               style={{resize: "vertical"}}
@@ -1299,8 +1300,7 @@ function TcpGwsPanel({onChange, gateways}) {
                             </Col>
 
                             <Col sm={9}>
-                              <FormControl
-                                componentClass="input"
+                              <HiddenField
                                 value={gateway.password}
                                 onChange={e => onChange(update(gateways, {[g]: {$merge: {password: e.target.value}}}))}/>
 
@@ -1312,8 +1312,7 @@ function TcpGwsPanel({onChange, gateways}) {
                             </Col>
 
                             <Col sm={9}>
-                              <FormControl
-                                componentClass="textarea"
+                              <HiddenTextarea
                                 rows={10}
                                 style={{resize: "vertical"}}
                                 value={gateway.client_tls_key || ""}
@@ -1344,8 +1343,7 @@ function TcpGwsPanel({onChange, gateways}) {
                             </Col>
 
                             <Col sm={9}>
-                              <FormControl
-                                componentClass="input"
+                              <HiddenField
                                 value={gateway.password}
                                 onChange={e => onChange(update(gateways, {[g]: {$merge: {password: e.target.value}}}))}/>
 
@@ -1380,8 +1378,7 @@ function TcpGwsPanel({onChange, gateways}) {
                             </Col>
 
                             <Col sm={9}>
-                              <FormControl
-                                componentClass="textarea"
+                              <HiddenTextarea
                                 rows={10}
                                 placeholder={"fill only to use mTLS"}
                                 style={{resize: "vertical"}}
@@ -2396,8 +2393,7 @@ function OidcParameters({params, onChange}) {
         </Col>
 
         <Col sm={9}>
-          <FormControl
-            componentClass="input"
+          <HiddenField
             value={params.client_secret}
             onChange={e => onChange(update(params, {$merge: {client_secret: e.target.value}}))}/>
         </Col>
@@ -2531,8 +2527,7 @@ function SamlParametersV2({params, onChange}) {
         </Col>
 
         <Col sm={9}>
-          <FormControl
-            componentClass="textarea"
+          <HiddenTextarea
             rows={10}
             value={params.sp.privateKey}
             onChange={e => onChange(update(params, {sp: {$merge: {privateKey: e.target.value}}}))} />
@@ -2835,8 +2830,7 @@ function SamlParametersV1({params, onChange}) {
         </Col>
 
         <Col sm={9}>
-          <FormControl
-            componentClass="textarea"
+          <HiddenTextarea
             value={params.sp.privateKey}
             onChange={e => onChange(update(params, {sp: {$merge: {privateKey: e.target.value}}}))} />
         </Col>
@@ -3788,7 +3782,7 @@ function LicenseGenerator({onNewLicense}) {
     )
 }
 
-function LicensePanel(props) {
+function LicensePanel() {
     const [newLicense, setNewLicense] = useState("");
     const [newDetails, setNewDetails] = useState(null);
     const [current, setCurrent] = useState({});
@@ -4194,15 +4188,14 @@ function SMTPForm({smtp, onChange}) {
             </Col>
 
             <Col sm={9}>
-              <FormControl
-                componentClass="input"
+              <HiddenField
                 value={smtp.password}
                 onChange={e => onChange(update(smtp, {$merge: {password: e.target.value}}))}/>
             </Col>
           </FormGroup>
           <FormGroup>
             <Col componentClass={ControlLabel} sm={2}>
-              <FormattedMessage id="ssl" defaultMessage="SSL"/>
+              <FormattedMessage id="tls" defaultMessage="TLS"/>
             </Col>
 
             <Col sm={9}>
@@ -4258,8 +4251,7 @@ function SMPPForm({smpp, onChange}) {
               </Col>
 
               <Col sm={9}>
-                <FormControl
-                  componentClass="input"
+                <HiddenField
                   value={smpp.password || ""}
                   placeholder='secret'
                   onChange={e => onChange(update(smpp, {$merge: {password: e.target.value}}))}/>
@@ -4715,16 +4707,58 @@ function ProvisioningPanels({prov, onChange}) {
   );
 }
 
+function HiddenField({value, onChange}) {
+  return (
+    <FormControl
+      componentClass="input"
+      value={
+        value?.startsWith("## SECRET ##") ?
+          "" :
+          value
+      }
+      placeholder={
+        value?.startsWith("## SECRET ##") ?
+          "********" :
+          ""
+      }
+      onChange={onChange}/>
+  )
+}
+
+function HiddenTextarea({value, placeholder, rows, style, onChange}) {
+  return (
+    <FormControl
+      componentClass="textarea"
+      rows={rows}
+      style={style}
+      value={
+        value?.startsWith("## SECRET ##") ?
+          "" :
+          value
+      }
+      placeholder={
+        value?.startsWith("## SECRET ##") ?
+          "********" :
+          placeholder
+      }
+      onChange={onChange}/>
+  )
+}
+
 export default function Configuration({userInfo, history}) {
   const [activeKey, setActiveKey] = useState("Gateways");
   const [config, setConfig] = useState({});
-  const { hash } = useLocation();
+  const { hash, search } = useLocation();
 
   useEffect(() => {
     hash && hash.length > 1 && setActiveKey(hash.substring(1));
   }, [hash]);
 
-  useEffect(() => fetchConfiguration(setConfig), []);
+  const searchQuery = new URLSearchParams(search);
+
+  useEffect(() => {
+    fetchConfiguration(searchQuery.get("r")=="true", setConfig);
+  }, [searchQuery.get("r")]);
 
   useEffect(() => {
     document.title = `Configuration - ${activeKey}`;
