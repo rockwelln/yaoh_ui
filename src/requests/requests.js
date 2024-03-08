@@ -998,7 +998,7 @@ export function Events(props) {
                                 {userLocalizeUtcDate(moment.utc(e.created_on), userInfo).format()}
                             </th>
                             <td>
-                                {e.content ? e.content.substr(0, 50): ""}
+                                {e.status ? e.status.substr(0, 150) : e.content ? e.content.substr(0, 150): ""}
                                 <br/>
                                 <Button bsStyle="link" onClick={() => { setShowDetails(true); setSelectedEvent(e); }}>...</Button>
                             </td>
@@ -1031,7 +1031,7 @@ export function Events(props) {
                                 {userLocalizeUtcDate(moment.utc(e.created_on), userInfo).format()}
                             </th>
                             <td>
-                                {e.content.substr(0, 50)}
+                                {e.content.substr(0, 75)}
                                 <br/>
                                 <Button bsStyle="link" onClick={() => { setShowDetails(true); setSelectedEvent(e); }}>...</Button>
                             </td>
@@ -1050,6 +1050,7 @@ export function Events(props) {
                     <StaticControl label={<FormattedMessage id='source' defaultMessage='Source'/>} value={selectedEvent.source_entity}/>
                     <StaticControl label={<FormattedMessage id='username' defaultMessage='Username'/>} value={selectedEvent.username}/>
                     <StaticControl label={<FormattedMessage id='when' defaultMessage='When'/>} value={userLocalizeUtcDate(moment.utc(selectedEvent.created_on), userInfo).format()}/>
+                    <StaticControl label={<FormattedMessage id='status' defaultMessage='Status'/>} value={selectedEvent.status}/>
                     <FormGroup>
                         <Col componentClass={ControlLabel} sm={2}>
                             <FormattedMessage id="content" defaultMessage="Content" />
