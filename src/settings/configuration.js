@@ -3758,6 +3758,20 @@ function LicenseGenerator({onNewLicense}) {
         </FormGroup>
         <FormGroup>
           <Col componentClass={ControlLabel} sm={2}>
+            <FormattedMessage id="dev" defaultMessage="dev platform"/>
+          </Col>
+          <Col sm={9}>
+            <Checkbox
+              value={newLicense.dev || false}
+              onChange={e => setNewLicense(update(newLicense, {"$merge": {dev: e.target.checked}}))} />
+            <HelpBlock>
+              Enable some development related features (e.g. template playground)<br/>
+              Careful, those features may expose sensitive data.
+            </HelpBlock>
+          </Col>
+        </FormGroup>
+        <FormGroup>
+          <Col componentClass={ControlLabel} sm={2}>
             <FormattedMessage id="license key" defaultMessage="License key"/>
           </Col>
           <Col sm={9}>
