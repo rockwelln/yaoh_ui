@@ -1743,7 +1743,10 @@ export default class SearchUsers extends Search {
                             sorting_spec={sorting_spec}
                             headers={[
                                 {title: <FormattedMessage id="username" defaultMessage="Username" />, field: 'username', sortable: true},
+                                {title: <FormattedMessage id="firstname" defaultMessage="First name" />, field: 'first_name', sortable: true},
+                                {title: <FormattedMessage id="lastname" defaultMessage="Last name" />, field: 'last_name', sortable: true},
                                 {title: <FormattedMessage id="email" defaultMessage="Email" />, field: 'email', sortable: true},
+                                {title: <FormattedMessage id="status" defaultMessage="Status" />, field: 'status', sortable: true},
                                 {title: <FormattedMessage id="language" defaultMessage="Language" />, field: 'language', sortable: true},
                                 {
                                     title: '', render: n => (
