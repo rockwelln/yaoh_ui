@@ -218,6 +218,12 @@ export function LocalUserProfile({onUserInfoChanged}) {
                 <Tabs defaultActiveKey={1} id="local-user-tabs">
                     <Tab eventKey={1} title={<FormattedMessage id="details" defaultMessage="Details" />}>
                     <Form horizontal style={{paddingTop: 10}}>
+                        {
+                            user_info.need_password_change &&
+                            <Alert bsStyle="danger">
+                                <FormattedMessage id="need-change-password" defaultMessage="You need to change your password" />
+                            </Alert>
+                        }
                         <StaticControl
                                 label={<FormattedMessage id='username' defaultMessage='Username' />}
                                 value={user_info.username}/>
@@ -1108,6 +1114,21 @@ function UpdateUser(props) {
                                     </tr>
                                     </tbody>
                                 </Table>
+                            </Col>
+                        </FormGroup>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="need-change-password" defaultMessage="Need change password" />
+                            </Col>
+
+                            <Col sm={9}>
+                                <Checkbox
+                                    checked={localUser.need_password_change || false}
+                                    onChange={e => setDiffUser(update(diffUser, {$merge: {need_password_change: e.target.checked}}))}
+                                    disabled={!localUser.local_user}/>
+                                <HelpBlock>
+                                    <FormattedMessage id="need-change-password-label" defaultMessage="This flag forces the user to change its password at next login."/>
+                                </HelpBlock>
                             </Col>
                         </FormGroup>
                         <FormGroup validationState={validPassword}>

@@ -255,6 +255,8 @@ class ApiError extends Error {
 
 
 export function checkStatus(response) {
+    const contentType = response.headers.get("content-type");
+
     if (response.status >= 200 && response.status < 300) {
         return response
     } else if (response.status === 401) {
@@ -269,17 +271,24 @@ export function checkStatus(response) {
         })
     }
 
-    const contentType = response.headers.get("content-type");
-    if(contentType && contentType.indexOf("application/json") !== -1) {
-        return response.json().then(function(json) {
+    
+    if(contentType?.indexOf("application/json") !== -1) {
+        return response.json().then((body) => {
+          if (response.status === 403 && body.error_code === 1) {
+              // support please change your password
+              if (window.location.href.indexOf("/user/profile") === -1) {
+                  window.location.href = "/user/profile";
+                  return;
+              }
+          }
           const message =
-              (json.errors && json.errors[0] && json.errors[0].message) ?
-                  `${json.errors[0].message}. Status Code: ${response.status}` :
-                  (json.error || response.statusText);
-          let error = new ApiError(message, json);
+              (body.errors && body.errors[0] && body.errors[0].message) ?
+                  `${body.errors[0].message}. Status Code: ${response.status}` :
+                  (body.error || response.statusText);
+          let error = new ApiError(message, body);
           error.response = response;
-          if(json.errors) {
-              error.errors = json.errors;
+          if(body.errors) {
+              error.errors = body.errors;
           }
           throw error;
         });
