@@ -1118,7 +1118,7 @@ function UpdateUser(props) {
                         </FormGroup>
                         <FormGroup>
                             <Col componentClass={ControlLabel} sm={2}>
-                                <FormattedMessage id="need-change-password" defaultMessage="Need change password" />
+                                <FormattedMessage id="force-change-password" defaultMessage="Force change password" />
                             </Col>
 
                             <Col sm={9}>
@@ -1317,7 +1317,7 @@ function UpdateUser(props) {
 }
 
 
-function NewUser(props) {
+function NewUser({user_info, show, onClose}) {
     const [user, setUser] = useState({
         username: '',
         first_name: '',
@@ -1332,14 +1332,15 @@ function NewUser(props) {
         groups: [],
         entity: null,
         properties: {},
+        need_password_change: false,
     });
     const [confirmPassword, setConfirmPassword] = useState('');
     const [profiles, setProfiles] = useState([]);
     const [newProp, setNewProp] = useState({key: "", value: ""});
     useEffect(() => {
-        props.show && fetch_get("/api/v01/system/user_profiles")
+        show && fetch_get("/api/v01/system/user_profiles")
             .then(data => setProfiles(data.profiles))
-    }, [props.show]);
+    }, [show]);
 
     // email has to contain @
     const validEmail = (user.email.length === 0) ? null : (user.email.indexOf('@') !== -1) ? "success" : "error";
@@ -1350,7 +1351,7 @@ function NewUser(props) {
     const validForm = validEmail === 'success' && ((validPassword === null && validRepPassword === null) || (validPassword === 'success' && validRepPassword === 'success'));
 
     return (
-        <Modal show={props.show} onHide={props.onClose} backdrop={false} bsSize="large">
+        <Modal show={show} onHide={onClose} backdrop={false} bsSize="large">
             <Modal.Header closeButton>
                 <Modal.Title><FormattedMessage id="create-a-user" defaultMessage="Create a user" /></Modal.Title>
             </Modal.Header>
@@ -1432,7 +1433,7 @@ function NewUser(props) {
                         <Col sm={9}>
                             <Checkbox
                                 checked={user.is_system}
-                                readOnly={!props.user_info.is_system} // if the user logged is system, then he can create other "system" user(s), otherwise, not.
+                                readOnly={!user_info.is_system} // if the user logged is system, then he can create other "system" user(s), otherwise, not.
                                 onChange={e => setUser(update(user, {$merge: {is_system: e.target.checked}}))}/>
 
                             <HelpBlock><FormattedMessage id="app.user.is_system.label"
@@ -1467,7 +1468,7 @@ function NewUser(props) {
                                 value={user.ui_profile}
                                 onChange={e => setUser(update(user, {$merge: {ui_profile: e.target.value}}))}>
                                 {
-                                    get_ui_profiles(props.user_info.modules).map((p, i) => <option value={p} key={i}>{p}</option>)
+                                    get_ui_profiles(user_info.modules).map((p, i) => <option value={p} key={i}>{p}</option>)
                                 }
                             </FormControl>
                             <HelpBlock><FormattedMessage id="app.user.profile.help"
@@ -1555,6 +1556,20 @@ function NewUser(props) {
                             </Table>
                         </Col>
                     </FormGroup>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="force-change-password" defaultMessage="Force change password" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <Checkbox
+                                checked={user.need_password_change || false}
+                                onChange={e => setUser(update(user, {$merge: {need_password_change: e.target.checked}}))}/>
+                            <HelpBlock>
+                                <FormattedMessage id="need-change-password-label" defaultMessage="This flag forces the user to change its password at next login."/>
+                            </HelpBlock>
+                        </Col>
+                    </FormGroup>
                     <FormGroup validationState={validPassword}>
                         <Col componentClass={ControlLabel} sm={2}>
                             <FormattedMessage id="password" defaultMessage="Password" />
@@ -1608,10 +1623,10 @@ function NewUser(props) {
                 </Form>
             </Modal.Body>
             <Modal.Footer>
-                <Button onClick={() => createUser(user, props.onClose)} bsStyle="primary" disabled={!validForm}>
+                <Button onClick={() => createUser(user, onClose)} bsStyle="primary" disabled={!validForm}>
                     <FormattedMessage id="create" defaultMessage="Create" />
                 </Button>
-                <Button onClick={props.onClose}>
+                <Button onClick={onClose}>
                     <FormattedMessage id="cancel" defaultMessage="Cancel" />
                 </Button>
             </Modal.Footer>
@@ -1620,20 +1635,20 @@ function NewUser(props) {
 }
 
 
-function DeleteUser(props) {
+function DeleteUser({show, onClose, user}) {
     return (
-        <Modal show={props.show} onHide={props.onClose} backdrop={false}>
+        <Modal show={show} onHide={onClose} backdrop={false}>
             <Modal.Header closeButton>
                 <Modal.Title><FormattedMessage id="confirm" defaultMessage="Confirm" /></Modal.Title>
             </Modal.Header>
             <Modal.Body>
                 <Form horizontal>
-                    <StaticControl label={<FormattedMessage id='username' defaultMessage='Username'/>} value={props.user.username}/>
+                    <StaticControl label={<FormattedMessage id='username' defaultMessage='Username'/>} value={user.username}/>
                 </Form>
             </Modal.Body>
             <Modal.Footer>
-                <Button onClick={() => deleteUser(props.user.id, props.onClose)} bsStyle="danger"><FormattedMessage id="delete" defaultMessage="Delete" /></Button>
-                <Button onClick={props.onClose}><FormattedMessage id="cancel" defaultMessage="Cancel" /></Button>
+                <Button onClick={() => deleteUser(user.id, onClose)} bsStyle="danger"><FormattedMessage id="delete" defaultMessage="Delete" /></Button>
+                <Button onClick={onClose}><FormattedMessage id="cancel" defaultMessage="Cancel" /></Button>
             </Modal.Footer>
         </Modal>
     )
