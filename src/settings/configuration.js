@@ -3656,6 +3656,17 @@ function CleanupPanel({retention, onChange}) {
             </FormGroup>
             <FormGroup>
               <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="keep-active-requests" defaultMessage="Keep active requests"/>
+              </Col>
+
+              <Col sm={9}>
+                <Checkbox
+                  checked={retention.exclude_active}
+                  onChange={e => onChange(update(retention, {$merge: {exclude_active: e.target.checked}}))}/>
+              </Col>
+            </FormGroup>
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
                 <FormattedMessage id="get-requests-retention" defaultMessage="Get requests retention (months)"/>
               </Col>
 
