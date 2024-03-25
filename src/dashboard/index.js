@@ -108,38 +108,19 @@ export default function Dashboard(props) {
                     number={stats.active.with_request} />
                 </Link>
               </Col>
-              {
-                stats.active.with_errors_with_request !== 0 ||
-                stats.active.with_errors_without_request === 0  ?
-                <Col xs={12} md={6} lg={3}>
-                  <Link to={{
-                    pathname: "/transactions/list", search: queryString.stringify({
-                      filter: JSON.stringify({...errorCriteriaQuery, ...activeCriteriaQuery})
-                    })
-                  }}>
-                    <DashboardCard
-                      className={
-                        stats.active.with_errors_without_request === 0 &&
-                        stats.active.with_errors_with_request === 0 ? "bg-grow-early" : "bg-alert-danger"}
-                      heading={"Errors"}
-                      subheading={"Transactions blocked"}
-                      number={stats.active.with_errors_with_request} />
-                  </Link>
-                </Col> :
-                <Col xs={12} md={6} lg={3}>
-                  <Link to={{
-                    pathname: "/custom-transactions/list", search: queryString.stringify({
-                      filter: JSON.stringify({...errorCriteriaQuery, ...activeCriteriaQuery})
-                    })
-                  }}>
-                    <DashboardCard
-                      className={"bg-alert-danger"}
-                      heading={"Errors"}
-                      subheading={"Sch./Bulk transactions blocked"}
-                      number={stats.active.with_errors_without_request} />
-                  </Link>
-                </Col>
-              }
+              <Col xs={12} md={6} lg={3}>
+                <Link to={{
+                  pathname: "/transactions/list", search: queryString.stringify({
+                    filter: JSON.stringify({...errorCriteriaQuery, ...activeCriteriaQuery})
+                  })
+                }}>
+                  <DashboardCard
+                    className={stats.active.with_errors_with_request === 0 ? "bg-grow-early" : "bg-alert-danger"}
+                    heading={"Errors"}
+                    subheading={"Transactions blocked"}
+                    number={stats.active.with_errors_with_request} />
+                </Link>
+              </Col>
               <Col xs={12} md={6} lg={3}>
                 { isManual && <ManualActionsTile /> }
               </Col>
