@@ -1773,7 +1773,7 @@ function WebauthnAllowedOrigins({origins, onChange}) {
   )
 }
 
-function UserCreationRules({entries, onChange}) {
+function UserCreationRules({entries, supportSystem, onChange}) {
   return (
     <Table>
       <thead>
@@ -1781,7 +1781,7 @@ function UserCreationRules({entries, onChange}) {
           <th>Condition</th>
           <th>Profile</th>
           <th>Ui Profile</th>
-          <th>Is system</th>
+          {supportSystem && <th>Is system</th>}
           <th/>
         </tr>
       </thead>
@@ -1807,11 +1807,13 @@ function UserCreationRules({entries, onChange}) {
                 value={entry.ui_profile}
                 onChange={e => onChange(update(entries, {[i]: {$merge: {ui_profile: e.target.value}}}))}/>
             </td>
-            <td>
-              <Checkbox
-                checked={entry.is_system}
-                onChange={e => onChange(update(entries, {[i]: {$merge: {is_system: e.target.checked}}}))}/>
-            </td>
+            {supportSystem &&
+              <td>
+                <Checkbox
+                  checked={entry.is_system}
+                  onChange={e => onChange(update(entries, {[i]: {$merge: {is_system: e.target.checked}}}))}/>
+              </td>
+            }
             <td>
               <Button
                 onClick={() => onChange(update(entries, {$splice: [[i, 1]]}))}>
@@ -2092,6 +2094,7 @@ function NewSsoModal({show, onHide, gateways, enabledMods}) {
 
             <Col sm={9}>
               <UserCreationRules
+                supportSystem={entry.protocol !== "broadsoft"}
                 entries={entry.user_creation_rules || []}
                 onChange={e => setEntry(update(entry, {$merge: {user_creation_rules: e}}))}/>
               <HelpBlock>
@@ -3304,6 +3307,7 @@ function SSOPanel({sso, gateways, onChange, enabledMods}) {
 
                       <Col sm={9}>
                         <UserCreationRules
+                          supportSystem={p.protocol !== "broadsoft"}
                           entries={p.user_creation_rules || []}
                           onChange={e => onChange(update(sso, {[i]: {$merge: {user_creation_rules: e}}}))}/>
                         <HelpBlock>
