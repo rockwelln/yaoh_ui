@@ -1,6 +1,6 @@
 import React, {useState, useEffect, useRef, useLayoutEffect, useCallback} from 'react';
 import ReactDOM from 'react-dom';
-import {Redirect, Prompt} from "react-router";
+import {useHistory, Prompt} from "react-router";
 import {
   fetch_post,
   fetch_get,
@@ -229,10 +229,9 @@ function downloadActivityVersions(id) {
       .then(token => window.location = `${API_URL_PREFIX}/api/v01/activities/${id}/versions/export?auth_token=${token}`)
 }
 
-export function NewActivity(props) {
-    const {show, onClose, onCreated} = props;
+export function NewActivity({show, onClose, onCreated}) {
     const [newActivity, setNewActivity] = useState(NEW_ACTIVITY);
-    const [redirect, setRedirect] = useState(null);
+    const history = useHistory();
 
     return (
         <Modal show={show} onHide={onClose} backdrop={false} bsSize="large">
@@ -262,8 +261,8 @@ export function NewActivity(props) {
                                     onClick={e => {
                                         e.preventDefault();
                                         saveActivity(newActivity, a => {
-                                          setRedirect(a.id);
                                           onCreated && onCreated(a.id);
+                                          history.push(`/transactions/config/activities/editor/${a.id}`)
                                         });
                                     }}
                                     disabled={!newActivity.name || newActivity.name.length === 0}
@@ -274,9 +273,6 @@ export function NewActivity(props) {
                                     <FormattedMessage id="cancel" defaultMessage="Cancel" />
                                 </Button>
                             </ButtonToolbar>
-                            {
-                                redirect && <Redirect to={`/transactions/config/activities/editor/${redirect}`}/>
-                            }
                         </Col>
                     </FormGroup>
                 </Form>
@@ -374,7 +370,7 @@ export function Activities({user_info}) {
     const [selected, setSelected] = useState([]);
     const [showImport, setShowImport] = useState(false);
     const [running , setRunning] = useState(false);
-    const [redirect, setRedirect] = useState(null);
+    const history = useHistory();
 
     const loadActivities = () => {
       setLoading(true);
@@ -395,7 +391,7 @@ export function Activities({user_info}) {
         .then(checkStatus)
         .then(parseJSON)
         .then(r => {
-          setRedirect(r.guid)
+          history.push(`/transactions/${r.guid}`);
         })
         .catch(e => {
           NotificationsManager.error("Failed to run now", e.message);
@@ -593,8 +589,6 @@ export function Activities({user_info}) {
                     </Alert>
                 </Modal.Body>
             </Modal>
-
-            {redirect && <Redirect to={`/transactions/${redirect}`} />}
         </>
     )
 }
