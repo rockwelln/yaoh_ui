@@ -2180,7 +2180,7 @@ export class Transaction extends Component {
                                                     })
                                                 }}
                                             >
-                                                <FormattedMessage id="request-as-csv" defaultMessage="Request as CSV"/>
+                                                <FormattedMessage id="request-as-json" defaultMessage="Request as JSON"/>
                                             </Button>
                                     }
                                     {
@@ -2512,11 +2512,11 @@ export class Request extends Component {
                                                 bsStyle="link"
                                                 onClick={() => {
                                                   AuthServiceManager.getValidToken().then(token => {
-                                                    window.location=`${API_URL_PREFIX}/api/v01/apio/requests/${request.request_id}?as=csv&auth_token=${token}`
+                                                    window.location=`${API_URL_PREFIX}/api/v01/apio/requests/${request.request_id}?auth_token=${token}`
                                                   })
                                                 }}
                                             >
-                                                csv
+                                                json
                                             </Button>
                                         </td>
                                     </tr>
