@@ -2169,7 +2169,7 @@ export function ActivityEditor(props) {
       return activity;
     }, [editor, titleRef, currentActivity]);
 
-    const save = useCallback(() => {
+    const save = useCallback((cb) => {
       const activity = composeActivity();
 
       saveActivity(
@@ -2181,10 +2181,24 @@ export function ActivityEditor(props) {
           setAlertUnsavedChanges(false);
           setNewActivity(false);
           fetchActivityVersions(activityId, setVersions);
+          cb && cb();
         }
       )
       return true;
     }, [composeActivity]);
+
+    const runNow = useCallback((activityId) => {
+      fetch_post(`/api/v01/activities/${activityId}/run`)
+        .then(checkStatus)
+        .then(parseJSON)
+        .then(r => {
+          // history.push(`/transactions/${r.guid}`);
+          window.open(`/transactions/${r.guid}`, "_blank");
+        })
+        .catch(e => {
+          NotificationsManager.error("Failed to run now", e.message);
+        });
+    }, []);
 
     return (
         <>
@@ -2268,6 +2282,13 @@ export function ActivityEditor(props) {
                             </Button>
                             <Button onClick={() => setShowStats(true)} title={"show stats"}>
                               <FontAwesomeIcon icon={faChartBar} />
+                            </Button>
+                        </ButtonGroup>
+                        <ButtonGroup style={{paddingLeft: '1rem'}}>
+                            <Button
+                              onClick={() => save(() => runNow(activityId))}
+                              disabled={activityId === undefined} >
+                              <FontAwesomeIcon icon={faPlay}/>
                             </Button>
                         </ButtonGroup>
                     </ButtonToolbar>
