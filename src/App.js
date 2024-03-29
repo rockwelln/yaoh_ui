@@ -83,6 +83,7 @@ import {NPEmergencyNotificationRequest} from "./np/emergency-notification";
 import TemplatePlayground from "./help/templatePlayground";
 import AlarmManagement, {AlarmCounters, fetchAlarms} from "./system/alarms";
 import Clients from "./system/clients_mgm";
+import TransactionAction from "./requests/transactionAction.js";
 
 const ListProvisioningGateways=React.lazy(() => import("./provisioning/ListProvisioningGateways"))
 
@@ -1223,6 +1224,12 @@ class App extends Component {
                                         <NotAllowed/>
                                )}
                                exact />
+                        <Route path="/transactions/:txId/actions/:aId"
+                               component={props => (
+                                   localUser.isAllowed(accesses.requests) ?
+                                       <TransactionAction {...props} /> :
+                                       <NotAllowed/>
+                               )} />
                         <Route path="/transactions/:txId"
                                component={props => (
                                    localUser.isAllowed(accesses.requests) ?
