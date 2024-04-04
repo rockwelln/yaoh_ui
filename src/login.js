@@ -459,7 +459,7 @@ export function LoginForm({onLogin}) {
 }
 
 
-export function LoginPage({error_msg, standby_alert, logo, children}) {
+export function LoginPage({error_msg, standby_alert, logo, label, children}) {
     return (
         <div>
             <Row style={{height: "20px", display: "block"}}/>
@@ -483,6 +483,13 @@ export function LoginPage({error_msg, standby_alert, logo, children}) {
                             }
                             <Row>
                                 <Col xsOffset={1} xs={10} mdOffset={0} md={12}>
+                                    {
+                                        label && (
+                                            <Alert bsStyle="info">
+                                                {label}
+                                            </Alert>
+                                        )
+                                    }
                                     {
                                         error_msg && (
                                             <Alert bsStyle="danger">

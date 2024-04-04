@@ -1447,15 +1447,16 @@ function GuiForm({ gui, onChange }) {
           <Form>
             <FormGroup>
               <Col componentClass={ControlLabel} sm={2}>
-                <FormattedMessage id="is-prod" defaultMessage="Is prod?"/>
+                <FormattedMessage id="label" defaultMessage="Label"/>
               </Col>
 
               <Col sm={9}>
-                <Checkbox
-                  checked={gui.prod}
-                  onChange={e => onChange(update(gui, {$merge: {prod: e.target.checked}}))}/>
+                <FormControl
+                  componentClass="input"
+                  value={gui.label}
+                  onChange={e => onChange(update(gui, {$merge: {label: e.target.value}}))}/>
                 <HelpBlock>
-                  Indicate if the platform is used in a Live environment or Lab test.
+                  Appears in the navigation bar and on the login page.
                 </HelpBlock>
               </Col>
             </FormGroup>

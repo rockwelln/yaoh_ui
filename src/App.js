@@ -108,7 +108,7 @@ const Loading = () => (
     </div>
 );
 
-const LimitedNavBar = ({user_info, logoutUser, database_status}) => (
+const LimitedNavBar = ({user_info, logoutUser, label}) => (
   <Navbar staticTop collapseOnSelect inverse>
     <Navbar.Header>
       <Navbar.Brand style={{color: '#ef0803', fontWeight: 'bold',}}>
@@ -122,6 +122,15 @@ const LimitedNavBar = ({user_info, logoutUser, database_status}) => (
       <Navbar.Toggle/>
     </Navbar.Header>
     <Navbar.Collapse>
+      {label?.length !== 0 && (
+        <Navbar.Text
+            style={{
+              color: '#ef0803',
+              fontWeight: 'bold',
+            }}>
+          {label}
+        </Navbar.Text>)
+      }
       <Nav>
         {(!user_info.modules || user_info.modules.includes(modules.provisioning)) && localUser.isAllowed(accesses.provisioning) &&
         <NavDropdown
@@ -161,23 +170,13 @@ const LimitedNavBar = ({user_info, logoutUser, database_status}) => (
             <FormattedMessage id="logout" defaultMessage="Logout"/>
           </MenuItem>
         </NavDropdown>
-
-        <Navbar.Text
-          style={{
-            color: (database_status && database_status.env === 'TEST') ? '#ef0803' : '#777',
-            fontWeight: (database_status && database_status.env === 'TEST') ? 'bold' : 'normal',
-          }}>
-          {
-            (database_status && database_status.env) ? database_status.env : "unknown"
-          }
-        </Navbar.Text>
       </Nav>
     </Navbar.Collapse>
   </Navbar>
 )
 
 
-function AsyncApioNavBar({user_info, logoutUser, database_status}){
+function AsyncApioNavBar({user_info, logoutUser, label}){
   return (
     <Navbar staticTop collapseOnSelect inverse>
       <Navbar.Header>
@@ -192,6 +191,15 @@ function AsyncApioNavBar({user_info, logoutUser, database_status}){
         <Navbar.Toggle/>
       </Navbar.Header>
       <Navbar.Collapse>
+        {label?.length !== 0 && (
+          <Navbar.Text
+              style={{
+                color: '#ef0803',
+                fontWeight: 'bold',
+              }}>
+            {label}
+          </Navbar.Text>)
+        }
         <Nav>
           {localUser.isAllowed(accesses.dashboard) &&
           <ListItemLink to={"/dashboard"}>
@@ -552,20 +560,11 @@ function AsyncApioNavBar({user_info, logoutUser, database_status}){
             <Glyphicon glyph="question-sign"/>
           </ListItemLink>
 
-          {database_status && database_status.env === 'TEST' &&
-            <Navbar.Text
-              style={{
-                color: (database_status && database_status.env === 'TEST') ? '#ef0803' : '#777',
-                fontWeight: (database_status && database_status.env === 'TEST') ? 'bold' : 'normal',
-              }}>
-              {
-                (database_status && database_status.env) ? database_status.env : "unknown"
-              }
-            </Navbar.Text>
-          }
+          
           <Navbar.Text style={{marginTop: "8px", marginBottom: "5px"}}>
             <AlarmCounters />
           </Navbar.Text>
+          
         </Nav>
       </Navbar.Collapse>
     </Navbar>
@@ -703,9 +702,15 @@ class App extends Component {
 
     getPlatformDetails() {
         fetchPlatformDetails(data => {
-          if (data.gui?.modules) {
+          if (data.gui) {
+            if(data.gui.modules) {
               UiFlavourService.updateFlavourFromModules(data.gui.modules);
               document.title = UiFlavourService.getWindowTitle();
+            }
+
+            if(data.gui.label) {
+              this.setState({label: data.gui.label})
+            }
           }
         })
     }
@@ -731,6 +736,7 @@ class App extends Component {
     shouldComponentUpdate(nextProps, nextState, nextContext) {
         const needUpdate = (nextState.database_status && !nextState.database_status.is_master) ||
           this.state.error_msg !== nextState.error_msg ||
+          this.state.label !== nextState.label ||
           JSON.stringify(this.state.user_info) !== JSON.stringify(nextState.user_info) ||
           this.state.proxy_fetch !== nextState.proxy_fetch;
 
@@ -803,7 +809,7 @@ class App extends Component {
     }
 
     render() {
-        const {database_status, error_msg, user_info, provisioningRoutes} = this.state;
+        const {database_status, error_msg, user_info, provisioningRoutes, label} = this.state;
         const is_reset_password = window.location.pathname.substr(0, RESET_PASSWORD_PREFIX.length) === RESET_PASSWORD_PREFIX;
         const standby_alert = database_status && !database_status.is_master && (
             <Alert bsStyle="danger">
@@ -850,6 +856,7 @@ class App extends Component {
                             component={() => (
                                 <LoginPage
                                     error_msg={error_msg}
+                                    label={label}
                                     logo={UiFlavourService.isApio() ? apio_logo : UiFlavourService.isNpact() ? npact_logo: null}
                                     standby_alert={standby_alert} >
                                     <ResetPasswordRequestForm />
@@ -860,6 +867,7 @@ class App extends Component {
                             component={() => (
                                 <LoginPage
                                     error_msg={error_msg}
+                                    label={label}
                                     logo={UiFlavourService.isApio() ? apio_logo : UiFlavourService.isNpact() ? npact_logo: null}
                                     standby_alert={standby_alert} >
                                     <LoginForm
@@ -893,11 +901,11 @@ class App extends Component {
                     limited_menu(user_info.ui_profile) ?
                       <LimitedNavBar
                         user_info={user_info}
-                        database_status={database_status}
+                        label={label}
                         logoutUser={() => logoutUser().catch(console.error).then(this.logout)}/> :
                       <AsyncApioNavBar
                         user_info={user_info}
-                        database_status={database_status}
+                        label={label}
                         logoutUser={() => logoutUser().catch(console.error).then(this.logout)}/>
                   }
                 </div>
