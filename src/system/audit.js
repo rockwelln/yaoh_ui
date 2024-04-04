@@ -97,7 +97,7 @@ export class AuditLogs extends Search {
             when: {value: '', op: 'eq'},
             operation: {value: '', op: 'eq'},
             target: {value: '', op: 'eq'},
-            target_type: {value: '', op: 'eq'},
+            target_type: {value: '', op: 'ilike'},
             channel: {value: '', op: 'eq'},
         },
     }});
@@ -119,10 +119,6 @@ export class AuditLogs extends Search {
 
     render() {
         const {filter_criteria, resources, users, sorting_spec, pagination} = this.state;
-        resources && resources.forEach(r => {
-            const user = users && users.find(u => u.id === r.user_id);
-            r.user = user !== undefined ? user.username : null;
-        });
         return (
             <div>
                 <Breadcrumb>
@@ -281,7 +277,7 @@ export class AuditLogs extends Search {
                                              filter_criteria: update(filter_criteria,
                                                  {target_type: {$merge: {op: e.target.value}}})
                                              })}>
-                                        <option value="eq">==</option>
+                                        <option value="ilike">==</option>
                                         <option value="ne">!=</option>
                                         <option value="is_null">is null</option>
                                     </FormControl>
@@ -319,7 +315,7 @@ export class AuditLogs extends Search {
                         <ApioDatatable
                             sorting_spec={sorting_spec}
                             headers={[
-                                {title: <FormattedMessage id="user" defaultMessage="User" />, field: 'user_id', sortable: true, render: e => e.user},
+                                {title: <FormattedMessage id="user" defaultMessage="User" />, field: 'user_id', sortable: true, render: e => e.username},
                                 {title: <FormattedMessage id="operation" defaultMessage="Operation" />, field: 'operation', sortable: true},
                                 {title: <FormattedMessage id="target" defaultMessage="Target" />, field: 'target', sortable: true},
                                 {title: <FormattedMessage id="target-type" defaultMessage="Target type" />, field: 'target_type', sortable: true},
