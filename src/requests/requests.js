@@ -2716,7 +2716,12 @@ export class Requests extends Component{
     }
 
     _prepare_url(paging_spec, sorting_spec, format, action) {
-        const url = new URL(`${API_URL_PREFIX}/api/v01/apio/requests/${action?action:"search"}`);
+        let url = new URL(`${API_URL_PREFIX}/api/v01/apio/requests/${action?action:"search"}`);
+        url.searchParams.append('c', '0');
+
+        if(action === "count") {
+            url = new URL(`${API_URL_PREFIX}/api/v01/apio/requests_count`);
+        }
         // filter
         const {filter_criteria} = this.state;
         const request_data_model = this.props.user_info.modules.includes(modules.orange) ? 'request_entities' : 'requests';
@@ -2877,6 +2882,7 @@ export class Requests extends Component{
 
         // get the export URL
         const url = this._prepare_url(paging_info, sorting_spec);
+        const count_url = this._prepare_url(paging_info, sorting_spec, undefined, "count");
         let export_url = this._prepare_url(undefined, sorting_spec, 'csv');
         // export_url.searchParams.append('auth_token', this.props.auth_token);
         // get the force close URL
@@ -2925,6 +2931,20 @@ export class Requests extends Component{
                      export_url: export_url.href,
                      close_instances_url: close_instances_url,
                 });
+
+                return data;
+            })
+            .then((searchData) => {
+                return fetch_get(count_url)
+                    .then(data => {
+                        this.setState(s => {
+                            return {pagination: {
+                                ...s.pagination,
+                                num_pages: Math.ceil(data.total_count / searchData.pagination[1]),
+                                total_results: data.total_count,
+                            }};
+                        });
+                    })
             })
             .catch(error => !this.cancelLoad && this.setState({error: error}));
     }
