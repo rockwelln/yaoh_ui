@@ -4165,7 +4165,7 @@ export class ScheduledRequests extends Component{
                                         value={filter_criteria.activity_id.op}
                                         onChange={e => this.setState({
                                             filter_criteria: update(this.state.filter_criteria,
-                                                {method: {$merge: {op: e.target.value}}})
+                                                {activity_id: {$merge: {op: e.target.value}}})
                                         })}>
                                         <option value="eq">==</option>
                                         <option value="ne">!=</option>
