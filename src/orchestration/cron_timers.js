@@ -492,6 +492,7 @@ export default function CronTimers() {
   const [showUpdate, setShowUpdate] = useState(null);
 
   useEffect(() => {
+    document.title = "Job scheduler";
     fetchActivities(setActivities);
     fetchCronTimers(setTimers);
   }, []);
