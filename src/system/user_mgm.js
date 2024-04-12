@@ -764,9 +764,7 @@ function UserTokenInput({value, onRefresh, onClear}) {
 }
 
 
-function UpdateUser(props) {
-    const {show, user, onClose} = props;
-
+function UpdateUser({show, user, onClose, user_info}) {
     const [fullUser, setFullUser] = useState({});
     const [diffUser, setDiffUser] = useState({});
     const [profiles, setProfiles] = useState([]);
@@ -774,6 +772,13 @@ function UpdateUser(props) {
     const [newProp, setNewProp] = useState({key: "", value: ""});
     // specific to DRAAS
     const [newAdmin, setNewAdmin] = useState({level: "", reference: ""});
+    const [alertPasswordDisabled, setAlertPasswordDisabled] = useState(false);
+
+    useEffect(() => {
+        if(diffUser.password_disabled) {
+            setAlertPasswordDisabled(true);
+        }
+    }, [diffUser.password_disabled]);
 
     const loadFullUser = userId => fetch_get(`/api/v01/system/users/${userId}`)
         .then(user => setFullUser(user))
@@ -910,7 +915,7 @@ function UpdateUser(props) {
                             <Col sm={9}>
                                 <Checkbox
                                     checked={localUser.is_system || false}
-                                    readOnly={!props.user_info.is_system} // if the user logged is system, then he can create other "system" user(s), otherwise, not.
+                                    readOnly={!user_info.is_system} // if the user logged is system, then he can create other "system" user(s), otherwise, not.
                                     onChange={e => setDiffUser(update(diffUser, {$merge: {is_system: e.target.checked}}))}/>
 
                                 <HelpBlock><FormattedMessage id="app.user.is_system.label"
@@ -945,7 +950,7 @@ function UpdateUser(props) {
                                     value={localUser.ui_profile}
                                     onChange={e => setDiffUser(update(diffUser, {$merge: {ui_profile: e.target.value}}))}>
                                     {
-                                        get_ui_profiles(props.user_info.modules).map((p, i) => <option value={p} key={i}>{p}</option>)
+                                        get_ui_profiles(user_info.modules).map((p, i) => <option value={p} key={i}>{p}</option>)
                                     }
                                 </FormControl>
                                 <HelpBlock><FormattedMessage id="app.user.profile.help"
@@ -1118,6 +1123,44 @@ function UpdateUser(props) {
                         </FormGroup>
                         <FormGroup>
                             <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="password-disabled" defaultMessage="Password disabled" />
+                            </Col>
+
+                            <Col sm={9}>
+                                <Checkbox
+                                    checked={localUser.password_disabled}
+                                    onChange={e => setDiffUser(update(diffUser, {$merge: {password_disabled: e.target.checked}}))}
+                                    disabled={!localUser.local_user}/>
+                                <HelpBlock>
+                                    <FormattedMessage id="password-disabled-label" defaultMessage="This flag prevent a local user using the login API."/>
+                                </HelpBlock>
+                                {
+                                    diffUser.password_disabled === false && <Alert bsStyle="warning">
+                                        <FormattedMessage id="password-disabled-help" defaultMessage="A password need to be set to enable it again."/>
+                                    </Alert>
+                                }
+                            </Col>
+
+                            <Modal show={alertPasswordDisabled} onHide={() => setAlertPasswordDisabled(false)}>
+                                <Modal.Header closeButton>
+                                    <Modal.Title><FormattedMessage id="password-disabled" defaultMessage="Password disabled" /></Modal.Title>
+                                </Modal.Header>
+
+                                <Modal.Body>
+                                    <Alert bsStyle="warning">
+                                        <FormattedMessage id="password-disabled-help" defaultMessage="The user will not be able to login anymore."/>
+                                    </Alert>
+                                </Modal.Body>
+
+                                <Modal.Footer>
+                                    <Button onClick={() => setAlertPasswordDisabled(false)}>
+                                        <FormattedMessage id="close" defaultMessage="Close" />
+                                    </Button>
+                                </Modal.Footer>
+                            </Modal>
+                        </FormGroup>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
                                 <FormattedMessage id="force-change-password" defaultMessage="Force change password" />
                             </Col>
 
@@ -1143,7 +1186,7 @@ function UpdateUser(props) {
                                     type="password"
                                     autoComplete="off"
                                     name="new-password"
-                                    disabled={!fullUser.local_user}
+                                    disabled={!fullUser.local_user || localUser.password_disabled}
                                     value={localUser.newPassword || ''}
                                     onChange={e => setDiffUser(update(diffUser, {$merge: {newPassword: e.target.value}}))}/>
                             </Col>
@@ -1160,7 +1203,7 @@ function UpdateUser(props) {
                                     type="password"
                                     autoComplete="off"
                                     name="confirm-new-password"
-                                    disabled={!fullUser.local_user}
+                                    disabled={!fullUser.local_user || localUser.password_disabled}
                                     value={localUser.confirmPassword || ''}
                                     onChange={e => setDiffUser(update(diffUser, {$merge: {confirmPassword: e.target.value}}))}/>
                             </Col>
@@ -1348,7 +1391,7 @@ function NewUser({user_info, show, onClose}) {
     const validPassword = user.password === undefined || user.password.length === 0 ? null : (user.password.length >= 7) ? "success" : "error";
     const validRepPassword = user.password === undefined || user.password.length === 0 ? null : confirmPassword === user.password ? "success" : "error";
 
-    const validForm = validEmail === 'success' && ((validPassword === null && validRepPassword === null) || (validPassword === 'success' && validRepPassword === 'success'));
+    const validForm = validEmail === 'success' && (user.password_disabled || (validPassword === null && validRepPassword === null) || (validPassword === 'success' && validRepPassword === 'success'));
 
     return (
         <Modal show={show} onHide={onClose} backdrop={false} bsSize="large">
@@ -1558,12 +1601,27 @@ function NewUser({user_info, show, onClose}) {
                     </FormGroup>
                     <FormGroup>
                         <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="password-disabled" defaultMessage="Password disabled" />
+                        </Col>
+
+                        <Col sm={9}>
+                            <Checkbox
+                                checked={user.password_disabled || false}
+                                onChange={e => setUser(update(user, {$merge: {password_disabled: e.target.checked}}))}/>
+                            <HelpBlock>
+                                <FormattedMessage id="password-disabled-label" defaultMessage="This flag prevent a local user using the login API."/>
+                            </HelpBlock>
+                        </Col>
+                    </FormGroup>
+                    <FormGroup>
+                        <Col componentClass={ControlLabel} sm={2}>
                             <FormattedMessage id="force-change-password" defaultMessage="Force change password" />
                         </Col>
 
                         <Col sm={9}>
                             <Checkbox
                                 checked={user.need_password_change || false}
+                                disabled={user.password_disabled}
                                 onChange={e => setUser(update(user, {$merge: {need_password_change: e.target.checked}}))}/>
                             <HelpBlock>
                                 <FormattedMessage id="need-change-password-label" defaultMessage="This flag forces the user to change its password at next login."/>
@@ -1582,6 +1640,7 @@ function NewUser({user_info, show, onClose}) {
                                 type="password"
                                 autoComplete="off"
                                 name="new-password"
+                                disabled={user.password_disabled}
                                 value={user.password || ""}
                                 onChange={e => setUser(update(user, {$merge: {password: e.target.value || undefined}}))}/>
                         </Col>
@@ -1598,6 +1657,7 @@ function NewUser({user_info, show, onClose}) {
                                 type="password"
                                 autoComplete="off"
                                 name="confirm-new-password"
+                                disabled={user.password_disabled}
                                 value={confirmPassword}
                                 onChange={e => setConfirmPassword(e.target.value)}/>
                         </Col>
