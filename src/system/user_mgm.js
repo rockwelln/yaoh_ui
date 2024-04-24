@@ -18,6 +18,7 @@ import Breadcrumb from 'react-bootstrap/lib/Breadcrumb';
 import Tab from 'react-bootstrap/lib/Tab';
 import Tabs from 'react-bootstrap/lib/Tabs';
 import Table from 'react-bootstrap/lib/Table';
+import Badge from 'react-bootstrap/lib/Badge';
 import InputGroup from 'react-bootstrap/lib/InputGroup';
 import InputGroupButton from 'react-bootstrap/lib/InputGroupButton';
 import {Link} from "react-router-dom";
@@ -40,6 +41,7 @@ import { DeleteConfirmButton } from '../utils/deleteConfirm';
 import moment from 'moment';
 import queryString from 'query-string';
 import UserLoginAttempts from './user_login_attempts';
+import { IpWhitelist } from './user_ips';
 
 
 // helper functions
@@ -531,6 +533,9 @@ export function LocalUserProfile({onUserInfoChanged}) {
                 <Tab eventKey={"login-attempts"} title={<FormattedMessage id="login-attempts" defaultMessage="Login Attempts" />}>
                      <UserLoginAttempts
                         attempts={userInfo.login_attempts} />
+                </Tab>
+                <Tab eventKey={"ip-whitelist"} title={<FormattedMessage id="ip-whitelist" defaultMessage="IP Whitelist" />}>
+                    <IpWhitelist userId={user_info.id} enabled={user_info.with_ip_limits} whitelist={user_info.ip_limits} />
                 </Tab>
             </Tabs>
             </Panel.Body>
@@ -1352,6 +1357,18 @@ function UpdateUser({show, user, onClose, user_info}) {
                     <Tab eventKey={"login-attempts"} title={<FormattedMessage id="login-attempts" defaultMessage="Login Attempts" />}>
                         <UserLoginAttempts
                             attempts={fullUser.login_attempts} />
+                    </Tab>
+                    <Tab eventKey={"ip-whitelist"} title={
+                        <>
+                            <FormattedMessage id="ip-whitelist" defaultMessage="IP Whitelist" />{" "}
+                            {fullUser.with_ip_limits && <Badge>{fullUser.ip_limits?.length || 0}</Badge>}
+                        </>
+                    }>
+                        <IpWhitelist
+                            userId={user.id}
+                            onChange={() => loadFullUser(user.id)}
+                            enabled={fullUser.with_ip_limits}
+                            whitelist={fullUser.ip_limits} />
                     </Tab>
                 </Tabs>
             </Modal.Body>
