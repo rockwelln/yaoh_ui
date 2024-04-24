@@ -39,7 +39,7 @@ function enabledIpWhitelist(enabled, userId) {
         });
 }
 
-export function IpWhitelist({enabled, whitelist, userId, onChange}) {
+export function IpWhitelist({enabled, whitelist, userId, local, onChange}) {
     const [newIp, setNewIp] = React.useState("");
     const [loading, setLoading] = React.useState(false);
     const validNewIp = isIpMaskValid(newIp);
@@ -50,8 +50,8 @@ export function IpWhitelist({enabled, whitelist, userId, onChange}) {
                 <tr>
                     <td>IP Whitelist is <EnabledBadge enabled={enabled} /></td>
                     <td colSpan={2}>
-                        <Button
-                            disabled={loading}
+                        {!local && <Button
+                            disabled={loading }
                             bsStyle="secondary"
                             onClick={() => {
                                 setLoading(true);
@@ -59,7 +59,7 @@ export function IpWhitelist({enabled, whitelist, userId, onChange}) {
                                     .then(() => onChange())
                                     .finally(() => setLoading(false));
                             }}
-                        >{enabled?<FormattedMessage id='Disable'/>:<FormattedMessage id='Enable'/>}</Button>
+                        >{enabled?<FormattedMessage id='Disable'/>:<FormattedMessage id='Enable'/>}</Button>}
                     </td>
                 </tr>
                 <tr>
@@ -76,7 +76,7 @@ export function IpWhitelist({enabled, whitelist, userId, onChange}) {
                             <td>{ip.ip}</td>
                             <td><i>{ip.created_at}</i></td>
                             <td>
-                                <Button
+                                {!local && <Button
                                     disabled={loading}
                                     onClick={() => {
                                         setLoading(true);
@@ -86,13 +86,13 @@ export function IpWhitelist({enabled, whitelist, userId, onChange}) {
                                     }}
                                     bsStyle="danger">
                                         <FontAwesomeIcon icon={faTrash} />
-                                </Button>
+                                </Button>}
                             </td>
                         </tr>
                     ))
                 }
 
-                <tr>
+                {!local && <tr>
                     <td>
                         <FormGroup validationState={!validNewIp && newIp.length !== 0 ? "error" : null}>
                             <FormControl
@@ -133,7 +133,7 @@ export function IpWhitelist({enabled, whitelist, userId, onChange}) {
                         >+</Button>
                     </td>
                     <td/>
-                </tr>
+                </tr>}
             </tbody>
         </Table>
     );

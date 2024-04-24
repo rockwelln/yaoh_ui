@@ -534,8 +534,17 @@ export function LocalUserProfile({onUserInfoChanged}) {
                      <UserLoginAttempts
                         attempts={userInfo.login_attempts} />
                 </Tab>
-                <Tab eventKey={"ip-whitelist"} title={<FormattedMessage id="ip-whitelist" defaultMessage="IP Whitelist" />}>
-                    <IpWhitelist userId={user_info.id} enabled={user_info.with_ip_limits} whitelist={user_info.ip_limits} />
+                <Tab eventKey={"ip-whitelist"}
+                    title={
+                    <>
+                        <FormattedMessage id="ip-whitelist" defaultMessage="IP Whitelist" />{" "}
+                        {user_info.with_ip_limits && <Badge>{user_info.ip_limits?.length || 0}</Badge>}
+                    </>
+                }>
+                    <IpWhitelist
+                        local
+                        enabled={user_info.with_ip_limits}
+                        whitelist={user_info.ip_limits} />
                 </Tab>
             </Tabs>
             </Panel.Body>
