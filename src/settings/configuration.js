@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import ReactJson from 'react-json-view';
 import Button from 'react-bootstrap/lib/Button';
 import Breadcrumb from 'react-bootstrap/lib/Breadcrumb';
@@ -7,7 +7,7 @@ import Tab from "react-bootstrap/lib/Tab";
 
 import {FormattedMessage} from 'react-intl';
 
-import {fetch_get, fetch_post, fetch_put, NotificationsManager, userLocalizeUtcDate} from "../utils";
+import {API_URL_PREFIX, AuthServiceManager, fetch_delete, fetch_get, fetch_post, fetch_put, fetch_put_raw, NotificationsManager, userLocalizeUtcDate} from "../utils";
 import update from 'immutability-helper';
 import {Panel} from "react-bootstrap";
 import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
@@ -29,6 +29,9 @@ import Table from "react-bootstrap/lib/Table";
 import {useLocation} from "react-router";
 import {HttpHeaders} from "../orchestration/nodeInputs";
 import { fetchActivities } from '../orchestration/activity-editor';
+import { useDropzone } from 'react-dropzone';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUpload, faDownload } from '@fortawesome/free-solid-svg-icons';
 
 
 function fetchConfiguration(raw, onSuccess) {
@@ -3998,7 +4001,68 @@ function EnvVariablesPanel({env, onChange}) {
   )
 }
 
+function fetchWeakPasswordsCounter() {
+  return fetch_get("/api/v01/system/configuration/weak_passwords/count")
+}
+
+function downloadWeakPasswords() {
+  AuthServiceManager
+    .getValidToken()
+    .then(token => window.location = `${API_URL_PREFIX}/api/v01/system/configuration/weak_passwords?auth_token=${token}`)
+}
+
+function ImportWeakPasswordsModal({show, onHide, onImport}) {
+  const onDropRejected = useCallback(() => {
+    NotificationsManager.error("File type rejected");
+  }, []);
+
+  const onDrop = useCallback((files) => {
+    files.forEach(file => {
+      onImport(file)
+    });
+  }, [onImport]);
+
+  const {
+    getRootProps,
+    getInputProps,
+  } = useDropzone({    
+    onDrop,
+    accept: ['.txt','.db'],
+    onDropRejected,
+  });
+
+  return (
+    <Modal show={show} onHide={() => onHide(true)} backdrop={false} bsSize="large">
+      <Modal.Header closeButton>
+          <Modal.Title>
+              <FormattedMessage id="import-weak-passwords" defaultMessage="Import weak passwords"/>
+          </Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Form>
+          <section className="dropcontainer" >
+            <div {...getRootProps({className: 'dropzone'})} >
+              <input {...getInputProps()} />
+              <p>Drag 'n' drop some files here, or click to select files</p>
+            </div>
+          </section>
+        </Form>
+      </Modal.Body>
+    </Modal>
+  )
+}
+
 function PasswordPanel({password, onChange}) {
+    const [weakPasswordCnt, setWeakPasswordCnt] = useState(0);
+    const [showImportWeakPasswords, setShowImportWeakPasswords] = useState(false);
+
+    useEffect(() => {
+      !showImportWeakPasswords && fetchWeakPasswordsCounter()
+        .then(r => setWeakPasswordCnt(r.count))
+        .catch(err => NotificationsManager.error("Failed to fetch weak passwords count", err.message))
+    }
+    , [showImportWeakPasswords]);
+
     return (
     <Panel>
       <Panel.Body>
@@ -4148,6 +4212,57 @@ function PasswordPanel({password, onChange}) {
                 In the limit of the history limit check configured above
               </HelpBlock>
             </Col>
+          </FormGroup>
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="check against weak passwords" defaultMessage="Check against weak passwords"/>
+            </Col>
+
+            <Col sm={9}>
+              <Checkbox
+                checked={password.check_against_weak_passwords || false}
+                onChange={e => onChange(update(password, {$merge: {check_against_weak_passwords: e.target.checked}}))} />
+            </Col>
+          </FormGroup>
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="weak passwords" defaultMessage="Weak passwords"/>
+            </Col>
+
+            <Col sm={9}>
+              <FormattedMessage id="weak passwords db size" defaultMessage="{counter} entries" values={{counter: weakPasswordCnt || 0}}/>
+              {" "}
+              <Button 
+                onClick={() => downloadWeakPasswords()}
+                bsStyle={"primary"}>
+                <FontAwesomeIcon icon={faDownload} />
+                {" "}
+                <FormattedMessage id="download" defaultMessage="Download"/>
+              </Button>
+              {" "}
+              <Button
+                onClick={() => setShowImportWeakPasswords(true)}
+                bsStyle={"primary"}>
+                <FontAwesomeIcon icon={faUpload} />
+                {" "}
+                <FormattedMessage id="upload" defaultMessage="Upload"/>
+              </Button>
+            </Col>
+
+            <ImportWeakPasswordsModal
+              show={showImportWeakPasswords}
+              onHide={() => setShowImportWeakPasswords(false)}
+              onImport={f => {
+                const data = new FormData();
+                data.append("file", f);
+                fetch_delete("/api/v01/system/configuration/weak_passwords")
+                .then(() => fetch_put_raw("/api/v01/system/configuration/weak_passwords", data))
+                .then(() => {
+                  NotificationsManager.success("Weak passwords imported");
+                  setShowImportWeakPasswords(false);
+                })
+                .catch(e => NotificationsManager.error("Failed to import weak passwords", e.message))
+              }} />
           </FormGroup>
         </Form>
       </Panel.Body>
