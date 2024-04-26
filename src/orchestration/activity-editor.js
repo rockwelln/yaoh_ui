@@ -50,7 +50,8 @@ import {
   faCopy, faDatabase, faDirections,
   faDownload, faEnvelope, faFileCsv, faFileExcel, faFileMedicalAlt, faHome, faPaste, faPlay, faPowerOff, faSearch,
   faSpinner, faStickyNote, faStop, faStopwatch, faStream,
-  faUserCog, faUsers, faArrowRight, faQuestion
+  faUserCog, faUsers, faArrowRight, faQuestion,
+  faUserShield
 } from "@fortawesome/free-solid-svg-icons";
 import {Link} from "react-router-dom";
 import Checkbox from "react-bootstrap/lib/Checkbox";
@@ -986,6 +987,7 @@ const sortedNodes = [
   "sync_response",
   "callback_response",
   "trigger_manual_action",
+  "user_approval",
   "cancel_manual_action",
   "send_email_template",
   "send_sms",
@@ -1121,6 +1123,12 @@ const nodesAttributes = {
     color: "green",
     icon: faBell,
     label: "Trigger manual action",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#trigger-manual-action`,
+  },
+  user_approval: {
+    color: "green",
+    icon: faUserShield,
+    label: "Require user approval",
     help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#trigger-manual-action`,
   },
   send_email_template: {

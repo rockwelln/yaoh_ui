@@ -44,7 +44,7 @@ import {
 import {ContextTable, SubTransactionsPanel} from "../../requests/components";
 import moment from 'moment';
 import {fetchActivities} from "../../orchestration/activity-editor";
-import {ManualActionInputForm} from "../../dashboard/manualActions";
+import {ManualActionInputForm} from "../../requests/manualActions";
 import Select from "react-select";
 import {fetchUpdateContext} from "../../requests/utils";
 import DatePicker from "react-datepicker";

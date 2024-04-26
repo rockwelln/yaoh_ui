@@ -48,7 +48,7 @@ import Badge from "react-bootstrap/lib/Badge";
 import {StaticControl} from "../../utils/common";
 import {SyncMessagesDetails, SyncMessagesFlow} from "./citc-sa";
 import moment from "moment";
-import {ManualActionInputForm} from "../../dashboard/manualActions";
+import {ManualActionInputForm} from "../../requests/manualActions";
 import {ContextTable} from "../../requests/components";
 import {SubTransactionsPanel} from "../../requests/components";
 import Breadcrumb from "react-bootstrap/lib/Breadcrumb";

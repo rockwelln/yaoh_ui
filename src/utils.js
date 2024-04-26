@@ -303,19 +303,24 @@ export function parseJSON(response) {
   return response.json()
 }
 
-export async function fetch_get(url, token) {
+export async function fetch_get(url, token, timeout) {
     // const token_ = AuthServiceManager.getToken();
     const full_url = url.href || url.startsWith('http') ?url:API_URL_PREFIX + url;
     let resp;
     for(let i=0; i<2; i++) {
       const token_ = await AuthServiceManager.getValidToken();
-      resp = await fetch(full_url, {
+
+      const opts = {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
           'Authorization': `Bearer ${token_}`
         }
-      })
+      }
+      if(timeout) {
+        opts.signal = AbortSignal.timeout(timeout)
+      }
+      resp = await fetch(full_url, opts);
 
       if (resp.status !== 401) {
         break;

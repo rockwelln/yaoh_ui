@@ -49,7 +49,7 @@ import Breadcrumb from "react-bootstrap/lib/Breadcrumb";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import {ConfirmButton} from "../../utils/deleteConfirm";
 import {fetchActivities} from "../../orchestration/activity-editor";
-import {ManualActionInputForm} from "../../dashboard/manualActions";
+import {ManualActionInputForm} from "../../requests/manualActions";
 
 export const DEFAULT_RECIPIENT = "ITC";
 export const rejection_codes = [

@@ -55,7 +55,7 @@ import {fetchRoles} from "../system/user_roles";
 import {LinkContainer} from "react-router-bootstrap";
 import {EditCellModal, fetchActivities, fetchCells, useWindowSize} from "../orchestration/activity-editor";
 import {SavedFiltersFormGroup} from "../utils/searchFilters";
-import {ManualActionInputForm} from "../dashboard/manualActions";
+import {ManualActionInputForm} from "./manualActions";
 import {useDropzone} from "react-dropzone";
 import {DeleteConfirmButton} from "../utils/deleteConfirm";
 import {fetchInstanceContext} from "../help/templatePlayground";
@@ -2024,10 +2024,10 @@ export class Transaction extends Component {
         }
         if(tx && tx.status === 'ACTIVE' && manualActions.length !== 0) {
             manualActions
-                .filter(a => !a.output && user_info.roles.find(ur => ur.id === a.role_id))
+                .filter(a => !a.output && (a.user_id === user_info.id || user_info.roles.find(ur => ur.id === a.role_id)))
                 .map(a => alerts.push(
                     <Alert bsStyle="warning" key={`request-action-${a.id}`}>
-                        Action required for {user_info.roles.find(ur => ur.id === a.role_id).name}<br/>
+                        Action required to {user_info.roles.find(ur => ur.id === a.role_id)?.name || "you"}<br/>
                         {a.description} <br/>
                         <ButtonToolbar>
                             {
