@@ -1569,6 +1569,28 @@ function GuiForm({ gui, onChange }) {
 
             <FormGroup>
               <Col componentClass={ControlLabel} sm={2}>
+                <FormattedMessage id="change-password-workflow"
+                                  defaultMessage="Post-change password workflow"/>
+              </Col>
+
+              <Col sm={9}>
+                <Select
+                  isClearable
+                  value={{label: gui.change_password_workflow || "", value: gui.change_password_workflow || ""}}
+                  onChange={e => onChange({...gui, change_password_workflow: e?.value})}
+                  onClear={() => onChange(update(gui, {$unset: ["change_password_workflow"]}))}
+                  options={activities.map(a => ({label: a.name, value: a.name}))}
+                />
+                <HelpBlock>
+                  The workflow is triggered when a user password is changed. The workflow is called with the following
+                  parameters: username and password. Note that the workflow is called when the password is changed already, so
+                  the workflow can't change the password, and it can't be used to validate the new password.
+                </HelpBlock>
+              </Col>
+            </FormGroup>
+
+            <FormGroup>
+              <Col componentClass={ControlLabel} sm={2}>
                 <FormattedMessage id="activate 2fa" defaultMessage="Force 2-factor auth."/>
               </Col>
 
