@@ -1811,7 +1811,7 @@ export default class SearchUsers extends Search {
       super.componentDidMount();
     }
 
-  render() {
+    render() {
         const {resources, error, sorting_spec, pagination, filter_criteria, showNew} = this.state;
         const {user_info} = this.props;
         return (
@@ -1869,6 +1869,9 @@ export default class SearchUsers extends Search {
                                 {title: <FormattedMessage id="lastname" defaultMessage="Last name" />, field: 'last_name', sortable: true},
                                 {title: <FormattedMessage id="email" defaultMessage="Email" />, field: 'email', sortable: true},
                                 {title: <FormattedMessage id="status" defaultMessage="Status" />, field: 'status', sortable: true},
+                                {title: <FormattedMessage id="system" defaultMessage="System" />, field: 'is_system', sortable: true, render: n => (
+                                    <Glyphicon glyph={n.is_system ? 'ok' : 'remove'}/>
+                                )},
                                 {title: <FormattedMessage id="language" defaultMessage="Language" />, field: 'language', sortable: true},
                                 {
                                     title: '', render: n => (
