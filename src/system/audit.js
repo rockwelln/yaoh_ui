@@ -19,6 +19,7 @@ import {ApioDatatable} from "../utils/datatable";
 import moment from "moment";
 import DatePicker from "react-datepicker";
 import {localUser} from "../utils/user";
+import ReactSelect from 'react-select';
 
 const audit_target_types = [
     "User",
@@ -47,8 +48,7 @@ const audit_target_types = [
 ];
 
 
-function AuditActions(props) {
-    const {entry} = props;
+function AuditActions({entry}) {
     const [showDetails, setShowDetails] = useState(false);
     const onClose = () => setShowDetails(false);
 
@@ -93,7 +93,7 @@ export class AuditLogs extends Search {
         searchUrl: '/api/v01/system/users/audit/search',
         collectionName: 'records',
         defaultCriteria: {
-            user_id: {value: '', op: 'eq'},
+            username: {value: '', op: 'eq'},
             when: {value: '', op: 'eq'},
             operation: {value: '', op: 'eq'},
             target: {value: '', op: 'eq'},
@@ -109,8 +109,8 @@ export class AuditLogs extends Search {
     }
 
     _fetchUsers() {
-        fetch_get('/api/v01/system/users')
-            .then(data => this.setState({users: data.users}))
+        fetch_get('/api/v01/system/users/audit/usernames')
+            .then(data => this.setState({usernames: data.usernames}))
             .catch(error => NotificationsManager.error(
               <FormattedMessage id="fetch-users-failed" defaultMessage="Failed to fetch users"/>,
               error.message,
@@ -118,7 +118,7 @@ export class AuditLogs extends Search {
     }
 
     render() {
-        const {filter_criteria, resources, users, sorting_spec, pagination} = this.state;
+        const {filter_criteria, resources, usernames, sorting_spec, pagination} = this.state;
         return (
             <div>
                 <Breadcrumb>
@@ -140,10 +140,10 @@ export class AuditLogs extends Search {
                                 <Col sm={1}>
                                     <FormControl
                                         componentClass="select"
-                                        value={filter_criteria.user_id.op}
+                                        value={filter_criteria.username.op}
                                         onChange={(e) => this.setState({
                                             filter_criteria: update(filter_criteria,
-                                                {user_id: {$merge: {op: e.target.value}}})
+                                                {username: {$merge: {op: e.target.value}}})
                                         })}>
                                         <option value="eq">==</option>
                                         <option value="ne">!=</option>
@@ -151,20 +151,13 @@ export class AuditLogs extends Search {
                                 </Col>
 
                                 <Col sm={8}>
-                                    <FormControl
-                                        componentClass="select"
-                                        value={filter_criteria.user_id.value}
+                                    <ReactSelect
+                                        value={{value: filter_criteria.username.value, label: filter_criteria.username.value}}
+                                        options={usernames?.map(u => ({value: u, label: u}))}
                                         onChange={e => this.setState({
-                                             filter_criteria: update(filter_criteria,
-                                                 {user_id: {$merge: {value: parseInt(e.target.value, 10) || e.target.value}}})
-                                             })}>
-                                        <option value="" />
-                                    {
-                                        users && users.map(u =>
-                                            <option key={u.id} value={u.id}>{u.username}</option>
-                                        )
-                                    }
-                                    </FormControl>
+                                            filter_criteria: update(filter_criteria,
+                                                {username: {$merge: {value: e.value}}})
+                                        })}/>
                                 </Col>
                             </FormGroup>
                             <FormGroup>
@@ -222,23 +215,17 @@ export class AuditLogs extends Search {
                                     </FormControl>
                                 </Col>
                                 <Col sm={8}>
-                                    <FormControl componentClass="select"
-                                         value={filter_criteria.operation.value}
-                                         onChange={e => this.setState({
-                                             filter_criteria: update(filter_criteria,
-                                                 {operation: {$merge: {value: e.target.value}}})
-                                             })}>
-                                        <option value="" />
-                                        <FormattedMessage id="create" defaultMessage="create">
-                                            {m => <option value="create">{m}</option> }
-                                        </FormattedMessage>
-                                        <FormattedMessage id="update" defaultMessage="update">
-                                            {m => <option value="update">{m}</option> }
-                                        </FormattedMessage>
-                                        <FormattedMessage id="delete" defaultMessage="delete">
-                                            {m => <option value="delete">{m}</option> }
-                                        </FormattedMessage>
-                                    </FormControl>
+                                    <ReactSelect
+                                        value={{value: filter_criteria.operation.value, label: filter_criteria.operation.value}}
+                                        options={[
+                                            {value: 'create', label: 'create'},
+                                            {value: 'update', label: 'update'},
+                                            {value: 'delete', label: 'delete'},
+                                        ]}
+                                        onChange={e => this.setState({
+                                            filter_criteria: update(filter_criteria,
+                                                {operation: {$merge: {value: e.value}}})
+                                        })}/>
                                 </Col>
                             </FormGroup>
                             <FormGroup>
@@ -283,19 +270,13 @@ export class AuditLogs extends Search {
                                     </FormControl>
                                 </Col>
                                 <Col sm={8}>
-                                    <FormControl componentClass="select"
-                                         value={filter_criteria.target_type.value}
-                                         onChange={e => this.setState({
-                                             filter_criteria: update(filter_criteria,
-                                                 {target_type: {$merge: {value: e.target.value}}})
-                                             })} >
-                                        <option value=''/>
-                                        {
-                                            audit_target_types.map(
-                                                (t, i) => <option key={i} value={t}>{t}</option>
-                                            )
-                                        }
-                                    </FormControl>
+                                    <ReactSelect
+                                        value={{value: filter_criteria.target_type.value, label: filter_criteria.target_type.value}}
+                                        options={audit_target_types.map(t => ({value: t, label: t}))}
+                                        onChange={e => this.setState({
+                                            filter_criteria: update(filter_criteria,
+                                                {target_type: {$merge: {value: e.value}}})
+                                        })}/>
                                 </Col>
                             </FormGroup>
 
@@ -315,7 +296,7 @@ export class AuditLogs extends Search {
                         <ApioDatatable
                             sorting_spec={sorting_spec}
                             headers={[
-                                {title: <FormattedMessage id="user" defaultMessage="User" />, field: 'user_id', sortable: true, render: e => e.username},
+                                {title: <FormattedMessage id="user" defaultMessage="User" />, field: 'username', sortable: true, render: e => e.username},
                                 {title: <FormattedMessage id="operation" defaultMessage="Operation" />, field: 'operation', sortable: true},
                                 {title: <FormattedMessage id="target" defaultMessage="Target" />, field: 'target', sortable: true},
                                 {title: <FormattedMessage id="target-type" defaultMessage="Target type" />, field: 'target_type', sortable: true},
