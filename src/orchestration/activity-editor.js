@@ -1733,6 +1733,10 @@ export function EditCellModal({show, cell, cells, activity, onHide, readOnly = f
     const params = paramsList
       // get the param definition (if possible)
       .map(p => (cellDef && cellDef.params.find(param => (param.name || param) === p)) || p)
+      .filter(p => {
+        // filter out extensions
+        return !p.name?.includes("#")
+      })
       .sort((a, b) => a.ui_order - b.ui_order)
       .map(param => {
         const n = param.name || param;
@@ -1749,10 +1753,10 @@ export function EditCellModal({show, cell, cells, activity, onHide, readOnly = f
                 value={staticParams[n]}
                 staticParams={staticParams}
                 readOnly={readOnly}
-                onChange={(e, outputs) => {
+                onChange={(e, outputs, name) => {
                   if(readOnly) return;
 
-                  setStaticParams(update(staticParams, {$merge: {[n]: e}}));
+                  setStaticParams(update(staticParams, {$merge: {[name || n]: e}}));
                   if(outputs !== undefined) {
                     setOutputs(outs => outs.filter(o => !o.custom || outputs.includes(o.value)).concat(outputs.filter(o => !outs.map(t => t.value).includes(o)).map(o => { return {value: o, custom: true, visible: true} })));
                   }

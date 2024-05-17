@@ -16,6 +16,8 @@ import InputGroup from "react-bootstrap/lib/InputGroup";
 import Glyphicon from "react-bootstrap/lib/Glyphicon";
 import HelpBlock from "react-bootstrap/lib/HelpBlock";
 import Alert from "react-bootstrap/lib/Alert";
+import ToggleButton from "react-bootstrap/lib/ToggleButton";
+import ToggleButtonGroup from "react-bootstrap/lib/ToggleButtonGroup";
 import Prism from 'prismjs';
 import 'prismjs/components/prism-markup-templating';
 import 'prismjs/components/prism-django';
@@ -273,6 +275,119 @@ function ListInput({options, value, onChange, readOnly}) {
         }
       </FormControl>
     )
+}
+
+
+function HttpBodyInput({staticParams, field, onChange, readOnly, cells}) {
+  const name = field?.name;
+  const formatKey = name + "#format";
+  const formKey = name + "#form";
+  const multipartKey = name + "#multipart";
+
+  const format = staticParams[formatKey];
+  let body;
+
+  switch (format) {
+    case "form":
+      body = (
+        <HttpBodyForm
+          readOnly={readOnly}
+          value={staticParams[formKey] ? staticParams[formKey] : []}
+          onChange={v => onChange(formKey, v)} />
+      )
+      break;
+
+    case "multipart":
+      body = (
+        <HttpBodyForm
+          readOnly={readOnly}
+          value={staticParams[multipartKey] ? staticParams[multipartKey] : []}
+          onChange={v => onChange(multipartKey, v)} />
+      )
+      break;
+  
+    case "default":
+    default:
+      body = <JinjaTextareaInput
+        value={staticParams[name] ? staticParams[name] : ""}
+        onChange={v => onChange(name, v)}
+        readOnly={readOnly}
+        cells={cells} />
+      break;
+  }
+
+  return (
+    <>
+      <ToggleButtonGroup name="body_format" type="radio" value={format || "default"} onChange={e => onChange(formatKey, e)}>
+        <ToggleButton value="default">Default</ToggleButton>
+        <ToggleButton value="form">Form</ToggleButton>
+        <ToggleButton value="multipart">Multipart</ToggleButton>
+      </ToggleButtonGroup>
+
+      { body }
+      
+    </>
+  )
+}
+
+function HttpBodyForm({value, onChange, readOnly}) {
+  const [newEntry, setNewEntry] = useState({key: "", value: ""});
+
+  const addNewEntry = () => {
+    onChange([...value || [], [newEntry.key, newEntry.value]])
+    setNewEntry({key: "", value: ""});
+  }
+
+  const dropEntry = (i) => {
+    value.splice(i, 1);
+    onChange([...value]);
+  }
+
+  return (
+    <Table>
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>Value</th>
+          {!readOnly && <th/>}
+        </tr>
+      </thead>
+      <tbody>
+        { value?.map(([field, v], i) =>
+          <tr>
+            <td>{field}</td>
+            <td>{v}</td>
+            {!readOnly &&
+              <td>
+                <Button onClick={() => dropEntry(i)}>{"-"}</Button>
+              </td>
+            }
+          </tr>
+        )}
+
+        { !readOnly &&
+          <tr>
+            <td>
+              <FormControl
+                value={newEntry.key}
+                onChange={e => setNewEntry({...newEntry, key: e.target.value})} />
+            </td>
+            <td>
+            <FormControl
+                value={newEntry.value}
+                onChange={e => setNewEntry({...newEntry, value: e.target.value})} />
+            </td>
+            <td>
+              <Button
+                onClick={() => addNewEntry()}
+                disabled={newEntry.key.length === 0}
+              >{"+"}</Button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </Table>
+  );
 }
 
 
@@ -1192,6 +1307,14 @@ export function Param2Input({param, activity, staticParams, cells, value, readOn
       break;
     case 'jinja':
       i = <TextareaInput multi rows={10} value={value} readOnly={readOnly} onChange={e => onChange(e)} cells={activity.definition.cells} />
+      break;
+    case 'http_body':
+      i = <HttpBodyInput
+        staticParams={staticParams}
+        field={param}
+        readOnly={readOnly}
+        onChange={(field, e) => onChange(e, undefined, field)}
+        cells={activity.definition.cells} />
       break;
     case 'python':
     case 'python_bool':
