@@ -14,9 +14,6 @@ import { applyMiddleware, compose, createStore } from "redux";
 import thunk from "redux-thunk";
 // default
 import SearchPage from "./default/components/SearchPage";
-import LocalUsers from "./default/components/LocalUsers";
-import AddLocalUsers from "./default/components/AddLocalUser";
-import UpdateLocalUser from "./default/components/UpdateLocalUser";
 import ConfigPage from "./default/components/Configs";
 import CategoryPage from "./default/components/CategoryPage";
 import TemplatePage from "./default/components/TemplatePage";
@@ -109,32 +106,10 @@ function provisioningDefaultRoutes(ui_profile) {
           exact
         />
         <Route
-          path="/provisioning/:gwName/localusers"
-          component={(props) =>
-            isAllowed(ui_profile, pages.data_tenants) ? (
-              <LocalUsers />
-            ) : (
-              <NotAllowed />
-            )
-          }
-          exact
-        />
-        <Route
           path="/provisioning/:gwName/system"
           component={(props) =>
             isAllowed(ui_profile, pages.data_tenants) ? (
               <SystemPage />
-            ) : (
-              <NotAllowed />
-            )
-          }
-          exact
-        />
-        <Route
-          path="/provisioning/:gwName/localusers/user/:localUserName"
-          component={(props) =>
-            isAllowed(ui_profile, pages.data_tenants) ? (
-              <UpdateLocalUser />
             ) : (
               <NotAllowed />
             )
@@ -153,28 +128,6 @@ function provisioningDefaultRoutes(ui_profile) {
           exact
         />
         <Route
-          path="/provisioning/:gwName/localusers/adduser"
-          component={(props) =>
-            isAllowed(ui_profile, pages.data_tenants) ? (
-              <AddLocalUsers />
-            ) : (
-              <NotAllowed />
-            )
-          }
-          exact
-        />
-        <Route
-          path="/provisioning/:gwName/localusers"
-          component={(props) =>
-            isAllowed(ui_profile, pages.data_tenants) ? (
-              <LocalUsers />
-            ) : (
-              <NotAllowed />
-            )
-          }
-          exact
-        />
-        <Route
           path="/provisioning/:gwName/configs"
           component={(props) =>
             isAllowed(ui_profile, pages.data_tenants) ? (
@@ -186,32 +139,10 @@ function provisioningDefaultRoutes(ui_profile) {
           exact
         />
         <Route
-          path="/provisioning/:gwName/localusers/user/:localUserName"
-          component={(props) =>
-            isAllowed(ui_profile, pages.data_tenants) ? (
-              <UpdateLocalUser />
-            ) : (
-              <NotAllowed />
-            )
-          }
-          exact
-        />
-        <Route
           path="/provisioning/:gwName/resellers"
           component={(props) =>
             isAllowed(ui_profile, pages.data_tenants) ? (
               <ResellersPage />
-            ) : (
-              <NotAllowed />
-            )
-          }
-          exact
-        />
-        <Route
-          path="/provisioning/:gwName/localusers/adduser"
-          component={(props) =>
-            isAllowed(ui_profile, pages.data_tenants) ? (
-              <AddLocalUsers />
             ) : (
               <NotAllowed />
             )

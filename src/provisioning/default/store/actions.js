@@ -1530,24 +1530,6 @@ export function fetchGetValueOfKey(appName, keyName) {
   };
 }
 
-export function fetchGetLocalUsers() {
-  return function (dispatch) {
-    return fetch_get(
-      `${ProvProxiesManager.getCurrentUrlPrefix()}/local/apio_users/`
-    )
-      .then((data) => dispatch(getLocalUsers(data)))
-      .catch((error) =>
-        NotificationsManager.error(
-          <FormattedMessage
-            id="fetch-local-users-failed"
-            defaultMessage="Failed to fetch local users!"
-          />,
-          error.message
-        )
-      );
-  };
-}
-
 export function fetchGetSearchUsers(data) {
   return function (dispatch) {
     return fetch_get(
@@ -1595,24 +1577,6 @@ export function fetchGetAvailableNumbersByTenantID(tenantId) {
           <FormattedMessage
             id="fetch-phone-numbers-failed"
             defaultMessage="Failed to fetch phone numbers!"
-          />,
-          error.message
-        )
-      );
-  };
-}
-
-export function fetchGetLocalUser(username) {
-  return function (dispatch) {
-    return fetch_get(
-      `${ProvProxiesManager.getCurrentUrlPrefix()}/local/apio_users/${username}`
-    )
-      .then((data) => dispatch(getLocalUser(data)))
-      .catch((error) =>
-        NotificationsManager.error(
-          <FormattedMessage
-            id="fetch-local-user-failed"
-            defaultMessage="Failed to fetch local user!"
           />,
           error.message
         )
@@ -2659,26 +2623,6 @@ export function fetchPostAddKeyToApplication(appName, data) {
   };
 }
 
-export function fetchPostCreateLocalUser(data) {
-  return function (dispatch) {
-    return fetch_post(
-      `${ProvProxiesManager.getCurrentUrlPrefix()}/local/apio_users/`,
-      data
-    )
-      .then((res) => res.json())
-      .then((data) => dispatch(postCreateLocalUser(data)))
-      .catch((error) =>
-        NotificationsManager.error(
-          <FormattedMessage
-            id="failed-create-local-user"
-            defaultMessage="Failed create local user!"
-          />,
-          error.message
-        )
-      );
-  };
-}
-
 export function fetchPostAssignPhoneNumbersToGroup(tenantId, groupId, data) {
   return function (dispatch) {
     return fetch_post(
@@ -3266,35 +3210,6 @@ export function fetchPutUpdateBackupByTrunkGtoup(
           <FormattedMessage
             id="update-trunk-group-backup-failed"
             defaultMessage="Failed to update trunk group backup!"
-          />,
-          error.message
-        )
-      );
-  };
-}
-
-export function fetchPutUpdateLocalUser(username, data) {
-  return function (dispatch) {
-    return fetch_put(
-      `${ProvProxiesManager.getCurrentUrlPrefix()}/local/apio_users/${username}/`,
-      data
-    )
-      .then((res) => res.json())
-      .then((data) => {
-        dispatch(putUpdateLocalUser(data));
-        NotificationsManager.success(
-          <FormattedMessage
-            id="local-user-successfully-updated"
-            defaultMessage="Local user successfully updated"
-          />,
-          "Updated"
-        );
-      })
-      .catch((error) =>
-        NotificationsManager.error(
-          <FormattedMessage
-            id="update-local-user-failed"
-            defaultMessage="Failed to update local user!"
           />,
           error.message
         )
@@ -4053,28 +3968,6 @@ export function fetchDeleteKey(appName, keyName) {
           <FormattedMessage
             id="failed-to-delete-key"
             defaultMessage="Failed to delete key!"
-          />,
-          error.message
-        )
-      );
-  };
-}
-
-export function fetchDeleteLocalUser(username) {
-  return function (dispatch) {
-    return fetch_delete(
-      `${ProvProxiesManager.getCurrentUrlPrefix()}/local/apio_users/${username}`
-    )
-      .then((res) => res.json())
-      .then((data) => {
-        dispatch(deleteLocalUser(data));
-        return "deleted";
-      })
-      .catch((error) =>
-        NotificationsManager.error(
-          <FormattedMessage
-            id="failed-to-delete-user"
-            defaultMessage="Failed to delete user!"
           />,
           error.message
         )

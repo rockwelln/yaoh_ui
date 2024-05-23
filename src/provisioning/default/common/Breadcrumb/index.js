@@ -74,13 +74,6 @@ const linkByCrumb = (item, lastItem, i, path, match) => {
   if (crumb === "addtrunk") {
     return "Add trunk";
   }
-  if (crumb === "localusers") {
-    return (
-      <Link to={`/provisioning/${match.params.gwName}/localusers`}>
-        Local users
-      </Link>
-    );
-  }
   if (crumb === "resellers") {
     return (
       <Link to={`/provisioning/${match.params.gwName}/resellers`}>{crumb}</Link>
