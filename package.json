@@ -78,5 +78,6 @@
     "markdown-folder-to-html": "^2.4.0",
     "source-map-explorer": "^2.5.2"
   },
-  "proxy": "http://127.0.0.1:5000"
+  "proxy": "http://127.0.0.1:5000",
+  "allowedHosts": "all"
 }
