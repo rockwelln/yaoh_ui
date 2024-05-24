@@ -602,23 +602,23 @@ function addDays(base, nbDays) {
 }
 
 const LicenseAlert = () => {
-  const [health, setHealth] = useState({});
+  const [license, setLicense] = useState({});
 
   useEffect(() => {
-    fetchBackendHealth(setHealth);
-    const i = setInterval(() => { fetchBackendHealth(setHealth) }, 120_000);
+    fetchBackendLicense(setLicense);
+    const i = setInterval(() => { fetchBackendLicense(setLicense) }, 120_000);
     return () => clearInterval(i);
   }, []);
 
-  const validUntil = health.valid_until && new Date(health.valid_until);
-  const watermark = health.demo ? <DemoWatermark/> : <div/>;
+  const validUntil = license.valid_until && new Date(license.valid_until);
+  const watermark = license.demo ? <DemoWatermark/> : <div/>;
 
   if(validUntil < addDays(new Date(), 30) && validUntil >= new Date()) {
     return (
-      <Alert bsStyle="warning">This instance run a {health.demo?'demo ':''}license which will expire soon ({ validUntil.toLocaleString() }) - Take contact with support@netaxis.be before it's too late.
+      <Alert bsStyle="warning">This instance run a {license.demo?'demo ':''}license which will expire soon ({ validUntil.toLocaleString() }) - Take contact with support@netaxis.be before it's too late.
       </Alert>
     )
-  } else if(validUntil < new Date()) {
+  } else if(license.expired || validUntil < new Date()) {
     return (
       <Alert bsStyle="danger">This instance run an invalid license - Take contact with support@netaxis.be to activate your
         instance.
@@ -629,16 +629,8 @@ const LicenseAlert = () => {
   }
 };
 
-function fetchBackendHealth(onSuccess) {
-    return fetch("/api/v01/health")
-      .then(r => {
-        if (r.status < 400) {
-          return r
-        } else {
-          throw new Error(r.statusText)
-        }
-      })
-      .then(r => r.json())
+function fetchBackendLicense(onSuccess) {
+    return fetch_get("/api/v01/system/configuration/license")
       .then(onSuccess)
       .catch(console.log);
 }
