@@ -4286,6 +4286,18 @@ function PasswordPanel({password, onChange}) {
                 .catch(e => NotificationsManager.error("Failed to import weak passwords", e.message))
               }} />
           </FormGroup>
+
+          <FormGroup>
+            <Col componentClass={ControlLabel} sm={2}>
+              <FormattedMessage id="force-reset-passwords-on-existing-weak-passwords" defaultMessage="Force user to change password if their current password don't match"/>
+            </Col>
+
+            <Col sm={9}>
+              <Checkbox
+                checked={password.force_change_password_if_dont_match || false}
+                onChange={e => onChange(update(password, {$merge: {force_change_password_if_dont_match: e.target.checked}}))} />
+            </Col>
+          </FormGroup>
         </Form>
       </Panel.Body>
     </Panel>
