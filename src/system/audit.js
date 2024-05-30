@@ -89,7 +89,7 @@ function AuditActions({entry}) {
 }
 
 export class AuditLogs extends Search {
-    static defaultProps = update(Search.defaultProps, {'$merge': {
+    static defaultProps = {...Search.defaultProps,
         searchUrl: '/api/v01/system/users/audit/search',
         collectionName: 'records',
         defaultCriteria: {
@@ -100,7 +100,7 @@ export class AuditLogs extends Search {
             target_type: {value: '', op: 'ilike'},
             channel: {value: '', op: 'eq'},
         },
-    }});
+    };
 
     componentDidMount() {
         document.title = "Audit logs"
@@ -152,11 +152,12 @@ export class AuditLogs extends Search {
 
                                 <Col sm={8}>
                                     <ReactSelect
+                                        isClearable
                                         value={{value: filter_criteria.username.value, label: filter_criteria.username.value}}
                                         options={usernames?.map(u => ({value: u, label: u}))}
                                         onChange={e => this.setState({
                                             filter_criteria: update(filter_criteria,
-                                                {username: {$merge: {value: e.value}}})
+                                                {username: {$merge: {value: e?.value}}})
                                         })}/>
                                 </Col>
                             </FormGroup>
@@ -216,6 +217,7 @@ export class AuditLogs extends Search {
                                 </Col>
                                 <Col sm={8}>
                                     <ReactSelect
+                                        isClearable
                                         value={{value: filter_criteria.operation.value, label: filter_criteria.operation.value}}
                                         options={[
                                             {value: 'create', label: 'create'},
@@ -224,7 +226,7 @@ export class AuditLogs extends Search {
                                         ]}
                                         onChange={e => this.setState({
                                             filter_criteria: update(filter_criteria,
-                                                {operation: {$merge: {value: e.value}}})
+                                                {operation: {$merge: {value: e?.value}}})
                                         })}/>
                                 </Col>
                             </FormGroup>
@@ -271,11 +273,12 @@ export class AuditLogs extends Search {
                                 </Col>
                                 <Col sm={8}>
                                     <ReactSelect
+                                        isClearable
                                         value={{value: filter_criteria.target_type.value, label: filter_criteria.target_type.value}}
                                         options={audit_target_types.map(t => ({value: t, label: t}))}
                                         onChange={e => this.setState({
                                             filter_criteria: update(filter_criteria,
-                                                {target_type: {$merge: {value: e.value}}})
+                                                {target_type: {$merge: {value: e?.value}}})
                                         })}/>
                                 </Col>
                             </FormGroup>

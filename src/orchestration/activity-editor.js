@@ -1735,7 +1735,7 @@ export function EditCellModal({show, cell, cells, activity, onHide, readOnly = f
       .map(p => (cellDef && cellDef.params.find(param => (param.name || param) === p)) || p)
       .filter(p => {
         // filter out extensions
-        return !p.name?.includes("#")
+        return !(p.name || p)?.includes("#")
       })
       .sort((a, b) => a.ui_order - b.ui_order)
       .map(param => {
