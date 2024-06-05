@@ -961,10 +961,18 @@ function TypedValues({value, onChange, readOnly}) {
         value?.map((e, i) =>
           <tr>
             <td style={{width: "70%"}}>
-              {e.value}
+              <FormControl
+                disabled={readOnly}
+                value={e.value}
+                onChange={e => onChange(update(value, {[i]: {$merge: {value: e.target.value}}}))} />
             </td>
             <td style={{width: "30%"}}>
-              {e.type}
+              <Select
+                value={{value: e.type, label: e.type}}
+                name={"type"}
+                disabled={readOnly}
+                onChange={e => onChange(update(value, {[i]: {$merge: {type: e.value}}}))}
+                options={["int", "string", "float", "bool", "int-list", "string-list"].map(e => ({value: e, label: e}))} />
             </td>
             { !readOnly &&
               <td>
@@ -986,8 +994,8 @@ function TypedValues({value, onChange, readOnly}) {
             <Select
               value={{value: newValue.type, label: newValue.type}}
               name={"type"}
-              onChange={e => setNewValue(update(newValue, {$merge: {type: e.target.value}}))}
-              options={["int", "string", "float", "bool"].map(e => ({value: e, label: e}))} />
+              onChange={e => setNewValue(update(newValue, {$merge: {"type": e.value}}))}
+              options={["int", "string", "float", "bool", "int-list"].map(e => ({value: e, label: e}))} />
           </td>
           <td>
             <Button
