@@ -625,12 +625,14 @@ function ContextKeyValues({value, onChange, readOnly}) {
             <td style={{width: "40%"}}>
               <FormControl
                 componentClass="input"
+                disabled={readOnly}
                 value={e.key}
                 onChange={e => onChange(update(value, {[i]: {$merge: {key: e.target.value}}}))} />
             </td>
             <td style={{width: "50%"}}>
               <FormControl
                 componentClass="textarea"
+                disabled={readOnly}
                 rows={4}
                 value={e.value}
                 onChange={e => onChange(update(value, {[i]: {$merge: {value: e.target.value}}}))}
@@ -639,6 +641,7 @@ function ContextKeyValues({value, onChange, readOnly}) {
             <td style={{width: "10%"}}>
               <Checkbox
                 checked={e.cleanup}
+                disabled={readOnly}
                 onChange={e => onChange(update(value, {[i]: {$merge: {cleanup: e.target.checked}}}))} />
             </td>
             {!readOnly &&
