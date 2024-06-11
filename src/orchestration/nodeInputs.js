@@ -623,13 +623,23 @@ function ContextKeyValues({value, onChange, readOnly}) {
         value?.map((e, i) =>
           <tr>
             <td style={{width: "40%"}}>
-              {e.key}
+              <FormControl
+                componentClass="input"
+                value={e.key}
+                onChange={e => onChange(update(value, {[i]: {$merge: {key: e.target.value}}}))} />
             </td>
-            <td style={{width: "40%"}}>
-              <pre>{e.value}</pre>
+            <td style={{width: "50%"}}>
+              <FormControl
+                componentClass="textarea"
+                rows={4}
+                value={e.value}
+                onChange={e => onChange(update(value, {[i]: {$merge: {value: e.target.value}}}))}
+                style={{resize: "both"}} />
             </td>
-            <td style={{width: "15%"}}>
-              {e.cleanup?"✔️":""}
+            <td style={{width: "10%"}}>
+              <Checkbox
+                checked={e.cleanup}
+                onChange={e => onChange(update(value, {[i]: {$merge: {cleanup: e.target.checked}}}))} />
             </td>
             {!readOnly &&
               <td>
