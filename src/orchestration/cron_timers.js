@@ -554,11 +554,11 @@ export default function CronTimers() {
                               }} />
                           </td>
                           <td>{n.job_id}</td>
-                          <td style={{width: 70}}>{n.minute}</td>
-                          <td style={{width: 70}}>{n.hour}</td>
-                          <td style={{width: 70}}>{n.day}</td>
-                          <td style={{width: 70}}>{n.month}</td>
-                          <td style={{width: 70}}>{n.year}</td>
+                          <td style={{width: 70}}>{n.minute || "*"}</td>
+                          <td style={{width: 70}}>{n.hour || "*"}</td>
+                          <td style={{width: 70}}>{n.day || "*"}</td>
+                          <td style={{width: 70}}>{n.month || "*"}</td>
+                          <td style={{width: 70}}>{n.year || "*"}</td>
                           <td style={{width: 300}}>
                             <InputGroup>
                                 <Select
