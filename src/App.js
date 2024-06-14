@@ -812,11 +812,13 @@ class App extends Component {
         // reset password
         if(is_reset_password) {
             return (
+              <Router>
                 <LoginPage
                     logo={UiFlavourService.isApio() ? apio_logo : null}
                     standby_alert={standby_alert}>
                     <ResetPasswordForm />
                 </LoginPage>
+              </Router>
             )
         }
 
