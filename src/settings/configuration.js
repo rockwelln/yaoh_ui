@@ -9,7 +9,7 @@ import {FormattedMessage} from 'react-intl';
 
 import {API_URL_PREFIX, AuthServiceManager, fetch_delete, fetch_get, fetch_post, fetch_put, fetch_put_raw, NotificationsManager, userLocalizeUtcDate} from "../utils";
 import update from 'immutability-helper';
-import {Panel} from "react-bootstrap";
+import {Alert, Panel} from "react-bootstrap";
 import ButtonToolbar from "react-bootstrap/lib/ButtonToolbar";
 import Form from "react-bootstrap/lib/Form";
 import Col from "react-bootstrap/lib/Col";
@@ -1615,8 +1615,11 @@ function GuiForm({ gui, onChange }) {
                   value={(gui["2fa"] || {}).email_template}
                   onChange={e => onChange(update(gui, {$merge: {"2fa": update(gui["2fa"] || {}, {$merge: {email_template: e.target.value}})}}))}/>
                 <HelpBlock>
-                  Refer to the "templates" sub-menu
+                  Refer to the "templates" sub-menu.
                 </HelpBlock>
+                <Alert bsStyle="info">
+                  <FormattedMessage id="2fa-remark" defaultMessage="To support trust in the 2-factor auth. process, a retention period needs to be set in the configuration -> Cleanup tab -> 'User trusted locations' "/>
+                </Alert>
               </Col>
             </FormGroup>
 
