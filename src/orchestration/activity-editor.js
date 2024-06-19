@@ -36,8 +36,6 @@ import Form from "react-bootstrap/lib/Form";
 import FormGroup from "react-bootstrap/lib/FormGroup";
 import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import update from "immutability-helper";
-import InputGroup from "react-bootstrap/lib/InputGroup";
-import InputGroupButton from "react-bootstrap/lib/InputGroupButton";
 import SplitButton from "react-bootstrap/lib/SplitButton";
 import MenuItem from "react-bootstrap/lib/MenuItem";
 import {DeleteConfirmButton} from "../utils/deleteConfirm";
@@ -63,7 +61,7 @@ import moment from "moment";
 import deepEqual from "../utils/deepEqual";
 import { readFile } from './startup_events';
 import { useDropzone } from 'react-dropzone';
-import { ApioDatatable } from '../utils/datatable';
+import { ApioDatatable, SearchBar } from '../utils/datatable';
 
 
 const NEW_ACTIVITY = {
@@ -282,29 +280,6 @@ export function NewActivity({show, onClose, onCreated}) {
     )
 }
 
-function SearchBar({onSearch, size}) {
-    const [filter, setFilter] = useState("");
-
-    return (
-        <Form onSubmit={e => {e.preventDefault(); onSearch(filter);}}>
-            <Col smOffset={12 - (size || 4)} sm={size || 4}>
-                <InputGroup>
-                    <FormControl
-                        type="text"
-                        value={filter}
-                        placeholder="search"
-                        onChange={e => setFilter(e.target.value)} />
-                    <InputGroupButton>
-                        <Button type='submit'>
-                            <Glyphicon glyph="search" />
-                        </Button>
-                    </InputGroupButton>
-                </InputGroup>
-            </Col>
-        </Form>
-    )
-}
-
 function CommitActivities({show, onHide, count, onCommit}) {
   const [label, setLabel] = useState("");
   const [message, setMessage] = useState("");
@@ -456,10 +431,9 @@ export function Activities({user_info}) {
 
             <Panel>
                 <Panel.Body>
-                    <SearchBar onSearch={s => {
-                      setFilter(s);
-                      setSelected([]);
-                    }} />
+                    <SearchBar
+                      filter={filter}
+                      onChange={setFilter} />
                     <Table>
                         <thead>
                             <tr>
