@@ -78,6 +78,7 @@ export const modules = Object.freeze({
     proxy: 'proxy',
     draas: 'draas',
     provisioning: 'provisioning',
+    provisioning_reporting_customers: 'provisioning_reporting_customers',
     bulk: 'bulk',
     orchestration: 'orchestration',
     telenet: 'telenet',

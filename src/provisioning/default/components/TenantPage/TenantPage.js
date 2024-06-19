@@ -16,6 +16,7 @@ import Details from "./Tabs/Details";
 import DeleteModal from "./DeleteModal";
 import Licenses from "./Tabs/Licenses";
 import Trunking from "./Tabs/Trunking";
+import Reports from "./Tabs/Reports";
 import MobileNumbersTab from "./Tabs/MobileNumbers";
 
 import { get } from "../get";
@@ -30,6 +31,7 @@ import {
 } from "../../store/actions";
 
 import "./styles.css";
+import { localUser, modules } from "../../../../utils/user";
 
 class TenantPage extends Component {
   state = {
@@ -174,6 +176,11 @@ class TenantPage extends Component {
                 <Trunking refreshTab={this.state.refreshTab === "Trunking"} />
               </Tab>
             )}
+            {localUser.isModuleEnabled(modules.provisioning_reporting_customers) && (
+              <Tab eventKey={8} title="REPORTS">
+                <Reports refreshTab={this.state.refreshTab === "Reports"} />
+              </Tab>
+            )}
           </Tabs>
         </div>
         {this.state.showSuspensionStatusModal && (
@@ -226,6 +233,9 @@ class TenantPage extends Component {
         break;
       case 7:
         refreshTab = "MobileNumbersTab";
+        break;
+      case 8:
+        refreshTab = "Reports";
         break;
       default:
         refreshTab = "";

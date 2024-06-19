@@ -828,6 +828,34 @@ function mainReducer(state = initialState, action) {
         tenantPasswordRules: action.data,
       };
     }
+    case actionType.GET_REPORTING_CUSTOMER: {
+      return {
+        ...state,
+        customer: action.data,
+      };
+    }
+    case actionType.POST_REPORTING_CUSTOMER: {
+      return {
+        ...state,
+      };
+    }
+    case actionType.DELETE_REPORTING_CUSTOMER: {
+      return {
+        ...state,
+      };
+    }
+    case actionType.GET_REPORTING_CUSTOMER_REPORTS: {
+      return {
+        ...state,
+        reports: action.data,
+      };
+    }
+    case actionType.GET_REPORTING_CUSTOMER_GROUPS_REPORTS: {
+      return {
+        ...state,
+        reports: action.data.reports,
+      };
+    }
     case actionType.GET_TENANT_ENTITLEMENTS: {
       return {
         ...state,

@@ -325,6 +325,31 @@ export const getGroupPasswordRules = (data) => ({
   data,
 });
 
+export const getReportingCustomer = (data) => ({
+  type: actionType.GET_REPORTING_CUSTOMER,
+  data,
+});
+
+export const deleteReportingCustomerReports = (data) => ({
+  type: actionType.DELETE_REPORTING_CUSTOMER,
+  data,
+})
+
+export const postReportingCustomerReports = (data) => ({
+  type: actionType.POST_REPORTING_CUSTOMER,
+  data,
+})
+
+export const getReportingCustomerReports = (data) => ({
+  type: actionType.GET_REPORTING_CUSTOMER_REPORTS,
+  data,
+})
+
+export const getReportingCustomerGroupReports = (data) => ({
+  type: actionType.GET_REPORTING_CUSTOMER_GROUPS_REPORTS,
+  data,
+})
+
 export const getTenantEntitlements = (data) => ({
   type: actionType.GET_TENANT_ENTITLEMENTS,
   data,
@@ -2056,6 +2081,101 @@ export function fetchGetGroupPasswordRules(tenantId, groupId) {
         );
       });
   };
+}
+
+export function fetchGetReportingCustomer(tenantId) {
+  return function (dispatch) {
+    return fetch_get(
+      `/api/v01/custom/reporting/customers/${tenantId}`
+    )
+    .then((data) => dispatch(getReportingCustomer(data)))
+    .catch((error) => {
+      if (error.response?.status === 404) {
+        dispatch(getReportingCustomer(null));
+        return;
+      }
+      NotificationsManager.error(
+        <FormattedMessage
+          id="fetch-entitlements-failed"
+          defaultMessage="Failed to fetch reporting details"
+        />,
+        error.message
+      );
+    });
+  }
+}
+
+export function fetchDisableReportingCustomer(tenantId) {
+  return function(dispatch) {
+    return fetch_delete(
+      `/api/v01/custom/reporting/customers/${tenantId}`
+    )
+    .then((data) => dispatch(deleteReportingCustomerReports(data)))
+    .catch((error) => {
+      NotificationsManager.error(
+        <FormattedMessage
+          id="fetch-disable-reporting-failed"
+          defaultMessage="Failed to disable reports"
+        />,
+        error.message
+      );
+    });
+  }
+}
+
+export function fetchEnableReportingCustomer(tenantId) {
+  return function(dispatch) {
+    return fetch_post(
+      "/api/v01/custom/reporting/customers",
+      {name: tenantId},
+    )
+    .then((data) => dispatch(postReportingCustomerReports(data)))
+    .catch((error) => {
+      NotificationsManager.error(
+        <FormattedMessage
+          id="fetch-enable-reporting-failed"
+          defaultMessage="Failed to enable reports"
+        />,
+        error.message
+      );
+    });
+  }
+}
+
+export function fetchGetReportingCustomerReports(tenantId) {
+  return function (dispatch) {
+    return fetch_get(
+      `/api/v01/custom/reporting/customers/${tenantId}/reports`
+    )
+    .then((data) => dispatch(getReportingCustomerReports(data)))
+    .catch((error) => {
+      NotificationsManager.error(
+        <FormattedMessage
+          id="fetch-entitlements-failed"
+          defaultMessage="Failed to fetch reports"
+        />,
+        error.message
+      );
+    });
+  }
+}
+
+export function fetchGetReportingCustomerGroupReports(tenantId, groupId) {
+  return function(dispatch) {
+    return fetch_get(
+      `/api/v01/custom/reporting/customers/${tenantId}/groups/${groupId}/reports`
+    )
+    .then((data) => dispatch(getReportingCustomerGroupReports(data)))
+    .catch((error) => {
+      NotificationsManager.error(
+        <FormattedMessage
+          id="fetch-entitlements-failed"
+          defaultMessage="Failed to fetch reports"
+        />,
+        error.message
+      );
+    });
+  }
 }
 
 export function fetchGetTenantEntitlements(tenantId) {
