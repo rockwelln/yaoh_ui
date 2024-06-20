@@ -12,7 +12,7 @@ import Checkbox from "react-bootstrap/lib/Checkbox";
 
 function ReportsTable({ tenantId, groupId }) {
   const [isLoading, setIsLoading] = useState(true);
-  const reports = useSelector(state => state.reports);
+  const reports = useSelector(state => state.report_cfgs);
 
   const dispatch = useDispatch();
 

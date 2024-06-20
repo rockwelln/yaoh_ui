@@ -20,6 +20,7 @@ import { FormattedMessage } from "react-intl";
 
 import Loading from "../../../../common/Loading";
 import ReportsTable from "./ReportsTable";
+import ReportHistoryTable from "./ReportHistoryTable";
 
 const Reports = ({match, refreshTab}) => {
   const [isLoading, setIsLoading] = useState(true);
@@ -109,7 +110,17 @@ const Reports = ({match, refreshTab}) => {
 
               <Row>
                 <Col sm={12}>
+                  <ControlLabel><FormattedMessage id="configuration" defaultMessage="Configuration" /></ControlLabel>
                   <ReportsTable tenantId={match.params.tenantId} />
+                </Col>
+              </Row>
+
+              <hr/>
+
+              <Row>
+                <Col sm={12}>
+                  <ControlLabel><FormattedMessage id="history" defaultMessage="History" /></ControlLabel>
+                  <ReportHistoryTable tenantId={match.params.tenantId} />
                 </Col>
               </Row>
             </Panel.Body>

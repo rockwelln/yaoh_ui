@@ -847,13 +847,25 @@ function mainReducer(state = initialState, action) {
     case actionType.GET_REPORTING_CUSTOMER_REPORTS: {
       return {
         ...state,
-        reports: action.data,
+        report_cfgs: action.data,
       };
     }
     case actionType.GET_REPORTING_CUSTOMER_GROUPS_REPORTS: {
       return {
         ...state,
-        reports: action.data.reports,
+        report_cfgs: action.data,
+      };
+    }
+    case actionType.GET_REPORTING_CUSTOMER_REPORT_HISTORY: {
+      return {
+        ...state,
+        reports: action.data,
+      };
+    }
+    case actionType.GET_REPORTING_CUSTOMER_GROUP_REPORT_HISTORY: {
+      return {
+        ...state,
+        reports: action.data,
       };
     }
     case actionType.GET_TENANT_ENTITLEMENTS: {

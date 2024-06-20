@@ -333,22 +333,32 @@ export const getReportingCustomer = (data) => ({
 export const deleteReportingCustomerReports = (data) => ({
   type: actionType.DELETE_REPORTING_CUSTOMER,
   data,
-})
+});
 
 export const postReportingCustomerReports = (data) => ({
   type: actionType.POST_REPORTING_CUSTOMER,
   data,
-})
+});
 
 export const getReportingCustomerReports = (data) => ({
   type: actionType.GET_REPORTING_CUSTOMER_REPORTS,
   data,
-})
+});
 
 export const getReportingCustomerGroupReports = (data) => ({
   type: actionType.GET_REPORTING_CUSTOMER_GROUPS_REPORTS,
   data,
-})
+});
+
+export const getReportingCustomerReportHistory = (data) => ({
+  type: actionType.GET_REPORTING_CUSTOMER_REPORT_HISTORY,
+  data,
+});
+
+export const getReportingCustomerGroupReportHistory = (data) => ({
+  type: actionType.GET_REPORTING_CUSTOMER_GROUP_REPORT_HISTORY,
+  data,
+});
 
 export const getTenantEntitlements = (data) => ({
   type: actionType.GET_TENANT_ENTITLEMENTS,
@@ -2171,6 +2181,42 @@ export function fetchGetReportingCustomerGroupReports(tenantId, groupId) {
         <FormattedMessage
           id="fetch-entitlements-failed"
           defaultMessage="Failed to fetch reports"
+        />,
+        error.message
+      );
+    });
+  }
+}
+
+export function fetchGetReportingCustomerReportHistory(tenantId) {
+  return function (dispatch) {
+    return fetch_get(
+      `/api/v01/custom/reporting/customers/${tenantId}/report_history`
+    )
+    .then((data) => dispatch(getReportingCustomerReportHistory(data)))
+    .catch((error) => {
+      NotificationsManager.error(
+        <FormattedMessage
+          id="fetch-entitlements-failed"
+          defaultMessage="Failed to fetch report history"
+        />,
+        error.message
+      );
+    });
+  }
+}
+
+export function fetchGetReportingCustomerGroupReportHistory(tenantId, groupId) {
+  return function (dispatch) {
+    return fetch_get(
+      `/api/v01/custom/reporting/customers/${tenantId}/groups/${groupId}/report_history`
+    )
+    .then((data) => dispatch(getReportingCustomerGroupReportHistory(data)))
+    .catch((error) => {
+      NotificationsManager.error(
+        <FormattedMessage
+          id="fetch-entitlements-failed"
+          defaultMessage="Failed to fetch report history"
         />,
         error.message
       );
