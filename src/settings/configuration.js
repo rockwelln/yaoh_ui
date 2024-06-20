@@ -4292,7 +4292,7 @@ function PasswordPanel({password, onChange}) {
 
           <FormGroup>
             <Col componentClass={ControlLabel} sm={2}>
-              <FormattedMessage id="force-reset-passwords-on-existing-weak-passwords" defaultMessage="Force user to change password if their current password don't match"/>
+              <FormattedMessage id="force-reset-passwords-on-existing-weak-passwords" defaultMessage="Force user to change password if their current password is weak"/>
             </Col>
 
             <Col sm={9}>
