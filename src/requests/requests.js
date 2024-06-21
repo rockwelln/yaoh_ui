@@ -60,8 +60,8 @@ import {ManualActionInputForm} from "./manualActions";
 import {useDropzone} from "react-dropzone";
 import {DeleteConfirmButton} from "../utils/deleteConfirm";
 import {fetchInstanceContext} from "../help/templatePlayground";
-import {ContextTable} from "./components";
 import Select from "react-select";
+import ContextPanel from './contextTable';
 
 const SUB_REQUESTS_PAGE_SIZE = 25;
 
@@ -2182,9 +2182,9 @@ export class Transaction extends Component {
                                 </ButtonGroup>
                             </Panel>
                             { tx.context && tx.context.length !== 0 &&
-                                <Panel header="Context">
-                                    <ContextTable context={tx.context}/>
-                                </Panel>
+                                <Alert bsStyle="info">
+                                    <FormattedMessage id="no-context-here" defaultMessage="There is no context here anymore, look at the tab level ;-)"/>
+                                </Alert>
                             }
                         </Col>
                         <Col xs={12} sm={12} md={12} lg={12}>
@@ -2381,6 +2381,19 @@ export class Transaction extends Component {
                                 </Panel>
                             )
                         }
+                    </Tab>
+                    <Tab
+                        eventKey={3}
+                        title={
+                        <div>
+                            <FormattedMessage id="context" defaultMessage="Context" />{" "}
+                            <Badge>{tx.context?.length || 0}</Badge>
+                        </div>
+                        }
+                        disabled={!(tx.context?.length !== 0)}>
+                        <Col xs={12} sm={12} md={10} mdOffset={1} lg={8} lgOffset={2}>
+                            <ContextPanel context={tx.context} style={{marginTop: '10px'}} onFocus={activeTab === 3} />
+                        </Col>
                     </Tab>
                 </Tabs>
             </>)

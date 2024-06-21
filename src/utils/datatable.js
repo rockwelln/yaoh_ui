@@ -78,15 +78,16 @@ export const Pagination = ({num_pages, page_number, onChange, total_results}) =>
     );
 };
 
-export const SearchBar = ({filter, onChange, onSearch, size}) => (
+export const SearchBar = ({filter, onChange, onSearch, size, refInput, placeholder}) => (
     <Form onSubmit={(e) => {e.preventDefault(); onSearch && onSearch(filter);}}>
         <Col smOffset={12 - (size || 4)} sm={size || 4}>
             <InputGroup>
                 <FormControl
                     type="text"
                     value={filter || ''}
-                    placeholder="search"
-                    onChange={e => onChange(e.target.value)} />
+                    placeholder={placeholder || "search"}
+                    onChange={e => onChange(e.target.value)}
+                    ref={refInput} />
                 <InputGroupButton>
                     <Button type='submit'>
                         <Glyphicon glyph="search" />
