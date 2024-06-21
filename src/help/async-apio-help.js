@@ -6,7 +6,7 @@ import {Link} from "react-router-dom";
 
 const HELP_DOCUMENTS = [
     // {url: `${STATIC_URL_PREFIX}/static/docs/high_level_api_guide/index.html`, title: 'High Level API Guide', version: '0.1', summary: ''},
-    {url: `${STATIC_URL_PREFIX}/static/docs/index.html`, title: 'Documentation', version: '0.1', summary: ''},
+    {url: `${STATIC_URL_PREFIX}/static/docs/`, title: 'Documentation', version: '1', summary: ''},
     {url: `/swagger/swagger.v3.json`, title: 'SWAGGER API definition', version: '3', summary: ''},
     {url: `https://editor.swagger.io/?url=${window.location.origin}/swagger/swagger.v3.json`, title: 'SWAGGER API Editor', version: '3', summary: ''},
 ];
