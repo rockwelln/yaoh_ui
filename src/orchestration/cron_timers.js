@@ -22,7 +22,7 @@ import {fetchActivities} from "./activity-editor";
 
 
 const validateCronEntry = (timer) => {
-    const {minute, hour, day, month, year} = timer;
+    const {minute, hour, day, month, year, day_of_week} = timer;
     if(minute && minute !== "*") {
         const m = parseInt(minute, 10);
         if(isNaN(m) || m < 0 || m > 59) return false;
@@ -42,6 +42,10 @@ const validateCronEntry = (timer) => {
     if(year && year !== "*") {
         const y = parseInt(year, 10);
         if(isNaN(y) || y < 2000) return false;
+    }
+    if(day_of_week && day_of_week !== "*") {
+        const d = parseInt(day_of_week, 10);
+        if(isNaN(d) || d < 0 || d > 6) return false;
     }
     return true;
 };
@@ -89,7 +93,7 @@ function NewCronTimerModal({show, onClose}) {
     const validForm = validJobId === "success" && validCronEntry !== "error" && timer.activity_id;
 
     return (
-        <Modal show={show} onHide={() => onClose(false)} backdrop={false} onSubmit={onSubmit}>
+        <Modal show={show} onHide={() => onClose(false)} backdrop={false} onSubmit={onSubmit} bsSize="large">
             <Modal.Header closeButton>
                 <Modal.Title><FormattedMessage id="new-timer" defaultMessage="New timer" /></Modal.Title>
             </Modal.Header>
@@ -130,11 +134,12 @@ function NewCronTimerModal({show, onClose}) {
                             <Table>
                                 <thead>
                                     <tr>
-                                        <th><FormattedMessage id="minute" defaultMessage="minute" /></th>
-                                        <th><FormattedMessage id="hour" defaultMessage="hour" /></th>
-                                        <th><FormattedMessage id="day" defaultMessage="day" /></th>
-                                        <th><FormattedMessage id="month" defaultMessage="month" /></th>
-                                        <th><FormattedMessage id="year" defaultMessage="year" /></th>
+                                        <th><FormattedMessage id="minute" defaultMessage="minute (0-59)" /></th>
+                                        <th><FormattedMessage id="hour" defaultMessage="hour (0-23)" /></th>
+                                        <th><FormattedMessage id="day" defaultMessage="day (1-31)" /></th>
+                                        <th><FormattedMessage id="month" defaultMessage="month (1-12)" /></th>
+                                        <th><FormattedMessage id="year" defaultMessage="year (>2000)" /></th>
+                                        <th><FormattedMessage id="dow" defaultMessage="day of week (0-6)*" /></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -174,11 +179,18 @@ function NewCronTimerModal({show, onClose}) {
                                                 placeholder="*"
                                                 onChange={e => setTimer({...timer, year: e.target.value})}/>
                                         </td>
+                                        <td>
+                                            <FormControl
+                                                componentClass="input"
+                                                value={timer.day_of_week || ""}
+                                                placeholder="*"
+                                                onChange={e => setTimer({...timer, day_of_week: e.target.value})}/>
+                                        </td>
                                     </tr>
                                 </tbody>
                             </Table>
                             <HelpBlock>
-                                <FormattedMessage id="cron-entry-help-fil" defaultMessage="the possible values may be a number (restricted by the category, ex: minute has to be between 0 and 60) or * (any) or left empty."/>
+                                <FormattedMessage id="cron-entry-help-dow" defaultMessage="day of the week is a range going from Sunday (0) to Saturday (6)"/>
                                 <br/>
                                 <FormattedMessage id="cron-entry-help-cols" defaultMessage="notice the columns left empty on the right are defaulted to '*' (any) and columns left empty on the left are considered as 0"/>
                             </HelpBlock>
@@ -281,7 +293,7 @@ function UpdateTimerModal({show, onClose, timer}) {
     const activitiesOptions = activities.sort((a, b) => a.name.localeCompare(b.name)).map(a => ({value: a.id, label: a.name}));
 
     return (
-        <Modal show={show} onHide={() => onClose(false)} backdrop={false}>
+        <Modal show={show} onHide={() => onClose(false)} backdrop={false} bsSize="large">
             <Modal.Header closeButton>
                 <Modal.Title><FormattedMessage id="update-timer" defaultMessage="Update timer" /></Modal.Title>
             </Modal.Header>
@@ -322,11 +334,12 @@ function UpdateTimerModal({show, onClose, timer}) {
                             <Table>
                                 <thead>
                                     <tr>
-                                        <th><FormattedMessage id="minute" defaultMessage="minute" /></th>
-                                        <th><FormattedMessage id="hour" defaultMessage="hour" /></th>
-                                        <th><FormattedMessage id="day" defaultMessage="day" /></th>
-                                        <th><FormattedMessage id="month" defaultMessage="month" /></th>
-                                        <th><FormattedMessage id="year" defaultMessage="year" /></th>
+                                    <th><FormattedMessage id="minute" defaultMessage="minute (0-59)" /></th>
+                                        <th><FormattedMessage id="hour" defaultMessage="hour (0-23)" /></th>
+                                        <th><FormattedMessage id="day" defaultMessage="day (1-31)" /></th>
+                                        <th><FormattedMessage id="month" defaultMessage="month (1-12)" /></th>
+                                        <th><FormattedMessage id="year" defaultMessage="year (>2000)" /></th>
+                                        <th><FormattedMessage id="dow" defaultMessage="day of week (0-6)*" /></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -366,11 +379,18 @@ function UpdateTimerModal({show, onClose, timer}) {
                                                 placeholder="*"
                                                 onChange={e => setDiffTimer({...diffTimer, year: e.target.value})}/>
                                         </td>
+                                        <td>
+                                            <FormControl
+                                                componentClass="input"
+                                                value={localTimer.day_of_week || ""}
+                                                placeholder="*"
+                                                onChange={e => setDiffTimer({...diffTimer, day_of_week: e.target.value})}/>
+                                        </td>
                                     </tr>
                                 </tbody>
                             </Table>
                             <HelpBlock>
-                                <FormattedMessage id="cron-entry-help-fil" defaultMessage="the possible values may be a number (restricted by the category, ex: minute has to be between 0 and 60) or * (any) or left empty."/>
+                                <FormattedMessage id="cron-entry-help-dow" defaultMessage="day of the week is a range going from Sunday (0) to Saturday (6)"/>
                                 <br/>
                                 <FormattedMessage id="cron-entry-help-cols" defaultMessage="notice the columns left empty on the right are defaulted to '*' (any) and columns left empty on the left are considered as 0"/>
                             </HelpBlock>
@@ -536,6 +556,7 @@ export default function CronTimers() {
                         <th>day</th>
                         <th>month</th>
                         <th>year</th>
+                        <th>day of week</th>
                         <th><FormattedMessage id="activity" defaultMessage="Activity"/></th>
                         <th/>
                       </tr>
@@ -559,6 +580,7 @@ export default function CronTimers() {
                           <td style={{width: 70}}>{n.day || "*"}</td>
                           <td style={{width: 70}}>{n.month || "*"}</td>
                           <td style={{width: 70}}>{n.year || "*"}</td>
+                          <td style={{width: 70}}>{n.day_of_week || "*"}</td>
                           <td style={{width: 300}}>
                             <InputGroup>
                                 <Select
