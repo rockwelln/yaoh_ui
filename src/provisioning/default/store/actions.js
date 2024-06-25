@@ -2155,7 +2155,7 @@ export function fetchEnableReportingCustomer(tenantId) {
 export function fetchGetReportingCustomerReports(tenantId) {
   return function (dispatch) {
     return fetch_get(
-      `/api/v01/custom/reporting/customers/${tenantId}/reports`
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/analytics/reporting/reports`,
     )
     .then((data) => dispatch(getReportingCustomerReports(data)))
     .catch((error) => {
@@ -2173,7 +2173,7 @@ export function fetchGetReportingCustomerReports(tenantId) {
 export function fetchGetReportingCustomerGroupReports(tenantId, groupId) {
   return function(dispatch) {
     return fetch_get(
-      `/api/v01/custom/reporting/customers/${tenantId}/groups/${groupId}/reports`
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/analytics/reporting/reports`
     )
     .then((data) => dispatch(getReportingCustomerGroupReports(data)))
     .catch((error) => {
@@ -2191,7 +2191,7 @@ export function fetchGetReportingCustomerGroupReports(tenantId, groupId) {
 export function fetchGetReportingCustomerReportHistory(tenantId) {
   return function (dispatch) {
     return fetch_get(
-      `/api/v01/custom/reporting/customers/${tenantId}/report_history`
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/analytics/reporting/report_history`
     )
     .then((data) => dispatch(getReportingCustomerReportHistory(data)))
     .catch((error) => {
@@ -2209,7 +2209,7 @@ export function fetchGetReportingCustomerReportHistory(tenantId) {
 export function fetchGetReportingCustomerGroupReportHistory(tenantId, groupId) {
   return function (dispatch) {
     return fetch_get(
-      `/api/v01/custom/reporting/customers/${tenantId}/groups/${groupId}/report_history`
+      `${ProvProxiesManager.getCurrentUrlPrefix()}/tenants/${tenantId}/groups/${groupId}/analytics/reporting/report_history`
     )
     .then((data) => dispatch(getReportingCustomerGroupReportHistory(data)))
     .catch((error) => {
