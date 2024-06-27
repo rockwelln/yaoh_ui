@@ -401,7 +401,7 @@ export function fetch_delete(url, body) {
 }
 
 export function userLocalizeUtcDate(d, userInfo) {
-  if(userInfo && userInfo.timezone && userInfo.timezone.length) {
+  if(userInfo?.timezone?.length) {
     return d.utcOffset(userInfo.timezone);
   } else {
     return d.local();

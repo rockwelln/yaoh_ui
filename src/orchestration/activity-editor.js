@@ -2378,6 +2378,7 @@ export function ActivityEditor(props) {
                     {title: <FormattedMessage id="username" defaultMessage="Username" />, field: 'username', sortable: true, render: n => n.username ? `${n.username} (${n.email})` : "-"},
                     {title: <FormattedMessage id="last-update" defaultMessage="Last update" />, field: 'updated_on', sortable: true, render: n => userLocalizeUtcDate(moment.utc(n.updated_on), props.user_info).format()},
                     {title: <FormattedMessage id="creation-update" defaultMessage="Creation date" />, field: 'created_on', sortable: true, render: n => userLocalizeUtcDate(moment.utc(n.created_on), props.user_info).format()},
+                    {title: <FormattedMessage id="committed-at" defaultMessage="Committed at" />, field: 'commit_at', sortable: true, render: n => n.commit_at ? userLocalizeUtcDate(moment.utc(n.commit_at), props.user_info).format() : "-"},
                     {
                         title: '', render: v => (
                           v.label &&
