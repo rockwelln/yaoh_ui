@@ -2376,7 +2376,8 @@ export function ActivityEditor(props) {
                     {title: <FormattedMessage id="label" defaultMessage="Label" />, render: n => n.label || WORKING_VERSION_LABEL},
                     {title: <FormattedMessage id="message" defaultMessage="Message" />, render: n => n.message || "-"},
                     {title: <FormattedMessage id="username" defaultMessage="Username" />, field: 'username', sortable: true, render: n => n.username ? `${n.username} (${n.email})` : "-"},
-                    {title: <FormattedMessage id="date" defaultMessage="Date" />, field: 'updated_on', sortable: true, render: n => userLocalizeUtcDate(moment.utc(n.updated_on), props.user_info).format()},
+                    {title: <FormattedMessage id="last-update" defaultMessage="Last update" />, field: 'updated_on', sortable: true, render: n => userLocalizeUtcDate(moment.utc(n.updated_on), props.user_info).format()},
+                    {title: <FormattedMessage id="creation-update" defaultMessage="Creation date" />, field: 'created_on', sortable: true, render: n => userLocalizeUtcDate(moment.utc(n.created_on), props.user_info).format()},
                     {
                         title: '', render: v => (
                           v.label &&
