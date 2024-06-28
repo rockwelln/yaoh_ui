@@ -49,8 +49,32 @@ function fetchConfiguration(raw, onSuccess) {
     )
 }
 
+function fetchHistory() {
+  return fetch_get('/api/v01/system/configuration/history')
+    .catch(error =>
+      NotificationsManager.error(
+        <FormattedMessage id="fetch-config-fail" defaultMessage="Fail fetch history"/>,
+        error.message
+      )
+    )
+}
+
+function fetchHistoryID(id, raw) {
+  let u = `/api/v01/system/configuration/history/${id}`;
+  if(raw) {
+    u += '?r=true';
+  }
+  return fetch_get(u)
+    .catch(error =>
+      NotificationsManager.error(
+        <FormattedMessage id="fetch-config-fail" defaultMessage="Fail fetch past version"/>,
+        error.message
+      )
+    ) 
+}
+
 function saveConfiguration(entry, onSuccess) {
-  fetch_put('/api/v01/system/configuration', entry)
+  return fetch_put('/api/v01/system/configuration', entry)
     .then(() => {
         NotificationsManager.success(<FormattedMessage id="config-saved" defaultMessage="Configuration saved"/>)
         onSuccess && onSuccess();
@@ -3872,6 +3896,7 @@ function LicensePanel() {
                 {`new license valid until ${newDetails.valid_until} for ${newDetails.customer_name} (don't forget to save and refresh your page to actually see the license beeing taken into account)`}
                 </HelpBlock>
               }
+              <hr/>
               <Button
                 onClick={() => {
                   setNewDetails(null);
@@ -4930,13 +4955,23 @@ function HiddenTextarea({value, placeholder, rows, style, onChange}) {
 export default function Configuration({userInfo, history}) {
   const [activeKey, setActiveKey] = useState("Gateways");
   const [config, setConfig] = useState({});
+  const [pastVersions, setPastVersions] = useState([]);
+  const [version, setVersion] = useState();
   const { hash, search } = useLocation();
 
   useEffect(() => {
-    hash && hash.length > 1 && setActiveKey(hash.substring(1));
+    hash?.length > 1 && setActiveKey(hash.substring(1));
   }, [hash]);
 
   const searchQuery = new URLSearchParams(search);
+
+  useEffect(() => {
+    fetchHistory().then(h => setPastVersions(h))
+  }, []);
+
+  useEffect(() => {
+    version && fetchHistoryID(version, searchQuery.get("r")=="true").then(h => setConfig(h))
+  }, [version]);
 
   useEffect(() => {
     fetchConfiguration(searchQuery.get("r")=="true", setConfig);
@@ -4959,6 +4994,20 @@ export default function Configuration({userInfo, history}) {
         <Breadcrumb.Item active><FormattedMessage id="configuration"
                                                   defaultMessage="Configuration"/></Breadcrumb.Item>
       </Breadcrumb>
+
+      <Col sm={5} md={2} >
+        <Select
+          isClearable
+          value={({value: config.id, label: `${config.config_id} (${userLocalizeUtcDate(moment.utc(config.created_on), userInfo).format()})`})}
+          onChange={v => {
+            setVersion(v ? v.value : pastVersions[0].id);
+          }}
+          options={pastVersions?.map(v => {
+            const ts = userLocalizeUtcDate(moment.utc(v.ts), userInfo).format();
+            return {value: v.id, label: `${v.id} (${ts})`}
+          })} />
+      </Col>
+
       <Tabs defaultActiveKey={hash ? hash.substring(1) : "Gateways"} onSelect={key => {
         setActiveKey(key);
         history.replace("#" + key);
@@ -5067,7 +5116,11 @@ export default function Configuration({userInfo, history}) {
           }
         </Tab>
       </Tabs>
-      <Button onClick={() => saveConfiguration(config.content)}>
+      <Button onClick={() => saveConfiguration(config.content).then(() => {
+        const p1 = fetchHistory().then(h => setPastVersions(h));
+        const p2 = fetchConfiguration(searchQuery.get("r")=="true", setConfig);
+        return Promise.all([p1, p2]);
+      })} disabled={pastVersions[0]?.id != config.config_id}>
         <FormattedMessage id='save' defaultMessage='save'/>
       </Button>
       <br/>
