@@ -49,7 +49,8 @@ import {
   faDownload, faEnvelope, faFileCsv, faFileExcel, faFileMedicalAlt, faHome, faPaste, faPlay, faPowerOff, faSearch,
   faSpinner, faStickyNote, faStop, faStopwatch, faStream,
   faUserCog, faUsers, faArrowRight, faQuestion,
-  faUserShield
+  faUserShield,
+  faHandSparkles
 } from "@fortawesome/free-solid-svg-icons";
 import {Link} from "react-router-dom";
 import Checkbox from "react-bootstrap/lib/Checkbox";
@@ -956,6 +957,7 @@ const sortedNodes = [
   "proxy_session_call",
   "proxy_call",
   "tcp_call",
+  "cleanup_cache",
   "context_setter",
   "multi_context_setter",
   "sync_response",
@@ -1062,6 +1064,12 @@ const nodesAttributes = {
     icon: faStream,
     label: "TCP call [experimental]",
     help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#tcp-call-experimental`,
+  },
+  cleanup_cache: {
+    color: "blue",
+    icon: faHandSparkles,
+    label: "Cleanup cache keys",
+    help: `${STATIC_URL_PREFIX}/static/docs/docs/workflows/nodes#cleanup-cache`,
   },
   context_setter: {
     color: "purple",
