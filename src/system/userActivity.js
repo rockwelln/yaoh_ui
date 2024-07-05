@@ -38,10 +38,12 @@ function prepareExportUrl(filter, sort) {
   return url;
 }
 
+const defaultFilter = {timestamp: { op: "between", value: moment().subtract(24, 'hour').format(), value2: moment().format() }}
+
 function UsersActivity() {
   const [searchExpanded, setSearchExpanded] = useState(false);
-  const [filter, setFilter] = useState([]);
-  const [pendingFilter, setPendingFilter] = useState({});
+  const [filter, setFilter] = useState(pendingFilterToFilter(defaultFilter));
+  const [pendingFilter, setPendingFilter] = useState(defaultFilter);
   const [data, setData] = useState();
   const [page, setPage] = useState(1); // current page
   const [loading, setLoading] = useState(false);
