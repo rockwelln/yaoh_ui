@@ -1837,6 +1837,11 @@ export default class SearchUsers extends Search {
                                     <FormattedMessage id="roles" defaultMessage="Roles"/>
                                 </Button>
                             </LinkContainer>
+                            <LinkContainer to={"/system/users/activity"}>
+                                <Button bsStyle='primary'>
+                                    <FormattedMessage id="activity" defaultMessage="Activity"/>
+                                </Button>
+                            </LinkContainer>
                             <LinkContainer to={"/system/users/audit"}>
                                 <Button bsStyle='danger'>
                                     <FormattedMessage id="audit" defaultMessage="Audit"/>

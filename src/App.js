@@ -84,6 +84,7 @@ import TemplatePlayground from "./help/templatePlayground";
 import AlarmManagement, {AlarmCounters, fetchAlarms} from "./system/alarms";
 import Clients from "./system/clients_mgm";
 import TransactionAction from "./requests/transactionAction.js";
+import UsersActivity from "./system/userActivity.js";
 
 const ListProvisioningGateways=React.lazy(() => import("./provisioning/ListProvisioningGateways"))
 
@@ -1032,7 +1033,7 @@ class App extends Component {
                                )}
                                exact />
                         <Route path="/system/users/audit"
-                               component={props => (
+                               component={() => (
                                    localUser.isAllowed(accesses.settings_users) ?
                                        <AuditLogs
                                            user_info={user_info}
@@ -1040,6 +1041,13 @@ class App extends Component {
                                        <NotAllowed />
                                )}
                                exact />
+                        <Route path="/system/users/activity"
+                                component={() => (
+                                  localUser.isAllowed(accesses.settings_users) ?
+                                      <UsersActivity />:
+                                      <NotAllowed />
+                                )}
+                                exact />
                         <Route path="/system/users/profiles"
                                component={props => (
                                    localUser.isAllowed(accesses.settings_users) ?
