@@ -1364,8 +1364,8 @@ export const TxTable = ({tx, request, userInfo, activities}) => (
         <tbody>
             <tr><th><FormattedMessage id="id" defaultMessage="ID" /></th><td>{tx.id}</td></tr>
             <tr><th><FormattedMessage id="workflow" defaultMessage="Workflow" /></th><td>{activities.find(a => a.id === tx.activity_id)?.name}</td></tr>
-            <tr><th><FormattedMessage id="owner" defaultMessage="Owner" /></th><td>{tx.username}</td></tr>
-            <tr><th><FormattedMessage id="request-status" defaultMessage="Request status" /></th><td>{request && request.status}</td></tr>
+            <tr><th><FormattedMessage id="owner" defaultMessage="Owner" /></th><td>{tx.username || request?.owner}</td></tr>
+            <tr><th><FormattedMessage id="request-status" defaultMessage="Request status" /></th><td>{request?.status}</td></tr>
             <tr><th><FormattedMessage id="workflow-status" defaultMessage="Workflow status" /></th><td>{tx.status}</td></tr>
             <tr><th><FormattedMessage id="creation-date" defaultMessage="Creation date" /></th><td>{userLocalizeUtcDate(moment.utc(tx.created_on), userInfo).format()}</td></tr>
             <tr><th><FormattedMessage id="last-update" defaultMessage="Last update" /></th><td>{userLocalizeUtcDate(moment.utc(tx.updated_on), userInfo).format()}</td></tr>
