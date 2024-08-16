@@ -322,7 +322,7 @@ export function LocalUserProfile({onUserInfoChanged}) {
                                     </thead>
                                     <tbody>
                                     {
-                                        user_info.roles && user_info.roles.sort((a, b) => a.id - b.id).map(
+                                        user_info.roles?.sort((a, b) => a.id - b.id).map(
                                             r => <tr key={r.id}>
                                                 <td>{r.name}</td>
                                                 <td>{r.created_on}</td>
@@ -1255,6 +1255,23 @@ function UpdateUser({show, user, onClose, user_info}) {
                                       onClear={() => updateUser(user.id, {token: null, token_expiry_date: null}, () => loadFullUser(user.id))}
                                       onRefresh={(expDate) => updateUser(user.id, {token: true, token_expiry_date: expDate}, () => loadFullUser(user.id))} />
                                 </FormControl.Static>
+                            </Col>
+                        </FormGroup>
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={2}>
+                                <FormattedMessage id="two-fa-option" defaultMessage="2FA option" />
+                            </Col>
+
+                            <Col sm={9} lg={2}>
+                                <Select
+                                    isClearable
+                                    placeholder={"not set"}
+                                    value={localUser.two_fa_option && {label: localUser.two_fa_option, value: localUser.two_fa_option}}
+                                    options={["email"].map(o => ({label: o, value: o}))}
+                                    onChange={v => {
+                                        setDiffUser(update(diffUser, {$merge: {two_fa_option: v?.value || null}}))
+                                    }}
+                                    />
                             </Col>
                         </FormGroup>
                         <FormGroup>
