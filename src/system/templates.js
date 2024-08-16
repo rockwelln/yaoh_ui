@@ -1,7 +1,8 @@
 import React, {useCallback, useEffect, useRef, useState} from "react";
 import {API_URL_PREFIX, AuthServiceManager, fetch_delete, fetch_get, fetch_post_raw, fetch_put_raw, NotificationsManager, parseJSON} from "../utils";
 import {FormattedMessage} from "react-intl";
-import {MenuItem, Modal, Panel, SplitButton} from "react-bootstrap";
+import Panel from "react-bootstrap/lib/Panel";
+import Modal from "react-bootstrap/lib/Modal";
 import Form from "react-bootstrap/lib/Form";
 import FormGroup from "react-bootstrap/lib/FormGroup";
 import Col from "react-bootstrap/lib/Col";
