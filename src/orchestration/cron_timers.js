@@ -428,7 +428,7 @@ function UpdateTimerModal({show, onClose, timer}) {
                         <Col sm={9}>
                             <FormControl
                                 componentClass="textarea"
-                                value={localTimer.request_body}
+                                value={localTimer.request_body || ""}
                                 placeholder='{"body": {"username": "fool"}}'
                                 onChange={e => setDiffTimer({...diffTimer, request_body: e.target.value})}/>
                         </Col>
