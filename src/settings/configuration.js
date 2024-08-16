@@ -362,6 +362,18 @@ function NewGatewayModal(props) {
                 </FormGroup>
                 <FormGroup>
                   <Col componentClass={ControlLabel} sm={2}>
+                    <FormattedMessage id="refresh-token" defaultMessage="Refresh token"/>
+                  </Col>
+
+                  <Col sm={9}>
+                    <FormControl
+                      componentClass="input"
+                      value={entry.refresh_token || ""}
+                      onChange={e => setEntry({...entry, refresh_token: e.target.value})}/>
+                  </Col>
+                </FormGroup>
+                <FormGroup>
+                  <Col componentClass={ControlLabel} sm={2}>
                     <FormattedMessage id="grant-type" defaultMessage="Grant type"/>
                   </Col>
 
@@ -813,6 +825,17 @@ function GatewaysPanel(props) {
                             <HiddenField
                               value={gateway.client_secret}
                               onChange={e => onChange(update(gateways, {[g]: {$merge: {client_secret: e.target.value}}}))}/>
+                          </Col>
+                        </FormGroup>
+                        <FormGroup>
+                          <Col componentClass={ControlLabel} sm={2}>
+                            <FormattedMessage id="refresh-token" defaultMessage="Refresh token"/>
+                          </Col>
+
+                          <Col sm={9}>
+                            <HiddenField
+                              value={gateway.refresh_token}
+                              onChange={e => onChange(update(gateways, {[g]: {$merge: {refresh_token: e.target.value}}}))}/>
                           </Col>
                         </FormGroup>
                         <FormGroup>
