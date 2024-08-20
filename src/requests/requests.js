@@ -2181,11 +2181,6 @@ export class Transaction extends Component {
                                     <Button onClick={() => this.setState({autoRefresh: !this.state.autoRefresh})} active={this.state.autoRefresh}>Auto-refresh</Button>
                                 </ButtonGroup>
                             </Panel>
-                            { tx.context && tx.context.length !== 0 &&
-                                <Alert bsStyle="info">
-                                    <FormattedMessage id="no-context-here" defaultMessage="There is no context here anymore, look at the tab level ;-)"/>
-                                </Alert>
-                            }
                         </Col>
                         <Col xs={12} sm={12} md={12} lg={12}>
                           <Panel>
