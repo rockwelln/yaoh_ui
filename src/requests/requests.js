@@ -265,7 +265,7 @@ const XSLT_PP = "<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1
     "</xsl:stylesheet>";
 
 
-export const pp_output = (protocol, content) => {
+export const pp_output = (protocol, content, format) => {
     switch(protocol) {
       case "BS-OCI":
       case "SOAP":
@@ -277,6 +277,15 @@ export const pp_output = (protocol, content) => {
         } else {
           return String(content);
         }
+      case "PV":
+        if(format === "xml") {
+            return transformXML(content, XSLT_PP);
+        }
+        try {
+            return JSON.stringify(content, null, 2)
+        }catch {
+            return String(content);
+        }
       default:
         try {
          return JSON.stringify(content, null, 2)
@@ -286,11 +295,14 @@ export const pp_output = (protocol, content) => {
     }
 };
 
-const protocol2endpoint = (protocol) => {
+const protocol2endpoint = ({protocol, vendorType}) => {
     switch(protocol) {
-        case "BS-OCI": return "BroadWorks";
+        case "BS-OCI":
+            return "BroadWorks";
         case "ROM":
             return protocol;
+        case "PV":
+            return vendorType;
         default:
             return "unknown ..."
     }
@@ -305,6 +317,8 @@ const protocol2summary = (protocol, content) => {
         case "ROM":
             s = /<(ns[0-9]:|)action>([A-Za-z0-9:]+)<\/.*$/gm.exec(content);
             return (s && s[2]) || "....";
+        case "PV":
+            return "phone vendor call..."
         default:
             return "..."
     }
@@ -332,7 +346,7 @@ const SyncMessagesDetails = ({data}) => (
                         <td>{d.id}</td>
                         <td>
                             <pre style={{wordWrap: 'break-word', whiteSpace: 'pre-wrap'}}>
-                                {d.content && pp_output(d.protocol, d.content)}
+                                {d.content && pp_output(d.protocol, d.content, d.format)}
                             </pre>
                         </td>
                     </tr>
@@ -356,7 +370,7 @@ class SyncMessagesFlow extends Component {
     }
 
     static _extractEndpoints(data) {
-        const endpoints = data.map(d => protocol2endpoint(d.protocol));
+        const endpoints = data.map(d => protocol2endpoint(d));
         return [...new Set(endpoints)];
     }
 
@@ -396,8 +410,8 @@ class SyncMessagesFlow extends Component {
                                 (d, i) =>
                                     <line
                                         key={`message_line_${i}`}
-                                        x1={d.type === "request"?0:messageWidth(d.protocol)}
-                                        x2={d.type === "request"?messageWidth(d.protocol):0}
+                                        x1={d.type === "request"?0:messageWidth(d)}
+                                        x2={d.type === "request"?messageWidth(d):0}
                                         y1={vSpacing * (i+1)}
                                         y2={vSpacing * (i+1)}
                                         stroke={d.type === "request"?"blue":d.type === "error"?"red":"green"}
@@ -425,7 +439,7 @@ class SyncMessagesFlow extends Component {
                                           }>
                                             <text
                                                 textAnchor="middle"
-                                                x={messageWidth(d.protocol) / 2}
+                                                x={messageWidth(d) / 2}
                                                 y={(vSpacing * (i + 1)) - 10}
                                                 fill={!focusId || focusId === d.id ? "#1f77b4" : "rgba(31,119,180,0.4)"}
                                                 fillOpacity={1}
